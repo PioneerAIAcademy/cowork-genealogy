@@ -455,22 +455,14 @@ def test_conflict_blocks_proved(after_state, test):
 
 
 def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
-    """Tagged `bounded-conclusion`: a well-supported bounded finding is tiered
-    at `probable` or better AND lands in the tree as a fact carrying the
-    bracket.
+    """Tagged `bounded-conclusion`: the bracket is a Death `fact` claim on I1
+    carrying the range, tiered on the bracket's own support, and I1 carries a
+    Death fact exactly when that claim is affirmed at `probable` or better.
 
-    Both halves are one rule. The tier says whether a finding was reached; the
-    encoding says whether it reached the researcher's tree. A bounded finding
-    can be honestly uncertain about WHERE INSIDE the range the event falls while
-    being certain the event happened — so it encodes at `possible` too, carrying
-    the range verbatim as the fact's date (lead ruling, 2026-08-21). What it may
-    not do is collapse to `not_proved` because the exact value is unreachable,
-    or reach a tier and never touch the tree.
-
-    `possible` or `probable` are both accepted; the committed run used
-    `possible`, but the tier may vary between runs. The `tier-possible-q001`
-    ceiling was removed from 018 on 2026-09-30, so this floor is now its only
-    tier guard.
+    A narrowing record caps the summary's scalar `tier`, not the claim (#3032
+    Stage 1b): the bracket can stand at `probable` under a `possible` scalar.
+    What it may not do is collapse to `not_proved` because the exact value is
+    unreachable, or stand at `probable` and never reach the tree.
     """
     if "bounded-conclusion" not in test.get("tags", []):
         pytest.skip("not a bounded-conclusion scenario")
@@ -479,39 +471,141 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     if after is None or tree is None:
         pytest.skip("Missing research.json or tree.gedcomx.json")
 
-    summaries = [
-        ps for ps in after.get("proof_summaries", [])
-        if ps.get("question_id") == "q_001"
-    ]
+    summaries = [ps for ps in after.get("proof_summaries", []) if ps.get("question_id") == "q_001"]
     assert summaries, "no proof summary written for q_001"
-
-    ACCEPTED = {"possible", "probable", "proved"}
-    tiers = [ps.get("tier") for ps in summaries]
-    assert any(t in ACCEPTED for t in tiers), (
-        f"bounded conclusion tiered {tiers} — a bounded finding is tiered on the "
-        "strength of what CAN be established (the bracket, the documented "
-        "negative), not on the unreachable exact value. `not_proved` says no "
-        "finding was reached; a defensible range IS a finding."
+    claims = [
+        c
+        for ps in summaries
+        for c in ps.get("claims") or []
+        if isinstance(c, dict)
+        and isinstance(c.get("fact"), dict)
+        and c["fact"].get("subject") == "I1"
+        and str(c["fact"].get("fact_type") or "").lower() == "death"
+    ]
+    assert claims, (
+        "no Death fact claim on I1 — the bracket is a claim of its own, tiered on "
+        "what CAN be established, not left to the summary's scalar tier."
     )
-
-    facts = [
+    claim = claims[-1]
+    assert str(claim["fact"].get("date") or "").strip(), (
+        "the Death claim on I1 carries no date — the bracket IS the finding, so "
+        "it belongs in the claim's date (e.g. 'after 1870, before 1885')."
+    )
+    tier = claim.get("proof_tier")
+    assert tier in {"possible", "probable", "proved"}, (
+        f"the Death claim stands at {tier!r} — a bounded finding is tiered on the "
+        "strength of what CAN be established, not collapsed because the exact "
+        "value is unreachable."
+    )
+    affirmed = claim.get("polarity") != "denied" and tier in {"probable", "proved"}
+    deaths = [
         f
         for p in tree.get("persons", [])
         if p.get("id") == "I1"
         for f in p.get("facts", []) or []
+        if f.get("type") == "Death"
     ]
-    deaths = [f for f in facts if f.get("type") == "Death"]
-    assert deaths, (
-        "no Death fact on I1 — the conclusion exists only in the narrative and "
-        "the tree is silent on the vital event the question asked about. Encode "
-        "the bracket as the fact's date. A `possible` tier is NOT a reason to "
-        "skip this: the probable threshold asks whether a conclusion was "
-        "reached, and a bracket is one."
+    if affirmed:
+        assert deaths, (
+            f"no Death fact on I1 although its claim stands at {tier!r} — an "
+            "affirmed claim at probable or better is encoded in the tree."
+        )
+        assert any(str(f.get("date") or "").strip() for f in deaths), (
+            "the Death fact on I1 carries no date — the bracket belongs in it."
+        )
+    else:
+        assert not deaths, (
+            f"a Death fact on I1 although its claim stands at {tier!r} — only an "
+            "affirmed claim at probable or better reaches the tree."
+        )
+
+
+# --- Untagged: no warn-mode finding left standing ------------------------
+#
+# Stage 1b's writer rules warn before Stage 1c makes them refuse. A run that
+# ends with a warning still standing on what it wrote would be refused then.
+
+_FINDING_WRITERS = ("research_append", "tree_edit", "tree_correct")
+_WILL_BE_REFUSED = re.compile(r"^Will be refused: (.+?): ")
+_SUMMARY_SHAPE_FIELDS = {"tier", "claims", "supporting_assertion_ids"}
+_TREE_KEYS = ("personId", "relationshipId", "factId", "nameId")
+
+
+def _tree_concern(op: dict) -> str | None:
+    """`treeConcern`'s text for the object an op names, or None (rule-modes.ts)."""
+    parts = [f"{k} {op[k]}" for k in _TREE_KEYS if isinstance(op.get(k), str) and op.get(k)]
+    return ", ".join(parts) or None
+
+
+def _ops_of(args) -> list[dict]:
+    args = args if isinstance(args, dict) else {}
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except ValueError:
+            ops = None
+    return [o for o in ops if isinstance(o, dict)] if isinstance(ops, list) else [args]
+
+
+def _touched(name: str, args, response) -> set[str]:
+    """The concerns a successful call wrote: a summary it appended, or whose
+    tier, claims or cited assertions it changed (a narrative-only edit is not
+    one), and the tree objects its ops name by holder and id."""
+    out: set[str] = set()
+    results = response.get("results") if isinstance(response.get("results"), list) else [response]
+    for i, op in enumerate(_ops_of(args)):
+        if name == "research_append":
+            if op.get("section") != "proof_summaries":
+                continue
+            if op.get("op") == "append":
+                res = results[i] if i < len(results) and isinstance(results[i], dict) else {}
+                if isinstance(res.get("entryId"), str):
+                    out.add(f"proof_summaries {res['entryId']}")
+            elif op.get("op") == "update" and isinstance(op.get("entryId"), str):
+                fields = op.get("fields") if isinstance(op.get("fields"), dict) else {}
+                if _SUMMARY_SHAPE_FIELDS & set(fields):
+                    out.add(f"proof_summaries {op['entryId']}")
+        else:
+            concern = _tree_concern(op)
+            if concern:
+                out.add(concern)
+    return out
+
+
+def _warned(response) -> set[str]:
+    validation = response.get("validation") if isinstance(response.get("validation"), dict) else {}
+    out = set()
+    for w in validation.get("warnings") or []:
+        m = _WILL_BE_REFUSED.match(str(w))
+        if m:
+            out.add(m.group(1))
+    return out
+
+
+def test_no_finding_left_will_be_refused(tool_calls, test):
+    """A proof-conclusion run fails when, for any proof summary or tree object,
+    the last successful write touching it answered "Will be refused:" for it.
+    A later clean write to the same summary's tier, claims or citations, or to
+    the same holder and id, clears it; a write to anything else does not."""
+    standing: dict[str, bool] = {}
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        name = _bare_tool_name(call.get("tool", ""))
+        response = call.get("response")
+        if name not in _FINDING_WRITERS or not isinstance(response, dict) or response.get("ok") is not True:
+            continue
+        warned = _warned(response)
+        for concern in _touched(name, call.get("args"), response) | warned:
+            standing[concern] = concern in warned
+    left = sorted(c for c, w in standing.items() if w)
+    assert not left, (
+        f"the run ended with a warn-mode finding standing on {left}: the last write "
+        "to each answered 'Will be refused:'. Stage 1c refuses it; write it so the "
+        "rule holds."
     )
-    assert any(str(f.get("date") or "").strip() for f in deaths), (
-        "the Death fact on I1 carries no date — the bracket IS the finding, so "
-        "it belongs in the date (e.g. 'after 1870, before 1885')."
-    )
+
 
 # --- Tag-gated: research_query tool coverage (agent body §1) -------------
 

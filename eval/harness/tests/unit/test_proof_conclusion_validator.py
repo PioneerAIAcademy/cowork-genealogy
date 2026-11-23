@@ -99,13 +99,24 @@ from test_proof_conclusion import (  # noqa: E402
 BOUNDED = {"type": "positive", "tags": ["bounded-conclusion"]}
 
 
-def _state(tier, death_fact):
+def _state(claim_tier, death_fact, *, scalar="possible", claim=True, date="after 1870, before 1885", polarity=None):
     facts = [{"type": "Birth", "date": "1805"}]
     if death_fact is not None:
         facts.append(death_fact)
+    claims = []
+    if claim:
+        c = {
+            "claim": "death bracket",
+            "proof_tier": claim_tier,
+            "supporting_assertion_ids": [],
+            "fact": {"subject": "I1", "fact_type": "Death", **({"date": date} if date else {})},
+        }
+        if polarity:
+            c["polarity"] = polarity
+        claims.append(c)
     return {
         "research_json": {
-            "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": tier}]
+            "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": scalar, "claims": claims}]
         },
         "tree_gedcomx_json": {"persons": [{"id": "I1", "facts": facts}]},
     }
@@ -114,8 +125,12 @@ def _state(tier, death_fact):
 DEATH = {"type": "Death", "date": "after 1870, before 1885"}
 
 
-def test_accepts_probable_with_an_encoded_bracket():
-    bounded(_state("probable", DEATH), BOUNDED)
+def test_accepts_a_probable_bracket_claim_encoded_under_a_possible_scalar():
+    bounded(_state("probable", DEATH, scalar="possible"), BOUNDED)
+
+
+def test_accepts_a_possible_bracket_claim_left_off_the_tree():
+    bounded(_state("possible", None), BOUNDED)
 
 
 def test_rejects_the_not_proved_collapse():
@@ -123,24 +138,24 @@ def test_rejects_the_not_proved_collapse():
         bounded(_state("not_proved", None), BOUNDED)
 
 
-def test_accepts_possible_with_an_encoded_bracket():
-    """Settled 2026-08-21: a bounded conclusion encodes at `possible` too. The
-    probable threshold asks whether a conclusion was REACHED, not how precise
-    it is — and a defensible range is a conclusion. This is what makes the
-    fixture satisfiable: its expected tier is `possible` (a reachable,
-    unsearched 1880 census would halve the bracket) AND it requires the fact."""
-    bounded(_state("possible", DEATH), BOUNDED)
+def test_rejects_a_bracket_with_no_claim():
+    with pytest.raises(AssertionError, match="no Death fact claim on I1"):
+        bounded(_state("probable", DEATH, claim=False), BOUNDED)
 
 
-def test_rejects_possible_that_never_reached_the_tree():
-    """The carve-out is about the threshold, not a licence to skip the write."""
-    with pytest.raises(AssertionError, match="no Death fact on I1"):
-        bounded(_state("possible", None), BOUNDED)
-
-
-def test_rejects_a_conclusion_that_never_reached_the_tree():
-    with pytest.raises(AssertionError, match="no Death fact on I1"):
+def test_rejects_a_probable_bracket_claim_that_never_reached_the_tree():
+    with pytest.raises(AssertionError, match="no Death fact on I1 although its claim stands at 'probable'"):
         bounded(_state("probable", None), BOUNDED)
+
+
+def test_rejects_a_possible_bracket_claim_written_to_the_tree():
+    with pytest.raises(AssertionError, match="only an affirmed claim at probable or better reaches the tree"):
+        bounded(_state("possible", DEATH), BOUNDED)
+
+
+def test_rejects_a_bracket_claim_with_no_date():
+    with pytest.raises(AssertionError, match="carries no date"):
+        bounded(_state("probable", DEATH, date=None), BOUNDED)
 
 
 def test_rejects_a_death_fact_with_no_bracket():
@@ -393,3 +408,91 @@ def test_refresh_rejects_a_second_summary_for_the_question():
 def test_refresh_skips_when_untagged():
     with pytest.raises(pytest.skip.Exception):
         check_refresh(*_refresh_states(), UNTAGGED)
+
+
+# --- no warn-mode finding left standing (#3032 Stage 1b part 4c) -------------
+
+from test_proof_conclusion import test_no_finding_left_will_be_refused as standing  # noqa: E402
+
+ANY = {"type": "positive", "tags": []}
+
+
+def _call(tool, args, warnings=(), results=None, ok=True):
+    response = {"ok": ok, "validation": {"valid": True, "warnings": list(warnings)}}
+    if results is not None:
+        response["results"] = results
+    return {"tool": f"mcp__genealogy__{tool}", "args": args, "response": response}
+
+
+def _fact_warning(person, fact):
+    # The exact shape rule-modes.ts `applyRuleMode` + `treeConcern` writes.
+    return f"Will be refused: personId {person}, factId {fact}: `primary` marks a fact the concluded value of its type"
+
+
+def _summary_warning(sid):
+    return f"Will be refused: proof_summaries {sid}: claim 'paternity' would stand at possible: I2 is not linked."
+
+
+def test_fires_on_a_tree_warning_never_written_again():
+    calls = [_call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")])]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_later_clean_write_to_another_fact_does_not_clear_it():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F3"}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_clean_write_to_the_same_fact_id_on_another_person_does_not_clear_it():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I2", "factId": "F2"}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_narrative_only_edit_does_not_clear_a_warned_summary():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "edits": [{"field": "narrative_markdown", "old": "a", "new": "b"}]}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def test_passes_when_a_batch_warning_is_cleared_by_a_later_write_to_that_fact_alone():
+    batch = {"ops": [
+        {"operation": "update_fact", "personId": "I1", "factId": "F1"},
+        {"operation": "update_fact", "personId": "I1", "factId": "F2"},
+    ]}
+    calls = [
+        _call("tree_correct", batch, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}),
+    ]
+    standing(calls, ANY)
+
+
+def test_passes_when_a_summary_warning_is_cleared_by_a_claims_update():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": {"claims": []}}),
+    ]
+    standing(calls, ANY)
+
+
+def test_ignores_a_refused_call_and_other_tools():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")], ok=False),
+        _call("person_read", {"personId": "I1"}, [_fact_warning("I1", "F2")]),
+    ]
+    standing(calls, ANY)
