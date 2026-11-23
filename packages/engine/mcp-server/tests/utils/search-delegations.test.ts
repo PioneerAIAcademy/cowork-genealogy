@@ -115,13 +115,16 @@ describe("searchDelegations", () => {
     expect(parse(out[0].prompt, "subject")).toBeUndefined();
   });
 
-  it("names search-records for every FamilySearch item, browse-only or not, and search-external-sites for another repository", () => {
+  it("names each item's lane: browse-only images, full text, another site, the index", () => {
     const r = research([
-      item("pli_001", 1, { rationale: "Digitized as browse-only image groups." }),
+      item("pli_001", 1, { rationale: "Digitized as browse-only image groups (volume_search shows 0% record-searchable)." }),
       item("pli_002", 2, { repository: "Ancestry" }),
+      item("pli_003", 3, { repository: "FamilySearch (full-text)", rationale: "His baptism is unindexed; full-text search the registers." }),
+      item("pli_004", 4, { rationale: "This collection is indexed and searchable, not a browse-only volume." }),
     ]);
     const out = searchDelegations("/p", r, TREE, r.questions[0], new Set());
-    expect(out.map((d) => d.agent)).toEqual(["search-records", "search-external-sites"]);
+    expect(out.map((d) => d.agent)).toEqual(["search-images", "search-external-sites", "search-full-text", "search-records"]);
+    expect(parse(out[2].prompt, "subject")).toBeDefined();
     expect(parse(out[0].prompt, "subject")).toBeDefined();
     expect(parse(out[1].prompt, "subject")).toBeUndefined();
   });

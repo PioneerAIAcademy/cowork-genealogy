@@ -101,7 +101,8 @@ can drop:
     }],
     searches?: [{                        // only when nextStep is a search — §2.2.1
       planItemId: string,
-      agent: "search-records" | "search-hints" | "search-external-sites",
+      agent: "search-records" | "search-images" | "search-full-text"
+           | "search-hints" | "search-external-sites",
       prompt: string,                    //   the whole delegation, sent as it is
     }],
     spawn?: {                            // only when nextStep names one of these — §2.2.2
@@ -607,12 +608,16 @@ plan_item: {<the stored item, verbatim>}
 subject: {"subjectId","names","birth","death","parents"}
 ```
 
-- **Agent.** `search-hints` for an `fs_hints` item, `search-external-sites`
-  for one whose repository is not FamilySearch (`routesToFamilySearch`), else
-  `search-records`. Whether a FamilySearch item's records are browse-only images
-  is the router's reading of the rationale, and it then sends the same prompt to
-  search-images: a pattern test cannot tell "browse-only" from "not a browse-only
-  volume" (ut_research_030 went to search-images on one).
+- **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`);
+  `search-full-text` for one whose repository says full-text ("FamilySearch
+  (full-text)", as research-plan writes it); `search-images` for one whose
+  rationale calls its records browse-only, unindexed or 0% record-searchable and
+  does not deny it ("not a browse-only volume" stays search-records); else
+  `search-records`. The browse test reads prose, so it was checked against every
+  open FamilySearch item in the eval scenarios (2026-11-24: four items, four
+  right) before it shipped; the router's own reading of the same rationale sent
+  ut_research_si3 to search-records in 2 of 3 runs.
 - **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
   item in `exhaustedImageGroups`, and a fallback whose primary is still open or
   found something. A fallback runs once every entry its primary logged is
@@ -621,7 +626,7 @@ subject: {"subjectId","names","birth","death","parents"}
   read from its rationale and no subject: its verdicts can save the searches
   behind it.
 - **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
-  search-records entry (which the router may send to search-images) only. `parents` is left out when the question
+  search-records, search-images or search-full-text entry. `parents` is left out when the question
   asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
   of`, the same words as the research suite's validator) and when the tree gives
   more than two. A given name `unsupportedGivenName` flags is replaced by its

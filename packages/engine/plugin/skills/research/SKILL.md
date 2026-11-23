@@ -377,7 +377,7 @@ message.
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints` with the prompt of the question's `searches` entry. It decides the subject's pending FamilySearch hints, logs its decisions and sets the item's own status — a hint that already answers the question can save a search |
    | The active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
    | The question's `nextStep` is a search, and its row carries `searches` | The question's `searches` from `project_context`: one spawn per entry, `@plugin:<agent>` with its `prompt` as the whole delegation (see **The search step**) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` with the item's `searches` prompt in place of `@plugin:search-records` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` with the item's `searches` prompt (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | A question's assertions (their `extracted_for_question_ids` names it) with no live link, or `project_context`'s `nextStep` for a question names person-evidence | `@plugin:person-evidence` with that question's assertion ids, as a linking request — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next, except `extraction_append({ personId })`, whose attachment links go to `timeline_build` next, never to person-evidence |
@@ -420,23 +420,17 @@ message.
      search: the link, what to look for, and to save the results page as a PDF
      and upload it. It still ends "Continue with `linking the records`?" — an
      external errand does not hold the step open.
-   - **Dispatching a `search-records` or `search-images` plan item that targets
-     a survey of every occurrence/mention of a surname, and relaying its
-     hand-back:** in the line that announces the dispatch, never call it,
-     or the plan item's own rationale, complete, or "every occurrence" —
-     even when the plan item's own `rationale` field uses that phrasing;
-     paraphrase it as a target to search for, not a result already achieved.
-     In the hand-back relay itself: never call it complete, or "every
-     occurrence." Keep the hand-back's own coverage caveats in the step's
-     report. Make no negative finding about a locality the hand-back's own
-     `place` field can't separate. Offer to read named pages for the
-     mentions the index lacks, up to 20 per film/image group, never "per
-     volume." Do not call the hits ready for extraction, ready to be
-     worked through, or ready to be linked to tree persons as a set. This
-     log entry's count is not a `recordIds` list the Extraction contract below
-     can act on: no `extraction_append` call and no next-step line naming
-     extraction or linking follow in this turn, whatever that contract
-     otherwise requires of a positive/partial log entry.
+   - **A plan item that surveys a surname across a record set:** announce it
+     as a search for the surname. Its report is the hand-back's own words
+     after the final `---`, word for word, caveats included; describe its
+     reach only in those words, not the plan item's rationale's. Make no
+     negative finding about a locality the hand-back's own `place` field
+     can't separate. Offer to read named pages for the mentions the index
+     lacks, up to 20 per film/image group. Its count is not a `recordIds`
+     list: no `extraction_append` call, no next-step line naming
+     extraction or linking, and no word that the hits are ready to extract
+     or link follow in this turn, whatever the Extraction contract otherwise
+     requires of a positive/partial log entry.
 
    **Extraction contract — an `assertions` write through `research_append` is refused.** You never compose
    sources, assertions or classifications yourself. Every positive/partial

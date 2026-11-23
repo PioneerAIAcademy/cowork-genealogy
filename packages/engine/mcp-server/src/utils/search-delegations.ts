@@ -16,7 +16,7 @@ export const MAX_SEARCH_SPAWNS = 4;
 /** One search agent to spawn: which agent, and the prompt to send it verbatim. */
 export interface SearchDelegation {
   planItemId: string;
-  agent: "search-records" | "search-hints" | "search-external-sites";
+  agent: "search-records" | "search-images" | "search-full-text" | "search-hints" | "search-external-sites";
   prompt: string;
 }
 
@@ -24,9 +24,17 @@ export interface SearchDelegation {
  *  research suite's validator (`_ASKS_ABOUT_A_PARENT`). */
 const ASKS_ABOUT_A_PARENT = /\b(?:parents?|parentage|father|mother)\b|\b(?:son|daughter|child) of\b/i;
 
-/** A FamilySearch person id, as the hints item's rationale names it. Whether a
- *  FamilySearch item's records are browse-only is left to the router, which reads
- *  the rationale: "not a browse-only volume" is the same words as "browse-only". */
+/** A FamilySearch item research-plan wrote for full-text search: its repository
+ *  says so ("FamilySearch (full-text)"). */
+const FULL_TEXT = /\bfull[- ]text\b/i;
+
+/** A FamilySearch item whose rationale says its records are browse-only images,
+ *  and does not say they are not ("not a browse-only volume", ut_research_030).
+ *  Read after FULL_TEXT: a full-text item's rationale can call a record unindexed. */
+const BROWSE_ONLY = /\bbrowse[- ]only\b|\b0% record-searchable\b|\bunindexed\b/i;
+const NOT_BROWSE_ONLY = /\bnot (?:a |an |yet )?(?:browse[- ]only|unindexed)\b/i;
+
+/** A FamilySearch person id, as the hints item's rationale names it. */
 const FS_PERSON_ID = /\b[A-Z0-9]{4}-[A-Z0-9]{3,4}\b/;
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -35,6 +43,9 @@ const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !=
 function agentFor(item: any): SearchDelegation["agent"] {
   if (item?.record_type === "fs_hints") return "search-hints";
   if (!routesToFamilySearch(item)) return "search-external-sites";
+  if (FULL_TEXT.test(String(item?.repository ?? ""))) return "search-full-text";
+  const rationale = String(item?.rationale ?? "");
+  if (BROWSE_ONLY.test(rationale) && !NOT_BROWSE_ONLY.test(rationale)) return "search-images";
   return "search-records";
 }
 
@@ -154,7 +165,7 @@ export function searchDelegations(
       if (personId) lines.push(`personId: ${personId}`);
     }
     lines.push(`plan_item: ${JSON.stringify(item)}`);
-    if (subject && agent === "search-records") {
+    if (subject && (agent === "search-records" || agent === "search-images" || agent === "search-full-text")) {
       lines.push(`subject: ${JSON.stringify(subject)}`);
       if (unsupported) {
         lines.push(

@@ -15,7 +15,7 @@
   },
   "input": {
     "user_message": "/research You offered to extract the Match from the review of log_017 (hit 9, results/log_017.json#3Q9M-CSK3-ZSLR). Continue.",
-    "scenario": "g9gj-fulltext-hits-unextracted"
+    "scenario": "g9gj-hit9-reviewed"
   },
   "execution": {
     "max_turns": 20,
