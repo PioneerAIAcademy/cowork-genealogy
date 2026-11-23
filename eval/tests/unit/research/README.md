@@ -251,6 +251,51 @@ that it called `image_transcribe` with a `projectPath`, read the staged page wit
 `sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
 handed off to nothing.
 
+Three tests pin one rule from the Tyler census bundles (feedback #4490–#4538): a single
+machine reading of a handwritten name challenges the index, never overrules it. The
+tester put the damage at "40-50% erroneous project conclusions". All three run on
+scenario `tyler-fluvanna-census`:
+- `ut_research_iv1` (`index-vs-reading-repeat-pass.json`): a second machine pass over
+  the 1900 page.
+- `ut_research_iv2` (`index-vs-reading-name-as-written.json`): the 1880 upload,
+  compared with the 1923 certificate.
+- `ut_research_iv3` (`index-vs-reading-search-brief.json`): a search for the subject.
+
+The `image_transcribe` mocks for iv1 and iv2 return what the OCR actually read
+("Tyler Anthony", "Tyler Armistead"), never the correct value (Antone, Anntogne). A
+mock holding the right answer reproduces nothing, and every check passes against it.
+The correct values appear only in each test's `description` and `judge_context`.
+
+Three deterministic validators, driven by the tests' data tags:
+- **`index-vs-reading`** (iv1, iv2, with `transcribes-in-place`):
+  `test_index_and_machine_reading_shown_side_by_side` requires both readings and the
+  line number in the reply, and forbids a verdict ("is clear", "index was wrong",
+  "both … agree", "confirmed", "the indexer got it wrong", "the enumerator wrote '…'",
+  "her correct name is …", "both passes match"); "no doubt" before a verdict affirms it,
+  so it is not read as a denial. With `as-written:` it also requires that record's
+  name as written, never as a "rendering", "variant" or "split" of another.
+- **`brief-no-disputed-reading`** (iv3), on what the researcher sees:
+  `test_reply_never_names_the_subject_by_the_disputed_reading` applies the brief's name
+  test to what the researcher sees: the reply and each search spawn's `description`
+  ("Why are you searching for 'Anthony'?", feedback #4510).
+- **`brief-no-disputed-reading`** (iv3): `test_search_brief_never_carries_the_disputed_reading`
+  reads the spawn prompts. No search brief may name the subject by the machine
+  reading, a given name it does search on must be the `agreed-prefix:` wildcard
+  (`A*`, `project_context`'s `unsupportedGivenName.searchAs`), a brief that never
+  searches it fails as a dropped name, and a run that briefs no search fails. It cannot ride on iv1 or iv2: a
+  transcription takes no hand-off, so no brief would ever be checked. iv3 is a
+  bounded record ask that stops at the search-records hand-off. A bare "continue" was
+  rejected, because `project_context.nextStep` there offers "search-records … or
+  research-plan".
+
+Both directions are proven in `tests/unit/test_research_index_vs_reading_validator.py`.
+A grade from the judge alone was rejected because the judge cannot see spawn prompts.
+
+Two things no test covers:
+- The main thread reading an uploaded crop itself with `Read` (feedback #4528).
+- Whether the rule holds late in a long, compacted session, which is where these
+  failures happened.
+
 `ut_research_b4i` (`bounded-first-message-runs-in-the-setup-turn.json`) and
 `ut_research_b4w` (`…-step-gate.json`) cover a bounded first message with a
 FamilySearch ID and no project (issue #2813 item 3, feedback #4237): init-project
