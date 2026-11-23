@@ -1050,10 +1050,11 @@ assertion must exist. `project_context.claimKinds` lists the kinds the running
 engine accepts.
 
 **The scalar `tier` may not exceed the strongest claim**, when it stands at
-`possible` or better (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
-reads per claim when `claims` is present, and falls back to the scalar when it
-is absent** — a claim at `possible` stays off the tree even though the scalar,
-backed by a stronger claim, may already read `probable`. Splitting a question into
+`possible` or better (see §7 for why). **The tree-encoding gate reads per claim**: an owed `encode`
+item is an affirmed claim at `probable` or better that no tree object carries, so a
+claim at `possible` stays off the tree even though the scalar, backed by a stronger
+claim, may already read `probable`. A legacy summary with no claims raises only the
+advisory `claims` item. Splitting a question into
 separate paternity/maternity questions remains available, but only when the
 two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which

@@ -284,7 +284,7 @@ a batch, its `results[i]` carries `op: "update"`.
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
 no-op, and the write-boundary advisories of §5.1–§5.7 (sources without
-assertions, tree-encoding completion, a corrected assertion with no linked fact,
+assertions, owed findings at completion, a corrected assertion with no linked fact,
 a transcription without a page, unsourced timeline events, a namesake row over
 untied links, a narrative over its vehicle's word budget).
 
@@ -1516,11 +1516,12 @@ that did nothing.
   compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
   first lever, not the last word.
 
-### 5.2 Tree-encoding completion advisory (warning, not a precondition)
+### 5.2 Owed-findings completion advisory (warning, not a precondition)
 
 A **warning** — never a rejection — emitted on the successful write that sets
 `project.status: "completed"`. It rides `validation.warnings` and never touches
-`ok`. Two arms:
+`ok`, and fires only on the call that *sets* `completed`, so it never re-warns on a
+later write to an already-completed project.
 
 - **Owed findings (Decision 33 of `docs/plan/conclusion-tree.md`).** Each owed
   item that blocks completion (`conclude`: a question with tied assertions and no
@@ -1530,57 +1531,18 @@ A **warning** — never a rejection — emitted on the successful write that set
   same list `project_context.owedFindings` serves. Over the 181 completed
   committed e2e runs, 0 carry a blocking item; on the 3 whose summaries carry
   claims, `encode` fires 0 times (`dev/replay-owed-findings.ts`).
-- **The legacy shape match, for claim-less summaries only.** When a
-  tier-≥-`probable` proof summary that states **no claims** has evidence persons
-  none of whom gained any new fact or relationship since the opening tree, it
-  warns. Implemented as `treeEncodingCompletionWarnings` in `research-append.ts`,
-  using the `tree_diff` tool against the write-once `starting-tree.gedcomx.json`
-  baseline. A summary that states claims is judged by `encode` instead. This arm
-  is Decision 24's legacy reading and stays until Stage 1b's part 4 bodies write
-  claims, when it is removed.
-
-- **Why a baseline file.** `research_append` loads only the *current* tree, so it
-  cannot tell a conclusion this session encoded from a fact already seeded. The
-  baseline is the opening tree, copied write-once at project creation; the diff
-  against it is what isolates this session's work.
-- **A shape match, not a foreign key — so warn, not deny.** A proof summary
-  carries no machine-readable tree reference. The subject is approximated as the
-  union of persons the summary's `supporting_assertion_ids` have `person_evidence`
-  for (`person_evidence` is the only link table). That approximation is why this
-  is advisory: it cannot certify *which* conclusion a given tree edit encodes,
-  only that *some* structure appeared for *some* evidence person. Deliberately
-  broad — it warns only when NONE of those persons gained ANY structure.
+- **The legacy shape match is gone (Stage 1b part 4c).** Until the proof-conclusion
+  body wrote claims, a claim-less summary at `probable` or better was checked by
+  diffing the tree against `starting-tree.gedcomx.json` for any new structure on its
+  evidence persons. It was a shape match, not a foreign key, and 2 of its 3 corpus
+  fires were documented negative conclusions with nothing to encode. Claims make
+  `encode` exact, so a claim-less summary now raises only the advisory `claims`
+  owed item. The baseline file stays: the import test (Decision 7) reads it.
 - **Why warn and not refuse (lead ruling, 2026-08-24).** Gates ship with no
   override mechanism until one is observed refusing correct work in the field. A
-  wrong refusal then hard-blocks a researcher from finishing correct work with no
-  route out — worse on the hosted path, where the sandbox has no text-editor
-  escape. A shape-match gate cannot clear that bar, so it ships warn-only.
-- **The fire rate, measured before shipping.** Over the committed e2e corpus
-  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 3
-  tier-≥-probable conclusions — in 3 of the 158 committed runs scanned — added no
-  new tree structure. The gate keys facts on a content signature (type, date,
-  place, value), so filling in a date or narrowing a place on a seeded fact reads
-  as new structure rather than a false fire; on standardized data this matches
-  the shadow signature the figure is measured from. The diff also counts a fact
-  gained on a relationship present in both trees — a Marriage dated onto an
-  already-seeded Couple — so a proved marriage on a pre-existing couple is not a
-  false fire. This re-measurement corrected a first-pass 32/22% that had
-  mis-classified parentage questions naming a birth date as birth questions.
-- **Fails open on a missing baseline.** A project created before the baseline
-  shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
-  than treating every fact as new. Fires only on the call that *sets* `completed`,
-  so it never re-warns on a later write to an already-completed project.
-- **2026-09-23 reading of the 3 fires.**
-  `anders-monsen-ancestry/run-2026-07-09_18-51-04.json` is a true positive: a
-  bounded Marriage fact (date and place both recovered) was encodable but not
-  encoded. The other two are false denies — documented negative conclusions
-  with nothing to encode: `joseph-david-daughter/run-2026-07-27_20-46-04.json`
-  ("did not have a daughter named Elizabeth A.") and
-  `mary-mcandrew-son/run-2026-08-23_03-19-50.json` ("five recorded children
-  are the only ones"). 2 of 3 fires being false denies on documented negatives
-  is why this stays warn-only. The condition to revisit it: a machine-readable
-  signal that a conclusion has nothing to encode, so a negative conclusion
-  stops reading as a missed one.
+  wrong refusal hard-blocks a researcher from finishing correct work with no
+  route out, worse on the hosted path, where the sandbox has no text-editor
+  escape. Completion refuses only after Stage 1c measures the owed-item fire rate.
 
 ### 5.3 Corrected-assertion-with-no-linked-fact nudge (warning, not a precondition)
 

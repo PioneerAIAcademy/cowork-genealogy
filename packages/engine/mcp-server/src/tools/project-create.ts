@@ -262,11 +262,11 @@ export async function runProjectCreate(
     }
     const pid = input.personId.trim();
 
-    // The opening tree, copied write-once alongside the two live documents. The
-    // tree-encoding completion gate (issue #1490) diffs the final tree against
-    // this baseline to tell a conclusion this session encoded from a fact that
-    // was already seeded. research_append loads only the CURRENT tree, so without
-    // a persisted baseline it cannot make that distinction. Written from the same
+    // The opening tree, copied write-once alongside the two live documents.
+    // Decision 7's import test reads it to tell an import from anything this
+    // project found, and tree_diff diffs the final tree against it for the
+    // viewer. research_append loads only the CURRENT tree, so without a persisted
+    // baseline neither could make that distinction. Written from the same
     // final tree, in the same atomic write, so the baseline is the opening tree
     // exactly and never diverges.
 

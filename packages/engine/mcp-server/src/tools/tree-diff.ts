@@ -6,14 +6,11 @@
 // trees into a tool call, which is a footgun with no use case the tools below
 // don't already serve. Callers pass in-memory trees they already hold.
 //
-// WHY THIS EXISTS. Two callers want the same question answered — "what did this
-// session actually change in the tree?" — and neither can get it from the data
-// alone. The tree-encoding completion gate (issue #1490) diffs the final tree
-// against the write-once `starting-tree.gedcomx.json` baseline to tell a
-// conclusion this session encoded from a fact that was already seeded (see
-// `research-append.ts`); the viewer and a status answer want the same session
-// delta for display. Rather than each re-deriving a diff — and getting the
-// relationship landmines wrong — they call this.
+// WHY THIS EXISTS. The viewer and a status answer want "what did this session
+// actually change in the tree?", which the data alone cannot say: it diffs the
+// final tree against the write-once `starting-tree.gedcomx.json` baseline. Rather
+// than re-deriving a diff, and getting the relationship landmines wrong, a caller
+// uses this.
 //
 // IDENTITY, and the landmines it steps around:
 //   - Persons key on `id`.
@@ -83,8 +80,7 @@ export interface TreeDiffResult {
    *  fact encoded onto an already-present Couple). */
   relationshipsChanged: RelationshipFactDelta[];
   /** Persons that gained at least one fact OR a relationship endpoint — the set
-   *  a tree-encoding gate asks about ("did this conclusion's person gain tree
-   *  structure?"). The union of personsAdded, the ids in personsChanged with
+   *  of persons this session gave any tree structure. The union of personsAdded, the ids in personsChanged with
    *  added facts, the endpoints of relationshipsAdded, and the endpoints of
    *  relationshipsChanged that gained a fact — the last so a marriage dated onto
    *  a seeded couple counts as structure for both spouses. */
@@ -198,7 +194,7 @@ export function treeDiff(input: TreeDiffInput): TreeDiffResult {
     // facts may not be. A Marriage/Divorce fact lives on the Couple here, so a
     // marriage dated onto a seeded couple shows up ONLY as a fact change, never
     // as an add. Diff the facts, and count a gained fact as new structure for
-    // both endpoints (without it the tree-encoding gate warns on correct work).
+    // both endpoints (without it a dated marriage reads as no change).
     const addedFacts = factsNotIn(r.facts ?? [], br.facts ?? []);
     const removedFacts = factsNotIn(br.facts ?? [], r.facts ?? []);
     if (addedFacts.length || removedFacts.length) {

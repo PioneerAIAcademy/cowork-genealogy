@@ -915,8 +915,9 @@ There **is** an orchestrator, and it is a skill:
    earlier change deliberately deleted — and it was ruled out and removed.
 4. **Completion is gated once in the router, once in the tool.** Before
    `project.status = "completed"` is written via `research_append`, the router
-   checks the **tree-encoding gate** — every tier-≥-probable conclusion must be
-   encoded in `tree.gedcomx.json` — and the tool refuses while a blocking conflict
+   checks the **tree-encoding gate** — no owed `encode` item, an affirmed claim at
+   `probable` or better with no tree object (`project_context.owedFindings`) — and
+   the tool refuses while a blocking conflict
    is unresolved. No `proof-critique` verdict is required: gps-mentor is off the
    default path, and `proof-conclusion`'s completing summary tells the user they
    can ask for a second opinion. **`proof-conclusion` owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when

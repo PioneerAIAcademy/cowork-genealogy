@@ -217,10 +217,9 @@ A stub is linked by the relative's tree id, and its edge is cited to a
 **The 2026-09-29 rule is retired.** That ruling merged stubs into the create so
 they sat in `starting-tree.gedcomx.json` from the start. It was retired by lead
 ruling 2026-10-20, and the cost is accepted: a stub added after the create is
-absent from that baseline, so `treeEncodingCompletionWarnings` (the completion
-check's legacy arm, which reads claim-less summaries) counts it, and the
-relative it links to, as structure gained this session (`tree-diff.ts`,
-`personsWithNewStructure`), and that warning cannot fire for them. A `subjectPersonIds` PID is matched trimmed and case-insensitively, and the
+absent from that baseline, so `tree_diff` reports it, and the relative it links
+to, as structure gained this session (`personsWithNewStructure`), and Decision 7's
+import test does not read it as an import. A `subjectPersonIds` PID is matched trimmed and case-insensitively, and the
 requested id of a merged person names the same person.
 
 **A place left unstandardized is reported, never silent.** Once the fill has
