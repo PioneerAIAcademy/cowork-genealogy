@@ -104,6 +104,11 @@ can drop:
       agent: "search-records" | "search-hints" | "search-external-sites",
       prompt: string,                    //   the whole delegation, sent as it is
     }],
+    spawn?: {                            // only when nextStep names one of these — §2.2.2
+      agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking"
+           | "research-exhaustiveness" | "proof-conclusion",
+      prompt: string,
+    },
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
@@ -628,6 +633,30 @@ subject: {"subjectId","names","birth","death","parents"}
 Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
 dropped the subject block or sent one spawn for two items in four research
 tests. Every field is in the project documents (ADR-0011's first question).
+
+The top-level `subject` is the same block for `subject_person_ids[0]`, parents
+included, for a brief the router writes itself (a bounded record ask has no
+plan item); the router leaves `parents` out on a parentage ask.
+
+### 2.2.2 `spawn` — the next agent step, written out
+
+When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
+`hypothesis-tracking`, `research-exhaustiveness` or `proof-conclusion`, the row
+carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
+`projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
+and the `nextStep` text:
+
+- person-evidence: `assertionIds:` every live assertion of the question (the
+  rung fires only when none is linked) and `userPresent: yes`, which the router
+  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+- conflict-resolution: one `competingAssertionIds:` line per unregistered
+  disagreement, or `conflictIds:` for an open conflict;
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+
+research-plan gets none: its rung does not know whether the question's
+jurisdiction has had its locality survey, which the router runs first. On Haiku
+5.5 low the router read past `nextStep` to another agent, or spawned nothing
+(ut_research_h22, rx4, 9k4).
 
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 

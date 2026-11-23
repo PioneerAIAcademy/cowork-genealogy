@@ -41,7 +41,8 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
-import { searchDelegations, type SearchDelegation } from "../utils/search-delegations.js";
+import { searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
+import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -233,6 +234,10 @@ export type ProjectContextQuestionStatus = Pick<QuestionStatus, "id" | "state" |
   /** When `nextStep` is a search: one spawn per open item of the active plan,
    *  its agent and the prompt to send it as it is. */
   searches?: SearchDelegation[];
+  /** When `nextStep` names conflict-resolution, person-evidence,
+   *  hypothesis-tracking, research-exhaustiveness or proof-conclusion: the agent
+   *  and the prompt to send it as it is. */
+  spawn?: StepSpawn;
 };
 
 /** A `nextStep` that runs the plan's search agents. */
@@ -347,6 +352,9 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only). The
        *  router has no other way to see who the research is about. */
       subjectPersonIds?: string[];
+      /** The first subject as a search agent's `subject:` block: names (a doubted
+       *  given name as its searchAs), birth, death and up to two parents. */
+      subject?: Record<string, unknown>;
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
@@ -631,15 +639,19 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       .filter((q: any) => q && typeof q === "object" && typeof q.id === "string")
       .map((q: any) => [q.id, q]),
   );
-  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(({ id, ...rest }) => {
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map((status) => {
+    const { id, ...rest } = status;
     const searches =
       typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
         ? searchDelegations(input.projectPath, research, tree, questionById.get(id), exhaustedItemIds, subjectUnsupported)
         : [];
-    return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches }, [
+    const spawn = stepSpawn(input.projectPath, research, status);
+    return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches, ...(spawn ? { spawn } : {}) }, [
       "nextStep",
     ]) as ProjectContextQuestionStatus;
   });
+  const subject =
+    typeof subjectId === "string" ? subjectBlock(tree, subjectId, "", subjectUnsupported) : null;
 
   // Decision 33: what the project still owes. Before questionStatuses in the
   // answer, so a reader scoping to that array by its key does not take these
@@ -689,6 +701,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    ...(subject ? { subject } : {}),
     narrationGuidance:
       typeof research?.researcher_profile?.narration_guidance === "string"
         ? research.researcher_profile.narration_guidance
@@ -815,6 +828,8 @@ export const projectContextSchema = {
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
     "what it is waiting on; searches [{planItemId, agent, prompt}], present when nextStep is a search, " +
     "is the search step written out: spawn each agent with its prompt as the whole delegation; " +
+    "spawn {agent, prompt}, present when nextStep names conflict-resolution, person-evidence, " +
+    "hypothesis-tracking, research-exhaustiveness or proof-conclusion, is that step written out the same way; " +
     "and storedStatus, the question's own questions[].status " +
     "verbatim when it is a string. state is DERIVED from the documents " +
     "and storedStatus " +
@@ -831,7 +846,8 @@ export const projectContextSchema = {
     "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
-    "subjectPersonIds are the project's subject " +
+    "subject is the first subject as a search agent's subject: block, a doubted given name already " +
+    "searched as its searchAs. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +

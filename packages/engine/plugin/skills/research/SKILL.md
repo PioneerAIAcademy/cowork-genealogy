@@ -329,6 +329,11 @@ message.
    relationship. Do not read the table or follow `nextStep` until this check
    is clean.
 
+   **When a question's `questionStatuses` row carries `spawn`, that is the
+   step:** `@plugin:<agent>` with its `prompt` as the whole delegation, changing
+   only `userPresent: yes` to `no` on a "Keep going." or "Wrap it up." turn and
+   in an autonomous run. A row with `searches` is the search step below.
+
    **Researcher-reported evidence.** When the message describes a record not
    yet in the project, with no record id or ARK, take only what the
    researcher stated: add no place, date, origin or relationship they did not
@@ -501,19 +506,17 @@ message.
    `@plugin:search-hints`, the `hitRef` and `target` for
    `@plugin:evaluate-search-results`, and the `planItemId` plus the volume's `standardPlace` (with its
    years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
-   `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
-   block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
-   the subject's `project_context` `parentIds`, left out when it has more than two), for
-   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
+   `planItemId` for `@plugin:search-full-text`, and `project_context`'s `subject`, copied whole as
+   a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and
+   `@plugin:search-full-text`. **When the
    question or request a search serves asks about the subject's parentage, even one parent (who a
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **When the subject's `project_context` person carries `unsupportedGivenName`:** `names`
-   carries the surname with its `searchAs` as the given name, and the brief gives its `given`
-   only as plain text, a reading in doubt beside the index reading. Never leave the given name
-   out, and never send `given` as the name. The spawn's `description` and your reply name the
-   subject by the surname alone, never by `given`.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** its `subject`
+   block already searches the given name as `searchAs`; the brief gives `given` only as plain
+   text, a reading in doubt. The spawn's `description` and your reply name the subject by the
+   surname alone, never by `given`.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
@@ -738,10 +741,10 @@ do:
    named item whose search ran and skips the rest with
    `skip_category: "user_declined"`. An item whose latest entry is an upload
    hand-off still waiting is left alone and **not** named.
-2. `@plugin:person-evidence` for the question's unlinked assertions, with
-   `userPresent: no`.
-3. `@plugin:conflict-resolution` for any unresolved conflict blocking the
-   question.
+2. `@plugin:person-evidence`, only when the question's `nextStep` names it,
+   with its `spawn` prompt and `userPresent: no`.
+3. `@plugin:conflict-resolution`, only when the question's `nextStep` names it,
+   with its `spawn` prompt.
 4. `@plugin:research-exhaustiveness` with `wrapUp: yes`.
 5. `@plugin:proof-conclusion` with `wrapUp: yes`, and `newQuestion: yes` when
    a different question is waiting.

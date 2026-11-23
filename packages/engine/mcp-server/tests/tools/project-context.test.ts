@@ -507,7 +507,7 @@ describe("project_context", () => {
       // waitingPages and uploadUrl need a staged page and a hosted store; their own tests show them.
       expect(keys(r)).toEqual(
         [
-          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
+          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",
@@ -516,7 +516,7 @@ describe("project_context", () => {
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
       expect(keys(r.owedFindings?.[0])).toEqual(["blocksCompletion", "kind", "nextStep", "personIds", "ref"]);
       expect(keys(r.questionStatuses?.[0])).toEqual(
-        ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets"].sort(),
+        ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets", "spawn"].sort(),
       );
       expect(r.persons?.find((p) => p.id === "I1")).toEqual({
         id: "I1",
