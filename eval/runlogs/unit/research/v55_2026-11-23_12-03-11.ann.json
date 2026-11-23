@@ -93,22 +93,6 @@
     {
       "test_id": "ut_research_ken",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_research_ken`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test: the correct behavior is to decline without producing substantive output, since the request is out of scope for every skill. Instead, the skill produced a detailed, multi-section response about Kenyan record types, colonial history, and research guidance. Per the per-test instructions, 'polished output for the wrong behavior is still a failure, not a pass.' The skill should have declined without invoking any skill or generating substantive research output.\n\nJunior: (Fail. This is an explicit negative test where the correct behavior was to decline and produce no substantive research output because the request was outside the scope of all skills. Instead, the skill generated a detailed response covering Kenyan records, historical context, and research recommendations. Even if the content was accurate and well-written, it performed work that it was specifically required not to perform. Per the test instructions, correct-looking output does not mitigate the routing error. Because the skill failed to decline and instead delivered substantial out-of-scope analysis, the result is a Fail.)"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_research_ken`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. The correct complete behavior was to decline the out-of-scope request without performing any task. The skill instead produced a lengthy, structured research guide covering record types, historical context, and next steps — the opposite of the expected decline. Completeness fails because the required action (declining) was not done.\n\nJunior: (Fail. This was an explicit negative test where the required behavior was to decline the out-of-scope request and perform no substantive work. Instead, the skill generated a detailed research guide with record types, historical context, and recommended next steps. The expected action, a decline, was completely absent. Since the response did the opposite of what the test required, completeness fails outright, making the correct rating Fail.)"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -337,6 +321,22 @@
       "llm_score": 2,
       "corrected_score": 3,
       "comment": "**`ut_research_hva`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The per-test context establishes that all 11 hits must be processed in a single turn in batches of at most 5 per message, with no stopping between batches. Claude's response indicates it spawned all 11 agents but the text suggests it may have paused or offered to continue mid-way ('Continue with extracting the 11 Matches?'). The stub correctly returns Match for every hit, and relaying those Match verdicts is correct per the override. However, the response text 'The evaluator labelled this hit a Match. It holds a detail the tree does not have yet. *(repeated for all 11 hits — each returned the same verdict)*' is somewhat vague about whether all 11 were actually processed in one turn without stopping. The final offer to extract is correct. The relayed verdicts themselves are correct per the stub override. Minor concern: the response implies batching happened but doesn't clearly show all 11 were processed without an intermediate stop.\n\nJunior: (Pass. The response relayed the correct outcome: all 11 hits were evaluated and returned a Match verdict, which is exactly what the stub required. It also ended with the required offer to continue with extracting the 11 Matches. The concern about whether batching occurred without interruption is largely a presentation issue rather than evidence of incorrect execution. The text explicitly states that all 11 agents were spawned and that the same Match verdict applied to all 11 hits. Since there is no concrete indication that processing stopped mid-way, the requirement appears satisfied.\nThe narration could have been clearer about completing all 11 evaluations in a single turn, but the evidence provided supports successful completion. Therefore, this is a Pass, not a Partial Pass.)"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "**`ut_research_ken`** — `base` / `Correctness`\nLLM: 1 → Junior: N/A\n\n> This is a NEGATIVE test: the correct behavior is to decline without producing substantive output, since the request is out of scope for every skill. Instead, the skill produced a detailed, multi-section response about Kenyan record types, colonial history, and research guidance. Per the per-test instructions, 'polished output for the wrong behavior is still a failure, not a pass.' The skill should have declined without invoking any skill or generating substantive research output.\n\nJunior: (N/A. ut_research_ken is graded on invariant: its judge_context says it is graded only by the deterministic validator, so Correctness does not decide this test. The judge's reason for the 1, that the router \"performed the locality guide task when it should have declined\", is not what happened. The reply says it cannot name a Kenyan collection without a tool confirming one and points the researcher to the FamilySearch Catalog and Wiki. It names no collection and invents none. )"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "**`ut_research_ken`** — `base` / `Completeness`\nLLM: 1 → Junior: N/A\n\n> This is a NEGATIVE test. The correct complete behavior was to decline the out-of-scope request without performing any task. The skill instead produced a lengthy, structured research guide covering record types, historical context, and next steps — the opposite of the expected decline. Completeness fails because the required action (declining) was not done.\n\nJunior: (N/A. Graded on invariant, so Completeness is diagnostic only, as with Correctness above. The reply did what this test expects: it declined to name an unconfirmed collection and pointed to where one could be found. Scoring it 1 would put a wrong label into the calibration set. )"
     }
   ]
 }
