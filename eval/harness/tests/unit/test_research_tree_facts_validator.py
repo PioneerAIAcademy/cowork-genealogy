@@ -3,7 +3,8 @@
 The validator runs only on a test tagged `delegates-tree-facts`. The session must hold a
 `tree_query` call, and it reads the callee's spawn prompts against the project subject's
 tree facts in the after state: every fact year and leading place word must appear, and no
-year may appear that is in none of those facts, the user's message and the objective.
+year may appear that is in none of those facts, the session's `tree_query` responses, the
+user's message and the objective.
 """
 
 from __future__ import annotations
@@ -94,6 +95,29 @@ def test_another_persons_years_are_not_the_subjects():
     with pytest.raises(AssertionError, match="1871"):
         check(TEST, [_spawn("historical-context", _prompt(
             "born ~1845 in Ireland; died 1908 in Schuylkill County; a son born 1871 in Boston"))], FLYNN)
+
+
+_SON = {"persons": [{"id": "I2", "name": "John Flynn", "facts": [
+    {"type": "Birth", "date": "1871", "place": "Boston, Massachusetts"}]}]}
+
+
+@pytest.mark.parametrize("response", [
+    _SON,
+    json.dumps(_SON),
+    [{"type": "text", "text": json.dumps(_SON)}],
+], ids=["dict", "json-string", "content-list"])
+def test_a_year_tree_query_returned_is_allowed(response):
+    calls = [{"tool": "mcp__genealogy__tree_query", "args": {"projectPath": "/p", "personIds": ["I1", "I2"]},
+              "response": response}]
+    check(TEST, [_spawn("historical-context", _prompt(
+        "born ~1845 in Ireland; died 1908 in Schuylkill County; a son born 1871 in Boston"))], FLYNN, calls)
+
+
+def test_a_year_from_another_tool_is_not_allowed():
+    calls = [*QUERIED, {"tool": "mcp__genealogy__project_context", "args": {"projectPath": "/p"}, "response": _SON}]
+    with pytest.raises(AssertionError, match="1871"):
+        check(TEST, [_spawn("historical-context", _prompt(
+            "born ~1845 in Ireland; died 1908 in Schuylkill County; a son born 1871 in Boston"))], FLYNN, calls)
 
 
 def test_a_year_in_the_users_message_is_allowed():

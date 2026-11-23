@@ -348,8 +348,9 @@ same way.
 
 Two more tags are deterministic:
 - **`delegates-tree-facts`**: the session calls `tree_query`, and the spawn names every year
-  and leading place word of the subject's tree facts, and no year outside those facts, the
-  message and the project objective. The `tree_query` half is what tells ia1 apart on
+  and leading place word of the subject's tree facts, and no year outside those facts, what
+  `tree_query` returned (a spouse's or child's years), the message and the project objective.
+  The `tree_query` half is what tells ia1 apart on
   main's SKILL.md: in a scratch run there, the router reached historical-context from the
   agent's own description, skipped `tree_query`, and handed over the objective's years.
   After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,

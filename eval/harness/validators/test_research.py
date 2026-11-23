@@ -1080,20 +1080,21 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     ``tree_query`` call. Read from the callee's spawn prompts (the ``deliverable:``
     tag, else ``routes-to:``), against the project subject's tree facts in the after
     state: every fact year and leading place word appears, and no year appears that
-    is in none of those facts, the user's message and the project objective, which
-    the delegation may add when it names them as the objective's. Places are
-    checked one way only: telling an invented place from a real one would need a
-    gazetteer."""
+    is in none of those facts, the session's ``tree_query`` responses, the user's
+    message and the project objective, which the delegation may add when it names
+    them as the objective's. Places are checked one way only: telling an invented
+    place from a real one would need a gazetteer."""
     if "delegates-tree-facts" not in (test.get("tags") or []):
         pytest.skip("not a delegates-tree-facts test")
     callee = _deliverable(test) or _expected_skill(test)
     assert callee, "delegates-tree-facts needs a deliverable: or routes-to: tag naming the callee"
     prompts = _spawn_prompts(builtin_tool_calls, callee)
     assert prompts, f"no {callee} spawn to carry the tree's places and years"
-    assert any(
-        isinstance(c, dict) and bare_tool_name(c.get("tool") or "") == "tree_query"
-        for c in tool_calls or []
-    ), f"the session makes no tree_query call, so what {callee} was handed was not read from the tree"
+    queries = [
+        c for c in tool_calls or []
+        if isinstance(c, dict) and bare_tool_name(c.get("tool") or "") == "tree_query"
+    ]
+    assert queries, f"the session makes no tree_query call, so what {callee} was handed was not read from the tree"
     text = " ".join(prompts)
     years, places = _subject_fact_marks(after_state or {})
     missing = sorted(y for y in years if not re.search(rf"\b{y}\b", text))
@@ -1104,10 +1105,12 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     objective = ((after_state or {}).get("research_json") or {}).get("project") or {}
     allowed = years | set(_YEAR.findall(test.get("user_message") or ""))
     allowed |= set(_YEAR.findall(str(objective.get("objective") or "")))
+    allowed |= {y for c in queries for s in response_strings(c.get("response")) for y in _YEAR.findall(s)}
     invented = sorted(set(_YEAR.findall(text)) - allowed)
     assert not invented, (
         f"a {callee} spawn names the year(s) {invented}, which none of the subject's "
-        f"tree facts ({sorted(years)}), the user's message and the project objective hold"
+        f"tree facts ({sorted(years)}), the tree_query responses, the user's message "
+        f"and the project objective hold"
     )
 
 
