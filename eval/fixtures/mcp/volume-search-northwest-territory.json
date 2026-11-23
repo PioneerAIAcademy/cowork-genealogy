@@ -1,0 +1,36 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search for the Northwest Territory, the territory-era name of the Ohio region circa 1790. Returns only volume-search-ohio's territorial land records (005112233), the one volume whose coverage is filed under 'Northwest Territory, United States'; the Washington County, Ohio tax volume is filed under the county-era name and comes back only on an Ohio search.",
+  "args": {
+    "standardPlace": "~Northwest Territory"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Northwest Territory, United States",
+      "startYear": 1788,
+      "endYear": 1803,
+      "pageSize": 50
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "005112233",
+        "imageCount": 51,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "en"
+        ],
+        "coverages": [
+          {
+            "places": [
+              "Northwest Territory, United States"
+            ],
+            "dateRange": "1788-1799",
+            "recordType": "Territorial Land Records"
+          }
+        ]
+      }
+    ]
+  }
+}

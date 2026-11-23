@@ -21,6 +21,26 @@ export function liveSuccessorId(id: string, byId: ReadonlyMap<string, any>): str
   return at;
 }
 
+/** A researcher's own reading of a page (#4286): a disputing assertion cited
+ *  under a `user_provided` log entry. */
+export function isResearcherReading(a: any, logById: ReadonlyMap<string, any>): boolean {
+  return typeof a?.disputes_assertion_id === "string" && logById.get(a?.log_entry_id)?.tool === "user_provided";
+}
+
+/** A machine reading of a page (#4578): a disputing assertion no researcher gave. */
+export function isMachinePageReading(a: any, logById: ReadonlyMap<string, any>): boolean {
+  return typeof a?.disputes_assertion_id === "string" && !isResearcherReading(a, logById);
+}
+
+/** research.log by entry id. */
+export function logEntriesById(research: any): Map<string, any> {
+  return new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+}
+
 /** Each disputed live index assertion, keyed by id, with every live assertion disputing it. */
 export function disputeGroups(research: any): Map<string, { target: any; disputers: any[] }> {
   const all: any[] = Array.isArray(research?.assertions) ? research.assertions : [];

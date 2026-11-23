@@ -658,7 +658,7 @@ describe("the guard script's decisions", () => {
     const out = runGuard({ tool_name: tool, tool_input: { file_path } });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain(
-      "external-collections.json is written only by external_links_search",
+      "external-collections.json is written only by locality_survey or external_links_search",
     );
   });
 

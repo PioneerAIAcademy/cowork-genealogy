@@ -123,6 +123,9 @@ const TOOL_ASSIGNED: Record<string, string[]> = {
   // Deliberate, per the file's own header: the composite form supplies
   // `sourceDescription`, which creates the tree's S entry and fills this id.
   sources: ["gedcomx_source_description_id"],
+  // `surveyRef` (#4602): the tool writes `pages_read` from the staged survey and
+  // refuses an entry that carries it.
+  localities: ["pages_read"],
 };
 
 /**
