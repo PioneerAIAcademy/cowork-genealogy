@@ -23,7 +23,13 @@ import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/r
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
-import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
+import {
+  compoundJurisdictionError,
+  outsideSiteJurisdictionError,
+  planItemFlags,
+  planWindowFlag,
+  routesToFamilySearch,
+} from "../utils/plan-item-plausibility.js";
 import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
@@ -157,6 +163,7 @@ import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
   loadStoredCollectionUrls,
+  loadStoredLinkTexts,
   readExternalCollections,
   EXTERNAL_COLLECTIONS_FILE,
   type StoredCollectionUrls,
@@ -7742,6 +7749,26 @@ function compoundJurisdictionInvariants(item: any, research: any): string[] {
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
+/** A FamilySearch plan item names no outside site in its jurisdiction
+ *  (`outsideSiteJurisdictionError`, #4665). Checked on an append and on a change
+ *  to `jurisdiction` or to where `repository` and `record_type` route the item: the
+ *  rule reads them,
+ *  so an edit moving a site's item onto FamilySearch is the same gap. An edit
+ *  touching neither, including a repository respelling that routes the same way
+ *  ("" for a missing one, "familysearch" for "FamilySearch"), leaves an item
+ *  written before the rule editable. */
+function outsideSiteRuleInputsChanged(stored: any, next: any): boolean {
+  return (
+    stored?.jurisdiction !== next?.jurisdiction ||
+    routesToFamilySearch(stored) !== routesToFamilySearch(next)
+  );
+}
+
+function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly string[]): string[] {
+  const error = outsideSiteJurisdictionError(item ?? {}, storedLinkTexts);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -9542,6 +9569,11 @@ function applyOne(
   // lock. `null` is UNKNOWN and refuses nothing, which is what every other entry
   // point (and every direct-call test) gets by omitting it.
   fulltextSearchable: FulltextSearchability | null = null,
+  // #4665: the project's stored `external-collections.json` link_texts, read once
+  // per call before the apply loop. `[]` narrows the outside-site jurisdiction
+  // check to its fixed site names; the end-to-end tests go through
+  // `researchAppend` so an omitted argument here cannot pass them.
+  storedLinkTexts: readonly string[] = [],
 ): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -10182,6 +10214,9 @@ function applyOne(
         if (item && storedItem?.jurisdiction !== item.jurisdiction) {
           invariantErrors.push(...compoundJurisdictionInvariants(item, research));
         }
+        if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
+          invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         invariantErrors.push(...planItemVoidSearchInvariants(item, research, fulltextSearchable));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -10273,6 +10308,9 @@ function applyOne(
     }
     if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
       invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
+      invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
@@ -13883,6 +13921,9 @@ export async function researchAppend(
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
       : undefined;
+    const storedLinkTexts = ops.some((o: any) => o?.section === "plans" || o?.section === "plan_items")
+      ? await loadStoredLinkTexts(projectPath)
+      : [];
 
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
@@ -13912,6 +13953,7 @@ export async function researchAppend(
         // green. The must-fire tests go through `researchAppend` end to end
         // rather than calling the guard directly for exactly this reason.
         options.fulltextSearchable ?? null,
+        storedLinkTexts,
       ),
       opIndex,
     });

@@ -554,8 +554,22 @@ export function extractEntityId(recordId: string): string {
   // rather than slipping through a check anchored on a literal "ark:/" prefix.
   const typed = toArk(trimmed).match(/^ark:\/61903\/(\d:\d):(.+)$/);
 
-  // Not an ARK at all — a bare entity id, which the schema documents as valid.
-  if (!typed) return trimmed;
+  if (!typed) {
+    // A scheme-prefixed id ("legacy-nfs:MMVZ-Z9T", "capture:…", "ancestry:…")
+    // names a source outside FamilySearch's record-persona id space. Fetching it
+    // as a bare id can return an unrelated persona that shares the suffix.
+    if (trimmed.includes(":")) {
+      throw new Error(
+        `"${trimmed}" names a source that is not a FamilySearch record persona ` +
+          "(a scheme-prefixed id, such as a tree source, capture or another " +
+          "site's record). record_read takes a record-persona ARK " +
+          '("ark:/61903/1:1:QVS9-DHDB") — the `recordId` returned by ' +
+          "record_search — or its bare entity ID.",
+      );
+    }
+    // Not an ARK at all — a bare entity id, which the schema documents as valid.
+    return trimmed;
+  }
 
   const [, arkType, entityId] = typed;
   if (arkType === "1:1") return entityId;
