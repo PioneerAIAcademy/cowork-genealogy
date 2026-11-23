@@ -54,9 +54,8 @@ first message with no project runs init-project first, then its deliverable
    research-exhaustiveness; from init-project in a bounded turn, leave out its
    sentence naming the next step;
 2. end with **"Continue with `<label>`?"**, using the exact label below,
-   then on the same line the project's `projectUrl` when a tool gave you one.
-   That line is the reply's last: a link to a person or record goes in the
-   report above it;
+   then on the same line the project's `projectUrl`, only when a tool
+   returned one. That line is the reply's last;
 3. end your turn.
 
 Nothing runs after that line. Do not start the next step, and do not promise
@@ -148,7 +147,7 @@ destination: take it through "Hint review" below.
 
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
-**When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
+**When `project_list` or `project_context` returned the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line. With none, end with no link. Every link you write is one a tool returned.
 
 ## Bounded request or job
 

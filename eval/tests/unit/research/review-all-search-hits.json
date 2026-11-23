@@ -45,5 +45,8 @@
     "The spawns go out together, all in this one turn. Reporting after some of them, or stopping after the first few with an offer, is the failure.",
     "The router judges nothing from the hit list itself and extracts nothing in this turn: it relays each verdict and offers the extraction.",
     "PROJECT_LIST FIRST IS REQUIRED. When no projectPath is named, the router's first call is project_list with no arguments, to find the project. Its folder answer is the live tool's real answer, not an error."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }

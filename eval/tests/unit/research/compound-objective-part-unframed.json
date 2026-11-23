@@ -46,5 +46,8 @@
     "The router ends its turn with that offer by design; nothing is handed off, so there is no callee output to grade. Grade the reply.",
     "Grade only the router's own work: whether its reply names the unframed part, whether its state derivation and gap explanation are sound, and whether it ends with the offer line. Saying the research is done, or that the project is complete, is the failure."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

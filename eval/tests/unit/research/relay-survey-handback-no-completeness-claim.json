@@ -77,5 +77,8 @@
     "Every other callee is STUBBED and changes no project state. Do not mark Correctness or Completeness down for missing research.json changes beyond what the stub already describes, and do not penalize the router for not completing the full research cycle in one turn.",
     "'The survey is done', 'the survey found 424 records' and the like describe the search step finishing and its count, exactly as 'the search is complete' does: not a coverage claim. The stub's report names log_001 as logged with outcome positive, so a reply saying the hits were logged repeats the stub; it is not a fabricated write, though the stub writes nothing to the files."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

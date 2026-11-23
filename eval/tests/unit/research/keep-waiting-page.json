@@ -63,5 +63,8 @@
     "The page names Michael Flynn, whom the project does not hold. Leaving him out is correct. Do not mark it as a missed fact.",
     "Agents are stubbed here: a step routed after the page pass changes nothing, and that is not a failure.",
     "The turn ends with one \"Continue with …?\" line for whatever comes next."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }

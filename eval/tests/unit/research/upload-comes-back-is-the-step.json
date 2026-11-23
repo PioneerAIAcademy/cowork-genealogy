@@ -36,5 +36,8 @@
     "`userPresent: yes` on this spawn: the researcher is right here.",
     "The turn ends with one \"Continue with …?\" line for whatever comes next.",
     "`@plugin:search-external-sites` is STUBBED in this test: it changes nothing, so no closing log entry is written and its absence is not a failure. The spawn is also invisible to you, and a deterministic validator (`routes-to:search-external-sites`) already asserts it happened. Grade the router's own reply: that it treats the returned capture as the waiting search's result rather than handing the link over again, and ends with one \"Continue with …?\" line."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }

@@ -50,5 +50,8 @@
     "That same validator also asserts that the hand-offs happened: it fails unless research-plan, research-exhaustiveness and proof-conclusion were each spawned. An agent spawn is not an MCP tool call, so the hand-offs never appear in the MCP tool calls you see, and their absence there is NOT evidence that the router skipped them or claimed work it did not do. Do not score Correctness or Completeness on whether the hand-offs ran; grade only the router's reply.",
     "The turn ends with NO \"Continue with …?\" line: nothing is waiting. Do not charge the reply for saying what was concluded.",
     "Every callee is STUBBED with the return its real agent would give on this project; nothing is written to the files. Describing the wrap-up from those returns is expected and is not a fabricated claim about the files."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }
