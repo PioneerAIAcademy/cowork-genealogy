@@ -401,6 +401,35 @@ describe("treeGapsTool", () => {
       expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
     });
 
+    const NOT_FOUND = () =>
+      json({ entries: [], results: 0, title: "t", updated: "1970-01-01T00:00:00.001Z", links: { "not-found": { href: "x" } } });
+    const TREE_PERSON = "/platform/tree/persons/KNDX-MKG";
+
+    // Issue #4691: a live person the matcher has no entry for was reported as unread.
+    it("counts a person the matcher has no entry for, but the tree has, as read with no hints", async () => {
+      const handlers = { [TREE_PERSON]: () => json({}, 200) };
+      survey(NOT_FOUND);
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (url: string, init?: unknown) =>
+        String(url).includes(TREE_PERSON) ? handlers[TREE_PERSON]() : base(url, init as never),
+      );
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.every((g) => g.pendingHints !== null)).toBe(true);
+      expect(r.gaps.every((g) => g.pendingHints?.fitting === 0)).toBe(true);
+      expect(r.notes.join(" ")).not.toMatch(/Pending hints were not read/);
+    });
+
+    it("leaves pendingHints null when the matcher has no entry and the tree check fails", async () => {
+      survey(NOT_FOUND);
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (url: string, init?: unknown) =>
+        String(url).includes(TREE_PERSON) ? json({}, 404) : base(url, init as never),
+      );
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
+      expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
+    });
+
     it("asks for pending matches at confidence 4 and up, at the API maximum count, with its own time window", async () => {
       survey(() => json({ entries: [] }));
       await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);

@@ -19,7 +19,13 @@ const CLOSE = ">".repeat(7);
 // keep passing. A bare `=======` line is deliberately not matched: that is a
 // markdown setext H1 underline, and the two bracketing markers already catch
 // every conflict without it.
-const MARKER = new RegExp(String.raw`^(?:${OPEN}|${CLOSE})(?: |$)`, "m");
+//
+// Seven OR MORE, not exactly seven. A rename/rename conflict writes EIGHT
+// marker characters and appends the path (`HEAD:<path>` after the opener), so
+// an exactly-seven match followed by a space skips it: the eighth character is
+// another marker character, not the space the pattern wants. Four corrupt run
+// logs reached a merge commit through that gap.
+const MARKER = new RegExp(String.raw`^(?:${OPEN}<*|${CLOSE}>*)(?: |$)`, "m");
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..", "..");

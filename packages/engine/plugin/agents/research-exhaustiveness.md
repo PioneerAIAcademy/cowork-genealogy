@@ -307,14 +307,16 @@ alongside the entries §3 names.
   `inaccessible`, unless the item already has a `handed_to_user` entry or, for
   `inaccessible`, an entry under §3's exception; `log_entry_id: null`;
   `wiki_title: null`; `description` names the item and its `skip_reason`.
-- **`wiki_named_untouched`** — from a kept locality's `guide_markdown`. This
+- **`wiki_named_untouched`** — from a kept locality's `record_types` rows, else
+  its `guide_markdown`. This
   needs the §1 `research_query` `section: "localities"` result; if that call
   has not been made, make it now — never conclude there is no guide without
-  it. Call `wiki_read` on the page only when `guide_markdown` is null; no
+  it. Call `wiki_read` on the page only when both are absent; no
   kept locality, no entries. One entry per record type that could hold this question's
   target fact, is named for the question's place and period, and was searched
   by no log entry on this question's plan items. On a stop-gate write list
-  only the types the guide places beyond reach of our tools — a reachable one
+  only the types the guide places beyond reach of our tools (a row's `access`
+  `microfilm`, `physical` or `lost`) — a reachable one
   is an unsearched gap (§3). On `resources_spent` or `blocked_by_conflict`
   list every such type. `wiki_title` is the page title: the path segment after
   `/wiki/` in that locality's `pages_read[].url` — never `pages_read[].section`.

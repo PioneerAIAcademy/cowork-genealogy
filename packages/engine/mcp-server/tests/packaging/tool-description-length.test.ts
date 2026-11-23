@@ -193,7 +193,11 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // with no project, since every answer is compacted now; it says so in fewer
   // words. Measured independently (2695 tool-level + 14571 params), not copied
   // from the failure message.
-  ["record_search", 17266],
+  // 17266 -> 17814: `planItemId` and `note` added, so the tool can write a nil
+  // search's own log entry (issue #4527). Measured independently from the
+  // compiled allToolSchemas (2695 tool-level + 15119 params), not copied from
+  // the failure message.
+  ["record_search", 17814],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured

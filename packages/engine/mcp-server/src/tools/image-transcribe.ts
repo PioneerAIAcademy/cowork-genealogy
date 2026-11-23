@@ -15,7 +15,7 @@ import {
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
-import { expandLookingFor } from "../utils/name-variants.js";
+import { expandLookingFor, formsOnPage } from "../utils/name-variants.js";
 import {
   runOcr,
   runFoundCheck,
@@ -36,6 +36,7 @@ import {
   noProjectResult,
   type NoProjectResult,
 } from "../utils/project-io.js";
+import { attachIndexReadings } from "../utils/index-readings.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
   compactImageTranscribeAnswer,
@@ -444,6 +445,12 @@ async function imageTranscribeToolInner(
       found = undefined;
     }
   }
+  // Name the forms that let a FOUND page match, so a caller never reads
+  // "Elizabeth" on a FOUND page for "Eliza" as a different person (#4587).
+  const matchedForms =
+    found === "FOUND" && lookingForExpansion
+      ? formsOnPage(lookingForExpansion.byWrittenName, transcription)
+      : null;
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants
@@ -499,6 +506,7 @@ async function imageTranscribeToolInner(
     ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
+    ...(matchedForms ? { matchedForms } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
@@ -547,14 +555,28 @@ export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) return compactOrPass(await imageTranscribeTool(input, principal));
+  if (input?.file !== undefined) {
+    return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
+  }
   const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
   if (cls === "missing_arg" || cls === "no_project") {
     const { projectPath: _dropped, ...unsaved } = input;
     return compactOrPass(await imageTranscribeTool(unsaved, principal));
   }
-  return compactOrPass(await imageTranscribeTool(input, principal));
+  return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
+}
+
+/** The project leg's index beside the reading (issue #4578). A refusal passes. */
+async function withIndexReadings(
+  input: ImageTranscribeInput,
+  out: ImageTranscribeToolResponse | NoProjectResult,
+): Promise<ImageTranscribeToolResponse | NoProjectResult> {
+  if ("ok" in out || typeof input.projectPath !== "string") return out;
+  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
+  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
+  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
+  return attachIndexReadings(input.projectPath, out, ark);
 }
 
 function compactOrPass(
@@ -573,7 +595,9 @@ export const imageTranscribeToolSchema = {
     "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
     "ref: staged.resultsRef }) only when you need it, and hand " +
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). With no " +
+    "comes back inline only when staging failed (`stagingError`). In a project " +
+    "it also returns `readingNote`, and `indexReadings`, the held records' " +
+    "indexed names for that page: follow the note. With no " +
     "project (no projectPath, or a folder holding no research.json) the text " +
     "comes back inline as `transcription` and nothing is saved; those reads " +
     "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
@@ -638,7 +662,10 @@ export const imageTranscribeToolSchema = {
           "or slants the full transcription. The pointer is withheld on a " +
           "truncated read (`truncated: true`): a half-read page cannot support a " +
           "clean NOT FOUND, so `found` is absent there — judge from the returned " +
-          "lines and treat the rest of the page as unread.",
+          "lines and treat the rest of the page as unread. On a FOUND, " +
+          "`matchedForms` lists the other forms of a sought given name that the " +
+          "page carries (`{ Eliza: [\"Elizabeth\"] }`): an entry under one of " +
+          "them carries the name sought, not a different name.",
       },
       projectPath: {
         type: "string",

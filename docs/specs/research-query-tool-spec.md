@@ -175,6 +175,12 @@ the principal personas of both records.
                         // list calls only — see below
   unregisteredDisagreements?: { personId, fact, assertionIds }[],
                         // `conflicts` only — see below
+  reviewReasons?: { [linkId: string]: string[] },
+                        // `person_evidence` with orderBy "review" — §2.5
+  settledConflicts?: { linkIds, notes }[],
+                        // `person_evidence` only — §2.6
+  unlinkedParties?: { assertionId, linkedPersonId, unlinkedPersonId, note }[],
+                        // `person_evidence` only — §2.7
 }
 // on failure: { ok: false, errors: string[] }
 ```
@@ -382,6 +388,48 @@ from the tree person's Birth fact:
   fact conflict skips the tree read. An unreadable tree yields none, and the links
   still come back.
 - `person_evidence` only.
+
+### 2.7 `unlinkedParties` — the second person a two-party assertion is not linked to
+
+An assertion that names two people (a relationship, a marriage, a couple event, a
+`father_birthplace`) bears on both, and person-evidence links it to each. A
+`person_evidence` read returns `unlinkedParties` when such an assertion is linked to
+one tree person and the tree names the other, who has no link to it:
+
+```json
+"unlinkedParties": [
+  { "assertionId": "a_013", "linkedPersonId": "I1", "unlinkedPersonId": "I2",
+    "note": "Assertion 'a_013' (\"Father: Thomas Flynn\") names a second person. The tree's father of 'I1' is 'I2' (Thomas Flynn), and 'I2' has no person_evidence link to this assertion." }
+]
+```
+
+- Why: linking only the record person is the commonest person-evidence miss, and a
+  review of existing links cannot see it, because the page shows the one link there
+  is. Whether both parties are linked is decidable from the project documents, so
+  the tool says it (ADR-0011) rather than the review having to notice.
+- It describes; it does not ask for a link. Whether to link the second person is
+  person-evidence's decision, made with `same_person` in linking mode.
+- Anchored on the tree. The assertion must be live and two-party
+  (`isTwoParty`, `utils/record-persona.ts`), and its live links must name exactly
+  one person, P. The second person is read from the tree:
+  - from `structured_value.relationship_type`, read first as the record subject's
+    own role (research-schema-spec.md, "Direction, for `relationship`"): `child`
+    means P's parents (only the father when `related_person_role` is `father`, only
+    the mother when it is `mother`), `parent` P's children, `spouse` P's `Couple` partners;
+  - if that finds nobody, read as the other person's role (older data spells
+    "Father: Thomas Flynn" as `father`), where `father`/`son`/`husband`/`widower`
+    keep only a male (or ungendered) tree person and `mother`/`daughter`/`wife`/`widow`
+    only a female one;
+  - with no `relationship_type`, from the fact type: `father*`, `mother*`,
+    `parent*`/`filiation`, and `spouse`/`couple`/marriage and couple events.
+  - `sibling`, `informant` and anything else name nobody. One row per person found.
+- Links are counted over the whole project, not the page: a second link that a
+  `personId` filter or a page boundary hid still suppresses the row. Rows are
+  computed only for assertions behind the live links on the returned page.
+- Silent when the tree names no such person, so a one-party link whose second
+  person is not in the tree (the usual, correct case) costs nothing. An unreadable
+  tree yields none, and the links still come back. Absent when there is none.
+  `person_evidence` only. Code: `utils/unlinked-parties.ts`.
 
 ## 3. Decisions recorded
 
