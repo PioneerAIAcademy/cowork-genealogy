@@ -1,0 +1,282 @@
+{
+  "persons": [
+    {
+      "id": "GK89-82B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Antonio Fernandes",
+          "surname": "Lucas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "baaad2fb-35a1-49c4-a855-fd91e3dd8834",
+          "type": "Birth",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "940e5148-66f0-45ad-9521-7185b77f3a5c",
+          "type": "Death"
+        },
+        {
+          "id": "68633657-90a4-4dfe-8d18-2ea25498efa8",
+          "type": "Christening",
+          "date": "22 de abril de 1838",
+          "standard_date": "22 Apr 1838",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "GK89-48Z",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Maria",
+          "surname": "Joana"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0699d8db-89f8-4743-b0d8-f142820b349a",
+          "type": "Birth",
+          "date": "1869",
+          "standard_date": "1869",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "092c492b-ef46-4668-9693-83612fa5e834",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GK8M-J38",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Antonio Fernandes de",
+          "surname": "Lucas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7760cb2b-56c9-4a52-88be-f468a9219748",
+          "type": "Birth",
+          "date": "1896",
+          "standard_date": "1896",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "73a4ee81-108b-4062-ba20-a8b34d667857",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GK8S-VV6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Francisca",
+          "surname": "Luisa"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1fed7bf0-4673-4d87-823f-3806a3ee41ff",
+          "type": "Birth",
+          "date": "1803",
+          "standard_date": "1803",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "1708be62-8996-4d1a-bb16-888cf7ed72e9",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GK8S-ZDH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "José Fernandes",
+          "surname": "Lucas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "16634a90-3f10-4d26-ae4c-59fa337ed214",
+          "type": "Birth",
+          "date": "1802",
+          "standard_date": "1802",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "853e44f6-6299-4b26-8235-7c016b316577",
+          "type": "Death",
+          "date": "31 de julho de 1871",
+          "standard_date": "31 Jul 1871",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "f2754a93-5e1d-4f49-b387-bb0fac49cbdb",
+          "type": "Burial",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "GK89-T3X",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Julia do Espirito Santo",
+          "surname": "Lucas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f5c58317-123c-4d91-a69b-6cfffda87d85",
+          "type": "Birth",
+          "date": "1899",
+          "standard_date": "1899",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "ffc25120-4619-40db-8273-18ae2ae28461",
+          "type": "Death",
+          "date": "13 de março de 1967",
+          "standard_date": "13 Mar 1967",
+          "place": "Nossa Senhora do Monte, Monte, Funchal, Madeira, Portugal",
+          "standard_place": "Nossa Senhora do Monte, Monte, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "4c933070-a237-45b7-aa3f-ccac3376516b",
+          "type": "Burial",
+          "place": "Monte, Funchal, Madeira, Portugal",
+          "standard_place": "Monte, Funchal, Madeira, Portugal"
+        },
+        {
+          "id": "1d06a6c6-db31-4903-a612-2bdb09b9883f",
+          "type": "Occupation",
+          "value": "domestica"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GK89-82B",
+      "person2": "GK89-48Z",
+      "facts": [
+        {
+          "id": "a9faea3e-4483-41a0-8cdf-7b20eeb21205",
+          "type": "Marriage",
+          "date": "8 de fevereiro de 1890",
+          "standard_date": "8 Feb 1890",
+          "place": "Santo António, Funchal, Madeira, Portugal",
+          "standard_place": "Santo António, Funchal, Madeira, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GK8S-ZDH",
+      "person2": "GK8S-VV6",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1826",
+          "standard_date": "1826",
+          "place": "Funchal, Madeira, Portugal",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GK8S-ZDH",
+      "child": "GK89-82B"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GK8S-VV6",
+      "child": "GK89-82B"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GK89-82B",
+      "child": "GK8M-J38"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GK89-48Z",
+      "child": "GK8M-J38"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GK89-82B",
+      "child": "GK89-T3X"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GK89-48Z",
+      "child": "GK89-T3X"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QWYM-8LP",
+      "title": "Casamento",
+      "citation": "continua\nhttps://arquivo-abm.madeira.gov.pt/storageimage/?id=DISSEMINATION/525EBC0C7D746819352C1B1A7846E128&proto=vault&",
+      "url": "https://arquivo-abm.madeira.gov.pt/storageimage/?id=DISSEMINATION/EE9DA42F08CC080BEACE1C8D7A6BC198&proto=vault&"
+    },
+    {
+      "id": "QWYM-R4M",
+      "title": "Batismo",
+      "url": "https://arquivo-abm.madeira.gov.pt/storageimage/?id=DISSEMINATION/332D72389E405181B8EF8876FAA4D92C&proto=vault&"
+    },
+    {
+      "id": "748G-VSR",
+      "title": "Antônio Fernandes Lucas, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65Y2-YP94 : Fri Jan 09 19:10:42 UTC 2026), Entry for Julia do Espirito Santo Lucas and Antônio Fernandes Lucas, 13 de março de 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65Y2-YP9H"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "partial",
+    "f3": "partial",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Father correctly identified and linked (ParentChild relationship to Sóstenes Cruz), but no birth facts were ever added to him -- the finding's required birth detail (27 Nov 1882, Coahuayutla) is absent from the tree, so partial. The proof stays at 'probable' because the primary source was never read: a record_search (log_033) returned Mauro's own civil-registration birth record (ark:/61903/1:1:QGWQ-MCFP, the fixture's cited source for f1/f2/f3) in its results -- the log names Mauro outright ('Mauro Cruz Coña, civil registration Guerrero (QGWQ-MCFP)') but dismisses it: 'These are children's records, not the parents' marriage.' The run moved on without opening it. The relationship instead rests on secondary testimony -- Mauro naming his father at his own 1941 marriage (derivative index).",
+    "f3": "Graded partial, not true: Apolinar Corona exists in the tree with an approximately matching birth year (Bet 1880-1881 vs about 1881), and research.json's own proof_summaries names her as the possible mother in ps_001 -- but no parent-child relationship was ever materialized connecting her to Mauro; the run's own closing narration says the mother link was 'correctly omitted at the possible tier.' Her raw birth place field reads 'Gerrero' (a data typo), not Coahuayutla. The same unread record noted on f2 (ark QGWQ-MCFP) would also have confirmed this parentage directly."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a",
+  "blind_bundle_digest": "f122f92340d4603b4dfcc53bfa4ebad66b6343a016e9011c30c64a9c2e079008"
+}

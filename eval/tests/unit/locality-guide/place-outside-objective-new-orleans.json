@@ -1,0 +1,52 @@
+{
+  "test": {
+    "id": "ut_locality_guide_x8n",
+    "skill": "locality-guide",
+    "name": "A guide for a place outside the project's objective is still surveyed and saved",
+    "type": "positive",
+    "description": "Issue #4602 item 8. Real runs ask locality-guide for a place the project's objective does not name (thomas-hanrahan-marriage surveyed County Tipperary for a Saratoga marriage; joao-sousa-death surveyed São Paulo for a Madeira family). On Sonnet 5 at low the agent read the objective and declined a New Orleans guide inside a Pennsylvania project in 2 of 10 runs. The project here is the Flynn project (Pennsylvania, Schuylkill County); the delegation asks for New Orleans with the project path. The survey must run and the guide must be saved.",
+    "tags": [
+      "locality-guide",
+      "localities",
+      "localities-persist",
+      "outside-objective",
+      "New Orleans",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for New Orleans, Orleans Parish, Louisiana for 1800-1830: the parish registers, notarial records and land records available, and where they are held.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
+  },
+  "mcp_fixtures": [
+    "place-search-new-orleans",
+    "place-search-louisiana",
+    "place-search-any",
+    "collections-search-louisiana",
+    "wikipedia-search-new-orleans",
+    "wikipedia-search-orleans-parish",
+    "wiki-search-new-orleans-disaster-records",
+    "wiki-search-louisiana-notarial-records",
+    "volume-search-louisiana",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "wiki-search-any",
+    "wikipedia-search-any",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
+  ],
+  "judge_context": [
+    "The project's objective is a Pennsylvania question (Patrick Flynn's parents, Schuylkill County). The delegation asks for a New Orleans guide inside that project. The request is legitimate: a researcher may need a guide for any place, and a locality guide is not a research step on the objective. Declining, or asking whether the place is in scope, is a failure.",
+    "The guide is for New Orleans, Orleans Parish, Louisiana, 1800-1830: parish registers, notarial records and land records, and where each is held, grounded in what the tools returned.",
+    "The guide is written once, into the localities entry; the agent's return is the loc_ id line and summary_for_user."
+  ],
+  "judge_reads_files": true
+}

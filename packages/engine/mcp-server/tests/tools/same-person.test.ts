@@ -762,6 +762,37 @@ describe("samePerson — project-relative arm", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
+  // A tree-source id fetched as a bare persona id returned an unrelated census
+  // household. record_read now refuses it before fetching, so the real tool runs
+  // here and the only fetch left is the matcher's.
+  it("scores a scheme-prefixed record id from the projection without a record fetch", async () => {
+    const { recordReadTool } = await vi.importActual<
+      typeof import("../../src/tools/record-read.js")
+    >("../../src/tools/record-read.js");
+    recordReadMock.mockImplementation(recordReadTool);
+    const r = research();
+    // No retained sidecar, as on the documents path: record_read would read live.
+    for (const a of r.assertions) {
+      a.record_id = "legacy-nfs:MMVZ-Z9T";
+      a.log_entry_id = null;
+    }
+    await project(r);
+    okScore();
+
+    const result = notHaving(
+      await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      ),
+      "matchRelatives",
+    );
+
+    expect(recordReadMock).toHaveBeenCalled();
+    expect(result.recordSource).toBe("projection");
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(String(mockFetch.mock.calls[0][0])).not.toContain("MMVZ-Z9T");
+  });
+
   it("scores from three references and records what it computed", async () => {
     await project();
     okScore();

@@ -74,6 +74,15 @@ class FixtureError(ValueError):
 
 
 @lru_cache(maxsize=1)
+def _read_json_or_none(path: Path) -> Any:
+    """A project file the run left, parsed, or None when absent or unreadable: the stored
+    curated-link rows (`external-collections.json`) the recall check counts as available."""
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
 def known_tool_names() -> frozenset[str]:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     return frozenset(t["name"] for t in manifest["tools"]) | BUILTIN_TOOLS
@@ -151,6 +160,8 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     for key in ("is_plan_ask", "ends_on_offer"):
         if not isinstance(raw.get(key, False), bool):
             raise FixtureError(f"{fixture_dir.name}: {key} must be true or false")
+    if any(alt.get("section") == "plans" and not alt.get("absent") for alt in alternatives) and not raw.get("is_plan_ask"):
+        raise FixtureError(f"{fixture_dir.name}: a plans expected_save needs is_plan_ask: true, or no_research_job fails it")
     setup = raw.get("setup_units") or []
     if not isinstance(setup, list) or not all(isinstance(u, str) for u in setup):
         raise FixtureError(f"{fixture_dir.name}: setup_units must be a list of unit names")
@@ -242,6 +253,7 @@ async def run_one(
         )
         final_research = read_research_json(workspace)
         research_json_exists = (workspace / "research.json").exists()
+        final_external_collections = _read_json_or_none(workspace / "external-collections.json")
 
     aborted = record["aborted_reason"]
     if aborted in NEVER_HAPPENED:
@@ -278,6 +290,7 @@ async def run_one(
                 },
                 **record,
                 "final_research": final_research,
+                "final_external_collections": final_external_collections,
             },
             indent=2,
             ensure_ascii=False,
