@@ -1032,7 +1032,7 @@ _TRACEABLE_ID_TOOLS = {
 # — 22 of the 40 across its 16 fixtures — and turned a correct citation into
 # a fabrication flag (ut_research_plan_r3d, v1_2026-09-01_07-35-31). Widening
 # grounding can only clear a false positive, per the invariant above.
-_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?![\w.])")
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?=_|(?![\w.]))")
 
 
 def _grounded_identifiers(text: str) -> set[str]:
@@ -1040,7 +1040,8 @@ def _grounded_identifiers(text: str) -> set[str]:
 
     Superset of candidate_identifiers: the same ARKs and strict numbers, plus
     5+ digit runs that touch a hyphen (the endpoints of a written range), which
-    candidate_identifiers deliberately refuses. Used only for the GROUNDED set
+    candidate_identifiers deliberately refuses, and the film number that leads an
+    image group number (`008216233` in `008216233_005_M9ZZ-4DD`). Used only for the GROUNDED set
     (served responses ∪ before-state), never for the cited identifiers."""
     return candidate_identifiers(text) | set(_GROUNDED_NUM_RE.findall(text))
 
@@ -1312,41 +1313,46 @@ _PERCENT_INDEXED_RE = re.compile(
 )
 
 
-def _collection_person_counts(tool_calls, research=None) -> dict[str, set[int]]:
-    """id -> set of personCounts across every collections_search response
-    this run received, plus, for an id no response served, its count in the
-    before-state `localities` entries (research-plan plans from those without
-    a call). A served count always wins over a stored one. An id can be
-    served with different counts in different
-    responses (1999196 was once 0 in schuylkill and 893214 in pennsylvania,
-    reconciled 2026-09-24 under issue #2685), so key on the response, not
-    the id."""
-    counts: dict[str, set[int]] = {}
+def _label(row_availability, person_count) -> str | None:
+    """A row's availability label, else the person count's: 0 is browse-only,
+    above 0 name-searchable (the label the engine gives a row with no image
+    count)."""
+    if row_availability in ("name-searchable", "browse-only"):
+        return row_availability
+    if isinstance(person_count, int) and not isinstance(person_count, bool):
+        return "browse-only" if person_count == 0 else "name-searchable"
+    return None
+
+
+def _collection_availability(tool_calls, research=None) -> dict[str, set[str]]:
+    """id -> availability labels across every collections_search response this
+    run received, plus, for an id no response served, its label in the
+    before-state `localities` entries. A served label wins over a stored one."""
+    labels: dict[str, set[str]] = {}
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
             continue
-        resp = c.get("response") or {}
-        for r in resp.get("results") or []:
-            cid, pc = r.get("id"), r.get("personCount")
-            if cid is None or pc is None:
-                continue
-            counts.setdefault(str(cid), set()).add(int(pc))
-    served = set(counts)
+        for r in (c.get("response") or {}).get("results") or []:
+            lab = _label(r.get("availability"), r.get("personCount"))
+            if r.get("id") is not None and lab:
+                labels.setdefault(str(r["id"]), set()).add(lab)
+    served = set(labels)
     for entry in (research or {}).get("localities") or []:
         for col in entry.get("collections") or []:
-            cid, pc = col.get("id"), col.get("person_count")
-            if cid is None or not isinstance(pc, int) or str(cid) in served:
+            cid = col.get("id")
+            lab = _label(col.get("availability"), col.get("person_count"))
+            if cid is None or not lab or str(cid) in served:
                 continue
-            counts.setdefault(str(cid), set()).add(pc)
-    return counts
+            labels.setdefault(str(cid), set()).add(lab)
+    return labels
 
 
 def test_research_plan_availability_claim_matches_counts(
     before_state, after_state, tool_calls
 ):
     """A rationale that calls a served collection "indexed" must name one
-    whose returned personCount is > 0; "browse-only"/"image-only" must name
-    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_010
+    labelled name-searchable; "browse-only"/"image-only" must name one labelled
+    browse-only (the row's `availability`, else 0 persons). Issue #1866 V5, e.g. ut_research_plan_010
     pli_007 (v1_2026-09-17_15-04-52) calls 1999196 "indexed" against a served
     personCount of 0.
 
@@ -1365,9 +1371,9 @@ def test_research_plan_availability_claim_matches_counts(
     if not new_plans:
         pytest.skip("run added no new plan")
 
-    counts = _collection_person_counts(tool_calls, before)
+    counts = _collection_availability(tool_calls, before)
     if not counts:
-        pytest.skip("no collections_search response or counted locality collection to check against")
+        pytest.skip("no collections_search response or labelled locality collection to check against")
 
     errors: list[str] = []
     for plan in new_plans:
@@ -1391,22 +1397,22 @@ def test_research_plan_availability_claim_matches_counts(
                 ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)
                 if claims_indexed == claims_browse:
                     continue  # neither claim, or a self-contradicting sentence
-                if claims_indexed and not any(pc > 0 for pc in pcs):
+                if claims_indexed and "name-searchable" not in pcs:
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} \"indexed\" but its personCount "
+                        f"collection {cid} \"indexed\" but its availability "
                         f"(from this run's collections_search responses, else "
-                        f"the localities entry) is 0"
+                        f"the localities entry) is browse-only"
                     )
-                elif claims_browse and not any(pc == 0 for pc in pcs):
+                elif claims_browse and "browse-only" not in pcs:
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
                         f"collection {cid} browse/image-only but its "
-                        f"personCount (from this run's collections_search "
-                        f"responses, else the localities entry) is {sorted(pcs)}"
+                        f"availability (from this run's collections_search "
+                        f"responses, else the localities entry) is name-searchable"
                     )
     assert not errors, (
-        "availability claim contradicts returned personCount:\n  - "
+        "availability claim contradicts the collection's availability:\n  - "
         + "\n  - ".join(errors)
     )
 
@@ -2101,4 +2107,50 @@ def test_research_plan_plans_parents_marriage(before_state, after_state, test):
             for i in items
         )
         + ")"
+    )
+
+
+# --- A fact found only in the locality entry's rows reaches the plan (issue #4602) ----
+
+# Per test: what a plan item must say to show it read the entry's `record_types` rows. The
+# fact is the scenario's one row-only fact: no quirk, guide line or served tool result says it.
+_ROW_FACT_BY_TEST_ID = {
+    "ut_research_plan_rws": re.compile(
+        r"orphans['’]?\s+court|\b1893\b[^.]{0,80}\b190[56]\b", re.IGNORECASE
+    ),
+}
+_BIRTH_WORD = re.compile(r"\bbirths?\b", re.IGNORECASE)
+
+
+def test_research_plan_reads_locality_rows(before_state, after_state, test):
+    """Tag-gated: ``reads-locality-rows``. A new plan item for the question carries, in one
+    sentence, the fact that only the locality entry's `record_types` rows state and the word
+    birth, so a planner that reads only the quirks and guide prose fails, and so does an
+    estate or guardianship item that names the same court."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _ROW_FACT_BY_TEST_ID or "reads-locality-rows" in tags, (
+        f"{test_id} has a _ROW_FACT_BY_TEST_ID entry but no 'reads-locality-rows' tag"
+    )
+    if "reads-locality-rows" not in tags:
+        pytest.skip("not a reads-locality-rows test")
+    fact = _ROW_FACT_BY_TEST_ID.get(test_id)
+    assert fact, f"{test_id} carries 'reads-locality-rows' but has no entry in _ROW_FACT_BY_TEST_ID"
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    def text(item: dict) -> str:
+        return " ".join(str(val) for k, val in item.items() if isinstance(val, str) and not k.endswith("id"))
+
+    def names_it(item: dict) -> bool:
+        return any(fact.search(s) and _BIRTH_WORD.search(s) for s in re.split(r"(?<=[.;!?])\s+", text(item)))
+
+    assert any(names_it(i) for i in items), (
+        "no plan item uses the birth register the locality entry's record_types rows name "
+        f"(pattern {fact.pattern!r}); items: "
+        + "; ".join(f"{i.get('id')} {i.get('record_type')}: {str(i.get('rationale'))[:80]}" for i in items)
     )

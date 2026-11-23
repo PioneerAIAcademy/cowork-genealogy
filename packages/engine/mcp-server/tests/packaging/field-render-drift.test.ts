@@ -102,6 +102,8 @@ const NOT_RENDERED: Record<string, string> = {
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
   "log_entry.staged_ref":
     "Host bookkeeping: the deleted results/.staging/ file the entry was finalized from, kept so research_log_append can answer a re-sent ref. It names nothing a reader can open.",
+  "log_entry.written_by":
+    "Host bookkeeping: which tool wrote the entry, so research_log_append can tell a tool-written nil from an agent's hand-logged repeat. A reader learns nothing from it that the entry's own tool and query do not already say.",
 };
 
 /**

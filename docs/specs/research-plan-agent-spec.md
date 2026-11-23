@@ -150,12 +150,17 @@ that would replace it (probed 2026-10-02, §5):
   `test_pre1850_parentage_plan_puts_child_naming_record_first`; the framing
   stays with the judge, since a phrase match over the 18 replayed runs flagged
   sound placement lines ("confirm I1's residence") and caught no real claim.
-- **Any personCount above 0 is name-searchable.** Collection
-  2106411 (Massachusetts Land Records) returns personCount 18 beside 5.7
-  million images. In 3 of 9 runs the agent judged that effectively zero and
-  wrote `browse-only (personCount 0)`, a number the response never returned.
-  The rule now keeps it name-searchable however small the count, with the
-  image browse as its fallback.
+- **Availability is the engine's label, not the agent's reading of counts.**
+  Collection 2106411 (Massachusetts Land Records) returns personCount 18
+  beside 5.7 million images. In 3 of 9 runs (2026-11-06) the agent judged that
+  effectively zero and wrote `browse-only (personCount 0)`, a number the
+  response never returned. The first fix was prose: any count above 0 is
+  name-searchable (Benter, 2026-11-10). #4742 then moved the decision into the
+  engine: `collectionAvailability` labels a collection browse-only below 0.001
+  indexed persons per image, which makes 2106411 browse-only in production,
+  and the body has the agent copy that label. The `ut_research_plan_hoh`
+  fixture row carries no `imageCount`, so the harness labels it
+  name-searchable.
 - **The dedicated parents'-marriage item, re-checked at return time.** The
   body's parentage rule (a dedicated item for the candidate parents' marriage
   to each other, Appendix B) slipped roughly one full run in seven by folding
@@ -250,8 +255,8 @@ change; keep no local copy.
   `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
   equals that of the `place` of a `localities` entry counted on every collection, unless the
   call's `startYear`–`endYear` reach outside the entry's `time_period`; an entry with no
-  parseable `time_period` covers nothing. `United States` is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
-  availability check grades a plan written from the entry. `test_names_collections_only_from_search`
+  parseable `time_period` covers nothing. `United States` is exempt. `_collection_availability` also reads entry labels (else counts) for collections no response served, so the
+  availability check grades a plan written from the entry, against each collection's `availability` label. `test_names_collections_only_from_search`
   (`validators/test_research.py`, Kenya test only) still accepts only search-returned
   titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
 - `test_research_plan_hints_review_first`: on `fs-hints-first` tests (ut_016,

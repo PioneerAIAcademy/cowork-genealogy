@@ -52,37 +52,44 @@ eval harness's 180-second silence watchdog, so every locality-guide test sets
 The `localities` entry carries what research-plan and research-exhaustiveness
 otherwise re-fetched:
 
-- `guide_markdown`, the whole guide as one markdown string, built by research_append.
-  Step 6 appends the entry without it and then sends the guide one `guideSection`
-  per call, all in one turn; a call that fails is sent again alone. Each answer's
-  `guide[0].missing` names the required headings not yet saved
-  (research-append-tool-spec §5.14).
-- `collections[].person_count`, copied from `collections_search`'s `personCount`,
-  and `record_count`, which the agent leaves out: `collections_search` no longer
+- `guide_markdown`, three prose sections (Jurisdiction overview, Boundary changes,
+  Research tips), built by research_append. Step 6 appends the entry without it and
+  then sends the guide one `guideSection` per call, all in one turn; a call that fails
+  is sent again alone. Each answer's `guide[0].missing` names the headings not yet
+  saved and the record types with no row (research-append-tool-spec §5.14).
+- `record_types[]` — `{ type, years, level, held_at, access, collection_ids, summary,
+  source_url }`, one row or more per `locality_record_type` value, sent with the
+  append; `access` is how the records are reached (the `locality_access` enum).
+  research-plan and research-exhaustiveness read a record type's reach here.
+- `repositories[]` — `{ name, holds, access, url }`, and `losses[]` — `{ record_set,
+  years, source_url }`, a loss always with the page that states it.
+- `catalog[]` — the survey's Catalog hits, written by research_append from `surveyRef`.
+- `collections[].person_count`, copied from `locality_survey`'s collections part
+  (`collections_search`'s `personCount`), and `record_count`, which the agent leaves
+  out: `collections_search` no longer
   returns a record count, and research_append stamps both from FamilySearch's
   catalog (null when unknown, research-append-tool-spec §5.12). Filling an
   absent `record_count` raises no warning.
-- `collections_search` answers over its character budget carry `truncated: true`.
-  Rows whose titles name the place come first, so what was left out is rows for
-  other places in the same scope; the agent does not report it as a coverage gap.
-  research-plan chooses a name search or an image browse on `person_count > 0`.
+- The survey's collections part lists the largest collections and says how many it
+  `omitted`; the agent does not report that as a coverage gap.
+  research-plan chooses a name search or an image browse on the collection's `availability`.
 - `registration_start[]` — `{ event, level, year, source_url }` from the
   `{Jurisdiction}_Vital_Records` page, one per event and level, so
   research-exhaustiveness need not re-read that page. An event the page gives
   no year for is left out rather than guessed.
-- `volume_summary` — `volume_search`'s `summary` (asked for with `summary: true`
-  in the survey batch), copied in snake_case. Counts only, never a volume list:
-  hosted surveys matched up to 4,261 volumes, so a list is rarely complete and
-  research-plan's own narrow `volume_search` calls would not be replaced by it.
-  Omitted when the tool returns `summaryError`.
+- `volume_summary` and `pages_read` — written by research_append from the staged
+  `locality_survey` answer the agent passes as `surveyRef` (the place's own level's
+  `volume_search` summary, and the four wiki sections' outcomes); the agent never sends
+  either (`locality-survey-tool-spec.md` §6). Counts only, never a volume list: hosted
+  surveys matched up to 4,261 volumes, so a list is rarely complete and research-plan's
+  own narrow `volume_search` calls would not be replaced by it.
 
 ## Wiki outages
 
-`wiki_place_page` returns `No wiki page found` on a 404 and throws an error naming
-`wiki-query-api` on a 5xx or an unreachable server (`src/tools/wiki-place-page.ts`).
-`pages_read[].found` is a boolean, so an outage is persisted as `found: false`, the same as
-a real 404. The agent retries once, then records the outage in the guide, in a `quirks[]`
-entry and in `summary_for_user`. Measured on the e2e corpus 2026-10-22:
+`locality_survey` records a page missing at every level as `found: false` and a page whose
+read failed or timed out as `found: false, outcome: "unreachable"`
+(`locality-survey-tool-spec.md` §4). The agent calls the survey again once, then records the
+outage in the guide, in a `quirks[]` entry and in `summary_for_user`. Measured on the e2e corpus 2026-10-22:
 about 36 of 156 persisted `found: false` sections came from runs where the wiki server was
 unreachable.
 
@@ -181,7 +188,14 @@ period, determine which of these categories may apply:
 
 #### 3. Locate repositories holding those records
 
-For each record type, determine where the records are held:
+For each record type, determine where the records are held. The kinds of
+repository below are where to look, not entries to fill in. The guide names
+a repository, its holdings and its access (free, paid, subscription) only
+where a tool result states them, and otherwise says the survey did not
+confirm one. FamilySearch, which every collection and volume these tools
+return belongs to, is free. For any other repository its name is not
+evidence of its access level, and the output template pre-fills only the
+FamilySearch row.
 
 - **Online digital repositories** — FamilySearch, Ancestry, FindMyPast,
   MyHeritage, state digital archives, specialized databases

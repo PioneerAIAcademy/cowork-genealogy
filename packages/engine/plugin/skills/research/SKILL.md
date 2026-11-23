@@ -193,7 +193,7 @@ only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
-to `@plugin:tree-edit`. The names and details in a record set, or a named title's catalog item or DGS numbers, with no project and no FamilySearch
+to `@plugin:tree-edit`. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
 `projectPath`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
@@ -204,7 +204,7 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
 link. Only when `project_context` returns `reason: "no_project"`: one named image, called
-without `projectPath`, its `transcription` shown inline; finding or reading more
+without `projectPath`, its `transcription` shown inline, unless the ask re-indexes it or compares it with its index; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
 already holds, as `researcherReadings`, each `{ sourceId, assertionId, words }`, the user's words exactly. An image
@@ -333,9 +333,13 @@ message.
    The record and each person it names are new leads: spawn
    `@plugin:research-plan` with `projectPath` and the question id to plan a
    search for each, or ask the researcher for the record's identifier, before
-   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
-   record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it. The same holds for
+   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. Before you hand off or
+   ask the researcher anything, call `research_query({ projectPath, section: "hypotheses" })`
+   and check the reported facts against each hypothesis not ruled out; name in the
+   reply any hypothesis they would make impossible if they describe the same
+   person, even when the turn ends by asking for the record's identifier — do
+   not present the record's facts as support for that hypothesis or any theory
+   built on it. The same holds for
    a relationship you or an earlier log note inferred from shared surname,
    place or era with no record linking the people: it is a hypothesis, not a
    fact. Log notes that say people "look like", "appear to be", "likely are",
@@ -351,7 +355,7 @@ message.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
    | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run). Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
@@ -405,6 +409,23 @@ message.
      search: the link, what to look for, and to save the results page as a PDF
      and upload it. It still ends "Continue with `linking the records`?" — an
      external errand does not hold the step open.
+   - **Dispatching a `search-records` or `search-images` plan item that targets
+     a survey of every occurrence/mention of a surname, and relaying its
+     hand-back:** in the line that announces the dispatch, never call it,
+     or the plan item's own rationale, complete, or "every occurrence" —
+     even when the plan item's own `rationale` field uses that phrasing;
+     paraphrase it as a target to search for, not a result already achieved.
+     In the hand-back relay itself: never call it complete, or "every
+     occurrence." Keep the hand-back's own coverage caveats in the step's
+     report. Make no negative finding about a locality the hand-back's own
+     `place` field can't separate. Offer to read named pages for the
+     mentions the index lacks, up to 20 per film/image group, never "per
+     volume." Do not call the hits ready for extraction, ready to be
+     worked through, or ready to be linked to tree persons as a set. This
+     log entry's count is not a `recordIds` list the Extraction contract below
+     can act on: no `extraction_append` call and no next-step line naming
+     extraction or linking follow in this turn, whatever that contract
+     otherwise requires of a positive/partial log entry.
 
    **Extraction contract — an `assertions` write through `research_append` is refused.** You never compose
    sources, assertions or classifications yourself. Every positive/partial

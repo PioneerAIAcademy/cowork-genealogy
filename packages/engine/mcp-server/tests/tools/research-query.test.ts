@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, rm } from "fs/promises";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 
 import {
@@ -2056,5 +2057,174 @@ describe("flattenAssertionGroups", () => {
 
   it("passes non-object entries through", () => {
     expect(flattenAssertionGroups([null, "x", { facts: "not a list" }])).toEqual([null, "x", { facts: "not a list" }]);
+  });
+});
+
+describe("research_query — person_evidence names a two-party assertion's unlinked second person", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-unlinked-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const REL = (id: string, over: Record<string, unknown> = {}) => ({
+    id, source_id: "src_004", record_id: "ark:/61903/1:1:MDEF", record_role: "deceased",
+    fact_type: "relationship", value: "Father: Thomas Flynn",
+    structured_value: { relationship_type: "father", related_person_role: "deceased" }, ...over,
+  });
+  const pe = (id: string, assertion: string, person: string, over: Record<string, unknown> = {}) => ({
+    id, assertion_id: assertion, person_id: person, confidence: "confident", superseded_by: null, ...over,
+  });
+  const TREE = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }] },
+      { id: "I2", gender: "Male", names: [{ given: "Thomas", surname: "Flynn" }] },
+      { id: "I5", gender: "Female", names: [{ given: "Mary", surname: "Doyle" }] },
+      { id: "I6", gender: "Female", names: [{ given: "Ann", surname: "Kerr" }] },
+    ],
+    relationships: [
+      { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      { id: "R2", type: "ParentChild", parent: "I5", child: "I1" },
+      { id: "R3", type: "Couple", person1: "I1", person2: "I6" },
+    ],
+  };
+
+  async function project(assertions: any[], links: any[], tree: any | null = TREE) {
+    await writeFile(join(dir, "research.json"), JSON.stringify({ assertions, person_evidence: links }), "utf-8");
+    if (tree) await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree), "utf-8");
+  }
+  async function links(args: Record<string, unknown> = {}) {
+    const result = await researchQuery({ projectPath: dir, section: "person_evidence", ...args });
+    if (!result.ok) throw new Error(result.errors.join("; "));
+    return result;
+  }
+
+  it("names the tree's father when only the child is linked", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1")]);
+    expect((await links({ assertionId: "a_013" })).unlinkedParties).toEqual([
+      {
+        assertionId: "a_013",
+        linkedPersonId: "I1",
+        unlinkedPersonId: "I2",
+        note:
+          "Assertion 'a_013' (\"Father: Thomas Flynn\") names a second person. The tree's father of 'I1' " +
+          "is 'I2' (Thomas Flynn), and 'I2' has no person_evidence link to this assertion.",
+      },
+    ]);
+  });
+
+  it("is absent when both parties are linked", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1"), pe("pe_009", "a_013", "I2")]);
+    expect(await links({ assertionId: "a_013" })).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("counts a second link that a personId filter hides", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1"), pe("pe_009", "a_013", "I2")]);
+    const result = await links({ personId: "I1" });
+    expect(result.items.map((i: any) => i.id)).toEqual(["pe_005"]);
+    expect(result).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("counts a second link that sits past the first page", async () => {
+    const filler = Array.from({ length: 60 }, (_, i) => pe(`pe_f${i}`, `a_f${i}`, "I1"));
+    const fillerAssertions = filler.map((l) => REL(l.assertion_id, { fact_type: "birth", structured_value: null }));
+    await project(
+      [REL("a_013"), ...fillerAssertions],
+      [pe("pe_005", "a_013", "I1"), ...filler, pe("pe_009", "a_013", "I2")],
+    );
+    const first = await links();
+    expect(first.items.map((i: any) => i.id)).toContain("pe_005");
+    expect(first.items.map((i: any) => i.id)).not.toContain("pe_009");
+    expect(first).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("ignores a superseded second link", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1"), pe("pe_009", "a_013", "I2", { superseded_by: "pe_010" })]);
+    expect((await links({ assertionId: "a_013" })).unlinkedParties?.map((r) => r.unlinkedPersonId)).toEqual(["I2"]);
+  });
+
+  it("is absent when the assertion is linked to someone the tree does not name", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1"), pe("pe_009", "a_013", "I7")]);
+    expect(await links({ assertionId: "a_013" })).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("keeps a father assertion off the mother, and names the mother for a mother assertion", async () => {
+    await project(
+      [REL("a_013"), REL("a_014", { value: "Mother: Mary Doyle", structured_value: { relationship_type: "mother" } })],
+      [pe("pe_005", "a_013", "I1"), pe("pe_006", "a_014", "I1")],
+    );
+    const rows = (await links({ personId: "I1" })).unlinkedParties!;
+    expect(rows.map((r) => [r.assertionId, r.unlinkedPersonId])).toEqual([["a_013", "I2"], ["a_014", "I5"]]);
+  });
+
+  it("reads relationship_type as the subject's own role first: `child` names every parent", async () => {
+    await project(
+      [REL("a_010", { value: "Listed as son of head Thomas Flynn", structured_value: { relationship_type: "child_inferred", related_person_role: "head_of_household" } })],
+      [pe("pe_004", "a_010", "I1")],
+    );
+    const rows = (await links({ assertionId: "a_010" })).unlinkedParties!;
+    expect(rows.map((r) => r.unlinkedPersonId)).toEqual(["I2", "I5"]);
+    expect(rows[0].note).toContain("The tree's parent of 'I1' is 'I2' (Thomas Flynn)");
+  });
+
+  it("keeps only the parent related_person_role names: a death certificate's father is not the mother", async () => {
+    await project(
+      [REL("a_010", { value: "Father: Thomas Flynn", structured_value: { relationship_type: "child", related_person_role: "father" } })],
+      [pe("pe_004", "a_010", "I1")],
+    );
+    const rows = (await links({ assertionId: "a_010" })).unlinkedParties!;
+    expect(rows.map((r) => r.unlinkedPersonId)).toEqual(["I2"]);
+  });
+
+  it("reads the relation from the fact_type when there is no relationship_type", async () => {
+    await project(
+      [
+        REL("a_020", { fact_type: "father_birthplace", value: "Father's birthplace: Ireland", structured_value: null }),
+        REL("a_021", { fact_type: "Marriage", value: "Married Ann Kerr", structured_value: null }),
+      ],
+      [pe("pe_020", "a_020", "I1"), pe("pe_021", "a_021", "I1")],
+    );
+    const rows = (await links({ personId: "I1" })).unlinkedParties!;
+    expect(rows.map((r) => [r.assertionId, r.unlinkedPersonId])).toEqual([["a_020", "I2"], ["a_021", "I6"]]);
+  });
+
+  it("never fires on a one-party fact, even one carrying a relationship_type, or on a superseded assertion", async () => {
+    await project(
+      [REL("a_011", { fact_type: "death" }), REL("a_013", { superseded_by: "a_099" })],
+      [pe("pe_004", "a_011", "I1"), pe("pe_005", "a_013", "I1")],
+    );
+    expect(await links({ personId: "I1" })).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("is silent when the tree has no such relative, or cannot be read", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1")], { persons: TREE.persons, relationships: [] });
+    expect(await links({ assertionId: "a_013" })).not.toHaveProperty("unlinkedParties");
+    await rm(join(dir, "tree.gedcomx.json"));
+    const result = await links({ assertionId: "a_013" });
+    expect(result.count).toBe(1);
+    expect(result).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("is absent on every other section", async () => {
+    await project([REL("a_013")], [pe("pe_005", "a_013", "I1")]);
+    const result = await researchQuery({ projectPath: dir, section: "assertions", assertionId: "a_013" });
+    expect(result).not.toHaveProperty("unlinkedParties");
+  });
+
+  it("names I2 for a_010 and a_013 on the committed mid-research-flynn scenario, and nothing for a_004", async () => {
+    const scenario = join(
+      dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..",
+      "eval", "fixtures", "scenarios", "mid-research-flynn",
+    );
+    for (const f of ["research.json", "tree.gedcomx.json"]) {
+      await writeFile(join(dir, f), readFileSync(join(scenario, f), "utf-8"), "utf-8");
+    }
+    const byPerson = (await links({ personId: "I1" })).unlinkedParties!;
+    expect(byPerson.map((r) => [r.assertionId, r.unlinkedPersonId])).toEqual([["a_010", "I2"], ["a_013", "I2"]]);
+    const one = (await links({ assertionId: "a_013" })).unlinkedParties!;
+    expect(one).toHaveLength(1);
+    expect(one[0].note).toContain("'I2' (Thomas Flynn)");
   });
 });
