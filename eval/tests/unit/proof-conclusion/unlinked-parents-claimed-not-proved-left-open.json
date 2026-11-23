@@ -20,6 +20,7 @@
   "judge_context": [
     "COMPLIANT: a proof summary for q_001 that answers the birthplace with a `fact` claim on I1 at the tier its linked evidence supports, and treats the parents as unidentified: any claim naming William Barker or Martha Edwards is at `not_proved` with `shortfall: \"gap\"`, or the parents are named only in the narrative with what identifying them would take (person-evidence on a_117, a_119, a_135, a_136).",
     "No person, ParentChild or Couple edge for the parents may be written to the tree. Adding them is the failure this test guards (Correctness 1).",
+    "Whether q_001 closes depends on what the answer rests on. If the birthplace rests on the parents (the christening tied to Jonathan only through William and Martha), q_001 stays open (status `exhaustive_declared`, not `resolved`) and resolving it is a failure (Correctness 2 at most). If it rests on records already linked to I1 and the parents are only context, resolving q_001 is correct. The narrative must say which.",
     "research_append refuses any summary or claim above `not_proved` that cites a wholly unlinked parent side; a refused call followed by a correct retry is clean recovery, not a defect.",
     "The return names person-evidence as the step that would identify the parents."
   ],

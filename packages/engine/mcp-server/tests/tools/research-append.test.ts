@@ -8109,8 +8109,6 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
-  const writeBaseline = async (tree: any) =>
-    writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   const withEvidence = (research: any) => {
     research.person_evidence.push({
       id: "pe_001", assertion_id: "a_001", person_id: "I1",
