@@ -871,7 +871,9 @@ def test_route_note_hook_sends_the_shipped_decision():
     prompt = {"prompt": "Find records on KWCF-S1C."}
     out = asyncio.run(route_note_hook(prompt, None, None))
     assert out == _route.decision(prompt, {})
-    assert out["hookSpecificOutput"]["additionalContext"] == f"{_route.CONTEXT}\n\n{_route.SOURCES_NOTE}"
+    assert out["hookSpecificOutput"]["additionalContext"] == (
+        f"{_route.CONTEXT}\n\n{_route.SOURCES_NOTE}\n\n{_route.ROUTING_NOTE}"
+    )
     hand_back = {"prompt": '<agent-message from="a1">done</agent-message>'}
     assert asyncio.run(route_note_hook(hand_back, None, None)) == {}
 

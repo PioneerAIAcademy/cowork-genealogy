@@ -299,6 +299,7 @@ def _load_route_hook():
 #: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
 _route = _load_route_hook()
 SOURCES_NOTE = _route.SOURCES_NOTE
+ROUTING_NOTE = _route.ROUTING_NOTE
 
 
 async def sources_note_hook(input_data, tool_use_id, context):
@@ -309,7 +310,7 @@ async def sources_note_hook(input_data, tool_use_id, context):
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": SOURCES_NOTE,
+            "additionalContext": f"{SOURCES_NOTE}\n\n{ROUTING_NOTE}",
         }
     }
 

@@ -15,6 +15,7 @@ import {
   wholeSectionOwners,
 } from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
+import { AGENT_ONLY, AGENT_ONLY_NOTE, allToolSchemas } from "../../src/tool-schemas.js";
 
 // The plugin's PreToolUse hook is the ONLY guardrail that reaches Cowork.
 //
@@ -608,6 +609,17 @@ describe("plugin hooks are packaged and wired", () => {
           "so the deny would send the model to the wrong agent or miss one",
       ).toEqual(agents.get(tool) ?? []);
     }
+  });
+
+  it("opens the description of exactly the tools the hook denies the main thread with the agents-only note", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    expect(
+      [...AGENT_ONLY].sort(),
+      "src/tool-schemas.ts AGENT_ONLY differs from AGENT_ONLY_TOOLS in hooks/guard_project_files.py: " +
+        "a tool the hook denies must say so in its description, and one it allows must not",
+    ).toEqual(Object.keys(agentOnly).sort());
+    const noted = allToolSchemas.filter((s) => s.description.startsWith(AGENT_ONLY_NOTE)).map((s) => s.name);
+    expect(noted.sort()).toEqual([...AGENT_ONLY].sort());
   });
 });
 
@@ -1702,8 +1714,15 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(
       /Name a source, collection, book or citation only if a tool result in this session returned it/,
     );
-    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from a collections search, which the locality-guide and research-plan agents run/);
     expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("adds the routing sentence, with or without a project", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Investigate Patrick Flynn." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /goes to the research skill, with or without a project/,
+    );
   });
 
   it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {

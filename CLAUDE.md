@@ -373,21 +373,25 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
-A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds three passages
 to each Cowork researcher message: a conditional one (no project → a research request goes
 to the research skill; a no-PID ask for the names in a record set goes to
-search-images) and one naming a source, collection, book or citation only from a
-tool result, and that nothing here changes FamilySearch's Family Tree. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+search-images), one naming a source, collection, book or citation only from a
+tool result, and that nothing here changes FamilySearch's Family Tree, and one routing
+every genealogy request, with or without a project, to the research skill or the agent
+whose work it is. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
-`continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
+`continue_policy.SOURCES_GUIDANCE`, `continue_policy.ROUTING_GUIDANCE` and
+`continue_policy.NO_PROJECT_NOTE` appended beside it).
 The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
-sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
-`no_project_route.SOURCES_NOTE`), pinned by
-`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add it the
-same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not the
-routing sentence.
+and routing sentences are too (`continue_policy.SOURCES_GUIDANCE` and `ROUTING_GUIDANCE`,
+which both hosted planes append, and `no_project_route.SOURCES_NOTE` and `ROUTING_NOTE`),
+pinned by `test_the_sources_sentence_is_the_one_the_plugin_hook_adds` and
+`test_the_routing_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add those two
+the same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not
+the conditional no-project sentence.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the

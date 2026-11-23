@@ -281,6 +281,25 @@ def test_the_sources_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
     assert SOURCES_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
 
 
+
+def test_the_routing_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
+    """The alpha appends `ROUTING_GUIDANCE` and the Cowork hook carries its own copy,
+    as with the sources sentence; a reword on one side alone leaves the two paths
+    routing differently."""
+    import importlib.util
+
+    from app.agent.continue_policy import ROUTING_GUIDANCE
+
+    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
+    spec = importlib.util.spec_from_file_location("_no_project_route", path)
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    assert hook.ROUTING_NOTE == ROUTING_GUIDANCE
+    added = hook.decision({"prompt": "Investigate Patrick Flynn."}, {})
+    assert ROUTING_GUIDANCE in added["hookSpecificOutput"]["additionalContext"]
+    assert ROUTING_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
+
+
 class _Turns:
     """Stands in for the session, borrowing the REAL turn-boundary method.
 

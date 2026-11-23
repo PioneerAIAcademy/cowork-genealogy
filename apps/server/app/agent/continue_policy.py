@@ -74,12 +74,26 @@ NO_PROJECT_NOTE = (
 SOURCES_GUIDANCE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
-    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "a collections search, which the locality-guide and research-plan agents run. This rule is about "
     "what you name, not about which agent a question goes to. "
     "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
     "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
     "such as a merge or a wrong parent link, give the researcher the steps to make it on "
     "FamilySearch.org, and never offer to make it yourself."
+)
+
+
+# The main thread's one routing sentence, with or without a project. The plugin hook
+# carries the same text as `no_project_route.ROUTING_NOTE`;
+# `test_the_routing_sentence_is_the_one_the_plugin_hook_adds` fails if they differ.
+ROUTING_GUIDANCE = (
+    "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
+    "what it returns. Researching, investigating or finding a person, a relative or a record, "
+    "or carrying the research on, goes to the research skill, with or without a project; any "
+    "other request, such as one about a place's history or a person's data problems, goes to "
+    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "or from the project's state. A question about where the project stands you answer from "
+    "project_context."
 )
 
 
