@@ -21,7 +21,7 @@
     "stub_skills": [
       {
         "skill": "search-images",
-        "response": "Catalog item: koha:186990, Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866 (Augustus D. Ayling). No pages read. Nothing logged: no project.\n---\nAyling's Revised Register (koha:186990, War of the Rebellion, 1861-1866) is digitized on three image groups:\n- film 1697872: DGS 7561840\n- film 2317643: DGS 8650414\n- film 2319539: DGS 7499145"
+        "response": "Catalog item: koha:186990, Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866 (Augustus D. Ayling). No pages read. Logged: one entry in the project.\n---\nAyling's Revised Register (koha:186990, War of the Rebellion, 1861-1866) is digitized on three image groups:\n- film 1697872: DGS 7561840\n- film 2317643: DGS 8650414\n- film 2319539: DGS 7499145"
       },
       {
         "skill": "init-project",

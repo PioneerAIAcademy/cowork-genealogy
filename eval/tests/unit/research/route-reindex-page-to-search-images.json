@@ -25,7 +25,7 @@
     "stub_skills": [
       {
         "skill": "search-images",
-        "response": "Page: 1830 US census, Peru, Clinton County, New York (3:1:33SQ-GYY1-B2G). Index read: 27 entries. Page read once. Nothing logged: no project.\n---\n| Line | FamilySearch index | New reading | |\n|---|---|---|---|\n| 1 | Michael Barry | Michael Berry | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 2 | Mila Fuller | Milo Hall | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 3 | Aaph B Totman | Asaph B Totman | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |"
+        "response": "Page: 1830 US census, Peru, Clinton County, New York (3:1:33SQ-GYY1-B2G). Index read: 27 entries. Page read once. Logged: one entry in the project.\n---\n| Line | FamilySearch index | New reading | |\n|---|---|---|---|\n| 1 | Michael Barry | Michael Berry | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 2 | Mila Fuller | Milo Hall | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 3 | Aaph B Totman | Asaph B Totman | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |"
       },
       {
         "skill": "init-project",
