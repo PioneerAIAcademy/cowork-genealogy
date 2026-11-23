@@ -54,6 +54,14 @@ describe("setAsideParents (Decision 26)", () => {
     expect(setAsideParents(r, tree)).toEqual(new Map([["I1", new Set(["I2", "I6"])]]));
   });
 
+  it("a Step disproof does not rule out the biological edge of the same pair", () => {
+    const notStep = { claim: "not the stepfather", proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", subtype: "Step", parent: "I6", child: "I1" } };
+    const r = { proof_summaries: [{ id: "ps_002", question_id: "q_002", tier: "disproved", claims: [notStep] }] };
+    expect(setAsideParents(r, tree).get("I1")?.has("I6") ?? false).toBe(false);
+    const untyped = { ...notStep, relationship: { type: "ParentChild", parent: "I6", child: "I1" } };
+    expect(setAsideParents({ proof_summaries: [{ ...r.proof_summaries[0], claims: [untyped] }] }, tree).get("I1")?.has("I6")).toBe(true);
+  });
+
   it("leaves an unclaimed rival beside the winner in: it has no verdict, so it still competes", () => {
     expect([...(setAsideParents(research, tree).get("I1") ?? [])]).toEqual(["I2"]);
   });
@@ -76,5 +84,24 @@ describe("setAsideParents (Decision 26)", () => {
     expect(setAsideParents({}, tree).size).toBe(0);
     expect(setAsideParents({ proof_summaries: [{ id: "ps_001", claims: [] }] }, tree).size).toBe(0);
     expect(setAsideParents(null, tree).size).toBe(0);
+  });
+});
+
+describe("conclusionStatus: a disproof naming a subtype", () => {
+  const male = (id: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given: id }] });
+  const notBio = { claim: "not the father", proof_tier: "disproved", supporting_assertion_ids: [], relationship: { type: "ParentChild", subtype: "Biological", parent: "I2", child: "I1" } };
+  const research = { proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "disproved", claims: [notBio] }] };
+  const rowFor = (subtype?: string) => {
+    const tree = { persons: [male("I1"), male("I2")], relationships: [{ id: "R1", type: "ParentChild", ...(subtype ? { subtype } : {}), parent: "I2", child: "I1" }] };
+    return conclusionStatus(research, tree, null).find((r) => JSON.stringify(r.holder) === JSON.stringify({ relationshipId: "R1" }));
+  };
+
+  it("reads a Step edge on the pair as not ruled out", () => {
+    expect(rowFor("Step")?.label).not.toBe("ruled out");
+  });
+
+  it("still reads the biological or untyped edge as ruled out", () => {
+    expect(rowFor("Biological")?.label).toBe("ruled out");
+    expect(rowFor()?.label).toBe("ruled out");
   });
 });

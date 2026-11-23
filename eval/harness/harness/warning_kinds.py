@@ -53,6 +53,8 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # 94 warning entries.
     "routing_negative_judge_fail": "judge",
     "coerced_routing_negative_to_na": "judge",
+    # A rubric dimension the test names in `na_dimensions` (#4548).
+    "coerced_review_dimension_to_na": "judge",
     # --- harness-side (advisories about skill / fixtures / harness) ---
     "unread_skill_call": "harness",
     "missing_tool_usage_dimension": "harness",

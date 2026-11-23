@@ -1,3 +1,4 @@
+import type { CollectionAvailability } from "../utils/collection-availability.js";
 // FamilySearch Collections API Response Types
 // GET https://www.familysearch.org/service/search/hr/v2/collections
 
@@ -46,6 +47,8 @@ export interface FSCollectionsResponse {
 export interface CollectionCounts {
   personCount: number;
   recordCount: number;
+  /** Page images (`DigitalArtifact#FamilySearch`), for `collectionAvailability`. */
+  imageCount?: number;
   /** The collection's title and years, for `research_append`'s locality fill. */
   title?: string;
   dateRange?: string | null;
@@ -64,6 +67,10 @@ export interface Collection {
   title: string;
   dateRange: string;
   personCount: number;
+  /** Present only when `collectionAvailability(personCount, images)` is
+   *  browse-only; a row without it is name-searchable. Every row carrying it
+   *  took Italy's answer past the budget, dropping 24 of 257 rows. */
+  availability?: Extract<CollectionAvailability, "browse-only">;
 }
 
 export interface CollectionsSearchResult {

@@ -85,20 +85,26 @@ export async function waitingPages(projectPath: string, research: any): Promise<
   }
 
   const out: WaitingPage[] = [];
-  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
   for (const s of sources) {
     const key = pageKey(s.image_ark);
     const ref = key === null ? undefined : oldestRead.get(key);
     if (!ref) continue;
-    const index = assertions
-      .filter((a) => a?.source_id === s.id && typeof a?.id === "string" && isLiveAssertion(a))
-      .map((a) => ({
-        assertionId: a.id as string,
-        role: String(a.record_role ?? ""),
-        factType: String(a.fact_type ?? ""),
-        value: String(a.value ?? ""),
-      }));
-    out.push({ sourceId: s.id, ref, index });
+    out.push({ sourceId: s.id, ref, index: sourceIndex(research, s.id).map(({ recordId: _r, ...e }) => e) });
   }
   return out;
+}
+
+/** A source's index: its live assertions, in array order. Shared with
+ *  `index-readings`, so a page's records read the same in both answers. */
+export function sourceIndex(research: any, sourceId: string): (WaitingPageIndexEntry & { recordId: string })[] {
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  return assertions
+    .filter((a) => a?.source_id === sourceId && typeof a?.id === "string" && isLiveAssertion(a))
+    .map((a) => ({
+      assertionId: a.id as string,
+      role: String(a.record_role ?? ""),
+      factType: String(a.fact_type ?? ""),
+      value: String(a.value ?? ""),
+      recordId: String(a.record_id ?? ""),
+    }));
 }

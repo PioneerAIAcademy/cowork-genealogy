@@ -756,7 +756,7 @@ class FixtureCaps:
     # the model made no progress for ~40 min until the wall-clock cap. Conservative
     # default; tune down once the per-turn `timeline` shows the normal max gap.
     progress_stall_seconds: int = 600
-    tool_calls: int = 300
+    tool_calls: int = 500
     max_turns: int = 250
     max_cost_usd: float = 15.0
 
@@ -2105,8 +2105,8 @@ async def _run_agent(
                         "tree_edit or tree_correct (from the main session, invoke "
                         "`@plugin:tree-edit`). These validate "
                         "before persisting. Direct file writes never validate. "
-                        "external-collections.json is written only by external_links_search given a "
-                        "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                        "external-collections.json is written only by locality_survey or external_links_search given a "
+                        "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                     ),
                 },
             }
@@ -2463,10 +2463,12 @@ async def _run_agent(
         # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
         # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
         # through — observed killing this exact e2e run on a real FamilySearch
-        # death-certificate image (2026-07-08). Raised generously here since
-        # this is eval-harness-only config; it does not change production
-        # Cowork behavior or the tool's own inline-image ceiling.
-        max_buffer_size=10 * 1024 * 1024,
+        # death-certificate image (2026-07-08). A main-thread PDF Read also
+        # puts the file's base64 on one line twice (#4694). Mirrors the hosted
+        # planes' apps/server/app/agent/real_agent.py MAX_BUFFER_BYTES, which
+        # this harness cannot import; apps/server/tests/test_sdk_buffer.py
+        # fails if the two differ.
+        max_buffer_size=96 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.

@@ -1,0 +1,20 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all for Greenup County, Kentucky — the county result, trimmed from live response 2026-11-21",
+  "args": {
+    "placeName": "~Greenup"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Greenup, Kentucky, United States",
+        "type": "County",
+        "dateRange": "+1803/",
+        "latitude": 38.5167,
+        "longitude": -82.9499,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Greenup&focusedId=394147",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Greenup_County,_Kentucky"
+      }
+    ]
+  }
+}

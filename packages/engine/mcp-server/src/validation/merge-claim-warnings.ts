@@ -6,7 +6,7 @@
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { claimRuleFindings, identityCoversMerge, namedPersons, type ClaimRuleId } from "./claim-rules.js";
-import { disprovedClaimCovering, sameSubtype } from "../utils/claim-join.js";
+import { disprovedClaimCovering, disprovedClaimsCovering, sameSubtype } from "../utils/claim-join.js";
 import { getPersonName } from "../tools/person-warnings.js";
 
 export interface SyntheticWarning {
@@ -98,9 +98,21 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
     out.set(warningId, { warningId, issueType, severity: "implausible", personId, personName: nameOf(personId), message });
   };
 
-  const prior = new Set(findings(before).map((f) => `${f.summaryId}|${f.ruleId}|${toSurvivor(f.message)}`));
+  // Rule 12 lists a couple's persons sorted, so rewriting a collapsed id can
+  // reorder a run of ids: compare each run of known person ids sorted.
+  const ids = new Set(
+    [...arr(before.tree.persons), ...arr(after.tree.persons)]
+      .map((p) => p?.id)
+      .filter((id): id is string => typeof id === "string"),
+  );
+  const canon = (text: string) =>
+    text.replace(/[A-Za-z0-9_-]+(?:, [A-Za-z0-9_-]+)+/g, (run) => {
+      const parts = run.split(", ");
+      return parts.every((p) => ids.has(p)) ? [...parts].sort().join(", ") : run;
+    });
+  const prior = new Set(findings(before).map((f) => `${f.summaryId}|${f.ruleId}|${canon(toSurvivor(f.message))}`));
   for (const f of findings(after)) {
-    if (prior.has(`${f.summaryId}|${f.ruleId}|${f.message}`)) continue;
+    if (prior.has(`${f.summaryId}|${f.ruleId}|${canon(f.message)}`)) continue;
     add(`mergeClaim|${f.ruleId}|${f.summaryId}|${hash8(f.message)}`, f.ruleId, `This merge leaves proof summary ${f.summaryId} in a state the claim rules warn about: ${f.message}`);
   }
 
@@ -108,7 +120,14 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
     if (typeof r?.id !== "string") continue;
     const ruled = disprovedClaimCovering(after.research, r);
     if (!ruled) continue;
-    const priorEdge = arr(before.tree.relationships).find((b) => disprovedClaimCovering(before.research, b) && sameEnds(b, r, merges));
+    // Already standing: a pre-merge edge of the pair that a claim still ruling
+    // this edge out also covered. Every covering claim is compared, since with
+    // two the merge can change which comes first.
+    const key = (d: { summaryId: string; label: string }) => `${d.summaryId}|${d.label}`;
+    const now = new Set(disprovedClaimsCovering(after.research, r).map(key));
+    const priorEdge = arr(before.tree.relationships).find(
+      (b) => sameEnds(b, r, merges) && disprovedClaimsCovering(before.research, b).some((d) => now.has(key(d))),
+    );
     if (priorEdge) continue;
     add(
       `mergeRuledOut|${r.id}`,
@@ -120,11 +139,12 @@ export function mergeClaimWarnings(before: Side, after: Side, merges: ReadonlyAr
   return [...out.values()];
 }
 
-/** The same edge before and after the merge, ends compared through the collapse. */
+/** The same pair before and after the merge, ends compared through the collapse.
+ *  Subtype is left to the covering claims: the dedup can retype the kept edge. */
 function sameEnds(before: any, after: any, merges: ReadonlyArray<readonly [string, string]>): boolean {
   const map = new Map(merges.map(([s, c]) => [c, s]));
   const m = (id: unknown) => (typeof id === "string" ? map.get(id) ?? id : id);
-  if (before?.type !== after?.type || !sameSubtype(before, after)) return false;
+  if (before?.type !== after?.type) return false;
   if (before.type === "ParentChild") return m(before.parent) === after.parent && m(before.child) === after.child;
   const a = [m(before.person1), m(before.person2)].sort().join("+");
   const b = [after.person1, after.person2].sort().join("+");

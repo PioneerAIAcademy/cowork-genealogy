@@ -331,7 +331,7 @@
       ]
     },
     "registration_level": {
-      "description": "The jurisdiction level at which a locality's registration_start[] entry says civil registration of that event began (localities section); a place can have an early town series and a later statewide one.",
+      "description": "The jurisdiction level at which a locality's registration_start[] entry says civil registration of that event began, and the level a record_types[] row's records are held at (localities section); a place can have an early town series and a later statewide one.",
       "enum": [
         "town",
         "municipality",
@@ -343,10 +343,46 @@
         "national"
       ]
     },
+    "collection_availability": {
+      "description": "How a FamilySearch collection can be searched (localities collections[].availability): name-searchable, or browse-only when it has no indexed person or fewer than one per thousand page images. Set by research_append from the catalog.",
+      "enum": [
+        "name-searchable",
+        "browse-only"
+      ]
+    },
     "locality_page_outcome": {
       "description": "Why a locality's pages_read[] entry has found: false when the cause was not a missing page (localities section). unreachable: the wiki server failed (5xx or no connection) after a retry, so the page may exist.",
       "enum": [
         "unreachable"
+      ]
+    },
+    "locality_record_type": {
+      "description": "A locality's record_types[] row type (localities section): exactly record_type_recommended's examples, closed, so a guide carries one row or more for each. A test keeps the two lists equal.",
+      "enum": [
+        "census",
+        "vital_record",
+        "probate",
+        "land",
+        "church",
+        "military",
+        "newspaper",
+        "cemetery",
+        "tax",
+        "immigration",
+        "court",
+        "other"
+      ]
+    },
+    "locality_access": {
+      "description": "How a locality's record_types[] row's records can be reached (localities section): indexed (name-searchable), fulltext (full-text searchable, not name-indexed), browse (digitized images, no index), microfilm (on film, not online), physical (only at the holding repository), lost (destroyed or not surviving), unknown (no tool result settles it).",
+      "enum": [
+        "indexed",
+        "fulltext",
+        "browse",
+        "microfilm",
+        "physical",
+        "lost",
+        "unknown"
       ]
     },
     "hit_verdict": {

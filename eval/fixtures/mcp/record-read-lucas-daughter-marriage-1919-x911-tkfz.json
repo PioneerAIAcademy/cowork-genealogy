@@ -1,0 +1,338 @@
+{
+  "tool": "record_read",
+  "description": "Marriage 26 Nov 1919, Funchal: Julia do Espirito Santo and Albino Marques dos Santos; parents Antonio Fernandes Lucas and Maria Joana Lucas (viuva). Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~X911-TKFZ"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_307637909556",
+        "ark": "ark:/61903/1:1:X911-TKFW",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "cdd6843a-73bf-4904-a6e9-c2aef78c1f62",
+            "given": "Albino",
+            "surname": "Marques dos Santos"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "pedreiro"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "solteiro"
+          },
+          {
+            "id": "0cca0353-ca1e-4a7d-bca1-71fc58a9c5b5",
+            "type": "Residence",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307637909557",
+        "ark": "ark:/61903/1:1:X911-TKF4",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "e3ef3006-0b5f-4218-8243-83f3e615d613",
+            "given": "João",
+            "surname": "Marques dos Santos"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "empreiteiro"
+          },
+          {
+            "id": "89020991-7b71-4356-94ca-cb5071307b5d",
+            "type": "Residence",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307637909558",
+        "ark": "ark:/61903/1:1:X911-TKFH",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "aeb9ec21-dce3-4142-a792-4eafcb2055dc",
+            "given": "Genoveva de Jesus",
+            "surname": "Santos"
+          }
+        ],
+        "facts": [
+          {
+            "id": "786db655-1452-4057-a024-e9b8d6d04bcb",
+            "type": "Residence",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307637909559",
+        "ark": "ark:/61903/1:1:X911-TKFC",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "3d32ad03-abd0-4681-b39e-183ebd896bee",
+            "given": "Julia do Espirito Santo",
+            "surname": "do Espirito Santo"
+          }
+        ],
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "solteira"
+          },
+          {
+            "type": "Occupation",
+            "value": "domestica"
+          },
+          {
+            "id": "280269fd-19b0-4d91-9ca5-7faba89623b9",
+            "type": "Residence",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307637909560",
+        "ark": "ark:/61903/1:1:X911-TKFZ",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "6252941c-4df7-4697-bb9e-f2024d9b76cd",
+            "given": "Antonio",
+            "surname": "Fernandes Lucas"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ca1f8576-10de-4e4b-b7ba-03616f70c0d8",
+            "type": "Death"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_307637909561",
+        "ark": "ark:/61903/1:1:X911-TKF8",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "a81791e5-ff8f-4475-9ae3-88a83657264f",
+            "given": "Maria Joana",
+            "surname": "Lucas"
+          }
+        ],
+        "facts": [
+          {
+            "type": "MaritalStatus",
+            "value": "viuva"
+          },
+          {
+            "type": "Occupation",
+            "value": "domestica"
+          },
+          {
+            "id": "57fd2b5d-bcc2-4a0d-94df-d747cff4b116",
+            "type": "Residence",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "049b3cf0-d5f1-4449-acef-a6453432d0f2",
+        "type": "Couple",
+        "person1": "p_307637909560",
+        "person2": "p_307637909561"
+      },
+      {
+        "id": "fe691fd2-2716-41d3-a730-a9b951d8c144",
+        "type": "ParentChild",
+        "parent": "p_307637909560",
+        "child": "p_307637909559"
+      },
+      {
+        "id": "19d8714b-ecb3-4a2a-8cd7-cffecdb5a071",
+        "type": "ParentChild",
+        "parent": "p_307637909557",
+        "child": "p_307637909556"
+      },
+      {
+        "id": "c2e1a3f0-3f65-469b-88eb-0c7f759b8c1f",
+        "type": "Couple",
+        "person1": "p_307637909556",
+        "person2": "p_307637909559",
+        "facts": [
+          {
+            "id": "612d329d-6c45-4aba-952e-113c204dee9d",
+            "type": "Marriage",
+            "primary": true,
+            "date": "26 de novembro de 1919",
+            "standard_date": "26 Nov 1919",
+            "place": "Funchal, Madeira, Portugal"
+          }
+        ]
+      },
+      {
+        "id": "5fb35aa8-3ab7-4f9f-97a7-d6a15cb9f963",
+        "type": "ParentChild",
+        "parent": "p_307637909558",
+        "child": "p_307637909556"
+      },
+      {
+        "id": "af4803b0-0d36-4dae-95db-165a7fb1438e",
+        "type": "Couple",
+        "person1": "p_307637909557",
+        "person2": "p_307637909558"
+      },
+      {
+        "id": "fc33343b-2f52-4ded-a8e9-1c4b8c4cd107",
+        "type": "ParentChild",
+        "parent": "p_307637909561",
+        "child": "p_307637909559"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_180753350368",
+        "resource_type": "Record",
+        "title": "Entrada para Albino Marques dos Santos e Julia do Espirito Santo do Espirito Santo, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKFW : Tue Jan 13 11:55:09 UTC 2026), Entry for Albino Marques dos Santos and João Marques dos Santos, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:H4BD-HFBB",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "26 de novembro de 1919",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_c_4474701",
+        "resource_type": "Collection",
+        "title": "Portugal, Civil Records, 1437-2023",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/4474701",
+        "coverage": {
+          "place_rep_id": "237",
+          "date_range": "1231/2023",
+          "record_type": "Vital",
+          "standard_place": "Portugal"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS9Z-Y3P1-4",
+        "coverage": {
+          "place_rep_id": "3052581",
+          "date_range": "1919",
+          "record_type": "Marriage",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      },
+      {
+        "id": "sd_da2",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS9Z-Y3P5-Q"
+      },
+      {
+        "id": "sd_p_307637909560",
+        "resource_type": "Person",
+        "title": "Antonio Fernandes Lucas, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKFZ : Tue Jan 13 11:55:09 UTC 2026), Antonio Fernandes Lucas in entry for Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKFZ"
+      },
+      {
+        "id": "sd_p_307637909556",
+        "resource_type": "Person",
+        "title": "Albino Marques dos Santos, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKFW : Tue Jan 13 11:55:09 UTC 2026), Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKFW"
+      },
+      {
+        "id": "sd_p_307637909558",
+        "resource_type": "Person",
+        "title": "Genoveva de Jesus Santos, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKFH : Tue Jan 13 11:55:09 UTC 2026), Genoveva de Jesus Santos in entry for Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKFH"
+      },
+      {
+        "id": "sd_p_307637909561",
+        "resource_type": "Person",
+        "title": "Maria Joana Lucas, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKF8 : Tue Jan 13 11:55:09 UTC 2026), Maria Joana Lucas in entry for Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKF8"
+      },
+      {
+        "id": "sd_p_307637909559",
+        "resource_type": "Person",
+        "title": "Julia do Espirito Santo do Espirito Santo, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKFC : Tue Jan 13 11:55:09 UTC 2026), Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKFC"
+      },
+      {
+        "id": "sd_p_307637909557",
+        "resource_type": "Person",
+        "title": "João Marques dos Santos, “Portugal, Civil Records, 1437-2023”",
+        "citation": "\"Portugal, Civil Records, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-TKF4 : Tue Jan 13 11:55:09 UTC 2026), João Marques dos Santos in entry for Albino Marques dos Santos and Julia do Espirito Santo do Espirito Santo, 26 de novembro de 1919.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X911-TKF4"
+      },
+      {
+        "id": "sd_auto_M9J1-QD3",
+        "resource_type": "auto",
+        "title": "Portugal, Madeira, Marriages, from 1728 to 31 March 1992",
+        "coverage": {
+          "place_rep_id": "4716",
+          "date_range": "+1728-01-01T00:00:00Z/+1992-03-31T23:59:59Z",
+          "standard_place": "Madeira, Portugal"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_3052581"
+      }
+    ]
+  }
+}

@@ -3580,6 +3580,87 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((r as any).errors?.join(" ") ?? "").not.toMatch(/rules this pair out/);
   });
 
+  // The proposed edge can be free while the edge it would corroborate is not:
+  // an untyped edge matches any subtype.
+  const typedRuledOut = (parent: string, subtype: string) => {
+    const research = ruledOutResearch(parent);
+    (research.proof_summaries[0].claims[0].relationship as any).subtype = subtype;
+    return research;
+  };
+  const addStep = (parent: string, subtype?: string) =>
+    treeEdit({
+      projectPath: dir, operation: "add_relationship",
+      relationship: { type: "ParentChild", ...(subtype ? { subtype } : {}), parent, child: "I1", sources: [{ ref: "S1" }] },
+    } as any);
+
+  it("refuses a Step add that would corroborate the ruled-out untyped edge", async () => {
+    await writeProject(parentage(), typedRuledOut("I2", "Biological"));
+    const before = await readTree();
+    const r = await addStep("I2", "Step");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/would corroborate relationship 'R1', which proof summary ps_009 rules out/);
+    expect((r as any).errors.join(" ")).toMatch(/have proof-conclusion revise the claim/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("refuses an untyped add that would corroborate a ruled-out Step edge", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Step"));
+    const before = await readTree();
+    const r = await addStep("I2");
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/would corroborate relationship 'R1'/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("still corroborates a Step edge under a Biological disproof", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Biological"));
+    const r = await addStep("I2", "Step");
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
+  it("the add refusal names proof-conclusion as the one that revises the claim", async () => {
+    await writeProject(parentage(), ruledOutResearch());
+    const r = await addParent("I3");
+    expect((r as any).errors.join(" ")).toMatch(/Have proof-conclusion revise that claim first/);
+  });
+
+  it("update_relationship refuses a retype onto the ruled-out subtype", async () => {
+    const t = parentage();
+    (t.relationships[0] as any).subtype = "Step";
+    await writeProject(t, typedRuledOut("I2", "Biological"));
+    const before = await readTree();
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Biological" } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/proof summary ps_009 rules out 'Biological' for this pair \(claim 'not John', disproved\)/);
+    expect(await readTree()).toEqual(before);
+  });
+
+  it("update_relationship lets a retype away from the ruled-out subtype through", async () => {
+    await writeProject(parentage(), typedRuledOut("I2", "Biological"));
+    // No claim names Step, so the retype carries its justification (retypeUnclaimed).
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step",
+      warningJustifications: [{ warningId: "retypeUnclaimed|R1|Step", justification: "The guardianship record names him." }],
+    } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect((await readTree()).relationships[0].subtype).toBe("Step");
+  });
+
+  it("update_relationship with no claims on file draws only the retype warning, and lands once justified", async () => {
+    await writeProject(parentage());
+    const refused: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(refused.warnings?.map((w: any) => w.warningId)).toEqual(["retypeUnclaimed|R1|Step"]);
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step",
+      warningJustifications: [{ warningId: "retypeUnclaimed|R1|Step", justification: "The guardianship record names him." }],
+    } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
   it("lets a ParentChild edge to a parent of the other sex through", async () => {
     await writeProject(parentage());
 

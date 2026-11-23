@@ -1,0 +1,58 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_035: every other Tyler or Tyl* search. Live response for An* Tyler + Fluvanna + 1870 census (1438024) with no birth range: 1 match, Antoine Tyler (MFLB-F5N), female, b. 1833, mulatto, household head, Cunningham. Listed after the tight-range nil. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "surname": "~Tyl"
+  },
+  "response": {
+    "query": {
+      "surname": "Tyler",
+      "givenName": "An*",
+      "collectionId": "1438024",
+      "residencePlace": "Fluvanna, Virginia, United States"
+    },
+    "totalMatches": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "census": {
+      "schedules": [
+        {
+          "year": 1870,
+          "census": "United States",
+          "collectionId": "1438024",
+          "recorded": "names every person but has no relationship-to-head column: relationships within a household are inferred from surname, age and listing order, not stated"
+        }
+      ],
+      "note": "From this tool's census table, not from the search results: what each census schedule recorded. Say nothing else about what a schedule collected."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MFLB-F5N",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ],
+        "personName": "Antoine Tyler",
+        "sex": "Female",
+        "birthDate": "1833",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1438024",
+        "recordTitle": "Household of Antoine Tyler",
+        "recordArk": "ark:/61903/1:2:MCQS-QCC",
+        "batchNumber": "N01493-2",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1438024": "United States, Census, 1870"
+    }
+  }
+}

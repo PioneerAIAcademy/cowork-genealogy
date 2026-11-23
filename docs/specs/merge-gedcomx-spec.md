@@ -325,10 +325,12 @@ Sequence inside each tool:
    (polarity) and 12 (proved identity) re-run on every summary before and
    after the merge, and each finding present after and absent before is a
    warning (collapsed ids rewritten to the survivor outside quoted claim labels
-   before comparing, so a finding standing on the collapsed person is not
-   raised again); and an edge the merge leaves joining a pair a `disproved`
-   claim covers, matching no pre-merge ruled-out edge through the collapse, is
-   one. Ids are `mergeClaim|<rule>|<summaryId>|<hash>` and
+   before comparing, and each run of person ids compared sorted, so a finding
+   standing on the collapsed person is not raised again); and an edge the merge
+   leaves joining a pair a `disproved` claim covers is one, unless a pre-merge
+   edge of the pair, through the collapse, was covered by a claim that still
+   covers it. A disproof naming a subtype covers only that subtype, untyped and
+   Biological reading as one; an untyped disproof covers the whole pair. Ids are `mergeClaim|<rule>|<summaryId>|<hash>` and
    `mergeRuledOut|<relationshipId>`; each names the survivor its message
    names, else the first. They fire only where a summary carries claims.
    Separately, each merge pair no identity claim covers raises
