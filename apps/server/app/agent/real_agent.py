@@ -311,6 +311,11 @@ _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
 # faster; it does not make it succeed. `_drain_background` is the fix.
 _PRETOOL_TIMEOUT_S = 10.0
 
+# SDK stdout line ceiling in characters (SDK default 1 MiB): a main-thread Read puts the file's
+# base64 on one line twice, so this holds two copies of the largest upload's base64 (25 MiB,
+# app/sessions.py and proto/web/project_blobs.py) plus the JSON envelope.
+MAX_BUFFER_BYTES = 96 * 1024 * 1024
+
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
 # though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
@@ -520,8 +525,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "research_log_append, and for the tree tree_edit or tree_correct (from "
                     "the main session, invoke `@plugin:tree-edit`). These validate "
                     "before persisting. Direct file writes never validate. "
-                    "external-collections.json is written only by external_links_search given a "
-                    "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                    "external-collections.json is written only by locality_survey or external_links_search given a "
+                    "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                 ),
             },
         }
@@ -844,6 +849,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         model=main.model,
         effort=main.effort,
         permission_mode="bypassPermissions",  # operator-controlled, headless
+        max_buffer_size=MAX_BUFFER_BYTES,
         system_prompt={
             "type": "preset",
             "preset": "claude_code",

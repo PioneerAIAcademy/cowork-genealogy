@@ -221,8 +221,8 @@ change; keep no local copy.
   `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
   equals that of the `place` of a `localities` entry counted on every collection, unless the
   call's `startYear`–`endYear` reach outside the entry's `time_period`; an entry with no
-  parseable `time_period` covers nothing. `United States` is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
-  availability check grades a plan written from the entry. `test_names_collections_only_from_search`
+  parseable `time_period` covers nothing. `United States` is exempt. `_collection_availability` also reads entry labels (else counts) for collections no response served, so the
+  availability check grades a plan written from the entry, against each collection's `availability` label. `test_names_collections_only_from_search`
   (`validators/test_research.py`, Kenya test only) still accepts only search-returned
   titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
 - `test_research_plan_hints_review_first`: on `fs-hints-first` tests (ut_016,

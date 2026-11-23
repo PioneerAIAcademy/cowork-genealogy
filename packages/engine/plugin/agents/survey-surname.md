@@ -82,7 +82,7 @@ Read `totalMatches` on the first page. **If `totalMatches` exceeds 600: STOP for
 
 Page with `offset` += 100 until `hasMore` is false.
 
-With a project, log every page, including the first, with `research_log_append`. Omit `query`; the staged search supplies it.
+With a project, log every page that returned rows, including the first, with `research_log_append`. Omit `query`; the staged search supplies it. A page that returns NOTHING logs itself — pass `planItemId` (null for an ad-hoc survey) on the `record_search` call and the tool writes that entry, returning `logId`; log it by hand only if the response carries `nilLogRefused`.
 
 ```
 research_log_append({

@@ -840,6 +840,15 @@ describe("project_context", () => {
               { id: "2", title: "Bad count", person_count: "5", record_count: 1.5 },
             ],
             quirks: ["Indexed only at county level."],
+            record_types: [
+              { type: "church", years: "1814-1900", level: "parish", held_at: "Statsarkivet", access: "browse",
+                collection_ids: ["4237104"], summary: "Church books by parish.", source_url: "https://x/church" },
+              { type: "tax", years: null, level: null, held_at: null, access: "unknown", collection_ids: [],
+                summary: "Not confirmed.", source_url: null },
+            ],
+            repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", access: null, url: "https://x/hamar" }],
+            losses: [{ record_set: "Ringebu church book", years: "1740-1760", source_url: "https://x/loss" }],
+            catalog: [{ id: "koha:1", title: "Kirkebøker catalog row", place: "Ringebu", repository_calls: [], film_count: 3 }],
             guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
             pages_read: [
               { section: "home", url: "u1", found: true },
@@ -863,14 +872,22 @@ describe("project_context", () => {
         timePeriod: "1870-1880",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
         collections: [
-          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
+          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12, availability: "browse-only" },
           { id: "1", title: "Uncounted" },
           { id: "2", title: "Bad count" },
         ],
         quirks: ["Indexed only at county level."],
+        recordTypes: [
+          { type: "church", years: "1814-1900", level: "parish", heldAt: "Statsarkivet", access: "browse",
+            collectionIds: ["4237104"], summary: "Church books by parish." },
+          { type: "tax", access: "unknown", summary: "Not confirmed." },
+        ],
+        repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", url: "https://x/hamar" }],
+        losses: [{ recordSet: "Ringebu church book", years: "1740-1760" }],
       },
     ]);
     expect(JSON.stringify(r.localities)).not.toContain("long prose");
+    expect(JSON.stringify(r.localities)).not.toContain("catalog row");
   });
 
   describe("nationalCollections: country-wide rows once per country (spec)", () => {
@@ -932,6 +949,21 @@ describe("project_context", () => {
       ]);
       expect(r.nationalCollections).toEqual({ Canada: [{ id: "ca1901", title: "Canada, Census, 1901" }] });
       expect(r.localities?.[0].collections?.map((c) => c.id)).toEqual(["cans"]);
+    });
+
+    it("marks browse-only from a stored label over the count, or from an older row's count, and leaves name-searchable unmarked", async () => {
+      const r = await run([
+        loc("loc_001", "Schuylkill, Pennsylvania, United States", "1845-1908", [
+          { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", person_count: 52, availability: "browse-only" },
+          { id: "2466360", title: "Pennsylvania, Church Marriages, 1682-1976", person_count: 17743 },
+          { id: "old0", title: "Pennsylvania, Old Browse Set", person_count: 0 },
+        ]),
+      ]);
+      expect(Object.fromEntries((r.localities?.[0].collections ?? []).map((c) => [c.id, c.availability]))).toEqual({
+        "1999196": "browse-only",
+        "2466360": undefined,
+        old0: "browse-only",
+      });
     });
 
     it("leaves a place outside the three countries alone, and gives no key", async () => {
