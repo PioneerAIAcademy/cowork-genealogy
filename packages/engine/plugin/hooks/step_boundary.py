@@ -70,7 +70,7 @@ _SOLO = (
     "search-familysearch-wiki",
     "search-wikipedia",
     "validate-schema",
-    # Its own group: a one-shot ask that needs no project and writes nothing,
+    # Its own group: a one-shot ask that writes nothing of its own,
     # the shape section K describes.
     "where-else-to-search",
     # Its own group: the per-hit verdicts fan out as repeats of one step, and a

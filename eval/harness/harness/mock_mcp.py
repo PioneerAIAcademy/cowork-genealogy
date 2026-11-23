@@ -457,7 +457,7 @@ PROJECT_GATE_ENABLED = True
 
 #: Mirrors PROJECT_EXEMPT_TOOLS in src/utils/project-gate.ts: the tools that run with no project.
 PROJECT_EXEMPT_TOOLS = frozenset(
-    {"project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps", "place_search", "external_links_search", "build_external_search_url"}
+    {"project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps"}
 )
 
 #: What production's no-project image_transcribe omits: it reads with projectPath

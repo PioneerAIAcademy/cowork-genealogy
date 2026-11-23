@@ -786,9 +786,8 @@ real weak-match signal, not an ARK artifact.
 Reverses the earlier ruling that it is fine for standalone work not to be persisted
 (replaced by the lead's ruling of 2026-11-19: every activity starts a project). `server.ts` calls `projectGateRefusal` once, beside `rejectUnknownArgs`,
 and every tool except `project_create`, `project_list`, `project_context`, `login`,
-`logout`, `auth_status`, `tree_gaps` (the tree survey, which writes nothing and runs
-with no project in folder mode) and `place_search`, `external_links_search` and
-`build_external_search_url` (where-else-to-search, a one-shot answer with no project) returns `isError: true` with `NO_PROJECT_REFUSAL` when
+`logout`, `auth_status` and `tree_gaps` (the tree survey, which writes nothing and runs
+with no project in folder mode) returns `isError: true` with `NO_PROJECT_REFUSAL` when
 `projectPath` is absent or names a folder that holds no project. The text names both
 routes: `project_create` with the researcher's request as the objective and no
 `personId` for an activity with no person, or init-project with the FamilySearch

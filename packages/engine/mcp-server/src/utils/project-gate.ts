@@ -15,7 +15,7 @@
 
 import { NO_PROJECT_REFUSAL, classifyProjectPath, missingProjectDirMessage } from "./project-io.js";
 
-/** Tools that run with no project: they create or list projects, sign in, only read the FamilySearch tree (tree_gaps), or serve where-else-to-search. */
+/** Tools that run with no project: they create or list projects, sign in, or (tree_gaps) only read the FamilySearch tree. */
 export const PROJECT_EXEMPT_TOOLS: ReadonlySet<string> = new Set([
   "project_create",
   "project_list",
@@ -24,11 +24,6 @@ export const PROJECT_EXEMPT_TOOLS: ReadonlySet<string> = new Set([
   "logout",
   "auth_status",
   "tree_gaps",
-  // where-else-to-search: a one-shot, write-nothing answer for a beginner with no project
-  // (user ruling, 2026-11-21). With a `projectPath` they behave as before.
-  "place_search",
-  "external_links_search",
-  "build_external_search_url",
 ]);
 
 /** The refusal for a call to `tool`, or `null` when the call may run. A missing

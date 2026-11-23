@@ -3637,7 +3637,6 @@ def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_listed_to
     assert "error" not in _extract_response_dict(ran)
     assert mock_mcp.PROJECT_EXEMPT_TOOLS == {
         "project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps",
-        "place_search", "external_links_search", "build_external_search_url",
     }
 
 
