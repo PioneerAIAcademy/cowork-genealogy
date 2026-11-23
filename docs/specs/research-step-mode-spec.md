@@ -582,7 +582,7 @@ router sentence: plan at most one extra round, then wrap up.
   extraction for a found record not yet extracted, otherwise the next item's search. A
   conflict not yet analysed still goes to conflict-resolution first.
 - **Ladder: after the round settles the conflict,** the concluded-but-open arm routes to
-  proof-conclusion ("concluded while blocked: re-conclude <ps_id>").
+  proof-conclusion ("concluded while blocked: re-conclude this question's proof summary").
 - **Ending on an unsettled conflict.**
   - **`weighed_log_entry_ids`** (optional, on a conflict): conflict-resolution sends it
     on an analysis that finds nothing left to search. `research_append` fills the value
