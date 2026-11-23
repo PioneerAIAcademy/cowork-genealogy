@@ -67,14 +67,6 @@
       "comment": "**`ut_research_hvy`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The two tool calls made (project_list and project_context) had expected_args of null, meaning no specific args were required by the fixture. The project_context call correctly passed the project path. Both calls matched as 'live' with no fixture_not_found errors. No argument defects are present.\n\nJunior: (Pass. No fixture_not_found errors. No arguments defects are present.)"
     },
     {
-      "test_id": "ut_research_hvy",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 1,
-      "comment": "**`ut_research_hvy`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The skill correctly identified the task (extracting hit 9 from log_017) and handed off to record-structurer. However, the response exposes the internal identifier '3Q9M-CSK3-ZSLR' indirectly (it was in the user message, not repeated by Claude), and more critically, the per-test context states that showing internal ids to the user is a failure condition. Claude's response says 'Extracting hit 9 from log_017' — 'log_017' is an internal id shown to the user. The per-test note explicitly states the narration must be 'free of internal ids shown to the user.' This is a concrete correctness defect in the narration.\n\nJunior: (Fail. The response correctly identified the task and routed it to the appropriate downstream skill. However, the per-test context establishes a failure condition: user-facing narration must not expose internal identifiers. By telling the user it was extracting \"hit 9 from log_017\", the response surfaced log_017, which is an internal ID. Since the test explicitly requires narration to be free of internal IDs shown to the user, this is a direct violation of a mandatory requirement. Therefore, despite the correct routing decision, the overall rating is Fail.)"
-    },
-    {
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -145,14 +137,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_030`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The three MCP tool calls made (project_list, project_context, research_query) all have expected_args: null, meaning the fixture did not declare specific expected args for them. The args passed are reasonable and correct for their purposes — project_context received the correct projectPath, and research_query correctly queried plans with status active. No fixture_not_found errors occurred. All calls matched as 'live'.\n\nJunior: (Pass. No fixture_not_found errors occurred. All calls matched as 'live'.)"
-    },
-    {
-      "test_id": "ut_research_hva",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "**`ut_research_hva`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The per-test context establishes that all 11 hits must be processed in a single turn in batches of at most 5 per message, with no stopping between batches. Claude's response indicates it spawned all 11 agents but the text suggests it may have paused or offered to continue mid-way ('Continue with extracting the 11 Matches?'). The stub correctly returns Match for every hit, and relaying those Match verdicts is correct per the override. However, the response text 'The evaluator labelled this hit a Match. It holds a detail the tree does not have yet. *(repeated for all 11 hits — each returned the same verdict)*' is somewhat vague about whether all 11 were actually processed in one turn without stopping. The final offer to extract is correct. The relayed verdicts themselves are correct per the stub override. Minor concern: the response implies batching happened but doesn't clearly show all 11 were processed without an intermediate stop.\n\nJunior: (Pass. The response relayed the correct outcome: all 11 hits were evaluated and returned a Match verdict, which is exactly what the stub required. It also ended with the required offer to continue with extracting the 11 Matches. The concern about whether batching occurred without interruption is largely a presentation issue rather than evidence of incorrect execution. The text explicitly states that all 11 agents were spawned and that the same Match verdict applied to all 11 hits. Since there is no concrete indication that processing stopped mid-way, the requirement appears satisfied.\nThe narration could have been clearer about completing all 11 evaluations in a single turn, but the evidence provided supports successful completion. Therefore, this is a Pass, not a Partial Pass.)"
     },
     {
       "test_id": "ut_research_hva",
@@ -337,6 +321,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_uc1`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Three tool calls were made: project_list (no args required), project_context with the correct projectPath, and research_query with the correct projectPath, section='conflicts', and conflictId='c_001'. All expected_args fields are null (live fixture), and all calls matched as 'live' with no fixture_not_found errors. The arguments passed were appropriate and correct for the task.\n\nJunior: (Pass. The arguments passed were appropriate and correct for the task.)"
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_research_hvy`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> The skill correctly identified the task (extracting hit 9 from log_017) and handed off to record-structurer. However, the response exposes the internal identifier '3Q9M-CSK3-ZSLR' indirectly (it was in the user message, not repeated by Claude), and more critically, the per-test context states that showing internal ids to the user is a failure condition. Claude's response says 'Extracting hit 9 from log_017' — 'log_017' is an internal id shown to the user. The per-test note explicitly states the narration must be 'free of internal ids shown to the user.' This is a concrete correctness defect in the narration.\n\nJunior: (Fail. The response correctly identified the task and routed it to the appropriate downstream skill. However, the per-test context establishes a failure condition: user-facing narration must not expose internal identifiers. By telling the user it was extracting \"hit 9 from log_017\", the response surfaced log_017, which is an internal ID. Since the test explicitly requires narration to be free of internal IDs shown to the user, this is a direct violation of a mandatory requirement. Therefore, despite the correct routing decision, the overall rating is Fail.)"
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hva`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The per-test context establishes that all 11 hits must be processed in a single turn in batches of at most 5 per message, with no stopping between batches. Claude's response indicates it spawned all 11 agents but the text suggests it may have paused or offered to continue mid-way ('Continue with extracting the 11 Matches?'). The stub correctly returns Match for every hit, and relaying those Match verdicts is correct per the override. However, the response text 'The evaluator labelled this hit a Match. It holds a detail the tree does not have yet. *(repeated for all 11 hits — each returned the same verdict)*' is somewhat vague about whether all 11 were actually processed in one turn without stopping. The final offer to extract is correct. The relayed verdicts themselves are correct per the stub override. Minor concern: the response implies batching happened but doesn't clearly show all 11 were processed without an intermediate stop.\n\nJunior: (Pass. The response relayed the correct outcome: all 11 hits were evaluated and returned a Match verdict, which is exactly what the stub required. It also ended with the required offer to continue with extracting the 11 Matches. The concern about whether batching occurred without interruption is largely a presentation issue rather than evidence of incorrect execution. The text explicitly states that all 11 agents were spawned and that the same Match verdict applied to all 11 hits. Since there is no concrete indication that processing stopped mid-way, the requirement appears satisfied.\nThe narration could have been clearer about completing all 11 evaluations in a single turn, but the evidence provided supports successful completion. Therefore, this is a Pass, not a Partial Pass.)"
     }
   ]
 }
