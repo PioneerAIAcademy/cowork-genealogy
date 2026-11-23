@@ -54,6 +54,10 @@ CLAIMS = [
     "The survey now holds every Czelusniak mention in the three parishes.",
     "The survey is complete.",
     "This is a complete list of Czelusniak records.",
+    "The search now has a record for every Czelusniak mention in the three parishes.",
+    "The search gives you a hit for every Czelusniak mention.",
+    "Searching is done: there is a record for every Czelusniak mention.",
+    "Our search holds an entry for every mention of Czelusniak.",
 ]
 
 
