@@ -159,7 +159,6 @@ import {
 export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
-import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
   loadStoredCollectionUrls,

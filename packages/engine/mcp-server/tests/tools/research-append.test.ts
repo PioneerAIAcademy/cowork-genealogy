@@ -8127,7 +8127,6 @@ describe("research_append (project singleton section)", () => {
 
   it("completion with an encode item warns", async () => {
     await writeProject(withClaims([birthClaim("1850")]), baseTree);
-    await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -8136,13 +8135,11 @@ describe("research_append (project singleton section)", () => {
 
   it("completion with nothing owed is silent", async () => {
     await writeProject(withClaims([birthClaim("1850")]), treeWithBirth);
-    await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const w = r.validation.warnings.join(" ");
     expect(w).not.toMatch(/still owes/);
-    expect(w).not.toMatch(/no tree person it draws evidence from/);
   });
 
 });
