@@ -254,21 +254,21 @@ reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
 (2 pass).
 
 person-evidence's two `research_query` lines ("group the items by `record_id` +
-`record_role`", and paging "until you hold `count` items") were changed on
-issue #4681, since the 0 of 22 reds measured against them (below) turned out to
+`record_role`", and paging "until you hold `count` items") have now been
+changed, since the 0 of 22 reds measured against them (below) turned out to
 be entangled with a separate defect: `ut_person_evidence_027`'s mock answered
 `same_person` from the wrong record persona (a 1850-census child role at
 0.2415, via a wildcard fixture) rather than the death certificate's `deceased`
 role the test actually links, which gave the agent a low, wrong-persona score
-to reason from regardless of either line's wording. #4681 fixed the fixture
+to reason from regardless of either line's wording. Fixing the fixture
 first (a `deceased`-role response at 0.86, matching pe_005's own a_013 score),
-then re-measured: edit 1 alone (the `record_id` + `record_role` line) still
+then re-measuring: edit 1 alone (the `record_id` + `record_role` line) still
 regressed `ut_person_evidence_027` (partial, fail, pass), but both lines
 together passed 6 of 6 across two `--runs-per-test 3` rounds, each naming
 `a_012` `confident`. The lines above are the "each item is one persona…" and
-"until `truncated` is false…" wording from #4681; both must change together,
+"until `truncated` is false…" wording now in place; both must change together,
 not edit 1 alone. Before the fixture fix, on `ut_person_evidence_027` (Haiku
-5.5 low), main's pre-#4681 text linked a_012 `confident` in 4 of 7 runs, and
+5.5 low), the prior text linked a_012 `confident` in 4 of 7 runs, and
 any edit to either line did so in 0 of 22, on the flat and grouped builds
 alike.
 
