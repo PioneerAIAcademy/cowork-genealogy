@@ -1070,6 +1070,68 @@ then says to log both in one batch. Both this and §8.4 run in one preflight ove
 the whole resolved batch. The fire count and
 the command that measured it are in `guardrail-enforcement-spec.md`.
 
+### 8.6 A precondition that blocks: a negative search whose rows include a record the tree cites on its subject
+
+A `record_search` op logged `negative` or `error` is refused when its staged rows
+include a record the project tree already cites on the search's own subject, and that
+record is what the search was for. In the Phipps feedback session the
+first row of an 1860 census search for Benjamin Phipps was the census record the
+tree cited on him from the start, indexed as "Benj Phillips"; the agent logged
+the search negative because the surname differed, and the researcher was told
+the household could not be found.
+
+It refuses only when **all** of these hold; any unmet condition allows the op:
+
+1. `tool` is `record_search`, `outcome` is `negative` or `error`, and the op
+   carries a `stagedResultsRef` that passed the staged-ref check. `error` is
+   judged too because a search that staged rows ran, so `error` would carry the
+   same false nil past the refusal. A hand-typed entry with no ref has nothing
+   to check.
+2. The staged query names a subject: the **raw** `payload.query.subjectId`.
+   `stripQueryPlumbing` deletes it, so it is read from the envelope the
+   staged-ref check already read, never through `readStagedEnvelopeQuery`.
+3. A staged row's `recordId`, reduced with `arkToBareId`, equals the bare id at
+   the end of the `url` of a tree source the subject cites: on the person, on
+   one of its facts or on one of its names (`collectSourceRefs`). The subject
+   must be a tree person, and a source with no url or a url that is not an ARK
+   matches nothing.
+4. The row is what the search was for: one of the row's `events` has a year
+   inside a `residenceYear*` or `anyYear*` window the query sent (one bound
+   alone is open on the other side), **or** the query's `collectionId` equals
+   the row's `collectionId`, the query sent **no** birth, death or marriage
+   window, and it named no `recordType` other than `census`. A vital-event
+   window never matches on its own, so a death search that returns the
+   subject's cited 1870 census is allowed. The collection arm is off under a
+   vital-event window or a non-census `recordType` because one collection holds
+   many record types and roles: a death or marriage search pinned to a mixed
+   collection is for that event, whatever years it sent, and in the committed e2e runs, death and marriage searches pinned to a
+   collection returned the subject's cited records as a Father, as an Other on
+   someone else's death, and a death record on a marriage search, and every one
+   was rightly logged negative.
+
+The ground truth is the **project tree**, not FamilySearch's `attachedToSubject`
+flag: the staged sidecar is written before ranking and never carries that flag
+(a standing ruling keeps ranking out of it). A record attached to the subject in Family Tree but not cited in
+the project tree is out of this rule's reach, and that limit is accepted.
+
+Every staged row is judged, not only the page the caller was shown. Under a
+place expansion with a named subject the staged payload is the whole merged
+pool and the caller saw one ranked page; that page cannot be rebuilt at
+log time, and the record came back from the search either way. So the refusal
+names the row's `recordId`, the tree source ids and the subject, says the record
+may not be on the page shown and to read it with `record_read` if it has not,
+says the tree already holds it as the subject's record, and asks for the search
+to be logged `positive` or `partial` and the record reported as the subject's,
+since a surname or given name indexed differently neither makes it someone else
+nor leaves it unfound. Fixing the log entry alone is not enough: in the replayed
+Phipps eval the agent re-logged the search `partial` but still reported the
+household as not found.
+
+It runs per op, after the never-sent filter check, before any op is applied, and
+reads the tree already loaded under the project lock. No override (ADR-0011).
+The refusal count and the command that measured it are in
+`guardrail-enforcement-spec.md`.
+
 ---
 
 ## 9. Test plan (vitest)
@@ -1153,6 +1215,21 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   with the rule removed, with pinned siblings counted, with surname-only matching,
   with pairing removed, with case folding removed, with errored siblings counted,
   or with paging kept.
+- **Cited-record negative check (§8.6)** — refused, with nothing written and the
+  staged file kept: the Phipps shape (a residence-window census search whose row
+  is the record the subject cites), the same as one op of a batch, a matching
+  `collectionId` with no year window (with no `recordType`, or `census`), an
+  `anyYear` window holding the row's year, a source cited on a fact rather than
+  the person, and the Phipps shape logged `error`; the refusal names the
+  record, the source and the subject, and asks for `positive` or `partial`.
+  Allowed: a death search returning the cited census, a residence window that
+  misses the row's year, a different collection, a same-collection row under a
+  death, marriage or birth window or a `death`, `marriage` or `cemetery`
+  `recordType`, no
+  `subjectId`, no `stagedResultsRef`, `positive` and `partial` outcomes, a
+  subject that is not a tree person, and a cited source with no url or a non-ARK
+  url. The refusal tests fail with the call removed from either the single or
+  the batch path.
 - **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
   and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
   table escaped twice, one with a single real leading or trailing newline, an

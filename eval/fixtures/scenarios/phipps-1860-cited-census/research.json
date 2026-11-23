@@ -1,0 +1,65 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find all children of Benjamin Fairbanks Phipps, whether recorded in Family Tree or not.",
+    "title": "Children of Benjamin Fairbanks Phipps",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-18",
+    "updated": "2026-11-18"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the children of Benjamin Fairbanks Phipps (b. 1816 Thompson, Connecticut)?",
+      "rationale": "Primary research objective. The household censuses name the children living at home.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-18",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Thompson, Windham, Connecticut",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 census household lists the children at home between the 1850 and 1870 enumerations.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
