@@ -934,12 +934,14 @@ question is a second overview entry, never an edit of the first.
 Return, for the caller, the historical-context narrative itself — the specific
 answer, its research implications (for a jurisdiction question, name the kinds
 of records that office kept, such as deeds, probate, court orders and tax
-lists), and (when any wiki/Wikipedia tool was called)
+lists) (use each date the question gives — birth, arrival, death — to name the
+record classes it opens; a death date opens death records, obituaries and
+pension files), and (when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
 ```
 ### Search implications
-- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis; open with "(general knowledge)" when no tool result suggested it>
+- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis; open with "(general knowledge)" unless a tool result stated it>
 - research-plan: <one fact per line that changes where or when to search>
 ```
 
