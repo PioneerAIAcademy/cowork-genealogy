@@ -275,9 +275,9 @@ certificate informant was James Brown (son-in-law), reporting 63 years after the
 event — he may have confused place of residence with place of birth, or may not
 have known Patrick immigrated as a young child.
 
-Some Irish immigrants in the 1840s-1850s listed children's birthplace as the
-first American state of residence rather than Ireland, especially for children
-who arrived very young.
+(general knowledge) Some Irish immigrants in the 1840s-1850s listed children's
+birthplace as the first American state of residence rather than Ireland,
+especially for children who arrived very young.
 
 Implication: The census records (contemporary, household informant) carry more
 weight than the death certificate (later recollection, secondary informant) for
@@ -897,11 +897,13 @@ Applying this:
   memory. When a tool call returns no results or an error, do not continue
   elaborating that topic as if the search succeeded — either narrow the response
   to what the successful calls returned, or flag the gap explicitly ("I could
-  not confirm this from the wiki"). Never present training-knowledge claims in
-  the same register as tool-verified facts. Open each sentence or bullet that
-  makes such a claim with "(general knowledge)"; a flag in another sentence does
-  not cover it. Do not present an unverified historical pattern as the reason
-  this family emigrated or as evidence of where they came from.
+  not confirm this from the wiki; verify it before relying on it"). Never
+  present training-knowledge claims in the same register as tool-verified
+  facts. Open each sentence or bullet that makes such a claim with
+  "(general knowledge)"; a flag in another sentence does not cover it. In a
+  Search implications bullet, put it right after the label. Do not present an
+  unverified historical pattern as the reason this family emigrated or as
+  evidence of where they came from.
 - **Never fabricate a tool or system error.** Do not claim a tool call failed, a
   system error occurred, or a technical issue happened unless a tool call was
   actually attempted and actually returned an error. If you decide not to call a
