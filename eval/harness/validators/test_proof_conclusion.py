@@ -609,11 +609,33 @@ def _reopened_questions(args) -> set[str]:
     return out
 
 
-def _writes_claims(args) -> bool:
-    return any(
-        op.get("section") == "proof_summaries" and "claims" in (_decoded(op.get("fields")) or op.get("entry") or {})
-        for op in _ops_of(args)
-    )
+_PROBABLE_OR_BETTER = {"probable", "proved"}
+
+
+def _claimed_fact_holders(args) -> set[str]:
+    """The holders an affirmed fact claim at probable or better names, in the
+    concern's own words: `personId X` for a person, `couple` for a pair subject."""
+    out: set[str] = set()
+    for op in _ops_of(args):
+        if op.get("section") != "proof_summaries":
+            continue
+        body = _decoded(op.get("fields")) or _decoded(op.get("entry"))
+        for c in body.get("claims") or []:
+            if not isinstance(c, dict) or c.get("polarity") == "denied" or c.get("proof_tier") not in _PROBABLE_OR_BETTER:
+                continue
+            subject = (c.get("fact") or {}).get("subject") if isinstance(c.get("fact"), dict) else None
+            if isinstance(subject, str):
+                out.add(f"personId {subject}")
+            elif isinstance(subject, dict):
+                out.add("couple")
+    return out
+
+
+def _primary_cleared_by(concern: str, holders: set[str]) -> bool:
+    """A `primary` finding a claims write answers: an affirmed fact claim at
+    probable or better on the warned person, or on a pair for a Couple fact."""
+    head = concern.split(", factId", 1)[0]
+    return head in holders or (head.startswith("relationshipId ") and "couple" in holders)
 
 
 def test_no_finding_left_will_be_refused(tool_calls, test):
@@ -622,9 +644,9 @@ def test_no_finding_left_will_be_refused(tool_calls, test):
     A later clean write to the same summary's tier, claims or citations, or to
     the same holder and id, clears it; a write to anything else does not. Two
     fixes write a different key and clear too: re-opening the question a
-    `claims-capped-open` finding names, and a clean claims write after a
-    `primary` finding. Known limit: a later clean edit of a fact made primary
-    while unclaimed reads as clearing it, though the engine does not re-check."""
+    `claims-capped-open` finding names (that finding only), and an affirmed
+    fact claim at probable or better on the person (or pair) a `primary`
+    finding names."""
     standing: dict[str, list[str]] = {}
     for call in tool_calls or []:
         if not isinstance(call, dict):
@@ -639,14 +661,15 @@ def test_no_finding_left_will_be_refused(tool_calls, test):
             standing[concern] = warned.get(concern, [])
         if name == "research_append":
             reopened = _reopened_questions(args)
-            claims_written = _writes_claims(args)
+            holders = _claimed_fact_holders(args)
             for concern, texts in list(standing.items()):
                 if concern in warned or not texts:
                     continue
-                if any((m := _CAPPED_OPEN.search(t)) and m.group(1) in reopened for t in texts):
-                    standing[concern] = []
-                elif claims_written and all(_PRIMARY_RULE in t for t in texts):
-                    standing[concern] = []
+                # Re-opening the named question answers only its capped finding.
+                texts = [t for t in texts if not ((m := _CAPPED_OPEN.search(t)) and m.group(1) in reopened)]
+                if texts and all(_PRIMARY_RULE in t for t in texts) and _primary_cleared_by(concern, holders):
+                    texts = []
+                standing[concern] = texts
     left = sorted(c for c, w in standing.items() if w)
     assert not left, (
         f"the run ended with a warn-mode finding standing on {left}: the last write "

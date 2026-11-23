@@ -148,7 +148,8 @@ write the answer anyway, and leave the question open.** Each claim naming that
 person carries `shortfall: "gap"`:
 - nothing cited is linked to anyone, or a cited parent side has no linked
   assertion → the claim at `not_proved`, citing no assertion, and the scalar
-  `tier` `not_proved` unless another claim stands higher;
+  `tier` `not_proved` unless another claim stands higher; keep that parent's
+  assertions out of the summary's `supporting_assertion_ids` too;
 - the evidence is linked but that person is not linked from it → the claim at
   `possible`.
 Write no tree object for it, name who is unidentified and what identifying them

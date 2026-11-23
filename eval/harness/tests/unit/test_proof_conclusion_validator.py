@@ -531,11 +531,75 @@ def test_reopening_another_question_does_not_clear_it():
         standing(calls, ANY)
 
 
+def _birth_claim(subject="I1", tier="probable", **extra):
+    return {"claim": "birth", "proof_tier": tier, "fact": {"subject": subject, "fact_type": "Birth", "date": "1850"}, **extra}
+
+
 def test_a_claims_write_clears_a_primary_finding():
     calls = [
         _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
         _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
-                                  "fields": {"claims": [{"claim": "birth"}]}}),
+                                  "fields": {"claims": [_birth_claim()]}}),
+    ]
+    standing(calls, ANY)
+
+
+@pytest.mark.parametrize("claim,why", [
+    ({"claim": "marriage", "proof_tier": "possible", "relationship": {"type": "Couple", "person1": "I1", "person2": "I3"}}, "an unrelated claim"),
+    (_birth_claim(subject="I9"), "a fact claim on another person"),
+    (_birth_claim(tier="possible"), "a fact claim below probable"),
+    (_birth_claim(polarity="denied"), "a denied fact claim"),
+])
+def test_a_claims_write_that_does_not_claim_the_warned_fact_leaves_it_standing(claim, why):
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_009",
+                                  "fields": {"claims": [claim]}}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_entry_mentioning_claims_in_its_narrative_does_not_clear_a_primary_finding():
+    entry = json.dumps({"question_id": "q_002", "tier": "probable", "narrative_markdown": "No claims yet."})
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": entry}, results=[{"entryId": "ps_009"}]),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_entry_with_a_covering_claim_clears_a_primary_finding():
+    entry = json.dumps({"question_id": "q_002", "tier": "probable", "claims": [_birth_claim()]})
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": entry}, results=[{"entryId": "ps_009"}]),
+    ]
+    standing(calls, ANY)
+
+
+def test_reopening_clears_only_the_capped_finding_and_keeps_the_rest():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"ops": [
+            {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "fields": {"claims": []}},
+            {"section": "questions", "op": "update", "entryId": "q_001", "fields": {"status": "resolved"}},
+        ]}, [capped, _summary_warning("ps_001")]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_reopen_clears_a_capped_open_finding():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": '{"status": "in_progress"}'}),
     ]
     standing(calls, ANY)
 
