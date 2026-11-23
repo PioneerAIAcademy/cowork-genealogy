@@ -5,10 +5,19 @@
     "name": "Translate a damaged German Kurrent baptism with ambiguous readings",
     "type": "positive",
     "description": "German Kurrent church record with genuinely uncertain spots — a partly illegible month, a surname affected by the e/n confusion pair, and an illegible godfather surname. Directly stresses the 'Notation of uncertainty' rubric dimension: a good answer must flag the uncertain readings with [?] and offer alternatives rather than silently guessing — especially the names. Differs from ut_translation_001 (a clean German baptism) by deliberately introducing paleographic ambiguity.",
-    "tags": ["german", "kurrent", "baptism", "paleography", "uncertainty", "damaged", "direct-arm"]
+    "tags": [
+      "german",
+      "kurrent",
+      "baptism",
+      "paleography",
+      "uncertainty",
+      "damaged",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you read and translate this German Kurrent baptism entry? My transcription is shaky in a few spots — the ink is faded and some letters are hard to tell apart: 'Den 3ten [M..]rz 1812 ist getauft worden Johann Georg, ehelicher Sohn des Joh. Sch[m/n]ider, Tagelöhner, und seiner Ehefrau Anna Maria. Pathe war Georg [unleserlich], Bürger allhier.'"
+    "delegation": "Can you read and translate this German Kurrent baptism entry? My transcription is shaky in a few spots — the ink is faded and some letters are hard to tell apart: 'Den 3ten [M..]rz 1812 ist getauft worden Johann Georg, ehelicher Sohn des Joh. Sch[m/n]ider, Tagelöhner, und seiner Ehefrau Anna Maria. Pathe war Georg [unleserlich], Bürger allhier.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
