@@ -28,6 +28,7 @@ import {
   outsideSiteJurisdictionError,
   planItemFlags,
   planWindowFlag,
+  routesToFamilySearch,
 } from "../utils/plan-item-plausibility.js";
 import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
@@ -7750,9 +7751,18 @@ function compoundJurisdictionInvariants(item: any, research: any): string[] {
 
 /** A FamilySearch plan item names no outside site in its jurisdiction
  *  (`outsideSiteJurisdictionError`, #4665). Checked on an append and on a change
- *  to `jurisdiction` or to `repository`: the rule reads both, so an edit moving a
- *  site's item onto FamilySearch is the same gap. An edit touching neither leaves
- *  an item written before the rule editable. */
+ *  to `jurisdiction` or to where `repository` routes the item: the rule reads both,
+ *  so an edit moving a site's item onto FamilySearch is the same gap. An edit
+ *  touching neither, including a repository respelling that routes the same way
+ *  ("" for a missing one, "familysearch" for "FamilySearch"), leaves an item
+ *  written before the rule editable. */
+function outsideSiteRuleInputsChanged(stored: any, next: any): boolean {
+  return (
+    stored?.jurisdiction !== next?.jurisdiction ||
+    routesToFamilySearch(stored?.repository) !== routesToFamilySearch(next?.repository)
+  );
+}
+
 function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly string[]): string[] {
   const error = outsideSiteJurisdictionError(item ?? {}, storedLinkTexts);
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
@@ -10203,10 +10213,7 @@ function applyOne(
         if (item && storedItem?.jurisdiction !== item.jurisdiction) {
           invariantErrors.push(...compoundJurisdictionInvariants(item, research));
         }
-        if (
-          item &&
-          (storedItem?.jurisdiction !== item.jurisdiction || storedItem?.repository !== item.repository)
-        ) {
+        if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
           invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
         }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
@@ -10301,11 +10308,7 @@ function applyOne(
     if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
       invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
-    if (
-      op.op === "append" ||
-      storedItem?.jurisdiction !== resultEntry?.jurisdiction ||
-      storedItem?.repository !== resultEntry?.repository
-    ) {
+    if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
       invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {

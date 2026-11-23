@@ -201,9 +201,21 @@ function normalizeName(s: string): string {
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** `name` as a whole word or phrase of `text` (both normalized by the caller):
- *  "ancestry" matches "(Ancestry)" and not "ancestryish". */
+ *  "ancestry" matches "(Ancestry)" and not "ancestryish". A name followed by
+ *  "index" or "indexes" is a FamilySearch collection title ("Find a Grave Index"),
+ *  not the site, so it does not match there. */
 function namesPhrase(text: string, name: string): boolean {
-  return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(name)}(?:$|[^a-z0-9])`).test(text);
+  return new RegExp(
+    `(?:^|[^a-z0-9])${escapeRegExp(name)}(?! index(?:es)?(?:$|[^a-z0-9]))(?:$|[^a-z0-9])`,
+  ).test(text);
+}
+
+/** Whether the router sends an item with this `repository` to FamilySearch agents:
+ *  blank, missing or naming FamilySearch (`searchStepFor`, which sends a `fs_hints`
+ *  item to search-hints and the rest to search-records). */
+export function routesToFamilySearch(repository: unknown): boolean {
+  const repo = typeof repository === "string" ? repository.trim() : "";
+  return repo === "" || /familysearch/i.test(repo);
 }
 
 /** Words that name a kind of record or page, not a site. A stored `link_text` made
@@ -238,16 +250,16 @@ function namesOnlyRecords(name: string): boolean {
  *  are FamilySearch collection titles ("Find a Grave Index") or availability notes.
  *  `storedNames` (the project's `external-collections.json` `link_text`s) count
  *  only when two or more words long, one-word rows ("Search", "Media") matching
- *  ordinary jurisdiction words, and not made only of `RECORD_WORDS`.
+ *  ordinary jurisdiction words, not made only of `RECORD_WORDS`, and not naming
+ *  FamilySearch ("images at FamilySearch").
  *
  *  A blank `repository` counts as FamilySearch, because the router (`searchStepFor`)
- *  sends it to search-records. */
+ *  sends it to FamilySearch agents (search-records, or search-hints for `fs_hints`). */
 export function outsideSiteJurisdictionError(
   item: PlanItemLike,
   storedNames: readonly string[] = []
 ): string | undefined {
-  const repository = typeof item?.repository === "string" ? item.repository.trim() : "";
-  if (repository !== "" && !/familysearch/i.test(repository)) return undefined;
+  if (!routesToFamilySearch(item?.repository)) return undefined;
   const jurisdiction = typeof item?.jurisdiction === "string" ? item.jurisdiction : "";
   const text = normalizeName(jurisdiction);
   if (text === "") return undefined;
@@ -258,7 +270,7 @@ export function outsideSiteJurisdictionError(
   }
   for (const raw of storedNames) {
     const name = typeof raw === "string" ? normalizeName(raw) : "";
-    if (name.split(" ").length < 2 || namesOnlyRecords(name)) continue;
+    if (name.split(" ").length < 2 || namesOnlyRecords(name) || name.includes("familysearch")) continue;
     if (found.some((f) => f.includes(name) || name.includes(f))) continue;
     if (namesPhrase(text, name)) found.push(name);
   }

@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { outsideSiteJurisdictionError, OUTSIDE_SITE_NAMES } from "../src/utils/plan-item-plausibility.js";
+import { outsideSiteJurisdictionError, OUTSIDE_SITE_NAMES, routesToFamilySearch } from "../src/utils/plan-item-plausibility.js";
 import { externalLinkRows } from "../src/tools/external-links-search.js";
 import { siteLinkTexts } from "../src/utils/external-collections-store.js";
 
@@ -54,7 +54,7 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const namesFixed = (text: string) =>
   fixedNames.some((n) => new RegExp(`(?:^|[^a-z0-9])${esc(n)}(?:$|[^a-z0-9])`).test(text.toLowerCase()));
 
-let files = 0, items = 0, fsItems = 0, refusals = 0, rationaleHits = 0, rationaleWithExternal = 0;
+let files = 0, items = 0, fsItems = 0, blankRepoItems = 0, refusals = 0, rationaleHits = 0, rationaleWithExternal = 0;
 const places = new Set<string>();
 const skipped = new Map<string, string>();
 const refused: string[] = [];
@@ -78,8 +78,10 @@ for (const scenario of readdirSync(RUNS).filter((d) => statSync(join(RUNS, d)).i
     for (const plan of Array.isArray(doc.plans) ? doc.plans : []) {
       for (const item of Array.isArray(plan?.items) ? plan.items : []) {
         items++;
-        if (!/familysearch/i.test(String(item?.repository ?? ""))) continue;
+        // The guard's own routing rule: a blank or missing repository is FamilySearch too.
+        if (!routesToFamilySearch(item?.repository)) continue;
         fsItems++;
+        if (String(item?.repository ?? "").trim() === "") blankRepoItems++;
         const error = outsideSiteJurisdictionError(item, linkTexts);
         if (error) {
           refusals++;
@@ -94,7 +96,7 @@ for (const scenario of readdirSync(RUNS).filter((d) => statSync(join(RUNS, d)).i
   }
 }
 
-console.log(`files ${files}, plan items ${items}, FamilySearch items ${fsItems}`);
+console.log(`files ${files}, plan items ${items}, FamilySearch items ${fsItems} (blank repository: ${blankRepoItems})`);
 console.log(`locality places ${places.size}, of which contributed no rows ${skipped.size}`);
 for (const [p, why] of skipped) console.log(`  no rows: ${p} — ${why}`);
 console.log(`refusals over FamilySearch items, each run against its own localities' link_texts: ${refusals}`);

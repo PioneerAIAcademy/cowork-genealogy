@@ -5,6 +5,7 @@ import {
   outsideSiteJurisdictionError,
   planItemFlags,
   planWindowFlag,
+  routesToFamilySearch,
 } from "../../src/utils/plan-item-plausibility.js";
 import { buildExternalSearchUrlSchema } from "../../src/tools/build-external-search-url.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
@@ -524,6 +525,41 @@ describe("outsideSiteJurisdictionError", () => {
     expect(outsideSiteJurisdictionError(fs("Utah (Chronicling\u00a0 America)"))).toMatch(/'chronicling america'/);
   });
 
+  it("reads a site name followed by 'index' as a FamilySearch collection title, not the site", () => {
+    // "United States, Find a Grave Index" is a FamilySearch collection: a FamilySearch item
+    // naming it is right, and the refusal's "write a separate Find a Grave item" would be wrong.
+    for (const jurisdiction of [
+      "Blount County, Alabama (Find a Grave Index)",
+      "Ohio (FindAGrave Indexes)",
+      "Ohio (find-a-grave index, 1600s-current)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toBeUndefined();
+    }
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave)"))).toMatch(/'find a grave'/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Index; Ancestry)"))).toMatch(/ names 'ancestry', an outside site,/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Indexer notes)"))).toMatch(/'find a grave'/);
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers Index)"), ["Utah Digital Newspapers"])).toBeUndefined();
+  });
+
+  it("never reads a stored name naming FamilySearch itself as an outside site", () => {
+    // Both are live external_links_search link_texts (replay at 8b27bce44).
+    const stored = ["images at FamilySearch", "Vermont Historical Society and the FamilySearch Library", "Utah Digital Newspapers"];
+    expect(outsideSiteJurisdictionError(fs("Kent, England (images at FamilySearch)"), stored)).toBeUndefined();
+    expect(
+      outsideSiteJurisdictionError(fs("Vermont (Vermont Historical Society and the FamilySearch Library)"), stored),
+    ).toBeUndefined();
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/utah digital newspapers/);
+  });
+
+  it("routes a repository as the router does", () => {
+    for (const r of [undefined, null, "", "  ", "FamilySearch", "familysearch.org", "FamilySearch Library"]) {
+      expect(routesToFamilySearch(r), String(r)).toBe(true);
+    }
+    for (const r of ["Ancestry", "Chronicling America", "Utah Digital Newspapers"]) {
+      expect(routesToFamilySearch(r), r).toBe(false);
+    }
+  });
+
   it("never reads a stored name made only of record words as a site", () => {
     const stored = ["Parish Registers", "Death Certificates", "1871 Census", "National Archives", "Utah Digital Newspapers"];
     for (const jurisdiction of [
@@ -608,6 +644,22 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
       fields: { status: "in_progress" },
     } as never, undefined as never).catch((e: Error) => e);
     expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold a repository respelling that routes the same way, on an item written before the rule", async () => {
+    const { repository: _omit, ...bare } = NEWS as Record<string, unknown>;
+    const stored = { ...bare, id: "pli_001", jurisdiction: PLI_006 };
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [stored] }] });
+    const viaPlans = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...stored, repository: "" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(viaPlans instanceof Error ? viaPlans.message : JSON.stringify(viaPlans)).toMatch(/"ok":\s*true/);
+    const viaItem = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { repository: "familysearch" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(viaItem instanceof Error ? viaItem.message : JSON.stringify(viaItem)).toMatch(/"ok":\s*true/);
   });
 
   it("accepts the fix: the place on the FamilySearch item, each site on its own item", async () => {
