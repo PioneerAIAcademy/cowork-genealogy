@@ -598,6 +598,47 @@ describe("outsideSiteJurisdictionError", () => {
     }
   });
 
+  it("reads a stored archive followed by 'film' or 'microfilm' as film FamilySearch holds", () => {
+    const stored = ["Texas State Library and Archives", "Utah State Archives"];
+    for (const jurisdiction of [
+      "Texas (Texas State Library and Archives microfilm)",
+      "Utah (Utah State Archives film)",
+      "Utah (Utah State Archives probate films)",
+      "Utah (Utah State Archives, microfilmed)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
+    }
+    expect(outsideSiteJurisdictionError(fs("Texas (Texas State Library and Archives)"), stored)).toMatch(
+      /'Texas State Library and Archives'/,
+    );
+    // Film follows only a stored name: no fixed site's film is held by FamilySearch.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Ancestry microfilm)"))).toMatch(/'ancestry'/);
+  });
+
+  it("reads punctuation before 'index' as the same collection title", () => {
+    for (const jurisdiction of [
+      "Blount County, Alabama (Find a Grave (index))",
+      "Alabama (Find a Grave: Index)",
+      "Alabama (Find a Grave - index)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toBeUndefined();
+    }
+    // Only spaces join the words between, so a second site does not stretch the title.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave; Ancestry index)"))).toMatch(/names 'ancestry', 'find a grave', outside sites/);
+  });
+
+  it("names a stored site whose name only contains a fixed site's letters", () => {
+    const msg = outsideSiteJurisdictionError(
+      fs("Germany (Matricula; Matriculation Society Archives)"),
+      ["Matriculation Society Archives", "Chronicling America Archive"],
+    );
+    expect(msg).toMatch(/'matricula', 'Matriculation Society Archives', outside sites/);
+    // A stored row holding a fixed name as a whole phrase is that site, named once.
+    expect(outsideSiteJurisdictionError(fs("Utah (Chronicling America)"), ["Chronicling America"])).toMatch(
+      /names 'chronicling america', an outside site/,
+    );
+  });
+
   it("quotes a stored link_text as stored, and matches it normalized", () => {
     const msg = outsideSiteJurisdictionError(fs("Ontario (library & archives of Upper-Canada)"), ["Library and Archives of Upper Canada"]);
     expect(msg).toMatch(/names 'Library and Archives of Upper Canada', an outside site/);

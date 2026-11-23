@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { outsideSiteJurisdictionError, OUTSIDE_SITE_NAMES, routesToFamilySearch } from "../src/utils/plan-item-plausibility.js";
+import { looksLikeSite, namesFixedSite, outsideSiteJurisdictionError, routesToFamilySearch } from "../src/utils/plan-item-plausibility.js";
 import { externalLinkRows } from "../src/tools/external-links-search.js";
 import { siteLinkTexts } from "../src/utils/external-collections-store.js";
 
@@ -49,13 +49,9 @@ async function rowsFor(place: string): Promise<PlaceRows> {
   return out;
 }
 
-const fixedNames = Object.values(OUTSIDE_SITE_NAMES).flat();
-const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const namesFixed = (text: string) =>
-  fixedNames.some((n) => new RegExp(`(?:^|[^a-z0-9])${esc(n)}(?:$|[^a-z0-9])`).test(text.toLowerCase()));
-
 let files = 0, items = 0, fsItems = 0, blankRepoItems = 0, refusals = 0, rationaleHits = 0, rationaleWithExternal = 0;
 const places = new Set<string>();
+const allLinkTexts = new Set<string>();
 const skipped = new Map<string, string>();
 const refused: string[] = [];
 
@@ -72,6 +68,7 @@ for (const scenario of readdirSync(RUNS).filter((d) => statSync(join(RUNS, d)).i
       else skipped.set(loc.place, r.skipped);
     }
     const linkTexts = siteLinkTexts(rows);
+    for (const t of linkTexts) allLinkTexts.add(t);
     const externalOn = new Set(
       (Array.isArray(doc.log) ? doc.log : []).filter((e: any) => e?.external_site).map((e: any) => e.plan_item_id),
     );
@@ -87,7 +84,7 @@ for (const scenario of readdirSync(RUNS).filter((d) => statSync(join(RUNS, d)).i
           refusals++;
           refused.push(`${scenario}/${f} ${item.id}: ${error.slice(0, 160)}`);
         }
-        if (typeof item?.rationale === "string" && namesFixed(item.rationale)) {
+        if (typeof item?.rationale === "string" && namesFixedSite(item.rationale)) {
           rationaleHits++;
           if (externalOn.has(item.id)) rationaleWithExternal++;
         }
@@ -102,3 +99,8 @@ for (const [p, why] of skipped) console.log(`  no rows: ${p} — ${why}`);
 console.log(`refusals over FamilySearch items, each run against its own localities' link_texts: ${refusals}`);
 for (const r of refused) console.log(`  ${r}`);
 console.log(`FamilySearch items whose rationale names a fixed site: ${rationaleHits}, with an external_site entry on the item: ${rationaleWithExternal}`);
+const candidates = [...allLinkTexts].filter((t) => t.trim().split(/\s+/).length >= 2 || looksLikeSite(t));
+console.log(
+  `stored link_texts across the corpus localities: ${allLinkTexts.size}; read as a site (looksLikeSite): ` +
+    `${candidates.filter(looksLikeSite).length} of the ${candidates.length} that are two or more words or a domain`,
+);

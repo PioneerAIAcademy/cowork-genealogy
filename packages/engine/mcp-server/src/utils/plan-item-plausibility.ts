@@ -213,17 +213,33 @@ function namesPhrase(text: string, name: string): boolean {
  *  "(Ancestry index)" still names Ancestry. */
 const INDEXED_BY_FAMILYSEARCH = new Set(["findagrave", "billiongraves", "newspapers"]);
 
-/** `text` with each FamilySearch collection title of `name` blanked out ("Newspapers.com
- *  Stories and Events Index"). Each site is tested on its own, so a title reaching
- *  over a second site's name never hides that site. */
-function withoutIndexTitles(text: string, name: string): string {
+const INDEX_TAIL = "index(?:es)?";
+/** A stored archive or library name followed by "film" or "microfilm" is film
+ *  FamilySearch holds ("Texas State Library and Archives microfilm"), as "National
+ *  Archives" film is. */
+const FILM_TAIL = "(?:micro)?film(?:s|ed)?";
+
+/** `text` with each `name`, up to three space-separated words, then `tail`, blanked
+ *  out: a FamilySearch collection title ("Newspapers.com Stories and Events Index",
+ *  "Find a Grave (index)") or film it holds. Only spaces join the middle words, so
+ *  "Find a Grave; Ancestry index" keeps Find a Grave, and each site is tested on its
+ *  own, so a title reaching over a second site's name never hides that site. */
+function withoutTitles(text: string, name: string, tail: string): string {
   return text.replace(
     new RegExp(
-      `(^|[^a-z0-9])${escapeRegExp(name)}(?: [a-z0-9.']+){0,3} index(?:es)?(?=$|[^a-z0-9])`,
+      `(^|[^a-z0-9])${escapeRegExp(name)}(?: [a-z0-9.']+){0,3}[^a-z0-9]{1,3}${tail}(?=$|[^a-z0-9])`,
       "g",
     ),
     "$1 ",
   );
+}
+
+/** Whether `text` names a fixed site (`OUTSIDE_SITE_NAMES`) as a whole word or
+ *  phrase, with no collection-title exemption. Exported for the corpus replay's
+ *  rationale count, so it counts as the guard reads. */
+export function namesFixedSite(text: string): boolean {
+  const t = normalizeName(text);
+  return Object.values(OUTSIDE_SITE_NAMES).some((names) => names.some((n) => namesPhrase(t, normalizeName(n))));
 }
 
 /** Whether the router sends this plan item to FamilySearch agents (`searchStepFor`):
@@ -265,18 +281,18 @@ const SITE_WORDS = new Set(
 );
 const DOMAIN = /[a-z0-9-]{2,}\.(?:com|org|net|gov|edu|info|[a-z]{2})(?![a-z0-9])/;
 
-/** Whether a normalized stored `link_text` looks like a site: a domain
- *  ("Genealogy.net"), or two or more words, not only `RECORD_WORDS`, holding a fixed
- *  site name or a `SITE_WORDS` word. Never one naming FamilySearch. Live `link_text`s are mostly collection titles ("Civil Marriage
- *  Records, 1894-1896") and places ("Los Angeles"), so anything else is not read as
- *  a site: missing a site costs less than refusing a sound FamilySearch item. */
-function looksLikeSite(name: string): boolean {
+/** Whether a stored `link_text` looks like a site: a domain ("Genealogy.net"), or
+ *  two or more words, not only `RECORD_WORDS`, holding a fixed site name or a
+ *  `SITE_WORDS` word. Never one naming FamilySearch. Live `link_text`s are mostly
+ *  collection titles ("Civil Marriage Records, 1894-1896") and places ("Los
+ *  Angeles"), so anything else is not read as a site: missing a site costs less than
+ *  refusing a sound FamilySearch item. Exported for the corpus replay. */
+export function looksLikeSite(linkText: string): boolean {
+  const name = normalizeName(linkText);
   if (name.includes("familysearch")) return false;
   if (DOMAIN.test(name)) return true;
   if (name.split(" ").length < 2 || namesOnlyRecords(name)) return false;
-  if (Object.values(OUTSIDE_SITE_NAMES).some((names) => names.some((n) => namesPhrase(name, normalizeName(n))))) {
-    return true;
-  }
+  if (namesFixedSite(name)) return true;
   return name.split(/[^a-z0-9]+/).some((w) => SITE_WORDS.has(w));
 }
 
@@ -303,16 +319,18 @@ export function outsideSiteJurisdictionError(
   for (const [site, names] of Object.entries(OUTSIDE_SITE_NAMES)) {
     const hit = names.find((n) => {
       const name = normalizeName(n);
-      return namesPhrase(INDEXED_BY_FAMILYSEARCH.has(site) ? withoutIndexTitles(text, name) : text, name);
+      return namesPhrase(INDEXED_BY_FAMILYSEARCH.has(site) ? withoutTitles(text, name, INDEX_TAIL) : text, name);
     });
     if (hit) found.push({ shown: hit, name: normalizeName(hit) });
   }
   for (const raw of storedNames) {
     if (typeof raw !== "string") continue;
+    if (!looksLikeSite(raw)) continue;
     const name = normalizeName(raw);
-    if (!looksLikeSite(name)) continue;
-    if (found.some((f) => f.name.includes(name) || name.includes(f.name))) continue;
-    if (namesPhrase(text, name)) found.push({ shown: raw.trim(), name });
+    // The same site under both lists ("Chronicling America" stored too), compared as
+    // whole words: "matriculation society archives" is not "matricula".
+    if (found.some((f) => namesPhrase(f.name, name) || namesPhrase(name, f.name))) continue;
+    if (namesPhrase(withoutTitles(text, name, FILM_TAIL), name)) found.push({ shown: raw.trim(), name });
   }
   if (found.length === 0) return undefined;
   const sites = found.map((f) => `'${f.shown}'`).join(", ");
