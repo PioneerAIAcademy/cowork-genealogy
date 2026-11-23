@@ -17,6 +17,7 @@ import argparse
 import collections
 import glob
 import json
+import re
 import os
 import statistics
 import sys
@@ -151,6 +152,11 @@ def cmd_gaps(args) -> None:
                         call_args = {k: v for k, v in (c.get("args") or {}).items() if k != "projectPath"}
                         print(f"{short(t['test_id'], log['skill'])} run{r['run_index']} {r['outcome']} "
                               f"#{i} {bare(c.get('tool'))} [{kind}] {json.dumps(call_args, ensure_ascii=False)[:260]}")
+                    for part, value in (c.get("response") or {}).items() if bare(c.get("tool")) == "locality_survey" else ():
+                        for tool in sorted(set(re.findall(r"No fixture matched call to (\w+)", json.dumps(value)))):
+                            print(f"{short(t['test_id'], log['skill'])} run{r['run_index']} {r['outcome']} "
+                                  f"#{i} locality_survey {part}: {tool} [none] "
+                                  f"{json.dumps(c.get('args', {}).get('standardPlace'), ensure_ascii=False)}")
 
 
 def cmd_usage(args) -> None:

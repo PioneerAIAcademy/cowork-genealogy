@@ -17,4 +17,4 @@ Patrick Flynn parentage research — q_001 has NO plan yet. Only the 1850 census
 
 Use when: testing that research-plan creates the FIRST plan for a question (add-new mode), requiring a full locality survey before proposing what records to search.
 
-> **Surveyed variant.** Identical to `flynn-first-plan` but with a pre-seeded `localities` entry (Schuylkill County / PA), representing the state after the orchestrator ran `locality-guide`. Used by research-plan pure-consumer tests, which read the locality entry rather than surveying.
+> **Surveyed variant.** Identical to `flynn-first-plan` but with a pre-seeded `localities` entry (Schuylkill County / PA), representing the state after the orchestrator ran `locality-guide`. `loc_001` carries `record_types` rows (vital_record, probate, court, church), a repository and an empty `losses`; its vital_record and court rows alone state that the county orphans' courts kept births and deaths (1893-1905), from the Pennsylvania Probate Records page. Used by research-plan pure-consumer tests, which read the locality entry rather than surveying.

@@ -19,6 +19,7 @@ const PINNED = [
   "image_read",
   "image_search",
   "image_transcribe",
+  "locality_survey",
   "merge_warnings",
   "person_ancestors",
   "person_person_matches",

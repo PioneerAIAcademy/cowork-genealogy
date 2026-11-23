@@ -106,25 +106,53 @@ export function isNationalCollectionTitle(title: string, country: NationalCollec
 }
 
 /** The national collections nearly every question in the country can use: the
- *  population and mortality censuses (a region before `Census` allowed, as in
- *  `Canada, Prairie Provinces, Census, 1916`); in the United States the Social
+ *  population and mortality censuses (a regional one, as in
+ *  `Canada, Prairie Provinces, Census, 1916`, only for a locality in a province it
+ *  covers: `CENSUS_REGION_PROVINCES`); in the United States the Social
  *  Security indexes, the two world-war draft registrations and the city
  *  directories; in Canada and Mexico the country-wide baptism, marriage and death
  *  indexes. Military service, immigration, Freedmen's Bureau, Native American,
  *  land and occupational collections depend on who the person was, and research-plan
  *  finds them with its own `collections_search` when the question calls for them. */
 const CORE_NATIONAL_REST =
-  /^(?:[^,]+, )?(?:National )?Census(?:,? \d{4}\b|\s*\(Mortality Schedule\)| Mortality Schedules)/;
+  /^(?:([^,]+), )?(?:National )?Census(?:,? \d{4}\b|\s*\(Mortality Schedule\)| Mortality Schedules)/;
+
+/** The provinces each regional census in a national title covers. A regional
+ *  census is core only for a locality in one of them; a region not listed here is
+ *  not core anywhere. */
+const CENSUS_REGION_PROVINCES: Readonly<Record<string, readonly string[]>> = {
+  "Lower Canada": ["Quebec", "Québec"],
+  "Upper Canada": ["Ontario"],
+  "Prairie Provinces": ["Manitoba", "Saskatchewan", "Alberta"],
+  "Northwest Provinces": ["Manitoba", "Saskatchewan", "Alberta"],
+};
 const CORE_US_INDEX =
   /^(?:Social Security Death Index|Social Security Numerical Identification Files|World War I Draft Registration Cards|World War II Draft Registration Cards|City and Business Directories)\b/;
 
 const CORE_VITAL_INDEX = /^(?:Births and Baptisms|Baptisms|Marriages|Deaths and Burials|Deaths),/;
 
-/** Whether a national title (`isNationalCollectionTitle`) is one of the core ones. */
-export function isCoreNationalCollection(title: string, country: NationalCollectionCountry): boolean {
+/** Whether a national title (`isNationalCollectionTitle`) is one of the core ones
+ *  for a locality named by `places` (its place, for_place and jurisdiction names).
+ *  A regional census (`Canada, Upper Canada, Census, 1842`) is core only when one of
+ *  `places` names a province the region covers. */
+export function isCoreNationalCollection(
+  title: string,
+  country: NationalCollectionCountry,
+  places: readonly unknown[] = [],
+): boolean {
   if (!isNationalCollectionTitle(title, country)) return false;
   const rest = title.slice(country.length + 1).trim();
-  if (CORE_NATIONAL_REST.test(rest)) return true;
+  const census = CORE_NATIONAL_REST.exec(rest);
+  if (census) {
+    const region = census[1];
+    if (region === undefined) return true;
+    const provinces = CENSUS_REGION_PROVINCES[region] ?? [];
+    return places.some(
+      (p) =>
+        typeof p === "string" &&
+        provinces.some((prov) => new RegExp(`(?<![\\p{L}\\p{N}])${prov}(?![\\p{L}\\p{N}])`, "u").test(p)),
+    );
+  }
   return country === "United States" ? CORE_US_INDEX.test(rest) : CORE_VITAL_INDEX.test(rest);
 }
 

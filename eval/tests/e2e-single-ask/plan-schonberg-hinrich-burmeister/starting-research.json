@@ -78,42 +78,48 @@
           "title": "Germany, Mecklenburg-Strelitz, Catholic and Lutheran Church Records, 1664-1937",
           "date_range": "1664-1937",
           "person_count": 440965,
-          "record_count": 28930
+          "record_count": 28930,
+          "availability": "name-searchable"
         },
         {
           "id": "1473000",
           "title": "Germany, Births and Baptisms, 1558-1898",
           "date_range": "1557-1898",
           "person_count": 29671418,
-          "record_count": 22780687
+          "record_count": 22780687,
+          "availability": "name-searchable"
         },
         {
           "id": "1494474",
           "title": "Germany, Deaths and Burials, 1582-1958",
           "date_range": "1581-1958",
           "person_count": 8192780,
-          "record_count": 2636397
+          "record_count": 2636397,
+          "availability": "name-searchable"
         },
         {
           "id": "3015626",
           "title": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
           "date_range": "1499-1971",
-          "person_count": 212026566,
-          "record_count": 70856117
+          "person_count": 212026579,
+          "record_count": 70856117,
+          "availability": "name-searchable"
         },
         {
           "id": "1473009",
           "title": "Germany, Marriages, 1558-1929",
           "date_range": "1557-1929",
           "person_count": 5319967,
-          "record_count": 5106582
+          "record_count": 5106582,
+          "availability": "name-searchable"
         },
         {
           "id": "1475962",
           "title": "Germany, Rhineland-Palatinate Church Record Extractions and Family Registers, 1600-1925",
           "date_range": "1600-1925",
           "person_count": 0,
-          "record_count": 0
+          "record_count": 0,
+          "availability": "browse-only"
         }
       ],
       "quirks": [
