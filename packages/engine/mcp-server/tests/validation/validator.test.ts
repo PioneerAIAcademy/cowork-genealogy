@@ -3058,6 +3058,14 @@ describe("Research closed shapes", () => {
             by_record_type: [{ group: "Census", volumes: 2, browse_only: null, fulltext_only: null }],
             untyped: { volumes: 1, browse_only: 1, fulltext_only: 0 },
           },
+          record_types: [{
+            type: "church", years: "1814-1900", level: "parish", held_at: "Regional archive",
+            access: "browse", collection_ids: ["4237104"], summary: "Church books by parish.",
+            source_url: "https://x/Norway_Church_Records",
+          }],
+          repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", access: "online", url: "https://x/hamar" }],
+          losses: [{ record_set: "Ringebu church book 1740-1760", years: "1740-1760", source_url: "https://x/loss" }],
+          catalog: [{ id: "koha:1", title: "Kirkebøker", place: "Ringebu", repository_calls: ["Online"], film_count: 3 }],
           source: "locality-guide",
           created: "2026-01-02",
           updated: "2026-01-02",
@@ -3232,6 +3240,24 @@ describe("Research closed shapes", () => {
             e.message.includes("'timeout' is not a valid locality_page_outcome")
         )
       ).toBe(true);
+    });
+
+    it("rejects an out-of-set collections[].availability (collection_availability)", async () => {
+      const research = maximalResearch();
+      research.localities[0].collections = [
+        { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", availability: "indexed" },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/collections[0]" &&
+            e.message.includes("'indexed' is not a valid collection_availability")
+        )
+      ).toBe(true);
+      research.localities[0].collections[0].availability = null;
+      expect((await validateParsed(research, maximalTree)).valid).toBe(true);
     });
   });
 
@@ -3823,6 +3849,10 @@ describe("Research closed shapes", () => {
     proof_claim_finding: schema.$defs.proof_claim_finding,
     evaluation_entry: schema.$defs.evaluation_entry,
     locality: schema.$defs.locality,
+    locality_record_type_row: schema.$defs.locality_record_type_row,
+    locality_repository: schema.$defs.locality_repository,
+    locality_loss: schema.$defs.locality_loss,
+    locality_catalog_entry: schema.$defs.locality_catalog_entry,
     warning_justification: schema.$defs.warning_justification,
     namesake: schema.$defs.namesake,
     hit_verdict_entry: schema.$defs.hit_verdict_entry,
@@ -3936,6 +3966,10 @@ describe("Research closed shapes", () => {
       proof_claim_finding: (r) => claim(r, 4).finding,
       evaluation_entry: (r) => r.evaluations[0],
       locality: (r) => r.localities[0],
+      locality_record_type_row: (r) => r.localities[0].record_types[0],
+      locality_repository: (r) => r.localities[0].repositories[0],
+      locality_loss: (r) => r.localities[0].losses[0],
+      locality_catalog_entry: (r) => r.localities[0].catalog[0],
       warning_justification: (r) => r.warning_justifications[0],
       namesake: (r) => r.namesakes[0],
       hit_verdict_entry: (r) => r.hit_verdicts[0],

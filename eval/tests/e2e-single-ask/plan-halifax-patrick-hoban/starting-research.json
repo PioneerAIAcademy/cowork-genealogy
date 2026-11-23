@@ -1,0 +1,395 @@
+{
+  "project": {
+    "id": "rp_patrick_hoban_spouse",
+    "objective": "Was the Patrick whose son Thomas Dee married Bessie Butler at Halifax in 1895 the same man as Patrick Hoban (b. 1836), and was his wife an Ellen?",
+    "subject_person_ids": [
+      "KK3W-WLT"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do independent records confirm or refute that Catherine Donovan was the wife of Patrick Hoban, born 1836 in Halifax, Nova Scotia?",
+      "rationale": "The tree's spouse link (Catherine Donovan, married 1867 at Halifax) is the premise under doubt, and the Ellen question depends on it: if the wife was not Catherine, her name must be found. The tree also carries an implausible child-birth warning on the subject's daughter, whose 1816 baptism likely belongs to a different person, so the family assignments are unverified. No sources are attached to the spouse link.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1855-1900",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Halifax, Nova Scotia, Canada",
+      "for_place": "Halifax, Nova Scotia (city and county)",
+      "time_period": "1836-1900",
+      "jurisdictions": [
+        {
+          "name": "Halifax, Nova Scotia, British North America (County)",
+          "date_range": "1759-1867"
+        },
+        {
+          "name": "Halifax, Halifax, Nova Scotia, British North America (City)",
+          "date_range": "1749-1867"
+        },
+        {
+          "name": "Halifax, Nova Scotia, Canada (County)",
+          "date_range": "1867-present"
+        },
+        {
+          "name": "Halifax, Nova Scotia, Canada (Independent City)",
+          "date_range": "1867-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1810409",
+          "title": "Canada, Nova Scotia, Marriages, 1711-1909",
+          "date_range": "1711-1909",
+          "person_count": 52949,
+          "record_count": 17717,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2242886",
+          "title": "Canada, Nova Scotia, Marriages, 1864-1918",
+          "date_range": "1864-1918",
+          "person_count": 1747251,
+          "record_count": 372511,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2241441",
+          "title": "Canada, Nova Scotia, Marriages, 1907-1932",
+          "date_range": "1907-1932",
+          "person_count": 383421,
+          "record_count": 66106,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1952893",
+          "title": "Canada, Nova Scotia, Vital Records, 1763-1957",
+          "date_range": "1763-1957",
+          "person_count": 1615154,
+          "record_count": 807577,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2365251",
+          "title": "Canada, Nova Scotia Church and Civil Records, 1727-1884",
+          "date_range": "1727-1884",
+          "person_count": 2705,
+          "record_count": 870,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1810407",
+          "title": "Canada, Nova Scotia, Births and Baptisms, 1702-1896",
+          "date_range": "1702-1896",
+          "person_count": 434515,
+          "record_count": 136014,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2241429",
+          "title": "Canada, Nova Scotia, Delayed Births, 1837-1907",
+          "date_range": "1837-1907",
+          "person_count": 343576,
+          "record_count": 117056,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2243378",
+          "title": "Canada, Nova Scotia, Births, 1864-1877",
+          "date_range": "1864-1877",
+          "person_count": 932167,
+          "record_count": 322088,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2242825",
+          "title": "Canada, Nova Scotia, Deaths, 1864-1877",
+          "date_range": "1864-1877",
+          "person_count": 414186,
+          "record_count": 171773,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1460163",
+          "title": "Canada, Nova Scotia, Census, 1861",
+          "date_range": "1861-1861",
+          "person_count": 57457,
+          "record_count": 57453,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1925428",
+          "title": "Canada, Nova Scotia, Church Records, 1720-2001",
+          "date_range": "1720-2001",
+          "person_count": 619803,
+          "record_count": 204328,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1392507",
+          "title": "Canada, Nova Scotia, Antigonish Catholic Diocese, 1823-1905",
+          "date_range": "1823-1905",
+          "person_count": 274473,
+          "record_count": 91875,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2251294",
+          "title": "Canada, Nova Scotia, Deaths, 1890-1955",
+          "date_range": "1890-1955",
+          "person_count": 883671,
+          "record_count": 280653,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2251301",
+          "title": "Canada, Nova Scotia, Deaths, 1956-1957",
+          "date_range": "1956-1957",
+          "person_count": 40243,
+          "record_count": 1074,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1808846",
+          "title": "Canada, Nova Scotia, Halifax County Deed Indexes, 1749-1958",
+          "date_range": "1749-1958",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2134302",
+          "title": "Canada, Nova Scotia, Probate Records, 1760-1993",
+          "date_range": "1760-1993",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1918186",
+          "title": "Canada, Nova Scotia, Queens County Notes of Thomas Brenton Smith, 1700-1950",
+          "date_range": "1700-1950",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1520604",
+          "title": "Canada, Births and Baptisms, 1661-1959",
+          "date_range": "1661-1959",
+          "person_count": 665942,
+          "record_count": 165363,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1554429",
+          "title": "Canada, Census Mortality Schedules, 1871",
+          "date_range": "1871-1871",
+          "person_count": 45371,
+          "record_count": 45371,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1325192",
+          "title": "Canada, Census, 1851",
+          "date_range": "1851-1851",
+          "person_count": 2199027,
+          "record_count": 2199027,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1551612",
+          "title": "Canada, Census, 1871",
+          "date_range": "1871-1871",
+          "person_count": 3519941,
+          "record_count": 3519941,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1804541",
+          "title": "Canada, Census, 1881",
+          "date_range": "1881-1881",
+          "person_count": 4499529,
+          "record_count": 4281160,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1583536",
+          "title": "Canada, Census, 1891",
+          "date_range": "1891-1891",
+          "person_count": 4787225,
+          "record_count": 4787225,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1520609",
+          "title": "Canada, Deaths and Burials, 1664-1955",
+          "date_range": "1664-1955",
+          "person_count": 134938,
+          "record_count": 43249,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1520608",
+          "title": "Canada, Marriages, 1661-1949",
+          "date_range": "1661-1949",
+          "person_count": 1055781,
+          "record_count": 228597,
+          "availability": "name-searchable"
+        }
+      ],
+      "quirks": [
+        "Civil registration of vital statistics began in Nova Scotia in 1763 only as an optional marriage-licence procedure, so early marriage bonds are incomplete and should be confirmed by another source; formalized birth, death and marriage registration began in 1864 and ran to 1877 for births and deaths (with gaps, compliance not universal) and continued for marriages to 1916 in Halifax County specifically; continuous registration resumed 1 Oct 1908. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration",
+        "A 'delayed birth registration' option let Nova Scotians born as early as 1836 register their birth later in life (e.g. for passports/pensions); these filings are incomplete since registration was voluntary. Relevant to a subject born 1836. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration",
+        "Most 1851 Nova Scotia census schedules are not extant; the only surviving/indexed 1851 returns are for Halifax County and Kings County (catalog id koha:429294).",
+        "Halifax city (to 1867) and Halifax County are two distinct FamilySearch standard-place records after 1867 (city vs county) but records before 1867 were kept under the undivided county/city jurisdiction — search both the city and county place forms for the same ancestor.",
+        "Roman Catholic parish registers are the primary pre-1864 vital record source for Halifax's large Irish Catholic population; about one in four Nova Scotians claims Irish descent, and Catholic Irish settlement concentrated in urban Halifax (estimated ~16% Irish Catholic in 1767, ~9% by century's end). Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Cultural_Groups",
+        "Most Nova Scotia parish-register microfilm (the NSARM 'Parish Register Microfilm Collection', 512 congregations) does not circulate and is not digitized or online; it must be viewed in person at Nova Scotia Archives in Halifax. Source: https://www.familysearch.org/en/wiki/Additional_Sources_of_Nova_Scotia_Birth,_Marriage,_and_Death_Records_-_International_Institute",
+        "FamilySearch's digitized Halifax Catholic baptism/marriage volumes for 1830-1863 (imageGroupNumbers under M986-NS*/M986-FT*) are 63-97% name-indexed depending on the specific volume, not full-text searchable — check the indexed percentage per volume rather than assuming full coverage.",
+        "Church of England (Anglican) parish registers (e.g. St. Paul's, Halifax) also predate civil registration and should be checked alongside Catholic registers when the family's denomination is uncertain."
+      ],
+      "guide_markdown": "# Locality Guide: Halifax, Nova Scotia, Canada (1836-1900)\n\n## Jurisdiction overview\n- **Formed:** Halifax founded 1749 by the British (Wikipedia: History of Halifax, Nova Scotia); Halifax County established 1759. From 1867 FamilySearch treats Halifax City and Halifax County as separate standard places.\n- **County seat / administrative center:** Halifax (also the provincial capital)\n- **Parent jurisdiction:** Nova Scotia, Canada (Dominion of Canada from 1867; British North America before)\n- **Ethnic composition:** Significant Irish Catholic population concentrated in urban Halifax from the 18th century onward (~16% Irish Catholic in 1767, ~9% by 1800); Nova Scotia overall about one in four residents of Irish descent. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Cultural_Groups\n- **Religious denominations:** Roman Catholic (Archdiocese of Halifax-Yarmouth), Church of England/Anglican, Presbyterian, Methodist/United Church, Baptist.\n- **Key historical events:** Halifax's economy and growth were tied to its naval base and harbour (established 1759); it remained the colonial and later provincial capital.\n\n## Boundary changes\n- No major boundary change affecting Halifax County itself in 1836-1900, but FamilySearch's standard-place model splits \"Halifax, Nova Scotia, British North America\" (county, 1759-1867) and \"Halifax, Halifax, Nova Scotia, British North America\" (city, 1749-1867) into separate post-1867 \"Halifax, Nova Scotia, Canada\" City and County entries. Search both place forms for the same period/ancestor.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Optional marriage-licence procedure from 1763 (incomplete); formalized birth/death/marriage registration 1864-1877 (compliance incomplete, gaps); marriage registration continued past 1877, concluding for Halifax County in 1916; continuous registration since 1 Oct 1908. Level: provincial. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration\n- **What exists:** Nova Scotia Marriages 1711-1909 (index, 52,949 persons), Marriages 1864-1918 (index & images, 1,747,251 persons), Marriages 1907-1932 (383,421), Vital Records 1763-1957 (index, 1,615,154), Births and Baptisms 1702-1896 (434,515), Delayed Births 1837-1907 (343,576 — includes persons born as early as 1836), Births 1864-1877 (932,167), Deaths 1864-1877 (414,186).\n- **Where held:** FamilySearch (collection ids above) and Nova Scotia Archives (https://archives.novascotia.ca/vital-statistics/, originals/images); provincial level.\n- **Gaps:** No formal birth/death registration 1877-1908 (lapsed); compliance gaps even 1864-1877.\n- **Pre-registration alternatives:** Church (parish) registers; marriage bonds 1763-1864.\n\n### Church records\n- **Denominations present:** Roman Catholic (several Halifax parishes), Church of England/Anglican, Presbyterian, Methodist.\n- **Record types:** Baptisms, marriages, burials, confirmations. Halifax Catholic parishes per the FamilySearch Church Records Inventory: St Mary's Basilica (baptisms 1830-1904, marriages 1830-1908, marriages with index 1845-1910, burials 1830-1842); St Peter (baptisms/marriages/burials 1821-1830); St Joseph (baptisms & marriages 1868-1966, marriages 1868-1905); St Patrick (baptisms 1848-1920, marriages 1887-1928); St Agnes (marriages 1892-1920). Anglican: St. Paul's Church, Halifax (baptisms, marriages, burials 1749-1768, compiled).\n- **Where held:** FamilySearch collection \"Canada, Nova Scotia, Church Records, 1720-2001\" (id 1925428, images, 619,803 persons) and \"Church and Civil Records 1727-1884\" (id 2365251); originals/microfilm at Nova Scotia Archives (NSARM Parish Register Microfilm Collection, 512 congregations) — must be viewed in person, not digitized. Archdiocese of Halifax-Yarmouth also holds registers directly (contact: catholichalifax.org).\n- **Gaps:** NSARM parish microfilm does not circulate and is not online; many registers were never sent for filming outside the Halifax archdiocese.\n- **Language:** Predominantly English, some Latin/French in Catholic registers.\n\n### Census records\n- **Federal/national census:** 1861 Nova Scotia Census indexed & imaged on FamilySearch (collection id 1460163, 57,457 persons); 1871, 1881, 1891, 1901 Canada censuses at Ancestry/Findmypast (external links).\n- **State/provincial census:** 1838 Halifax County census (indexed in print/PDF, catalog ids koha:1656833 and koha:4133409 — the latter available online as a donated PDF); 1851 Nova Scotia census survives (and is indexed) only for Halifax County and Kings County — most other 1851 schedules are not extant (catalog id koha:429294); Nova Scotia Census, Property Assessments and Poll Tax Records 1767-1838 at Nova Scotia Archives.\n- **Access:** 1861 is indexed+images on FamilySearch; 1838 and 1851 Halifax County indexes exist as compiled/catalog works, not necessarily online name-searchable at FamilySearch.\n\n### Probate and court records\n- **Types:** Wills, administrations, guardianships.\n- **Date range:** Nova Scotia Probate Records 1760-1993 at FamilySearch (collection id 2134302, images only, browse).\n- **Where held:** County probate court; FamilySearch has browse-only images; volume_search shows a large Probate record-type group (72 volumes for the county/period surveyed, mostly full-text searchable per the tool's counts).\n\n### Land records\n- **Land-distribution jurisdiction:** Nova Scotia, Halifax County Deed Indexes 1749-1958 (FamilySearch collection id 1808846, images only).\n- **Types:** Deed indexes, land petitions/papers 1765-1800 (Nova Scotia Archives).\n- **Where held:** County Registry of Deeds; FamilySearch holds indexes only (no person-count, images-only).\n\n### Military records\n- **Relevant conflicts:** War of 1812 (American prisoners of war held at Halifax, catalog ids koha:1341341, koha:4581437); Royal Navy muster books for ships based at Halifax dockyard, 18th-19th century (catalog id koha:973264, extensive film notes).\n- **Where held:** FamilySearch Library microfilm/catalog; originals at UK National Archives (Admiralty records) and Library and Archives Canada.\n\n### Cemetery records\n- **Major cemeteries:** Camp Hill Cemetery (records 1844-1950, catalog id koha:340342) and Fort Massey Cemetery (combined burial records 1878-1961, catalog id koha:14537), both in Halifax.\n- **Online coverage:** FindAGrave and BillionGraves indexes at FamilySearch (collection ids 2221801 and 2026973) and directly.\n- **Physical records:** Sexton/cemetery company records for named cemeteries at Nova Scotia Archives (https://archives.novascotia.ca/cemeteries/).\n\n### Newspaper records\n- **Where held:** Nova Scotia Digitized Historical Newspapers at Nova Scotia Archives (https://archives.novascotia.ca/virtual/?Search=THnews&List=all).\n- **Content value:** Obituaries, marriage notices.\n\n### Immigration/emigration records\n- **Relevant ports:** Halifax was a major Atlantic port.\n- **Record types:** Passenger lists (Library and Archives Canada, 1865-1922 onward); border-crossing alien-arrival cards occasionally include Halifax arrivals (catalog id koha:986330, NARA M2071).\n- **Content note:** Check full manifests for all family members including children.\n\n### Tax records\n- **Types:** Poll tax, property assessment.\n- **Date range:** Nova Scotia Census Returns, Assessment and Poll Tax Records 1767-1838 (Nova Scotia Archives / Ancestry collection 8809).\n- **Substitute value:** Can stand in for missing census years before 1838.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Marriages 1711-1909 / 1864-1918 / 1907-1932; Vital Records 1763-1957; Church Records 1720-2001; Births/Baptisms 1702-1896; Delayed Births 1837-1907; Census 1861; Probate 1760-1993; Halifax County Deed Indexes 1749-1958 | NSARM parish microfilm not digitized | Free |\n| Nova Scotia Archives (archives.novascotia.ca) | Marriage registrations 1763-1938 (index & images), church records database, cemetery records, newspapers, land papers | Original holder of vital statistics and parish microfilm | Free |\n| Ancestry.com | Nova Scotia Marriages 1763-1942; Births 1840-1917; Deaths 1864-1877,1890-1965; 1851/1861/1871/1881/1891/1901/1911 Census of Canada; Antigonish Catholic Baptisms/Marriages/Burials 1823-1905 | Broader census-year and Antigonish-diocese coverage | Subscription |\n| MyHeritage | Canada Nova Scotia Births 1836-1921; Marriages; Deaths; Parish Baptisms 1748-1930; Parish Marriages | Parish-level indexed coverage | Subscription |\n| novascotiagenealogy.com | Nova Scotia Births, Marriages, and Deaths regional index | Free regional index referenced throughout the FamilySearch Wiki | Free |\n\n**Coverage of this survey:** 1,031 digitized volumes matched Halifax County/City for 1836-1900 in volume_search; the 10 detailed in this guide's census/church examples are the first page. By record-type group: Marriage 84 volumes (76 browse-only), Vital 172 (142 browse-only), Death 69 (64 browse-only), Baptism 32 (2 browse-only), Census 7 (5 browse-only), Probate 72 (70 full-text-only). Most matching Legal/Land/Government/School/Tax volumes (hundreds) are outside the vital/church/census scope of this guide.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Nova Scotia Archives, Halifax | Original vital statistics (transferred on a schedule: births 100yr, marriages 75yr, deaths 50yr after registration), NSARM Parish Register Microfilm Collection (512 congregations, non-circulating), probate, land papers, cemeteries | In-person at Halifax, or by online request for digitized items |\n| Archdiocese of Halifax-Yarmouth | Catholic parish registers for Halifax-area parishes | Write/contact parish or archdiocese (catholichalifax.org) |\n| County Registry of Deeds / Probate Court | Original land and probate records | In-person or mail request |\n\n## Records NOT online\n- Most of the NSARM Parish Register Microfilm Collection (512 congregations) is explicitly not digitized and must be viewed in person at Nova Scotia Archives.\n- Halifax County probate case files beyond the browse-only FamilySearch images.\n\n## Known record losses\n- Most 1851 Nova Scotia census schedules are not extant; only Halifax County and Kings County survive in indexed form (catalog id koha:429294). No tool result in this survey states a loss for Halifax-specific vital or church records beyond this.\n\n## Research tips\n- Registration was only compulsory (if incompletely complied with) 1864-1877 and from 1908; for 1836-1864 and 1877-1908 rely on church registers and delayed-birth registrations. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration\n- A subject born in 1836 is within the window covered by Nova Scotia's delayed-birth registration (surviving registrations go back to persons born as early as 1836) — search the Delayed Births 1837-1907 collection even though it is indexed as starting 1837. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration\n- For a marriage question, check both the civil marriage series (bonds 1763-1871, licenses 1849-1918, registers 1864-1918) and the couple's probable denomination's parish register, since Catholic marriage entries were often endorsed noting the baptismal parish of each party. Source: https://www.familysearch.org/en/wiki/Nova_Scotia_Birth,_Marriage,_and_Death_Records_-_International_Institute\n- Given Halifax's large Irish Catholic population, check the major Halifax Catholic parishes (St Mary's Basilica, St Peter, St Patrick, St Joseph, St Agnes) for both baptism and marriage entries under variant spellings of the surname.\n- Search both the Halifax City and Halifax County standard-place forms, since FamilySearch splits them after 1867 while the records themselves may be filed under either.\n- Consult novascotiagenealogy.com (Nova Scotia's own historical vital statistics index) alongside FamilySearch and Ancestry, as it is the province's own free index and may have entries not yet indexed elsewhere.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "marriage",
+          "level": "state",
+          "year": 1763,
+          "source_url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration"
+        },
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1864,
+          "source_url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1864,
+          "source_url": "https://www.familysearch.org/en/wiki/Nova_Scotia_Civil_Registration"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1836,
+        "end_year": 1900,
+        "total_volumes": 1031,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 172,
+            "browse_only": 142,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Death",
+            "volumes": 69,
+            "browse_only": 64,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Marriage",
+            "volumes": 84,
+            "browse_only": 76,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious",
+            "volumes": 51,
+            "browse_only": 4,
+            "fulltext_only": 3
+          },
+          {
+            "group": "Baptism",
+            "volumes": 32,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 14,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Census",
+            "volumes": 7,
+            "browse_only": 5,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Probate",
+            "volumes": 72,
+            "browse_only": 0,
+            "fulltext_only": 70
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}

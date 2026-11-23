@@ -30,8 +30,8 @@
 
 <!-- Normal: the two parts of PLAN.md nothing else here carries. Trivial:
      delete this section. Don't paste PLAN.md whole — its file list is the
-     diff, its deferrals are "Follow-on issues", and by the time you open
-     the PR it may be a plan you knowingly deviated from (step 4).
+     diff, and by the time you open the PR it may be a plan you knowingly
+     deviated from (step 4).
 
      Didn't change — the tempting adjacent thing you left alone, so a
      reviewer reads it as a decision rather than an omission.
@@ -107,9 +107,3 @@
            `check_negative_reciprocity.py` reports the gaps, but only after the
            fact and only as a warning — this box is the part that prevents them.
            Nothing enforces it; it is here because the lint can't be. -->
-
-## Follow-on issues
-
-<!-- Numbers filed for work you deferred. DEVELOPMENT.md § "Follow-on work". -->
-
-**Folded in / filed instead:** <!-- Follow-on work found during this PR: what you folded in, and for anything filed rather than folded, which of the four reasons applied. -->

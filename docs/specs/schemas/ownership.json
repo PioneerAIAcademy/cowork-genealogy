@@ -213,7 +213,7 @@
       "artifact": "research.json",
       "section": "log",
       "owner": null,
-      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`. No single skill owns the section; the permitted writers are listed in `callers`.",
+      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`, and `record_search` appends a nil search's own entry the same way, so the logged query is the call's arguments rather than one the agent re-typed. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
         "agent:search-records",
         "agent:search-external-sites",
@@ -259,7 +259,8 @@
         {
           "agent": "agent:survey-surname",
           "tools": [
-            "research_log_append"
+            "research_log_append",
+            "record_search"
           ]
         },
         {
@@ -313,7 +314,8 @@
         {
           "agent": "agent:search-records",
           "tools": [
-            "research_log_append"
+            "research_log_append",
+            "record_search"
           ]
         },
         {
@@ -326,7 +328,8 @@
       "writerTools": [
         "research_log_append",
         "extraction_append",
-        "build_external_search_url"
+        "build_external_search_url",
+        "record_search"
       ],
       "enforceableAt": [
         "unit",

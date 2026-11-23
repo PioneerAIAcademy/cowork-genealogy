@@ -1,0 +1,169 @@
+{
+  "tool": "record_read",
+  "description": "Baptism of Franz Rychter, 23 Aug 1891: parents Franz Rychter and Anna Jicinsky. A different husband. Live capture 2026-11-16.",
+  "args": {
+    "recordId": "~6VGS-5GPR"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_297968888506",
+        "ark": "ark:/61903/1:1:6VGS-5GPN",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "4941b99a-a342-4b53-8918-1a22a11c7af6",
+            "type": "BirthName",
+            "surname": "Rychter",
+            "given": "Franz"
+          }
+        ],
+        "facts": [
+          {
+            "id": "da6e7f20-1b07-4e2d-a239-645526dc6fc2",
+            "type": "Birth",
+            "date": "15 Aug 1891",
+            "standard_date": "15 Aug 1891"
+          },
+          {
+            "id": "d484376b-3e2b-4e9e-9efa-f2e585e5bbd5",
+            "type": "Baptism",
+            "primary": true,
+            "date": "23 Aug 1891",
+            "standard_date": "23 Aug 1891",
+            "place": "Tschechien"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297968888510",
+        "ark": "ark:/61903/1:1:6VGS-5GP2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "31fa4cbd-dc8f-4d91-9aaa-a165cd17eada",
+            "type": "BirthName",
+            "surname": "Rychter",
+            "given": "Franz"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_297968888515",
+        "ark": "ark:/61903/1:1:6VGS-5GPR",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "958c9235-1514-4d2c-80c0-dc37d15e3af9",
+            "type": "BirthName",
+            "surname": "Jičinsky",
+            "given": "Anna"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "90aa0984-e6d2-45cd-854a-545389bb5ab9",
+        "type": "ParentChild",
+        "parent": "p_297968888510",
+        "child": "p_297968888506"
+      },
+      {
+        "id": "592976d6-5cdd-4ae5-821a-f94dcd09629a",
+        "type": "Couple",
+        "person1": "p_297968888510",
+        "person2": "p_297968888515"
+      },
+      {
+        "id": "8d682fbb-eeec-4182-882f-940cbbfb0c7b",
+        "type": "ParentChild",
+        "parent": "p_297968888515",
+        "child": "p_297968888506"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_176724265488",
+        "resource_type": "Record",
+        "title": "Entry for Franz Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-5GPN : Mon Feb 02 17:13:51 UTC 2026), Entry for Franz Rychter and Franz Rychter, 23 Aug 1891.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HSDV-3Q1V",
+        "coverage": {
+          "date_range": "23 Aug 1891",
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1804263",
+        "resource_type": "Collection",
+        "title": "Czech Republic, Church Books, 1552-1981",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1804263",
+        "coverage": {
+          "place_rep_id": "132",
+          "date_range": "1552/1963",
+          "record_type": "Vital",
+          "standard_place": "Czechia"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:2:77TN-Y23P",
+        "coverage": {
+          "place_rep_id": "11903248",
+          "date_range": "1887-1896",
+          "record_type": "Baptism",
+          "standard_place": "Weißkirchlitz, Teplitz, Bohemia"
+        }
+      },
+      {
+        "id": "sd_p_297968888510",
+        "resource_type": "Person",
+        "title": "Franz Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-5GP2 : Mon Feb 02 17:13:51 UTC 2026), Franz Rychter in entry for Franz Rychter, 23 Aug 1891.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-5GP2"
+      },
+      {
+        "id": "sd_p_297968888515",
+        "resource_type": "Person",
+        "title": "Anna Jičinsky, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-5GPR : Mon Feb 02 17:13:51 UTC 2026), Anna Jičinsky in entry for Franz Rychter, 23 Aug 1891.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-5GPR"
+      },
+      {
+        "id": "sd_p_297968888506",
+        "resource_type": "Person",
+        "title": "Franz Rychter, \"Czech Republic, Church Books, 1552-1981\"",
+        "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VGS-5GPN : Mon Feb 02 17:13:51 UTC 2026), Franz Rychter, 23 Aug 1891.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:6VGS-5GPN"
+      },
+      {
+        "id": "sd_auto_M9RS-HYS",
+        "resource_type": "auto",
+        "title": "Bohemia, Teplitz, Religious, from 1594 to 30 April 1928",
+        "coverage": {
+          "place_rep_id": "10705566",
+          "date_range": "+1594-01-01T00:00:00Z/+1928-04-30T23:59:59Z",
+          "standard_place": "Teplitz, Bohemia"
+        }
+      }
+    ]
+  }
+}

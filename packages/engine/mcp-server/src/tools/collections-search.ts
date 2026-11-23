@@ -1,4 +1,5 @@
 import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
+import { collectionAvailability } from "../utils/collection-availability.js";
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { rejectedTokenMessage } from "../auth/config.js";
@@ -169,6 +170,7 @@ export function collectionCountsById(data: FSCollectionsResponse): Map<string, C
     out.set(String(c.id), {
       personCount: getCount(c.content, "/Person"),
       recordCount: getCount(c.content, "/Record"),
+      imageCount: getCount(c.content, "/DigitalArtifact#FamilySearch"),
       title: c.title,
       dateRange: formatYearRange(meta?.startYear, meta?.endYear) || null,
     });
@@ -187,11 +189,15 @@ function toCollection(data: FSCollectionData): Collection {
   const meta = data.searchMetadata?.[0];
   const dateRange = formatYearRange(meta?.startYear, meta?.endYear);
 
+  const personCount = getCount(data.content, "/Person");
+  const browseOnly =
+    collectionAvailability(personCount, getCount(data.content, "/DigitalArtifact#FamilySearch")) === "browse-only";
   return {
     id: data.id,
     title: data.title,
     dateRange,
-    personCount: getCount(data.content, "/Person"),
+    personCount,
+    ...(browseOnly ? { availability: "browse-only" as const } : {}),
   };
 }
 
@@ -385,7 +391,8 @@ export const collectionsSearchToolSchema = {
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Each row is {id, title, dateRange, " +
-    "personCount}; a collection's page is `collectionUrl` with `{id}` replaced by " +
+    "personCount, availability?}: availability \"browse-only\" marks a collection with no " +
+    "indexed person or under one per thousand page images; a row without it is name-searchable; a collection's page is `collectionUrl` with `{id}` replaced by " +
     "the row's id. There is no pagination: the matched set comes back in one " +
     `response, held to ${ANSWER_CHAR_BUDGET.toLocaleString("en-US")} characters. ` +
     "When it is over that, `truncated: true` " +

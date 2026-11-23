@@ -658,7 +658,7 @@ describe("the guard script's decisions", () => {
     const out = runGuard({ tool_name: tool, tool_input: { file_path } });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain(
-      "external-collections.json is written only by external_links_search",
+      "external-collections.json is written only by locality_survey or external_links_search",
     );
   });
 
@@ -1710,6 +1710,13 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
     expect(out.hookSpecificOutput.additionalContext).toMatch(
       /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+    );
+  });
+
+  it("routes a no-project, no-PID re-index of one page to search-images (#4141)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Reindex the names from this image and compare them with the index." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /or to re-index\s+one page or compare it with its FamilySearch index, goes to the\s+search-images agent/,
     );
   });
 

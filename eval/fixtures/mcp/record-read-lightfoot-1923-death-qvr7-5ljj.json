@@ -1,0 +1,71 @@
+{
+  "tool": "record_read",
+  "description": "Issue #4580 Tyler/Lightfoot tests: 1923 Fluvanna death registration: Ann Tone Lightfoot, widowed, midwife, age 90 (b. 1833), father Job Lightfoot. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "recordId": "~QVR7-5LJJ"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_101214217427",
+        "ark": "ark:/61903/1:1:QVR7-5LJJ",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "given": "Ann Tone",
+            "surname": "Lightfoot"
+          }
+        ],
+        "facts": [
+          {
+            "type": "DeathRegistration",
+            "primary": true,
+            "date": "9 Nov 1923",
+            "standard_date": "9 Nov 1923"
+          },
+          {
+            "type": "Birth",
+            "date": "1833",
+            "standard_date": "1833"
+          },
+          {
+            "type": "Death",
+            "date": "29 Oct 1923",
+            "standard_date": "29 Oct 1923",
+            "place": "Cunningham, Fluvanna County, Virginia, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          }
+        ]
+      },
+      {
+        "id": "p_101214217428",
+        "ark": "ark:/61903/1:1:QVR7-5LJV",
+        "gender": "Male",
+        "names": [
+          {
+            "given": "Job",
+            "surname": "Lightfoot"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "parent": "p_101214217428",
+        "child": "p_101214217427"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-L9GL-TF39",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9GL-TF39",
+    "birthRanges": {
+      "p_101214217427": "Bet 1832 and 1833"
+    },
+    "citation": "\"Virginia, Death Certificates, 1912-1987\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJJ : Tue Mar 11 21:08:38 UTC 2025), Ann Tone Lightfoot, 9 Nov 1923.",
+    "recordUrl": "https://www.familysearch.org/ark:/61903/1:2:Q247-BS3K"
+  }
+}
