@@ -21,7 +21,7 @@
 import { collectionAvailability } from "../utils/collection-availability.js";
 import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
-import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
+import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
@@ -1389,12 +1389,6 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
  *  `[?]`"). Nothing else in the entry marks doubt structurally. */
 function hasUncertainReading(assertion: any): boolean {
   return typeof assertion?.value === "string" && assertion.value.includes("[?]");
-}
-
-/** A researcher's own reading of a page (#4286): a disputing assertion cited
- *  under a `user_provided` log entry. */
-function isResearcherReading(a: any, logById: Map<string, any>): boolean {
-  return typeof a?.disputes_assertion_id === "string" && logById.get(a?.log_entry_id)?.tool === "user_provided";
 }
 
 /** Ruling 10 (#4286): an assertion is doubtful when its value carries `[?]`, or
