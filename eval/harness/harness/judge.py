@@ -630,6 +630,35 @@ _WRITER_ARGS_ALWAYS_KEPT = {
     "build_external_search_url": "search-external-sites grades its args",
 }
 
+# Ownership writers with NO refusal path: `_is_refused_writer` is False for
+# these whatever a call returns, so there is no draft to blank and no rendering
+# decision to make.
+#
+# Why they are not simply listed in one of the two sets above: both are READ by
+# `_is_refused_writer`, which `render_prompt_parts` reaches, so adding an inert
+# name to either moves `judge_render_hash` -- billing a regrade of every suite
+# whose latest log carries it (measured 2026-11-17: 30 suites, 595 tests, none
+# already stale) for an entry that cannot change one rendered byte. Nothing in
+# the render graph reads THIS set, and an unreferenced module binding is not
+# walked, which is what keeps it out of the fingerprint.
+#
+# So: do not reference this from rendering code, and do not delete it as unused
+# -- `test_writer_tools_classifies_every_ownership_writer` is its consumer.
+# An entry is a claim that the tool is absent from `_WRITER_TOOLS`, pinned by
+# `test_no_refusal_path_writers_are_inert`. Giving one a blanked draft later
+# means moving it up and paying the regrade then, which is the trip-wire.
+_WRITER_NO_REFUSAL_PATH = {
+    # `record_search` writes only its own nil-search log entry (#4527) and
+    # returns `ok: false` from nowhere -- a refused append surfaces as
+    # `nilLogRefused` on an otherwise ok answer. Its args are the question
+    # asked, and two rubrics grade them: `search-records/rubric.md` routes an
+    # anchorless query to "a Tool Arguments failure, not a strategy one", and
+    # `survey-surname/rubric.md` grades the place mapped onto `recordCountry`/
+    # `recordSubdivision`/`residencePlace` and the per-year
+    # `residenceYearFrom`/`residenceYearTo`.
+    "record_search": "no ok:false path; search rubrics grade its executed args",
+}
+
 # Says only what is always true. "it wrote nothing" would be FALSE for
 # `extraction_append`'s recordIds mode, which persists its research_log_append
 # batch BEFORE the per-record writes and returns ok: false when every record is

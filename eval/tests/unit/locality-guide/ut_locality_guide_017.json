@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_locality_guide_017",
     "skill": "locality-guide",
-    "name": "Locality guide for Louisiana, 1700s \u2014 French colonial records",
+    "name": "Locality guide for Louisiana, 1700s — French colonial records",
     "type": "positive",
     "description": "Checks if the skill recognizes Louisiana under French rule and directs researchers to parish registers, land grants, and colonial court records.",
     "tags": [
@@ -11,13 +11,12 @@
       "parish registers",
       "land grants",
       "archives",
-      "direct-arm",
-      "no-project"
+      "direct-arm"
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -43,6 +42,8 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s."
-  ]
+    "Must mention Louisiana under French colonial rule. Must highlight parish registers, land grants, and colonial court records. Must not suggest U.S. state vital records for the 1700s.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }

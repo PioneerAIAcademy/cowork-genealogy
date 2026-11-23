@@ -4,7 +4,7 @@
 // claim-join.ts, Decision 31's one join; imports come from import-baseline.ts
 // (Decision 7).
 
-import { claimCoversEdge, claimCoversFact, claimKind, isBiologicalClaim, nearMiss } from "./claim-join.js";
+import { claimCoversEdge, claimCoversFact, claimKind, disproofCoversEdge, isBiologicalClaim, nearMiss } from "./claim-join.js";
 import { importBaseline } from "./import-baseline.js";
 import { claimProvedCapped, claimUngroundedPersons } from "../validation/claim-rules.js";
 import { PROOF_TIER_RANK } from "../validation/validator.js";
@@ -105,7 +105,7 @@ export function setAsideParents(research: any, tree: any): Map<string, Set<strin
   const edges: any[] = Array.isArray(tree?.relationships) ? tree.relationships : [];
   for (const r of edges) {
     if (r?.type !== "ParentChild" || !isBiologicalClaim(r) || typeof r.parent !== "string" || typeof r.child !== "string") continue;
-    const ruledOut = located.some(({ c }) => isDisproved(c) && claimCoversEdge(c, r));
+    const ruledOut = located.some(({ c }) => isDisproved(c) && disproofCoversEdge(c, r));
     if (ruledOut || setAsideBy(r, located, genderOf, edges) !== null) {
       const set = out.get(r.child) ?? new Set<string>();
       set.add(r.parent);
@@ -203,7 +203,7 @@ export function conclusionStatus(research: any, tree: any, startingTree: any | n
     if (typeof r?.id !== "string") continue;
     const covering = located.filter(({ c }) => claimCoversEdge(c, r));
     const row: StatusRow = { holder: { relationshipId: r.id }, label: "" };
-    const ruledOut = covering.find(({ c }) => isDisproved(c));
+    const ruledOut = covering.find(({ c }) => isDisproved(c) && disproofCoversEdge(c, r));
     const best = strongest(covering.filter(({ c }) => isAffirmed(c)));
     const winner = setAsideBy(r, located, genderOf, edges);
     const doubt = doubting(covering);

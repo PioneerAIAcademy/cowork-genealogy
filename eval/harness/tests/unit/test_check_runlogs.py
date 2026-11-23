@@ -2807,7 +2807,13 @@ _NO_RENDER_HASH_LOG = {"snapshot": {}, "judge_prompt_hash": "a" * 64}
 
 
 def _stub_current_render_hash(monkeypatch, hex_digest: str) -> None:
-    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda: hex_digest)
+    # `*a, **k`: the real `base_judge_render_hash` calls `judge_render_hash`
+    # WITH a path, so a zero-arg lambda raises TypeError there.
+    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda *a, **k: hex_digest)
+
+
+def _stub_base_render_hash(monkeypatch, value) -> None:
+    monkeypatch.setattr(check_runlogs, "base_judge_render_hash", lambda: value)
 
 
 def test_rule2b_render_blocks_when_render_code_moved(monkeypatch, capsys):
@@ -2885,6 +2891,151 @@ def test_rule2b_render_silent_when_no_hash_and_nothing_touched(monkeypatch, caps
     )
     assert rc == 0
     assert capsys.readouterr().out == ""
+
+
+def test_rule2b_render_blocks_when_this_pr_moved_the_hash(monkeypatch, capsys):
+    """The mutation that must stay red. The PR itself moved the render hash —
+    base differs from current — so the block stands and the inherited-debt
+    downgrade must NOT fire."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    _stub_base_render_hash(monkeypatch, "c" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json",
+        judge_render_touched=True, compare_base=True,
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "does not move the render hash" not in out
+
+
+def test_rule2b_render_warns_when_the_pr_did_not_move_the_hash(monkeypatch, capsys):
+    """Inherited debt: the base computes the same hash the current tree does, so
+    the log's older stamp is owed on whichever PR moved the render code."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    _stub_base_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json",
+        judge_render_touched=True, compare_base=True,
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "does not move the render hash" in out
+
+
+def test_rule2b_render_blocks_when_the_base_cannot_be_read(monkeypatch, capsys):
+    """Fail closed. No readable base is not evidence of innocence — the gate
+    must not pass on a read it skipped."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    _stub_base_render_hash(monkeypatch, None)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json",
+        judge_render_touched=True, compare_base=True,
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2b_render_does_not_downgrade_a_log_the_pr_added(monkeypatch, capsys):
+    """A log the PR ADDS is its own evidence and must match the tree it merges
+    into, so it gets no downgrade even when the base agrees."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    monkeypatch.setattr(
+        check_runlogs, "base_judge_render_hash",
+        lambda: pytest.fail("the base must not be read for a PR-added log"),
+    )
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json",
+        judge_render_touched=True, compare_base=False,
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2b_render_reads_no_base_when_the_render_code_was_untouched(monkeypatch, capsys):
+    """The new branch sits AFTER the touched guard, so a PR that touched no
+    render code keeps the older 'mixed-era corpus' message and pays nothing."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    monkeypatch.setattr(
+        check_runlogs, "base_judge_render_hash",
+        lambda: pytest.fail("the base must not be read when nothing was touched"),
+    )
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json",
+        judge_render_touched=False, compare_base=True,
+    )
+    assert rc == 0
+    assert "mixed-era corpus" in capsys.readouterr().out
+
+
+def test_base_judge_render_hash_reads_the_base_checkout(monkeypatch, tmp_path):
+    """The one test the others cannot substitute for: it runs the REAL helper
+    and proves it reads BASE_TREE rather than the tree it is imported from.
+    Every other test here stubs that helper, so a version that ignored
+    BASE_TREE and returned the head hash would pass all of them while
+    permanently disabling this rule's block.
+
+    Two traps, both measured:
+      * `_judge_render_hash_cached` is lru_cache'd on the path, so a second read
+        of the same dir returns the CACHED value — `cache_clear()` between reads.
+      * the hash is of the NORMALIZED AST, so comments and docstrings drop out;
+        the perturbation has to be semantic.
+    The precedent's one-file tree cannot be reused: `judge_render_hash` needs
+    every `_JUDGE_RENDER_ROOTS` entry plus `scenario_brief` to resolve, so the
+    real harness tree is copied.
+    """
+    import shutil
+    from harness.judge_render import judge_render_hash, _judge_render_hash_cached
+
+    harness_root = Path(check_runlogs.__file__).resolve().parents[1]
+    dst = tmp_path / "eval" / "harness"
+    dst.mkdir(parents=True)
+    shutil.copytree(harness_root / "harness", dst / "harness")
+    shutil.copytree(harness_root / "validators", dst / "validators")
+
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    _judge_render_hash_cached.cache_clear()
+    assert check_runlogs.base_judge_render_hash() == judge_render_hash()
+
+    judge_py = dst / "harness" / "judge.py"
+    src = judge_py.read_text(encoding="utf-8")
+    perturbed = src.replace("def grade(", "def grade(\n    _probe_marker=12345,", 1)
+    assert perturbed != src, "perturbation did not apply — judge.grade moved"
+    judge_py.write_text(perturbed, encoding="utf-8")
+    _judge_render_hash_cached.cache_clear()
+
+    # THE assertion a head-reading helper fails.
+    assert check_runlogs.base_judge_render_hash() != judge_render_hash()
+
+
+@pytest.mark.parametrize("base_tree", [None, "missing"], ids=["unset", "no-such-dir"])
+def test_base_judge_render_hash_is_none_with_no_base_checkout(monkeypatch, tmp_path, base_tree):
+    if base_tree is None:
+        monkeypatch.delenv("BASE_TREE", raising=False)
+    else:
+        monkeypatch.setenv("BASE_TREE", str(tmp_path / base_tree))
+    assert check_runlogs.base_judge_render_hash() is None
+
+
+def test_base_judge_render_hash_is_none_on_an_unparseable_base(monkeypatch, tmp_path):
+    """Fail closed on a base tree that cannot be parsed. Also the only test that
+    executes the `except JudgeRenderGraphError` clause, so it is what proves the
+    exception class is imported — without the import it raises NameError."""
+    import shutil
+    from harness.judge_render import _judge_render_hash_cached
+
+    harness_root = Path(check_runlogs.__file__).resolve().parents[1]
+    dst = tmp_path / "eval" / "harness"
+    dst.mkdir(parents=True)
+    shutil.copytree(harness_root / "harness", dst / "harness")
+    shutil.copytree(harness_root / "validators", dst / "validators")
+    (dst / "harness" / "judge.py").write_text("def (\n", encoding="utf-8")
+
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    _judge_render_hash_cached.cache_clear()
+    assert check_runlogs.base_judge_render_hash() is None
 
 
 def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):

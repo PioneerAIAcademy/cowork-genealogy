@@ -1,0 +1,46 @@
+{
+  "run_log": "v11_2026-11-16_06-30-20.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: conflict identified from tool responses; score retrieved and contextualized; threshold policy applied correctly; no fabrication."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: full chain run (assertion → tree person → same_person → conflict); pause-for-confirmation is the correct outcome here, not a gap."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: all calls correct; same_person omitted recordRole for principal party; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: core-identifier birthplace conflict caps tier at speculative regardless of 0.85 score; no link created; user asked to disambiguate."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
