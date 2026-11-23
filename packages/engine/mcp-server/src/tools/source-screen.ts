@@ -52,7 +52,7 @@ export type { SourceScreenInput, SourceScreenResponse } from "../types/source-sc
 export const MISATTRIBUTED_BELOW = 0.5;
 /** A score from `MISATTRIBUTED_BELOW` up to this is the grey band: weak. */
 export const WEAK_BELOW = 0.8;
-/** The matcher call (a, c) finishes within this much of the call's entry. */
+/** The matcher call (a, c, g) finishes within this much of the call's entry. */
 export const MATCHER_DEADLINE_MS = 30_000;
 /** Every image read finishes within this much of the call's entry (Cowork
  *  aborts an MCP call at 60 s). */
@@ -60,14 +60,14 @@ export const OCR_DEADLINE_MS = 45_000;
 /** Image reads at once: a transcription slot cap is shared with other users. */
 export const OCR_CONCURRENCY = 2;
 
-/** Whether an attachment gets the page-image read (check e): a or c called it
- *  misattributed, b raised any warning (an implausible one included — a wrong
+/** Whether an attachment gets the page-image read (check e): a, c or g called
+ *  it misattributed, b raised any warning (an implausible one included — a wrong
  *  year in the index is what b sees first), or h names a contradiction. */
 export function flaggedForImage(mis: readonly string[], soft: readonly string[], contradicts?: readonly string[]): boolean {
-  return [...mis, ...soft].some((m) => m.startsWith("b:")) || mis.some((m) => /^[ac]:/.test(m)) || (contradicts?.length ?? 0) > 0;
+  return [...mis, ...soft].some((m) => m.startsWith("b:")) || mis.some((m) => /^[acg]:/.test(m)) || (contradicts?.length ?? 0) > 0;
 }
 
-export const ALL_CHECKS: readonly SourceScreenCheck[] = ["a", "b", "c", "e", "h"];
+export const ALL_CHECKS: readonly SourceScreenCheck[] = ["a", "b", "c", "e", "g", "h"];
 
 export interface SourceScreenOptions {
   /** The checks to run; all by default. Not on the MCP schema: the dev
@@ -289,7 +289,7 @@ export async function sourceScreenTool(
   }
   const scored = rows.filter((r) => r.out.verdict !== "not_scored");
 
-  // ── a, c: one matcher call for every pair ──
+  // ── a, c, g: one matcher call for every pair ──
   const supports = new Map<string, AttachmentSupport>();
   const supportFor = (id: string) => {
     if (!supports.has(id)) supports.set(id, supportOf(tree, research, id));
@@ -312,11 +312,25 @@ export async function sourceScreenTool(
     pairIndex.set(key, pairs.length - 1);
     return pairs.length - 1;
   };
-  const plan = new Map<Row, { a?: number; parties: Array<[{ personId: string; personaId: string }, number | undefined]> }>();
+  type Planned = Array<[{ personId: string; personaId: string }, number | undefined]>;
+  const plan = new Map<Row, { a?: number; parties: Planned; others: Planned }>();
   for (const row of scored) {
-    const p: { a?: number; parties: any[] } = { parties: [] };
+    const p: { a?: number; parties: Planned; others: Planned } = { parties: [], others: [] };
     if (on.has("a")) p.a = pairFor(row, pid, row.personaId!);
     if (on.has("c")) for (const party of row.parties ?? []) p.parties.push([party, pairFor(row, party.personId, party.personaId)]);
+    if (on.has("g")) {
+      const seen = new Set<string>([pid, ...(row.parties ?? []).map((x) => x.personId)]);
+      for (const persona of arr(row.record?.persons)) {
+        if (typeof persona?.id !== "string") continue;
+        for (const b of row.recordBares!) {
+          for (const tp of linkedTo(b, persona.id)) {
+            if (seen.has(tp)) continue;
+            seen.add(tp);
+            p.others.push([{ personId: tp, personaId: persona.id }, pairFor(row, tp, persona.id)]);
+          }
+        }
+      }
+    }
     plan.set(row, p);
   }
   let scores: PairScore[] = [];
@@ -330,6 +344,10 @@ export async function sourceScreenTool(
   const scoreAt = (i: number | undefined): number | null => (i === undefined ? null : (scores[i]?.score ?? null));
   const whyNot = (i: number | undefined): string =>
     i === undefined ? "the pair could not be built" : (matcherError ?? scores[i]?.error?.message ?? "not scored");
+  const scored1 = ([x, i]: [{ personId: string; personaId: string }, number | undefined]): PartyScore => {
+    const score = scoreAt(i);
+    return score === null ? { ...x, score, not_run: whyNot(i) } : { ...x, score };
+  };
 
   // ── the per-attachment rules ──
   const treeName = fullName(preferredName(person.names));
@@ -356,10 +374,7 @@ export async function sourceScreenTool(
       for (const w of sig.b.implausible) row.soft.push(`b: ${w}`);
     }
     if (on.has("c")) {
-      const parties: PartyScore[] = p.parties.map(([x, i]) => {
-        const score = scoreAt(i);
-        return score === null ? { ...x, score, not_run: whyNot(i) } : { ...x, score };
-      });
+      const parties: PartyScore[] = p.parties.map(scored1);
       const disagreements: string[] = [];
       for (const b of row.recordBares!) {
         for (const s of statedRelationships(research, links, b)) {
@@ -377,6 +392,12 @@ export async function sourceScreenTool(
         if (x.score !== null && x.score < MISATTRIBUTED_BELOW) row.mis.push(`c: party ${x.personId} scores ${x.score.toFixed(2)} against persona ${x.personaId}.`);
       }
       for (const d of disagreements) row.mis.push(`c: ${d}`);
+    }
+    if (on.has("g")) {
+      const checked: PartyScore[] = p.others.map(scored1);
+      const failing = checked.filter((x) => x.score !== null && x.score < MISATTRIBUTED_BELOW);
+      sig.g = { checked, failing };
+      for (const x of failing) row.mis.push(`g: ${x.personId}, also linked to this record, scores ${x.score!.toFixed(2)} against persona ${x.personaId}.`);
     }
   }
 
@@ -500,13 +521,13 @@ async function withDeadline<T>(p: Promise<T>, ms: number): Promise<{ r: T } | { 
 /**
  * The vital fact an image read can settle for this attachment, and what to look
  * for: a birth or death year or place — one this row's h contradictions or b
- * warnings name, or, when a or c marked it misattributed, any — where this
+ * warnings name, or, when a, c or g marked it misattributed, any — where this
  * record's own stated value disagrees with the tree's. Undefined when there is none — a name alone, or an index that
  * already agrees with the tree on the fact, is nothing the page can settle.
  */
 function disputedFact(person: SimplifiedPerson, row: Row, treeName: string): { lookingFor: string; fact: string } | undefined {
   const named = (row.out.signals.h?.contradicts ?? []).filter((c) => row.out.contradicts?.includes(c.sourceId)).map((c) => c.fact);
-  const scored = row.mis.some((m) => /^[ac]:/.test(m)) ? ["birth year", "birth place", "death year", "death place"] : [];
+  const scored = row.mis.some((m) => /^[acg]:/.test(m)) ? ["birth year", "birth place", "death year", "death place"] : [];
   const candidates = [...new Set([...named, ...(row.bEvents ?? []).map((e) => `${e} year`), ...scored])];
   for (const fact of candidates) {
     const [event, aspect] = fact.split(" ") as [string, "year" | "place"];

@@ -1,6 +1,6 @@
 {
   "tool": "source_screen",
-  "description": "source_screen on Christian P. Hole (KD96-TV2) in christian-hole-screened, after person mode. The real sourceScreenTool's answer, produced offline with checks a, b, c, h (e, the image read, excluded) and a STUB matchPairs, because FamilySearch's matchTwoExamples answers 400 Bad Request for these synthetic HOLE-00x records. The stub gives one fixed leave-one-out score per record: HOLE-001 0.94, HOLE-002 0.88, HOLE-003 0.07, HOLE-004 0.91. Every other signal and every verdict is the tool's own. S3 (1885 state census, born 1852, Otter Tail) is misattributed and names S1 and S2, whose birth years disagree with it; S1 (1900 census) and S4 (1898 marriage, no birth indexed) are fine; S2 (death index, death 1954 against the tree's 1945) is weak.",
+  "description": "source_screen on Christian P. Hole (KD96-TV2) in christian-hole-screened, after person mode. The real sourceScreenTool's answer, produced offline with checks a, b, c, g, h (e, the image read, excluded) and a STUB matchPairs, because FamilySearch's matchTwoExamples answers 400 Bad Request for these synthetic HOLE-00x records. The stub gives one fixed leave-one-out score per record: HOLE-001 0.94, HOLE-002 0.88, HOLE-003 0.07, HOLE-004 0.91. Every other signal and every verdict is the tool's own. S3 (1885 state census, born 1852, Otter Tail) is misattributed and names S1 and S2, whose birth years disagree with it; S1 (1900 census) and S4 (1898 marriage, no birth indexed) are fine; S2 (death index, death 1954 against the tree's 1945) is weak.",
   "args": {
     "personId": "KD96-TV2"
   },
@@ -26,6 +26,10 @@
           "c": {
             "parties": [],
             "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
           },
           "h": {
             "contradicts": [
@@ -63,6 +67,10 @@
             "parties": [],
             "disagreements": []
           },
+          "g": {
+            "checked": [],
+            "failing": []
+          },
           "h": {
             "contradicts": [
               {
@@ -96,6 +104,10 @@
           "c": {
             "parties": [],
             "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
           },
           "h": {
             "contradicts": [
@@ -135,6 +147,10 @@
           "c": {
             "parties": [],
             "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
           }
         },
         "personaId": "P1"

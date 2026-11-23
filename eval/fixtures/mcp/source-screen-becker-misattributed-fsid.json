@@ -1,6 +1,6 @@
 {
   "tool": "source_screen",
-  "description": "source_screen for John Becker (LZBK-7QN) on becker-attachment-links-question with the 1900 census (MM8C-43Q) misattributed: the real tool, checks a,b,c,h, with a stub matcher scoring MM8C-43Q 0.10 and MLFM-GC8 0.90.",
+  "description": "source_screen for John Becker (LZBK-7QN) on becker-attachment-links-question with the 1900 census (MM8C-43Q) misattributed: the real tool, checks a,b,c,g,h, with a stub matcher scoring MM8C-43Q 0.10 and MLFM-GC8 0.90.",
   "args": {
     "personId": "LZBK-7QN"
   },
@@ -28,6 +28,10 @@
           "c": {
             "parties": [],
             "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
           }
         },
         "personaId": "p_1",
@@ -51,6 +55,10 @@
           "c": {
             "parties": [],
             "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
           }
         },
         "personaId": "p_1"

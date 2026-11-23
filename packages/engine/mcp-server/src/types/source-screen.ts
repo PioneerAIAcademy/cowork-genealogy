@@ -8,9 +8,9 @@ export interface SourceScreenInput {
   personId: string;
 }
 
-/** The checks, by the letters the spec names them. f is not built; d and g
- *  were measured and dropped (spec, "Measurement"). */
-export type SourceScreenCheck = "a" | "b" | "c" | "e" | "h";
+/** The checks, by the letters the spec names them. f is not built; d was
+ *  measured and dropped (spec, "Measurement"). */
+export type SourceScreenCheck = "a" | "b" | "c" | "e" | "g" | "h";
 
 export type SourceScreenVerdict = "misattributed" | "indexing_error" | "contradicts" | "weak" | "fine" | "not_scored";
 
@@ -39,6 +39,8 @@ export interface SourceScreenSignals {
   /** The page image read for the disputed vital fact (flagged attachments only):
    *  `fact` is e.g. "birth year", `lookingFor` the tree's value of it. */
   e?: { lookingFor: string; fact: string; found: "FOUND" | "NOT FOUND" } | NotRun;
+  /** Every other tree person linked to a persona of this record, scored. */
+  g?: { checked: PartyScore[]; failing: PartyScore[] };
   /** Other attachments whose birth or death year or place disagrees with this one. */
   h?: { contradicts: Array<{ sourceId: string; fact: string }> };
 }

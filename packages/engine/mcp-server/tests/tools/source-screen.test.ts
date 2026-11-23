@@ -299,6 +299,22 @@ describe("source_screen", () => {
     expect(row(without, "S1").signals).not.toHaveProperty("a");
   });
 
+  it("g: a record failing for another tree person it is linked to is flagged", async () => {
+    const S3 = { id: "S3", title: "census", url: url("MZGS-1BW") };
+    await writeTree(
+      [JOHN(["S1"]), person("I2", "Anna", "Boyer", "Female", ["S3"], [{ type: "Birth", date: "1849", place: "Pennsylvania" }])],
+      [S1, S3],
+    );
+    await build("I1", [CENSUS()]);
+    const r = await screen({ matchPairs: matcher({ "I2|p_260900946": 0.1 }) });
+    expect(row(r, "S1").verdict).toBe("misattributed");
+    expect(row(r, "S1").signals.g!.failing).toEqual([{ personId: "I2", personaId: "p_260900946", score: 0.1 }]);
+    expect(row(r, "S1").reasons).toContainEqual(expect.stringMatching(/^g: I2, also linked to this record, scores 0\.10/));
+    const clear = await screen({ matchPairs: matcher() });
+    expect(row(clear, "S1").signals.g).toEqual({ checked: [{ personId: "I2", personaId: "p_260900946", score: 0.95 }], failing: [] });
+    expect(row(clear, "S1").verdict).toBe("fine");
+  });
+
   it("c: a record that calls the tree's mother the subject's wife is misattributed", async () => {
     const C1 = { id: "S1", title: "1880", url: url("MNH8-SHT") };
     const C2 = { id: "S2", title: "1880", url: url("MNH8-SHY") };
@@ -507,6 +523,18 @@ describe("source_screen", () => {
       expect(row(r, "S4").signals.c!.parties).toEqual([{ personId: "I2", personaId: expect.any(String), score: null, not_run: "budget" }]);
     });
 
+    it("a matcher unfinished at its deadline leaves g's pairs not_run: budget", async () => {
+      const S3 = { id: "S3", title: "census", url: url("MZGS-1BW") };
+      await writeTree(
+        [JOHN(["S1"]), person("I2", "Anna", "Boyer", "Female", ["S3"], [{ type: "Birth", date: "1849", place: "Pennsylvania" }])],
+        [S1, S3],
+      );
+      await build("I1", [CENSUS()]);
+      const hang = vi.fn(() => new Promise<any>(() => {}));
+      const r = await screen({ matchPairs: hang as any, matcherDeadlineMs: 200 });
+      expect(row(r, "S1").signals.g).toEqual({ checked: [{ personId: "I2", personaId: "p_260900946", score: null, not_run: "budget" }], failing: [] });
+    });
+
     it("image reads run two at a time", async () => {
       const bares = ["DDDD-111", "DDDD-222", "DDDD-333", "DDDD-444"];
       const srcs = bares.map((b, i) => ({ id: `S${i + 1}`, title: "death", url: url(b) }));
@@ -557,6 +585,7 @@ describe("flaggedForImage", () => {
     expect(flaggedForImage(["b: died before born"], [])).toBe(true);
     expect(flaggedForImage(["a: leave-one-out score 0.10 is below 0.5."], [])).toBe(true);
     expect(flaggedForImage(["c: party I2 scores 0.10"], [])).toBe(true);
+    expect(flaggedForImage(["g: I2, also linked to this record, scores 0.10 against persona p_1."], [])).toBe(true);
     expect(flaggedForImage([], [], ["S2"])).toBe(true);
     expect(flaggedForImage([], ["a: leave-one-out score 0.60 is in the grey band."])).toBe(false);
     expect(flaggedForImage([], [], [])).toBe(false);

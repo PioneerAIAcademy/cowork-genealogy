@@ -27,7 +27,7 @@ returns one row per attachment. A mode would give one tool two return shapes.
 | `personId` | string | yes | A tree person id, or a FamilySearch id a tree person's `ark` links to (resolved as `person_warnings` resolves it, by `findAnchor`). |
 
 `checks` is **not** on the MCP schema. `sourceScreenTool(input, principal,
-{ checks })` takes a subset of `a b c e h` so the measurement script can
+{ checks })` takes a subset of `a b c e g h` so the measurement script can
 score each check's absence. Tests also inject `matchPairs`, `imageTranscribe`,
 `now`, `deadlineMs` and `matcherDeadlineMs`.
 
@@ -134,7 +134,7 @@ review.
   give no role (KW8N-2TB, 2026-11-01).
 - **e. Image read, for a disputed vital fact on a flagged attachment.**
   Decided (Richard, 2026-10-27): OCR runs only on attachments the rules already
-  flagged — a or c marked it misattributed, b raised any warning (an implausible
+  flagged — a, c or g marked it misattributed, b raised any warning (an implausible
   one included: a wrong year in the index is what b sees first), or h named a
   contradiction — truth sets included (`flaggedForImage`, the eligibility gate).
   A flagged attachment is read only for a **specific disputed fact on this
@@ -142,7 +142,7 @@ review.
   value differs from the tree's. The candidate facts are the ones this row's
   contradictions name (`contradicts[]`, after the misattribution filter in h),
   then the events of the record facts a b warning rests on (their year), then,
-  when a or c marked it misattributed, any birth or death year or place. The
+  when a, c or g marked it misattributed, any birth or death year or place. The
   first candidate whose stated value disagrees with the tree's is read, with
   `lookingFor` the person's name and the tree's value of that fact
   (`John Boyer, birth 1852`, `John Boyer, birth place Pennsylvania`). With no
@@ -156,10 +156,18 @@ review.
   `NOT FOUND` leaves the verdict on the rules. No key, no image, a refused
   transcription slot, an error, or no answer is `e: { not_run }` and the
   verdict stands on the rules.
+- **g. Every person the record touches.** Each other tree person holding a live
+  `person_evidence` link to any persona of the record, whatever its rationale
+  (the person and c's relationship parties excepted), is scored as in a against
+  their own leave-one-out tree, in the same `matchPairs` call. One below
+  `MISATTRIBUTED_BELOW` marks the attachment misattributed; `signals.g` lists
+  every pair `checked` and the `failing` ones. It is what sees a wrong family's
+  records attached across a cluster of tree relatives, where they vouch for each
+  other through the shared parents.
 - **h. Contradictions.** Two attachments on the person whose birth or death
   year or place disagree (the same comparators; a census birth as its window)
   each get `contradicts`, naming the other — except that a disagreement with an
-  attachment a, b or c already marks misattributed is that attachment's
+  attachment a, b, c or g already marks misattributed is that attachment's
   finding alone: it names the other, and the other is not `contradicts` for it
   and is not image-read for it. `signals.h` still records every disagreement.
   Without this, one wrong record marks every right record that disagrees with it
@@ -172,8 +180,9 @@ In order, first match wins:
 1. `not_scored` — a reason from the table above.
 2. `indexing_error` — e found on the page the tree's value of a vital fact this
    attachment's index states differently.
-3. `misattributed` — a below `MISATTRIBUTED_BELOW`, b impossible, or c: a party
-   below the threshold or a contradicted relationship.
+3. `misattributed` — a below `MISATTRIBUTED_BELOW`, b impossible, c: a party
+   below the threshold or a contradicted relationship, or g: another linked
+   tree person below the threshold.
 4. `contradicts` — h alone.
 5. `weak` — a in the grey band (`MISATTRIBUTED_BELOW` ≤ score < `WEAK_BELOW`),
    or any soft signal.
@@ -236,7 +245,7 @@ on an earlier build of the same planted set:
 | c | 10 | 5 | unmeasured: no relationship-level plant |
 | h | 10 | 5 | unmeasured: no contradiction plant |
 | d (name variants) | 11 | 5 | **dropped**: it softened one sr_jr_swap plant and spared no false alarm |
-| g (every person the record touches) | 10 | 4 | **dropped**: it added a false alarm and caught nothing more |
+| g (every person the record touches) | 10 | 4 | kept, unmeasured: no wrong-family cluster plant |
 
 **Uncurated sample (item 6).** 30 persons drawn at random (seed 20261120) from
 the e2e fixtures' `source_pid`s, snapshot 2026-11-20, no image read: 313
@@ -249,16 +258,22 @@ Prizer) that the matcher scores low and are likely right. So on real profiles th
 screen over-flags name changes; telling which flags are right is the
 genealogist review the truth set carries.
 
-c and h are kept pending the truth set, which also has to re-test the d and g
-drops: the planted set carries two fixtures per must-not-flag type. The
-100-person truth set was not available for this run.
+c, g and h are kept pending the truth set and, for g, the wrong-family cluster
+plant: `wrong_family_cluster` in `dev/source-screen.ts` attaches one donor
+family's record to the host (`donor_ark`) and to the host's tree parents
+(`relatives: [{ person, donor_ark }]`), and is caught when the donor ARK on the
+host is misattributed. The fixture spec has none yet — its `shortfalls` entry
+says what one needs — so the planted set above has no plant g alone could catch,
+and g's row measures only its false alarm. Only d stays dropped, and
+the truth set has to re-test that drop: the planted set carries two fixtures per
+must-not-flag type. The 100-person truth set was not available for this run.
 
 ## Time budget
 
 Cowork aborts every MCP call at 60 s. One clock starts at the call's entry. All
-matcher pairs (a, c) go in **one** `matchPairs` call, which must finish by
+matcher pairs (a, c, g) go in **one** `matchPairs` call, which must finish by
 `MATCHER_DEADLINE_MS = 30_000`; unfinished, every pair is `a: { not_run:
-"budget" }` and every c party `{ score: null, not_run: "budget" }` (the matcher
+"budget" }` and every c party and g pair `{ score: null, not_run: "budget" }` (the matcher
 offers no abort, so its requests are abandoned, not cancelled). The image reads
 then run two at a time (`OCR_CONCURRENCY`, so a `GENEALOGY_MAX_TRANSCRIPTIONS`
 cap shared with other users is not taken whole) and must finish by

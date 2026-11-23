@@ -958,8 +958,8 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
 
 // ─── fixture spec ───────────────────────────────────────────────────────────
 
-export const MUST_FLAG = ["easy_wrong_person", "hard_wrong_person", "sr_jr_swap", "relative_clash", "indexing_error"] as const;
-export const WRONG_PERSON = new Set<string>(["easy_wrong_person", "hard_wrong_person", "sr_jr_swap", "relative_clash"]);
+export const MUST_FLAG = ["easy_wrong_person", "hard_wrong_person", "sr_jr_swap", "relative_clash", "wrong_family_cluster", "indexing_error"] as const;
+export const WRONG_PERSON = new Set<string>(["easy_wrong_person", "hard_wrong_person", "sr_jr_swap", "relative_clash", "wrong_family_cluster"]);
 export const MUST_NOT_FLAG = [
   "spelling_variant",
   "nickname",
@@ -983,6 +983,10 @@ export interface FixtureSpecEntry {
   host: string;
   /** Wrong-person types: the donor persona ARK attached to the host. */
   donor_ark?: string;
+  /** wrong_family_cluster: the host's tree relatives (a parent, by Family Tree
+   *  id) and the donor family's persona ARK attached to each, so the wrong
+   *  records vouch for each other through the shared parents. */
+  relatives?: Array<{ person: string; donor_ark: string }>;
   /** Must-not-flag types: the host's real source that shows the variation. */
   source_ark?: string;
   /** indexing_error: the one field changed in the host's own record. */
@@ -1002,6 +1006,9 @@ export function loadSpec(path: string): FixtureSpec {
     ids.add(f.id);
     if (![...MUST_FLAG, ...MUST_NOT_FLAG].includes(f.type as never)) throw new Error(`${f.id}: unknown type ${f.type}`);
     if (WRONG_PERSON.has(f.type) && !f.donor_ark) throw new Error(`${f.id}: ${f.type} needs donor_ark`);
+    if (f.type === "wrong_family_cluster" && !(f.relatives?.length && f.relatives.every((r) => r?.person && r?.donor_ark))) {
+      throw new Error(`${f.id}: wrong_family_cluster needs relatives [{ person, donor_ark }]`);
+    }
     if (f.type === "indexing_error" && !f.edit) throw new Error(`${f.id}: indexing_error needs edit`);
     if ((MUST_NOT_FLAG as readonly string[]).includes(f.type) && !f.source_ark) throw new Error(`${f.id}: ${f.type} needs source_ark`);
   }
@@ -1061,6 +1068,33 @@ export function applyWrongPersonPlant(
   }
   audit.entries.push({ key: donorArk, ark: donorArk, source_ids: [sourceId], title, level: "subject", class: "persona" });
   return { read, tree, audit };
+}
+
+/**
+ * Add a donor family's persona source to one of the host's tree relatives in a
+ * copy's person-read and tree, as `applyWrongPersonPlant` adds the host's.
+ * The audit is the host's own attachments, so it is left alone. Pure.
+ */
+export function applyRelativePlant(
+  docs: { read: Json; tree: Json },
+  relativeId: string,
+  donorRecord: Json,
+  donorArk: string,
+  sourceId: string,
+): { read: Json; tree: Json } {
+  const read = structuredClone(docs.read);
+  const tree = structuredClone(docs.tree);
+  const source = { id: sourceId, title: donorTitle(donorRecord, donorArk), url: `https://www.familysearch.org/${donorArk}` };
+  for (const doc of [read, tree]) {
+    const relative = (doc.persons ?? []).find((p: Json) => p?.id === relativeId);
+    if (!relative) throw new Error(`cluster plant: ${relativeId} is not a tree relative of the host`);
+    if ((relative.sources ?? []).some((r: Json) => (doc.sources ?? []).some((s: Json) => s.id === r?.ref && typeof s.url === "string" && toArk(s.url) === donorArk))) {
+      throw new Error(`cluster plant: ${donorArk} is already attached to ${relativeId}`);
+    }
+    doc.sources = [...(doc.sources ?? []), { ...source }];
+    relative.sources = [...(relative.sources ?? []), { ref: sourceId }];
+  }
+  return { read, tree };
 }
 
 /** Add the host to the donor ARK's attachments, keeping who else holds it. Pure. */
@@ -1164,15 +1198,24 @@ async function plantOne(ctx: Ctx, f: FixtureSpecEntry): Promise<void> {
     if (audit.entries.some((e) => e.ark === donorArk)) {
       throw new Error(`fixture ${f.id}: donor ${donorArk} is already attached to host ${f.host}, so planting it plants nothing`);
     }
-    const id = arkToBareId(donorArk);
-    let record = readRecord(ctx.out, f.id, id);
-    if (!record) {
-      const r = await call(ctx, calls, errors, "record_read", donorArk, () => ctx.tools.recordRead(donorArk));
-      failIf();
-      if (r.ok) writeJson(sharedRecordPath(ctx.out, id), (record = r.value));
-    }
-    if (record.is_error) throw new Error(`plant ${f.id}: donor record unreadable: ${record.error}`);
+    const donorRecord = async (a: string): Promise<Json> => {
+      const id = arkToBareId(a);
+      let rec = readRecord(ctx.out, f.id, id);
+      if (!rec) {
+        const r = await call(ctx, calls, errors, "record_read", a, () => ctx.tools.recordRead(a));
+        failIf();
+        if (r.ok) writeJson(sharedRecordPath(ctx.out, id), (rec = r.value));
+      }
+      if (rec.is_error) throw new Error(`plant ${f.id}: donor record unreadable: ${rec.error}`);
+      return rec;
+    };
+    const record = await donorRecord(donorArk);
     const planted = applyWrongPersonPlant({ read, tree, audit }, record, donorArk, plantSourceId(f.id));
+    for (const rel of f.relatives ?? []) {
+      const relArk = toArk(rel.donor_ark);
+      const relRecord = personaFor(record, relArk) ? record : await donorRecord(relArk);
+      Object.assign(planted, applyRelativePlant(planted, rel.person, relRecord, relArk, plantSourceId(`${f.id}:${rel.person}`)));
+    }
     writeJson(join(dst, "person-read.json"), planted.read);
     writeJson(join(dst, "tree.gedcomx.json"), planted.tree);
     writeJson(join(dst, "audit.json"), planted.audit);

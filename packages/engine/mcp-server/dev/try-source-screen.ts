@@ -2,7 +2,7 @@
  * Smoke-test the source_screen tool against a project person mode has built.
  *
  * Usage:
- *   npx tsx dev/try-source-screen.ts <projectPath> <personId> [--checks a,b,c,e,h]
+ *   npx tsx dev/try-source-screen.ts <projectPath> <personId> [--checks a,b,c,e,g,h]
  *
  * `--checks` passes the internal `checks` option (not on the MCP schema) to run
  * only those checks. Calls the configured matcher and, for flagged attachments,
@@ -18,7 +18,7 @@ import type { SourceScreenCheck } from "../src/types/source-screen.js";
 const args = process.argv.slice(2);
 
 function usage(): never {
-  console.error("Usage: npx tsx dev/try-source-screen.ts <projectPath> <personId> [--checks a,b,c,e,h]");
+  console.error("Usage: npx tsx dev/try-source-screen.ts <projectPath> <personId> [--checks a,b,c,e,g,h]");
   process.exit(1);
 }
 
