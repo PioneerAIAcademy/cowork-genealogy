@@ -1420,13 +1420,15 @@ def _stage_image_transcribe(
     `image_transcribe`; the element's `id` is the `capture:<basename>` of a
     `file`, else the image the caller named. The layout cleanup, staging, the
     digest and the strip all run in ONE node process, through the compiled
-    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest` and
-    `compactImageTranscribeAnswer`, so each has one definition. A staging throw
+    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest`,
+    `compactImageTranscribeAnswer` and `attachIndexReadings` (#4578), so each has
+    one definition. A staging throw
     keeps the text inline with `staged: null` and `stagingError`, as production
     does; a node failure returns the same shape, with a warning.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    readings_js = _MCP_BUILD / "utils" / "index-readings.js"
     # Production folds record_read's `imageArk` into `ark` (foldImageArkInput):
     # a blank `ark` counts as absent, and a blank alias is ignored.
     alias, ark = args.get("imageArk"), args.get("ark")
@@ -1461,11 +1463,12 @@ def _stage_image_transcribe(
         warnings.warn(f"mock image_transcribe could not be staged ({why})", stacklevel=3)
         return {**response, "staged": None, "stagingError": f"mock: staging the canned page failed ({why})"}
 
-    if not (stager_js.exists() and compactor_js.exists()):
+    if not (stager_js.exists() and compactor_js.exists() and readings_js.exists()):
         return _unstaged(f"no engine build at {_MCP_BUILD}")
 
     script = (
         f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
+        f" import {{ attachIndexReadings }} from '{_node_module_url(readings_js)}';"
         f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER},"
         f" {_IMAGE_TRANSCRIBE_DIGEST} }} from '{_node_module_url(compactor_js)}';"
         " import { readFileSync } from 'node:fs';"
@@ -1480,6 +1483,7 @@ def _stage_image_transcribe(
         " ...(stagingError !== undefined ? { stagingError } : {}),"
         f" digest: {_IMAGE_TRANSCRIBE_DIGEST}(el.id, el.transcription) }};"
         f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " await attachIndexReadings(input.projectPath, out, input.pageArk);"
         " process.stdout.write(JSON.stringify(out));"
     )
     input_obj = {
@@ -1487,6 +1491,8 @@ def _stage_image_transcribe(
         "element": element,
         "query": query,
         "response": response,
+        # Production joins the index on the ark it read; a `file` names no page.
+        "pageArk": None if isinstance(args.get("file"), str) else args.get("ark"),
     }
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
