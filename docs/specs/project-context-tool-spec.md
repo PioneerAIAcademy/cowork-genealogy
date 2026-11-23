@@ -131,6 +131,17 @@ can drop:
       availability?: "browse-only",      // only on a browse-only row: the stored label, else from personCount
     }],
     quirks?: string[],
+    recordTypes?: [{                     // the entry's record_types rows, without
+      type: string,                      //   source_url (research_query has it), so a
+      years?: string,                    //   planner reading only this answer still sees
+      level?: string,                    //   each record type's years, holder and reach
+      heldAt?: string,
+      access?: string,
+      collectionIds?: string[],
+      summary?: string,
+    }],
+    repositories?: [{ name: string, holds?: string, access?: string, url?: string }],
+    losses?: [{ recordSet: string, years?: string }],
   }],
   nationalCollections?: {                // country-wide rows, once per country (US, Canada, Mexico)
     [country: string]: [{ id, title?, dateRange?, personCount?, recordCount? }],

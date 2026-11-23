@@ -525,8 +525,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "research_log_append, and for the tree tree_edit or tree_correct (from "
                     "the main session, invoke `@plugin:tree-edit`). These validate "
                     "before persisting. Direct file writes never validate. "
-                    "external-collections.json is written only by external_links_search given a "
-                    "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                    "external-collections.json is written only by locality_survey or external_links_search given a "
+                    "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                 ),
             },
         }
