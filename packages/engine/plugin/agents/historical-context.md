@@ -943,5 +943,6 @@ paragraphs of plain prose with **no label, heading or field name**:
    the research and is being passed there.
 2. One sentence: what happens next, in plain language.
 
-The caller prints everything after that `---` verbatim and nothing above it. No
-closing essay.
+The caller prints everything after that `---` verbatim and nothing above it, or,
+from research, everything above `### Search implications` instead. No closing
+essay.

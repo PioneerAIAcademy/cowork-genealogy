@@ -1081,9 +1081,11 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     tag, else ``routes-to:``), against the project subject's tree facts in the after
     state: every fact year and leading place word appears, and no year appears that
     is in none of those facts, the session's ``tree_query`` responses, the user's
-    message and the project objective, which the delegation may add when it names
-    them as the objective's. Places are checked one way only: telling an invented
-    place from a real one would need a gazetteer."""
+    message and the project objective. A year only the objective holds must be named
+    as the objective's at least once in the prompt that gives it: on a line saying
+    "objective", or under a heading line (one ending in a colon) that does. Places are
+    checked one way only: telling an invented place from a real one would need a
+    gazetteer."""
     if "delegates-tree-facts" not in (test.get("tags") or []):
         pytest.skip("not a delegates-tree-facts test")
     callee = _deliverable(test) or _expected_skill(test)
@@ -1103,15 +1105,40 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
         f"no {callee} spawn names {missing}, which the subject's tree facts hold"
     )
     objective = ((after_state or {}).get("research_json") or {}).get("project") or {}
-    allowed = years | set(_YEAR.findall(test.get("user_message") or ""))
-    allowed |= set(_YEAR.findall(str(objective.get("objective") or "")))
-    allowed |= {y for c in queries for s in response_strings(c.get("response")) for y in _YEAR.findall(s)}
-    invented = sorted(set(_YEAR.findall(text)) - allowed)
+    objective_years = set(_YEAR.findall(str(objective.get("objective") or "")))
+    sourced = years | set(_YEAR.findall(test.get("user_message") or ""))
+    sourced |= {y for c in queries for s in response_strings(c.get("response")) for y in _YEAR.findall(s)}
+    invented = sorted(set(_YEAR.findall(text)) - sourced - objective_years)
     assert not invented, (
         f"a {callee} spawn names the year(s) {invented}, which none of the subject's "
         f"tree facts ({sorted(years)}), the tree_query responses, the user's message "
         f"and the project objective hold"
     )
+    unnamed = sorted(_unnamed_objective_years(prompts, objective_years - sourced))
+    assert not unnamed, (
+        f"a {callee} spawn gives the year(s) {unnamed}, which only the project objective "
+        f"holds, without naming them as the objective's"
+    )
+
+
+def _unnamed_objective_years(prompts: list[str], only_objective: set[str]) -> set[str]:
+    unnamed: set[str] = set()
+    for prompt in prompts:
+        heading = ""
+        given: set[str] = set()
+        named: set[str] = set()
+        for line in prompt.splitlines():
+            if not line.strip():
+                heading = ""
+                continue
+            found = set(_YEAR.findall(line)) & only_objective
+            given |= found
+            if "objective" in line.lower() or "objective" in heading:
+                named |= found
+            if line.rstrip().endswith(":"):
+                heading = line.lower()
+        unnamed |= given - named
+    return unnamed
 
 
 def test_reply_relays_the_overview(test, text_response):

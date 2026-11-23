@@ -354,10 +354,11 @@ Two more tags are deterministic:
   main's SKILL.md: in a scratch run there, the router reached historical-context from the
   agent's own description, skipped `tree_query`, and handed over the objective's years.
   After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,
-  and the message names neither. ia1's tree holds nothing, so on ia1 it checks only that no
-  other year appears. The delegation may pass the objective's places and years named as the
-  objective's (Ikennaya, 2026-11-17, after 3 of 3 scratch runs of ia1 did so). Whether it
-  names them as the objective's is checked by nothing: the judge cannot see a spawn prompt.
+  and the message names neither. ia1's tree holds nothing, so on ia1 it checks that no
+  other year appears and that the objective's years are named as the objective's. The
+  delegation may pass them (Ikennaya, 2026-11-17, after 3 of 3 scratch runs of ia1 did so)
+  if a year only the objective holds sits at least once on a line saying "objective", or
+  under a heading line that does. "Tree data: … born ca. 1845" fails.
 - **`relays-overview`**: the reply carries the overview's Sources consulted list and not
   its `### Search implications` block (Richard, 2026-11-17).
 

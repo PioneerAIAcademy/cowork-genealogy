@@ -146,6 +146,41 @@ def test_an_empty_tree_fails_a_year_beyond_the_objective():
                                   "projectPath: /p\nThe objective says born ca. 1845; the Famine ran to 1852.")], EMPTY)
 
 
+@pytest.mark.parametrize("prompt", [
+    "projectPath: /p\nTree data: The project's subject is Patrick Flynn (I1), born ca. 1845 in Pennsylvania, "
+    "died 1908 in Schuylkill County, PA.",
+    "projectPath: /p\nProject context:\n- Subject: Patrick Flynn, Male, born ca. 1845 in Pennsylvania, died 1908\n"
+    "- Objective: identify his parents",
+    "projectPath: /p\nProject objective: identify his parents.\n\nborn ca. 1845 in Pennsylvania, died 1908",
+], ids=["as-tree-data", "objective-on-another-line", "after-a-blank-line"])
+def test_objective_years_not_named_as_the_objectives_fail(prompt):
+    """The first two are the shapes of a branch run before the skill sentence named
+    the objective and of main's router on ia1."""
+    with pytest.raises(AssertionError, match="without naming them as the objective's"):
+        check(EMPTY_TEST, [_spawn("historical-context", prompt)], EMPTY)
+
+
+@pytest.mark.parametrize("prompt", [
+    'projectPath: /p\nProject objective: "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, '
+    'died 1908 in Schuylkill County, PA."',
+    "projectPath: /p\nProject objective:\nIdentify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania,\n"
+    "died 1908 in Schuylkill County, PA",
+    "projectPath: /p\nFrom the OBJECTIVE: born c. 1845; d. 1908.",
+    'projectPath: /p\nProject objective: "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, '
+    'died 1908 in Schuylkill County, PA."\n\nExplain what children of a man born ca. 1845 in Pennsylvania, '
+    "dying in Schuylkill County, would have experienced.",
+], ids=["same-line", "under-a-heading", "case", "named-once-then-reused"])
+def test_objective_years_named_as_the_objectives_pass(prompt):
+    check(EMPTY_TEST, [_spawn("historical-context", prompt)], EMPTY)
+
+
+def test_an_objective_year_the_tree_also_holds_needs_no_label():
+    state = {**FLYNN, "research_json": {"project": {
+        "subject_person_ids": ["I1"], "objective": "Find where Patrick Flynn, born 1845, died in 1908"}}}
+    check(TEST, [_spawn("historical-context", _prompt(
+        "born ~1845 in Ireland; died 1908 in Schuylkill County"))], state)
+
+
 def test_an_objective_year_is_not_allowed_when_the_objective_lacks_it():
     no_objective = {**EMPTY, "research_json": {"project": {"subject_person_ids": ["I1"]}}}
     with pytest.raises(AssertionError, match="1845"):
