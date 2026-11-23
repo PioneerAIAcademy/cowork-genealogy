@@ -9,5 +9,7 @@ relationships are the tree's claims; none has been checked against a record in t
 yet. That includes the parent links from I1 Alexander Mills to I5 George Mills and I7 Abigail
 Weed, and the two marriage dates on R1 and R2.
 
-There is no `localities` entry for any Massachusetts or New Hampshire place. That is how the
-project stood at the time, not a fixture defect.
+`loc_001` (Stamford) and `loc_002` (Shelburne) are real locality guides from that session.
+`loc_003` (Worcester) is a short entry written for this test: it names the record keepers
+and nothing about which records are indexed. There is no entry for Beverly or any New
+Hampshire place; that is intentional, not a fixture defect.

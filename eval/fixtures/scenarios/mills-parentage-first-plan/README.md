@@ -32,8 +32,12 @@ in the 1846 Worcester vital-records compilation.
 
 ## Notes for the author
 
-- There is no Worcester `localities` entry (none existed at the time), so a rule keyed on a
-  `fulltext_only` count cannot fire here; the pre-1850 New England fallback is what applies.
+- `loc_003` (Worcester, Worcester County, Massachusetts, 1735-1765) was added on 2026-11-23;
+  no Worcester entry existed in the session. Without it, today's planner leaves Massachusetts
+  out of a first plan and asks for a locality survey (7 of 8 plans in the first 9 scratch
+  runs), so the full-text rule could not be measured. The entry is hand-built and neutral:
+  record keepers only, no `volume_summary`, no collections, nothing on indexing. With no
+  `fulltext_only` count, the pre-1850 New England fallback is what applies.
 - The question text itself asks whether records confirm or refute the Stamford parents, and
   the delegation invites testing the tree's claims. Both are kept as they were.
 - PII: the people are 18th century and on the public Family Tree; no tester or contributor

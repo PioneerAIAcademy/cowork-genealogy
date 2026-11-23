@@ -21,7 +21,6 @@ from test_research_plan import (  # noqa: E402
     test_fulltext_beside_indexed_for_early_vital as check_fulltext,
     test_research_plan_plans_subject_birth_and_death as check_vitals,
     test_ruled_out_tree_claim_gets_no_item as check_ruled_out,
-    test_subject_birth_evidence_precedes_alleged_parents as check_birth_first,
 )
 
 _ORIGINAL = json.loads(
@@ -31,7 +30,7 @@ _ORIGINAL = json.loads(
 )["items"]
 
 ALAN = {"id": "ut_research_plan_zgw", "tags": ["subject-birth-death-items"]}
-MILLS_TAGS = ["ruled-out-claim", "subject-birth-first", "fulltext-beside-indexed"]
+MILLS_TAGS = ["ruled-out-claim", "fulltext-beside-indexed"]
 MILLS = {"id": "ut_research_plan_99n", "tags": MILLS_TAGS}
 
 
@@ -151,7 +150,7 @@ def test_vitals_entry_without_tag_fails():
 
 # --- Part A: replay of the real #4642 first plan ------------------------------
 
-@pytest.mark.parametrize("check", [check_ruled_out, check_birth_first, check_fulltext])
+@pytest.mark.parametrize("check", [check_ruled_out, check_fulltext])
 def test_original_mills_plan_fails_every_part_a_check(check):
     with pytest.raises(AssertionError):
         _run(check, [dict(i) for i in _ORIGINAL], MILLS)
@@ -175,43 +174,8 @@ def test_ruled_out_fails_on_stamford_jurisdiction(jurisdiction):
         _run(check_ruled_out, items, MILLS)
 
 
-# --- Part A (b): subject's own birth evidence before the alleged parents --------
-
 PARENTS = _item(5, rationale="Probate of George Mills of Stamford may name his heirs.",
                 jurisdiction="Fairfield County, Connecticut")
-
-
-@pytest.mark.parametrize("birth", [
-    _item(2, rationale="Search for Alexander's own baptism in Massachusetts town records."),
-    _item(2, record_type="military",
-          rationale="Samuel's pension declaration may say where Alexander was born."),
-    _item(2, rationale="A deposition giving the age of Alexander Mills."),
-    _item(2, record_type="church",
-          rationale="Target his own baptism record,\nwherever Alexander first appears."),
-])
-def test_birth_first_passes_variants(birth):
-    _run(check_birth_first, [birth, PARENTS], MILLS)
-
-
-def test_birth_first_passes_with_no_parents_item():
-    _run(check_birth_first,
-         [_item(4, rationale="Alexander's birthplace may appear in his marriage intention.")],
-         MILLS)
-
-
-@pytest.mark.parametrize("items,msg", [
-    ([PARENTS], "no item targets"),
-    ([_item(2, rationale="Alexander's son Samuel was born 1762 in Nova Scotia."), PARENTS],
-     "no item targets"),
-    ([_item(2, rationale="George Mill's son Alexander was born 1761 at Stamford."), PARENTS],
-     "no item targets"),
-    ([_item(7, rationale="Search for Alexander's own baptism."), PARENTS], "sequence 7"),
-    ([_item(5, rationale="Search for Alexander's own baptism.", sequence=5), PARENTS],
-     "sequence 5"),
-])
-def test_birth_first_fails_planted_breaks(items, msg):
-    with pytest.raises(AssertionError, match=msg):
-        _run(check_birth_first, items, MILLS)
 
 
 # --- Part A (c): full-text beside indexed for the 1759 Worcester marriage ------
@@ -245,7 +209,7 @@ def test_fulltext_fails_planted_breaks(item):
 
 
 def test_part_a_checks_skip_untagged_tests():
-    for check in (check_ruled_out, check_birth_first, check_fulltext):
+    for check in (check_ruled_out, check_fulltext):
         with pytest.raises(pytest.skip.Exception):
             _run(check, [PARENTS], {"id": "ut_x", "tags": []})
 

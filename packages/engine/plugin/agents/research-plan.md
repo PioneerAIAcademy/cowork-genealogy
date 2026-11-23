@@ -515,6 +515,14 @@ table and contextual factors checklist.
   item too: planned, or `skipped` with `skip_category` `inaccessible`
   (sealed or destroyed) or `no_coverage` (never kept for that place and
   period) and a `skip_reason`.
+- **Plan no item whose only purpose is to test a tree claim that dated
+  evidence already in the project rules out** — a candidate couple who
+  married after the subject's own marriage, a candidate parent born too
+  late to be one. That couple is no longer a candidate: plan none of
+  their own records (their marriage, their children's baptisms, their
+  estates) and nothing in a place only that claim points to, and the
+  parents'-marriage item above does not apply to them. A doubt without
+  such a date does not rule a claim out.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
@@ -895,8 +903,10 @@ the caller, in this order:
   burial entry; if the plan has none, append it before you return
 - for a parentage question whose plan you wrote this turn (create or
   supersede), the `pli_` id of the dedicated item for the candidate parents'
-  marriage to each other; if the plan you wrote has none, append it before
-  you return
+  marriage to each other; if the plan you wrote has none and a candidate
+  couple remains, append it before you return
+- each tree claim you planned no item for because dated evidence rules it
+  out (Step 3), one line: the claim and the dated evidence
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites

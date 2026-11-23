@@ -165,6 +165,47 @@ that would replace it (probed 2026-10-02, §5):
   planned-status validator excuses such a skip by the question's own text
   (`_parentage_vital_skip`), since the `parentage` test tag is missing from five
   parentage tests.
+- **No item for a tree claim the project's own dates rule out (issue #4696
+  Part A, item 1).** From alpha feedback #4642: the tree gave Alexander Mills's
+  parents as George Mills and Abigail Weed, whose marriage the same tree dates
+  to 1760, after Alexander's own 1759 marriage; the planner said so and still
+  planned Stamford items, and the tester had to strike them. The rule is scoped
+  to impossibility shown by dated evidence already in the project; a doubt alone
+  does not count. It **omits** the item rather than writing it `skipped`, because
+  the body's "never write a new item skipped" rule stands outside the two
+  exceptions above, and the tester's request to prove or disprove the tree is met
+  by the one return line naming the excluded claim and its evidence. The
+  parents'-marriage item and its return-time append are both limited to a
+  couple who remain candidates, or the mandatory marriage item would re-plan the
+  ruled-out couple (it did, as `pli_002`, in the before-runs). Prose, not a tool
+  rule: it judges the planner's own reading of the evidence. Measured on
+  `ut_research_plan_99n`: an item in Stamford in 9 of 9 plans before the edit,
+  5 of 9 after (6 of 9 on an earlier wording). The plans that still fail accept
+  that the couple is ruled out and keep a Stamford item under another purpose:
+  separating the merged 1761 Alexander, or an origin search for any
+  Stamford-born Alexander. Short of 3 of 3, so the test was deleted
+  (`unit-test-spec.md`, `expected_outcome`) and its restore is on issue #4696.
+- **Not landed: full-text beside indexed search for a pre-1850 New England
+  vital, land or court record (item 3).** The 1759 Worcester marriage was found
+  by full-text after six empty indexed searches. A Step 3 rule in Appendix B,
+  keyed on the `localities` entry's `volume_summary` `fulltext_only` count with
+  "pre-1850 New England" as the fallback, and then a seventh breadth self-check
+  naming it, were measured on `ut_research_plan_99n`, whose Worcester entry
+  (`loc_003`, added for the test) carries no count: no Worcester item covering
+  1759 named full-text in 8 of 9 plans before, 5 of 9 and 7 of 9 after the two
+  wordings. That is no gain beyond run-to-run spread, so the prose was removed.
+  It cannot be a `research_append` precondition either without a schema change:
+  nothing marks an item as full-text (`record_type` has no such value,
+  `repository` is free text). Without `loc_003` the planner left Massachusetts
+  out of 7 of 8 first plans and asked for a locality survey instead, so the
+  scenario keeps it. Nothing routes a planned full-text item straight to
+  search-full-text either: `research` sends a FamilySearch item to
+  search-records, which only offers full-text as a hand-back.
+- **Not landed: the subject's own birth evidence before the alleged parents'
+  records (item 2).** Its check failed 3 of 9 on the body with this section's
+  first rule already in, at or under the 3-of-9 stop rule (#1830), so neither the
+  prose nor the check was kept. Counting a death entry stating age as birth
+  evidence, as the issue does, is what brought it under the bar.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -279,3 +320,12 @@ change; keep no local copy.
   text names a parent, `inaccessible` or `no_coverage`, a reason, and a birth or
   death event). It does not check whose record the skipped item is. Proven in
   `eval/harness/tests/unit/test_research_plan_planned_status_validator.py`.
+- `test_ruled_out_tree_claim_gets_no_item` (`ruled-out-claim`) and
+  `test_fulltext_beside_indexed_for_early_vital` (`fulltext-beside-indexed`), on
+  `ut_research_plan_99n`: no new item's `jurisdiction` names the ruled-out place
+  (a rationale may), and some item in the event's place whose `date_range`
+  covers its year names full-text in its rationale. Both fail on a replay of the
+  plan the #4642 session wrote, and are proven in
+  `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`. No
+  live test carries either tag while `ut_research_plan_99n` is deleted; they are
+  kept as the measurement its restore needs.

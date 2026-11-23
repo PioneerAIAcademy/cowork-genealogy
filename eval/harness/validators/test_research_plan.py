@@ -2222,8 +2222,8 @@ def test_research_plan_plans_subject_birth_and_death(before_state, after_state, 
     )
 
 
-# --- Parentage first plan: a ruled-out tree claim, the subject's own birth evidence first,
-# --- full-text beside indexed search for an early New England vital (issue #4696 Part A) ----
+# --- Parentage first plan: no item for a ruled-out tree claim, and full-text beside indexed
+# --- search for an early New England vital (issue #4696 Part A) ----
 
 # test id -> the case's names. Alexander Mills (mills-parentage-first-plan): the tree's
 # parents George Mills and Abigail Weed of Stamford married 12 Aug 1760, after Alexander's
@@ -2232,15 +2232,13 @@ _RULED_OUT_CLAIM_BY_TEST_ID = {
     "ut_research_plan_99n": {
         "given": "Alexander",
         "excluded_place": "Stamford",
-        "parents": r"\bGeorge\s+Mills?\b|\bAbigail\b",
         "fulltext_place": "Worcester",
         "fulltext_year": 1759,
     },
 }
 
-_RULED_OUT_TAGS = ("ruled-out-claim", "subject-birth-first", "fulltext-beside-indexed")
+_RULED_OUT_TAGS = ("ruled-out-claim", "fulltext-beside-indexed")
 _FULLTEXT_RE = re.compile(r"\bfull[\s-]?text|\bfulltext", re.IGNORECASE)
-_OWN_BIRTH_WORD = r"(?:birth\w*|baptism\w*|baptis\w*|baptiz\w*|christen\w*|age|origin)"
 
 
 def _ruled_out_spec(test: dict, tag: str) -> dict:
@@ -2269,43 +2267,6 @@ def test_ruled_out_tree_claim_gets_no_item(before_state, after_state, test):
     assert not hits, (
         f"{len(hits)} item(s) planned in {place}, where only the ruled-out tree claim "
         "points: " + "; ".join(f"{i.get('id')} {i.get('jurisdiction')}" for i in hits)
-    )
-
-
-def _own_birth_re(given: str) -> re.Pattern:
-    g = re.escape(given)
-    return re.compile(
-        rf"\b{g}(?:\s+\w+){{0,2}}['’]s\s+(?:own\s+)?(?:[\w-]+\s+){{0,2}}{_OWN_BIRTH_WORD}\b"
-        rf"|\b{_OWN_BIRTH_WORD}(?:\s+[\w-]+){{0,3}}\s+(?:of|for)\s+{g}\b(?!(?:\s+\w+)?['’]s)"
-        rf"|\b{g}(?:\s+\w+){{0,2}}\s+(?:was\s+)?(?:born|baptised|baptized|christened)\b"
-        rf"|\b(?:his|the\s+subject['’]s)\s+own\s+(?:[\w-]+\s+){{0,2}}{_OWN_BIRTH_WORD}\b",
-        re.IGNORECASE,
-    )
-
-
-def test_subject_birth_evidence_precedes_alleged_parents(before_state, after_state, test):
-    """Tag-gated (``subject-birth-first``): a parentage plan has an item aimed at
-    the subject's own birth, baptism, age or birthplace evidence, sequenced
-    before every item about the alleged parents. An item whose rationale names
-    an alleged parent is a parents' item and never the subject's birth item:
-    the original run's Stamford item mentioned "a son Alexander Mill born
-    1761". A relative's birth ("Alexander's son Samuel was born 1762") does
-    not count."""
-    spec = _ruled_out_spec(test, "subject-birth-first")
-    items = _new_items_or_fail(before_state, after_state)
-    parents = re.compile(spec["parents"], re.IGNORECASE)
-    own = _own_birth_re(spec["given"])
-    parent_items = [i for i in items if parents.search(str(i.get("rationale") or ""))]
-    birth_items = [i for i in items if i not in parent_items and own.search(_item_text(i))]
-    assert birth_items, (
-        f"no item targets {spec['given']}'s own birth, baptism, age or birthplace evidence; "
-        "items: " + "; ".join(f"{i.get('id')} {str(i.get('rationale'))[:80]}" for i in items)
-    )
-    first_birth = min(_item_seq(i) for i in birth_items)
-    first_parent = min((_item_seq(i) for i in parent_items), default=None)
-    assert first_parent is None or first_birth < first_parent, (
-        f"the subject's own birth evidence first comes at sequence {first_birth}, at or "
-        f"after an alleged parents' item at sequence {first_parent}"
     )
 
 

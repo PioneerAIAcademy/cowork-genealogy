@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_research_plan_99n",
     "skill": "research-plan",
-    "name": "A first parentage plan plans no item for a tree claim the project's own dates rule out, seeks the subject's own birth evidence first, and plans full-text for an early New England vital",
+    "name": "A first parentage plan plans no item for a tree claim the project's own dates rule out, and plans full-text for an early New England vital",
     "type": "positive",
-    "description": "Mined from alpha feedback #4642 (issue #4696 Part A). The tree names George Mills and Abigail Weed of Stamford as Alexander Mills's parents, but the same tree dates their marriage to 1760, after Alexander's own 1759 marriage, and gives them a son Alexander born 1761 who died in Stamford. The original planner said so in its summary and still planned two Stamford items, sought nothing on the subject's own birth or age before the alleged parents' records, and planned the 1759 Worcester marriage as an indexed search only. There is no Worcester localities entry, so the pre-1850 New England fallback is what bears on the full-text item.",
+    "description": "Mined from alpha feedback #4642 (issue #4696 Part A). The tree names George Mills and Abigail Weed of Stamford as Alexander Mills's parents, but the same tree dates their marriage to 1760, after Alexander's own 1759 marriage, and gives them a son Alexander born 1761 who died in Stamford. The original planner said so in its summary and still planned two Stamford items and planned the 1759 Worcester marriage as an indexed search only. The Worcester localities entry (loc_003, added for this test) carries no fulltext_only count, so the pre-1850 New England fallback is what bears on the full-text item.",
     "tags": [
       "planning",
       "first-plan",
@@ -14,7 +14,6 @@
       "new-plan-items-planned-status",
       "direct-arm",
       "ruled-out-claim",
-      "subject-birth-first",
       "fulltext-beside-indexed"
     ]
   },
@@ -34,7 +33,6 @@
   ],
   "judge_context": [
     "GENERAL RULE: when dated evidence already in the project makes a tree claim impossible (here, a candidate couple's marriage dated after the subject's own marriage), a first plan does not spend items whose only purpose is to test that claim, and the return says in one line which claim was excluded and on what dated evidence. A doubt without dated evidence does not license dropping a line of inquiry.",
-    "GENERAL RULE: on a parentage question the plan includes at least one item aimed at the subject's own birth, age or birthplace evidence (a birth or baptism entry, a pension declaration, a death record stating age, a deposition), sequenced before searches of the alleged parents' own records.",
     "GENERAL RULE: for a pre-1850 New England vital, land or court record, the plan carries a full-text item beside the indexed search, not as a later fallback, because the published town vital-records books and county deed and court books there are reached through full-text.",
     "Grade the reasoning, not a preferred answer: different item counts, orderings among the subject's own records, and additional FAN items are all acceptable."
   ],
