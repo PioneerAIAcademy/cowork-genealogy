@@ -1,0 +1,634 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Verify the correct given name, and correct indexing errors, for the head of household in the 1900 US Census record ark:/61903/1:1:MMF1-WWF (Cunningham District, Fluvanna, Virginia). Specifically: (1) verify that \"Anthony\" is her correct given name — the FamilySearch index omitted her given name, capturing only the surname \"Tyler\"; (2) verify the proposed correction of \"Daisy\" vs the indexed \"Dora\" for daughter Lightfoot; (3) verify \"Houston\" vs the indexed \"Winston\" as the surname for granddaughter Emma.",
+    "title": "Anthony Tyler 1900 census verification",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-11",
+    "updated": "2026-11-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What given name is written for the head of household, the woman surnamed Tyler, on the 1900 US census page for Cunningham District, Fluvanna County, Virginia?",
+      "rationale": "The FamilySearch index captured only the surname Tyler and omitted her given name. The tree carries the given name Anthony, which has not been checked against the original image. The answer is the name the enumerator wrote on the page, so the original image is the source to read.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1900-1900",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-11"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-11",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Cunningham District, Fluvanna County, Virginia",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Read the 1900 census entry and its page image for the head of household, whose given name the index omits.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Cunningham District, Fluvanna County, Virginia",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census of the same district, where a Tyler woman of about the right age may appear with her given name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Fluvanna County, Virginia",
+          "date_range": "1900-1960",
+          "repository": "FamilySearch",
+          "rationale": "Her death certificate, which would give her given name as the registrar wrote it.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T21:04:30.427Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MMF1-WWF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "1900 US Census, Cunningham District (south part), ED 73, Fluvanna, Virginia. Head of household indexed with surname Tyler and no given name; Female, Widowed, born Apr 1853, Virginia. Household: Dora Lightfoot (daughter), William E Lightfoot (son), Mary Dillard and Emma Winston (granddaughters). Image ark:/61903/3:1:S3HT-DTXQ-WTP."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T21:01:12.000Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:S3HT-DTXQ-WTP"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Machine transcription of the 1900 census page, sheet 6A. Line 23 transcribed as 'Tyler Anthony', Head, B, F, Apr 1853, 47, Wd, Mid wife. The index for this line gives the surname Tyler and no given name."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T17:24:29.653Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MC5S-GVQ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read 1880 US Census record ark:/61903/1:1:MC5S-GVQ, Cunningham, Fluvanna, Virginia. Head indexed as 'Armtogne Tyler' (female, Mulatto, Laundress, born about 1840). Household: Joseph, Eliza, Malinda, Edward, John and Charles Tyler. Record image ark:/61903/3:1:33S7-9YB6-8MG."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T23:32:26.727Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVR7-5LJJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Read Virginia death certificate ark:/61903/1:1:QVR7-5LJJ. Deceased indexed as 'Ann Tone Lightfoot', female, Black, age 90, born 1832-1833, died 29 Oct 1923, Cunningham, Fluvanna County, Virginia; registered 9 Nov 1923. Father: Job Lightfoot. Image ark:/61903/3:1:3QS7-L9GL-TF39."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWF : Wed Oct 15 07:47:52 UTC 2025), Entry for Tyler and Dora Lightfoot, 1900.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Tyler, \"United States, Census, 1900\"",
+        "when_created": "1900",
+        "when_accessed": "2026-11-11",
+        "where": "United States, Census, 1900",
+        "where_within": "ark:/61903/1:1:MMF1-WWF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_001",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1B2W-X3N",
+      "image_ark": "ark:/61903/3:1:S3HT-DTXQ-WTP",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Virginia, Death Certificates, 1912-1987\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJJ : Tue Mar 11 21:08:38 UTC 2025), Entry for Ann Tone Lightfoot and Job Lightfoot, 9 Nov 1923.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Ann Tone Lightfoot, \"Virginia, Death Certificates, 1912-1987\"",
+        "when_created": "1923",
+        "when_accessed": "2026-11-12",
+        "where": "Virginia, Death Certificates, 1912-1987",
+        "where_within": "ark:/61903/1:1:QVR7-5LJJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_004",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q247-BS3K",
+      "image_ark": "ark:/61903/3:1:3QS7-L9GL-TF39",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Tyler",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "",
+        "surname": "Tyler"
+      },
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "47",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "Black",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+      "standard_place": "Cunningham District, Fluvanna, Virginia, United States",
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Apr 1853",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Apr 1853",
+      "place": "Virginia",
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N",
+      "standard_place": "Virginia, United States"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MMF1-WWF",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Virginia",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Virginia",
+      "record_persona_id": "p_12938595",
+      "informant_bias_notes": "the mother's birthplace as stated on 2 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1B2W-X3N",
+      "standard_place": "Virginia, United States"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Ann Tone Lightfoot",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ann Tone",
+        "surname": "Lightfoot"
+      },
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "90",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "9 Nov 1923",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "9 Nov 1923",
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Bet 1832 and 1833",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Bet 1832 and 1833",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "29 Oct 1923",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "29 Oct 1923",
+      "place": "Cunningham, Fluvanna County, Virginia, Virginia, United States",
+      "record_persona_id": "p_101214217427",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K",
+      "standard_place": "Cunningham, Fluvanna, Virginia, United States"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "Black",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Job Lightfoot",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Job",
+        "surname": "Lightfoot"
+      },
+      "record_persona_id": "p_101214217428",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_101214217428",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:QVR7-5LJJ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Job Lightfoot",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_101214217427",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q247-BS3K"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Date check: Apr 1853 (record) vs I1 (no independent birth year attested): none attested for I1 — gap N/A. Residence check: Cunningham District, Fluvanna, VA 1900 vs I1 (none attested before this run): none attested. Tyler surname matches I1 'Anthony Tyler'. I1 is the project subject placed specifically to represent the head of this household. Thin-subject score (0.0015) reflects I1's current status as a name-and-gender stub only; no competing candidates exist in the tree. No core identifier conflicts. Strong match — confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Sex Female agrees with I1 (Female). Same persona as a_001; score shared from head_of_household persona p_12938595 vs I1. Strong match — confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Age 47 implies birth circa 1853, consistent with the birth Apr 1853 assertion. Same persona as a_001; score shared. Strong match — confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Marital status Widowed provides life-stage context consistent with a household headed by a woman alone. Same persona as a_001; score shared. Confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Race Black. Same persona as a_001; score shared. Confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "1900 census enumeration in Cunningham District, Fluvanna, Virginia — the record this project was opened to study. Same persona as a_001; score shared. Confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Birth Apr 1853 Virginia. Same persona as a_001; score shared. No conflicting birth date attested for I1. Confident.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_038",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.0014662979,
+      "rationale": "Mother's birthplace Virginia, as reported by household members. Secondary informant. Same persona as a_001; score shared. Confident.",
+      "created": "2026-11-11"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
