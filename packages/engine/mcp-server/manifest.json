@@ -48,6 +48,7 @@
     { "name": "place_distance" },
     { "name": "place_population" },
     { "name": "external_links_search" },
+    { "name": "locality_survey" },
     { "name": "image_read" },
     { "name": "image_transcribe" },
     { "name": "record_search" },

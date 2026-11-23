@@ -689,24 +689,16 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // locality-guide (issue #2117) holds the eleven MCP tools the skill it
-  // replaced declared, plus `catalog_search` (issue #3107), plus `Read`:
-  // Step 6 persists only when research.json exists at the project path, and
-  // the narration line reads it. Plus `research_query`, to read the stored
-  // collections list past the inline cap (#2995).
+  // locality-guide runs its whole survey through `locality_survey` (issue #4602),
+  // which replaced the six survey tools it held, so no partial survey can be made
+  // by hand. `wiki_read` and `wiki_search` stay for a page the survey left out.
   "locality-guide.md": {
     tools: [
-      "catalog_search",
-      "collections_search",
-      "external_links_search",
-      "place_population",
+      "locality_survey",
       "place_search",
       "place_search_all",
       "project_context",
       "research_append",
-      "research_query",
-      "volume_search",
-      "wiki_place_page",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",

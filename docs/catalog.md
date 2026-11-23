@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 59 tools. A caller on the remote connector also gets the two
+The MCP server exposes 60 tools. A caller on the remote connector also gets the two
 under [Connector only](#connector-only).
 
 ### FamilySearch records and places
@@ -49,6 +49,7 @@ under [Connector only](#connector-only).
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume, 50 volumes a page by default (`pageSize` 1–50). With `summary: true` on the first page it also counts every matching volume by record-type group (browse-only and full-text-only included), and the page defaults to 10 volumes. With `omitSearchable: true` it drops already-searchable volumes out of `results` into one-line entries in `searchableOmitted`, for a caller planning a browse | OAuth |
 | `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
+| `locality_survey` | One call runs locality-guide's whole records survey for a place and period: population, collections, volumes and outside links (the place and its parent below county level), the Catalog, the four wiki place pages and the vital-records page, chosen to fit one answer; with a project, stages it for `research_append`'s `surveyRef` | OAuth |
 
 ### FamilySearch Wiki content
 

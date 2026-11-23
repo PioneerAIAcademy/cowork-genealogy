@@ -67,6 +67,35 @@ def test_never_reading_the_staged_page_fails():
         validator([], [], [_transcribe(), _read("results/.staging/other.json")], TEST)
 
 
+def _served(ref, *, ok=True, chars=4966):
+    return {**_read(ref), "response": {"ok": ok, "ref": ref, "totalChars": chars}}
+
+
+def _transcribe_with_digest(chars=4966):
+    call = _transcribe()
+    call["response"]["digest"] = {"id": "capture:p36", "chars": chars}
+    return call
+
+
+def test_a_near_copy_ref_that_served_the_staged_page_passes():
+    # scratch_2026-11-17_17-34-55, ut_research_iv2 run 2: one character mistyped,
+    # and sidecar_read's near-copy correction served the staged page.
+    validator([], [], [_transcribe_with_digest(), _served("results/.staging/abd.json")], TEST)
+
+
+@pytest.mark.parametrize("read", [
+    _served("results/.staging/abd.json", ok=False),
+    _served("results/.staging/abd.json", chars=120),
+    _served("results/other.json"),
+    # another staged page of the same length is not a near copy of this one
+    _served("results/.staging/xyz.json"),
+    {**_read("results/.staging/abd.json"), "response": {"ok": True, "ref": "x"}},
+])
+def test_a_read_that_did_not_serve_the_staged_page_fails(read):
+    with pytest.raises(AssertionError, match="never read"):
+        validator([], [], [_transcribe_with_digest(), read], TEST)
+
+
 def test_a_hand_off_on_a_single_bounded_ask_fails():
     with pytest.raises(AssertionError, match="hands off to nothing"):
         validator(["research", "question-selection"], [], [_transcribe(), _read()], TEST)

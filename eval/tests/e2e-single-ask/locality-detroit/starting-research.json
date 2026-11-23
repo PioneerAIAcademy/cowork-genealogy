@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_mary_mcandrew_son",
+    "objective": "Did Mary E. McAndrew (G13G-P68) and her husband John Mogan of Detroit have any children besides the five already in the tree?",
+    "subject_person_ids": [
+      "G13G-P68"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

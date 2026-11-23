@@ -132,7 +132,6 @@ FORK_SUBAGENT_TYPE = "fork"
 AGENT_ONLY_TOOLS = {
     "build_external_search_url": ("search-external-sites", "where-else-to-search"),
     "catalog_search": (
-        "locality-guide",
         "search-external-sites",
         "search-images",
         "search-records",
@@ -140,14 +139,12 @@ AGENT_ONLY_TOOLS = {
     "census_children_gap": ("check-warnings", "question-selection"),
     "collections_search": (
         "gps-mentor",
-        "locality-guide",
         "research-plan",
         "search-external-sites",
     ),
     "convert_calendar": ("conflict-resolution", "convert-dates"),
     "evaluation_append": ("gps-mentor",),
     "external_links_search": (
-        "locality-guide",
         "research-plan",
         "search-external-sites",
         "where-else-to-search",
@@ -173,7 +170,8 @@ AGENT_ONLY_TOOLS = {
         "person-evidence",
         "timeline",
     ),
-    "place_population": ("historical-context", "locality-guide"),
+    "locality_survey": ("locality-guide",),
+    "place_population": ("historical-context",),
     "place_search": (
         "conflict-resolution",
         "gps-mentor",
@@ -203,8 +201,8 @@ AGENT_ONLY_TOOLS = {
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),
     "volume_bisect": ("search-images",),
-    "volume_search": ("locality-guide", "research-plan", "search-images"),
-    "wiki_place_page": ("gps-mentor", "locality-guide"),
+    "volume_search": ("research-plan", "search-images"),
+    "wiki_place_page": ("gps-mentor",),
     "wiki_read": (
         "citation",
         "conflict-resolution",
@@ -631,8 +629,8 @@ REASON = (
     "research_append or research_log_append, and for the tree tree_edit or "
     "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "
-    "external-collections.json is written only by external_links_search given a projectPath "
-    "(from the main session, invoke `@plugin:locality-guide`)."
+    "external-collections.json is written only by locality_survey or external_links_search given a projectPath "
+    "(from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
 )
 
 READ_REASON = (
