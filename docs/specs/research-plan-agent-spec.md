@@ -141,8 +141,7 @@ that would replace it (probed 2026-10-02, §5):
   `plans[]` (their validators fail any appended item). This spec has no fuller
   return-contract description; the agent body's "Return contract" section is
   the source. The validator is in §7.
-- **The subject's own birth record and death certificate (issue #4696, was
-  #4654).** On a parentage question the plan carries the subject's own birth
+- **The subject's own birth record and death certificate.** On a parentage question the plan carries the subject's own birth
   record and, when the subject has died, their death certificate, each as an
   item: planned, or written `skipped` with `skip_category` `inaccessible`
   (sealed or destroyed) or `no_coverage` (never kept for that place and period)
@@ -152,7 +151,7 @@ that would replace it (probed 2026-10-02, §5):
   judges what a plan holds and misses what it leaves out. On a project holding
   the subject's 2023 obituary and no mention of his death certificate, it named
   the gap 4 to 5 times in 10; with the certificate carried as a skipped item, 29
-  of 30 and 20 of 20 (PR #4628). Measured on `ut_research_plan_zgw` (Alan
+  of 30 and 20 of 20. Measured on `ut_research_plan_zgw` (Alan
   Applegarth, both certificates sealed in Utah): the planner planned his own
   birth record in 3 of 3 runs on the unedited body and his own death record
   in 2 of 3 (the third planned only his parents' death records); after the
@@ -172,8 +171,8 @@ that would replace it (probed 2026-10-02, §5):
   the log gives a death date, a burial or an obituary for the subject:
   `ut_research_plan_zgw` left out Alan's death certificate in 2 of 7 runs while
   reading his 2023 obituary only as evidence of his parents (0 of 3 after).
-- **No item for a tree claim the project's own dates rule out (issue #4696
-  Part A, item 1).** From alpha feedback #4642: the tree gave Alexander Mills's
+- **No item for a tree claim the project's own dates rule out.** From an alpha
+  feedback session: the tree gave Alexander Mills's
   parents as George Mills and Abigail Weed, whose marriage the same tree dates
   to 1760, after Alexander's own 1759 marriage; the planner said so and still
   planned Stamford items, and the tester had to strike them. The rule is scoped
@@ -194,7 +193,8 @@ that would replace it (probed 2026-10-02, §5):
   claims: without it `ut_research_plan_010` (a supersede on a death date the
   user supplies) refused or edited in place in 2 of 4 suite runs, calling the
   date "not in the project's sources" (0 of 3 on `main`, 0 of 3 after). Short of 3 of 3, so the test was deleted
-  (`unit-test-spec.md`, `expected_outcome`) and its restore is on issue #4696.
+  (`unit-test-spec.md`, `expected_outcome`); restoring it and making it pass 3
+  of 3 is open work.
 - **Not landed: full-text beside indexed search for a pre-1850 New England
   vital, land or court record (item 3).** The 1759 Worcester marriage was found
   by full-text after six empty indexed searches. A Step 3 rule in Appendix B,
@@ -213,7 +213,8 @@ that would replace it (probed 2026-10-02, §5):
   search-records, which only offers full-text as a hand-back.
 - **Not landed: the subject's own birth evidence before the alleged parents'
   records (item 2).** Its check failed 3 of 9 on the body with this section's
-  first rule already in, at or under the 3-of-9 stop rule (#1830), so neither the
+  first rule already in, at or under the stop rule (drop an item whose check fails 3 or fewer of 9
+  runs before the edit), so neither the
   prose nor the check was kept. Counting a death entry stating age as birth
   evidence, as the issue does, is what brought it under the bar.
 
@@ -335,7 +336,7 @@ change; keep no local copy.
   `ut_research_plan_99n`: no new item's `jurisdiction` names the ruled-out place
   (a rationale may), and some item in the event's place whose `date_range`
   covers its year names full-text in its rationale. Both fail on a replay of the
-  plan the #4642 session wrote, and are proven in
+  plan that alpha feedback session wrote, and are proven in
   `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`. No
   live test carries either tag while `ut_research_plan_99n` is deleted; they are
   kept as the measurement its restore needs.
