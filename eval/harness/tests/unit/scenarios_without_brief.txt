@@ -39,7 +39,6 @@ dutch-mother-searched-out
 dutch-mother-searched-out-weighed
 elena-pre-register-birth
 empty-folder-no-project
-empty-project-just-created
 empty-project-new-orleans-objective
 empty-project-two-fact-objective
 empty-project-why-objective
@@ -126,7 +125,6 @@ martha-remarriage-surname-plan
 matricula-ochtrup
 mercer-census-children-gap
 mexico-paternal-surname-quirk-first-plan
-mid-research-flynn
 mid-research-flynn-1870-nil-search
 mid-research-flynn-1880-found
 mid-research-flynn-ancestry-sub
