@@ -1046,7 +1046,7 @@ def test_person_evidence_spawn_carries_the_users_words(test, builtin_tool_calls)
     )
 
 
-_YEAR = re.compile(r"\b1[5-9]\d\d\b")
+_YEAR = re.compile(r"\b(1[5-9]\d\d|20\d\d)s?\b")
 _PLACE_TAIL = re.compile(r"\s+(?:county|parish|township)$", re.I)
 
 
@@ -1121,22 +1121,29 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     )
 
 
+_HEADING_LINE = re.compile(r"^\s*(?:#{1,6}\s.*|\*\*[^*]+\*\*:?|.*:(?:\*\*)?)\s*$")
+
+
 def _unnamed_objective_years(prompts: list[str], only_objective: set[str]) -> set[str]:
     unnamed: set[str] = set()
     for prompt in prompts:
         heading = ""
+        under = False
         given: set[str] = set()
         named: set[str] = set()
         for line in prompt.splitlines():
             if not line.strip():
-                heading = ""
+                if under:
+                    heading = ""
                 continue
             found = set(_YEAR.findall(line)) & only_objective
             given |= found
             if "objective" in line.lower() or "objective" in heading:
                 named |= found
-            if line.rstrip().endswith(":"):
-                heading = line.lower()
+            if _HEADING_LINE.match(line):
+                heading, under = line.lower(), False
+            else:
+                under = True
         unnamed |= given - named
     return unnamed
 
@@ -1149,7 +1156,7 @@ def test_reply_relays_the_overview(test, text_response):
     if "relays-overview" not in (test.get("tags") or []):
         pytest.skip("not a relays-overview test")
     reply = (text_response or "").lower()
-    assert "sources consulted" in reply, (
+    assert re.search(r"(?m)^\W*sources consulted\W*$", reply), (
         "the reply does not relay the overview's Sources consulted list"
     )
     assert "search implications" not in reply, (
@@ -1358,9 +1365,7 @@ _GIVEN_FIELD = re.compile(
 
 
 def _one_tag_value(test: dict, prefix: str) -> str | None:
-    values = _data_tag_values(test, prefix)
-    assert len(values) <= 1, f"an {_READING_TAG} test names at most one {prefix} tag; got {values}"
-    return values[0] if values else None
+    return _data_tag(test, prefix)
 
 
 def test_index_and_machine_reading_shown_side_by_side(test, text_response):

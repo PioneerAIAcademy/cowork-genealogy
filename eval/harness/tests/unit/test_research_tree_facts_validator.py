@@ -91,6 +91,20 @@ def test_fails_on_a_year_the_tree_does_not_hold():
             "born ~1845 in Ireland, likely left in the Famine (1845-1852); died 1908 in Schuylkill County"))], FLYNN)
 
 
+def test_fails_on_a_decade_the_tree_does_not_hold():
+    with pytest.raises(AssertionError, match="1850"):
+        check(TEST, [_spawn("historical-context", _prompt(
+            "born ~1845 in Ireland, likely left in the 1850s; died 1908 in Schuylkill County"))], FLYNN)
+
+
+def test_a_2000s_fact_year_is_required():
+    state = {**FLYNN, "tree_gedcomx_json": {"persons": [
+        {"id": "I1", "facts": [{"type": "Death", "date": "2003", "place": "Tamaqua, Pennsylvania"}]}]}}
+    check(TEST, [_spawn("historical-context", _prompt("died 2003 in Tamaqua"))], state)
+    with pytest.raises(AssertionError, match="2003"):
+        check(TEST, [_spawn("historical-context", _prompt("died in Tamaqua"))], state)
+
+
 def test_another_persons_years_are_not_the_subjects():
     with pytest.raises(AssertionError, match="1871"):
         check(TEST, [_spawn("historical-context", _prompt(
@@ -152,7 +166,10 @@ def test_an_empty_tree_fails_a_year_beyond_the_objective():
     "projectPath: /p\nProject context:\n- Subject: Patrick Flynn, Male, born ca. 1845 in Pennsylvania, died 1908\n"
     "- Objective: identify his parents",
     "projectPath: /p\nProject objective: identify his parents.\n\nborn ca. 1845 in Pennsylvania, died 1908",
-], ids=["as-tree-data", "objective-on-another-line", "after-a-blank-line"])
+    "projectPath: /p\nProject objective:\nidentify his parents.\n\nborn ca. 1845 in Pennsylvania, died 1908",
+    "projectPath: /p\n## Tree data\nborn ca. 1845 in Pennsylvania, died 1908",
+], ids=["as-tree-data", "objective-on-another-line", "after-a-blank-line", "heading-closed-by-a-blank-line",
+        "markdown-heading-not-the-objective"])
 def test_objective_years_not_named_as_the_objectives_fail(prompt):
     """The first two are the shapes of a branch run before the skill sentence named
     the objective and of main's router on ia1."""
@@ -169,7 +186,14 @@ def test_objective_years_not_named_as_the_objectives_fail(prompt):
     'projectPath: /p\nProject objective: "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, '
     'died 1908 in Schuylkill County, PA."\n\nExplain what children of a man born ca. 1845 in Pennsylvania, '
     "dying in Schuylkill County, would have experienced.",
-], ids=["same-line", "under-a-heading", "case", "named-once-then-reused"])
+    "projectPath: /p\nProject objective:\n\nIdentify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, "
+    "died 1908 in Schuylkill County, PA",
+    "projectPath: /p\n## Project objective\nIdentify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, "
+    "died 1908 in Schuylkill County, PA",
+    "projectPath: /p\n**Project objective:**\nIdentify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, "
+    "died 1908 in Schuylkill County, PA",
+], ids=["same-line", "under-a-heading", "case", "named-once-then-reused", "blank-line-after-the-heading",
+        "markdown-heading", "bold-heading"])
 def test_objective_years_named_as_the_objectives_pass(prompt):
     check(EMPTY_TEST, [_spawn("historical-context", prompt)], EMPTY)
 

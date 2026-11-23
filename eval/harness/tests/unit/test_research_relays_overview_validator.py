@@ -39,9 +39,11 @@ def test_passes_the_overview(reply):
 @pytest.mark.parametrize("reply, match", [
     (f"{NARRATIVE}\n\n{IMPLICATIONS}\n\n{OFFER}", "Search implications"),
     (f"{SUMMARY}\n\n{OFFER}", "Sources consulted"),
+    ("No tool result gave the reason, so the sources consulted did not give one.\n\n" + OFFER,
+     "Sources consulted"),
     ("", "Sources consulted"),
     (None, "Sources consulted"),
-], ids=["implications-relayed", "summary-only", "empty", "none"])
+], ids=["implications-relayed", "summary-only", "summary-naming-sources-consulted", "empty", "none"])
 def test_fails_without_the_overview_or_with_the_implications(reply, match):
     with pytest.raises(AssertionError, match=match):
         check(TEST, reply)
