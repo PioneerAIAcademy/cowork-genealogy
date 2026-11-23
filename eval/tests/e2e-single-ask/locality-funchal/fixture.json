@@ -1,0 +1,21 @@
+{
+  "id": "locality-funchal",
+  "message": "Please write a locality guide for Funchal, Madeira, Portugal, for about 1830 to 1910, covering marriage and baptism records, civil registration and parish records, and save it to the project.",
+  "expected_owner": "locality-guide",
+  "expected_save": {
+    "section": "localities"
+  },
+  "required_tools": [
+    "locality_survey"
+  ],
+  "must_not": "No guide built without the survey; no section of the template left out; no claim no tool returned",
+  "caps": {
+    "wall_clock_seconds": 1200,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}

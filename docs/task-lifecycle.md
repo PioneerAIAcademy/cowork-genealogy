@@ -101,13 +101,12 @@ say what the task is in a sentence before you plan it.
 
 ### 2. Write the plan to a file
 
-`PLAN.md` at the repo root. It is gitignored; don't commit it. Four things:
+`PLAN.md` at the repo root. It is gitignored; don't commit it. Three things:
 
 1. **What changes** — the file list, by path.
 2. **What doesn't change** — the tempting adjacent thing you're not touching.
 3. **The acceptance check** — a named test that fails today and passes after.
    "The tests pass" is not one; they pass right now.
-4. **What you're deferring** — becomes issues in step 7.
 
 A plan that stays in the chat can't be read by the critic, by your fresh-session
 review, or by your reviewer.
@@ -153,7 +152,7 @@ to do any of these:
 Saying so costs one message, and it isn't a mark against you — it means the task
 was scoped from something the issue didn't say.
 
-Keep the diff scoped to the plan. Anything else you spot becomes step 7.
+Keep the diff scoped to the plan. Anything else you spot is handled in step 7.
 
 ### 5. Verify it yourself
 
@@ -218,34 +217,21 @@ read the whole diff yourself.
 Arrive at step 9 with this done. A reviewer's round should go to whether the
 approach is right, not to what a free command would have caught.
 
-### 7. Fold in what you can, then file the rest
+### 7. Finish what you turned up
 
-**Fold first.** Most of what you turned up belongs in this PR, not in a new
-issue — you have the context loaded and whoever picks up a ticket has to rebuild
-it from nothing. An issue costs four people: someone to vet it, someone to
-implement it, and two reviewers. Walk the steps in CLAUDE.md's "Work you find
-along the way" and stop at the first that fits: fix it here, drop it if it's a
-nit, or comment on the issue that already covers it. Filing is the last resort,
-and it needs one of the four exemptions named there — in both the PR body and
-the issue body.
+Whatever the task turned up is finished in this PR, not filed. For each item,
+stop at the first that fits — CLAUDE.md's "Work you find along the way" is the
+rule:
 
-What's genuinely left over becomes a GitHub issue, in this PR. Have Claude file
-them:
+1. Fix it here. This always covers what your change broke, left half-done or
+   made stale.
+2. Add it as a comment on the issue that already covers it.
+3. Drop it, and don't list it in the PR body.
 
-> For each thing we decided not to do, first tell me whether it could be folded
-> into this PR instead — name the files and roughly the lines. For the ones that
-> genuinely can't, file a GitHub issue with `gh issue create`. A few sentences
-> each: what the work is, why it's still open, and which CLAUDE.md exemption
-> puts it out of scope for this PR. Open the body with a `**Touches:**` line
-> naming the files it would change. Label it `developer` if it has a mechanical
-> pass/fail — lints, CI, validators, harness/Python, MCP tools, refactors,
-> tooling bugs — or `genealogist` for fixture adjudication, run-log annotation,
-> record research, doctrine prose. Add `icebox` as well if it's a maybe rather
-> than a decision. Don't run any `gh project` command.
-
-The board takes care of itself — a workflow files the card. Don't leave a `TODO`
-comment and don't start a to-do file. Put the issue numbers in your PR
-description; the lead reads every issue.
+A new issue is only for a bug that harms researchers' data, or a missing guard,
+that you cannot fix here. A failing test is never one: make it pass, or put its
+restore in the done-when of the issue that owns the fix. Don't leave a `TODO`
+comment and don't start a to-do file.
 
 ### 8. Open the PR
 
@@ -444,9 +430,7 @@ make e2e-validate TEST=<slug>        # an e2e fixture changed
 /code-review high                    # bugs; in a FRESH session — it forks the one it runs in
 /check-drift                         # PLAN.md vs the diff; own subagent, so any session
 
-# 7. follow-on work — ask Claude to file it; don't run gh yourself
-#    → "File a GitHub issue for each thing we decided not to do. Label it
-#       developer or genealogist. Don't run any gh project command."
+# 7. what you turned up — fix it here, comment on its issue, or drop it
 
 # 9. review someone else's PR
 gh pr checkout <N>
