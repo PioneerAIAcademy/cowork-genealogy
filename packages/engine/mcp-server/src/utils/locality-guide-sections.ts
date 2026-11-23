@@ -14,25 +14,6 @@
 export const LOCALITY_GUIDE_OUTLINE: ReadonlyArray<readonly [string, readonly string[]]> = [
   ["Jurisdiction overview", []],
   ["Boundary changes", []],
-  [
-    "Available record types",
-    [
-      "Vital records",
-      "Church records",
-      "Census records",
-      "Probate and court records",
-      "Land records",
-      "Military records",
-      "Cemetery records",
-      "Newspaper records",
-      "Immigration/emigration records",
-      "Tax records",
-      "Other record types",
-    ],
-  ],
-  ["Repository guide", ["Online repositories", "Physical repositories"]],
-  ["Records NOT online", []],
-  ["Known record losses", []],
   ["Research tips", []],
 ];
 
@@ -40,10 +21,6 @@ export const LOCALITY_GUIDE_OUTLINE: ReadonlyArray<readonly [string, readonly st
  *  4,000 to 9,000 characters arrived as valid JSON; 8 of the 15 whole-guide calls of
  *  9,000 to 12,000 did not. */
 export const GUIDE_SECTION_MAX_CHARS = 9000;
-
-/** The section a `### ` block goes under when the call names none and the
- *  template does not place it. */
-const DEFAULT_PARENT = "Available record types";
 
 interface Block {
   level: 2 | 3;
@@ -171,9 +148,17 @@ export function mergeGuideSection(
     if (block.level === 2) {
       upsertSection(blocks, block);
       parentInCall = block.title;
-    } else {
-      upsertSubsection(blocks, parentInCall ?? subsectionHome(block.title)?.parent ?? DEFAULT_PARENT, block);
+      continue;
     }
+    const parent = parentInCall ?? subsectionHome(block.title)?.parent;
+    if (!parent) {
+      return {
+        error:
+          `'### ${block.title}' has no '## ' section above it in this call. Send it under its section's ` +
+          `heading line: ${LOCALITY_GUIDE_OUTLINE.map(([s]) => `'## ${s}'`).join(", ")}.`,
+      };
+    }
+    upsertSubsection(blocks, parent, block);
   }
   const preamble = incoming.preamble || current.preamble || titleLine;
   return { guide: [preamble, ...blocks.map((b) => b.text)].filter((t) => t !== "").join("\n\n") };

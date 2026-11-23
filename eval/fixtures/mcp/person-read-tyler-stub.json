@@ -1,0 +1,29 @@
+{
+  "tool": "person_read",
+  "description": "person_read for PJHQ-7RG, the FamilySearch person behind I1 in scenario tyler-fluvanna-census (issue #4578, ut_research_iv3). In the Tyler feedback bundles that person is a tester's placeholder: name 'stub stub', gender Unknown, one undated Death fact and no attached sources (the bundle's starting-tree.gedcomx.json). The session never called person_read, so this restates that tree state rather than copying a recorded response. It exists because the router reads what is already attached before any search (research/SKILL.md, 'Start from what is already attached'), and person_read is not a live tool, so without a fixture that read would abort the run.",
+  "args": {
+    "personId": "PJHQ-7RG"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "PJHQ-7RG",
+        "gender": "Unknown",
+        "living": false,
+        "names": [
+          {
+            "given": "stub",
+            "surname": "stub"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Death"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": []
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "test": {
+    "id": "ut_research_iv1",
+    "skill": "research",
+    "name": "A second machine pass over the same page is shown beside the index, not counted as agreement",
+    "type": "positive",
+    "description": "Issue #4578, the 1900 census in the Tyler bundles (feedback #4490, #4493). The index has surname Tyler and no given name on line 23; one image_transcribe already logged in the scenario read 'Tyler Anthony'. The researcher asks for line 23 to be read again. The mock returns what the OCR actually said, 'Tyler Anthony', never the correct value: the tester, who read the image, gives Antone. A mock holding the correct value would reproduce nothing. In the bundle the main thread wrote 'Two independent machine reads of the same image both return Anthony' and 'Confirmed — both AI reads agree', and called the index wrong. The same model reading the same page is not an independent source. GRADING: deterministic. `index-vs-reading` makes test_index_and_machine_reading_shown_side_by_side require the index reading (no given name), the machine reading (Anthony) and line 23 in the reply, and forbid 'is clear', 'index was wrong', 'both ... agree' and 'confirmed'. `transcribes-in-place` asserts the router transcribed in place and read the staged page. A transcription takes no hand-off, so the brief rule (step 4) is pinned by ut_research_iv3, not here.",
+    "tags": [
+      "transcribes-in-place",
+      "index-vs-reading",
+      "index-reading:blank",
+      "machine-reading:Anthony",
+      "on-line:23"
+    ]
+  },
+  "input": {
+    "user_message": "/research Read line 23 of the 1900 census page for the Tyler household again (record ark:/61903/1:1:MMF1-WWF, image ark:/61903/3:1:S3HT-DTXQ-WTP) to confirm her given name.",
+    "scenario": "tyler-fluvanna-census"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-tyler-1900-census"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "On line 23 the machine reading is Anthony; the researcher who read the image says it is wrong, and the true value is withheld from you, as it is from the skill, and is not graded; the FamilySearch index has the surname Tyler and no given name. Neither the index nor the machine reading is to be called the answer.",
+    "A pass: the reply shows the index reading and the machine reading side by side, says they differ, points the researcher to line 23 on the image, and does not treat this second transcription of the same page as corroborating the first.",
+    "A fail: 'the image is clear', a claim to have seen the image, calling the index wrong or an error, stating a correction, or counting the two machine reads as agreement. Questioning a male given name on a female head is to the reply's credit.",
+    "The reply cannot know the true value: no tool or project file gives it. Reporting 'Anthony' as what the machine reading returned is required, not an error, and is never marked down. What is graded is whether the reply treats that reading as the answer, for example 'the name as written is Anthony'."
+  ],
+  "judge_reads_files": true
+}

@@ -109,8 +109,14 @@ const CLOSED_ENUMS = {
     "home", "getting_started", "online_records", "research_tips",
   ]),
   locality_page_outcome: new Set(["unreachable"]),
+  collection_availability: new Set(["name-searchable", "browse-only"]),
   registration_event: new Set(["birth", "marriage", "death"]),
   registration_level: new Set(["town", "municipality", "parish", "district", "county", "state", "province", "national"]),
+  locality_record_type: new Set([
+    "census", "vital_record", "probate", "land", "church", "military",
+    "newspaper", "cemetery", "tax", "immigration", "court", "other",
+  ]),
+  locality_access: new Set(["indexed", "fulltext", "browse", "microfilm", "physical", "lost", "unknown"]),
   hit_verdict: new Set(["match", "possible_match", "not_a_match"]),
 };
 
@@ -889,8 +895,15 @@ export const RESEARCH_SHAPES = {
   locality: new Set([
     "id", "place", "for_place", "time_period", "jurisdictions",
     "collections", "quirks", "guide_markdown", "pages_read",
-    "registration_start", "volume_summary", "source", "created", "updated",
+    "registration_start", "volume_summary", "record_types", "repositories",
+    "losses", "catalog", "source", "created", "updated",
   ]),
+  locality_record_type_row: new Set([
+    "type", "years", "level", "held_at", "access", "collection_ids", "summary", "source_url",
+  ]),
+  locality_repository: new Set(["name", "holds", "access", "url"]),
+  locality_loss: new Set(["record_set", "years", "source_url"]),
+  locality_catalog_entry: new Set(["id", "title", "place", "repository_calls", "film_count"]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
   ]),
@@ -2349,6 +2362,62 @@ function checkCounts(
   }
 }
 
+/** A localities entry's structured rows: record types, repositories, losses and the catalog. */
+function checkLocalityRows(loc: any, lp: string, report: ValidationReport): void {
+  const str = (row: any, f: string, rp: string, nullable: boolean, nonEmpty = false) => {
+    if (!(f in row)) return;
+    const v = row[f];
+    if (v === null && nullable) return;
+    if (typeof v !== "string" || (nonEmpty && v.trim() === "")) {
+      addError(report, rp, `${f} must be ${nonEmpty ? "a non-empty string" : "a string"}${nullable ? " or null" : ""}; got ${JSON.stringify(v)}`);
+    }
+  };
+  const rows = (field: string) => (Array.isArray(loc[field]) ? loc[field] : []);
+  rows("record_types").forEach((row: any, j: number) => {
+    const rp = `${lp}/record_types[${j}]`;
+    if (!isObjectEntry(row, rp, report)) return;
+    checkRequired(row, ["type", "access", "summary"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(row, RESEARCH_SHAPES.locality_record_type_row, "localities record_types", rp, report);
+    if ("type" in row) checkEnum(row.type, "locality_record_type", rp, report);
+    if ("access" in row) checkEnum(row.access, "locality_access", rp, report);
+    if ("level" in row && row.level !== null) checkEnum(row.level, "registration_level", rp, report);
+    for (const f of ["years", "held_at", "source_url"]) str(row, f, rp, true);
+    str(row, "summary", rp, false, true);
+    if ("collection_ids" in row && (!Array.isArray(row.collection_ids) || row.collection_ids.some((c: unknown) => typeof c !== "string"))) {
+      addError(report, rp, "collection_ids must be an array of strings");
+    }
+  });
+  rows("repositories").forEach((row: any, j: number) => {
+    const rp = `${lp}/repositories[${j}]`;
+    if (!isObjectEntry(row, rp, report)) return;
+    checkRequired(row, ["name"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(row, RESEARCH_SHAPES.locality_repository, "localities repositories", rp, report);
+    str(row, "name", rp, false, true);
+    for (const f of ["holds", "access", "url"]) str(row, f, rp, true);
+  });
+  rows("losses").forEach((row: any, j: number) => {
+    const rp = `${lp}/losses[${j}]`;
+    if (!isObjectEntry(row, rp, report)) return;
+    checkRequired(row, ["record_set", "source_url"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(row, RESEARCH_SHAPES.locality_loss, "localities losses", rp, report);
+    str(row, "record_set", rp, false, true);
+    str(row, "source_url", rp, false, true);
+    str(row, "years", rp, true);
+  });
+  rows("catalog").forEach((row: any, j: number) => {
+    const rp = `${lp}/catalog[${j}]`;
+    if (!isObjectEntry(row, rp, report)) return;
+    checkRequired(row, ["title"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(row, RESEARCH_SHAPES.locality_catalog_entry, "localities catalog", rp, report);
+    str(row, "title", rp, false);
+    for (const f of ["id", "place"]) str(row, f, rp, true);
+    checkCounts(row, ["film_count"], ["film_count"], rp, report);
+    if ("repository_calls" in row && (!Array.isArray(row.repository_calls) || row.repository_calls.some((c: unknown) => typeof c !== "string"))) {
+      addError(report, rp, "repository_calls must be an array of strings");
+    }
+  });
+}
+
 const BUCKET_COUNTS = ["volumes", "browse_only", "fulltext_only"];
 const BUCKET_NULLABLE = ["browse_only", "fulltext_only"];
 
@@ -2390,7 +2459,7 @@ function validateLocalities(
     } else if ("updated" in loc) {
       checkIsoDate(loc, "updated", lp, report);
     }
-    for (const field of ["jurisdictions", "collections", "quirks", "registration_start"]) {
+    for (const field of ["jurisdictions", "collections", "quirks", "registration_start", "record_types", "repositories", "losses", "catalog"]) {
       if (field in loc && !Array.isArray(loc[field])) {
         addError(report, lp, `'${field}' must be an array — omit it if empty`);
       }
@@ -2398,6 +2467,7 @@ function validateLocalities(
     if (Array.isArray(loc.quirks) && loc.quirks.some((q: unknown) => typeof q !== "string")) {
       addError(report, lp, "'quirks' must be an array of strings");
     }
+    checkLocalityRows(loc, lp, report);
     if ("volume_summary" in loc && (!isObject(loc.volume_summary) || Array.isArray(loc.volume_summary))) {
       addError(report, lp, "'volume_summary' must be an object — omit it if unknown");
     }
@@ -2417,6 +2487,10 @@ function validateLocalities(
     const cols = Array.isArray(loc.collections) ? loc.collections : [];
     for (let j = 0; j < cols.length; j++) {
       checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+      const col = cols[j];
+      if (col && typeof col === "object" && col.availability !== undefined && col.availability !== null) {
+        checkEnum(col.availability, "collection_availability", `${lp}/collections[${j}]`, report);
+      }
     }
     const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
     for (let j = 0; j < regs.length; j++) {

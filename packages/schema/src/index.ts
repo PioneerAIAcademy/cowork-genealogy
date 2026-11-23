@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionKind, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, LocalityRecordType, LocalityAccess, CollectionAvailability, ResolutionKind,
   SkipCategory, RegistrationEvent, RegistrationLevel, ClaimPolarity, FindingType, HitVerdict,
 } from './enums.generated.js'
 
@@ -423,6 +423,7 @@ export interface LocalityCollection {
   date_range?: string | null
   person_count?: number | null
   record_count?: number | null
+  availability?: CollectionAvailability | null
 }
 
 export interface LocalityRegistrationStart {
@@ -455,6 +456,38 @@ export interface LocalityVolumeSummary {
   untyped: LocalityVolumeCounts
 }
 
+export interface LocalityRecordTypeRow {
+  type: LocalityRecordType
+  years?: string | null
+  level?: RegistrationLevel | null
+  held_at?: string | null
+  access: LocalityAccess
+  collection_ids?: string[]
+  summary: string
+  source_url?: string | null
+}
+
+export interface LocalityRepository {
+  name: string
+  holds?: string | null
+  access?: string | null
+  url?: string | null
+}
+
+export interface LocalityLoss {
+  record_set: string
+  years?: string | null
+  source_url: string
+}
+
+export interface LocalityCatalogEntry {
+  id?: string | null
+  title: string
+  place?: string | null
+  repository_calls?: string[]
+  film_count?: number | null
+}
+
 export interface Locality {
   id: string
   place: string
@@ -467,6 +500,10 @@ export interface Locality {
   pages_read: LocalityPageRead[]
   registration_start?: LocalityRegistrationStart[]
   volume_summary?: LocalityVolumeSummary
+  record_types?: LocalityRecordTypeRow[]
+  repositories?: LocalityRepository[]
+  losses?: LocalityLoss[]
+  catalog?: LocalityCatalogEntry[]
   source: string
   created: string
   updated?: string

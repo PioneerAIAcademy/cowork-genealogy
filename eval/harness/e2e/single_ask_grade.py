@@ -19,7 +19,10 @@ only when the fixture asks for it:
   missing final research.json is no reason: nothing was created.
 - ``save`` — any one of the ``expected_save`` alternatives holds: a new
   ``sources`` entry, a new ``log`` entry whose ``tool`` (and ``outcome``, when
-  given) is the expected value, or, with ``absent``, no new entry in the section.
+  given) is the expected value, a new ``localities`` entry whose guide carries
+  every heading of the locality-guide template (``GUIDE_HEADINGS``) and a
+  ``record_types`` row for every type the validator requires, or, with
+  ``absent``, no new entry in the section.
   New = id in the final ``research.json`` and absent from the starting one. With no
   research.json at the end, the empty-folder rule holds: an ``absent`` save passes
   and any other fails; from a seeded project it is a failure, and so is a
@@ -40,14 +43,48 @@ only when the fixture asks for it:
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from e2e.orchestrator import _is_agent_tool
 from harness.skill_runner import load_step_boundary
 
 ROUTER_UNIT = "research"
-SAVE_SECTIONS = ("log", "sources", "plans")
+SAVE_SECTIONS = ("log", "sources", "localities", "plans")
+# Every heading of the locality-guide template: `_GUIDE_HEADING_LINES` in
+# eval/harness/validators/test_locality_guide.py, which test_e2e_single_ask.py pins
+# this copy to.
+GUIDE_HEADINGS = (
+    "## Jurisdiction overview",
+    "## Boundary changes",
+    "## Research tips",
+)
+
+
+# The record types a localities entry owes a row each: the closed `locality_record_type`
+# enum, read from the schema as the validator reads it.
+LOCALITY_RECORD_TYPES = tuple(
+    json.loads(
+        (Path(__file__).resolve().parents[3] / "docs" / "specs" / "schemas" / "enums.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )["$defs"]["locality_record_type"]["enum"]
+)
+
+
+def missing_guide_headings(guide: Any) -> list[str]:
+    """The template headings a saved guide lacks, matched as the validator matches them."""
+    if not isinstance(guide, str):
+        return list(GUIDE_HEADINGS)
+    missing = []
+    for heading in GUIDE_HEADINGS:
+        hashes, title = heading.split(" ", 1)
+        if not re.search(rf"^{hashes}[ \t]+{re.escape(title)}", guide, re.IGNORECASE | re.MULTILINE):
+            missing.append(heading)
+    return missing
 CHECKS = (
     "owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop",
     "ends_on_offer",
@@ -190,6 +227,23 @@ def _save_check(
         )
         got = [f"{r.get('tool')}/{r.get('outcome')}" for r in new]
         return (hit, want if hit else f"missing {want} (new log rows: {got or 'none'})")
+    if section == "localities":
+        if not new:
+            return (False, "missing new localities")
+        def gaps_of(r: dict[str, Any]) -> list[str]:
+            rows = r.get("record_types") if isinstance(r.get("record_types"), list) else []
+            have = {x.get("type") for x in rows if isinstance(x, dict)}
+            return missing_guide_headings(r.get("guide_markdown")) + [
+                f"record_types: {t}" for t in LOCALITY_RECORD_TYPES if t not in have
+            ]
+
+        gaps = [gaps_of(r) for r in new]
+        best = min(gaps, key=len)
+        return (
+            not best,
+            f"{len(new)} new localities, guide complete" if not best
+            else f"new localities guide lacks {len(best)} heading(s) or row(s): {best[:4]}",
+        )
     return (bool(new), f"{len(new)} new {section}" if new else f"missing new {section}")
 
 
