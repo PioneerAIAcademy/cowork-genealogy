@@ -99,6 +99,24 @@ export interface ImageTranscribeToolResponse {
   metadata?: {
     memoryArtifactUrl?: string;
   };
+  /** In a project, the indexed names of every held record whose source's
+   *  `image_ark` is the page read (`attachIndexReadings`, issue #4578); a reading
+   *  of the page (`disputes_assertion_id`) is left out. Absent when no held source
+   *  names that page, and for a `file`. */
+  indexReadings?: IndexReading[];
+  /** In a project, always: the transcription is one machine reading, to be
+   *  shown beside the index, never over it (issue #4578). */
+  readingNote?: string;
+}
+
+/** One indexed name of a held record on the page read. */
+export interface IndexReading {
+  sourceId: string;
+  recordId: string;
+  role: string;
+  /** The name as the index gives it; a given name the index left blank is
+   *  simply absent from it. */
+  name: string;
 }
 
 /** `imageTranscribeTool`'s own return, which always carries the text. */

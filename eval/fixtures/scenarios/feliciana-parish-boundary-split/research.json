@@ -133,12 +133,230 @@
         {
           "id": "3000101",
           "title": "Louisiana, East Feliciana Parish Marriage Records, 1824-1900",
-          "date_range": "1824-1900"
+          "date_range": "1824-1900",
+          "availability": null
         },
         {
           "id": "3000102",
           "title": "Louisiana, West Feliciana Parish Marriage Records, 1824-1900",
-          "date_range": "1824-1900"
+          "date_range": "1824-1900",
+          "availability": null
+        },
+        {
+          "id": "1459894",
+          "title": "Louisiana Naturalization Records, 1812-1932",
+          "date_range": "1831-1906",
+          "person_count": 100724,
+          "record_count": 89692,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1921443",
+          "title": "Louisiana Second Registration Draft Cards, 1948-1959",
+          "date_range": "1948-1959",
+          "person_count": 243721,
+          "record_count": 243676,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3158839",
+          "title": "Louisiana Wills and Deeds, 1700-2017",
+          "date_range": "1700-2017",
+          "person_count": 12529,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674847",
+          "title": "Louisiana, Births and Christenings, 1811-1830, 1854-1934",
+          "date_range": "1811-1934",
+          "person_count": 269756,
+          "record_count": 92037,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2790251",
+          "title": "Louisiana, Church Records, 1836-1938",
+          "date_range": "1836-1938",
+          "person_count": 6080,
+          "record_count": 2878,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932372",
+          "title": "Louisiana, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 778925,
+          "record_count": 778925,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932399",
+          "title": "Louisiana, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 119515,
+          "record_count": 119515,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1838535",
+          "title": "Louisiana, Confederate Pensions, 1898-1950",
+          "date_range": "1898-1950",
+          "person_count": 206319,
+          "record_count": 97279,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1609793",
+          "title": "Louisiana, Deaths, 1850-1875, 1894-1960",
+          "date_range": "1850-1960",
+          "person_count": 2386244,
+          "record_count": 776611,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1854308",
+          "title": "Louisiana, Eastern District Naturalization Petitions, 1838-1861",
+          "date_range": "1838-1861",
+          "person_count": 3669,
+          "record_count": 1450,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1916286",
+          "title": "Louisiana, First Registration Draft Cards, 1940-1945",
+          "date_range": "1940-1945",
+          "person_count": 403423,
+          "record_count": 396037,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333781",
+          "title": "Louisiana, Freedmen's Bureau Field Office Records, 1865-1872",
+          "date_range": "1865-1872",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1674881",
+          "title": "Louisiana, Marriages, 1816-1906",
+          "date_range": "1816-1906",
+          "person_count": 237427,
+          "record_count": 104590,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4119893",
+          "title": "Louisiana, Military Discharge Records, ca.1890 - ca.1951",
+          "date_range": "1890-1951",
+          "person_count": 1182,
+          "record_count": 1182,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2443949",
+          "title": "Louisiana, New Orleans Index to Passenger Lists, 1853-1952",
+          "date_range": "1853-1952",
+          "person_count": 439781,
+          "record_count": 439667,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3326858",
+          "title": "Louisiana, New Orleans Passenger Departures, 1867-1871",
+          "date_range": "1867-1871",
+          "person_count": 5123,
+          "record_count": 5123,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1916009",
+          "title": "Louisiana, New Orleans Passenger Lists, 1820-1945",
+          "date_range": "1820-1945",
+          "person_count": 1214771,
+          "record_count": 1214574,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1807364",
+          "title": "Louisiana, Parish Marriages, 1787-1958",
+          "date_range": "1787-1958",
+          "person_count": 6526866,
+          "record_count": 1795647,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4234528",
+          "title": "Louisiana, State Museum Historical Center, Cemetery Records, 1805-1944",
+          "date_range": "1805-1944",
+          "person_count": 242847,
+          "record_count": 224024,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1931391",
+          "title": "Louisiana, State Penitentiary Records, 1866-1963",
+          "date_range": "1866-1963",
+          "person_count": 128207,
+          "record_count": 128204,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3041284",
+          "title": "Louisiana, Tombstone Inscriptions, 1812-1970",
+          "date_range": "1812-1970",
+          "person_count": 105961,
+          "record_count": 76516,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1527724",
+          "title": "Louisiana, War of 1812 Pension Lists, 1812-1868",
+          "date_range": "1812-1868",
+          "person_count": 5549,
+          "record_count": 2880,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2489920",
+          "title": "Louisiana, World War I Service Records, 1917-1920",
+          "date_range": "1917-1920",
+          "person_count": 74174,
+          "record_count": 74174,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803765",
+          "title": "United States, Census, 1810",
+          "date_range": "1810-1810",
+          "person_count": 827020,
+          "record_count": 827020,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803955",
+          "title": "United States, Census, 1820",
+          "date_range": "1820-1820",
+          "person_count": 1226220,
+          "record_count": 1226220,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803958",
+          "title": "United States, Census, 1830",
+          "date_range": "1830-1830",
+          "person_count": 1825827,
+          "record_count": 1824437,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

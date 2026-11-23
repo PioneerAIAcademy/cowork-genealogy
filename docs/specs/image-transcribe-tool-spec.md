@@ -692,6 +692,9 @@ Text only, no image block:
   metadata?: {               // present only when a Memories page URL was resolved
     memoryArtifactUrl: string
   }
+  readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
+  indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
+                             // in a project, for an `ark` read whose page a held source's image_ark names
 }
 ```
 
@@ -751,6 +754,47 @@ list more than one coverage place, and 3 of them end in different countries (Aus
 Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is the
 shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
 refused (403) and 4 answered 400.
+
+#### Index readings
+
+In a project, every answer across the MCP boundary carries `readingNote`, and, when held
+records sit on the page read, `indexReadings`. Added by `attachIndexReadings`
+(`src/utils/index-readings.ts`) after the compactor, on the project legs of
+`imageTranscribeMcpTool` only: never with no project, and never on person_read's
+in-process call.
+
+- `indexReadings`: `{ sourceId, recordId, role, name }` for each live `fact_type: "name"`
+  assertion of every source whose `image_ark` names the page read, joined on
+  `pageKey` (`src/utils/waiting-pages.ts`), the same key `waitingPages` uses. So a `cc=`
+  query on either side still matches, and an `i=` or `groupId=` ARK matches nothing. A
+  reading of the page, a machine's or the researcher's (an assertion with
+  `disputes_assertion_id`, research-append §11.9), is not the index and is left out. A
+  given name the index left blank is simply absent from `name`. Joined for an `ark` (or
+  its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
+- `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
+  of the page, and its text is never "the name as written". Where it and the index
+  differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
+  Call neither reading the answer or the likelier one, never call the index wrong or a
+  misread, and never state a correction. A reading the researcher gives of the page ranks
+  with the index: it is shown beside the transcription the same way and never corrected
+  from it. A line the transcription leaves blank where the index
+  has a person is a difference between the readings, never evidence the person is absent.
+  A second transcription of the same page, or one
+  made after declining to read it, confirms nothing; only a different record or a
+  different person's reading does. Report each other record's name as that record writes
+  it: it challenges the reading, so never call it a rendering, variant or split of another
+  name, never call a disagreeing spelling consistent, and never drop a reading on a
+  premise the project's own files contradict. The router's skill carries none of these
+  rules itself; it follows the note.
+
+Never an error: an unreadable `research.json` gives the note alone. The unit harness
+calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).
+
+Why a tool and not prose: the same rules as `research/SKILL.md` lines were followed in
+4 of 5 runs of `ut_research_iv1` in one round and 0 of 5 in the next, with the text
+unchanged. Four of those five runs skipped the index lookup the lines asked for
+(scratch 2026-11-18). In the tool result, the index is in front of the model when it
+writes the reply, with no lookup to forget.
 
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 

@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../../src/utils/plan-item-plausibility.js";
+import {
+  compoundJurisdictionError,
+  OUTSIDE_SITE_NAMES,
+  outsideSiteJurisdictionError,
+  planItemFlags,
+  planWindowFlag,
+  routesToFamilySearch,
+} from "../../src/utils/plan-item-plausibility.js";
+import { buildExternalSearchUrlSchema } from "../../src/tools/build-external-search-url.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 // Phase 3 item 5: "dead ends become next actions", and the next actions have to be
 // usable. In the reported failure 2 of 8, then 1 of 3 suggestions were viable -- the
@@ -428,5 +437,379 @@ describe("research_append refuses a plan item that names two places", () => {
       fields: { jurisdiction: "Alabama and Texas, United States" },
     } as never, undefined as never).catch((e: Error) => e);
     expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/names 2 places/);
+  });
+});
+
+// #4665: a FamilySearch item whose jurisdiction names an outside site is routed to
+// FamilySearch agents only, so the site is never searched. The Hagell session's
+// pli_006 is the shape; the jimmie-jewel-neal and rationale cases are the
+// legitimate work it must leave alone.
+describe("outsideSiteJurisdictionError", () => {
+  const PLI_006 = "Utah Territory and outside papers (Utah Digital Newspapers, Chronicling America)";
+  const fs = (jurisdiction: string, over: Record<string, unknown> = {}) => ({
+    repository: "FamilySearch",
+    jurisdiction,
+    ...over,
+  });
+
+  it("refuses the Hagell pli_006 jurisdiction verbatim, on the fixed name alone", () => {
+    const msg = outsideSiteJurisdictionError(fs(PLI_006));
+    expect(msg).toMatch(/'chronicling america'/);
+    expect(msg).toMatch(/write a separate item per site whose repository is the site/);
+  });
+
+  it("names the state archive too when the project stored it as a link_text", () => {
+    const msg = outsideSiteJurisdictionError(fs(PLI_006), ["Utah Digital Newspapers", "Search"]);
+    expect(msg).toMatch(/'chronicling america', 'Utah Digital Newspapers'/);
+  });
+
+  it("refuses an item that names only a state archive, through the stored link_text", () => {
+    const item = fs("Utah Territory (Utah Digital Newspapers)");
+    expect(outsideSiteJurisdictionError(item)).toBeUndefined();
+    expect(outsideSiteJurisdictionError(item, ["Utah Digital Newspapers"])).toMatch(/'Utah Digital Newspapers'/);
+  });
+
+  it("matches the repository case-insensitively, as the router does", () => {
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave)", { repository: "familysearch.org" }))).toMatch(
+      /'find a grave'/,
+    );
+  });
+
+  it("accepts a newspaper item that names FamilySearch alone", () => {
+    expect(outsideSiteJurisdictionError(fs("Washington, Utah, United States", { record_type: "newspaper" }))).toBeUndefined();
+  });
+
+  it("accepts a plain place", () => {
+    expect(outsideSiteJurisdictionError(fs("Washington County, Utah"), ["Utah Digital Newspapers"])).toBeUndefined();
+  });
+
+  it("accepts an item whose repository IS the outside site", () => {
+    expect(outsideSiteJurisdictionError({ repository: "Utah Digital Newspapers", jurisdiction: PLI_006 }, ["Utah Digital Newspapers"])).toBeUndefined();
+    expect(outsideSiteJurisdictionError({ repository: "Chronicling America", jurisdiction: PLI_006 })).toBeUndefined();
+  });
+
+  it("never reads the rationale, where a site is usually a FamilySearch collection title", () => {
+    for (const rationale of [
+      "Ancestry indexes the same collection.",
+      "United States, GenealogyBank Historical Newspaper Obituaries",
+      "Find a Grave Index",
+    ]) {
+      expect(outsideSiteJurisdictionError({ ...fs("Washington County, Utah"), rationale } as never)).toBeUndefined();
+    }
+  });
+
+  it("ignores a one-word link_text: the corpus jurisdiction 'Search' would have refused", () => {
+    // jimmie-jewel-neal run-2026-07-30_14-32-18 pli_012, verbatim; Ohio's live rows hold "Search".
+    expect(outsideSiteJurisdictionError(fs("Alabama (statewide search, focus Blount County)"), ["Search", "Media"])).toBeUndefined();
+  });
+
+  it("matches whole words only", () => {
+    expect(outsideSiteJurisdictionError(fs("Matriculation Lists, Ohio"))).toBeUndefined();
+    expect(outsideSiteJurisdictionError(fs("Ohio (Ancestry)"))).toMatch(/'ancestry'/);
+  });
+
+  it("is quiet on a missing or non-string jurisdiction", () => {
+    expect(outsideSiteJurisdictionError({ repository: "FamilySearch" })).toBeUndefined();
+    expect(outsideSiteJurisdictionError({ repository: "FamilySearch", jurisdiction: 7 })).toBeUndefined();
+  });
+
+  it("reads a blank or missing repository as FamilySearch, as the router does", () => {
+    // searchStepFor: `if (!repo || /familysearch/i.test(repo)) return "search-records"`.
+    expect(outsideSiteJurisdictionError({ jurisdiction: PLI_006 })).toMatch(/'chronicling america'/);
+    expect(outsideSiteJurisdictionError({ repository: "  ", jurisdiction: PLI_006 })).toMatch(/'chronicling america'/);
+  });
+
+  it("reads hyphens, '&' and odd whitespace as the plain spelling", () => {
+    expect(outsideSiteJurisdictionError(fs("Blount County, Alabama (Find-A-Grave)"))).toMatch(/'find a grave'/);
+    expect(outsideSiteJurisdictionError(fs("Ontario (Library & Archives Canada)"))).toMatch(/library and archives canada/);
+    expect(outsideSiteJurisdictionError(fs("Utah (Chronicling\u00a0 America)"))).toMatch(/'chronicling america'/);
+  });
+
+  it("reads a Find a Grave, BillionGraves or Newspapers.com index title as a FamilySearch collection", () => {
+    // "United States, Find a Grave Index" and "Newspapers.com Obituary Index" are FamilySearch
+    // collections: a FamilySearch item naming one is right, and the refusal's "write a
+    // separate item for the site" would be wrong.
+    for (const jurisdiction of [
+      "Blount County, Alabama (Find a Grave Index)",
+      "Ohio (FindAGrave Indexes)",
+      "Ohio (find-a-grave index, 1600s-current)",
+      "Kentucky (Newspapers.com Obituary Index, 1800-current)",
+      "Kentucky (Newspapers.com Stories and Events Index)",
+      "Utah (BillionGraves Index)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toBeUndefined();
+    }
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave)"))).toMatch(/'find a grave'/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Indexer notes)"))).toMatch(/'find a grave'/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Index; Ancestry)"))).toMatch(/ names 'ancestry', an outside site,/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave and BillionGraves)"))).toMatch(/'find a grave', 'billiongraves'/);
+    // A title reaching over a second site's name hides only its own site.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave and Ancestry index)"))).toMatch(/ names 'ancestry', an outside site,/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Newspapers.com four more words then index)"))).toMatch(/'newspapers\.com'/);
+  });
+
+  it("reads 'index' after any other site as the site: no FamilySearch collection is titled so", () => {
+    for (const [jurisdiction, site] of [
+      ["Ohio (Ancestry index)", "ancestry"],
+      ["Ohio (FindMyPast Index)", "findmypast"],
+      ["Ohio (MyHeritage indexes)", "myheritage"],
+      ["Utah (Chronicling America Index)", "chronicling america"],
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toMatch(new RegExp(`'${site}'`));
+    }
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers Index)"), ["Utah Digital Newspapers"])).toMatch(
+      /'Utah Digital Newspapers'/,
+    );
+  });
+
+  it("never reads a stored name naming FamilySearch itself as an outside site", () => {
+    // Both are live external_links_search link_texts (replay at 8b27bce44).
+    const stored = ["images at FamilySearch", "Vermont Historical Society and the FamilySearch Library", "Utah Digital Newspapers"];
+    expect(outsideSiteJurisdictionError(fs("Kent, England (images at FamilySearch)"), stored)).toBeUndefined();
+    expect(
+      outsideSiteJurisdictionError(fs("Vermont (Vermont Historical Society and the FamilySearch Library)"), stored),
+    ).toBeUndefined();
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/'Utah Digital Newspapers'/);
+  });
+
+  it("reads a stored name as a site only when it looks like one", () => {
+    // Live link_texts are mostly collection titles and places: of 7,215 multi-word ones
+    // the earlier cuts kept, 758 look like a site (replay at 9c501a1cc).
+    const stored = [
+      "Civil Registration", "Passenger Lists", "Civil Marriage Records, 1894-1896", "Los Angeles",
+      "United States Passenger And Crew Lists, 1820-1957",
+      "Utah Digital Newspapers", "Texas State Library and Archives", "The Scottish Genealogy Society", "Genealogy.net",
+    ];
+    for (const jurisdiction of [
+      "Mexico (civil registration)",
+      "New York (passenger lists)",
+      "Los Angeles, California, United States",
+      "Los Angeles County, California",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
+    }
+    for (const [jurisdiction, site] of [
+      ["Utah (Utah Digital Newspapers)", "Utah Digital Newspapers"],
+      ["Texas (Texas State Library and Archives)", "Texas State Library and Archives"],
+      ["Scotland (The Scottish Genealogy Society)", "The Scottish Genealogy Society"],
+      ["Germany (Genealogy.net)", "Genealogy.net"],
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toMatch(`'${site}'`);
+    }
+  });
+
+  it("reads a stored archive followed by 'film' or 'microfilm' as film FamilySearch holds", () => {
+    const stored = ["Texas State Library and Archives", "Utah State Archives"];
+    for (const jurisdiction of [
+      "Texas (Texas State Library and Archives microfilm)",
+      "Utah (Utah State Archives film)",
+      "Utah (Utah State Archives probate films)",
+      "Utah (Utah State Archives, microfilmed)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
+    }
+    expect(outsideSiteJurisdictionError(fs("Texas (Texas State Library and Archives)"), stored)).toMatch(
+      /'Texas State Library and Archives'/,
+    );
+    // Film follows only a stored name: no fixed site's film is held by FamilySearch.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Ancestry microfilm)"))).toMatch(/'ancestry'/);
+  });
+
+  it("reads punctuation before 'index' as the same collection title", () => {
+    for (const jurisdiction of [
+      "Blount County, Alabama (Find a Grave (index))",
+      "Alabama (Find a Grave: Index)",
+      "Alabama (Find a Grave - index)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toBeUndefined();
+    }
+    // Only spaces join the words between, so a second site does not stretch the title.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave; Ancestry index)"))).toMatch(/names 'ancestry', 'find a grave', outside sites/);
+  });
+
+  it("names a stored site whose name only contains a fixed site's letters", () => {
+    const msg = outsideSiteJurisdictionError(
+      fs("Germany (Matricula; Matriculation Society Archives)"),
+      ["Matriculation Society Archives", "Chronicling America Archive"],
+    );
+    expect(msg).toMatch(/'matricula', 'Matriculation Society Archives', outside sites/);
+    // A stored row holding a fixed name as a whole phrase is that site, named once.
+    expect(outsideSiteJurisdictionError(fs("Utah (Chronicling America)"), ["Chronicling America"])).toMatch(
+      /names 'chronicling america', an outside site/,
+    );
+  });
+
+  it("quotes a stored link_text as stored, and matches it normalized", () => {
+    const msg = outsideSiteJurisdictionError(fs("Ontario (library & archives of Upper-Canada)"), ["Library and Archives of Upper Canada"]);
+    expect(msg).toMatch(/names 'Library and Archives of Upper Canada', an outside site/);
+  });
+
+  it("routes an item as the router does: fs_hints to search-hints, else by repository", () => {
+    for (const r of [undefined, null, "", "  ", "FamilySearch", "familysearch.org", "FamilySearch Library"]) {
+      expect(routesToFamilySearch({ repository: r }), String(r)).toBe(true);
+    }
+    for (const r of ["Ancestry", "Chronicling America", "Utah Digital Newspapers"]) {
+      expect(routesToFamilySearch({ repository: r }), r).toBe(false);
+      expect(routesToFamilySearch({ repository: r, record_type: "fs_hints" }), r).toBe(true);
+    }
+    expect(routesToFamilySearch(undefined)).toBe(true);
+    expect(
+      outsideSiteJurisdictionError({ repository: "Ancestry", record_type: "fs_hints", jurisdiction: "Ohio (Find a Grave)" }),
+    ).toMatch(/'find a grave'/);
+  });
+
+  it("never reads a stored name made only of record words as a site", () => {
+    const stored = ["Parish Registers", "Death Certificates", "1871 Census", "National Archives", "Utah Digital Newspapers"];
+    for (const jurisdiction of [
+      "Kent, England (parish registers)",
+      "Ohio (death certificates)",
+      "Lancashire, England (1871 census)",
+      "United States (National Archives film)",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
+    }
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/'Utah Digital Newspapers'/);
+  });
+
+  it("names every site build_external_search_url builds, but the generic archive", () => {
+    const sites = (buildExternalSearchUrlSchema.inputSchema.properties.site as { enum: string[] }).enum;
+    const named = Object.keys(OUTSIDE_SITE_NAMES);
+    expect(sites.filter((s) => s !== "digital_newspaper_archive" && !named.includes(s))).toEqual([]);
+    expect(named.filter((s) => !sites.includes(s))).toEqual([]);
+  });
+});
+
+// #4665 end to end: through `researchAppend`, so the stored link_texts must actually
+// reach `applyOne` (an omitted trailing argument compiles clean and would leave the
+// state-archive half inert).
+describe("research_append refuses a FamilySearch plan item whose jurisdiction names an outside site", () => {
+  const PLI_006 = "Utah Territory and outside papers (Utah Digital Newspapers, Chronicling America)";
+  const UTAH = { localities: [{ id: "lo_001", place: "Washington, Utah, United States" }] };
+  const withCollections = (dir: string, linkTexts: string[]) => {
+    const rows = linkTexts.map((link_text, i) => ({
+      key: `k${i}`, url: `https://example.org/${i}`, link_text, record_types: ["Newspapers"],
+      place: "Utah, United States", cost: "free", content_type: "index", start_year: "", end_year: "",
+    }));
+    writeFileSync(join(dir, "external-collections.json"),
+      JSON.stringify({ places: { "Utah, United States": { rows } } }), "utf8");
+    return dir;
+  };
+  const NEWS = { ...ITEM, record_type: "newspaper", date_range: "1880-1885" };
+  const items = () => JSON.parse(readFileSync(join(dirOf, "research.json"), "utf8")).plans[0].items ?? [];
+  let dirOf = "";
+
+  it("refuses pli_006 as written in the Hagell session, and writes nothing", async () => {
+    dirOf = withCollections(project(UTAH), ["Utah Digital Newspapers"]);
+    const text = await append(dirOf, { ...NEWS, jurisdiction: PLI_006 });
+    expect(text).toMatch(/"ok":\s*false/);
+    expect(text).toMatch(/'chronicling america', 'Utah Digital Newspapers'/);
+    expect(items()).toEqual([]);
+  });
+
+  it("refuses a state-archive-only jurisdiction through external-collections.json", async () => {
+    const jurisdiction = "Washington County, Utah (Utah Digital Newspapers)";
+    expect(await append(project(UTAH), { ...NEWS, jurisdiction })).toMatch(/"ok":\s*true/);
+    const text = await append(withCollections(project(UTAH), ["Utah Digital Newspapers"]), { ...NEWS, jurisdiction });
+    expect(text).toMatch(/"ok":\s*false/);
+    expect(text).toMatch(/'Utah Digital Newspapers'/);
+  });
+
+  it("refuses the same item inline on a plans append", async () => {
+    const out = await researchAppend({
+      projectPath: project({ ...UTAH, plans: [] }), section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...NEWS, id: "pli_001", jurisdiction: PLI_006 }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/'chronicling america'/);
+  });
+
+  it("refuses an update that moves the jurisdiction onto a site", async () => {
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...NEWS, id: "pli_001", jurisdiction: "Washington, Utah, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { jurisdiction: PLI_006 },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/'chronicling america'/);
+  });
+
+  it("does not hold a status-only edit to an item written before the rule", async () => {
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...NEWS, id: "pli_001", jurisdiction: PLI_006 },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { status: "in_progress" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold a repository respelling that routes the same way, on an item written before the rule", async () => {
+    const { repository: _omit, ...bare } = NEWS as Record<string, unknown>;
+    const stored = { ...bare, id: "pli_001", jurisdiction: PLI_006 };
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [stored] }] });
+    const viaPlans = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...stored, repository: "" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(viaPlans instanceof Error ? viaPlans.message : JSON.stringify(viaPlans)).toMatch(/"ok":\s*true/);
+    const viaItem = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { repository: "familysearch" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(viaItem instanceof Error ? viaItem.message : JSON.stringify(viaItem)).toMatch(/"ok":\s*true/);
+  });
+
+  it("accepts the fix: the place on the FamilySearch item, each site on its own item", async () => {
+    const dir = withCollections(project(UTAH), ["Utah Digital Newspapers", "Search"]);
+    expect(await append(dir, { ...NEWS, jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...NEWS, sequence: 2, repository: "Utah Digital Newspapers", jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...NEWS, sequence: 3, repository: "Chronicling America", jurisdiction: "Utah, United States" })).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not read a place's own page as a site: 'New York' under 'New York, United States'", async () => {
+    // The live rows for New York and South Africa each list the place's own page under the
+    // place's name; read as a site, they refused 87 ordinary corpus jurisdictions.
+    const dir = project({ localities: [{ id: "lo_001", place: "New York, United States" }] });
+    const rows = [
+      { link_text: "New York", place: "New York, United States" },
+      { link_text: "New York State Library", place: "New York, United States" },
+    ].map((r, i) => ({ key: `k${i}`, url: `https://example.org/${i}`, record_types: [], cost: "free",
+      content_type: "index", start_year: "", end_year: "", ...r }));
+    writeFileSync(join(dir, "external-collections.json"),
+      JSON.stringify({ places: { "New York, United States": { rows } } }), "utf8");
+    expect(await append(dir, { ...ITEM, jurisdiction: "Saratoga County, New York, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...ITEM, sequence: 2, jurisdiction: "Saratoga County, New York (New York State Library)" })).toMatch(
+      /'New York State Library'/,
+    );
+  });
+
+  it("refuses an update that moves a site's item onto FamilySearch, on the repository alone", async () => {
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...NEWS, id: "pli_001", repository: "Chronicling America", jurisdiction: "Utah (Chronicling America)" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { repository: "FamilySearch" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/'chronicling america'/);
+  });
+
+  it("refuses the same repository move on an inline item of a plans update", async () => {
+    const stored = { ...NEWS, id: "pli_001", repository: "Chronicling America", jurisdiction: "Utah (Chronicling America)" };
+    const dir = project({ ...UTAH, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [stored] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...stored, repository: "FamilySearch" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/'chronicling america'/);
+  });
+
+  it("still writes when external-collections.json is malformed, on the fixed names alone", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+    const dir = project(UTAH);
+    writeFileSync(join(dir, "external-collections.json"), "{not json", "utf8");
+    expect(await append(dir, { ...NEWS, jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...NEWS, jurisdiction: PLI_006 })).toMatch(/'chronicling america'/);
   });
 });

@@ -36,6 +36,7 @@ import {
   noProjectResult,
   type NoProjectResult,
 } from "../utils/project-io.js";
+import { attachIndexReadings } from "../utils/index-readings.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
   compactImageTranscribeAnswer,
@@ -554,14 +555,28 @@ export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) return compactOrPass(await imageTranscribeTool(input, principal));
+  if (input?.file !== undefined) {
+    return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
+  }
   const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
   if (cls === "missing_arg" || cls === "no_project") {
     const { projectPath: _dropped, ...unsaved } = input;
     return compactOrPass(await imageTranscribeTool(unsaved, principal));
   }
-  return compactOrPass(await imageTranscribeTool(input, principal));
+  return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
+}
+
+/** The project leg's index beside the reading (issue #4578). A refusal passes. */
+async function withIndexReadings(
+  input: ImageTranscribeInput,
+  out: ImageTranscribeToolResponse | NoProjectResult,
+): Promise<ImageTranscribeToolResponse | NoProjectResult> {
+  if ("ok" in out || typeof input.projectPath !== "string") return out;
+  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
+  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
+  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
+  return attachIndexReadings(input.projectPath, out, ark);
 }
 
 function compactOrPass(
@@ -580,7 +595,9 @@ export const imageTranscribeToolSchema = {
     "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
     "ref: staged.resultsRef }) only when you need it, and hand " +
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). With no " +
+    "comes back inline only when staging failed (`stagingError`). In a project " +
+    "it also returns `readingNote`, and `indexReadings`, the held records' " +
+    "indexed names for that page: follow the note. With no " +
     "project (no projectPath, or a folder holding no research.json) the text " +
     "comes back inline as `transcription` and nothing is saved; those reads " +
     "count under a 20-images-per-film cap for this server session. Use this for large scans that " +

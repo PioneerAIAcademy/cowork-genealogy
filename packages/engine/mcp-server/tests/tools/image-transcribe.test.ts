@@ -1676,6 +1676,54 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(envelope.payload.results[0].transcription).toBe(page);
   });
 
+  it("puts the held record's indexed names beside the reading, with the note (#4578)", async () => {
+    const ARK = "ark:/61903/3:1:S3HT-DTXQ-WTP";
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      sources: [{ id: "src_001", image_ark: `${ARK}?cc=1325221` }, { id: "src_002" }],
+      assertions: [
+        { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:MMF1-WWF",
+          record_role: "head_of_household", fact_type: "name", value: "Tyler" },
+        { id: "a_002", source_id: "src_001", fact_type: "sex", value: "Female" },
+        { id: "a_003", source_id: "src_002", fact_type: "name", value: "Ann Tone Lightfoot" },
+      ],
+    }));
+    mockOpenRouterOk("23 | Tyler Anthony | Head");
+    const r = await imageTranscribeMcpTool({ ark: ARK, projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.indexReadings).toEqual([
+      { sourceId: "src_001", recordId: "ark:/61903/1:1:MMF1-WWF", role: "head_of_household", name: "Tyler" },
+    ]);
+    expect(r.readingNote).toMatch(/one machine reading/);
+  });
+
+  it("joins on the imageArk alias when ark is blank, as the read folds it", async () => {
+    const ARK = "ark:/61903/3:1:S3HT-DTXQ-WTP";
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      sources: [{ id: "src_001", image_ark: ARK }],
+      assertions: [{ id: "a_001", source_id: "src_001", record_id: "r", record_role: "head", fact_type: "name", value: "Tyler" }],
+    }));
+    mockOpenRouterOk("23 | Tyler Anthony");
+    const r = await imageTranscribeMcpTool({ ark: " ", imageArk: ARK, projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.indexReadings?.map((x) => x.name)).toEqual(["Tyler"]);
+  });
+
+  it("gives a page no held source names the note alone", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.readingNote).toMatch(/one machine reading/);
+    expect(r).not.toHaveProperty("indexReadings");
+  });
+
+  it("adds no note with no project", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r).not.toHaveProperty("readingNote");
+    expect(r).not.toHaveProperty("indexReadings");
+  });
+
   it("keeps the text inline when staging failed, since it is then the only copy", async () => {
     await writeFile(join(dir, "results"), "not a directory");
     mockOpenRouterOk("still read");
@@ -1765,7 +1813,7 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
       LOCAL,
     );
     if ("ok" in staged || "ok" in inline) throw new Error("unexpected no-project answer");
-    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "readingNote", "staged", "viewerUrl"]);
     expect(Object.keys(inline).sort()).toEqual(["found", "transcription", "viewerUrl"]);
   });
 

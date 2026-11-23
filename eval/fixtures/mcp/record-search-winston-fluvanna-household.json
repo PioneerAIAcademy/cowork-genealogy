@@ -1,0 +1,226 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_036: a Winston search (Emma Winston is in the subject's 1900 household). Live response for Emma Winston, census, Fluvanna County, 1910-1930: 7 matches, none in the Lightfoot household. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "args": {
+    "surname": "~Winston"
+  },
+  "response": {
+    "query": {
+      "surname": "Winston",
+      "givenName": "Emma",
+      "recordType": "census",
+      "residencePlace": "Fluvanna County, Virginia, United States",
+      "residenceYearFrom": 1910,
+      "residenceYearTo": 1930
+    },
+    "totalMatches": 7,
+    "returned": 7,
+    "offset": 0,
+    "hasMore": false,
+    "census": {
+      "schedules": [
+        {
+          "year": 1910,
+          "census": "United States",
+          "collectionId": "1727033",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        },
+        {
+          "year": 1920,
+          "census": "United States",
+          "collectionId": "1488411",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        },
+        {
+          "year": 1930,
+          "census": "United States",
+          "collectionId": "1810731",
+          "recorded": "names every person and states each one's relationship to the head of household"
+        }
+      ],
+      "note": "From this tool's census table, not from the search results: what each census schedule recorded. Say nothing else about what a schedule collected."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-84Q",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Emma W Winston",
+        "sex": "Female",
+        "birthDate": "1875",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of James D Winston",
+        "recordArk": "ark:/61903/1:2:9JKH-Q94",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MPPJ-6ZJ",
+        "events": [
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Emma Winston",
+        "sex": "Female",
+        "birthDate": "1873",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1727033",
+        "recordTitle": "Household of Edward Winston",
+        "recordArk": "ark:/61903/1:2:9JKH-SKD",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:C6S7-N2M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1930",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "personName": "Emma H Winston",
+        "sex": "Female",
+        "birthDate": "1854",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1810731",
+        "recordTitle": "Household of Grover C Scott",
+        "recordArk": "ark:/61903/1:2:1BHD-GW9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MJNW-PL5",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1920",
+            "place": "Palmyra, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Emma E Winston",
+        "sex": "Female",
+        "birthDate": "1851",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1488411",
+        "recordTitle": "Household of James B Winston",
+        "recordArk": "ark:/61903/1:2:MDF4-9YP",
+        "batchNumber": "N03114-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MJNW-LH7",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "Black"
+          },
+          {
+            "type": "Census",
+            "date": "1920",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          }
+        ],
+        "personName": "Jana E Winston",
+        "sex": "Female",
+        "birthDate": "1918",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1488411",
+        "recordTitle": "Household of Edward Winston",
+        "recordArk": "ark:/61903/1:2:MDF4-MX5",
+        "batchNumber": "N03114-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:C674-FN2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1930",
+            "place": "Fork Union, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "Negro"
+          }
+        ],
+        "personName": "Mary E Winston",
+        "sex": "Female",
+        "birthDate": "1921",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1810731",
+        "recordTitle": "Household of Nelson Winston",
+        "recordArk": "ark:/61903/1:2:QVFM-M1GW",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Z7B2-2N6Z",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1914"
+          }
+        ],
+        "personName": "Clifford E. Winston Burk",
+        "sex": "Female",
+        "birthPlace": "United States",
+        "collectionId": "3438701",
+        "recordTitle": "Household of Clifford E. Winston Burk",
+        "recordArk": "ark:/61903/1:2:WBCL-XQT2",
+        "role": "Principal"
+      }
+    ],
+    "collections": {
+      "1488411": "United States, Census, 1920",
+      "1727033": "United States, Census, 1910",
+      "1810731": "United States, Census, 1930",
+      "3438701": "The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960"
+    }
+  }
+}

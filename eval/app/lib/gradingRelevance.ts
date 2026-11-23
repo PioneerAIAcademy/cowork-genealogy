@@ -28,6 +28,7 @@ export const GRADING_RELEVANT_FIELDS = [
   'test.xfail_reason',
   'test.tags',
   'judge_reads_files',
+  'na_dimensions',
 ] as const;
 
 /** True if any grading-relevant field differs between `before` and `after`. */
@@ -53,6 +54,8 @@ export function hasGradingRelevantChange(
   // judge_reads_files likewise survives normalization and changes what the
   // judge sees — toggling it invalidates the content hash.
   if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
+  // na_dimensions decides which judge scores reach the outcome (#4548).
+  if (JSON.stringify(before.na_dimensions ?? []) !== JSON.stringify(after.na_dimensions ?? [])) return true;
   // expected_outcome / xfail_reason survive normalization too, and
   // expected_outcome changes how the harness labels the result — so a run log
   // taken under the old marking no longer describes the test.

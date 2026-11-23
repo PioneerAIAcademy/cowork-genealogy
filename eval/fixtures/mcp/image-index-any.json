@@ -1,0 +1,17 @@
+{
+  "tool": "image_index",
+  "description": "image_index catch-all (issue #4141) — matches ANY imageId (predicate '~' = empty-substring match) and answers an empty index list, so a call no specific fixture covers degrades to 'nothing indexed on this page' instead of fixture_not_found. MUST be ordered LAST among the image-index fixtures in a test's mcp_fixtures. Stocked on the research tests that run search-images live, because the agent holds image_index and the runnability gate requires a fixture for every tool a live agent can call. Mirrors image-search-any.",
+  "args": {
+    "imageId": "~"
+  },
+  "response": {
+    "imageArk": "",
+    "total": 0,
+    "offset": 0,
+    "returned": 0,
+    "entries": [],
+    "ordered": false,
+    "hydrationTimedOut": false,
+    "rateLimited": false
+  }
+}
