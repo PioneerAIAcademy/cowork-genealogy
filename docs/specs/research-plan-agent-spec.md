@@ -155,8 +155,8 @@ that would replace it (probed 2026-10-02, §5):
   beside 5.7 million images. In 3 of 9 runs (2026-11-06) the agent judged that
   effectively zero and wrote `browse-only (personCount 0)`, a number the
   response never returned. The first fix was prose: any count above 0 is
-  name-searchable (Benter, 2026-11-10). #4742 then moved the decision into the
-  engine: `collectionAvailability` labels a collection browse-only below 0.001
+  name-searchable (Benter, 2026-11-10). The move to Haiku 5.5 then put the
+  decision in the engine: `collectionAvailability` labels a collection browse-only below 0.001
   indexed persons per image, which makes 2106411 browse-only in production,
   and the body has the agent copy that label. The `ut_research_plan_hoh`
   fixture row carries no `imageCount`, so the harness labels it
