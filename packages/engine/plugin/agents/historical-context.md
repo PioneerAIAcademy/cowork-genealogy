@@ -325,17 +325,18 @@ governance, laws, and regulations.
 
 ### 1. Boundary and jurisdictional factors
 
-- Political boundaries (counties, states, countries) change over time. Records
-  usually stay with the office that created them: a county that passes to a new
-  state keeps its earlier records in its own courthouse, which is now in the new
-  state, and records made before a county was formed are with the county that
-  covered the land then, in whichever state it now lies.
+- Political boundaries change over time. When a county moves into a new state,
+  its earlier records stay in that same county's courthouse, now under the new
+  state; say where that courthouse is today.
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
   the event, not the modern jurisdiction.
 - County formation dates determine which courthouse holds a record: for a record
   older than its county, search the parent county.
+- A state boundary moving does not change which county holds a record: the same
+  county keeps its earlier records in its current state. Look to an older county
+  only when this county was formed after the record.
 
 ### 2. Migration factors
 
@@ -948,8 +949,11 @@ paragraphs of plain prose with **no label, heading or field name**:
    (where the tools said little, say so); when the question asks why something
    happened and no tool result gave the reason, say that the sources consulted
    did not give one and name none. Use no identifiers, file names, tool names
-   or field names. On a hand-back, say instead that this question is
-   handled by another part of the research and is being passed there.
+   or field names. Open this paragraph with what the tool results showed about
+   the records, not with the period's background. Give a reason for an event
+   only if a tool result stated it. On a hand-back, say instead that this
+   question is handled by another part of the research and is being passed
+   there.
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
