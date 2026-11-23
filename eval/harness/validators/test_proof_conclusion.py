@@ -548,6 +548,20 @@ def _ops_of(args) -> list[dict]:
     return [o for o in ops if isinstance(o, dict)] if isinstance(ops, list) else [args]
 
 
+def _decoded(value):
+    """A dict argument the model may have sent as a JSON string, decoded."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
+_CAPPED_OPEN = re.compile(r"question (q_\w+) is set resolved")
+_PRIMARY_RULE = "`primary` marks a fact"
+
+
 def _touched(name: str, args, response) -> set[str]:
     """The concerns a successful call wrote: a summary it appended, or whose
     tier, claims or cited assertions it changed (a narrative-only edit is not
@@ -563,7 +577,7 @@ def _touched(name: str, args, response) -> set[str]:
                 if isinstance(res.get("entryId"), str):
                     out.add(f"proof_summaries {res['entryId']}")
             elif op.get("op") == "update" and isinstance(op.get("entryId"), str):
-                fields = op.get("fields") if isinstance(op.get("fields"), dict) else {}
+                fields = _decoded(op.get("fields"))
                 if _SUMMARY_SHAPE_FIELDS & set(fields):
                     out.add(f"proof_summaries {op['entryId']}")
         else:
@@ -573,22 +587,45 @@ def _touched(name: str, args, response) -> set[str]:
     return out
 
 
-def _warned(response) -> set[str]:
+def _warned(response) -> dict[str, list[str]]:
+    """Each concern a response warns on, with the warning texts."""
     validation = response.get("validation") if isinstance(response.get("validation"), dict) else {}
-    out = set()
+    out: dict[str, list[str]] = {}
     for w in validation.get("warnings") or []:
         m = _WILL_BE_REFUSED.match(str(w))
         if m:
-            out.add(m.group(1))
+            out.setdefault(m.group(1), []).append(str(w))
     return out
+
+
+def _reopened_questions(args) -> set[str]:
+    """Questions a research_append call sets to any status but resolved."""
+    out = set()
+    for op in _ops_of(args):
+        if op.get("section") == "questions" and op.get("op") == "update" and isinstance(op.get("entryId"), str):
+            status = _decoded(op.get("fields")).get("status")
+            if isinstance(status, str) and status != "resolved":
+                out.add(op["entryId"])
+    return out
+
+
+def _writes_claims(args) -> bool:
+    return any(
+        op.get("section") == "proof_summaries" and "claims" in (_decoded(op.get("fields")) or op.get("entry") or {})
+        for op in _ops_of(args)
+    )
 
 
 def test_no_finding_left_will_be_refused(tool_calls, test):
     """A proof-conclusion run fails when, for any proof summary or tree object,
     the last successful write touching it answered "Will be refused:" for it.
     A later clean write to the same summary's tier, claims or citations, or to
-    the same holder and id, clears it; a write to anything else does not."""
-    standing: dict[str, bool] = {}
+    the same holder and id, clears it; a write to anything else does not. Two
+    fixes write a different key and clear too: re-opening the question a
+    `claims-capped-open` finding names, and a clean claims write after a
+    `primary` finding. Known limit: a later clean edit of a fact made primary
+    while unclaimed reads as clearing it, though the engine does not re-check."""
+    standing: dict[str, list[str]] = {}
     for call in tool_calls or []:
         if not isinstance(call, dict):
             continue
@@ -596,9 +633,20 @@ def test_no_finding_left_will_be_refused(tool_calls, test):
         response = call.get("response")
         if name not in _FINDING_WRITERS or not isinstance(response, dict) or response.get("ok") is not True:
             continue
+        args = call.get("args")
         warned = _warned(response)
-        for concern in _touched(name, call.get("args"), response) | warned:
-            standing[concern] = concern in warned
+        for concern in _touched(name, args, response) | set(warned):
+            standing[concern] = warned.get(concern, [])
+        if name == "research_append":
+            reopened = _reopened_questions(args)
+            claims_written = _writes_claims(args)
+            for concern, texts in list(standing.items()):
+                if concern in warned or not texts:
+                    continue
+                if any((m := _CAPPED_OPEN.search(t)) and m.group(1) in reopened for t in texts):
+                    standing[concern] = []
+                elif claims_written and all(_PRIMARY_RULE in t for t in texts):
+                    standing[concern] = []
     left = sorted(c for c, w in standing.items() if w)
     assert not left, (
         f"the run ended with a warn-mode finding standing on {left}: the last write "

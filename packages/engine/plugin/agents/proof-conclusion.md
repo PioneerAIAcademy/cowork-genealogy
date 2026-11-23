@@ -147,13 +147,15 @@ record. Report the failing IDs and route.
 write the answer anyway, and leave the question open.** Each claim naming that
 person carries `shortfall: "gap"`:
 - nothing cited is linked to anyone, or a cited parent side has no linked
-  assertion → the claim at `not_proved`, and the scalar `tier` `not_proved`;
+  assertion → the claim at `not_proved`, citing no assertion, and the scalar
+  `tier` `not_proved` unless another claim stands higher;
 - the evidence is linked but that person is not linked from it → the claim at
   `possible`.
 Write no tree object for it, name who is unidentified and what identifying them
 would take, and route to `person-evidence`.
 
-**Under `wrapUp: yes`** the same write resolves the question (§7). A question
+**Under `wrapUp: yes`** write such a claim at `not_proved` (never `possible`)
+and the same write resolves the question (§7). A question
 with no assertions at all is this case. Step 4's conflict IDs still stop you
 under `wrapUp: yes` — see §7.
 
@@ -295,7 +297,7 @@ Labels are unique within the summary; a parent claim is labelled `paternity` or 
 - every rival set aside: a claim with `polarity: "denied"` at `probable` or `possible`, or an affirmed claim at `possible`;
 - every object ruled out: `proof_tier: "disproved"`, no `polarity`. A disproof names the subtype it rules out; omit `subtype` only to rule out every relationship between the pair.
 
-When `project_context` has no `claimKinds` or no `owedFindings`, omit `claims` and mark the concluded value `primary` as §6 describes.
+When `project_context` has no `claimKinds`, omit `claims` and mark the concluded value `primary` as §6 describes.
 
 On re-invocation where a proof summary for this question already exists, use `op: "update"` with the existing `ps_` id — **never append a second summary for the same question**. `op: "update"` shallow-merges, so pass `entryId: "ps_NNN"` plus a `fields` object containing ONLY the fields that changed — do NOT regenerate or re-emit the full entry (especially `narrative_markdown`) when just a couple of fields change. `narrative_markdown` and `exhaustive_search_summary` count as one field: when the log holds entries the summary does not yet account for, re-derive both from the log, taking every record a later entry searched off the narrative's what-could-resolve-it and not-examined lists and adding it to the summary's searched list, and pass both. The tool refuses one without the other.
 

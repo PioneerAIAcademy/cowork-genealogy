@@ -496,3 +496,56 @@ def test_ignores_a_refused_call_and_other_tools():
         _call("person_read", {"personId": "I1"}, [_fact_warning("I1", "F2")]),
     ]
     standing(calls, ANY)
+
+
+def test_a_stringified_fields_claims_update_clears_a_summary_warning():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": '{"claims": []}'}),
+    ]
+    standing(calls, ANY)
+
+
+def test_reopening_the_question_clears_a_capped_open_finding():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    standing(calls, ANY)
+
+
+def test_reopening_another_question_does_not_clear_it():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_002",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def test_a_claims_write_clears_a_primary_finding():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": {"claims": [{"claim": "birth"}]}}),
+    ]
+    standing(calls, ANY)
+
+
+def test_a_claims_write_does_not_clear_a_summary_finding_on_another_summary():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_002",
+                                  "fields": {"claims": []}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)

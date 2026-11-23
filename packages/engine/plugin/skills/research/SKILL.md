@@ -621,7 +621,7 @@ no tree object carries.
    item is advisory. An `identity` claim is never an `encode` item: a merge it
    concludes is checked by its own warning.
 
-With no `owedFindings` in `project_context`, check with `tree_query` that each
+With no `claimKinds` in `project_context`, check with `tree_query` that each
 summary at `probable` or better has its concluded relationship or fact in the tree.
 
 ## Second opinion
