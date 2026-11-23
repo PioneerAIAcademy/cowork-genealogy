@@ -302,11 +302,16 @@ tree_edit({
   - `removeImport|<holder>|<factId>` or `removeImport|<relationshipId>` — a `remove`
     that drops a fact or edge the import baseline (Decision 7, built on the
     pre-call tree from `starting-tree.gedcomx.json`) reads as an import, which no
-    live `disproved` claim covers. A fact that leaves with its removed Couple edge
-    is that edge's warning, not its own.
+    live `disproved` claim covers. With no starting tree, a ref-less object reads as
+    an import too, and the message says so. A fact that leaves with its removed
+    Couple edge is that edge's to answer only when the edge itself warns or a
+    disproof covers it; on any other removed edge its facts are judged on their own.
+    A fact edited in place stops matching the baseline, so editing an import and
+    then removing it warns on neither write (Stage 1b warns on removals and retypes,
+    not edits).
   - `retypeUnclaimed|<relationshipId>|<subtype>` — an `update_relationship` to a
     subtype no live affirmed claim covering the edge names (untyped and
-    Biological agreeing).
+    Biological agreeing: an untyped claim names Biological).
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree

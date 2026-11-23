@@ -110,7 +110,7 @@ function denialAnchors(claim: any): string[] {
 }
 
 /** What every rule reads from the pre-call research, computed once per call. */
-class Evidence {
+export class Evidence {
   readonly assertions = new Map<string, any>();
   private readonly links = new Map<string, Set<string>>();
   private readonly confidentLinks = new Map<string, Set<string>>();
@@ -246,16 +246,25 @@ function provedWeakPersons(claim: any, ev: Evidence, allClaims: readonly any[]):
 
 /** Decision 13: whether an identity claim records that `survivor` and `collapsed`
  *  are one person. Affirmed at probable or better, and either a `same_as` naming
- *  the pair whose cited assertions link to both, or a record identity naming one of
- *  them whose persona is tied to the other. Links are read as rule 7 reads them. */
-export function identityCoversMerge(claim: any, research: any, summaries: readonly any[], survivor: string, collapsed: string): boolean {
+ *  the pair with one live cited assertion linked to both (a record that ties the
+ *  two, not two records each tied to one), or a record identity naming one of
+ *  them whose persona is tied to the other. Pass `ev` to share one index across
+ *  claims and merge pairs. */
+export function identityCoversMerge(
+  claim: any,
+  research: any,
+  summaries: readonly any[],
+  survivor: string,
+  collapsed: string,
+  ev: Evidence = new Evidence(research, summaries),
+): boolean {
   const idn = claim?.identity;
   if (!idn || isDenied(claim) || claim?.proof_tier === "disproved" || !atLeast(claim?.proof_tier, "probable")) return false;
-  const ev = new Evidence(research, summaries);
   const pair = new Set([survivor, collapsed]);
   if (typeof idn.same_as === "string") {
     if (!pair.has(idn.person) || !pair.has(idn.same_as) || idn.person === idn.same_as) return false;
     return citedIds(claim).some((id) => {
+      if (!ev.assertions.has(id)) return false;
       const linked = ev.linkedFrom([id]);
       return linked.has(survivor) && linked.has(collapsed);
     });

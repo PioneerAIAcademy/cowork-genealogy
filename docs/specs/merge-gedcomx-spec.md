@@ -336,9 +336,10 @@ Sequence inside each tool:
    Separately, each merge pair no identity claim covers raises
    `mergeIdentity|<survivor>|<collapsed>` (Decision 13 of `docs/plan/conclusion-tree.md`), which fires with no claims at
    all: covered means a live affirmed `identity` claim at `probable` or better that
-   is either a `same_as` naming the pair whose cited assertions link to both, or a
-   record identity naming one of them whose persona is tied to the other (links read
-   as claim rule 7 reads them). The user's instruction, quoted, is its justification.
+   is either a `same_as` naming the pair with one live cited assertion linked to both
+   (a record that ties the two; two records each tied to one do not), or a record
+   identity naming one of them whose persona is tied to the other. The user's
+   instruction, quoted, is its justification.
 7. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
    (`research.json` is unchanged — see §10). `merge_tree_persons` writes **both**
    files **both-or-neither** (write both temps → rename both back-to-back). Note:
