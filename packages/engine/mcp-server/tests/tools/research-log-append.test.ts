@@ -5,7 +5,9 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
-import { researchLogAppend, unescapeJsonNotes } from "../../src/tools/research-log-append.js";
+import { familySearchCollectionIdOf, researchLogAppend, unescapeJsonNotes } from "../../src/tools/research-log-append.js";
+import { markFsRefusal } from "../../src/utils/fs-budget.js";
+import type { CollectionCounts } from "../../src/types/collection.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { backingStore } from "../helpers/store-backend.js";
@@ -3668,4 +3670,279 @@ describe("research_log_append — pinned zero-hit record_search names its unpinn
       expect(reads()).toBe(3);
     });
   }
+});
+
+describe("research_log_append — a name search in a browse-only collection is not a negative (§8.6)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-bo-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const writeProject = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  };
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+
+  // Live catalog figures, 2026-11-23 (`dev/probe-browse-only-collections.ts`).
+  const CATALOG = new Map<string, CollectionCounts>([
+    ["2036959", { personCount: 6, recordCount: 0, imageCount: 4302124, title: "Mississippi, Probate Records, 1781-1930" }],
+    ["1680835", { personCount: 854756, recordCount: 425101, imageCount: 0, title: "Mississippi, Marriages, 1800-1911" }],
+    ["1675510", { personCount: 3, recordCount: 2719982, imageCount: 0, title: "North Carolina, Deaths and Burials, 1898-1994" }],
+    ["2228170", { personCount: 17694080, recordCount: 0, imageCount: 660318, title: "England, London, Electoral Registers, 1847-1913" }],
+  ]);
+  const loader = () => async () => CATALOG;
+  const NAMES = { surname: "Holliday", givenName: "Eliza" };
+  const pinned = (collectionId: unknown) => ({ ...NAMES, residencePlace: "Amite, Mississippi, United States", collectionId });
+  // The unpinned same-name retry, already logged, clears the pinned-nil rule:
+  // the path that wrote the tester's negatives.
+  const retryLogged = () =>
+    baseResearch([
+      {
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00.000Z",
+        tool: "record_search",
+        query: { ...NAMES },
+        outcome: "negative",
+        results_examined: 0,
+        external_site: null,
+        results_ref: null,
+      },
+    ]);
+  const searchOp = (query: unknown, outcome = "negative") => ({
+    tool: "record_search",
+    query,
+    outcome,
+    resultsExamined: 0,
+    resultsAvailable: 0,
+    planItemId: null,
+  });
+  const captureOp = (url: string, outcome = "negative") => ({
+    tool: "external_site",
+    query: { url },
+    outcome,
+    resultsExamined: 0,
+    planItemId: null,
+    externalSite: { site: "familysearch_web", urlGenerated: url, captureReceived: true, captureFilename: "Holliday.pdf" },
+  });
+  const refusedAsBrowseOnly = async (r: any) => {
+    expect(r.ok).toBe(false);
+    const msg = (r.errors as string[]).join(" ");
+    expect(msg).toContain("browse-only");
+    expect(msg).toContain("Mississippi, Probate Records, 1781-1930 (collection 2036959)");
+    expect(msg).toContain("image_search");
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  };
+  const written = async (r: any, n = 2) => {
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(n);
+  };
+
+  describe("refused", () => {
+    it("a record_search pinned to a browse-only collection, logged negative", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend({ projectPath: dir, ...searchOp(pinned("2036959")) } as any, { loadCatalog: loader() }),
+      );
+    });
+
+    it("the same search logged partial", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend({ projectPath: dir, ...searchOp(pinned("2036959"), "partial") } as any, {
+          loadCatalog: loader(),
+        }),
+      );
+    });
+
+    it("a stringified query", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend({ projectPath: dir, ...searchOp(JSON.stringify(pinned("2036959"))) } as any, {
+          loadCatalog: loader(),
+        }),
+      );
+    });
+
+    it("a collectionId sent as a number", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend({ projectPath: dir, ...searchOp(pinned(2036959)) } as any, { loadCatalog: loader() }),
+      );
+    });
+
+    it("a staged record_search whose staged query is pinned there", async () => {
+      await writeProject(retryLogged());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: pinned("2036959"), results: [{ recordId: "A" }] },
+      });
+      await refusedAsBrowseOnly(
+        await researchLogAppend(
+          {
+            projectPath: dir,
+            tool: "record_search",
+            outcome: "partial",
+            stagedResultsRef: handle!.resultsRef,
+            planItemId: null,
+          } as any,
+          { loadCatalog: loader() },
+        ),
+      );
+    });
+
+    it("a capture of a hand-written FamilySearch URL with f.collectionId", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend(
+          {
+            projectPath: dir,
+            ...captureOp(
+              "https://www.familysearch.org/search/record/results?q.surname=Holliday&q.residencePlace=Amite%2C%20Mississippi&f.collectionId=2036959",
+            ),
+          } as any,
+          { loadCatalog: loader() },
+        ),
+      );
+    });
+
+    it("the same collection in the /search/collection/<id> shape", async () => {
+      await writeProject(retryLogged());
+      await refusedAsBrowseOnly(
+        await researchLogAppend(
+          {
+            projectPath: dir,
+            ...captureOp("https://www.familysearch.org/search/collection/2036959?q.surname=Holliday"),
+          } as any,
+          { loadCatalog: loader() },
+        ),
+      );
+    });
+
+    it("stays refused when batched with its unpinned retry, and names only that op", async () => {
+      await writeProject(baseResearch());
+      const r: any = await researchLogAppend(
+        { projectPath: dir, ops: [searchOp(pinned("2036959")), searchOp({ ...NAMES })] } as any,
+        { loadCatalog: loader() },
+      );
+      expect(r.ok).toBe(false);
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[0\]: .*browse-only/);
+      expect((await readJson("research.json")).log).toHaveLength(0);
+    });
+
+    it("returns both messages when the pinned-nil rule also fires", async () => {
+      await writeProject(baseResearch());
+      const r: any = await researchLogAppend({ projectPath: dir, ...searchOp(pinned("2036959")) } as any, {
+        loadCatalog: loader(),
+      });
+      expect(r.ok).toBe(false);
+      expect(r.errors).toHaveLength(2);
+      expect(r.errors[0]).toContain("browse-only");
+      expect(r.errors[1]).toMatch(/0 results pinned to `collectionId: "2036959"`/);
+    });
+  });
+
+  describe("accepted", () => {
+    for (const [id, why] of [
+      ["1680835", "a name-searchable collection"],
+      ["1675510", "3 persons but no page images: the person count alone decides"],
+      ["2228170", "no records counted but millions of persons"],
+    ] as const) {
+      it(`${id}: ${why}`, async () => {
+        await writeProject(retryLogged());
+        await written(
+          await researchLogAppend({ projectPath: dir, ...searchOp(pinned(id)) } as any, { loadCatalog: loader() }),
+        );
+      });
+    }
+
+    for (const outcome of ["positive", "error"]) {
+      it(`the browse-only collection logged ${outcome}`, async () => {
+        await writeProject(retryLogged());
+        await written(
+          await researchLogAppend(
+            { projectPath: dir, ...searchOp(pinned("2036959"), outcome), resultsExamined: outcome === "positive" ? 1 : 0, resultsAvailable: outcome === "positive" ? 1 : 0 } as any,
+            { loadCatalog: loader() },
+          ),
+        );
+      });
+    }
+
+    it("the collection's bare landing page, where a browse starts", async () => {
+      await writeProject(retryLogged());
+      await written(
+        await researchLogAppend(
+          { projectPath: dir, ...captureOp("https://www.familysearch.org/search/collection/2036959") } as any,
+          { loadCatalog: loader() },
+        ),
+      );
+    });
+
+    it("a URL on another host carrying the same parameter", async () => {
+      await writeProject(retryLogged());
+      await written(
+        await researchLogAppend(
+          {
+            projectPath: dir,
+            ...captureOp("https://www.ancestry.com/search/?q.surname=Holliday&f.collectionId=2036959"),
+            externalSite: {
+              site: "ancestry",
+              urlGenerated: "https://www.ancestry.com/search/?q.surname=Holliday&f.collectionId=2036959",
+              captureReceived: true,
+              captureFilename: "Holliday.pdf",
+            },
+          } as any,
+          { loadCatalog: loader() },
+        ),
+      );
+    });
+
+    it("no loader: the check does not run", async () => {
+      await writeProject(retryLogged());
+      await written(await researchLogAppend({ projectPath: dir, ...searchOp(pinned("2036959")) } as any));
+    });
+
+    for (const [label, load] of [
+      ["a loader that throws", async () => {
+        throw new Error("network down");
+      }],
+      ["a spent FamilySearch budget", async () => {
+        throw markFsRefusal(new Error("FamilySearch budget spent"));
+      }],
+    ] as const) {
+      it(`${label}: writes, and warns that the check did not run`, async () => {
+        await writeProject(retryLogged());
+        const r: any = await researchLogAppend({ projectPath: dir, ...searchOp(pinned("2036959")) } as any, {
+          loadCatalog: load as any,
+        });
+        await written(r);
+        expect(r.validation.warnings.join(" ")).toMatch(/browse-only check did not run on ops\[0\] \(collection 2036959\)/);
+      });
+    }
+  });
+
+  describe("familySearchCollectionIdOf", () => {
+    it.each([
+      ["https://www.familysearch.org/search/record/results?q.surname=X&f.collectionId=2036959", "2036959"],
+      ["https://familysearch.org/search/collection/2036959?q.givenName=Eliza", "2036959"],
+      ["https://www.familysearch.org/search/collection/2036959/?q.surname=X", "2036959"],
+    ])("reads %s", (url, id) => {
+      expect(familySearchCollectionIdOf(url)).toBe(id);
+    });
+    it.each([
+      ["a landing page", "https://www.familysearch.org/search/collection/2036959"],
+      ["a full-text search", "https://www.familysearch.org/search/full-text/results?q.text=Holliday&f.collectionId=2036959"],
+      ["another host", "https://www.ancestry.com/search/?q.surname=X&f.collectionId=2036959"],
+      ["a look-alike host", "https://familysearch.org.example.com/search/collection/2036959?q.surname=X"],
+      ["not a URL", "familysearch 2036959"],
+      ["a search with no collection", "https://www.familysearch.org/search/record/results?q.surname=X"],
+    ])("ignores %s", (_label, url) => {
+      expect(familySearchCollectionIdOf(url)).toBeUndefined();
+    });
+  });
 });

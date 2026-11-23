@@ -126,9 +126,9 @@ so a corrected re-send finds every one. Several checks run over every op before 
 op is applied: the staged ref itself (it exists under `results/.staging/` and its
 `tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
 ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
-the §8.3 query check, the §8.4 filtered-nil-retry check and the §8.5
+the §8.3 query check, the §8.4 filtered-nil-retry check, the §8.5
 pinned-nil-retry check (both batch-aware — an unfiltered or unpinned sibling in
-the same batch clears it). So a bad ref in op[1] is refused
+the same batch clears it) and the §8.6 browse-only check. So a bad ref in op[1] is refused
 before op[0] writes a sidecar. These checks run over **every** op before the call
 refuses, and the refusal lists each failing op's `ops[i]: <msg>`, so one corrected
 re-send can fix them all; the batch still writes all or nothing.
@@ -436,6 +436,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | a `fulltext_search` entry returned zero hits with a post-search filter set (`place`, `recordPlace0`–`3`, `recordType`, `yearFrom`/`yearTo`) and no unfiltered retry — a sibling `fulltext_search` with the same `keywords`/`nlQuery` whose filter-key set is a strict subset of this op's, in the same batch or already in `log[]` | input error; write nothing, and in a batch no op's staged file is consumed. The message names the filter keys and the exact unfiltered `fulltext_search` call to make, then says to log both in one batch. Exempt: a `name`-field query and a query with no `keywords`/`nlQuery` term. Keyed on zero hits, not `outcome`. See §8.4 |
 | a `record_search` entry returned zero hits pinned to a `collectionId` and no unpinned retry — a sibling `record_search` with no `collectionId` whose name fields (`givenName`, `surname`, `givenNameAlt`, `surnameAlt`, and any key ending in `GivenName`/`Surname`) equal this op's after Unicode NFC normalization, trimming, ignoring case, and alternate-name auto-pairing, in the same batch or already in `log[]` (a sibling logged `error` does not count) | input error; write nothing, and in a batch no op's staged file is consumed. The message names the pinned `collectionId` and the exact unpinned `record_search` call to make (without paging), then says to log both in one batch. Exempt: a query with no name field. Keyed on zero hits, not `outcome`. See §8.5 |
+| an op logged `negative` or `partial` whose search was pinned to a collection `collectionAvailability` calls browse-only — `query.collectionId` on a `record_search` op, or the collection of a FamilySearch name-search `externalSite.urlGenerated` (a `q.*` term present; not a landing page or a full-text URL) | input error; write nothing. The message names the collection, its counts, `outcome: "error"` with a note as the only way to log it, and search-images. When §8.5 also fires, both messages. Fails open: no catalog, a spent budget or a slow read writes the op with a warning. See §8.6 |
 | an `external_site` op's `urlGenerated` names a collection whose key is not in `external-collections.json`, and either the url is not in the log or the op opens a new hand-off (`partial`, `captureReceived: false`) | input error, raised in the preflight pass so a batch names every refused op; write nothing. The message names the fix: a site-wide search, a stored url from `research_query`, or — with nothing stored or the file unreadable — `external_links_search` first |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
@@ -1070,6 +1071,62 @@ then says to log both in one batch. Both this and §8.4 run in one preflight ove
 the whole resolved batch. The fire count and
 the command that measured it are in `guardrail-enforcement-spec.md`.
 
+### 8.6 A precondition that blocks: a name search in a browse-only collection
+
+An op logged `negative` or `partial` is refused when its search was pinned to a
+collection FamilySearch has almost no index for. A name search there finds
+nothing about most of the collection's records, so its zero is not evidence of
+absence. In the alpha session that prompted the rule, four name searches in
+"Mississippi, Probate Records, 1781-1930" (six indexed persons over four million
+page images) came back empty, were logged as negatives, and the question was
+closed on them; the probate files were never read.
+
+**The collection** is `query.collectionId` on a `record_search` op (a string or a
+whole number, from the staged echo when the op has a staged ref, as in §8.3), or the
+collection of a FamilySearch name-search `externalSite.urlGenerated`, whatever the
+op's `tool` or `site` says. A FamilySearch URL is one whose host is
+`familysearch.org` or a subdomain; its collection is `f.collectionId=<id>` or a
+`/search/collection/<id>` path, and it is a name search only when it carries a
+`q.*` term. A collection's landing page with no `q.*` term is where a browse
+starts, and a `/search/full-text/` URL reads the page images themselves, so
+neither is judged.
+
+**Browse-only** is `collectionAvailability(personCount, imageCount)`, the one
+label `collections_search`, `research_append`'s locality stamp, `project_context`
+and the research plan already read: no indexed person, or fewer than one per
+thousand page images. A second threshold here would let the log refuse a search
+the planner was told is name-searchable, or take one it was told is browse-only.
+The rule first proposed, no persons or no records with fewer than 100 persons,
+was measured against the live catalog and dropped: the shared label decides every
+case it was written for the same way (a collection with three persons and millions
+of records but no page images stays name-searchable, because its person count
+decides alone), and of the few collections where the two disagree, the shared
+label is right on each. The counts come from the catalog, read through the
+caller's own session (`collectionCatalogLoader`, bound in `server.ts`), never from
+prose. A collection the catalog does not list passes.
+
+`positive` and `error` pass: a hit in the small index is real, and an errored
+search is not a nil. The refusal names the collection's title and counts, says
+not to log the search as `negative` or `partial` and that it stays refused even
+in a batch with an unpinned retry, says that if it is logged at all it is logged
+`error` with a note (which also closes an open hand-off for that URL, §2.3), and
+sends the agent to browse the page images with search-images (`image_search`).
+When §8.5 also fires on the op, both messages are returned, this one first.
+
+**It fails open.** The catalog is read before the project lock, and only when an
+op could trip the rule. Any failure — no session, a spent FamilySearch budget, a
+read past its budget (`CATALOG_READ_BUDGET_MS` from an MCP call; a shorter one from
+`record_search`, below) — writes the op and adds one warning that the check did
+not run. A false allow is preferred to a false deny (ADR-0011 limit 1). A caller
+that passes no loader — a direct call, the unit eval's mock — is not checked.
+
+`record_search`'s own nil write (it logs a zero-hit search itself) meets the same
+rule with its caller's loader, under a shorter catalog budget because it stacks on
+the search's own time under Cowork's call limit. A pinned nil in a browse-only
+collection comes back as `nilLogRefused` carrying the message, and nothing is
+logged. The replay over the committed run logs is in
+`guardrail-enforcement-spec.md`.
+
 ---
 
 ## 9. Test plan (vitest)
@@ -1153,6 +1210,25 @@ the command that measured it are in `guardrail-enforcement-spec.md`.
   with the rule removed, with pinned siblings counted, with surname-only matching,
   with pairing removed, with case folding removed, with errored siblings counted,
   or with paging kept.
+- **Browse-only collection check (§8.6)** — refused, with nothing written and the
+  message naming browse-only and the collection's title, each with the unpinned
+  same-name retry already in `log[]` so §8.5 is clear: a `record_search` pinned to
+  a browse-only collection logged `negative`, the same logged `partial`, with a
+  stringified `query`, with `collectionId` sent as a number, a staged
+  `record_search` whose staged query is pinned there, and an `external_site`
+  capture of a FamilySearch name search in either URL shape. Refused in a batch
+  with its unpinned retry, naming only that op. Both messages when §8.5 also
+  fires. Allowed: a name-searchable collection, one with persons but no page
+  images, one with no records counted but many persons, the browse-only collection
+  logged `positive` or `error`, its bare landing page, the same parameter on
+  another host, and any op when no loader is given. A throwing loader and a spent
+  FamilySearch budget each write and warn. Through `createServer`, the
+  `research_log_append` arm refuses (the loader is bound); `record_search`'s own
+  nil write in a browse-only collection returns `nilLogRefused` and logs nothing.
+  Each fails with the rule removed, with the URL dropped from the resolver, with
+  the `q.*` requirement removed, with only the first message kept, with a staged
+  ref not reading the catalog, with a numeric id ignored, with the full-text
+  exclusion removed, and with either loader unbound.
 - **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
   and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
   table escaped twice, one with a single real leading or trailing newline, an

@@ -1592,6 +1592,26 @@ describe("recordSearchTool — the nil log write, end to end (#4527)", () => {
     expect(after.log.every((e: any) => e.written_by === undefined)).toBe(true);
   });
 
+  it("does not log a pinned nil in a browse-only collection, even with its unpinned retry logged (§8.6)", async () => {
+    // The unpinned retry clears the pinned-nil rule, which is the path that wrote
+    // the tester's negatives: without the browse-only check this nil is logged.
+    await writeProject([{ ...priorNil(1), query: { surname: "Flynn", givenName: "Patrick" } }]);
+    nilOnce();
+    const catalog = new Map([
+      ["2036959", { personCount: 6, recordCount: 0, imageCount: 4302124, title: "Mississippi, Probate Records, 1781-1930" }],
+    ]);
+    const out = await recordSearchTool(
+      { surname: "Flynn", givenName: "Patrick", collectionId: "2036959", projectPath: dir, planItemId: "pli_001" },
+      LOCAL,
+      { loadCatalog: async () => catalog },
+    );
+
+    expect(out.logId).toBeUndefined();
+    expect(out.nilLogRefused!.join(" ")).toContain("browse-only");
+    expect(out.totalMatches).toBe(0);
+    expect((await readResearch()).log).toHaveLength(1);
+  });
+
   it("gives three nils sent at once three ids, in sequence, with nothing lost", async () => {
     // Each write takes the project lock in turn. Without that serialization two
     // of the three would read the same `log[]` and one id would be reused or an
