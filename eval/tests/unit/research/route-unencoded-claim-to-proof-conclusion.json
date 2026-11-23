@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_enc",
+    "skill": "research",
+    "name": "A probable claim with no tree object routes back to proof-conclusion to encode it",
+    "type": "positive",
+    "description": "#3032 Stage 1b part 4c: the tree-encoding gate reads `project_context.owedFindings`. flynn-parentage-claim-unencoded resolves both questions, but ps_001's `paternity` claim stands at `probable` and the tree has no ParentChild edge for it, so an `encode` item is owed. The router must re-invoke proof-conclusion for q_001 before anything completes the project.",
+    "tags": [
+      "flynn-parentage-claim-unencoded",
+      "re-invoke-safe",
+      "routing",
+      "routes-to:proof-conclusion"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching this project — drive the workflow forward.",
+    "scenario": "flynn-parentage-claim-unencoded"
+  },
+  "judge_context": [
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill) asserts the router's first hand-off is proof-conclusion (an Agent spawn of `@plugin:proof-conclusion`). Do not grade the routing decision yourself.",
+    "Both questions are resolved, but `project_context.owedFindings` lists an `encode` item for ps_001's `paternity` claim: it stands at `probable` and the tree has no ParentChild edge from I2 to I1.",
+    "COMPLIANT: the router reads the owed `encode` item and hands q_001 back to proof-conclusion to encode the claim. Narration that says the conclusion is not yet in the tree is correct.",
+    "NON-COMPLIANT: the router treats the project as finished without encoding (heading for completion while saying nothing about the missing edge), writes the edge itself, or routes to question-selection.",
+    "The run ends at the router's first hand-off by design (execution.stop_at_stub), with no closing summary. Do not mark a summary as missing. Grade the narration up to the hand-off."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-structurer",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "gps-mentor"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_cl2",
+    "skill": "proof-conclusion",
+    "name": "A parent proof writes a claim that sets the rival father aside (direct-agent arm)",
+    "type": "positive",
+    "description": "#3032 Stage 1b part 4c: every rival set aside is a claim of its own. flynn-competing-fathers-parentage has Thomas of Schuylkill (I2, R1, the 1850/1860 census and the 1908 death certificate) and a Luzerne Thomas (I3) whose 1845 Wilkes-Barre baptism names a Thomas Flynn as father, linked only at speculative.",
+    "tags": [
+      "proof",
+      "parentage",
+      "claims",
+      "rival",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Refresh the proof conclusion for q_001 — who was Patrick Flynn's father — in place. A Luzerne County Thomas Flynn (I3) is also in the tree; settle how the answer treats him.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-competing-fathers-parentage"
+  },
+  "judge_context": [
+    "COMPLIANT: ps_001 is updated in place (no second summary) and its `claims` hold a `paternity` claim for I2 → I1 at the tier its evidence supports (`probable` expected), AND a claim that sets I3 aside: either `polarity: \"denied\"` on the I3 → I1 ParentChild at `probable` or `possible`, or an affirmed I3 → I1 claim at `possible`.",
+    "Ruling I3 out at `disproved` is acceptable only if the narrative shows evidence that refutes him, not merely evidence that favours I2; a disproved claim carries no `polarity`.",
+    "No ParentChild I3 → I1 edge may be written to the tree: a denied or `possible` claim writes no tree object.",
+    "Leaving I3 out of the claims while the narrative weighs him is the failure this test guards (Completeness 2 at most)."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
