@@ -7,15 +7,15 @@
     "description": "A FamilySearch search of a named Civil War collection for a Schuylkill County soldier. Rows whose linkText names Civil War or military records should rank first.",
     "tags": [
       "where-else",
-      "no-project",
+      "person-less-project",
       "direct-arm",
       "collection",
       "military"
     ]
   },
   "input": {
-    "delegation": "I searched the FamilySearch Civil War collection for John Brennan from Schuylkill County, Pennsylvania, 1862, with no luck. What other sites have this?\n\ngivenName: John\nsurname: Brennan\nevent: residence\nstartYear: 1861\nendYear: 1865\nplace: Schuylkill County, Pennsylvania\nrecordType: Military",
-    "scenario": null
+    "delegation": "I searched the FamilySearch Civil War collection for John Brennan from Schuylkill County, Pennsylvania, 1862, with no luck. What other sites have this?\n\ngivenName: John\nsurname: Brennan\nevent: residence\nstartYear: 1861\nendYear: 1865\nplace: Schuylkill County, Pennsylvania\nrecordType: Military\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",

@@ -7,15 +7,15 @@
     "description": "A FamilySearch baptism search in Kongsberg, Norway, 1800. The curated rows include Norway-specific collections on several sites and image-viewer pages (media.digitalarkivet.no) that are not buildable.",
     "tags": [
       "where-else",
-      "no-project",
+      "person-less-project",
       "direct-arm",
       "non-us",
       "birth"
     ]
   },
   "input": {
-    "delegation": "I looked on FamilySearch for Anne Olsdatter's baptism in Kongsberg, Norway around 1800. Where else might it be?\n\ngivenName: Anne\nsurname: Olsdatter\nevent: birth\nyear: 1800\nplace: Kongsberg, Norway",
-    "scenario": null
+    "delegation": "I looked on FamilySearch for Anne Olsdatter's baptism in Kongsberg, Norway around 1800. Where else might it be?\n\ngivenName: Anne\nsurname: Olsdatter\nevent: birth\nyear: 1800\nplace: Kongsberg, Norway\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-kongsberg",

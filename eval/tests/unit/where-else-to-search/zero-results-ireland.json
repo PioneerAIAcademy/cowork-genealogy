@@ -7,14 +7,14 @@
     "description": "external_links_search returns zero rows for Ireland 1840-1850. The agent must say no curated external collection was found for that place and period, call build_external_search_url not at all, and suggest no site from its own knowledge.",
     "tags": [
       "where-else",
-      "no-project",
+      "person-less-project",
       "direct-arm",
       "zero-results"
     ]
   },
   "input": {
-    "delegation": "I couldn't find Bridget Kelly's birth on FamilySearch, Ireland, about 1845. Where else could I search?\n\ngivenName: Bridget\nsurname: Kelly\nevent: birth\nyear: 1845\nplace: Ireland",
-    "scenario": null
+    "delegation": "I couldn't find Bridget Kelly's birth on FamilySearch, Ireland, about 1845. Where else could I search?\n\ngivenName: Bridget\nsurname: Kelly\nevent: birth\nyear: 1845\nplace: Ireland\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-ireland",

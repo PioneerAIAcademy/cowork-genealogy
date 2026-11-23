@@ -7,15 +7,15 @@
     "description": "A FamilySearch 1870 census search for a man in Schuylkill County, Pennsylvania. external_links_search returns 200 real rows (inline cap hit), most on ancestry.com, some dated and many undated. The agent must pick at most 8 buildable rows, build them in one batch, and ground each reason in the row's linkText and years.",
     "tags": [
       "where-else",
-      "no-project",
+      "person-less-project",
       "direct-arm",
       "census",
       "cap"
     ]
   },
   "input": {
-    "delegation": "I searched FamilySearch for Patrick Flynn in the 1870 census in Schuylkill County, Pennsylvania and didn't find him. Where else could I look?\n\ngivenName: Patrick\nsurname: Flynn\nevent: residence\nyear: 1870\nplace: Schuylkill County, Pennsylvania\ncollection: United States Census, 1870",
-    "scenario": null
+    "delegation": "I searched FamilySearch for Patrick Flynn in the 1870 census in Schuylkill County, Pennsylvania and didn't find him. Where else could I look?\n\ngivenName: Patrick\nsurname: Flynn\nevent: residence\nyear: 1870\nplace: Schuylkill County, Pennsylvania\ncollection: United States Census, 1870\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",

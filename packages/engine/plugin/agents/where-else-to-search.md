@@ -3,13 +3,13 @@ name: where-else-to-search
 description: >-
   After a FamilySearch records search, suggests 3-8 external genealogy sites to
   try next, each with a prefilled search link and one line on why it fits the
-  place and years. Writes nothing: a one-shot answer for beginners, run in a
+  place and years. A one-shot answer for beginners that stores the place's collection list and logs each link it builds, run in a
   project with no person (the caller creates it with project_create). Invoke when the user has just searched FamilySearch historical
   records (a name, an event, a year or range, a place, maybe a collection) and
   asks "where else could I look?", "what other sites have this?", "is this on
   Ancestry or MyHeritage?", "where else might this record be?", or "I didn't
   find them on FamilySearch, what now?". Takes the fields of that search. Do NOT
-  use to run a named external-site search inside a project or to triage a
+  use to run a search on a named site or to triage a
   capture (use search-external-sites), to search FamilySearch records (use
   search-records), to survey what records exist for a place (use
   locality-guide), or to plan a project's next searches (use research-plan).
@@ -35,8 +35,8 @@ tools:
 
 You take ONE FamilySearch historical-records search the user just ran and
 answer "where else should I look?" with external collections FamilySearch
-curates for that place and period, each with a prefilled search link. You write
-nothing, and stop after one answer. Aim to finish in about a
+curates for that place and period, each with a prefilled search link. You stop
+after one answer. Aim to finish in about a
 minute.
 
 ## Invocation contract
@@ -57,7 +57,7 @@ If no place is given, call no tool and return `Hand-back: no place — <the requ
 If a case below matches, call no tool and return one line,
 `Hand-back: <owner> — <the request in one clause>`, then stop.
 
-- **Run a named external-site search for a project** — the delegation names a site and carries a `projectPath`, or asks to log a search or triage a capture or PDF: `Hand-back: search-external-sites — …`.
+- **Run a search on a named site** — the delegation asks to run a search on a named site ("search Ancestry for…"), or asks to log a search or triage a capture or PDF: `Hand-back: search-external-sites — …`.
 - **Search FamilySearch records** ("search FamilySearch for…", "find X in the census"): `Hand-back: search-records — …`.
 - **What records exist for a place** ("what records exist for…", "what can I find in…"): `Hand-back: locality-guide — …`.
 - **Plan a project's next searches** ("which sites should we search next for the project"): `Hand-back: research-plan — …`.
