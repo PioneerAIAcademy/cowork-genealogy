@@ -1887,15 +1887,18 @@ def _sentences(text):
 
 
 def _names_missing_i2_link(text):
-    """Two adjacent sentences name a_013 and Thomas / I2, and one of them says
-    the link is absent. A negation tied to something else ("no edits to
-    pe_005", "no conflict against the links", "no further link is needed"),
-    or a second sentence about another person or entry, does not count."""
+    """a_013 is named somewhere in the reply (the whole review is about it, so
+    it need not repeat in the same sentence pair as the gap), and two adjacent
+    sentences name Thomas / I2 with one of them saying the link is absent. A
+    negation tied to something else ("no edits to pe_005", "no conflict
+    against the links", "no further link is needed"), or a second sentence
+    about another person or entry, does not count."""
+    if not re.search(r"\ba_013\b", text or ""):
+        return False
     sents = _sentences(text)
     for i in range(len(sents)):
         pair = sents[i:i + 2]
-        joined = " ".join(pair)
-        if not (re.search(r"\ba_013\b", joined) and re.search(r"\bI2\b|\bThomas\b", joined)):
+        if not re.search(r"\bI2\b|\bThomas\b", " ".join(pair)):
             continue
         if any(
             _MISSING_LINK.search(s)
