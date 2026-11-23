@@ -945,8 +945,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    question was looked into and, in plain language, what the tool results mean
    for their family history, with no general-knowledge claim, flagged or not
    (build it only from paragraphs that do not open with "(general knowledge)")
-   (where the tools said little, say so), and no identifiers, file names, tool
-   names or field names. On a hand-back, say instead that this question is
+   (where the tools said little, say so); when the question asks why something
+   happened and no tool result gave the reason, say that the sources consulted
+   did not give one and name none, and no identifiers, file names, tool names
+   or field names. On a hand-back, say instead that this question is
    handled by another part of the research and is being passed there.
 2. One sentence: what happens next, in plain language.
 
