@@ -1,0 +1,370 @@
+{
+  "tool": "image_index",
+  "description": "Issue #4141. The tool's own output for the 1830 US census page of Peru, Clinton County, New York (ark:/61903/3:1:33SQ-GYY1-B2G, cc 1803958): 27 indexed records, entry 0 Michael Barry, entry 1 Mila Fuller. GENERATED 2026-11-18 by running imageIndexTool over the raw FamilySearch bodies recorded live on 2026-11-17 (packages/engine/mcp-server/tests/fixtures/image-index/peru-list.json and peru-records.json) with fetch stubbed, because the live FamilySearch session had expired; not hand-edited. Anchored to the image id, so the ark, the viewer URL and the bare id all match.",
+  "args": {
+    "imageId": "~33SQ-GYY1-B2G"
+  },
+  "response": {
+    "imageArk": "ark:/61903/3:1:33SQ-GYY1-B2G",
+    "collectionId": "1803958",
+    "total": 27,
+    "offset": 0,
+    "returned": 27,
+    "entries": [
+      {
+        "index": 0,
+        "recordArk": "ark:/61903/1:2:1TVW-1PV",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3V",
+            "name": "Michael Barry",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145816_01000643825659"
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "recordArk": "ark:/61903/1:2:1TVW-15X",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQX",
+            "name": "Mila Fuller",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145817_01000644978259"
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "recordArk": "ark:/61903/1:2:1TVW-15Z",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQZ",
+            "name": "Aaph B Totman",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145818_01000644761474"
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "recordArk": "ark:/61903/1:2:1TVW-1PK",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3K",
+            "name": "John B Bndama",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145819_01000643825660"
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "recordArk": "ark:/61903/1:2:1TVW-1P2",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F32",
+            "name": "Dennis D Long",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145820_01000643825661"
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "recordArk": "ark:/61903/1:2:1TVW-1PL",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3L",
+            "name": "Oliva Baker",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145821_01000643825662"
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "recordArk": "ark:/61903/1:2:1TVW-1PG",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3G",
+            "name": "John Thomas",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145822_01000643825663"
+          }
+        ]
+      },
+      {
+        "index": 7,
+        "recordArk": "ark:/61903/1:2:1TVW-1PP",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3P",
+            "name": "Ralph P Allen",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145823_01000643825664"
+          }
+        ]
+      },
+      {
+        "index": 8,
+        "recordArk": "ark:/61903/1:2:1TVW-158",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ8",
+            "name": "Thomas S Harvey",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145824_01000644761475"
+          }
+        ]
+      },
+      {
+        "index": 9,
+        "recordArk": "ark:/61903/1:2:1TVW-1P5",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F35",
+            "name": "Robert Battey",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145825_01000643825665"
+          }
+        ]
+      },
+      {
+        "index": 10,
+        "recordArk": "ark:/61903/1:2:1TVW-1PR",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3R",
+            "name": "Elias Hurlburt",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145826_01000643825666"
+          }
+        ]
+      },
+      {
+        "index": 11,
+        "recordArk": "ark:/61903/1:2:1TVW-15C",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQC",
+            "name": "Samuel Brown",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145827_01000644518433"
+          }
+        ]
+      },
+      {
+        "index": 12,
+        "recordArk": "ark:/61903/1:2:1TVW-1PT",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3T",
+            "name": "Worden Place",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145828_01000643825667"
+          }
+        ]
+      },
+      {
+        "index": 13,
+        "recordArk": "ark:/61903/1:2:1TVW-154",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ4",
+            "name": "John Brigham",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145829_01000644436404"
+          }
+        ]
+      },
+      {
+        "index": 14,
+        "recordArk": "ark:/61903/1:2:1TVW-1PY",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3Y",
+            "name": "Aelphos Tenny",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145830_01000643825668"
+          }
+        ]
+      },
+      {
+        "index": 15,
+        "recordArk": "ark:/61903/1:2:1TVW-15D",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQD",
+            "name": "John Whitcomb",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145831_01000644761476"
+          }
+        ]
+      },
+      {
+        "index": 16,
+        "recordArk": "ark:/61903/1:2:1TVW-1PB",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F3B",
+            "name": "James Low",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145832_01000643825669"
+          }
+        ]
+      },
+      {
+        "index": 17,
+        "recordArk": "ark:/61903/1:2:1TVW-1P1",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-F31",
+            "name": "David Pease",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145833_01000643825670"
+          }
+        ]
+      },
+      {
+        "index": 18,
+        "recordArk": "ark:/61903/1:2:1TVW-15M",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQM",
+            "name": "Betsey Acken",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145834_01000643825671"
+          }
+        ]
+      },
+      {
+        "index": 19,
+        "recordArk": "ark:/61903/1:2:1TVW-159",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ9",
+            "name": "Joshua Acken",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145835_01000643825672"
+          }
+        ]
+      },
+      {
+        "index": 20,
+        "recordArk": "ark:/61903/1:2:1TVW-156",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ6",
+            "name": "Simon Southworth",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145836_01000644761477"
+          }
+        ]
+      },
+      {
+        "index": 21,
+        "recordArk": "ark:/61903/1:2:1TVW-15S",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQS",
+            "name": "Lucy Kingsland",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145837_01000643825673"
+          }
+        ]
+      },
+      {
+        "index": 22,
+        "recordArk": "ark:/61903/1:2:1TVW-153",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ3",
+            "name": "Reuben Hayes",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145838_01000643825674"
+          }
+        ]
+      },
+      {
+        "index": 23,
+        "recordArk": "ark:/61903/1:2:1TVW-15Q",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQQ",
+            "name": "Francis Bradley",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145839_01000643825675"
+          }
+        ]
+      },
+      {
+        "index": 24,
+        "recordArk": "ark:/61903/1:2:1TVW-157",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQ7",
+            "name": "John Mshaw",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145840_01000643825676"
+          }
+        ]
+      },
+      {
+        "index": 25,
+        "recordArk": "ark:/61903/1:2:1TVW-15W",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQW",
+            "name": "Alexander Mdugal",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145841_01000643825677"
+          }
+        ]
+      },
+      {
+        "index": 26,
+        "recordArk": "ark:/61903/1:2:1TVW-15H",
+        "hydrated": true,
+        "personas": [
+          {
+            "personaArk": "ark:/61903/1:1:XHPP-FQH",
+            "name": "Asa D Moore",
+            "principal": true,
+            "sortKey": "000000000_005155907_00688_02145842_01000644436405"
+          }
+        ]
+      }
+    ],
+    "ordered": false,
+    "hydrationTimedOut": false,
+    "rateLimited": false
+  }
+}

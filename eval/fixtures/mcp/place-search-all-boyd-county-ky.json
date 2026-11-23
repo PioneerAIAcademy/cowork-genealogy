@@ -1,0 +1,20 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all for Boyd County, Kentucky — live response 2026-11-21",
+  "args": {
+    "placeName": "~Boyd"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Boyd, Kentucky, United States",
+        "type": "County",
+        "dateRange": "+1860/",
+        "latitude": 38.36,
+        "longitude": -82.69,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Boyd&focusedId=394113",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Boyd_County,_Kentucky"
+      }
+    ]
+  }
+}

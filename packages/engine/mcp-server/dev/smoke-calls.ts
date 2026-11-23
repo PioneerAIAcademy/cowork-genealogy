@@ -879,6 +879,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     }),
   },
   {
+    tool: "locality_survey",
+    args: (ctx) => ({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1850, endYear: 1880, projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok:
+        !res.isError &&
+        Array.isArray(res.body?.pagesRead) &&
+        res.body.pagesRead.length === 4 &&
+        typeof res.body?.staged?.resultsRef === "string",
+      detail: brief(res),
+    }),
+  },
+  {
     tool: "research_query",
     label: "research_query (external_collections)",
     args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
