@@ -1,4 +1,5 @@
 import type { Locality } from '@genealogy/schema'
+import { parseExternalCollections } from '@genealogy/viewer-ui/external-collections'
 import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import { list, strings } from '../cards/kit/view'
 import { plainProse, Prose } from '../rules/Prose'
@@ -7,15 +8,6 @@ import { LeadsList } from './CasePage'
 import { useFile } from './FileContext'
 import { sourcePeople, sourcesNewestFirst, sourceTitle } from './model'
 import { Open } from './Open'
-
-interface CollectionRow {
-  link_text?: string
-  url?: string
-  place?: string
-  record_types?: string[]
-  start_year?: string
-  end_year?: string
-}
 
 function DirectMentions() {
   const { research, index } = useFile()
@@ -118,34 +110,35 @@ function Background() {
   )
 }
 
-/** FamilySearch's curated outside collections, one closed list per place: a planning list, never a source used. */
+/** FamilySearch's curated outside collections, one closed list per place: a planning list, not the sources used. */
 function OtherWebsites() {
   const { collections } = useFile()
-  const places = (collections as { places?: Record<string, unknown> } | null)?.places ?? {}
-  const kept = Object.entries(places)
-    .map(([place, entry]) => ({ place, rows: list((entry as { rows?: CollectionRow[] } | null)?.rows) }))
+  const places = parseExternalCollections(collections)?.places ?? {}
+  const kept = Object.keys(places)
+    .sort((a, b) => a.localeCompare(b))
+    .map((place) => ({ place, ...places[place] }))
     .filter(({ rows }) => rows.length > 0)
   if (kept.length === 0) return null
   return (
     <section>
       <h3>Other websites</h3>
-      {kept.map(({ place, rows }) => (
+      {kept.map(({ place, rows, too_large }) => (
         <details key={place}>
           <summary>
-            Other websites with records for {place} ({rows.length}). FamilySearch’s list, for planning: being listed here does not mean a
-            site was searched or paid for.
+            Other websites with records for {place} ({rows.length}
+            {too_large ? ' of a longer list' : ''}). FamilySearch’s list, for planning: being listed here does not mean a site was searched
+            or paid for.
           </summary>
           <ul className="file-list">
-            {rows.map((row, i) => (
-              <li key={i} className="file-item">
-                {row.url && /^https:\/\//.test(row.url) ? <a href={row.url}>{row.link_text ?? 'A collection'}</a> : row.link_text}
-                <p>
-                  {[row.place, strings(row.record_types).join(', '), [row.start_year, row.end_year].filter(Boolean).join('–')]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </p>
-              </li>
-            ))}
+            {rows.map((row, i) => {
+              const about = [row.record_types.join(', '), [row.start_year, row.end_year].filter(Boolean).join('–')].filter(Boolean).join(' · ')
+              return (
+                <li key={i} className="file-item">
+                  {/^https:\/\//.test(row.url) ? <a href={row.url}>{row.link_text || 'A collection'}</a> : row.link_text || row.url}
+                  {about && <p>{about}</p>}
+                </li>
+              )
+            })}
           </ul>
         </details>
       ))}
