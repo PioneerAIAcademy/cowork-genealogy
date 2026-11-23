@@ -2,7 +2,7 @@
 // 2026-11-19). Every activity starts a project, so every tool requires
 // `projectPath` and refuses when no project is there, except the six that manage
 // projects or sign-in, and `tree_gaps`. Tree-survey runs `tree_gaps` in folder mode
-// before any project exists (lead, 2026-11-21: a folder holds one project, so the survey
+// before any project exists (lead, 2026-11-23, issue #4686: a folder holds one project, so the survey
 // must not create one there); it reads FamilySearch only and writes nothing. No tool is
 // classified by what it reads: a new tool needs no
 // judgment call, only a `projectPath` in `required` (tests/packaging/
