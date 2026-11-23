@@ -360,6 +360,29 @@ describe("merge_tree_persons: the claim warnings (Decision 13)", () => {
     expect(r.ok, JSON.stringify(r.warnings ?? r.errors)).toBe(true);
   });
 
+  it("a same_as claim needs one record tied to both: two records each tied to one do not cover the merge", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [{ claim: "same man", proof_tier: "probable", supporting_assertion_ids: ["a_001", "a_002"], identity: { person: "I1", same_as: "I5" } }])],
+      { ...evidence, person_evidence: [link("pe_001", "a_001", "I1"), link("pe_002", "a_002", "I5")] },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
+  it("a same_as claim citing a superseded assertion does not cover the merge", async () => {
+    await writeProject(
+      { persons: [P("I1", "Patrick"), P("I5", "Pat")], relationships: [] },
+      [ps("ps_001", [{ claim: "same man", proof_tier: "probable", supporting_assertion_ids: ["a_001"], identity: { person: "I1", same_as: "I5" } }])],
+      {
+        assertions: [{ ...evidence.assertions[0], superseded_by: "a_002" }, evidence.assertions[1]],
+        person_evidence: [link("pe_001", "a_001", "I1"), link("pe_002", "a_001", "I5")],
+      },
+    );
+    const r: any = await mergeRaw({ projectPath: dir, merges: [["I1", "I5"]] });
+    expect(r.warnings?.map((w: any) => w.warningId) ?? []).toContain("mergeIdentity|I1|I5");
+  });
+
   it.each(["I1", "I5"])("a record identity covers the merge in either direction (claim names %s)", async (person) => {
     {
       const other = person === "I1" ? "I5" : "I1";

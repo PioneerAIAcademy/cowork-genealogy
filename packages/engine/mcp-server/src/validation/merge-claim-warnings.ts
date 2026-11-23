@@ -5,7 +5,7 @@
 // Fires only where a summary carries claims.
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
-import { claimRuleFindings, identityCoversMerge, namedPersons, type ClaimRuleId } from "./claim-rules.js";
+import { claimRuleFindings, Evidence, identityCoversMerge, namedPersons, type ClaimRuleId } from "./claim-rules.js";
 import { disprovedClaimCovering, disprovedClaimsCovering, sameSubtype } from "../utils/claim-join.js";
 import { getPersonName } from "../tools/person-warnings.js";
 
@@ -162,8 +162,9 @@ export function mergeIdentityWarnings(before: Side, merges: ReadonlyArray<readon
     return p ? getPersonName(p) : "";
   };
   const out: SyntheticWarning[] = [];
+  const ev = new Evidence(before.research, summaries);
   for (const [survivor, collapsed] of merges) {
-    if (claims.some((c) => identityCoversMerge(c, before.research, summaries, survivor, collapsed))) continue;
+    if (claims.some((c) => identityCoversMerge(c, before.research, summaries, survivor, collapsed, ev))) continue;
     out.push({
       warningId: `mergeIdentity|${survivor}|${collapsed}`,
       issueType: "mergeIdentity",

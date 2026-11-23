@@ -36,10 +36,9 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
-import { primaryTarget, unclaimedPrimarySet } from "../utils/primary-claim.js";
+import { holderKey, primaryTarget, treeFacts, unclaimedPrimarySet } from "../utils/primary-claim.js";
 import { claimCoversEdge, claimCoversFact, disprovedClaimCovering, sameSubtype } from "../utils/claim-join.js";
 import { importBaseline } from "../utils/import-baseline.js";
-import { treeFacts } from "../utils/primary-claim.js";
 import type { SyntheticWarning } from "../validation/merge-claim-warnings.js";
 import { applyRuleMode, ruleMode, treeConcern } from "../validation/rule-modes.js";
 import {
@@ -1294,22 +1293,22 @@ async function treeWriteWarnings(
     out.push({ warningId, issueType, severity: "implausible", personId, personName: nameOf(beforeTree, personId), message });
 
   const afterEdges = new Map((afterTree.relationships ?? []).map((r) => [r.id, r]));
-  const afterFactKeys = new Set(
-    treeFacts(afterTree).map((x) => `${"personId" in x.holder ? `p:${x.holder.personId}` : `r:${x.holder.relationshipId}`}|${x.fact?.id}`),
-  );
-  const goneFacts = treeFacts(beforeTree).filter(
-    (x) => !afterFactKeys.has(`${"personId" in x.holder ? `p:${x.holder.personId}` : `r:${x.holder.relationshipId}`}|${x.fact?.id}`),
-  );
+  const afterFactKeys = new Set(treeFacts(afterTree).map((x) => `${holderKey(x.holder)}|${x.fact?.id}`));
+  const goneFacts = treeFacts(beforeTree).filter((x) => !afterFactKeys.has(`${holderKey(x.holder)}|${x.fact?.id}`));
   const goneEdges = (beforeTree.relationships ?? []).filter((r) => r.id !== undefined && !afterEdges.has(r.id));
 
   if (goneFacts.length > 0 || goneEdges.length > 0) {
     // Built on the pre-call tree, so a moved import's holder still holds it.
     const baseline = importBaseline(beforeTree, await readStartingTree(projectPath));
     const disproved = claims.filter((c: any) => c?.proof_tier === "disproved");
-    const goneEdgeIds = new Set(goneEdges.map((r) => r.id));
+    // A fact that left with its removed Couple is that removal's, not its own,
+    // when the removal itself answers for it: the edge warns as an import, or a
+    // disproof rules it out. On any other removed edge its facts are judged here.
+    const answeredEdgeIds = new Set(
+      goneEdges.filter((r) => baseline.isImportEdge(r) || disprovedClaimCovering(research, r)).map((r) => r.id),
+    );
     for (const x of goneFacts) {
-      // A fact that left with its removed Couple is that removal's, not its own.
-      if ("relationshipId" in x.holder && goneEdgeIds.has(x.holder.relationshipId)) continue;
+      if ("relationshipId" in x.holder && answeredEdgeIds.has(x.holder.relationshipId)) continue;
       if (!baseline.isImportFact(x.holderIds, x.fact)) continue;
       if (disproved.some((c: any) => claimCoversFact(c, x.holderIds, x.fact))) continue;
       const holder = "personId" in x.holder ? x.holder.personId : x.holder.relationshipId;
@@ -1317,7 +1316,8 @@ async function treeWriteWarnings(
         `removeImport|${holder}|${x.fact?.id}`,
         "removeImport",
         x.holderIds[0] ?? holder,
-        `This removes fact ${x.fact?.id} (${x.fact?.type}) from ${holder}, which came from the starting tree, and no ` +
+        `This removes fact ${x.fact?.id} (${x.fact?.type}) from ${holder}, which reads as an import (from the ` +
+          "starting tree, or carrying no record source when there is none), and no " +
           "disproved claim rules it out. Justify the removal, or have proof-conclusion record the disproof first.",
       );
     }
@@ -1328,7 +1328,8 @@ async function treeWriteWarnings(
         `removeImport|${r.id}`,
         "removeImport",
         personId,
-        `This removes relationship ${r.id}, which came from the starting tree, and no disproved claim rules it out. ` +
+        `This removes relationship ${r.id}, which reads as an import (from the starting tree, or carrying no record ` +
+          "source when there is none), and no disproved claim rules it out. " +
           "Justify the removal, or have proof-conclusion record the disproof first.",
       );
     }
@@ -1344,7 +1345,6 @@ async function treeWriteWarnings(
         c?.polarity !== "denied" &&
         c?.proof_tier !== "disproved" &&
         claimCoversEdge(c, after) &&
-        typeof c.relationship?.subtype === "string" &&
         sameSubtype(c.relationship, after),
     );
     if (named) continue;

@@ -679,7 +679,12 @@ export const CALL_PLAN: readonly SmokeStep[] = [
         justification: "The user instructed this merge.",
       })),
     }),
-    expect: okTrue,
+    // With no warning ids the refused step above already failed; say so here
+    // rather than report the re-merge's unrelated error.
+    expect: (res, ctx) =>
+      ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).length === 0
+        ? { ok: false, detail: "skipped: the refused merge above returned no warning ids to justify" }
+        : okTrue(res),
   },
   {
     tool: "tree_forget",

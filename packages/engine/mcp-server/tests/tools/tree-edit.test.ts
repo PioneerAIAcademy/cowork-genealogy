@@ -1782,6 +1782,41 @@ describe("tree_edit", () => {
     expect(r.warnings?.map((w: any) => w.warningId)).toEqual(["retypeUnclaimed|R1|Biological"]);
   });
 
+  it("an untyped affirmed claim names Biological, so a retype to Biological under it needs no justification", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "ParentChild", subtype: "Step", parent: "I1", child: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t, {
+      ...minimalResearch,
+      proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "probable", claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I1", child: "I2" } },
+      ] }],
+    });
+    const r: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Biological" } as any);
+    expect(r.ok, JSON.stringify(r.warnings ?? r.errors)).toBe(true);
+  });
+
+  it("an untyped claim does not name Step", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t, {
+      ...minimalResearch,
+      proof_summaries: [{ id: "ps_001", question_id: "q_001", tier: "probable", claims: [
+        { claim: "father", proof_tier: "probable", supporting_assertion_ids: [], relationship: { type: "ParentChild", parent: "I1", child: "I2" } },
+      ] }],
+    });
+    const r: any = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(r.warnings?.map((w: any) => w.warningId)).toEqual(["retypeUnclaimed|R1|Step"]);
+  });
+
+  it("removing a Couple edge that is not an import still judges the imported facts it held", async () => {
+    const t = twoPersons();
+    // A sourced (non-import) edge carrying a ref-less, import-reading Marriage fact.
+    (t as any).relationships = [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }], facts: [{ id: "F9", type: "Marriage", date: "1870" }] }];
+    await writeProject(t);
+    const r: any = await treeCorrect({ projectPath: dir, operation: "remove", relationshipId: "R1" } as any);
+    expect(r.warnings?.map((w: any) => w.warningId)).toEqual(["removeImport|R1|F9"]);
+  });
+
   it("removing an imported Couple edge raises one warning, not one more per fact it held", async () => {
     const t = twoPersons();
     (t as any).relationships = [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F9", type: "Marriage", date: "1870" }] }];
