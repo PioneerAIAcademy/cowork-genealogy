@@ -8,7 +8,7 @@
 
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
-import { researchLogAppend } from "./research-log-append.js";
+import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import { classifyProjectPath } from "../utils/project-io.js";
 import {
   collectionKey,
@@ -1612,7 +1612,7 @@ export async function buildExternalSearchUrlTool(
   const planItemId = input?.planItemId;
   if (projectPath === undefined || projectPath === null || projectPath === "") {
     if (planItemId !== undefined && planItemId !== null) {
-      result.notes.push("'planItemId' has no effect without projectPath — nothing was logged");
+      result.notes.push(PLAN_ITEM_WITHOUT_PROJECT_NOTE);
     }
     return result;
   }

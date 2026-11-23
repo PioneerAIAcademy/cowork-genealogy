@@ -197,6 +197,9 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
       if (!payload.negative) payload.negative = { correct_skill: [], explanation: '' };
       payload.negative.correct_skill = payload.negative.correct_skill ?? [];
       payload.negative.explanation = payload.negative.explanation ?? '';
+      // The runnability gate refuses na_dimensions on a negative test, and the
+      // form has no field to remove it, so drop it here.
+      delete payload.na_dimensions;
     } else {
       delete payload.negative;
     }

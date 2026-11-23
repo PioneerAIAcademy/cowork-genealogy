@@ -65,7 +65,7 @@ otherwise re-fetched:
 - `collections_search` answers over its character budget carry `truncated: true`.
   Rows whose titles name the place come first, so what was left out is rows for
   other places in the same scope; the agent does not report it as a coverage gap.
-  research-plan chooses a name search or an image browse on `person_count > 0`.
+  research-plan chooses a name search or an image browse on the collection's `availability`.
 - `registration_start[]` — `{ event, level, year, source_url }` from the
   `{Jurisdiction}_Vital_Records` page, one per event and level, so
   research-exhaustiveness need not re-read that page. An event the page gives
@@ -181,7 +181,14 @@ period, determine which of these categories may apply:
 
 #### 3. Locate repositories holding those records
 
-For each record type, determine where the records are held:
+For each record type, determine where the records are held. The kinds of
+repository below are where to look, not entries to fill in. The guide names
+a repository, its holdings and its access (free, paid, subscription) only
+where a tool result states them, and otherwise says the survey did not
+confirm one. FamilySearch, which every collection and volume these tools
+return belongs to, is free. For any other repository its name is not
+evidence of its access level, and the output template pre-fills only the
+FamilySearch row.
 
 - **Online digital repositories** — FamilySearch, Ancestry, FindMyPast,
   MyHeritage, state digital archives, specialized databases

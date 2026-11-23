@@ -11,6 +11,10 @@
 > **Updated 2026-10-14 (T2.3):** `personId`, `assertionId`, `sourceId` and
 > `recordId` also take a list of ids, and a list call returns `countById`; every
 > non-string filter value is now rejected (§3, "Plural ids, not plural sections").
+> **Updated 2026-11-17 (grouped assertions):** `assertions` items are grouped by
+> persona — the five keys a persona's facts repeat are hoisted onto one group,
+> and a `questionId` read drops the `[questionId]` echo. Lossless; counts still
+> count assertions (§2.2, "Assertions are grouped by persona").
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated, nextOffset?, countById? }
@@ -159,7 +163,8 @@ the principal personas of both records.
   section: string,
   count: number,      // total matches, BEFORE paging and any offset
   items: any[],        // the section's native snake_case fields, verbatim but
-                        // for the two omissions below — a read projection, not
+                        // for the two omissions below, and grouped by persona
+                        // on `assertions` (below) — a read projection, not
                         // a persisted document, so no camelCase rename
                         // (contrast project_context, whose fixed shape IS a
                         // wire surface)
@@ -170,9 +175,89 @@ the principal personas of both records.
                         // list calls only — see below
   unregisteredDisagreements?: { personId, fact, assertionIds }[],
                         // `conflicts` only — see below
+  reviewReasons?: { [linkId: string]: string[] },
+                        // `person_evidence` with orderBy "review" — §2.5
+  settledConflicts?: { linkIds, notes }[],
+                        // `person_evidence` only — §2.6
+  unlinkedParties?: { assertionId, linkedPersonId, unlinkedPersonId, note }[],
+                        // `person_evidence` only — §2.7
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**Assertions are grouped by persona.** On `assertions`, `items` is a list of
+groups. A group is a maximal run of *consecutive* matching assertions, in the
+section's order, that share all five of `record_id`, `record_persona_id`,
+`record_role`, `source_id` and `log_entry_id` — a key absent from an assertion is
+a different value from `null`:
+
+```typescript
+{ record_id?, record_persona_id?, record_role?, source_id?, log_entry_id?,
+  facts: [ { id, ...every other field of one assertion } ] }
+```
+
+- The group carries only the hoisted keys its assertions carry; an absent key
+  stays absent, never written as `null`.
+- Exactly those five are hoisted. `informant` and `informant_proximity` stay on
+  each fact: over the 15,793 assertions in `eval/runlogs/e2e/*/*.final-research.json`
+  (2026-11-17), `informant` differs inside 1,160 of the 2,062 multi-fact groups
+  whose `record_persona_id` is a value. `record_document_id` never varied inside a
+  group but is on only 1,410 of those assertions, so it stays per fact too.
+- On a `questionId` read, a fact omits `extracted_for_question_ids` when it is
+  exactly `[questionId]`. Every hit of that read contains `questionId` (the filter
+  is `contains`), so the omission is lossless.
+- `count`, `offset`, `nextOffset`, `countById` and `MAX_ITEMS` count assertions,
+  never groups. A persona split across a page boundary repeats its keys at the top
+  of the next page.
+- The page budget is measured on the answer as emitted, groups and all
+  (**Pages**, below).
+- `flattenAssertionGroups` (exported from `research-query.ts`) is the inverse: it
+  returns the flat assertions, deep-equal to the stored ones, key order aside.
+  `replay_collapse.py`'s `_flatten_items` restates it for the replay harness.
+
+Measured with `make replay-sizes BASE=<pre-change> TOOLS=research_query
+SECTION=assertions` over the 713 recorded assertion reads that answered (of 715
+replayed, 2026-11-19, against the 40k-budget pager), the grouped answers are 20.1% smaller;
+a single-assertion read grows by the 14 characters of its one-fact wrapper.
+
+**Misreads (probe, 2026-11-17).** `eval/harness/scripts/probe_assertion_shape.py`
+replays the 24 largest recorded assertion reads (at most two per run) on the pre-change build (flat)
+and on this one (grouped), and asks each assertion reader's model, by assertion
+id, for `information_quality`, `record_basis`, `informant`,
+`informant_proximity` and `record_persona_id` on 192 sampled assertions: 960
+answers per shape per model. Misreads out of 960:
+
+| model (effort) | system prompt holds the tool description | flat | grouped |
+|---|---|---|---|
+| claude-sonnet-5 (medium) | no | 0 | 0 |
+| claude-sonnet-5-5 (medium) | no | 1 | 0 |
+| claude-haiku-5-5 (low) | no | 0 | 11 |
+| claude-sonnet-5 (medium) | yes | 1 | 3 |
+| claude-sonnet-5-5 (medium) | yes | 0 | 3 |
+| claude-haiku-5-5 (low) | yes | 0 | 1 |
+
+Without the description, Haiku read a group's `record_persona_id` as absent on
+every fact of one page (8 of its 11). With it — as every real reader has it — the
+grouped misreads are one adjacent persona id and a single pattern: the one fact
+in a group whose informant differs from the rest (a census residence attested by
+the enumerator among facts from a household member) read with the group's
+majority values. That is why the description says each fact holds its own fields.
+
+**Eval gate.** All eight `assertions` readers gate the shape, since
+`research_query` runs live from the compiled build in the unit harness: a new fail
+in any of them sends assertions back to flat. Scratch runs on this build, against
+each suite's committed rate (`make eval-health`): research-exhaustiveness 20,
+timeline 13, conflict-resolution 14, search-hints 11, search-full-text 18 — 69
+pass, 7 partial, no fail or abort — and person-evidence 36 — 29 pass, 7 partial,
+no fail. Committed runs, for the two agents whose paging line this shape
+reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
+(2 pass).
+
+person-evidence's two `research_query` lines ("group the items by `record_id` +
+`record_role`", and paging "until you hold `count` items") were left as they
+are, though both read stale against groups. On `ut_person_evidence_027`
+(Haiku 5.5 low), main's text linked a_012 `confident` in 4 of 7 runs, and any
+edit to either line did so in 0 of 22, on the flat and grouped builds alike.
 
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
@@ -226,6 +311,8 @@ may hold items it already has; an `offset` past the last match is the empty
 page `{ items: [], truncated: false }` only when every page but the last is a
 full 50, and refused naming the last page start otherwise (§3). `offset` must be
 a non-negative whole number and is rejected (not coerced) otherwise — see §4.
+On `assertions`, `items` are persona groups (§2.2), while `count`, `offset`,
+`nextOffset` and the 50-item cap count assertions, never groups.
 
 ### 2.4 `external_collections`
 
@@ -301,6 +388,48 @@ from the tree person's Birth fact:
   fact conflict skips the tree read. An unreadable tree yields none, and the links
   still come back.
 - `person_evidence` only.
+
+### 2.7 `unlinkedParties` — the second person a two-party assertion is not linked to
+
+An assertion that names two people (a relationship, a marriage, a couple event, a
+`father_birthplace`) bears on both, and person-evidence links it to each. A
+`person_evidence` read returns `unlinkedParties` when such an assertion is linked to
+one tree person and the tree names the other, who has no link to it:
+
+```json
+"unlinkedParties": [
+  { "assertionId": "a_013", "linkedPersonId": "I1", "unlinkedPersonId": "I2",
+    "note": "Assertion 'a_013' (\"Father: Thomas Flynn\") names a second person. The tree's father of 'I1' is 'I2' (Thomas Flynn), and 'I2' has no person_evidence link to this assertion." }
+]
+```
+
+- Why: linking only the record person is the commonest person-evidence miss, and a
+  review of existing links cannot see it, because the page shows the one link there
+  is. Whether both parties are linked is decidable from the project documents, so
+  the tool says it (ADR-0011) rather than the review having to notice.
+- It describes; it does not ask for a link. Whether to link the second person is
+  person-evidence's decision, made with `same_person` in linking mode.
+- Anchored on the tree. The assertion must be live and two-party
+  (`isTwoParty`, `utils/record-persona.ts`), and its live links must name exactly
+  one person, P. The second person is read from the tree:
+  - from `structured_value.relationship_type`, read first as the record subject's
+    own role (research-schema-spec.md, "Direction, for `relationship`"): `child`
+    means P's parents (only the father when `related_person_role` is `father`, only
+    the mother when it is `mother`), `parent` P's children, `spouse` P's `Couple` partners;
+  - if that finds nobody, read as the other person's role (older data spells
+    "Father: Thomas Flynn" as `father`), where `father`/`son`/`husband`/`widower`
+    keep only a male (or ungendered) tree person and `mother`/`daughter`/`wife`/`widow`
+    only a female one;
+  - with no `relationship_type`, from the fact type: `father*`, `mother*`,
+    `parent*`/`filiation`, and `spouse`/`couple`/marriage and couple events.
+  - `sibling`, `informant` and anything else name nobody. One row per person found.
+- Links are counted over the whole project, not the page: a second link that a
+  `personId` filter or a page boundary hid still suppresses the row. Rows are
+  computed only for assertions behind the live links on the returned page.
+- Silent when the tree names no such person, so a one-party link whose second
+  person is not in the tree (the usual, correct case) costs nothing. An unreadable
+  tree yields none, and the links still come back. Absent when there is none.
+  `person_evidence` only. Code: `utils/unlinked-parties.ts`.
 
 ## 3. Decisions recorded
 
@@ -454,6 +583,26 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
     whole-set extra changed), so the next `nextOffset` may be refused and the
     caller re-reads from the start it names. Both are intended: either is better
     than a silently skipped item.
+
+- **Assertions grouped by persona, consecutive runs only — not columnar, not
+  merged across the page (2026-11-17).** Assertions are the largest share of what
+  `research_query` returns, and within one persona the five hoisted keys repeat on
+  every fact. Measured over the 651 recorded assertion reads that answered (of
+  653 replayed) against the pre-change build (`make replay-sizes …
+  SECTION=assertions`):
+
+  | shape | smaller by |
+  |---|---|
+  | grouped, consecutive runs (shipped) | 20.1% |
+  | grouped, every same-persona assertion on the page merged | 20.3% |
+  | columnar, lossless (a group splits where the fact keys change) | 5.5% |
+  | columnar, an absent field written as `null` (whole-section estimate) | ~33% |
+
+  Merging across the page reorders assertions for 0.2 points, so a flattened
+  page would no longer be the stored order. Columnar saves little losslessly,
+  because assertions carry different optional fields; it nears its estimate only
+  by writing absent fields as `null`, which loses the absent/`null` difference
+  the grouped shape keeps.
 
 - **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
   `research-exhaustiveness` reads a question's log by walking it: one
