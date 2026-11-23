@@ -133,6 +133,34 @@ def test_vitals_year_fallback_keeps_a_parents_record_out(items, missing):
         _run(check_vitals, items, ALAN)
 
 
+SUITE_RUN_BIRTH = _item(1, date_range="1936-1936", jurisdiction="Weber County, Utah",
+                        rationale="Direct child-with-parents evidence: a 29 April 1936 Ogden "
+                                  "birth record would name both parents at the birth itself.")
+
+
+@pytest.mark.parametrize("date_range", ["1936-1936", "1936"])
+def test_vitals_counts_an_unnamed_record_dated_to_the_event_year_alone(date_range):
+    _run(check_vitals, [{**SUITE_RUN_BIRTH, "date_range": date_range}, RUN_DEATH], ALAN)
+
+
+@pytest.mark.parametrize("items,missing", [
+    ([{**SUITE_RUN_BIRTH, "date_range": "1930-1940"}, RUN_DEATH], "birth record"),
+    ([{**SUITE_RUN_BIRTH, "date_range": "1937-1937"}, RUN_DEATH], "birth record"),
+    ([_item(1, date_range="1936-1936", rationale="The 1936 city directory lists the household."),
+      RUN_DEATH], "birth record"),
+    ([RUN_BIRTH, _item(4, date_range="1970-1970", rationale="A death certificate would name "
+                                                            "the deceased's children.")],
+     "death certificate"),
+    ([{**SUITE_RUN_BIRTH, "rationale": "Olive's sister Mary's birth record, 1936."}, RUN_DEATH],
+     "birth record"),
+    ([RUN_BIRTH, {**RUN_DEATH, "rationale": "John Applegarth's death certificate."}],
+     "death certificate"),
+])
+def test_vitals_event_year_route_keeps_other_items_out(items, missing):
+    with pytest.raises(AssertionError, match=missing):
+        _run(check_vitals, items, ALAN)
+
+
 def test_vitals_fails_when_nothing_written():
     with pytest.raises(AssertionError, match="no new plan items"):
         _run(check_vitals, [], ALAN)

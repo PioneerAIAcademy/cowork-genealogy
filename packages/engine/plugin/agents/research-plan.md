@@ -512,7 +512,8 @@ table and contextual factors checklist.
   child *with* the parents (see `research-exhaustiveness`). See
   Appendix B ("Identifying parents"). The subject's own birth record
   and, when the subject has died, their death certificate are each an
-  item too: planned, or `skipped` with `skip_category` `inaccessible`
+  item too. The subject has died when the tree or the log gives a death
+  date, a burial or an obituary for the subject. Each is planned, or `skipped` with `skip_category` `inaccessible`
   (sealed or destroyed) or `no_coverage` (never kept for that place and
   period) and a `skip_reason`.
 - **Plan no item whose only purpose is to test a tree claim that dated
@@ -741,9 +742,11 @@ research_append({
   `in_progress`, `completed`, or `skipped`. New items are `planned`. The
   one exception: on a question whose `question_kind` is `enumerative`, an
   event type the plan does not cover is written `skipped` with its
-  `skip_category` and `skip_reason` (Step 4 self-check 1). On a parentage
-  question, so is the subject's own birth record or death certificate that
-  cannot be searched (Step 3). Otherwise never write a new item `skipped`:
+  `skip_category` and `skip_reason` (Step 4 self-check 1). On a question
+  asking who the subject's parents are, and on no other question, so is the
+  subject's own birth record or death certificate that cannot be searched
+  (Step 3); a question asking for a date or place of birth or death is not
+  one. Otherwise never write a new item `skipped`:
   leave out what you would not search. Never use any other value (e.g. not `not_started`, not `pending`).
 - `skip_category`: required whenever `status` is `skipped` — exactly
   one of `answered`, `inaccessible`, `no_coverage`,

@@ -2172,7 +2172,10 @@ def test_research_plan_plans_subject_birth_and_death(before_state, after_state, 
     parents" and "His death certificate would name his parents", which the
     phrase patterns alone miss. The year is what keeps a parent's death record
     that mentions the subject (Olive's in 1970, John's in 1998) out. A births
-    index searched for the subject counts for the birth half.
+    index searched for the subject counts for the birth half. An item whose
+    `date_range` is the subject's event year alone counts without the name: the
+    2026-11-23 suite run wrote "a 29 April 1936 Ogden birth record would name
+    both parents" with `date_range` 1936-1936.
     """
     tags = test.get("tags") or []
     test_id = test.get("id")
@@ -2196,11 +2199,14 @@ def test_research_plan_plans_subject_birth_and_death(before_state, after_state, 
         if _own_record_re(given, word, event).search(text):
             return True
         years = [int(y) for y in re.findall(r"\b(1[5-9]\d\d|20\d\d)\b", str(item.get("date_range") or ""))]
-        return (
-            bool(named.search(text))
-            and re.search(word, text, re.IGNORECASE) is not None
-            and bool(years) and min(years) <= year <= max(years)
+        if not years or re.search(word, text, re.IGNORECASE) is None:
+            return False
+        other_owner = re.search(
+            rf"\b(?!{re.escape(given)}\b)[A-Z]\w+['’]s\s+(?:[\w-]+\s+){{0,3}}(?i:{word})", text
         )
+        if min(years) == max(years) == year and not other_owner:
+            return True
+        return bool(named.search(text)) and min(years) <= year <= max(years)
 
     missing = [
         label

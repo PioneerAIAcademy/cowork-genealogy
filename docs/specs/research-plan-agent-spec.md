@@ -165,6 +165,13 @@ that would replace it (probed 2026-10-02, §5):
   planned-status validator excuses such a skip by the question's own text
   (`_parentage_vital_skip`), since the `parentage` test tag is missing from five
   parentage tests.
+  The body limits that skip to a question asking who the subject's parents are:
+  worded as "a parentage question", it leaked into `ut_research_plan_016`, a
+  death-date question, which wrote its death certificate `skipped` in 1 of 3
+  suite runs (0 of 3 after). It also says the subject has died when the tree or
+  the log gives a death date, a burial or an obituary for the subject:
+  `ut_research_plan_zgw` left out Alan's death certificate in 2 of 7 runs while
+  reading his 2023 obituary only as evidence of his parents (0 of 3 after).
 - **No item for a tree claim the project's own dates rule out (issue #4696
   Part A, item 1).** From alpha feedback #4642: the tree gave Alexander Mills's
   parents as George Mills and Abigail Weed, whose marriage the same tree dates
