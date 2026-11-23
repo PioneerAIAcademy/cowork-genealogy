@@ -8011,12 +8011,6 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
-  // ── Completed-gate: the tree-encoding WARNING (issue #1490 phase 2) ──
-  // A tier->=-probable conclusion is expected to leave a fact or relationship on
-  // the tree. This warns — never refuses (2026-08-24 no-override ruling) — when a
-  // completed project holds one whose evidence persons gained nothing since the
-  // starting-tree.gedcomx.json baseline. Fires only on the completing call.
-
   const writeBaseline = async (tree: any) =>
     writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   const withEvidence = (research: any) => {
@@ -8027,53 +8021,9 @@ describe("research_append (project singleton section)", () => {
     return research;
   };
 
-  it("warns on completion when a probable conclusion added no tree structure (#1490)", async () => {
-    // Baseline == current tree, so I1 (linked to the summary via a_001) gained
-    // nothing this session — the conclusion was reached and left un-encoded.
-    await writeProject(withEvidence(withProof()), baseTree);
-    await writeBaseline(baseTree);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const w = r.validation.warnings.join(" ");
-    expect(w).toMatch(/ps_001/);
-    expect(w).toMatch(/no tree person it draws evidence from/);
-  });
-
-  it("is silent when the conclusion's person gained a tree fact (#1490)", async () => {
-    // The current tree adds a Birth fact for I1 that the baseline lacked, so the
-    // conclusion is encoded and no warning fires.
-    const current = {
-      ...baseTree,
-      persons: [
-        {
-          id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
-          facts: [{ id: "f1", type: "Birth", date: "1850", standard_date: "+1850" }],
-        },
-      ],
-    };
-    await writeProject(withEvidence(withProof()), current);
-    await writeBaseline(baseTree);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
-  });
-
-  it("does not warn when the project predates the baseline (fail-open) (#1490)", async () => {
-    // No starting-tree.gedcomx.json on disk — a legacy project. The check must
-    // fail open (no warning), never treat every fact as new.
-    await writeProject(withEvidence(withProof()), baseTree);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
-  });
-
   // ── Completed-gate: owed findings (issue #3032 Stage 1b, Decision 33) ──
   // Completing a project that still owes a blocking finding, or an encode item,
-  // warns and never refuses. A summary that states claims is judged by its
-  // claims; the legacy shape match above reads only claim-less summaries.
+  // warns and never refuses.
 
   const birthClaim = (date: string) => ({
     claim: "birth", proof_tier: "probable", supporting_assertion_ids: ["a_001"],
@@ -8107,17 +8057,6 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
-  });
-
-  it("the legacy shape match is skipped for a summary that carries claims", async () => {
-    // The same unencoded probable summary without claims draws the legacy
-    // warning (#1490 above); with claims, only the owed encode item speaks.
-    await writeProject(withClaims([birthClaim("1850")]), baseTree);
-    await writeBaseline(baseTree);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
   it("completion with nothing owed is silent", async () => {
