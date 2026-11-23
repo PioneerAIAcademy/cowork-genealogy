@@ -4473,6 +4473,29 @@ describe("research_append (Phase 3)", () => {
       expect((errorsOf(r) ?? []).join("\n")).toMatch(/claim 'name': proof_summaries .*none is linked to a person/);
     });
 
+    // #3032 Stage 1b part 4c: how proof-conclusion writes an answer whose person is unidentified.
+    it("with nothing linked, the claim is written at not_proved with shortfall gap, and possible is refused", async () => {
+      const research = phase3Research();
+      research.person_evidence = [];
+      await writeProject(research);
+      const refused = await appendSummary(summaryWith("not_proved", [nameClaim("name", "possible", "gap")]));
+      expect(refused.ok).toBe(false);
+      expect((errorsOf(refused) ?? []).join("\n")).toMatch(/Recording the attempt at 'not_proved' is allowed now/);
+      const r = await appendSummary(summaryWith("not_proved", [nameClaim("name", "not_proved", "gap")]));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
+    it("with the evidence linked but the named person not, the claim stands at possible (Decision 28)", async () => {
+      // a_001 is linked to I1; the name claim names I2, whom nothing cited links.
+      const tree = { ...baseTree, persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "James", surname: "Smith" }] }] };
+      await writeProject(phase3Research(), tree);
+      const claim = { ...nameClaim("name", "possible", "gap"), name: { person: "I2", given: "James" } };
+      const r = await appendSummary(summaryWith("possible", [claim]));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
     it("a claims-only update raising a claim meets the unlinked-proof gate", async () => {
       const research = phase3Research();
       research.person_evidence = [];
