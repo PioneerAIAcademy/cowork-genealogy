@@ -460,13 +460,13 @@ describe("outsideSiteJurisdictionError", () => {
 
   it("names the state archive too when the project stored it as a link_text", () => {
     const msg = outsideSiteJurisdictionError(fs(PLI_006), ["Utah Digital Newspapers", "Search"]);
-    expect(msg).toMatch(/'chronicling america', 'utah digital newspapers'/);
+    expect(msg).toMatch(/'chronicling america', 'Utah Digital Newspapers'/);
   });
 
   it("refuses an item that names only a state archive, through the stored link_text", () => {
     const item = fs("Utah Territory (Utah Digital Newspapers)");
     expect(outsideSiteJurisdictionError(item)).toBeUndefined();
-    expect(outsideSiteJurisdictionError(item, ["Utah Digital Newspapers"])).toMatch(/utah digital newspapers/);
+    expect(outsideSiteJurisdictionError(item, ["Utah Digital Newspapers"])).toMatch(/'Utah Digital Newspapers'/);
   });
 
   it("matches the repository case-insensitively, as the router does", () => {
@@ -525,20 +525,41 @@ describe("outsideSiteJurisdictionError", () => {
     expect(outsideSiteJurisdictionError(fs("Utah (Chronicling\u00a0 America)"))).toMatch(/'chronicling america'/);
   });
 
-  it("reads a site name followed by 'index' as a FamilySearch collection title, not the site", () => {
-    // "United States, Find a Grave Index" is a FamilySearch collection: a FamilySearch item
-    // naming it is right, and the refusal's "write a separate Find a Grave item" would be wrong.
+  it("reads a Find a Grave, BillionGraves or Newspapers.com index title as a FamilySearch collection", () => {
+    // "United States, Find a Grave Index" and "Newspapers.com Obituary Index" are FamilySearch
+    // collections: a FamilySearch item naming one is right, and the refusal's "write a
+    // separate item for the site" would be wrong.
     for (const jurisdiction of [
       "Blount County, Alabama (Find a Grave Index)",
       "Ohio (FindAGrave Indexes)",
       "Ohio (find-a-grave index, 1600s-current)",
+      "Kentucky (Newspapers.com Obituary Index, 1800-current)",
+      "Kentucky (Newspapers.com Stories and Events Index)",
+      "Utah (BillionGraves Index)",
     ]) {
       expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toBeUndefined();
     }
     expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave)"))).toMatch(/'find a grave'/);
-    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Index; Ancestry)"))).toMatch(/ names 'ancestry', an outside site,/);
     expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Indexer notes)"))).toMatch(/'find a grave'/);
-    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers Index)"), ["Utah Digital Newspapers"])).toBeUndefined();
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave Index; Ancestry)"))).toMatch(/ names 'ancestry', an outside site,/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave and BillionGraves)"))).toMatch(/'find a grave', 'billiongraves'/);
+    // A title reaching over a second site's name hides only its own site.
+    expect(outsideSiteJurisdictionError(fs("Ohio (Find a Grave and Ancestry index)"))).toMatch(/ names 'ancestry', an outside site,/);
+    expect(outsideSiteJurisdictionError(fs("Ohio (Newspapers.com four more words then index)"))).toMatch(/'newspapers\.com'/);
+  });
+
+  it("reads 'index' after any other site as the site: no FamilySearch collection is titled so", () => {
+    for (const [jurisdiction, site] of [
+      ["Ohio (Ancestry index)", "ancestry"],
+      ["Ohio (FindMyPast Index)", "findmypast"],
+      ["Ohio (MyHeritage indexes)", "myheritage"],
+      ["Utah (Chronicling America Index)", "chronicling america"],
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction)), jurisdiction).toMatch(new RegExp(`'${site}'`));
+    }
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers Index)"), ["Utah Digital Newspapers"])).toMatch(
+      /'Utah Digital Newspapers'/,
+    );
   });
 
   it("never reads a stored name naming FamilySearch itself as an outside site", () => {
@@ -548,16 +569,52 @@ describe("outsideSiteJurisdictionError", () => {
     expect(
       outsideSiteJurisdictionError(fs("Vermont (Vermont Historical Society and the FamilySearch Library)"), stored),
     ).toBeUndefined();
-    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/utah digital newspapers/);
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/'Utah Digital Newspapers'/);
   });
 
-  it("routes a repository as the router does", () => {
+  it("reads a stored name as a site only when it looks like one", () => {
+    // Live link_texts are mostly collection titles and places: of 7,215 multi-word ones
+    // the earlier cuts kept, 758 look like a site (replay at 9c501a1cc).
+    const stored = [
+      "Civil Registration", "Passenger Lists", "Civil Marriage Records, 1894-1896", "Los Angeles",
+      "United States Passenger And Crew Lists, 1820-1957",
+      "Utah Digital Newspapers", "Texas State Library and Archives", "The Scottish Genealogy Society", "Genealogy.net",
+    ];
+    for (const jurisdiction of [
+      "Mexico (civil registration)",
+      "New York (passenger lists)",
+      "Los Angeles, California, United States",
+      "Los Angeles County, California",
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
+    }
+    for (const [jurisdiction, site] of [
+      ["Utah (Utah Digital Newspapers)", "Utah Digital Newspapers"],
+      ["Texas (Texas State Library and Archives)", "Texas State Library and Archives"],
+      ["Scotland (The Scottish Genealogy Society)", "The Scottish Genealogy Society"],
+      ["Germany (Genealogy.net)", "Genealogy.net"],
+    ]) {
+      expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toMatch(`'${site}'`);
+    }
+  });
+
+  it("quotes a stored link_text as stored, and matches it normalized", () => {
+    const msg = outsideSiteJurisdictionError(fs("Ontario (library & archives of Upper-Canada)"), ["Library and Archives of Upper Canada"]);
+    expect(msg).toMatch(/names 'Library and Archives of Upper Canada', an outside site/);
+  });
+
+  it("routes an item as the router does: fs_hints to search-hints, else by repository", () => {
     for (const r of [undefined, null, "", "  ", "FamilySearch", "familysearch.org", "FamilySearch Library"]) {
-      expect(routesToFamilySearch(r), String(r)).toBe(true);
+      expect(routesToFamilySearch({ repository: r }), String(r)).toBe(true);
     }
     for (const r of ["Ancestry", "Chronicling America", "Utah Digital Newspapers"]) {
-      expect(routesToFamilySearch(r), r).toBe(false);
+      expect(routesToFamilySearch({ repository: r }), r).toBe(false);
+      expect(routesToFamilySearch({ repository: r, record_type: "fs_hints" }), r).toBe(true);
     }
+    expect(routesToFamilySearch(undefined)).toBe(true);
+    expect(
+      outsideSiteJurisdictionError({ repository: "Ancestry", record_type: "fs_hints", jurisdiction: "Ohio (Find a Grave)" }),
+    ).toMatch(/'find a grave'/);
   });
 
   it("never reads a stored name made only of record words as a site", () => {
@@ -570,7 +627,7 @@ describe("outsideSiteJurisdictionError", () => {
     ]) {
       expect(outsideSiteJurisdictionError(fs(jurisdiction), stored), jurisdiction).toBeUndefined();
     }
-    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/utah digital newspapers/);
+    expect(outsideSiteJurisdictionError(fs("Utah (Utah Digital Newspapers)"), stored)).toMatch(/'Utah Digital Newspapers'/);
   });
 
   it("names every site build_external_search_url builds, but the generic archive", () => {
@@ -604,7 +661,7 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
     dirOf = withCollections(project(UTAH), ["Utah Digital Newspapers"]);
     const text = await append(dirOf, { ...NEWS, jurisdiction: PLI_006 });
     expect(text).toMatch(/"ok":\s*false/);
-    expect(text).toMatch(/'chronicling america', 'utah digital newspapers'/);
+    expect(text).toMatch(/'chronicling america', 'Utah Digital Newspapers'/);
     expect(items()).toEqual([]);
   });
 
@@ -613,7 +670,7 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
     expect(await append(project(UTAH), { ...NEWS, jurisdiction })).toMatch(/"ok":\s*true/);
     const text = await append(withCollections(project(UTAH), ["Utah Digital Newspapers"]), { ...NEWS, jurisdiction });
     expect(text).toMatch(/"ok":\s*false/);
-    expect(text).toMatch(/'utah digital newspapers'/);
+    expect(text).toMatch(/'Utah Digital Newspapers'/);
   });
 
   it("refuses the same item inline on a plans append", async () => {
@@ -675,14 +732,14 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
     const dir = project({ localities: [{ id: "lo_001", place: "New York, United States" }] });
     const rows = [
       { link_text: "New York", place: "New York, United States" },
-      { link_text: "New York Heritage", place: "New York, United States" },
+      { link_text: "New York State Library", place: "New York, United States" },
     ].map((r, i) => ({ key: `k${i}`, url: `https://example.org/${i}`, record_types: [], cost: "free",
       content_type: "index", start_year: "", end_year: "", ...r }));
     writeFileSync(join(dir, "external-collections.json"),
       JSON.stringify({ places: { "New York, United States": { rows } } }), "utf8");
     expect(await append(dir, { ...ITEM, jurisdiction: "Saratoga County, New York, United States" })).toMatch(/"ok":\s*true/);
-    expect(await append(dir, { ...ITEM, sequence: 2, jurisdiction: "Saratoga County, New York (New York Heritage)" })).toMatch(
-      /'new york heritage'/,
+    expect(await append(dir, { ...ITEM, sequence: 2, jurisdiction: "Saratoga County, New York (New York State Library)" })).toMatch(
+      /'New York State Library'/,
     );
   });
 

@@ -7751,7 +7751,8 @@ function compoundJurisdictionInvariants(item: any, research: any): string[] {
 
 /** A FamilySearch plan item names no outside site in its jurisdiction
  *  (`outsideSiteJurisdictionError`, #4665). Checked on an append and on a change
- *  to `jurisdiction` or to where `repository` routes the item: the rule reads both,
+ *  to `jurisdiction` or to where `repository` and `record_type` route the item: the
+ *  rule reads them,
  *  so an edit moving a site's item onto FamilySearch is the same gap. An edit
  *  touching neither, including a repository respelling that routes the same way
  *  ("" for a missing one, "familysearch" for "FamilySearch"), leaves an item
@@ -7759,7 +7760,7 @@ function compoundJurisdictionInvariants(item: any, research: any): string[] {
 function outsideSiteRuleInputsChanged(stored: any, next: any): boolean {
   return (
     stored?.jurisdiction !== next?.jurisdiction ||
-    routesToFamilySearch(stored?.repository) !== routesToFamilySearch(next?.repository)
+    routesToFamilySearch(stored) !== routesToFamilySearch(next)
   );
 }
 

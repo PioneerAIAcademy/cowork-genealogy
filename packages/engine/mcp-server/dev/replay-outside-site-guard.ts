@@ -79,7 +79,7 @@ for (const scenario of readdirSync(RUNS).filter((d) => statSync(join(RUNS, d)).i
       for (const item of Array.isArray(plan?.items) ? plan.items : []) {
         items++;
         // The guard's own routing rule: a blank or missing repository is FamilySearch too.
-        if (!routesToFamilySearch(item?.repository)) continue;
+        if (!routesToFamilySearch(item)) continue;
         fsItems++;
         if (String(item?.repository ?? "").trim() === "") blankRepoItems++;
         const error = outsideSiteJurisdictionError(item, linkTexts);
