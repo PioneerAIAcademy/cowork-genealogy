@@ -42,6 +42,9 @@ SEARCH_TARGETS = [
     "Searching the index for all mentions of Czelusniak.",
     "I searched for every Czelusniak mention and the search found 424 records.",
     "Looking for every occurrence of the surname in the three parishes.",
+    "I searched the books that hold the three parish registers for every Czelusniak mention.",
+    "I'm searching the index, which has the old parish books, for every Czelusniak mention.",
+    "I searched the collection that contains the three parishes for every Czelusniak mention.",
 ]
 
 CLAIMS = [
@@ -58,6 +61,16 @@ CLAIMS = [
     "The search gives you a hit for every Czelusniak mention.",
     "Searching is done: there is a record for every Czelusniak mention.",
     "Our search holds an entry for every mention of Czelusniak.",
+    "The search accounts for every Czelusniak mention.",
+    "The search yielded a record for every Czelusniak mention.",
+    "The search produced a hit for every Czelusniak mention.",
+    "The search brought back a record for every Czelusniak mention.",
+    "The search shows a record for every Czelusniak mention.",
+    "The search got a record for every Czelusniak mention.",
+    "The survey now lists an entry for every Czelusniak mention.",
+    "There is now a search hit for every Czelusniak mention.",
+    "Search results now exist for every Czelusniak mention.",
+    "The search yields hits for all the Czelusniak mentions.",
 ]
 
 

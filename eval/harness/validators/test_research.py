@@ -2251,11 +2251,14 @@ _FORBIDDEN_COMPLETENESS_PATTERNS = [
 ]
 
 _SEARCH_TARGET_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[:2]
-_SENTENCE_BOUNDARY_RE = re.compile(r"[.;!?\n]|—")
-_SEARCH_VERB_RE = re.compile(r"\b(?:search|look|survey|scan|dispatch|query|quer)\w*\b", re.IGNORECASE)
+_SENTENCE_BOUNDARY_RE = re.compile(r"[.;:!?\n]|—")
+_SEARCH_VERB_RE = re.compile(
+    r"\b(?:(?:search|look|survey|dispatch)(?:ing|ed)|scann(?:ing|ed)|quer(?:ying|ied)"
+    r"|to\s+(?:search|look|survey|scan|dispatch|query))\b",
+    re.IGNORECASE,
+)
 _ACHIEVED_RE = re.compile(
-    r"\b(?:found|find(?:s|ing)?|captured?|cover(?:s|ed|ing)?|accounted|returned|located|identified|turned\s+up"
-    r"|ha(?:s|ve)|hold(?:s|ing)?|giv(?:es|ing)|contain(?:s|ing)?|there\s+(?:is|are))\b",
+    r"\b(?:found|find(?:s|ing)?|captured?|cover(?:s|ed|ing)?|accounted|returned|located|identified|turned\s+up)\b",
     re.IGNORECASE,
 )
 
