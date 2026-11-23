@@ -525,8 +525,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "research_log_append, and for the tree tree_edit or tree_correct (from "
                     "the main session, invoke `@plugin:tree-edit`). These validate "
                     "before persisting. Direct file writes never validate. "
-                    "external-collections.json is written only by external_links_search given a "
-                    "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                    "external-collections.json is written only by locality_survey or external_links_search given a "
+                    "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                 ),
             },
         }
@@ -812,7 +812,11 @@ RESEARCHER_VIEW_NOTE = (
     "a file path. The app's only download is the tree as GEDCOM (Export GEDCOM "
     "in the header). A conclusion written to proof_summaries is shown to them "
     "under Findings; if they ask for a report or document, point them there "
-    "when one exists, and otherwise give the text in your reply."
+    "when one exists, and otherwise give the text in your reply. To upload "
+    "files, the researcher uses the 📎 button below the message box and "
+    "selects all the files at once; dragging a file in or pasting it does not "
+    "work. The 📎 button is off while you are working and comes back "
+    "when you end your turn and wait for their reply, so say so when you ask for files."
 )
 
 

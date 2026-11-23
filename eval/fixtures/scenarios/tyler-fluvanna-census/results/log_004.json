@@ -1,0 +1,159 @@
+{
+  "log_id": "log_004",
+  "tool": "record_read",
+  "retrieved": "2026-11-12T23:31:39.220Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:QVR7-5LJJ"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QVR7-5LJJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101214217427",
+              "ark": "ark:/61903/1:1:QVR7-5LJJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "07a0f7b8-64ac-4838-9932-e1e91339a3fc",
+                  "type": "BirthName",
+                  "given": "Ann Tone",
+                  "surname": "Lightfoot"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "664620cf-3b2d-471a-96ad-eb551cee9fdb",
+                  "type": "DeathRegistration",
+                  "primary": true,
+                  "date": "9 Nov 1923",
+                  "standard_date": "9 Nov 1923"
+                },
+                {
+                  "id": "407368af-3dde-4e8a-942d-11537b23d5e2",
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833"
+                },
+                {
+                  "id": "9dc6d775-3041-4a17-b68c-4b6ebf0afb7a",
+                  "type": "Death",
+                  "date": "29 Oct 1923",
+                  "standard_date": "29 Oct 1923",
+                  "place": "Cunningham, Fluvanna County, Virginia, Virginia, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "Black"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101214217428",
+              "ark": "ark:/61903/1:1:QVR7-5LJV",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "d284957e-94a1-446c-88ff-ddc4d5b9dfb2",
+                  "type": "BirthName",
+                  "given": "Job",
+                  "surname": "Lightfoot"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "dbd73ab0-6dbe-4345-8fc1-9b8c88f53144",
+              "type": "ParentChild",
+              "parent": "p_101214217428",
+              "child": "p_101214217427"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102234907909",
+              "resource_type": "Record",
+              "title": "Entry for Ann Tone Lightfoot, \"Virginia, Death Certificates, 1912-1987\"",
+              "citation": "\"Virginia, Death Certificates, 1912-1987\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJJ : Tue Mar 11 21:08:38 UTC 2025), Entry for Ann Tone Lightfoot and Job Lightfoot, 9 Nov 1923.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q247-BS3K",
+              "coverage": {
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2377565",
+              "resource_type": "Collection",
+              "title": "Virginia, Death Certificates, 1912-1987",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2377565",
+              "coverage": {
+                "place_rep_id": "360",
+                "date_range": "1912/1987",
+                "record_type": "Vital",
+                "standard_place": "Virginia, United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9GL-TF39",
+              "coverage": {
+                "place_rep_id": "360",
+                "date_range": "1923",
+                "record_type": "DeathCertificate",
+                "standard_place": "Virginia, United States"
+              }
+            },
+            {
+              "id": "sd_p_101214217427",
+              "resource_type": "Person",
+              "title": "Ann Tone Lightfoot, \"Virginia, Death Certificates, 1912-1987\"",
+              "citation": "\"Virginia, Death Certificates, 1912-1987\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJJ : Tue Mar 11 21:08:38 UTC 2025), Ann Tone Lightfoot, 9 Nov 1923.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJJ"
+            },
+            {
+              "id": "sd_p_101214217428",
+              "resource_type": "Person",
+              "title": "Job Lightfoot, \"Virginia, Death Certificates, 1912-1987\"",
+              "citation": "\"Virginia, Death Certificates, 1912-1987\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJV : Tue Mar 11 21:08:38 UTC 2025), Job Lightfoot in entry for Ann Tone Lightfoot, 9 Nov 1923.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:QVR7-5LJV"
+            },
+            {
+              "id": "sd_auto_M9J1-SDD",
+              "resource_type": "auto",
+              "title": "United States, Virginia, Deaths, from 0112 to 9175",
+              "coverage": {
+                "place_rep_id": "360",
+                "date_range": "+0112-01-01T00:00:00Z/+9175-12-31T23:59:59Z",
+                "standard_place": "Virginia, United States"
+              }
+            }
+          ]
+        },
+        "indexFields": {
+          "p_101214217427": {
+            "sortKey": "000000000_100786184_00059_00000_0012288603429_000",
+            "age": "90"
+          },
+          "p_101214217428": {
+            "sortKey": "000000000_100786184_00059_00000_0012288603429_001"
+          }
+        }
+      }
+    ]
+  }
+}

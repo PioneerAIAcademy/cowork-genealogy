@@ -100,6 +100,55 @@ async function fetchAll(placeId: string): Promise<FSPlaceExternalResponse> {
   }
 }
 
+/**
+ * A place's whole curated list, deduplicated, with each row's record types and place: what
+ * `external_links_search` stores and what `locality_survey` ranks. `tooLarge` (the link count)
+ * when the place has more than one request can return. Throws on an unresolved or ambiguous
+ * place and on a partial list.
+ */
+export async function externalLinkRows(
+  standardPlace: string,
+): Promise<{ rows: StoredCollectionRow[] } | { tooLarge: number }> {
+  const resolution = await resolveStandardPlaceToPlaceId(standardPlace);
+  if (resolution.kind === "ambiguous") {
+    throw ambiguousPlaceError(standardPlace, resolution.candidates);
+  }
+  if (resolution.kind === "unresolved") {
+    throw new Error(
+      `Could not resolve "${standardPlace}" to a FamilySearch place. ` +
+        "Use place_search to get a standard place name first."
+    );
+  }
+  const placeId = resolution.placeId;
+
+  const data = await fetchAll(placeId);
+  const collections = data.collections ?? [];
+  const totalResults = data.totalResults;
+  // A partial list is an error, never an answer: a stored list that silently
+  // lacks rows reads to every later caller as "this collection is not here".
+  if (typeof totalResults !== "number" || !Number.isFinite(totalResults)) {
+    throw new Error(
+      "FamilySearch's external-links response carried no totalResults, so whether the list is " +
+        "complete cannot be told. Nothing was stored. Retry once; if it persists, surface this to the user.",
+    );
+  }
+  if (totalResults > FETCH_COUNT) return { tooLarge: totalResults };
+  if (totalResults > collections.length) {
+    throw new Error(
+      `FamilySearch returned ${collections.length} of the ${totalResults} curated links for ` +
+        `"${standardPlace}", so the list is partial. Nothing was stored. Retry once; if it persists, ` +
+        "surface this to the user.",
+    );
+  }
+
+  return {
+    rows: dedupeCollections(
+      collections.filter((c): c is FSPlaceExternalCollection & { url: string } => typeof c.url === "string"),
+      standardPlace,
+    ),
+  };
+}
+
 export async function externalLinksSearchTool(
   input: ExternalLinksSearchInput
 ): Promise<ExternalLinksSearchResult> {
@@ -135,32 +184,8 @@ export async function externalLinksSearchTool(
     );
   }
 
-  // Resolve the standard place name to a FamilySearch placeId only after the
-  // cheap guards, so malformed input never hits the network.
-  const resolution = await resolveStandardPlaceToPlaceId(standardPlace);
-  if (resolution.kind === "ambiguous") {
-    throw ambiguousPlaceError(standardPlace, resolution.candidates);
-  }
-  if (resolution.kind === "unresolved") {
-    throw new Error(
-      `Could not resolve "${standardPlace}" to a FamilySearch place. ` +
-        "Use place_search to get a standard place name first."
-    );
-  }
-  const placeId = resolution.placeId;
-
-  const data = await fetchAll(placeId);
-  const collections = data.collections ?? [];
-  const totalResults = data.totalResults;
-  // A partial list is an error, never an answer: a stored list that silently
-  // lacks rows reads to every later caller as "this collection is not here".
-  if (typeof totalResults !== "number" || !Number.isFinite(totalResults)) {
-    throw new Error(
-      "FamilySearch's external-links response carried no totalResults, so whether the list is " +
-        "complete cannot be told. Nothing was stored. Retry once; if it persists, surface this to the user.",
-    );
-  }
-  if (totalResults > FETCH_COUNT) {
+  const fetched = await externalLinkRows(standardPlace);
+  if ("tooLarge" in fetched) {
     // The refusal counts as the lookup (build_external_search_url's place gate,
     // #4410): stored as too_large, it lets a site-wide build for exactly this
     // place through, and never a place inside it.
@@ -173,7 +198,7 @@ export async function externalLinksSearchTool(
       }
     }
     throw new Error(
-      `"${standardPlace}" has ${totalResults} curated links, more than the ${FETCH_COUNT} one request ` +
+      `"${standardPlace}" has ${fetched.tooLarge} curated links, more than the ${FETCH_COUNT} one request ` +
         "can return, so no list is returned or stored. " +
         (recorded
           ? `It is recorded as looked up: build_external_search_url accepts a site-wide search for exactly ` +
@@ -182,18 +207,7 @@ export async function externalLinksSearchTool(
             "for a smaller place inside it, look that place up instead."),
     );
   }
-  if (totalResults > collections.length) {
-    throw new Error(
-      `FamilySearch returned ${collections.length} of the ${totalResults} curated links for ` +
-        `"${standardPlace}", so the list is partial. Nothing was stored. Retry once; if it persists, ` +
-        "surface this to the user.",
-    );
-  }
-
-  const rows = dedupeCollections(
-    collections.filter((c): c is FSPlaceExternalCollection & { url: string } => typeof c.url === "string"),
-    standardPlace,
-  );
+  const rows = fetched.rows;
   const totalForPlace = rows.length;
 
   // When no years are given, every resource matches (dated and undated alike).

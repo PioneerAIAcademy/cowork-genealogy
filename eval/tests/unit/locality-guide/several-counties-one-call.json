@@ -1,0 +1,65 @@
+{
+  "test": {
+    "id": "ut_locality_guide_029",
+    "skill": "locality-guide",
+    "name": "Several counties in one delegation — one entry per county",
+    "type": "positive",
+    "description": "When delegated 'Pulaski, Greenup and Boyd County, Kentucky, 1840-1880', the agent may survey one county or each of them, but saves each county it surveys as its own localities entry, names every entry it wrote, and names any county it did not survey as still needing its own survey.",
+    "tags": [
+      "locality-guide",
+      "localities",
+      "localities-persist",
+      "several-jurisdictions",
+      "kentucky",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Survey Pulaski, Greenup and Boyd County, Kentucky, 1840-1880.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-pulaski-county-ky",
+    "place-search-all-pulaski-county-ky",
+    "place-search-greenup-county-ky",
+    "place-search-all-greenup-county-ky",
+    "place-search-boyd-county-ky",
+    "place-search-all-boyd-county-ky",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-search-any",
+    "wiki-read-kentucky-vital-records",
+    "wiki-read-pulaski-county-kentucky-genealogy",
+    "wiki-read-kentucky-genealogy",
+    "wiki-read-kentucky-land-and-property",
+    "wiki-read-kentucky-church-records",
+    "wiki-read-greenup-county-kentucky-genealogy",
+    "wiki-read-boyd-county-kentucky-genealogy",
+    "wiki-read-any",
+    "wiki-place-page-pulaski-county-ky-home",
+    "wiki-place-page-greenup-county-ky-home",
+    "wiki-place-page-boyd-county-ky-home",
+    "wiki-place-page-any",
+    "wikipedia-search-any",
+    "catalog-search-empty",
+    "catalog-search-empty-title",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "The delegation names three separate counties: Pulaski, Greenup, and Boyd County, Kentucky. The agent may survey only one of them or each of them; either is correct.",
+    "Each county the agent surveys must be saved as its own localities entry with its own guide. One entry that covers two or three counties fails the test.",
+    "The agent's summary_for_user must name every localities entry it wrote, and must name each county it did not survey as still needing its own survey. A reply that names only one county when it saved entries for three fails.",
+    "Boyd County was formed in 1860 from Greenup, Carter and Lawrence counties, so a Boyd guide that sends 1840-1859 research to the parent counties is correct.",
+    "Read-coverage is enforced deterministically by the validator (test_localities_persisted_with_full_page_coverage). Grade the substance of each guide written.",
+    "The skill must NOT write to any research.json section other than localities, and must not touch tree.gedcomx.json."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
+  }
+}

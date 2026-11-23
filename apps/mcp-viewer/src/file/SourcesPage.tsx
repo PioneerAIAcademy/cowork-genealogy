@@ -73,6 +73,24 @@ function LocalityItem({ locality }: { locality: Locality }) {
           {volumes.complete ? '' : ' (not all counted)'}.
         </p>
       )}
+      {list(locality.record_types).length > 0 && (
+        <ul>
+          {list(locality.record_types).map((r, i) => (
+            <li key={i}>
+              {[statusLabel(String(r.type)), r.years, statusLabel(String(r.access)), r.held_at].filter(Boolean).join(', ')}: <Prose text={r.summary} index={index} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {list(locality.repositories).length > 0 && (
+        <p>Repositories: {list(locality.repositories).map((r) => [r.name, r.holds].filter(Boolean).join(', ')).join('; ')}</p>
+      )}
+      {list(locality.losses).length > 0 && (
+        <p>Losses: {list(locality.losses).map((l) => [l.record_set, l.years].filter(Boolean).join(', ')).join('; ')}</p>
+      )}
+      {list(locality.catalog).length > 0 && (
+        <p>Catalog: {list(locality.catalog).map((c) => c.title).join('; ')}</p>
+      )}
       {list(locality.collections).length > 0 && (
         <p>Collections: {list(locality.collections).map((c) => [c.title, c.date_range].filter(Boolean).join(' ')).join('; ')}</p>
       )}
