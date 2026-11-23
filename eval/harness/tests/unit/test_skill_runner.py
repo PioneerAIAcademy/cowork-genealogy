@@ -757,7 +757,7 @@ def test_a_stubbed_spawn_runs_a_no_op_agent_and_hands_back_the_stub(tmp_path, mo
     to its real hook closure (issue #2825), rewrite the spawn so the callee never
     runs, and replace the no-op agent's return with the stub text, so the caller
     reads an ordinary hand-back rather than an error."""
-    from harness.skill_stubs import STUB_RUNNER_AGENT, STUB_RUNNER_PROMPT
+    from harness.skill_stubs import STUB_REPORTED_USAGE, STUB_RUNNER_AGENT, STUB_RUNNER_PROMPT
 
     _, returns = _drive_hook(
         tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
@@ -771,7 +771,9 @@ def test_a_stubbed_spawn_runs_a_no_op_agent_and_hands_back_the_stub(tmp_path, mo
     assert "continue_" not in returns[0]
     post = returns[1]["hookSpecificOutput"]
     assert post["hookEventName"] == "PostToolUse"
-    assert post["updatedToolOutput"] == {**_AGENT_OUTPUT, "content": [{"type": "text", "text": expected}]}
+    assert post["updatedToolOutput"] == {
+        **_AGENT_OUTPUT, **STUB_REPORTED_USAGE, "content": [{"type": "text", "text": expected}],
+    }
 
 
 def test_a_default_stubbed_spawn_hands_back_the_bare_return(tmp_path, monkeypatch):

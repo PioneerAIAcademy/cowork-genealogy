@@ -101,13 +101,15 @@ can drop:
     }],
     searches?: [{                        // only when nextStep is a search — §2.2.1
       planItemId: string,
-      agent: "search-records" | "search-images" | "search-hints" | "search-external-sites",
+      agent: "search-records" | "search-hints" | "search-external-sites",
       prompt: string,                    //   the whole delegation, sent as it is
     }],
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
-    name?: string,                       // preferred names entry, "Given Surname"
+    name?: string,                       // preferred names entry, "Given Surname";
+                                         //   the surname alone when
+                                         //   unsupportedGivenName flags the given name
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -601,9 +603,11 @@ subject: {"subjectId","names","birth","death","parents"}
 ```
 
 - **Agent.** `search-hints` for an `fs_hints` item, `search-external-sites`
-  for one whose repository is not FamilySearch (`routesToFamilySearch`),
-  `search-images` for a FamilySearch item whose rationale calls its records
-  browse-only, unindexed or 0% record-searchable, else `search-records`.
+  for one whose repository is not FamilySearch (`routesToFamilySearch`), else
+  `search-records`. Whether a FamilySearch item's records are browse-only images
+  is the router's reading of the rationale, and it then sends the same prompt to
+  search-images: a pattern test cannot tell "browse-only" from "not a browse-only
+  volume" (ut_research_030 went to search-images on one).
 - **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
   item in `exhaustedImageGroups`, and a fallback whose primary is still open or
   found something. A fallback runs once every entry its primary logged is
@@ -611,8 +615,8 @@ subject: {"subjectId","names","birth","death","parents"}
 - **A hints item at the head of the plan goes alone**, with a `personId:` line
   read from its rationale and no subject: its verdicts can save the searches
   behind it.
-- **`subject`** is `subject_person_ids[0]` as the tree holds it, for
-  search-records and search-images only. `parents` is left out when the question
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
+  search-records entry (which the router may send to search-images) only. `parents` is left out when the question
   asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
   of`, the same words as the research suite's validator) and when the tree gives
   more than two. A given name `unsupportedGivenName` flags is replaced by its

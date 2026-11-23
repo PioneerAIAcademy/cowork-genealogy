@@ -471,16 +471,20 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
     const f = family.get(p.id);
+    const doubted = unsupportedGivenName(p, linkedNames.get(p.id) ?? []);
+    // A given name no linked record carries is a reading in doubt: the name is
+    // the surname alone, so no reader takes the reading for the person's name.
+    const surname = preferredName(Array.isArray(p.names) ? p.names : [])?.surname;
     persons.push(
       omitEmpty({
         id: p.id,
-        name: preferredDisplayName(p),
+        name: doubted ? (typeof surname === "string" && surname.trim() !== "" ? surname.trim() : null) : preferredDisplayName(p),
         gender: typeof p.gender === "string" ? p.gender : null,
         spouseIds: f ? [...f.spouseIds] : [],
         parentIds: f ? [...f.parentIds] : [],
         childIds: f ? [...f.childIds] : [],
         diedByYear: diedByYear(p),
-        unsupportedGivenName: unsupportedGivenName(p, linkedNames.get(p.id) ?? []) ?? null,
+        unsupportedGivenName: doubted ?? null,
       }) as ProjectContextPerson,
     );
   }

@@ -54,7 +54,9 @@ first message with no project runs init-project first, then its deliverable
    research-exhaustiveness; from init-project in a bounded turn, leave out its
    sentence naming the next step;
 2. end with **"Continue with `<label>`?"**, using the exact label below,
-   then on the same line the project's `projectUrl` when a tool gave you one;
+   then on the same line the project's `projectUrl` when a tool gave you one.
+   That line is the reply's last: a link to a person or record goes in the
+   report above it;
 3. end your turn.
 
 Nothing runs after that line. Do not start the next step, and do not promise
@@ -180,7 +182,7 @@ can be both. "Create a research plan for Mary Hales, but leave it at that" names
 a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a plan to `@plugin:research-plan`, a record to
-`@plugin:search-records`, a review of the sources attached to a person to
+`@plugin:search-records` after `person_read` shows it is not already attached, a review of the sources attached to a person to
 `@plugin:source-evaluation`, whether two people are the same or should be merged
 to `@plugin:person-evidence` (a researcher who doubts or denies that a record is this
 person goes there with their message copied verbatim, even when an open hypothesis
@@ -306,7 +308,8 @@ message.
    cues — defer to each sub-skill's own "Use when" guidance when
    state is ambiguous. **Every entry in the "Invoke" column is a tool
    call, by the name written there — not a narrated intention. An
-   entry spelled `@plugin:<name>` is an `Agent` spawn of that agent;
+   entry spelled `@plugin:<name>` is an `Agent` spawn with `subagent_type`
+   `<name>`, without the `plugin:`;
    every other entry is a `Skill` call.**
    Writing "proceed to research-exhaustiveness" or "proceed directly
    to proof-conclusion" and then hand-authoring the fields that skill
@@ -369,7 +372,7 @@ message.
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints` with the prompt of the question's `searches` entry. It decides the subject's pending FamilySearch hints, logs its decisions and sets the item's own status — a hint that already answers the question can save a search |
    | The active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
    | The question's `nextStep` is a search, and its row carries `searches` | The question's `searches` from `project_context`: one spawn per entry, `@plugin:<agent>` with its `prompt` as the whole delegation (see **The search step**) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` with the item's `searches` prompt (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` with the item's `searches` prompt in place of `@plugin:search-records` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | A question's assertions (their `extracted_for_question_ids` names it) with no live link, or `project_context`'s `nextStep` for a question names person-evidence | `@plugin:person-evidence` with that question's assertion ids, as a linking request — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next, except `extraction_append({ personId })`, whose attachment links go to `timeline_build` next, never to person-evidence |

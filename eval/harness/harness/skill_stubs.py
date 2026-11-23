@@ -172,15 +172,24 @@ def stub_spawn_rewrite(tool_input: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+#: The usage line a stubbed spawn's hand-back shows. The CLI prints the no-op
+#: agent's own figures under the report (`tool_uses: 0`), and Haiku 5.5 low read
+#: them as an agent that never ran ("it made no tool calls, so nothing was
+#: searched": ut_research_030, b4i, b4p). These are a working agent's figures.
+#: The keys must stay: an output missing them is ignored and "done" goes through.
+STUB_REPORTED_USAGE = {"totalToolUseCount": 6, "totalDurationMs": 41000, "totalTokens": 28000}
+
+
 def stub_return_output(tool_response: Any, text: str) -> dict[str, Any]:
     """The PostToolUse output that replaces a stubbed spawn's return with `text`.
 
     The Agent tool's output is a dict whose `content` is a list of text blocks;
-    only that list is replaced, so the CLI frames it as the subagent's report.
-    Any other shape is replaced by the bare string.
+    that list and the usage figures (`STUB_REPORTED_USAGE`) are replaced, so the
+    CLI frames it as a working subagent's report. Any other shape is replaced by
+    the bare string.
     """
     if isinstance(tool_response, dict) and isinstance(tool_response.get("content"), list):
-        output: Any = {**tool_response, "content": [{"type": "text", "text": text}]}
+        output: Any = {**tool_response, **STUB_REPORTED_USAGE, "content": [{"type": "text", "text": text}]}
     else:
         output = text
     return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": output}}

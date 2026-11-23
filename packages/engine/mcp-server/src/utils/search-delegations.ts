@@ -16,7 +16,7 @@ export const MAX_SEARCH_SPAWNS = 4;
 /** One search agent to spawn: which agent, and the prompt to send it verbatim. */
 export interface SearchDelegation {
   planItemId: string;
-  agent: "search-records" | "search-images" | "search-hints" | "search-external-sites";
+  agent: "search-records" | "search-hints" | "search-external-sites";
   prompt: string;
 }
 
@@ -24,11 +24,9 @@ export interface SearchDelegation {
  *  research suite's validator (`_ASKS_ABOUT_A_PARENT`). */
 const ASKS_ABOUT_A_PARENT = /\b(?:parents?|parentage|father|mother)\b|\b(?:son|daughter|child) of\b/i;
 
-/** A FamilySearch item whose own rationale says its records are browse-only
- *  images, which search-images reads page by page. */
-const BROWSE_ONLY = /\bbrowse[- ]only\b|\bunindexed\b|\bnot (?:yet )?indexed\b|\b0% record-searchable\b/i;
-
-/** A FamilySearch person id, as the hints item's rationale names it. */
+/** A FamilySearch person id, as the hints item's rationale names it. Whether a
+ *  FamilySearch item's records are browse-only is left to the router, which reads
+ *  the rationale: "not a browse-only volume" is the same words as "browse-only". */
 const FS_PERSON_ID = /\b[A-Z0-9]{4}-[A-Z0-9]{3,4}\b/;
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -37,7 +35,7 @@ const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !=
 function agentFor(item: any): SearchDelegation["agent"] {
   if (item?.record_type === "fs_hints") return "search-hints";
   if (!routesToFamilySearch(item)) return "search-external-sites";
-  return BROWSE_ONLY.test(String(item?.rationale ?? "")) ? "search-images" : "search-records";
+  return "search-records";
 }
 
 /** One vital event as the tree holds it: the primary fact of that type, else the first. */
@@ -156,7 +154,7 @@ export function searchDelegations(
       if (personId) lines.push(`personId: ${personId}`);
     }
     lines.push(`plan_item: ${JSON.stringify(item)}`);
-    if (subject && agent !== "search-hints" && agent !== "search-external-sites") {
+    if (subject && agent === "search-records") {
       lines.push(`subject: ${JSON.stringify(subject)}`);
       if (unsupported) {
         lines.push(

@@ -314,6 +314,12 @@ describe("project_context", () => {
       I2: null, I3: null, I4: null, I5: null, I6: null, I7: null, I8: null,
       I9: null, I10: null, I11: { given: "Anthony", searchAs: "A*" },
     });
+    // A flagged given name is a reading in doubt, so the name is the surname alone.
+    const names = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.name ?? null]));
+    const surnameOf = (id: string) => (r.persons ?? []).find((p) => p.id === id)!.name;
+    expect(names.I1).not.toMatch(/Anthony/);
+    expect(names.I11).not.toMatch(/Anthony/);
+    expect(surnameOf("I3")).toMatch(/^Anthony /);
   });
 
   it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
