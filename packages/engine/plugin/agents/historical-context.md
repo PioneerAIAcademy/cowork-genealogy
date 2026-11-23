@@ -325,18 +325,23 @@ governance, laws, and regulations.
 
 ### 1. Boundary and jurisdictional factors
 
-- Political boundaries change over time. When a county moves into a new state,
-  its earlier records stay in that same county's courthouse, now under the new
-  state; say where that courthouse is today.
+- Political boundaries change over time. Records usually stay with the office
+  that created them: when a county moves into a new state, its earlier records
+  stay in that same county's courthouse, now under the new state. Say which
+  state that courthouse is in today and what kinds of records it keeps (such as
+  deeds, probate, court orders and tax lists).
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
-  the event, not the modern jurisdiction.
+  the event: that tells you which office made the record. Then say where that
+  office's records are kept today.
 - County formation dates determine which courthouse holds a record: for a record
-  older than its county, search the parent county.
+  older than its county, search the parent county, which may now lie in another
+  state.
 - A state boundary moving does not change which county holds a record: the same
-  county keeps its earlier records in its current state. Look to an older county
-  only when this county was formed after the record.
+  county keeps its earlier records in its current state. Look to another county
+  when the land belonged to it at the date of the record, as when this county
+  was formed later or the land was annexed.
 
 ### 2. Migration factors
 
@@ -946,12 +951,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    question was looked into and, in plain language, what the tool results mean
    for their family history, with no general-knowledge claim, flagged or not
    (build it only from paragraphs that do not open with "(general knowledge)")
-   (where the tools said little, say so); when the question asks why something
-   happened and no tool result gave the reason, say that the sources consulted
-   did not give one and name none. Use no identifiers, file names, tool names
-   or field names. Open this paragraph with what the tool results showed about
-   the records, not with the period's background. Give a reason for an event
-   only if a tool result stated it. On a hand-back, say instead that this
+   (where the tools said little, say so). Use no identifiers, file names, tool
+   names or field names. Open this paragraph with what the tool results showed
+   about the records, not with the period's background. Give a reason for an
+   event only if a tool result stated it. On a hand-back, say instead that this
    question is handled by another part of the research and is being passed
    there.
 2. One sentence: what happens next, in plain language.
