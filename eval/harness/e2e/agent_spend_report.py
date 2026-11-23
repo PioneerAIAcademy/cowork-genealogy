@@ -36,7 +36,10 @@ priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
 rate). A spawn recording no model predates the field and keeps the flat Sonnet
 table (`pricing.estimate_cost_usd`), labelled so. A spawn on a model the table
 does not know, or on more than one model, is counted as unpriced with its reason
-— never as $0 and never at the Sonnet rate. The production (5-minute) basis is
+— never as $0 and never at the Sonnet rate. A Haiku 5.5 request over 100,000
+prompt tokens bills at 5x (`pricing.LONG_PROMPT`); a spawn adds that premium
+from its `long_prompt_usage`, and one captured before the field whose peak
+passed the line is unpriced. The production (5-minute) basis is
 ~8% lower; state the basis next to any figure lifted out of here.
 
 **Runs written before #2582 carry no `subagents[].usage`** and are counted as
@@ -80,7 +83,10 @@ def price_helper(sub: dict[str, Any]) -> tuple[float | None, str]:
     Returns `(cost, how)`. `how` is the model id, `NOT_RECORDED` (flat Sonnet
     table, the spawn predates `models`), or a reason the spawn is unpriced. Tokens
     are not split per model inside one spawn, so a multi-model spawn is unpriced
-    rather than guessed (none is recorded yet).
+    rather than guessed (none is recorded yet). On a model with a long-prompt
+    price (`pricing.LONG_PROMPT`) the spawn's `long_prompt_usage` adds its
+    premium; a spawn captured before that field is priced only when its peak
+    shows no call passed the threshold.
     """
     usage = sub.get("usage")
     if pricing.estimate_cost_usd(usage) is None:
@@ -94,7 +100,17 @@ def price_helper(sub: dict[str, Any]) -> tuple[float | None, str]:
     cost = pricing.estimate_cost_for_model(usage, names[0])
     if cost is None:
         return None, f"no rate for {names[0]}"
-    return cost, names[0]
+    threshold, multiple = pricing.LONG_PROMPT.get(pricing.canonical_model(names[0]), (None, 1.0))
+    if threshold is None:
+        return cost, names[0]
+    long_usage = sub.get("long_prompt_usage")
+    if isinstance(long_usage, dict):
+        premium = pricing.estimate_cost_for_model(long_usage, names[0]) or 0.0
+        return cost + (multiple - 1) * premium, names[0]
+    peak = sub.get("peak_window_tokens")
+    if isinstance(peak, int) and not isinstance(peak, bool) and peak <= threshold:
+        return cost, names[0]
+    return None, f"a call over {threshold:,} prompt tokens, captured before long_prompt_usage"
 
 
 def collect(paths: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:

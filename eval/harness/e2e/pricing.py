@@ -90,7 +90,8 @@ CACHE_WRITE_5M_INPUT_MULTIPLE = 1.25
 # model -> (prompt tokens, multiple): one request whose prompt (input + cache read +
 # cache write) is over the threshold bills every token class at the multiple. Only a
 # single request can be priced this way, so `estimate_message_cost` applies it and
-# `estimate_cost_for_model`, which prices a sum of requests, cannot.
+# `estimate_cost_for_model`, which prices a sum of requests, cannot; a subagent's
+# sum adds it from `long_prompt_usage` (`agent_spend_report.price_helper`).
 LONG_PROMPT = {"claude-haiku-5-5": (100_000, 5.0)}
 
 
