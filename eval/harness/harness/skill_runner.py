@@ -53,6 +53,7 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    builtin_spawn_denial,
     sources_note_hook,
     owned_section_denial,
     owner_denied,
@@ -1319,6 +1320,10 @@ async def run_skill(
         ):
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
+        elif (builtin_denial := builtin_spawn_denial(input_data)) is not None:
+            # The shipped hook's deny of a built-in agent type on the main thread,
+            # before any stub: production never runs one in a plugin agent's place.
+            return builtin_denial
         elif (
             (stub_text := spawn_stub_text(tool_name, input_data, _stub_agents)) is not None
             # Last on purpose: the short-circuit, the stop and an explicit stub's

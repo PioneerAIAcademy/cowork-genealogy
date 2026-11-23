@@ -3134,12 +3134,17 @@ def test_a_spawn_inside_live_agents_runs(tmp_path, monkeypatch):
     assert not _stubbed(out)
 
 
-def test_a_general_purpose_spawn_with_no_subagent_type_is_stubbed(tmp_path, monkeypatch):
-    """A general-purpose spawn carries only {description, prompt}. It is not in
-    `live_agents` under the name 'general-purpose', so it is stubbed too."""
-    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn()], live_agents=_LIVE)
+@pytest.mark.parametrize("agent", [None, "general-purpose", "claude", "Explore"])
+def test_a_main_thread_spawn_of_a_built_in_agent_is_denied_by_name(tmp_path, monkeypatch, agent):
+    """As the shipped hook denies it: a built-in agent runs a step without any plugin
+    agent's instructions or tool limits. A spawn with no `subagent_type` is
+    general-purpose, and is denied under that name, never as 'None'."""
+    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn(agent)], live_agents=_LIVE)
 
-    assert _stubbed(out)
+    assert _denied(out)
+    assert f'"{agent or "general-purpose"}"' in _reason(out)
+    assert "None" not in _reason(out)
+    assert "continue_" not in out
 
 
 def test_an_explicit_stub_keeps_its_canned_text_under_the_default(tmp_path, monkeypatch):

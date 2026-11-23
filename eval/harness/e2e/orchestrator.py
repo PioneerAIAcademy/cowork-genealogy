@@ -54,6 +54,7 @@ from harness.context_policy import (
     OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    builtin_spawn_denial,  # the SHIPPED hook's predicate, not a copy
     is_subagent_call,
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
@@ -2080,6 +2081,11 @@ async def _run_agent(
             # another tool call among dozens.
             if _step_turns and _gate.first_step and _step_turns[-1].step != _gate.first_step:
                 _step_turns[-1].step = _gate.first_step
+
+        # The shipped hook's deny of a built-in agent type on the main thread.
+        if (builtin_denial := builtin_spawn_denial(input_data)) is not None:
+            _emit(f"[blocked built-in spawn] {tool_name}")
+            return builtin_denial
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already

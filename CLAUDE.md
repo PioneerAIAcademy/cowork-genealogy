@@ -397,7 +397,10 @@ the conditional no-project sentence.
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
 the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
-ours, so the hook denies the call there. Change one, change both.
+ours, so the hook denies the call there. Change one, change both. The hook also denies
+the main thread a built-in agent type (`claude`, `general-purpose`, `Explore`, `Plan`,
+`web-fetch`; `BUILTIN_SUBAGENT_TYPES`), which runs a step the same way, on every path;
+both harnesses mirror it.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing

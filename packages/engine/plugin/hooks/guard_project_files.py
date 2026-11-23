@@ -101,7 +101,8 @@ READ_TARGET_KEYS = {"Read": ("file_path", "path"), "Grep": ("path", "glob"), "Gl
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
-# The delegation tools, denied only for `subagent_type: "fork"`. From Claude Code
+# The delegation tools, denied for `subagent_type: "fork"` and, on the main thread, for a
+# built-in agent type (BUILTIN_SUBAGENT_TYPES below). From Claude Code
 # 2.1.302 the SDK and the desktop app offer a fork by default: a copy of the main
 # thread with its context and tools, which runs a step without the plugin agent's
 # instructions or `tools:` list. The hosted path, both harnesses and the prototype
@@ -109,6 +110,16 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # environment is not ours to set, and this hook is the one thing that reaches it.
 DELEGATION_TOOLS = ("Agent", "Task")
 FORK_SUBAGENT_TYPE = "fork"
+
+# Claude Code's built-in agent types (CLI 2.1.3xx lists these beside the plugin's).
+# Spawned from the MAIN THREAD, each runs a step the way a fork does: without the
+# plugin agent's instructions or `tools:` list. A Haiku 5.5 router spawned `claude`
+# for a hypothesis-tracking step (ut_research_9k4). A spawn with no `subagent_type`
+# is `general-purpose`. A subagent holds no Agent tool, so only the main thread is
+# checked.
+BUILTIN_SUBAGENT_TYPES = frozenset(
+    {"claude", "general-purpose", "Explore", "Plan", "web-fetch", "statusline-setup"}
+)
 
 # MCP tools held only by agents, denied on the MAIN THREAD (no `agent_id` key),
 # mapped to the BARE names of the agents whose `tools:` grant them -- the deny
@@ -645,6 +656,13 @@ FORK_REASON = (
     "yourself."
 )
 
+BUILTIN_SPAWN_REASON = (
+    '{tool} with subagent_type "{name}" is disabled from the main session: a built-in '
+    "agent runs the step without the plugin agent's instructions and tool limits. Spawn "
+    "the plugin agent the step calls for; its name is the subagent_type, without "
+    "`plugin:`."
+)
+
 AGENT_ONLY_REASON = (
     "Calling {tool} from the main session is disabled — only agents hold it, and "
     "each applies rules its result depends on. Delegate the step: invoke "
@@ -1061,6 +1079,17 @@ def deny_reason(denied: tuple) -> str:
     return reason
 
 
+def builtin_spawn_denied(tool_name: str, tool_input: dict, payload: dict) -> str | None:
+    """The built-in agent type a main-thread spawn names, else None."""
+    if tool_name not in DELEGATION_TOOLS or payload.get("agent_id"):
+        return None
+    raw = tool_input.get("subagent_type")
+    if raw is not None and not isinstance(raw, str):
+        return None
+    name = raw or "general-purpose"
+    return name if name in BUILTIN_SUBAGENT_TYPES else None
+
+
 def decision(payload: dict) -> dict:
     """The hook's stdout payload: a deny, or `{}` for no opinion."""
     tool_input = payload.get("tool_input")
@@ -1073,6 +1102,16 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
+
+    builtin = builtin_spawn_denied(tool_name, tool_input, payload)
+    if builtin is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": BUILTIN_SPAWN_REASON.format(tool=tool_name, name=builtin),
             },
         }
 

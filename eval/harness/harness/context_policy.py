@@ -279,6 +279,23 @@ _guard = _load_guard()
 #: hook's map, not a copy.
 AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
 
+
+def builtin_spawn_denial(input_data: dict[str, Any]) -> dict[str, Any] | None:
+    """The shipped hook's deny of a main-thread spawn of a built-in agent type, else None."""
+    tool_input = input_data.get("tool_input")
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    tool_name = str(input_data.get("tool_name") or "")
+    name = _guard.builtin_spawn_denied(tool_name, tool_input, input_data)
+    if name is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": _guard.BUILTIN_SPAWN_REASON.format(tool=tool_name, name=name),
+        }
+    }
+
 _ROUTE_HOOK_PATH = _GUARD_HOOK_PATH.with_name("no_project_route.py")
 
 

@@ -638,13 +638,28 @@ describe("the guard script's decisions", () => {
   it.each([
     ["Agent", { subagent_type: "record-extractor", prompt: "p" }],
     ["Agent", { subagent_type: "genealogy-research:record-extractor", prompt: "p" }],
-    ["Task", { subagent_type: "general-purpose", prompt: "p" }],
-    ["Agent", { prompt: "p" }],
-    ["Agent", { subagent_type: null, prompt: "p" }],
     ["Agent", { subagent_type: ["fork"], prompt: "p" }],
     ["mcp__genealogy__record_read", { subagent_type: "fork" }],
   ])("has no opinion on %s %j", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  it.each([
+    ["Task", { subagent_type: "general-purpose", prompt: "p" }, "general-purpose"],
+    ["Agent", { prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: null, prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: "claude", prompt: "p" }, "claude"],
+    ["Agent", { subagent_type: "Explore", prompt: "p" }, "Explore"],
+  ])("denies the main thread %s %j, a built-in agent, and names the way out", (tool_name, tool_input, name) => {
+    const out = runGuard({ tool_name, tool_input });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`"${name}"`);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("Spawn the plugin agent the step calls for");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("leaves a built-in agent type alone inside a subagent", () => {
+    expect(runGuard({ tool_name: "Agent", agent_id: "a1", tool_input: { subagent_type: "claude", prompt: "p" } })).toEqual({});
   });
 
   it.each([
