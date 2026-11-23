@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_search_records_035",
+    "skill": "search-records",
+    "name": "Found 1870 candidate (b. 1833) is not excluded by a tighter birth-range search",
+    "type": "positive",
+    "description": "The subject is a Black midwife of Cunningham District, Fluvanna County, Virginia (b. Apr 1853). The 1870 Fluvanna census shows Antoine Tyler (ark:/61903/1:1:MFLB-F5N), female, mulatto, born 1833, household head in Cunningham — this record is handed to the agent as a known candidate for pli_002. In the session that generated this test (feedback #4513) the agent then searched An* Tyler 1870 with birthYearFrom 1848, which excluded Antoine entirely and produced a nil, suppressing the candidate. The agent must never run a search whose filters exclude a record it already has as a candidate in the same invocation. Issue #4580.",
+    "tags": [
+      "search",
+      "census",
+      "negative-result",
+      "candidate-not-excluded"
+    ]
+  },
+  "input": {
+    "delegation": "Run plan item pli_002: find the subject in the 1870 Fluvanna County, Virginia census. A candidate has been found: Antoine Tyler (ark:/61903/1:1:MFLB-F5N), female, mulatto, born 1833, household head, Cunningham, Fluvanna, Virginia — from the 1870 US census (collection 1438024). This record may be the subject's earlier household. Continue searching pli_002 to completion and report whether this candidate should be associated with the subject.\n\nThe subject: a midwife, female, black, born April 1853, Cunningham District, Fluvanna County, Virginia (family name Tyler in 1900). Her given name readings include Ann and Antone.\n\nplanItemId: pli_002\nprojectPath: <workspace>",
+    "scenario": "tyler-fluvanna-midwife"
+  },
+  "mcp_fixtures": [
+    "record-search-tyler-1870-tight-birth-nil",
+    "record-search-tyler-1870-antoine-household",
+    "record-read-tyler-1870-mflb-f5n",
+    "record-search-catch-all-empty",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH: Antoine Tyler (MFLB-F5N), female, b. 1833, Cunningham, Fluvanna, Virginia, is the household the subject lived in during 1870. The subject (b. Apr 1853) would be about 17 and likely appears in the household — but the 1870 census has no relationship column, so membership must be inferred from surname, age and listing order. Antoine is head; her children in the record are Margaret (1855), Joseph (1863), Julia E (1866), Malinda (1869). Margaret is 2–3 years younger than the subject's birth year.",
+    "FIXTURES: The tight-birth-nil fixture is keyed on surname ~Tyl AND birthYearFrom 1848; it returns 0, because that range excludes Antoine (b. 1833). The broader Antoine-household fixture is keyed on surname ~Tyl alone (no birth range restriction); it returns Antoine's household row. Any other record_search returns 0 via the catch-all. record_read of MFLB-F5N returns the full 5-person household. Any catalog_search returns empty.",
+    "CORE: Antoine Tyler (b. 1833) is handed as a found candidate in the delegation BEFORE any searches. Every record_search issued in this invocation must have no birth range, or a birth range that includes 1833. A search with birthYearFrom > 1833 or birthYearTo < 1833 is a violation of the rule 'never exclude a candidate this invocation has already found'. The tight-birth-nil fixture fires for any such excluding search and returns 0, suppressing the candidate — that outcome is what the validator catches.",
+    "Antoine is a candidate needing review, not a confirmed match. Reporting her household as 'found, needs review' (not adopted as proved) is the correct form. Dismissing her on the birth-year gap alone (1833 ≠ 1853) is incorrect: the subject may appear as a child in the household, and the head's age in 1870 is consistent with the subject's mother. Calling her proved without further corroboration overclaims."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}
