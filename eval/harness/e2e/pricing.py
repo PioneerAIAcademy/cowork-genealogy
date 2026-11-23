@@ -73,12 +73,18 @@ MODEL_RATES = {
                           "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
     "claude-haiku-4-5": {"input_tokens": 1.00, "output_tokens": 5.00,
                          "cache_read_input_tokens": 0.10, "cache_creation_input_tokens": 2.00},
-    # Prompts over 100K bill 5x; the CLI's small-model calls send none.
+    # A prompt over 100K bills 5x: LONG_PROMPT_TIERS.
     "claude-haiku-5-5": {"input_tokens": 0.10, "output_tokens": 0.50,
                          "cache_read_input_tokens": 0.01, "cache_creation_input_tokens": 0.20},
     "claude-opus-4-8": {"input_tokens": 5.00, "output_tokens": 25.00,
                         "cache_read_input_tokens": 0.50, "cache_creation_input_tokens": 10.00},
 }
+
+# A message whose prompt (input + cache write + cache read) is over the first figure
+# bills every rate at the second. Applied per message (`estimate_message_cost`): a usage
+# total cannot say which of its calls were long. The server's `spend.LONG_PROMPT_TIERS`
+# is the other copy, pinned by the MODEL_RATES parity test.
+LONG_PROMPT_TIERS = {"claude-haiku-5-5": (100_000, 5.0)}
 
 _DATE_SUFFIX = re.compile(r"-\d{8}$")
 
@@ -135,7 +141,10 @@ def estimate_message_cost(usage: dict | None, model: str | None) -> float | None
     raw_1h = split.get("ephemeral_1h_input_tokens") if isinstance(split, dict) else None
     writes = tokens("cache_creation_input_tokens")
     one_hour = min(writes, raw_1h) if isinstance(raw_1h, int) and raw_1h > 0 else 0
-    return (
+    prompt = tokens("input_tokens") + writes + tokens("cache_read_input_tokens")
+    threshold, multiple = LONG_PROMPT_TIERS.get(canonical_model(model), (None, 1.0))
+    tier = multiple if threshold is not None and prompt > threshold else 1.0
+    return tier * (
         tokens("input_tokens") * rates["input_tokens"]
         + tokens("output_tokens") * rates["output_tokens"]
         + tokens("cache_read_input_tokens") * rates["cache_read_input_tokens"]

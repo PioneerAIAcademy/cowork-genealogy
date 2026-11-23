@@ -98,21 +98,30 @@ MODEL_RATES = {
     "claude-sonnet-5": (2.0, 10.0),
     "claude-sonnet-5-5": (2.0, 10.0),
     "claude-haiku-4-5": (1.0, 5.0),
-    # The CLI's own small-model calls from 2.1.308. Prompts over 100K bill 5x; it sends none.
+    # The main thread's model (main-thread.json) and the CLI's own small-model calls.
+    # A prompt over 100K bills 5x: LONG_PROMPT_TIERS.
     "claude-haiku-5-5": (0.10, 0.50),
     "claude-opus-4-8": (5.0, 25.0),
 }
+# A call whose prompt (input + cache write + cache read) is over the first figure bills
+# every rate at the second: Haiku 5.5's price list. The harness's `LONG_PROMPT_TIERS` is
+# the other copy, pinned by the MODEL_RATES parity test.
+LONG_PROMPT_TIERS = {"claude-haiku-5-5": (100_000, 5.0)}
 _DATED = re.compile(r"-\d{8}$")
 
 
-def rates_for(model: str | None) -> dict[str, float]:
+def rates_for(model: str | None, prompt_tokens: int = 0) -> dict[str, float]:
     """``model``'s rates, keyed like PRICE_PER_MTOK; PRICE_PER_MTOK itself for no model or
     one MODEL_RATES does not know. A dated id (``claude-haiku-4-5-20251001``) is its
-    undated model."""
-    base = MODEL_RATES.get(_DATED.sub("", model or ""))
+    undated model. ``prompt_tokens`` is one call's prompt, for LONG_PROMPT_TIERS."""
+    key = _DATED.sub("", model or "")
+    base = MODEL_RATES.get(key)
     if base is None:
         return PRICE_PER_MTOK
     input_rate, output_rate = base
+    threshold, multiple = LONG_PROMPT_TIERS.get(key, (None, 1.0))
+    if threshold is not None and prompt_tokens > threshold:
+        input_rate, output_rate = input_rate * multiple, output_rate * multiple
     return {"input": input_rate, "cache_write": 1.25 * input_rate,
             "cache_read": 0.1 * input_rate, "output": output_rate}
 
@@ -126,8 +135,9 @@ def price_usd(tokens, model: str | None = None, cache_write_1h: int = 0) -> floa
     """Tokens (input, cache_write, cache_read, output) priced at ``rates_for(model)``:
     with no model, at PRICE_PER_MTOK. The first ``cache_write_1h`` of the cache writes are
     1-hour ones, priced at ``cache_write_1h_rate``; clamped to the write total, as the CLI's
-    own cost line clamps it."""
-    rates = rates_for(model)
+    own cost line clamps it. ``tokens`` is one call's: a model in LONG_PROMPT_TIERS is
+    priced by that call's prompt."""
+    rates = rates_for(model, sum((t or 0) for t in tokens[:3]))
     total = sum(
         (t or 0) / 1_000_000 * rates[name]
         for name, t in zip(TOKEN_CLASSES, tokens)
