@@ -1465,3 +1465,66 @@ describe("project_context include parameter (#4422 stage 1)", () => {
     expect(bad.text).toContain("persons, sources");
   });
 });
+
+describe("project_context — searches on a search step (spec §2.2.1)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-searches-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const tree = {
+    persons: [{ id: "I1", names: [{ id: "N1", given: "Ann", surname: "Lee", preferred: true }] }],
+    relationships: [],
+  };
+  const planItem = {
+    id: "pli_001",
+    sequence: 1,
+    record_type: "census",
+    jurisdiction: "Ohio",
+    date_range: "1850",
+    repository: "FamilySearch",
+    rationale: "The 1850 census.",
+    fallback_for: null,
+    status: "planned",
+  };
+
+  async function contextFor(plans: any[]) {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        project: {
+          id: "rp_001",
+          objective: "x",
+          status: "active",
+          created: "2026-01-01",
+          updated: "2026-01-01",
+          subject_person_ids: ["I1"],
+        },
+        questions: [{ id: "q_001", question: "Where was Ann in 1850?", status: "in_progress" }],
+        plans,
+      }),
+    );
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    return r.questionStatuses![0];
+  }
+
+  it("writes the search step out when nextStep is a search", async () => {
+    const row = await contextFor([{ id: "pl_001", question_id: "q_001", status: "active", items: [planItem] }]);
+    expect(row.nextStep).toBe("search-records");
+    expect(row.searches).toHaveLength(1);
+    expect(row.searches![0]).toMatchObject({ planItemId: "pli_001", agent: "search-records" });
+    expect(row.searches![0].prompt).toContain(`projectPath: ${dir}`);
+    expect(row.searches![0].prompt).toContain(`plan_item: ${JSON.stringify(planItem)}`);
+  });
+
+  it("carries no searches when the next step is not a search", async () => {
+    const row = await contextFor([]);
+    expect(row.nextStep).toBe("research-plan");
+    expect(row.searches).toBeUndefined();
+  });
+});

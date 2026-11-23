@@ -99,6 +99,11 @@ can drop:
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
+    searches?: [{                        // only when nextStep is a search — §2.2.1
+      planItemId: string,
+      agent: "search-records" | "search-images" | "search-hints" | "search-external-sites",
+      prompt: string,                    //   the whole delegation, sent as it is
+    }],
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
@@ -576,6 +581,49 @@ projection. Two consequences worth stating so they are not "tidied" later:
 The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
+
+
+### 2.2.1 `searches` — the search step, written out
+
+When a row's `nextStep` starts `search-records`, `search-hints` or
+`search-external-sites`, the row carries `searches`: one entry per open item of
+the question's active plan, lowest `sequence` first, at most four
+(`src/utils/search-delegations.ts`). Each names the agent and the prompt the
+router sends it unchanged:
+
+```
+projectPath: <projectPath>
+questionId: q_001
+planId: pl_001
+planItemId: pli_002
+plan_item: {<the stored item, verbatim>}
+subject: {"subjectId","names","birth","death","parents"}
+```
+
+- **Agent.** `search-hints` for an `fs_hints` item, `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`),
+  `search-images` for a FamilySearch item whose rationale calls its records
+  browse-only, unindexed or 0% record-searchable, else `search-records`.
+- **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
+  item in `exhaustedImageGroups`, and a fallback whose primary is still open or
+  found something. A fallback runs once every entry its primary logged is
+  `negative`.
+- **A hints item at the head of the plan goes alone**, with a `personId:` line
+  read from its rationale and no subject: its verdicts can save the searches
+  behind it.
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, for
+  search-records and search-images only. `parents` is left out when the question
+  asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
+  of`, the same words as the research suite's validator) and when the tree gives
+  more than two. A given name `unsupportedGivenName` flags is replaced by its
+  `searchAs`, and a line after the block names the given name as a reading in
+  doubt.
+- The router adds `userPresent` to a search-external-sites prompt itself; only
+  it knows whether the run is autonomous.
+
+Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
+dropped the subject block or sent one spawn for two items in four research
+tests. Every field is in the project documents (ADR-0011's first question).
 
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 

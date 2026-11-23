@@ -41,6 +41,7 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { searchDelegations, type SearchDelegation } from "../utils/search-delegations.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -229,7 +230,13 @@ export type ProjectContextQuestionStatus = Pick<QuestionStatus, "id" | "state" |
   storedStatus?: string;
   unregisteredDisagreements?: QuestionStatus["unregisteredDisagreements"];
   competingParentSets?: QuestionStatus["competingParentSets"];
+  /** When `nextStep` is a search: one spawn per open item of the active plan,
+   *  its agent and the prompt to send it as it is. */
+  searches?: SearchDelegation[];
 };
+
+/** A `nextStep` that runs the plan's search agents. */
+const SEARCH_STEP = /^search-(?:records|hints|external-sites)\b/;
 
 /** Each exhausted film with the open plan items whose `image_search` log
  *  entries browsed it. Only `image_search` entries: that is what search-images
@@ -611,10 +618,24 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // #4444: the identity rung's pairs, by research_append's own pair test and
   // place lookup, so the rung and the proof gate cannot disagree.
   const attachedBirthPairs = await attachedBirthPairsByQuestion(research, tree);
-  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(
-    ({ id, ...rest }) =>
-      omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
+  const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
+  const exhaustedItemIds = new Set(exhausted.flatMap((g) => g.planItemIds ?? []));
+  const subjectId = Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids[0] : undefined;
+  const subjectUnsupported = persons.find((p) => p.id === subjectId)?.unsupportedGivenName;
+  const questionById = new Map<string, any>(
+    (Array.isArray(research?.questions) ? research.questions : [])
+      .filter((q: any) => q && typeof q === "object" && typeof q.id === "string")
+      .map((q: any) => [q.id, q]),
   );
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(({ id, ...rest }) => {
+    const searches =
+      typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
+        ? searchDelegations(input.projectPath, research, tree, questionById.get(id), exhaustedItemIds, subjectUnsupported)
+        : [];
+    return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches }, [
+      "nextStep",
+    ]) as ProjectContextQuestionStatus;
+  });
 
   // Decision 33: what the project still owes. Before questionStatuses in the
   // answer, so a reader scoping to that array by its key does not take these
@@ -643,7 +664,6 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     undefined,
   ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
-  const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
   const uploads = await projectUploads(input.projectPath);
   const links = await projectLinks(principal);
   // A connector caller whose FamilySearch session has ended gets the link here
@@ -786,10 +806,12 @@ export const projectContextSchema = {
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +
     "Canada and Mexico, once per country and left out of each locality's collections; and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
-    "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
+    "competingParentSets, searches}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
-    "what it is waiting on, and storedStatus, the question's own questions[].status " +
+    "what it is waiting on; searches [{planItemId, agent, prompt}], present when nextStep is a search, " +
+    "is the search step written out: spawn each agent with its prompt as the whole delegation; " +
+    "and storedStatus, the question's own questions[].status " +
     "verbatim when it is a string. state is DERIVED from the documents " +
     "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
