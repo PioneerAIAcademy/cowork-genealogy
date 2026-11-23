@@ -102,6 +102,38 @@ def test_vitals_fails_planted_breaks(items, missing):
         _run(check_vitals, items, ALAN)
 
 
+RUN_BIRTH = _item(3, date_range="1936-1936", jurisdiction="Weber County, Utah",
+                 rationale="Alan Glen Applegarth was born 29 Apr 1936 in Ogden, Weber County. A "
+                           "birth record would name both parents.")
+RUN_DEATH = _item(7, date_range="2023-2023", jurisdiction="Cache County, Utah",
+                  rationale="The 2023 obituary places Alan's death in Cache County. His death "
+                            "certificate would name his parents.")
+
+
+def test_vitals_passes_the_2026_11_23_run_wording():
+    _run(check_vitals, [RUN_BIRTH, RUN_DEATH], ALAN)
+
+
+def test_vitals_passes_the_subjects_own_death_entry_unnamed():
+    item = _item(11, date_range="2023", rationale="The subject's own death or burial entry (he "
+                                                  "died in 2023 per the logged obituary).")
+    _run(check_vitals, [RUN_BIRTH, item], ALAN)
+
+
+@pytest.mark.parametrize("items,missing", [
+    ([RUN_BIRTH, _item(4, date_range="1970", rationale="Olive died about 1970; her death "
+                                                       "certificate would name her son Alan.")],
+     "death certificate"),
+    ([RUN_DEATH, _item(5, date_range="1900-1910", rationale="Olive's birth record; she is "
+                                                            "Alan's mother.")],
+     "birth record"),
+    ([RUN_BIRTH, {**RUN_DEATH, "date_range": None}], "death certificate"),
+])
+def test_vitals_year_fallback_keeps_a_parents_record_out(items, missing):
+    with pytest.raises(AssertionError, match=missing):
+        _run(check_vitals, items, ALAN)
+
+
 def test_vitals_fails_when_nothing_written():
     with pytest.raises(AssertionError, match="no new plan items"):
         _run(check_vitals, [], ALAN)

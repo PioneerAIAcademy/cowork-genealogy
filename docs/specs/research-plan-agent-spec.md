@@ -141,6 +141,30 @@ that would replace it (probed 2026-10-02, §5):
   `plans[]` (their validators fail any appended item). This spec has no fuller
   return-contract description; the agent body's "Return contract" section is
   the source. The validator is in §7.
+- **The subject's own birth record and death certificate (issue #4696, was
+  #4654).** On a parentage question the plan carries the subject's own birth
+  record and, when the subject has died, their death certificate, each as an
+  item: planned, or written `skipped` with `skip_category` `inaccessible`
+  (sealed or destroyed) or `no_coverage` (never kept for that place and period)
+  and a `skip_reason`. It is the second exception, beside the enumerative one, to
+  "never write a new item `skipped`: leave out what you would not search" (lead,
+  2026-11-22). Why a skipped item rather than an omission: research-exhaustiveness
+  judges what a plan holds and misses what it leaves out. On a project holding
+  the subject's 2023 obituary and no mention of his death certificate, it named
+  the gap 4 to 5 times in 10; with the certificate carried as a skipped item, 29
+  of 30 and 20 of 20 (PR #4628). Measured on `ut_research_plan_zgw` (Alan
+  Applegarth, both certificates sealed in Utah): the planner planned his own
+  birth record in 3 of 3 runs on the unedited body and his own death record
+  in 2 of 3 (the third planned only his parents' death records); after the
+  edit, both in 3 of 3 (scratch runs, 2026-11-23). The death half also extends Step 4 self-check 6 and
+  the return-contract death line to "or on a parentage question whose subject
+  has died", the same return-time re-check the parents'-marriage item uses. Not a
+  `research_append` precondition: questions carry no parentage marker, plan
+  `record_type` has no birth/death distinction, and the subject's tree person
+  may hold no Death fact (Alan's death is known only from the obituary). The
+  planned-status validator excuses such a skip by the question's own text
+  (`_parentage_vital_skip`), since the `parentage` test tag is missing from five
+  parentage tests.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -243,3 +267,15 @@ change; keep no local copy.
   a church marriage register is a valid dedicated item (review decision,
   2026-10-30). Proven to fail in
   `eval/harness/tests/unit/test_research_plan_validator.py`.
+- `test_research_plan_plans_subject_birth_and_death`: on
+  `subject-birth-death-items` tests (`ut_research_plan_zgw`), some new item, in
+  any status, ties a birth-record phrase to the subject and some item ties a
+  death-certificate phrase to him, read from `rationale`, `skip_reason` and
+  `jurisdiction`. A parent's record does not count; a sentence that also names
+  the parents does. Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`.
+- `test_new_plan_items_planned_status` excuses a new `skipped` item on two
+  exceptions: the enumerative one, and `_parentage_vital_skip` (a question whose
+  text names a parent, `inaccessible` or `no_coverage`, a reason, and a birth or
+  death event). It does not check whose record the skipped item is. Proven in
+  `eval/harness/tests/unit/test_research_plan_planned_status_validator.py`.

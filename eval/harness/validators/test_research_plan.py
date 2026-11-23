@@ -317,14 +317,35 @@ def _enumerative_skip(item: dict, question: dict | None) -> bool:
     )
 
 
+_PARENTAGE_QUESTION_RE = re.compile(r"\b(?:parents?|father|mother)\b", re.IGNORECASE)
+
+
+def _parentage_vital_skip(item: dict, question: dict | None) -> bool:
+    """The second exception (lead ruling on #4696, 2026-11-22): on a parentage
+    question, the subject's own birth record or death certificate that cannot
+    be searched is written `skipped`, `inaccessible` or `no_coverage`, with a
+    reason. A question is parentage when its text names a parent: neither the
+    question nor the test carries a marker, and the `parentage` test tag is
+    missing from five such tests. Known limit: it does not check whose record
+    the item is, so a parent's sealed certificate passes here too; only the
+    tag-gated `test_research_plan_plans_subject_birth_and_death` reads that."""
+    return (
+        bool(_PARENTAGE_QUESTION_RE.search(str((question or {}).get("question") or "")))
+        and item.get("status") == "skipped"
+        and item.get("skip_category") in ("inaccessible", "no_coverage")
+        and bool(str(item.get("skip_reason") or "").strip())
+        and bool(_covered_events(item) & {"birth", "death"})
+    )
+
+
 def test_new_plan_items_planned_status(before_state, after_state, test):
     """Tag-gated: new plan items default to status='planned' (not
     in_progress) and fallback_for=null unless an explicit fallback chain
     is being set up. Items created mid-execution would have status set
     by the search-* skills via log entries — never by research-plan.
-    The one exception is `_enumerative_skip`; on a targeted or unlabelled
-    question a `skipped` item at creation still fails, which is what stops
-    the enumerative obligation over-firing. The tag means the test writes a
+    The exceptions are `_enumerative_skip` and `_parentage_vital_skip`; any
+    other `skipped` item at creation still fails, which is what stops the
+    enumerative obligation over-firing. The tag means the test writes a
     plan, so a run that adds no new item (to a new plan or an existing one)
     fails rather than passing with nothing checked (#4477)."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
@@ -352,7 +373,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
                 continue  # pre-existing item, not our responsibility
             new_items += 1
             status = item.get("status")
-            if status != "planned" and not _enumerative_skip(item, question):
+            if status != "planned" and not (
+                _enumerative_skip(item, question) or _parentage_vital_skip(item, question)
+            ):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
@@ -2081,13 +2104,16 @@ def test_research_plan_reads_locality_rows(before_state, after_state, test):
 
 # --- Parentage: the subject's own birth record and death certificate (issue #4696 Part B) ----
 
-# test id -> the subject's given name. Alan Applegarth: born 1936 and died 2023 in Utah, both
-# certificates closed to the public (recent-birth-first-plan).
+# test id -> (the subject's given name, birth year, death year). Alan Applegarth: born 1936
+# and died 2023 in Utah, both certificates closed to the public (recent-birth-first-plan).
 _SUBJECT_VITALS_BY_TEST_ID = {
-    "ut_research_plan_zgw": "Alan",
+    "ut_research_plan_zgw": ("Alan", 1936, 2023),
 }
 
-_DEATH_RECORD_WORD = r"(?:death\s+(?:certificate|record|registration|index)\w*|certificates?\s+of\s+death)"
+_DEATH_RECORD_WORD = (
+    r"(?:death(?:\s+or\s+burial)?\s+(?:certificate|record|registration|index|entry|entries)\w*"
+    r"|certificates?\s+of\s+death)"
+)
 _BIRTH_RECORD_WORD = (
     r"(?:births?(?:\s+and\s+christenings)?\s+(?:certificate|record|registration|index)\w*"
     r"|certificates?\s+of\s+birth)"
@@ -2139,7 +2165,13 @@ def test_research_plan_plans_subject_birth_and_death(before_state, after_state, 
     reason when sealed (lead ruling on #4696, 2026-11-22).
 
     An item counts when its rationale, skip_reason or jurisdiction ties a
-    birth- or death-record phrase to the subject (`_own_record_re`). A births
+    birth- or death-record phrase to the subject (`_own_record_re`), or when it
+    names the subject, carries the record phrase anywhere, and its `date_range`
+    covers the subject's own birth or death year: the 2026-11-23 run wrote
+    "Alan Glen Applegarth was born 29 Apr 1936 … A birth record would name both
+    parents" and "His death certificate would name his parents", which the
+    phrase patterns alone miss. The year is what keeps a parent's death record
+    that mentions the subject (Olive's in 1970, John's in 1998) out. A births
     index searched for the subject counts for the birth half.
     """
     tags = test.get("tags") or []
@@ -2150,18 +2182,33 @@ def test_research_plan_plans_subject_birth_and_death(before_state, after_state, 
     )
     if "subject-birth-death-items" not in tags:
         pytest.skip("not a subject-birth-death-items test")
-    given = _SUBJECT_VITALS_BY_TEST_ID.get(test_id)
-    assert given, (
+    spec = _SUBJECT_VITALS_BY_TEST_ID.get(test_id)
+    assert spec, (
         f"{test_id} carries 'subject-birth-death-items' but has no entry in "
         "_SUBJECT_VITALS_BY_TEST_ID"
     )
+    given, birth_year, death_year = spec
     items = _new_items_or_fail(before_state, after_state)
-    death = _own_record_re(given, _DEATH_RECORD_WORD, "death")
-    birth = _own_record_re(given, _BIRTH_RECORD_WORD, "birth")
+    named = re.compile(rf"\b{re.escape(given)}\b|\bthe\s+subject\b", re.IGNORECASE)
+
+    def _counts(item: dict, word: str, event: str, year: int) -> bool:
+        text = _item_text(item)
+        if _own_record_re(given, word, event).search(text):
+            return True
+        years = [int(y) for y in re.findall(r"\b(1[5-9]\d\d|20\d\d)\b", str(item.get("date_range") or ""))]
+        return (
+            bool(named.search(text))
+            and re.search(word, text, re.IGNORECASE) is not None
+            and bool(years) and min(years) <= year <= max(years)
+        )
+
     missing = [
         label
-        for label, pattern in (("birth record", birth), ("death certificate", death))
-        if not any(pattern.search(_item_text(i)) for i in items)
+        for label, word, event, year in (
+            ("birth record", _BIRTH_RECORD_WORD, "birth", birth_year),
+            ("death certificate", _DEATH_RECORD_WORD, "death", death_year),
+        )
+        if not any(_counts(i, word, event, year) for i in items)
     ]
     assert not missing, (
         f"no new plan item accounts for {given}'s own "
