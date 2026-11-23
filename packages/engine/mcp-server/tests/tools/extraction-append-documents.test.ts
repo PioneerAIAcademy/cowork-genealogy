@@ -1972,7 +1972,7 @@ describe("extraction_append: documents", () => {
       const r = await run([{ recordId: "capture:hagell-note", document: hagell() }]);
       expect(r.ok, JSON.stringify(r.errors)).toBe(true);
       expect(r.records[0].summary).toMatch(
-        /Note: no party carries a probate, will or death fact, so no testator or decedent role was assigned\./,
+        /Note: no party carries a probate, will, death or burial fact, so the tool chose no testator or decedent — each party takes its own stated relation\./,
       );
     });
 
@@ -1987,7 +1987,7 @@ describe("extraction_append: documents", () => {
       const r = await run([{ recordId: "capture:will-carrier", document: { ...probate(persons), recordLabel: "will and probate" } }]);
       expect(r.ok, JSON.stringify(r.errors)).toBe(true);
       expect(await rolesOf("capture:will-carrier")).toMatchObject({ "Paul Meacham": "testator" });
-      expect(r.records[0].summary).not.toMatch(/no testator or decedent role was assigned/);
+      expect(r.records[0].summary).not.toMatch(/the tool chose no testator or decedent/);
     });
 
     it("still names the decedent from a death fact alone when another party is flagged principal", async () => {
@@ -2002,7 +2002,7 @@ describe("extraction_append: documents", () => {
       const r = await run([{ recordId: "capture:death-carrier", document: probate(flaggedOther) }]);
       expect(r.ok, JSON.stringify(r.errors)).toBe(true);
       expect(await rolesOf("capture:death-carrier")).toMatchObject({ "Paul Meacham": "decedent" });
-      expect(r.records[0].summary).not.toMatch(/no testator or decedent role was assigned/);
+      expect(r.records[0].summary).not.toMatch(/the tool chose no testator or decedent/);
 
       const flaggedCarrier = [
         person("p1", "Isaac", "Porter", "administrator"),
@@ -2011,10 +2011,10 @@ describe("extraction_append: documents", () => {
       const r2 = await run([{ recordId: "capture:death-flagged", document: probate(flaggedCarrier) }]);
       expect(r2.ok, JSON.stringify(r2.errors)).toBe(true);
       expect(await rolesOf("capture:death-flagged")).toMatchObject({ "Paul Meacham": "decedent" });
-      expect(r2.records[0].summary).not.toMatch(/no testator or decedent role was assigned/);
+      expect(r2.records[0].summary).not.toMatch(/the tool chose no testator or decedent/);
     });
 
-    it.each(["will", "will_execution", "testament"])(
+    it.each(["will", "will_execution", "testament", "will_proved"])(
       "names the testator from a %s fact, so the no-carrier branch does not fire",
       async (factType) => {
         // `probateDecedentId` once matched only `will`, while `hasWill` and the
@@ -2029,9 +2029,37 @@ describe("extraction_append: documents", () => {
         const r = await run([{ recordId: id, document: { ...probate(persons), recordLabel: "last will and testament" } }]);
         expect(r.ok, JSON.stringify(r.errors)).toBe(true);
         expect(await rolesOf(id)).toMatchObject({ "Thomas Hagell": "testator" });
-        expect(r.records[0].summary).not.toMatch(/no testator or decedent role was assigned/);
+        expect(r.records[0].summary).not.toMatch(/the tool chose no testator or decedent/);
       },
     );
+
+    it("names the decedent from a burial fact alone", async () => {
+      // `burial` says whose estate this is just as `death` does. Excluded from
+      // the carrier list it silently stripped the role.
+      const persons = [
+        person("p1", "Thomas", "Hagell", undefined, [{ type: "burial", date: "1850" }]),
+        person("p2", "Isaac", "Porter", "administrator"),
+      ];
+      const r = await run([{ recordId: "capture:burial-carrier", document: probate(persons) }]);
+      expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+      expect(await rolesOf("capture:burial-carrier")).toMatchObject({ "Thomas Hagell": "decedent" });
+      expect(r.records[0].summary).not.toMatch(/the tool chose no testator or decedent/);
+    });
+
+    it("keeps the will's own voice on the classification, and says so", async () => {
+      // The role moves; the classification does not, and that is deliberate —
+      // on a will the testator is the informant for everything in it, which is
+      // why the heir Anna Becker carries "the testator|self|primary" in the
+      // green test above. Pinned so a later change cannot move one without the
+      // other going red.
+      const r = await run([{ recordId: "capture:hagell-cls", document: hagell() }]);
+      expect(r.ok, JSON.stringify(r.errors)).toBe(true);
+      const age = (await assertionsFor("capture:hagell-cls")).find((a: any) => a.fact_type === "age");
+      expect(age.record_role).toBe("child_1");
+      expect(`${age.informant}|${age.informant_proximity}|${age.information_quality}`).toBe(
+        "the testator|self|primary",
+      );
+    });
 
     it("numbers a parent on an explicit edge, rather than naming them father", async () => {
       // The branch forgoes `principalRoles`' parent/grandparent assignment from
@@ -2129,8 +2157,27 @@ describe("extraction_append: documents", () => {
 
     it("refuses an administrator written as decedent when no party carries a probate, will or death fact", () => {
       const persons = [person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "residence", place: "Southwick" }])];
-      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be written as the decedent or testator/);
+      // Still refused (#3660). Since #4708 the message no longer says he
+      // "would be written as the decedent" — with no carrier nobody is — so it
+      // names the real problem instead: the document does not say whose estate
+      // this is. The refusal, which is what #3660 pins, is unchanged.
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(
+        /Isaac Porter\) is stated as "administrator" and no party carries a probate, will, death or burial fact, so the document does not say whose estate this is/,
+      );
       expect(validateStructuredDocument(probate([{ ...persons[0], statedRelation: undefined }, persons[1]]))).toEqual([]);
+    });
+
+    it("keeps the original wording when a carrier really would be written as the decedent", () => {
+      // The other branch of the same message. Here Isaac carries the probate
+      // fact, so he IS the decedent the role pass writes, and the sentence
+      // that says so is true and stays.
+      const persons = [
+        person("p1", "Isaac", "Porter", "administrator", [{ type: "probate", date: "1790" }]),
+        person("p2", "Paul", "Meacham", undefined, [{ type: "residence", place: "Southwick" }]),
+      ];
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(
+        /Isaac Porter\) would be written as the decedent or testator but is stated as "administrator"/,
+      );
     });
 
     it("still writes a probate couple when one party is the wife, and an obituary couple with no spouse word", async () => {

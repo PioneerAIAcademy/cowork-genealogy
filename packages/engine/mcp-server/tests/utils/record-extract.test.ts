@@ -717,8 +717,11 @@ describe("the defaulted-classification report", () => {
     // note rather than on the role: `detectRecordType` has no probate arm and
     // `TITLE_TO_RECORD` no probate row, so this types as `other` today, and if
     // probate detection is ever added the correct indexed role is `decedent` —
-    // a role assertion would then red on correct behaviour. The note stays
-    // empty either way, and reds on a gate spelled `!mode?.decedentId`.
+    // a role assertion would then red on correct behaviour.
+    //
+    // This does NOT discriminate the gate's spelling today: nothing mode-less
+    // reaches the probate arm, so `!mode?.decedentId` leaves it green too
+    // (mutation-checked). It is a forward pin, not a guard on this change.
     expect(out.notes).toEqual([]);
     expect(out.defaultedClassifications.length).toBeGreaterThan(0);
     expect(out.defaultedClassifications[0]).toMatch(/unknown\/indeterminate/);

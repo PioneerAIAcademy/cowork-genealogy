@@ -1300,7 +1300,8 @@ export function extractRecord(
       const counters = new Map<string, number>();
       for (const p of ps) roles.set(p.id, numbered("other", counters));
       notes.push(
-        "no party carries a probate, will or death fact, so no testator or decedent role was assigned",
+        "no party carries a probate, will, death or burial fact, so the tool chose no testator " +
+          "or decedent — each party takes its own stated relation",
       );
     } else {
       for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent", mode?.decedentId)) roles.set(id, r);
