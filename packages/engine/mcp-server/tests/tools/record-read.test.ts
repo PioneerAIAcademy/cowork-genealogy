@@ -211,6 +211,20 @@ describe("extractEntityId", () => {
       /document-image ARK/i,
     );
   });
+
+  // A tree-source id ("legacy-nfs:MMVZ-Z9T") read as a bare id returned
+  // persona 1:1:MMVZ-Z9T, an unrelated 1900 census household.
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("rejects the scheme-prefixed id %s as not a record persona", (id) => {
+    expect(() => extractEntityId(id)).toThrow(/not a FamilySearch record persona/);
+  });
+
+  it("still accepts a bare persona id", () => {
+    expect(extractEntityId("QVS9-DHDB")).toBe("QVS9-DHDB");
+  });
 });
 
 // ─── recordReadTool tests ─────────────────────────────────────────────────
@@ -244,6 +258,17 @@ describe("recordReadTool", () => {
     await expect(
       recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }, LOCAL),
     ).rejects.toThrow(/1:2: record ARK/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("refuses the scheme-prefixed id %s without fetching", async (id) => {
+    await expect(recordReadTool({ recordId: id }, LOCAL)).rejects.toThrow(
+      /not a FamilySearch record persona/,
+    );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 

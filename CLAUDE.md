@@ -170,38 +170,41 @@ workbench". Commands: the `Makefile`.
 
 ## Work you find along the way
 
-Implementing one task always turns up others. **Filing an issue is the last
-resort, not the default** — an issue costs about four people: someone vets it
-(`/review-ready`), someone implements it, and two review it. So the test is not
-"is this issue justified?" — it is **"is the work big enough to carry
-four-person overhead?"** A half-day genealogist deep dive carries it comfortably.
-A change of four functions in one file does not; build that one.
+The project winds down at the end of 2026, and every issue filed now costs
+someone to vet it, someone to implement it and two to review it. **Finish what
+your task turns up in the PR you are working on.** Stop at the first of these
+that fits:
 
-Walk these in order and stop at the first that fits:
-
-1. **Fix it in the current PR.** The default, and the right answer about two
-   times in three. You already have the context loaded; whoever picks up the
-   ticket has to rebuild it from nothing.
-2. **Drop it** if it is a nit — a wording preference, a tidier structure, a test
-   you would like but nothing is broken without.
-3. **Comment on the issue that already covers it.** One search, then stop:
+1. **Fix it in this PR.** The default. You have the context loaded; whoever
+   picks up a ticket has to rebuild it from nothing. This always covers what your
+   change broke, left half-done or made stale, and the rest of your own issue.
+2. **Comment on the issue that already covers it.** One search, then stop:
    `gh issue list --state open --search "<path or symbol>"`, plus a grep of the
    `**Touches:**` lines.
-4. **File a new issue**, in the same PR that defers it.
+3. **Drop it.** An improvement, a nit, a test you would like, an open question,
+   anything that would cost a second paid eval run — whatever does not meet step 4.
+   Don't list it in the PR body.
+4. **File a new issue** only for a bug that harms researchers' data, or a missing
+   guard (a way CI can be green while the thing is broken), that you cannot fix
+   here: it needs a different skill (a code fix found during fixture work, or
+   vice versa), or it is too big **and you have opened the call sites and
+   counted**. Name which, with the files and roughly the lines, in both the PR
+   body and the issue body.
+
+**A failing test is never a new issue.** Don't delete, skip or `xfail` a test to
+land and then file one to restore it. Make it pass in this PR; if its fix belongs
+to another open issue, put the restore in that issue's done-when
+(`eval/CLAUDE.md`, "Grading Scale").
+
+**While working a PR, Claude does not propose new issues.** No "follow-ups",
+"out of scope" or "suggested issues" lists, and no "should I file an issue for
+this?". Fix it, comment on the existing issue, or drop it. Offer to file only
+what meets step 4, and say which part of step 4 it meets.
 
 A follow-on PR, a Task, and a "known limitation" written into a docstring or a
 PR body are all step 4 wearing a disguise — same debt, minus the tracking. If
 you can describe the limitation precisely enough to document it, you understand
 it well enough to fix it.
-
-You may only reach step 4 by naming, in both the PR body and the issue body,
-which of these is true: the fix needs a different reviewer or skill; it depends
-on a decision only the lead can make **and he is not reachable** (a decision is a
-question, not work — if you can ask, ask); it is a different skill's paid eval
-slot; or it is too big for this PR **and you have opened the call sites and
-counted**, stating the files and roughly the lines. "It feels out of scope" is
-not a measurement. "I noticed it in passing" and "I'm not sure if this is in
-scope" are not on that list at all — they are reasons to fix it now, or drop it.
 
 **Creating the issue is the whole job: do not call the Projects API yourself**
 (no `gh project` commands, no `addProjectV2ItemById`). A workflow files the card
@@ -226,7 +229,8 @@ reader who goes looking there.
 Everything else — the exact `gh issue create` line, the `**Touches:**` line, the
 `icebox` label, what belongs in a body and what does not, and the hook that
 gates filing — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) § "Follow-on work you
-find along the way", which owns these rules.
+find along the way". The order above is the rule; that section owns only the
+mechanics.
 
 ## Tools and skills
 
