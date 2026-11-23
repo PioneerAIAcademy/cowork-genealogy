@@ -1,0 +1,671 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find the parents of Alexander Mills (PD5R-5VD).",
+    "title": "Alexander Mills's parents",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-17",
+    "updated": "2026-11-17"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do independent records confirm or refute that George Mills and Abigail Weed of Stamford, Connecticut were the parents of Alexander Mills, who married Mary Millet in 1759 and died after 21 March 1816 in Shelburne, Chittenden, Vermont?",
+      "rationale": "The tree links Alexander to George Mills (died 1777, Stamford) and Abigail Weed, but the only source on this subject is a compiled family sketch, and the same sketch warns that a Stamford Alexander Mills (b. 1761, d. 1822) has been merged with this Alexander's family. The parent link is unverified and load-bearing, so it must be tested before any parent is accepted.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1735-1816",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-17"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Never sound surer than the evidence was rated: say the records show it for a well established fact or relationship, probably for a likely one and possibly for a tentative one, and never write that someone is the parent, spouse or child of another without one of these. Say match or search result, never hit; never write ARK: name the record or link to it. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Stamford, Fairfield County, Connecticut",
+      "for_place": "Stamford, Fairfield County, Connecticut",
+      "time_period": "1740-1780",
+      "jurisdictions": [
+        {
+          "name": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "date_range": "1639-1776"
+        },
+        {
+          "name": "Stamford, Fairfield, Connecticut, United States (Town)",
+          "date_range": "1776-1830"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2448938",
+          "title": "Connecticut, Births and Baptisms, 1639-1941",
+          "date_range": "1639-1941",
+          "person_count": 87659,
+          "record_count": 39361
+        },
+        {
+          "id": "1674736",
+          "title": "Connecticut, Births and Christenings, 1649-1906",
+          "date_range": "1649-1906",
+          "person_count": 1975883,
+          "record_count": 719358
+        },
+        {
+          "id": "2658554",
+          "title": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955",
+          "date_range": "1640-1955",
+          "person_count": 1476370,
+          "record_count": 1205723
+        },
+        {
+          "id": "2658799",
+          "title": "Connecticut, Church Records, 1660-1955",
+          "date_range": "1660-1955",
+          "person_count": 33571,
+          "record_count": 16710
+        },
+        {
+          "id": "1674748",
+          "title": "Connecticut, Deaths and Burials, 1772-1934",
+          "date_range": "1772-1934",
+          "person_count": 1335947,
+          "record_count": 711947
+        },
+        {
+          "id": "2448941",
+          "title": "Connecticut, Deaths, 1640-1955",
+          "date_range": "1640-1955",
+          "person_count": 838850,
+          "record_count": 447940
+        },
+        {
+          "id": "1674749",
+          "title": "Connecticut, Marriages, 1630-1997",
+          "date_range": "1630-1997",
+          "person_count": 556136,
+          "record_count": 281484
+        },
+        {
+          "id": "2448940",
+          "title": "Connecticut, Marriages, 1640-1939",
+          "date_range": "1640-1939",
+          "person_count": 3052149,
+          "record_count": 1683068
+        },
+        {
+          "id": "2843390",
+          "title": "Connecticut, Vital Records, Prior to 1850",
+          "date_range": "1710-1850",
+          "person_count": 1146260,
+          "record_count": 437950
+        },
+        {
+          "id": "3158818",
+          "title": "Connecticut, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 6647,
+          "record_count": 1
+        },
+        {
+          "id": "5000080",
+          "title": "Connecticut, County Coroner's Records, 1883-1934",
+          "date_range": "1883-1934",
+          "person_count": 76309,
+          "record_count": 76296
+        },
+        {
+          "id": "1946874",
+          "title": "Connecticut, Death Index, 1949-2001",
+          "date_range": "1949-2001",
+          "person_count": 3165925,
+          "record_count": 1408326
+        },
+        {
+          "id": "2141008",
+          "title": "Connecticut, District Court Naturalization Indexes, 1851-1992",
+          "date_range": "1851-1992",
+          "person_count": 251944,
+          "record_count": 253215
+        },
+        {
+          "id": "1967742",
+          "title": "Connecticut, Divorce Index, 1968-1997",
+          "date_range": "1968-1997",
+          "person_count": 966036,
+          "record_count": 322012
+        },
+        {
+          "id": "1936542",
+          "title": "Connecticut, Marriage Index, 1959-2001",
+          "date_range": "1959-2001",
+          "person_count": 2011486,
+          "record_count": 1005743
+        },
+        {
+          "id": "3741249",
+          "title": "Connecticut, Military Census Questionnaires, 1917",
+          "date_range": "1917-1917",
+          "person_count": 522261,
+          "record_count": 522261
+        },
+        {
+          "id": "3238391",
+          "title": "Connecticut, Naturalization Records, 1795-1945",
+          "date_range": "1795-1945",
+          "person_count": 1083882,
+          "record_count": 782656
+        },
+        {
+          "id": "3477650",
+          "title": "Connecticut, Passenger and Crew Lists, 1804-1959",
+          "date_range": "1804-1959",
+          "person_count": 98791,
+          "record_count": 98790
+        },
+        {
+          "id": "2695954",
+          "title": "Connecticut, World War II Draft Registration Cards, 1940-1945",
+          "date_range": "1940-1945",
+          "person_count": 953946,
+          "record_count": 478703
+        }
+      ],
+      "quirks": [
+        "Connecticut town vital registration (births, marriages, deaths) began in the 1630s at the town level, with statewide registration only starting in 1897 and general compliance by 1915 (per the Connecticut Vital Records wiki page) — so for 1740-1780 the only vital registration is Stamford's own town records, not a state system.",
+        "Recording of vital records by Stamford's town clerk was not always kept consistently after the Revolutionary War into the 1870s, so gaps in the 1776-1790 window are possible.",
+        "The Barbour Collection (town vital-record abstracts to the 1850s) is known to be incomplete and to contain indexing errors; cross-check against the original Stamford town registers and Spencer Mead's published transcriptions rather than relying on the index alone.",
+        "Stamford's probate district (formed 1719) covered Stamford and Darien jointly through this period — Darien did not become its own parish/town until 1820 — so probate volumes for 1728-1782 are filed under combined Stamford/Darien coverage; search both place labels.",
+        "Congregationalism was Connecticut's state-supported religion until 1818; a family's vital events for 1740-1780 are more likely recorded in First Congregational Church of Stamford records (covering 1747-1907, including baptisms 1747-1843 and marriages 1747-1846) than in any civil register.",
+        "The volumes found for Stamford probate and land records (imageGroupNumber-level) are 0% name-indexed but fulltext-searchable — they must be searched via FamilySearch's full-text search tool, not name-index search.",
+        "Stamford borders Darien, Greenwich and New Canaan in Fairfield County, and North Castle and Pound Ridge, NY in Westchester County — a Stamford family may also appear in adjoining Connecticut towns' or New York border towns' records."
+      ],
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Stamford,_Fairfield_County,_Connecticut_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "town",
+          "year": 1630,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "town",
+          "year": 1630,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "town",
+          "year": 1630,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        },
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1897,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "state",
+          "year": 1897,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1897,
+          "source_url": "https://www.familysearch.org/en/wiki/Connecticut_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1740,
+        "end_year": 1780,
+        "total_volumes": 26,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 8,
+            "browse_only": 1,
+            "fulltext_only": 5
+          },
+          {
+            "group": "Birth",
+            "volumes": 4,
+            "browse_only": 1,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Death",
+            "volumes": 8,
+            "browse_only": 1,
+            "fulltext_only": 5
+          },
+          {
+            "group": "Marriage",
+            "volumes": 4,
+            "browse_only": 1,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Religious",
+            "volumes": 2,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Military",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Legal",
+            "volumes": 13,
+            "browse_only": 0,
+            "fulltext_only": 11
+          },
+          {
+            "group": "Court",
+            "volumes": 8,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Probate",
+            "volumes": 8,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Land",
+            "volumes": 5,
+            "browse_only": 0,
+            "fulltext_only": 5
+          },
+          {
+            "group": "Government",
+            "volumes": 3,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Reference",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Miscellaneous",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-17",
+      "guide_markdown": "# Locality Guide: Stamford, Fairfield County, Connecticut (1740-1780)\n\n## Jurisdiction overview\n- **Formed:** Stamford was settled in 1641 (known earlier as Rippowam to the Siwanoy inhabitants); it was a town of the Connecticut Colony through 1776, then of the State of Connecticut from 1776.\n- **County seat / administrative center:** Stamford itself; Fairfield County was organized with Stamford as one of its towns.\n- **Parent jurisdiction:** Fairfield County, Connecticut Colony (to 1776), then Fairfield County, State of Connecticut.\n- **Population during period:** Population figures specific to 1740-1780 were not returned by this survey's tools (place_population returned no match for this standard place); the researcher should consult the FamilySearch Wiki or town histories directly for population estimates.\n- **Religious denominations:** Congregationalism was Connecticut's state-established religion until 1818; First Congregational Church of Stamford, North Stamford Congregational Church, St. John's Episcopal Church, First Baptist Church and the Church of England in Fairfield County (Norwalk/Ridgefield/Stamford/Greenwich circuit) all had a presence by the mid-1700s, per the Stamford genealogy wiki page and FamilySearch Catalog records of 1742-1746 Church of England communicants.\n- **Key historical events:** The Revolutionary War (1775-1783) directly affects this period — Stamford, a coastal Fairfield County town near the New York border, saw disrupted record-keeping; the FamilySearch Wiki notes town vital record-keeping was not always consistent after the Revolutionary War into the 1870s.\n\n## Boundary changes\n- Darien was a parish of Stamford until 1820 and was not set off as its own town until then — so probate, land, and some church records covering Stamford before 1820 also cover Darien, and the two must be searched together for 1740-1780 (confirmed by the catalog title \"History of Stamford, Connecticut: from its settlement in 1641 ... including Darien, which was one of its parishes until 1820\").\n- North Stamford Congregational Society was set off from the Stamford First Society in May 1781, just after this period's end — church records after 1781 may appear under \"North Stamford\" rather than \"Stamford.\"\n- Otherwise, Stamford's own town boundaries were not reported as having changed during 1740-1780 by the tools consulted.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Town-level recording began in the 1630s; statewide registration did not begin until 1897 (general compliance by 1915), per the [Connecticut Vital Records](https://www.familysearch.org/en/wiki/Connecticut_Vital_Records) wiki page — so the only \"civil\" record available for 1740-1780 is the Stamford town register.\n- **What exists:** Stamford's town register of births, marriages and deaths from 1641 to 1825 is held at FamilySearch Catalog (images) as both \"Town records, 1630-1806\" and \"Stamford registration of births, marriages, and deaths ... down to the year 1825,\" and indexed/imaged (subscription) at American Ancestors as \"Stamford, CT: Vital Records, 1654-1825.\"\n- **Where held:** Original town register at the Stamford Town Clerk's office (888 Washington Boulevard, Stamford, CT); FamilySearch Catalog holds microfilm/digitized images; American Ancestors holds a separately indexed version.\n- **Gaps:** The FamilySearch Wiki notes record-keeping was not always consistent following the Revolutionary War into the 1870s — gaps in 1776-1780 entries are possible.\n- **Pre-registration alternatives:** Congregational/Episcopal/Baptist church records (baptisms, marriages, burials) and probate records, both covered below.\n\n### Church records\n- **Denominations present:** First Congregational Church of Stamford (church records 1747-1907, confirmed by FamilySearch Catalog); North Stamford Congregational Church (set off 1781, records from 1782); St. John's Episcopal; First Baptist; Church of England communicants for the Norwalk-Ridgefield-Stamford-Greenwich circuit, 1742-1746; Methodist Episcopal (established later, from 1788).\n- **Record types:** Baptisms, marriages, deaths/burials, membership and admission records, meeting minutes.\n- **Where held:** Originals largely at the Connecticut State Library in Hartford (per FamilySearch Catalog notes on microfilm sources); FamilySearch Catalog holds microfilm and digitized images of Spencer Mead's \"Abstract of church records of the town of Stamford... to 1850\" and of the original First Congregational Church records (1747-1843, including baptisms 1747-1806 and marriages 1747-1792).\n- **Gaps:** None specifically reported for 1740-1780 by the tools consulted; the Church of England circuit records found cover only 1742-1746.\n- **Language:** English.\n\n### Census records\n- **Federal/national census:** The first U.S. federal census was 1790 (after this period); no colonial Connecticut census was identified for 1740-1780 by this survey's tools.\n- **State/provincial census:** None identified for this period.\n- **Other enumerations:** Tax lists (see Tax records) can substitute for missing census coverage before 1790.\n- **Access:** Not applicable for this window — see 1790+ federal census collections at Ancestry for the years following.\n\n### Probate and court records\n- **Types:** Wills, administrations, inventories, guardianships.\n- **Testate or intestate:** Not established for this family by this survey; both wills and administrations should be checked.\n- **Date range:** The Stamford probate district (formed 1719, jointly with Darien) has records from 1729 at FamilySearch Catalog (\"Abstract of probate records for the district of Stamford... 1729-1848\" by Spencer Mead, and the underlying \"Probate records, 1728-1916\"/\"1729-1848\" image volumes, imageGroupNumbers 009066970 and 009067003, both 0% indexed but full-text searchable); volume_search additionally found Stamford/Darien probate-record volumes for 1728-1772 and 1772-1782 (imageGroupNumbers 007626803 and 007626804) and Stamford probate packets for 1759-1880 and 1760-1870 (007627982, 007627983).\n- **Where held:** FamilySearch Catalog (digitized images; some online, some microfilm only per catalog hit koha:2699513); Connecticut State Library holds related typescripts; Connecticut Probate Courts system.\n\n### Land records\n- **Survey system:** Metes and bounds, as in colonial New England generally.\n- **Land-distribution jurisdiction:** Land records in Connecticut are kept at the town level, not a state land office, per the Stamford genealogy wiki page.\n- **Types:** Deeds, grants, surveys — \"Genealogical References in Stamford, Ct. Land Records: Volumes A thru S, 1666-1800+\" (FamilySearch Catalog) and \"Colonial Land Records of Connecticut, 1640-1846.\"\n- **Date range:** Stamford land records run continuously from 1666 through at least 1800, covering the full 1740-1780 target window.\n- **Where held:** FamilySearch Catalog (images); Stamford Town Clerk (originals, by continuity of town record-keeping).\n\n### Military records\n- **Relevant conflicts:** French and Indian War (1754-1763) and the Revolutionary War (1775-1783) both fall within or just after this window.\n- **Record types:** Service and muster rolls — \"Connecticut Soldiers, French and Indian War, 1755-1762\" and \"Connecticut Revolutionary War Military Lists\"/\"Connecticut Men in the Revolutionary War\" (both at Ancestry, index only); pension records apply more to veterans still living decades later.\n- **Where held:** Ancestry (index only, subscription); Connecticut State Library holds Revolutionary War service records per its research guide.\n\n### Cemetery records\n- **Major cemeteries:** Not individually named by this survey's tools; the Stamford Cemeteries list is available via FamilySearch Catalog and Find a Grave.\n- **Online coverage:** Find a Grave (Stamford Cemeteries List); the Charles R. Hale Collection (1640-1955) indexes cemetery inscriptions and is 73% name-searchable per volume_search (imageGroupNumber 007592443, 1237 images, recordSearchablePercent 73, also full-text searchable).\n- **Physical records:** Sexton/burial registers likely held locally; not itemized by tools consulted.\n\n### Newspaper records\n- **Local papers:** \"Connecticut Newspapers in the Eighteenth Century\" (FamilySearch Catalog, images only) surveys 1700s-era papers generally; no Stamford-specific 18th-century title was returned.\n- **Where held:** FamilySearch Digital Library (catalog item); later Stamford newspapers (Daily Advocate, from 1892) postdate this period.\n- **Content value:** Eighteenth-century Connecticut newspapers rarely carried routine birth/marriage/death notices for ordinary families; of limited value for 1740-1780 except for notable events.\n\n### Immigration/emigration records\nNot applicable as a primary record type for an inland Fairfield County family already resident in Stamford by 1740; this family is multi-generation colonial Connecticut, not recent immigrants, so no port-of-entry or passenger records are expected for this period.\n\n### Tax records\n- **Types:** Town tax/rate lists; a \"catalogue of professors of the Church of England ... who bear and pay rates\" appears within the 1742-1746 Church of England church-records volume, suggesting civil/ecclesiastical rate lists existed for Stamford in this era.\n- **Date range:** The online Connecticut tax collections identified (Internal Revenue Assessment Lists, Excise Tax Lists) begin only in the 1860s — no online 1740-1780 Stamford tax list was found by this survey.\n- **Where held:** Likely town or Connecticut State Library records not yet digitized; the FamilySearch Wiki's Stamford page lists \"Tax lists\" among its \"Other Town Records\" category without a specific online collection for this period.\n- **Substitute value:** Could substitute for the lack of a pre-1790 census if located.\n\n### Other record types\nTown meeting minutes, freemen's oaths (voting eligibility), and care-of-the-poor records are listed among Stamford's \"Other Town Records\" by the FamilySearch Wiki, but no specific online collection or date range for 1740-1780 was returned by the tools used.\n\n## Research tips\n- Connecticut's statewide vital registration did not begin until 1897 (general compliance by 1915); for 1740-1780 only town-level registration applies, per the [Connecticut Vital Records](https://www.familysearch.org/en/wiki/Connecticut_Vital_Records) wiki page — do not expect a state-held birth/marriage/death certificate for this family.\n- Early death records give no parent information; for an 18th-century death, church records and probate are the main routes to identifying parents, per the [Connecticut Research Tips and Strategies](https://www.familysearch.org/en/wiki/Connecticut_Research_Tips_and_Strategies) page.\n- The Barbour Collection (town vital abstracts to the 1850s) is explicitly flagged by the FamilySearch Wiki as having an incomplete and error-prone index — treat a Barbour non-match as inconclusive, not as proof a record does not exist, and check the original town register or Spencer Mead's published Stamford transcriptions.\n- Search Stamford's probate and land records via FamilySearch's full-text search rather than by-name index search — the 18th-century Stamford/Darien probate packet volumes found in this survey are 0% name-indexed but marked full-text searchable.\n- Search the adjoining Fairfield County towns of Darien, Greenwich and New Canaan, and the adjoining Westchester County, New York towns of North Castle and Pound Ridge, since a family near Stamford could generate records in any of them, per the *Adjacent Towns* table on the [Stamford genealogy](https://www.familysearch.org/en/wiki/Stamford,_Fairfield_County,_Connecticut_Genealogy) wiki page.\n- Consult Spencer P. Mead's \"Abstract of church records of the town of Stamford... from the earliest records extant to 1850\" (FamilySearch Catalog, available online) for baptisms, marriages and burials across Stamford's several churches in this period — it abstracts First Congregational, North Stamford Congregational, Long Ridge Congregational, St. John's Episcopal, First Baptist, North Baptist, and Methodist Episcopal church records.\n- Because Darien was a Stamford parish until 1820, search both \"Stamford\" and \"Darien\" as place terms in land, probate and church-record collections for 1740-1780."
+    },
+    {
+      "id": "loc_002",
+      "place": "Shelburne, Chittenden County, Vermont",
+      "for_place": "Shelburne, Chittenden County, Vermont",
+      "time_period": "1790-1820",
+      "jurisdictions": [
+        {
+          "name": "Shelburne, Chittenden, Republic of Vermont",
+          "date_range": "/-1791"
+        },
+        {
+          "name": "Shelburne, Chittenden, Vermont, United States",
+          "date_range": "1791-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1987653",
+          "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+          "date_range": "1699-2005",
+          "person_count": 5248434,
+          "record_count": 2385813
+        },
+        {
+          "id": "1784223",
+          "title": "Vermont, Vital Records, 1760-1954",
+          "date_range": "1760-1954",
+          "person_count": 7076740,
+          "record_count": 2328328
+        },
+        {
+          "id": "2075288",
+          "title": "Vermont, Vital Records, 1760-2008",
+          "date_range": "1760-2008",
+          "person_count": 7457505,
+          "record_count": 1974168
+        },
+        {
+          "id": "1675544",
+          "title": "Vermont, Births and Christenings, 1765-1908",
+          "date_range": "1765-1908",
+          "person_count": 585280,
+          "record_count": 210358
+        },
+        {
+          "id": "1675550",
+          "title": "Vermont, Marriages, 1791-1974",
+          "date_range": "1791-1974",
+          "person_count": 35623,
+          "record_count": 11502
+        },
+        {
+          "id": "1675549",
+          "title": "Vermont, Deaths and Burials, 1871-1965",
+          "date_range": "1871-1965",
+          "person_count": 277037,
+          "record_count": 82428
+        },
+        {
+          "id": "1435692",
+          "title": "Vermont, Probate Files, 1800-1921",
+          "date_range": "1800-1921",
+          "person_count": 10214,
+          "record_count": 10225
+        },
+        {
+          "id": "1409123",
+          "title": "Vermont, Land Records, Early to 1900",
+          "date_range": "1600-1900",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "3158875",
+          "title": "Vermont, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 25792,
+          "record_count": 1
+        },
+        {
+          "id": "1879935",
+          "title": "Vermont, Addison County and District Probate Files, 1845-1915",
+          "date_range": "1845-1915",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1935045",
+          "title": "Vermont, Bennington County, Manchester District Estate Files, 1779-1935",
+          "date_range": "1779-1935",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1483040",
+          "title": "Vermont, Enrolled Militia Records, 1861-1867",
+          "date_range": "1861-1867",
+          "person_count": 4350,
+          "record_count": 4350
+        },
+        {
+          "id": "1921463",
+          "title": "Vermont, Franklin County Probate Records, 1796-1921",
+          "date_range": "1796-1921",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2625097",
+          "title": "Vermont, Naturalization Records, 1908-1987",
+          "date_range": "1908-1987",
+          "person_count": 67738,
+          "record_count": 50814
+        },
+        {
+          "id": "1807377",
+          "title": "Vermont, Orange County, Bradford District Estate Files, 1780-1915",
+          "date_range": "1780-1915",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1453983",
+          "title": "Vermont, Orange County, Randolph District Probate Records, 1790-1935",
+          "date_range": "1790-1935",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "3499160",
+          "title": "Vermont, Passenger Lists, 1895-1924",
+          "date_range": "1895-1924",
+          "person_count": 102419,
+          "record_count": 102419
+        },
+        {
+          "id": "1627819",
+          "title": "Vermont, Town Records, 1850-2005",
+          "date_range": "1850-2005",
+          "person_count": 136019,
+          "record_count": 55144
+        },
+        {
+          "id": "5000152",
+          "title": "Vermont, U.S. District Court, Naturalization Records, 1790-1954",
+          "date_range": "1790-1954",
+          "person_count": 20745,
+          "record_count": 15872
+        },
+        {
+          "id": "1419704",
+          "title": "Vermont, Washington County, Probate Estate Files, 1862-1915",
+          "date_range": "1862-1915",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1879202",
+          "title": "Vermont, Windham County, Westminster District, Probate Records, 1781-1921",
+          "date_range": "1781-1921",
+          "person_count": 0,
+          "record_count": 0
+        }
+      ],
+      "quirks": [
+        "Vermont vital records began at the town level around 1760, kept by the town clerk, with a statewide law in 1857 requiring town recording and a centralized state registration system only from 1919 (FamilySearch Wiki, Vermont Vital Records) — so for 1790-1820 the only vital registration is Shelburne's own town-clerk records, not a state system.",
+        "Shelburne's original town clerk volumes for births/marriages/deaths (1775-1883) and town records (1776-1883) and land records (1787-1821 and 1812-1835) are digitized on FamilySearch but are 0% name-indexed and reachable only via full-text search, not name-index search — search them with FamilySearch's full-text search tool.",
+        "Shelburne's probate district is Chittenden — estate records for a death after 21 March 1816 should be sought in Chittenden County probate records (Vermont, Probate Files, 1800-1921, indexed and imaged on FamilySearch) and/or the Chittenden District Probate Court in Burlington, not in a separate Shelburne-only probate series.",
+        "Shelburne was part of the then-independent Republic of Vermont until it joined the United States in 1791 — early land grants and some records from before 1791 may be referenced under 'Republic of Vermont' rather than 'Vermont, United States'.",
+        "A family near Shelburne likely also generated records in adjoining Chittenden County towns; the FamilySearch Wiki page fetched for Shelburne did not list a Neighboring Towns table, so adjoining towns were not identified from that page — check the Chittenden County Genealogy wiki page directly for that list before ruling out neighboring towns.",
+        "Trinity Episcopal Church's Shelburne parish register only begins in 1849, after the 1790-1820 target window, so it is not a usable source for Alexander Mills's death; no earlier Shelburne church register was found in this survey."
+      ],
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Shelburne,_Chittenden_County,_Vermont_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "town",
+          "year": 1760,
+          "source_url": "https://www.familysearch.org/en/wiki/Vermont_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "town",
+          "year": 1760,
+          "source_url": "https://www.familysearch.org/en/wiki/Vermont_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "town",
+          "year": 1760,
+          "source_url": "https://www.familysearch.org/en/wiki/Vermont_Vital_Records"
+        },
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1857,
+          "source_url": "https://www.familysearch.org/en/wiki/Vermont_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1790,
+        "end_year": 1820,
+        "total_volumes": 10,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 8,
+            "browse_only": 0,
+            "fulltext_only": 8
+          },
+          {
+            "group": "Birth",
+            "volumes": 7,
+            "browse_only": 0,
+            "fulltext_only": 7
+          },
+          {
+            "group": "Death",
+            "volumes": 8,
+            "browse_only": 0,
+            "fulltext_only": 8
+          },
+          {
+            "group": "Marriage",
+            "volumes": 7,
+            "browse_only": 0,
+            "fulltext_only": 7
+          },
+          {
+            "group": "Land",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Legal",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Court",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Government",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Religious",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Genealogies",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Biography",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-17",
+      "guide_markdown": "# Locality Guide: Shelburne, Chittenden County, Vermont (1790-1820)\n\n## Jurisdiction overview\n- **Formed:** Shelburne was chartered August 18, 1763; first settlers arrived in 1768 (FamilySearch Wiki, [Shelburne, Chittenden County, Vermont Genealogy](https://www.familysearch.org/en/wiki/Shelburne,_Chittenden_County,_Vermont_Genealogy)).\n- **County seat / administrative center:** Shelburne is a town in Chittenden County; the county seat is Burlington.\n- **Parent jurisdiction:** Shelburne was part of the Republic of Vermont (an independent state until it joined the United States in 1791), per place-authority records.\n- **Population during period:** FamilySearch's place-population tool returned no data for Shelburne for 1790-1820; not confirmed by this survey.\n- **Economy:** Early settlers cut timber for shipment to Canada and cleared land under charter obligations to reserve pine for Royal Navy masts (FamilySearch Wiki, Shelburne Genealogy page).\n- **Religious denominations:** Historically the largest Vermont denominations were Congregational, Baptist, Roman Catholic, and Methodist (FamilySearch Wiki, [Vermont Online Genealogy Records](https://www.familysearch.org/en/wiki/Vermont_Online_Genealogy_Records)); the only Shelburne-specific church record found, Trinity Episcopal Church's parish register, begins in 1849, after this period.\n- **Key historical events:** Vermont existed as the independent Republic of Vermont until admitted to the United States as the 14th state in 1791, which falls inside the target period and affects where early land and governmental records are filed.\n\n## Boundary changes\n- Shelburne's jurisdiction changed from the Republic of Vermont to the State of Vermont, United States, in 1791 — squarely within the 1790-1820 window. Records from before 1791 may be filed or indexed under \"Republic of Vermont\" rather than \"Vermont, United States\"; search both labels for the same town.\n- No other boundary change for Shelburne itself was found in this survey. The FamilySearch Wiki's Shelburne page has empty \"Parent Towns\" and \"Boundary Changes\" sections, so no earlier parent-town history was returned.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Vermont vital records began at the town level about 1760, kept by the town or city clerk; the present (statewide) vital registration law dates to 1857, and a centralized state registration system was established in 1919 (FamilySearch Wiki, [Vermont Vital Records](https://www.familysearch.org/en/wiki/Vermont_Vital_Records)). For 1790-1820 the record is the town clerk's own register, not a state system.\n- **What exists:** Shelburne's original town-clerk register of \"Births, marriages, deaths, v. 1, 1775-1883\" and \"Town records, v. 1-2, 1776-1883\" (which also includes marriages, births, deaths, earmarks, freemen's lists, and road and school records) both cover the full 1790-1820 window (FamilySearch Catalog entries koha:967385 and koha:117486).\n- **Where held:** Originals at the Shelburne Town Clerk's Office, 5420 Shelburne Rd., Shelburne, VT; microfilmed by FamilySearch (image group 005464235) and also reachable online via the \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\" collection (FamilySearch collection 1987653).\n- **Gaps:** None stated for this period by any tool result; the surviving town volume spans 1775-1883 without a noted loss.\n- **Pre-registration alternatives:** Not applicable — the town-clerk series itself begins before 1790.\n\n### Church records\n- **Denominations present:** Historically Congregational, Baptist, Roman Catholic, and Methodist were the largest Vermont denominations generally (FamilySearch Wiki, Vermont Online Genealogy Records); no denomination-specific presence in Shelburne for 1790-1820 was confirmed by any tool result in this survey.\n- **Record types:** The only Shelburne church record identified is Trinity (Episcopal) Church's parish register, with baptisms, marriages, confirmations, communicants, and deaths — but it begins in 1849 (FamilySearch Catalog koha:459907), outside the target period.\n- **Where held:** Microfilm of the Trinity Church register is held at the FamilySearch Library; the originals are at the Episcopal Diocesan Center, Burlington, Vermont, per the catalog note.\n- **Gaps:** No church records covering 1790-1820 were found for Shelburne in this survey — this is a confirmed coverage gap, not evidence that none were ever kept.\n- **Language:** English.\n\n### Census records\n- **Federal/national census:** The federal census was taken in 1790, 1800, 1810, and 1820, each within the target window; Ancestry's curated links list each year separately (e.g., 1790 U.S. Federal Census, 1800, 1810, 1820 — ancestry.com/search/collections/5058, 7590, 7613, 7734).\n- **State/provincial census:** A \"Vermont Compiled Census and Census Substitutes Index, 1778-1840\" exists at Ancestry (ancestry.com/search/collections/3577), useful where a federal schedule is incomplete for this era.\n- **Other enumerations:** None specific to Shelburne found in this survey.\n- **Access:** The Ancestry census collections are index & images (subscription); FamilySearch's own federal census collections were not directly queried in this survey but are generally indexed by name for this era.\n\n### Probate and court records\n- **Types:** Wills, administrations, and estate files are the probate record types relevant to a death in this period.\n- **Testate or intestate:** Not established by this survey — whether Alexander Mills left a will is unknown here; search both wills and intestate administration files.\n- **Date range:** Chittenden County probate coverage on FamilySearch (\"Vermont, Probate Files, 1800-1921,\" collection 1435692) begins in 1800, which covers a death after 21 March 1816. Ancestry's \"Vermont, U.S., Wills and Probate Records, 1749-1999\" also covers the period.\n- **Where held:** Shelburne's probate district is Chittenden; estate matters were handled by the Chittenden District Probate Court, 175 Main St., Burlington, VT (FamilySearch Wiki, Shelburne Genealogy page). FamilySearch's \"Vermont, Probate Files, 1800-1921\" is indexed & imaged online; Ancestry's probate collection is also index & images (subscription).\n\n### Land records\n- **Survey system:** Not stated by any tool result in this survey.\n- **Land-distribution jurisdiction:** Not confirmed by this survey; the FamilySearch Wiki's Vermont Land and Property page was not fetched, so the granting office is not named here.\n- **Types:** Deeds and general land-record entries, per Shelburne's town-clerk land volumes.\n- **Date range:** Shelburne's original town land records run 1787-1821 (volume 1, FamilySearch image group 008664200) and 1812-1835 (volume 2, image group 008573894) — both overlapping the 1790-1820 target period.\n- **Where held:** Originals at the Shelburne Town Clerk's Office; FamilySearch microfilm/digitized images, 0% name-indexed, full-text searchable only — use FamilySearch's full-text search tool, not name search. Also at the statewide \"Vermont, Land Records, Early to 1900\" collection (1409123) and Ancestry's equivalent (ancestry.com/search/collections/60209).\n\n### Military records\n- **Relevant conflicts:** The War of 1812 (1812-1815) falls within this window.\n- **Record types:** Service and pension records; Ancestry hosts \"A List of Vermont Pensioners of the War of 1812\" (ancestry.com/search/collections/49226) and \"British Aliens in the United States During the War of 1812\" (ancestry.com/search/collections/49091).\n- **Where held:** Held at Ancestry (subscription, images only for the pensioners list); no FamilySearch-hosted War of 1812 collection specific to Vermont was returned in this survey.\n\n### Cemetery records\n- **Major cemeteries:** Shelburne Village Cemetery, Spear Street Cemetery, Saint Catherines Cemetery, and Webb Family Cemetery, per the FamilySearch Wiki's Shelburne page, each with Find a Grave inscription links.\n- **Online coverage:** Find a Grave listings exist for all four cemeteries named above; FamilySearch's BillionGraves Index is also a statewide option.\n- **Physical records:** Shelburne's own \"Cemetery records, 1775-1869\" compiled in 1919 are at the Shelburne Town Clerk's Office, microfilmed by FamilySearch (catalog koha:420391, image group 008619614) — 0% name-indexed, full-text searchable, covering the full target period.\n\n### Newspaper records\n- **Local papers:** The Burlington Free Press is the long-running local paper named in the FamilySearch Wiki's Shelburne page; its coverage start date for this early period was not confirmed by this survey.\n- **Where held:** Chronicling America (Library of Congress) and GenealogyBank's \"Vermont Newspaper Archives, 1781-2006\" both cover the target window in principle (genealogybank.com link, dates 1781-2006).\n- **Content value:** Obituaries and legal notices are the main genealogical value, per the FamilySearch Wiki's general guidance; no Shelburne-specific 1790-1820 newspaper holding was confirmed in this survey.\n\n### Immigration/emigration records\n- Shelburne is inland on Lake Champlain, near the Canadian border; immigration/border-crossing collections on FamilySearch and MyHeritage (e.g., St. Albans Canadian Border Crossings) begin only in 1895, well after this period, so no immigration record type was confirmed as applicable to 1790-1820.\n\n### Tax records\n- **Types:** Not confirmed for this period. The only Vermont tax collection returned by this survey, \"Internal revenue assessment lists for Vermont, 1861-1866\" (FamilySearch catalog 577870), postdates the target window.\n- **Substitute value:** No substitute tax list for 1790-1820 was found in this survey — a confirmed gap, not evidence none exist; consult the FamilySearch Wiki's Vermont Taxation page directly for pre-1820 tax lists, which this survey did not fetch.\n\n### Other record types\n- Town meeting minutes, lists of freemen (voters), earmarks, and school-district records are combined into the same \"Town records, v. 1-2, 1776-1883\" volume as vital records (FamilySearch catalog koha:117486), covering the full target period.\n\n## Research tips\n- Vermont's present vital registration law dates only to 1857, and a centralized state system to 1919, so for Alexander Mills's 1816 death the only vital record is Shelburne's own town-clerk register, not any state-level record (FamilySearch Wiki, [Vermont Vital Records](https://www.familysearch.org/en/wiki/Vermont_Vital_Records)).\n- Finding parents or confirming family relationships for an early-1800s Vermont death is best pursued through probate files (which can name heirs) since death records of this era rarely give parents' names, per the FamilySearch Wiki's Vermont Research Tips and Strategies page.\n- Shelburne's original town-clerk vital, town, land, and cemetery volumes on FamilySearch are all 0% name-indexed but full-text searchable; use FamilySearch's full-text search tool for a name search of these images rather than the standard name-index search, which will return nothing.\n- Because Shelburne's probate district is Chittenden, search \"Vermont, Probate Files, 1800-1921\" (FamilySearch) and Ancestry's \"Vermont, U.S., Wills and Probate Records, 1749-1999\" under Chittenden County, not under Shelburne alone.\n- A date in the Republic-of-Vermont era (pre-1791) may be catalogued under \"Republic of Vermont\" rather than \"Vermont, United States\" — search both standard place labels for records from the early part of this period.\n- This survey did not fetch the Chittenden County-level wiki page or the Vermont Land and Property/Church Records/Probate Records pages specifically; a follow-up survey of those pages could surface Shelburne's neighboring-towns table and the land-granting office, which this pass could not confirm."
+    }
+  ],
+  "namesakes": []
+}

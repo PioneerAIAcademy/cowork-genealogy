@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_plan_99n",
+    "skill": "research-plan",
+    "name": "A first parentage plan plans no item for a tree claim the project's own dates rule out, seeks the subject's own birth evidence first, and plans full-text for an early New England vital",
+    "type": "positive",
+    "description": "Mined from alpha feedback #4642 (issue #4696 Part A). The tree names George Mills and Abigail Weed of Stamford as Alexander Mills's parents, but the same tree dates their marriage to 1760, after Alexander's own 1759 marriage, and gives them a son Alexander born 1761 who died in Stamford. The original planner said so in its summary and still planned two Stamford items, sought nothing on the subject's own birth or age before the alleged parents' records, and planned the 1759 Worcester marriage as an indexed search only. There is no Worcester localities entry, so the pre-1850 New England fallback is what bears on the full-text item.",
+    "tags": [
+      "planning",
+      "first-plan",
+      "parentage",
+      "from-cowork",
+      "mills-parentage-first-plan",
+      "new-plan-items-planned-status",
+      "direct-arm",
+      "ruled-out-claim",
+      "subject-birth-first",
+      "fulltext-beside-indexed"
+    ]
+  },
+  "input": {
+    "delegation": "Build a research plan for question q_001 in this project. projectPath: <workspace>. questionId: q_001.\n\nThe researcher's instruction: Rather than merely execute searches, build a research plan to answer the research question: Who are the parents of Alexander Mills of Shelburne, Vermont, husband of Mary Millet? This research plan should be independent of the current assertions in the FamilySearch Family Tree. Part of the plan might involve gathering evidence to prove or disprove currently undocumented assertions about Alexander Mills (PD5R-5VD) in the FamilySearch tree.\n\nKey facts already established about the subject: Alexander Mills married Mary Millet around 22 March 1759 (Worcester, Massachusetts), died after 21 March 1816 in Shelburne, Chittenden County, Vermont. The FamilySearch tree lists George Mills and Abigail Weed of Stamford, Connecticut as his parents, but those links are unverified and undocumented. There is also a possible duplicate: another Alexander Mills (died 1822, Connecticut) with the same candidate parents appears in the tree.\n\nLocality guides are saved as loc_001 (Stamford, Fairfield County, Connecticut, 1740-1780) and loc_002 (Shelburne, Chittenden County, Vermont, 1790-1820). The plan should work from the subject outward — starting from what is documented about Alexander himself (Vermont death, Massachusetts marriage), then looking for his origins — and should not assume the tree's parentage claim is correct.",
+    "scenario": "mills-parentage-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "wiki-place-page-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE: when dated evidence already in the project makes a tree claim impossible (here, a candidate couple's marriage dated after the subject's own marriage), a first plan does not spend items whose only purpose is to test that claim, and the return says in one line which claim was excluded and on what dated evidence. A doubt without dated evidence does not license dropping a line of inquiry.",
+    "GENERAL RULE: on a parentage question the plan includes at least one item aimed at the subject's own birth, age or birthplace evidence (a birth or baptism entry, a pension declaration, a death record stating age, a deposition), sequenced before searches of the alleged parents' own records.",
+    "GENERAL RULE: for a pre-1850 New England vital, land or court record, the plan carries a full-text item beside the indexed search, not as a later fallback, because the published town vital-records books and county deed and court books there are reached through full-text.",
+    "Grade the reasoning, not a preferred answer: different item counts, orderings among the subject's own records, and additional FAN items are all acceptable."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
+  }
+}
