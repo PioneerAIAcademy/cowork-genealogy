@@ -15,8 +15,6 @@
  * the repo's own doctrine is that heuristics are flags, never gates.
  */
 
-import type { ExternalSearchSite } from "../tools/build-external-search-url.js";
-
 export interface PlanItemLike {
   jurisdiction?: unknown;
   date_range?: unknown;
@@ -159,14 +157,13 @@ export function compoundJurisdictionError(
 }
 
 /** How a model writes each `build_external_search_url` site in prose. The slugs
- *  ("chronicling_america") match nothing a model writes. Keyed by the site union so
- *  a new site fails `tsc` until it is named here. `digital_newspaper_archive` is
- *  left out: it is the generic state-archive entry and has no name; a state
- *  archive is caught by the project's stored `link_text` instead. */
-export const OUTSIDE_SITE_NAMES: Record<
-  Exclude<ExternalSearchSite, "digital_newspaper_archive">,
-  readonly string[]
-> = {
+ *  ("chronicling_america") match nothing a model writes. Keyed by the site value;
+ *  a test fails until every advertised site but `digital_newspaper_archive` is
+ *  named here (the generic state-archive entry, which has no name; a state archive
+ *  is caught by the project's stored `link_text` instead). Not typed by
+ *  `ExternalSearchSite`: even a type-only import of a tool file puts every tool
+ *  that imports this module into apps/server's token-reach scan. */
+export const OUTSIDE_SITE_NAMES: Readonly<Record<string, readonly string[]>> = {
   ancestry: ["ancestry", "ancestry.com"],
   myheritage: ["myheritage", "my heritage"],
   findmypast: ["findmypast", "find my past"],

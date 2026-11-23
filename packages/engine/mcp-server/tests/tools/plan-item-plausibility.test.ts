@@ -7,6 +7,7 @@ import {
   planWindowFlag,
 } from "../../src/utils/plan-item-plausibility.js";
 import { buildExternalSearchUrlSchema } from "../../src/tools/build-external-search-url.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 // Phase 3 item 5: "dead ends become next actions", and the next actions have to be
 // usable. In the reported failure 2 of 8, then 1 of 3 suggestions were viable -- the
@@ -655,6 +656,7 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
   });
 
   it("still writes when external-collections.json is malformed, on the fixed names alone", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     const dir = project(UTAH);
     writeFileSync(join(dir, "external-collections.json"), "{not json", "utf8");
     expect(await append(dir, { ...NEWS, jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
