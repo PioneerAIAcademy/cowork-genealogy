@@ -15,7 +15,7 @@ description: >-
   already found (extraction_append, or the record-structurer agent), or, after
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
 
@@ -335,8 +335,12 @@ records actually exist** there.
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` first, so the `localities` section should already hold an
-entry for the target place (`jurisdictions`,
-`quirks`, `guide_markdown`). **Read it** with `research_query`. If it is **missing** for a place you
+entry for the target place (`jurisdictions`, `quirks`, `record_types`,
+`repositories`, `losses`, `catalog`, `guide_markdown`). **Read it** with `research_query`.
+Each `record_types` row gives a record type's holder, level and summary, and its
+`collection_ids`: judge whether the subject's event and year are name-searchable from each listed
+collection's own `dateRange` and `availability`, never from the type as a whole. An entry with no
+`record_types` carries these in `guide_markdown`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
@@ -372,18 +376,17 @@ startYear, endYear, projectPath })` once, then read. Let the guide's quirks stee
 says the parish is indexed only at county level, weight the county
 collection, not the exact-parish one.
 
-**Availability comes from the response, not from memory.** A collection's
-returned `personCount`, or its `personCount` in the `localities` entry,
-decides how you plan and describe it:
-- **Above 0:** name-searchable. Plan a name search.
-- **0:** browse-only images. Plan an image browse, not a name search.
+**Availability is the collection's `availability`, not its counts or your
+memory.** A collection whose `availability` is "browse-only" is browse-only:
+plan an image browse, not a name search. Any other collection in a
+`collections_search` answer, a `localities` entry or `nationalCollections` is
+name-searchable: plan a name search.
 
 Wherever a rationale names a collection, describe it with exactly one of
-these two phrases, copied as written — "name-searchable" or
-`browse-only (personCount 0)` — and with no other availability word: not
-"indexed", "unindexed", "image-only" or "searchable" on its own, and not as
-part of the collection's name. Write no record or person count into a
-rationale; the 0 in `browse-only (personCount 0)` is the only number.
+"name-searchable" or "browse-only", copied as written, and with no other
+availability word: not "indexed", "unindexed", "image-only" or "searchable"
+on its own, and not as part of the collection's name. Write no record or
+person count into a rationale.
 
 Cite a collection or volume id, a postal or email address, or any other
 identifying number in a rationale only if a tool returned it this session or
@@ -697,7 +700,7 @@ research_append({
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
         repository: "FamilySearch",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only (personCount 0), so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
       }
@@ -833,7 +836,7 @@ County naming Patrick as a son?"
 know-how + facts are already there (county formed 1811; probate = county
 Register of Wills; naming/indexing quirks). Its `collections[]` give the
 records to plan (FamilySearch "Pennsylvania Probate Records, 1683-1994",
-personCount 0, so browse-only); no `collections_search` for Schuylkill.
+browse-only); no `collections_search` for Schuylkill.
 
 **Plan:** pl_003 — three items: probate on FamilySearch, probate on
 Ancestry (fallback), land records (fallback).
@@ -1246,8 +1249,8 @@ Before finalizing record selection, verify these factors:
   creating jurisdiction.
 - [ ] **Record availability dates:** When did civil registration begin
   in this jurisdiction? Earlier events require church or other records.
-- [ ] **Record destruction:** Does the `localities` entry record a
-  courthouse fire, flood, or wartime loss? Plan the substitute sources
+- [ ] **Record destruction:** Does the `localities` entry's `losses` (or,
+  with none, its `guide_markdown`) record a courthouse fire, flood, or wartime loss? Plan the substitute sources
   it names for the lost series.
 - [ ] **Wars and military service:** Was the subject of service age
   during a conflict? Check military service, pension, and draft records.

@@ -12,13 +12,12 @@
       "archives",
       "jurisdiction-awareness",
       "colonial records",
-      "direct-arm",
-      "no-project"
+      "direct-arm"
     ]
   },
   "input": {
-    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?",
-    "scenario": null,
+    "delegation": "I'm researching an ancestor who lived in the Alabama region around 1800, before statehood. What archives or record repositories will hold for that locality and period?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -49,6 +48,9 @@
     "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Must mention territorial, church, land, and court records; historical societies in Alabama likely hold pre-statehood records and should be mentioned as repositories. Must avoid anachronistic record types like state archives or modern databases."
-  ]
+    "Must mention territorial, church, land, and court records. Naming a present-day archive that holds period records is correct, not anachronistic; presenting a modern database or index as though it were a record created in the period is the error. Naming a historical society is not required: name one only where a tool result does, and no tool in this test names one.",
+    "Grounded, do not dock: the wiki-search-alabama-territorial-records result names the Alabama Department of Archives and History (Montgomery) as holding the 1801, 1805, 1808 and 1810 Mississippi Territory censuses, the Archives Nationales d'Outre-Mer (Aix-en-Provence) and the Mobile Municipal Archives for French colonial records, and the Archivo General de Indias (Seville) with copies at the Library of Congress for Spanish records of the Mobile District. Dock this: stating as fact a record class, survival or registration regime that no tool result gives (e.g. 'no civil vital registration existed in this period', or which federal census schedules survive) is ungrounded, even when it is likely true.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }

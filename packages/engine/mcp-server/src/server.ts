@@ -32,6 +32,8 @@ import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import { localitySurveyTool } from "./tools/locality-survey.js";
+import type { LocalitySurveyInput } from "./types/locality-survey.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
@@ -39,6 +41,7 @@ import { volumeBisectTool } from "./tools/volume-bisect.js";
 import type { ImageTranscribeInput } from "./types/image-transcribe.js";
 import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
+import type { RecordSearchToolResponse } from "./types/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
 import { samePerson } from "./tools/same-person.js";
@@ -395,6 +398,19 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
+    if (request.params.name === "locality_survey") {
+      try {
+        const args = request.params.arguments as unknown as LocalitySurveyInput;
+        const result = await localitySurveyTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
     if (request.params.name === "image_read") {
       try {
         const args = request.params.arguments as unknown as ImageReadInput;
@@ -445,10 +461,14 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "record_search") {
       try {
         const args = request.params.arguments as unknown as RecordSearchInput;
-        const result = await recordSearchTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }]
-        };
+        // record_search became a document writer in issue #4527 — it writes a
+        // nil search's own log entry — so it routes through the writer envelope.
+        // Its response carries no `ok` today (a refused log write keeps the
+        // search result and reports `nilLogRefused`), so this never marks an
+        // error; the intersection is the same idiom external_links_search uses
+        // above, and it surfaces an `ok: false` correctly if one is ever added.
+        const result: RecordSearchToolResponse & OkFalseResult = await recordSearchTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {

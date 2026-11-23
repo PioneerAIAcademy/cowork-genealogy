@@ -65,3 +65,36 @@ export function normalizeRegistrationStart(rows: unknown, allowed: ReadonlySet<s
   }
   return changed ? out : rows;
 }
+
+/**
+ * `rows` (a locality's `record_types[]`) with each row's free-text `level` read into one
+ * list word: the narrowest the text names, in `order` (the enum order, town first). Text
+ * naming no level word sets `level: null`. Text that said more than the level is appended
+ * to the row's `summary`. A row is never split and never gains a key, so it can never be
+ * refused for its level. Rows already valid come back unchanged.
+ */
+export function normalizeRowLevels(rows: unknown, order: readonly string[]): unknown {
+  if (!Array.isArray(rows)) return rows;
+  const allowed = new Set(order);
+  let changed = false;
+  const out = rows.map((row) => {
+    if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+    const r = row as Record<string, unknown>;
+    const level = r.level;
+    if (level === undefined || level === null || (typeof level === "string" && allowed.has(level))) return row;
+    const text = typeof level === "string" ? level.trim() : JSON.stringify(level);
+    const outside = text.replace(/\([^()]*\)/g, " ");
+    const words = outside.toLowerCase().split(/[^a-z]+/).filter((w) => w !== "");
+    const found = words.flatMap((w) => levelWord(w, allowed) ?? []);
+    const narrowest = order.find((l) => found.includes(l)) ?? null;
+    const saidMore = narrowest === null || new Set(found).size > 1 || outside !== text || words.some((w) => levelWord(w, allowed) === null && !FILLER.has(w));
+    const summary = typeof r.summary === "string" ? r.summary : "";
+    changed = true;
+    return {
+      ...r,
+      level: narrowest,
+      ...(saidMore && text !== "" ? { summary: summary ? `${summary} (held at: ${text})` : `Held at: ${text}` } : {}),
+    };
+  });
+  return changed ? out : rows;
+}

@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   lookupNameFamily,
   expandLookingFor,
+  formsOnPage,
   __clearVariantCacheForTests,
 } from "../../src/utils/name-variants.js";
 
@@ -106,6 +107,33 @@ describe("expandLookingFor", () => {
     expect(expandLookingFor("marked in may")).toBeNull();
   });
 
+  it("expands a name written with a comma or bracket beside it (#4587)", () => {
+    const incident = expandLookingFor("Lee, Eliza, father James Lee");
+    expect(incident).not.toBeNull();
+    expect(incident!.expansions).toHaveProperty("Elizabeth");
+    expect(incident!.expansions).toHaveProperty("James");
+    expect(incident!.expanded).toMatch(
+      /^Lee, Eliza, father James Lee \(also known as .*Elizabeth/
+    );
+    expect(expandLookingFor("Eliza, Lee")!.expansions).toHaveProperty("Elizabeth");
+    expect(expandLookingFor("(Eliza) Lee")!.expansions).toHaveProperty("Elizabeth");
+    expect(expandLookingFor('"Polly" Lee')!.expansions).toHaveProperty("Mary");
+  });
+
+  it("matches a scribal form with its period, and a sentence-final name without it", () => {
+    expect(expandLookingFor("Jas., son of")!.expansions).toHaveProperty("James");
+    const final = expandLookingFor("daughter of James.");
+    expect(final!.expansions).toHaveProperty("James");
+    expect(final!.expansions.James).not.toContain("James");
+  });
+
+  it("does not expand punctuated common words", () => {
+    expect(expandLookingFor("29 May, 1774")).toBeNull();
+    expect(expandLookingFor("the last will, and testament")).toBeNull();
+    expect(expandLookingFor("married in May.")).toBeNull();
+    expect(expandLookingFor("son of Ted.")).toBeNull();
+  });
+
   it("skips ambiguous words without an adjacent proper name", () => {
     // "MAY" in a date context — "1774" is not capitalized, "29" is not → skip MAY
     expect(expandLookingFor("born 12 May 1877")).toBeNull();
@@ -148,5 +176,37 @@ describe("expandLookingFor", () => {
     const forms = parts.split(", ");
     const unique = new Set(forms);
     expect(forms.length).toBe(unique.size);
+  });
+});
+
+describe("formsOnPage", () => {
+  it("names the other forms on the page, keyed by the name as written", () => {
+    const { byWrittenName } = expandLookingFor("Lee, Eliza, father James Lee")!;
+    expect(byWrittenName.Eliza).toContain("Elizabeth");
+    const page = "LEE BRN 29 SEP 1821 ELIZABETH D JAMES LEE AND MARIA 06132-2";
+    expect(formsOnPage(byWrittenName, page)).toEqual({ Eliza: ["Elizabeth"] });
+  });
+
+  it("matches whole words only, and a scribal form with its period", () => {
+    const { byWrittenName } = expandLookingFor("Elizabeth Lee")!;
+    expect(formsOnPage(byWrittenName, "BETTYE LEE, BETHANY LEE")).toBeNull();
+    expect(formsOnPage(byWrittenName, "Eliz. Lee, dau. of Jas.")).toEqual({ Elizabeth: ["Eliz", "Eliz."] });
+  });
+
+  it("is null when only the name as written is on the page", () => {
+    const { byWrittenName } = expandLookingFor("Eliza Lee")!;
+    expect(formsOnPage(byWrittenName, "ELIZA, daughter of JOHN LEE")).toBeNull();
+  });
+});
+
+describe("formsOnPage — ordinary words", () => {
+  it("does not report a month or common word as a matched name form", () => {
+    expect(formsOnPage(expandLookingFor("Mary Lee")!.byWrittenName, "LEE BRN 12 MAY 1821 SARAH D JOHN LEE")).toBeNull();
+    expect(formsOnPage(expandLookingFor("William Lee")!.byWrittenName, "the last will and testament of John Lee")).toBeNull();
+    expect(formsOnPage(expandLookingFor("Edward Lee")!.byWrittenName, "John Lee, Ed. note")).toBeNull();
+  });
+
+  it("strips curly quotes beside a name", () => {
+    expect(expandLookingFor("\u201cPolly\u201d Lee")!.expansions).toHaveProperty("Mary");
   });
 });

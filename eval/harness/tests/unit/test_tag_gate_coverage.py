@@ -56,14 +56,6 @@ DORMANT: dict[str, str] = {
         "issue #2475 restores it once a writer precondition can join search_stop "
         "to localities"
     ),
-    "objective-target": (
-        "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
-        "the validator was kept and no test carries the tag yet"
-    ),
-    "single-jurisdiction": (
-        "its only test, ut_locality_guide_029, was deleted by PR #4558: it aborts "
-        "on max_tool_calls on main too; issue #4602 restores it"
-    ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "

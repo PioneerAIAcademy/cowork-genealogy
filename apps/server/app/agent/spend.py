@@ -91,17 +91,22 @@ CACHE_WRITE_1H_INPUT_MULTIPLE = 2.0
 
 # Each model's own input and output rate, USD per 1M tokens, for pricing a call by the
 # model that made it (the alpha's credential proxy). On every model a 5-minute cache write
-# is 1.25x input and a cache read 0.1x. The harness's `MODEL_RATES` is the other copy,
-# pinned against this one by the same parity test as PRICE_PER_MTOK.
+# is 1.25x input; a cache read is 0.1x input, or `CACHE_READ_INPUT_MULTIPLE` where that
+# names the model. The harness's `MODEL_RATES` is the other copy, pinned against this one
+# by the same parity test as PRICE_PER_MTOK.
 MODEL_RATES = {
     "claude-sonnet-4-6": (3.0, 15.0),
     "claude-sonnet-5": (2.0, 10.0),
     "claude-sonnet-5-5": (2.0, 10.0),
     "claude-haiku-4-5": (1.0, 5.0),
-    # The CLI's own small-model calls from 2.1.308. Prompts over 100K bill 5x; it sends none.
+    # Up to a 100K-token prompt; a longer call bills every class at `LONG_PROMPT`.
     "claude-haiku-5-5": (0.10, 0.50),
     "claude-opus-4-8": (5.0, 25.0),
 }
+CACHE_READ_INPUT_MULTIPLE = {"claude-sonnet-5-5": 0.05}
+# model -> (prompt tokens, multiple): one call whose prompt (input + cache write + cache
+# read) is over the threshold bills every token class at the multiple.
+LONG_PROMPT = {"claude-haiku-5-5": (100_000, 5.0)}
 _DATED = re.compile(r"-\d{8}$")
 
 
@@ -109,12 +114,14 @@ def rates_for(model: str | None) -> dict[str, float]:
     """``model``'s rates, keyed like PRICE_PER_MTOK; PRICE_PER_MTOK itself for no model or
     one MODEL_RATES does not know. A dated id (``claude-haiku-4-5-20251001``) is its
     undated model."""
-    base = MODEL_RATES.get(_DATED.sub("", model or ""))
+    key = _DATED.sub("", model or "")
+    base = MODEL_RATES.get(key)
     if base is None:
         return PRICE_PER_MTOK
     input_rate, output_rate = base
     return {"input": input_rate, "cache_write": 1.25 * input_rate,
-            "cache_read": 0.1 * input_rate, "output": output_rate}
+            "cache_read": CACHE_READ_INPUT_MULTIPLE.get(key, 0.1) * input_rate,
+            "output": output_rate}
 
 
 def cache_write_1h_rate(rates: dict[str, float]) -> float:
@@ -123,10 +130,12 @@ def cache_write_1h_rate(rates: dict[str, float]) -> float:
 
 
 def price_usd(tokens, model: str | None = None, cache_write_1h: int = 0) -> float:
-    """Tokens (input, cache_write, cache_read, output) priced at ``rates_for(model)``:
-    with no model, at PRICE_PER_MTOK. The first ``cache_write_1h`` of the cache writes are
-    1-hour ones, priced at ``cache_write_1h_rate``; clamped to the write total, as the CLI's
-    own cost line clamps it."""
+    """Tokens (input, cache_write, cache_read, output) of ONE call priced at
+    ``rates_for(model)``: with no model, at PRICE_PER_MTOK. The first ``cache_write_1h`` of
+    the cache writes are 1-hour ones, priced at ``cache_write_1h_rate``; clamped to the
+    write total, as the CLI's own cost line clamps it. A call whose prompt passes the
+    model's ``LONG_PROMPT`` threshold bills at its multiple, so a sum of calls on such a
+    model must not be priced in one go."""
     rates = rates_for(model)
     total = sum(
         (t or 0) / 1_000_000 * rates[name]
@@ -135,6 +144,9 @@ def price_usd(tokens, model: str | None = None, cache_write_1h: int = 0) -> floa
     one_hour = min(max(cache_write_1h or 0, 0), tokens[1] or 0)
     if one_hour:
         total += one_hour / 1_000_000 * (cache_write_1h_rate(rates) - rates["cache_write"])
+    threshold, multiple = LONG_PROMPT.get(_DATED.sub("", model or ""), (None, 1.0))
+    if threshold is not None and sum(t or 0 for t in tokens[:3]) > threshold:
+        total *= multiple
     return total
 
 

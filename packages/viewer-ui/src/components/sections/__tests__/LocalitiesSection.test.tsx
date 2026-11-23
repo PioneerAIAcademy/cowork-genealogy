@@ -54,6 +54,37 @@ describe('LocalitiesSection', () => {
     vi.clearAllMocks()
   })
 
+  it('renders the record-type, repository, loss and catalog rows', async () => {
+    mockResearch({
+      localities: [
+        makeLocality({
+          record_types: [
+            {
+              type: 'court',
+              years: '1885-1925',
+              level: 'county',
+              held_at: "Schuylkill County Orphans' Court",
+              access: 'microfilm',
+              summary: 'Births and deaths 1893-1905.'
+            }
+          ],
+          repositories: [{ name: 'Schuylkill County Register of Wills', holds: 'wills from 1811' }],
+          losses: [{ record_set: 'Courthouse fire', years: '1850', source_url: 'https://example.org/loss' }],
+          catalog: [{ id: 'koha:1', title: 'Orphans court dockets', place: 'Schuylkill', repository_calls: ['Online'], film_count: 12 }]
+        })
+      ]
+    })
+    render(<LocalitiesSection />)
+    await userEvent.click(screen.getByText(/Pennsylvania, United States/))
+    expect(screen.getByText('Record types')).toBeInTheDocument()
+    expect(screen.getByText('court, 1885-1925: microfilm')).toBeInTheDocument()
+    expect(screen.getByText(/Births and deaths 1893-1905/)).toBeInTheDocument()
+    expect(screen.getByText('Schuylkill County Register of Wills')).toBeInTheDocument()
+    expect(screen.getByText('Courthouse fire, 1850')).toBeInTheDocument()
+    expect(screen.getByText('Orphans court dockets')).toBeInTheDocument()
+    expect(screen.getByText('12 films')).toBeInTheDocument()
+  })
+
   it('renders the empty state when localities is absent', () => {
     mockResearch({ localities: undefined })
     render(<LocalitiesSection />)
