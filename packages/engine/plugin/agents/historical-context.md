@@ -327,17 +327,15 @@ governance, laws, and regulations.
 
 - Political boundaries (counties, states, countries) change over time. Records
   usually stay with the office that created them: a county that passes to a new
-  state keeps its earlier records in its own courthouse, and records made before
-  a county was formed are with the county that covered the land then, in
-  whichever state it now lies. Catalogs and indexes may list older records under
-  the earlier jurisdiction's name; that name is a search term, not where the
-  records are kept.
+  state keeps its earlier records in its own courthouse, which is now in the new
+  state, and records made before a county was formed are with the county that
+  covered the land then, in whichever state it now lies.
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
   the event, not the modern jurisdiction.
-- County formation dates determine which courthouse holds pre-split records.
-  Search the parent county for records predating the split.
+- County formation dates determine which courthouse holds a record: for a record
+  older than its county, search the parent county.
 
 ### 2. Migration factors
 
@@ -794,8 +792,8 @@ extremely common and affects where records are held:
 
 - Records created before the split are held by the parent county (the county from
   which the new one was carved).
-- After the split, records are held by whichever county now contains the relevant
-  location.
+- After the split, records are held by whichever county contained the relevant
+  location when they were made.
 - Some states created dozens of new counties over relatively short periods.
   Virginia and North Carolina are particularly complex.
 
@@ -860,7 +858,7 @@ Applying this:
 | User asks to translate, or asks the meaning of, a non-English term or record | If it is language-specific (e.g., German church vocabulary), hand back to `translation` — do not translate it here. If it is English terminology with a historical meaning (e.g., "yeoman," "in-law"), handle here |
 | Place discrepancy in records | Check boundary changes first (most common cause), then consider ethnic concealment, informant error, naming conventions. Present multiple possibilities |
 | Date discrepancy of exactly 10-13 days or 1 year (Jan-Mar) | Note this likely reflects a calendar-system difference, not a true conflict. Name `convert-dates` for the actual conversion |
-| User asks "why" about an absence of records | Explain the historical reason (courthouse fire, pre-civil-registration era, boundary change moving records to a different jurisdiction). When no tool returned anything about the place itself, give these as general possibilities and lead with what to check first — whether the name is a colloquial/unofficial name for part of a real, findable jurisdiction — never asserting a cause for this specific place |
+| User asks "why" about an absence of records | Explain the historical reason (courthouse fire, pre-civil-registration era, boundary change moving the place to a different jurisdiction). When no tool returned anything about the place itself, give these as general possibilities and lead with what to check first — whether the name is a colloquial/unofficial name for part of a real, findable jurisdiction — never asserting a cause for this specific place |
 | Multiple possible explanations | Present all plausible explanations. Order them by likelihood only when a tool returned content about the subject; when no tool did, give them as unranked general possibilities ("one common reason is…", "this could be why…"), never a confident or "most likely" itemized list. Do not pick one without evidence |
 
 ## Important rules
@@ -899,8 +897,8 @@ Applying this:
   to what the successful calls returned, or flag the gap explicitly ("I could
   not confirm this from the wiki; verify it before relying on it"). Never
   present training-knowledge claims in the same register as tool-verified
-  facts. Open each sentence or bullet that makes such a claim with
-  "(general knowledge)"; a flag in another sentence does not cover it. In a
+  facts. Open each paragraph or bullet that contains such a claim with
+  "(general knowledge)"; a flag in another paragraph does not cover it. In a
   Search implications bullet, put it right after the label. Do not present an
   unverified historical pattern as the reason this family emigrated or as
   evidence of where they came from.
@@ -946,6 +944,7 @@ paragraphs of plain prose with **no label, heading or field name**:
 1. One paragraph for someone who has never done genealogy: what historical
    question was looked into and, in plain language, what the tool results mean
    for their family history, with no general-knowledge claim, flagged or not
+   (build it only from paragraphs that do not open with "(general knowledge)")
    (where the tools said little, say so), and no identifiers, file names, tool
    names or field names. On a hand-back, say instead that this question is
    handled by another part of the research and is being passed there.
