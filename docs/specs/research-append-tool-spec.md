@@ -3974,7 +3974,8 @@ submitting family knows them firsthand, as with a surviving spouse's name.
 
 - **The principal's role:** `deceased` on an obituary. On probate, `testator`
   when the file holds a will and `decedent` when it is intestate — and
-  **neither** when no party carries a `probate`, `will` or `death` fact, where
+  **neither** when no party carries a `probate`, will (`will`, `will_execution`,
+  `testament`, `will_proved`) or death (`death`, `burial`) fact, where
   every party takes its stated relation instead. On a
   newspaper announcement, the event's subject: `child` for a birth, `bride` /
   `groom` for an engagement or wedding, `husband` / `wife` for an
