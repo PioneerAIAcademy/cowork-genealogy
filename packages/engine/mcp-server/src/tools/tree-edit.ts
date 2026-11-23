@@ -839,7 +839,8 @@ async function applyOperation(
       if (ruledOut) {
         throw new TreeEditError(
           `add_relationship: proof summary ${ruledOut.summaryId} rules this pair out (claim '${ruledOut.label}', ` +
-            "disproved). Revise that claim first if the new evidence overturns it; the edge cannot stand beside it.",
+            "disproved). Have proof-conclusion revise that claim first if the new evidence overturns it; the edge " +
+            "cannot stand beside it.",
         );
       }
 
@@ -850,6 +851,16 @@ async function applyOperation(
       // would make the caller re-route the same evidence by hand through
       // `add_fact`, dropping the edge's own sources on the way.
       const matched = (tree.relationships ?? []).find((e) => relationshipMatches(e, rel));
+      // An untyped edge matches any subtype, so the edge a corroboration lands
+      // on can be one a disproof covers even when the proposed edge is not.
+      const matchedRuledOut = matched ? disprovedClaimCovering(research, matched) : null;
+      if (matched && matchedRuledOut) {
+        throw new TreeEditError(
+          `add_relationship: this would corroborate relationship '${matched.id}', which proof summary ` +
+            `${matchedRuledOut.summaryId} rules out (claim '${matchedRuledOut.label}', disproved). Remove that edge ` +
+            "with tree_correct, or have proof-conclusion revise the claim first; nothing is added to a ruled-out edge.",
+        );
+      }
       if (matched) {
         if (rel.sources?.length) {
           matched.sources = dedupSourceRefs([...(matched.sources ?? []), ...rel.sources]);
@@ -1002,6 +1013,18 @@ async function applyOperation(
         throw new TreeEditError(
           `update_relationship: retyping '${rel.id}' to '${input.subtype}' would duplicate '${clash.id}', ` +
             "which already joins this pair — remove one of them instead",
+        );
+      }
+      // A retype that newly brings the edge under a disproof asserts the ruled-out
+      // pair; one already under it, or moving away from it, does not.
+      const retypeRuledOut = disprovedClaimCovering(research, rel)
+        ? null
+        : disprovedClaimCovering(research, { ...rel, subtype: input.subtype });
+      if (retypeRuledOut) {
+        throw new TreeEditError(
+          `update_relationship: proof summary ${retypeRuledOut.summaryId} rules out '${input.subtype}' for this pair ` +
+            `(claim '${retypeRuledOut.label}', disproved). Have proof-conclusion revise that claim first if the new ` +
+            "evidence overturns it.",
         );
       }
       rel.subtype = input.subtype;
