@@ -130,6 +130,8 @@ describe("expandLookingFor", () => {
   it("does not expand punctuated common words", () => {
     expect(expandLookingFor("29 May, 1774")).toBeNull();
     expect(expandLookingFor("the last will, and testament")).toBeNull();
+    expect(expandLookingFor("married in May.")).toBeNull();
+    expect(expandLookingFor("son of Ted.")).toBeNull();
   });
 
   it("skips ambiguous words without an adjacent proper name", () => {

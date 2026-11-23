@@ -300,7 +300,7 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
     // adjacent capitalized token to confirm they are used as a name.
     // "29 MAY 1774" → no adjacent capital → skip.
     // "May Thornton" → "Thornton" starts with T → expand.
-    if (AMBIGUOUS_WORDS.has(token.toLowerCase()) && !hasAdjacentCapital(tokens, i)) continue;
+    if (AMBIGUOUS_WORDS.has(token.replace(/\.$/, "").toLowerCase()) && !hasAdjacentCapital(tokens, i)) continue;
 
     // A sentence-final name ("daughter of James.") is not a scribal form.
     let name = token;
