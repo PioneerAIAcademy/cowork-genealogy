@@ -114,6 +114,7 @@ describe('The case', () => {
     const locality = MCANDREW_DOC().research!.localities![0]
     expect(body()).toContain(locality.place)
     expect(document.querySelector('section h3')?.textContent).toBeTruthy()
+    expect([...document.querySelectorAll('h3')].map((h) => h.textContent)).not.toContain('Other websites')
     expect(leftoverIds(body())).toEqual([])
   })
 
@@ -158,6 +159,8 @@ describe('The case', () => {
         expect(background!.textContent).not.toContain(link_text)
         const items = [...document.querySelectorAll('li')].filter((li) => li.textContent?.startsWith(link_text))
         expect(items).toHaveLength(1)
+        expect(mentions!.contains(items[0])).toBe(false)
+        expect(background!.contains(items[0])).toBe(false)
         expect(items[0].querySelector('a')?.getAttribute('href') ?? null).toBe(url.startsWith('https://') ? url : null)
         expect(items[0].textContent).toBe(`${link_text}Census · 1900–1940`)
         const details = items[0].closest('details')
@@ -195,6 +198,7 @@ describe('The case', () => {
     await caseOn(doc, { page: 'sources' })
     expect(body()).toContain('Other websites with records for Leake, Mississippi, United States (2).')
     expect(document.querySelector('a[href="https://example.org/4"]')?.textContent).toBe('A collection')
+    expect(document.querySelector('a[href="https://example.org/4"]')?.closest('li')?.querySelector('p')).toBeNull()
     expect([...document.querySelectorAll('li')].map((li) => li.textContent)).toContain('http://example.org/7')
     expect(document.querySelector('a[href="http://example.org/7"]')).toBeNull()
     expect(body()).not.toContain('Null Entry Place')

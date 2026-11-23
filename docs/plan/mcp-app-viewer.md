@@ -154,8 +154,8 @@ leaving the page, so a researcher can compare without losing their place.
   - **Background:** the locality guides.
   - **Other websites:** FamilySearch's curated outside collections, one list for each
     place FamilySearch files links under (a county lookup also brings its state's list),
-    in name order, each closed until opened. A place with no rows listed, one too large
-    to list among them, is skipped. Each list's line names the place and the count,
+    in name order, each closed until opened. A place with no rows is skipped, including
+    one FamilySearch refused as too large to list. Each list's line names the place and the count,
     marks a place too large to list in full as part of a longer list, and says this is
     FamilySearch's list for planning: being listed does not mean a site was searched or
     paid for. It is never presented as a source.
