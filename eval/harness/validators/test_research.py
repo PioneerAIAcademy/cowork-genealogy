@@ -1055,9 +1055,10 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
 def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_calls):
     """Tag-gated (``no-wrong-project-path``). The hosted ``project_list`` answer
     gives a ``newProjectPath``, so the router reads project state there or not at
-    all, never at another path, the working folder included. The first hand-off
-    goes to tree-survey, which takes no ``projectPath``, so it names neither
-    ``newProjectPath`` nor a listed project's path."""
+    all, never at another path, the working folder included. A message that names
+    no person gets a project there: ``project_create`` at ``newProjectPath`` with
+    no ``personId``, and the first hand-off, to tree-survey, names that
+    ``projectPath``, and no listed project's."""
     if "no-wrong-project-path" not in (test.get("tags") or []):
         pytest.skip("not a no-wrong-project-path test")
     listing = _hosted_listing(tool_calls)
@@ -1066,10 +1067,21 @@ def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_c
     read_paths = _project_context_paths(tool_calls)
     other = [p for p in read_paths if p != new_path]
     assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    creates = [
+        c for c in tool_calls or []
+        if bare_tool_name(c.get("tool", "")) == "project_create"
+    ]
+    assert creates, "a request with no person in it must start a project: project_create was never called"
+    assert all((c.get("args") or {}).get("projectPath") == new_path for c in creates), (
+        f"project_create must create at newProjectPath {new_path!r}: {[c.get('args') for c in creates]}"
+    )
+    assert not any((c.get("args") or {}).get("personId") for c in creates), (
+        "project_create was given a personId for a request that names no person"
+    )
     callee = _expected_skill(test)
     handoff = _first_handoff_args(callee, builtin_tool_calls)
     assert handoff is not None, f"no hand-off to '{callee}'"
-    assert new_path not in handoff, f"the '{callee}' hand-off names newProjectPath {new_path!r}: {handoff[:300]}"
+    assert new_path in handoff, f"the '{callee}' hand-off must name the project just created, {new_path!r}: {handoff[:300]}"
     named = _listed_paths_named(listing, handoff)
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 

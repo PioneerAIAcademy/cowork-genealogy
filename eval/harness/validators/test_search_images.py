@@ -441,8 +441,7 @@ def _line_pairs(block: str, left: tuple[str, ...], right: tuple[str, ...]) -> bo
 
 def test_reindex_reads_the_index_then_the_page_once(tool_calls, test):
     """Tag-gated (reindex): the page's index comes from image_index before the
-    page is read, the page is read once with no projectPath, and nothing is
-    logged (no project)."""
+    page is read, and the page is read once, in the project the delegation names."""
     if "reindex" not in test.get("tags", []):
         pytest.skip("not a re-index test")
     indexes = _calls_named(tool_calls, "image_index")
@@ -451,11 +450,9 @@ def test_reindex_reads_the_index_then_the_page_once(tool_calls, test):
     assert reads, "the re-index never read the page with image_transcribe"
     assert indexes[0][0] < reads[0][0], "image_transcribe ran before image_index"
     assert len(reads) == 1, f"the page was read {len(reads)} times; one read, never a second OCR pass"
-    assert not (_as_mapping(reads[0][1].get("args")).get("projectPath")), (
-        "image_transcribe was called with a projectPath; with no project it takes none"
+    assert _as_mapping(reads[0][1].get("args")).get("projectPath"), (
+        "image_transcribe was called with no projectPath; every read has a project"
     )
-    writes = [c.get("tool") for c in tool_calls or [] if (c.get("tool") or "").endswith(("research_log_append", "research_append"))]
-    assert not writes, f"no project, so nothing is logged; got {writes}"
 
 
 def test_reindex_reply_pairs_readings_without_a_verdict(agent_returns, text_response, test):

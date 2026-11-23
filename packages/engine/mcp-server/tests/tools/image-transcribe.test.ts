@@ -78,7 +78,6 @@ async function transcribe(
   ...args: Parameters<typeof imageTranscribeTool>
 ): Promise<ImageTranscribeResult> {
   const r = await imageTranscribeTool(...args);
-  if ("ok" in r) throw new Error(`unexpected no-project answer: ${r.errors.join(" ")}`);
   return r;
 }
 
