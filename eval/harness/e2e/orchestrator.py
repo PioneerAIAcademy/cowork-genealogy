@@ -756,7 +756,7 @@ class FixtureCaps:
     # the model made no progress for ~40 min until the wall-clock cap. Conservative
     # default; tune down once the per-turn `timeline` shows the normal max gap.
     progress_stall_seconds: int = 600
-    tool_calls: int = 300
+    tool_calls: int = 500
     max_turns: int = 250
     max_cost_usd: float = 15.0
 
@@ -2105,8 +2105,8 @@ async def _run_agent(
                         "tree_edit or tree_correct (from the main session, invoke "
                         "`@plugin:tree-edit`). These validate "
                         "before persisting. Direct file writes never validate. "
-                        "external-collections.json is written only by external_links_search given a "
-                        "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                        "external-collections.json is written only by locality_survey or external_links_search given a "
+                        "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                     ),
                 },
             }

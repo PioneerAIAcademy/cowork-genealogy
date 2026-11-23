@@ -46,6 +46,8 @@ from harness.snapshot import collect_refs
 # Bare tool names that are always registered as live handlers rather than
 # fixture-backed mocks (`mock_mcp.py` imports this; see its module docstring).
 LIVE_TOOLS: set[str] = {
+    # Runs the compiled survey over the test's per-tool fixtures (issue #4602).
+    "locality_survey",
     "validate_research_schema",
     "research_log_append",
     "research_append",
@@ -140,6 +142,7 @@ LIVE_TOOLS: set[str] = {
 # Kept apart from mock_mcp's `_COMPILED_TOOLS` because six live tools are served
 # by dedicated handlers that never consult that table.
 LIVE_MODULES: dict[str, str] = {
+    "locality_survey": "tools/locality-survey.js",
     "validate_research_schema": "tools/validate-research-schema.js",
     "research_log_append": "tools/research-log-append.js",
     "research_append": "tools/research-append.js",

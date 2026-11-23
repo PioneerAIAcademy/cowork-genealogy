@@ -29,11 +29,11 @@ guard the structural properties a validator can settle without judgment
     `research.schema.json` ($defs.locality, additionalProperties:false),
     so VR1 does not re-check them.
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
-    a records survey that called one Step-3 search must have called both.
-  - test_persisted_guide_is_the_guide, test_in_project_return_follows_the_contract
-    and test_no_project_return_carries_guide — the guide is written exactly once
-    (issue #3442): into `guide_markdown` inside a project, into the return
-    outside one. Rationale in each docstring.
+    a run that produced a guide called locality_survey (issue #4602).
+  - test_persisted_guide_is_the_guide and test_in_project_return_follows_the_contract
+    — the guide is written exactly once (issue #3442), into `guide_markdown`.
+    locality-guide always runs in a project (lead, 2026-11-19). Rationale in
+    each docstring.
 
 Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
 (NOT shipped here, and NOT dropped on the reasons first given — those don't hold):
@@ -77,6 +77,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -168,68 +169,50 @@ def test_persisted_localities_entry_shape(before_state, after_state):
         )
 
 
-def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
-    """VR4 (gating) — a records-availability survey that called one of the Step-3
-    searches must have called both: collections_search and volume_search are both
-    required Step-3 calls (agents/locality-guide.md Step 3, "do not drop any call").
+def _survey_calls(tool_calls):
+    return [tc for tc in (tool_calls or []) if bare_tool_name(tc.get("tool")) == "locality_survey"]
 
-    Grades call PRESENCE, not the result: the skill *making* both calls is the
-    behaviour under test. A `fixture_not_found` response means the skill DID call
-    a *registered* tool with args no fixture matched (a test-corpus gap, not
-    skill misbehaviour); in production the call always returns. That is distinct
-    from a tool with NO fixture at all: collections_search and volume_search are
-    fixture-backed and absent from LIVE_TOOLS, so a test that declares no fixture
-    for one never registers it and the skill cannot call it — which is why ut_002
-    (which declares NEITHER search fixture) is a no-search run VR4 skips, not a
-    `fixture_not_found`. Grounding of a result is not this validator's concern.
 
-    LIMIT (documented, not a bug): a run that called NEITHER search is skipped —
-    it cannot be distinguished from a legitimate non-survey (standalone Q&A, a
-    wiki-only guide, or a decline). `ut_locality_guide_023` is exactly such a
-    deliberate no-collection-tool test (its judge_context forbids naming a
-    collection), so VR4 correctly stands down there; `ut_002` is a plain records
-    survey that stands down only because its fixture list omits the searches.
-    Catching "a survey that should have called both but called neither" would
-    need an intent signal (e.g. the `volume-search` tag already on 12 tests, none
-    of them the seven rewired here) VR4 does not yet consult — a deliberate
-    choice, tracked on #1886, not an absence.
+def test_survey_run_calls_both_collections_and_volume_search(before_state, after_state, tool_calls, agent_returns=None):
+    """VR4 (gating, issue #4602) — a run that produced a guide ran the survey:
+    `locality_survey` (one call that makes every Step-3 call: collections, volumes,
+    catalog, outside links, the wiki pages) was called. A guide is a localities entry
+    this run wrote, or a return carrying `## Jurisdiction overview`.
+
+    Skips a run that produced no guide (a hand-back, a question, a decline). The name
+    is kept so the gate tags and run logs that cite it still resolve.
     """
-    tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
-    called_cs = "collections_search" in tools
-    called_vs = "volume_search" in tools
-    if not (called_cs or called_vs):
-        pytest.skip("not a records survey — called neither collections_search nor volume_search")
-    missing = [
-        name
-        for name, called in (("collections_search", called_cs), ("volume_search", called_vs))
-        if not called
-    ]
-    assert not missing, (
-        f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
-        f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
+    wrote = bool(_written_localities(before_state, after_state))
+    returned = bool(_RETURNED_GUIDE_HEADING.search(agent_return_text(agent_returns, "locality-guide")))
+    if not (wrote or returned):
+        pytest.skip("no guide produced this run")
+    assert _survey_calls(tool_calls), (
+        "a guide was produced without the survey: locality_survey was never called "
+        "(agents/locality-guide.md Step 3)"
     )
+
+
+def _catalog_places(tool_calls):
+    """The places the survey's catalog part searched, in order, from each
+    `locality_survey` call's `survey_parts` (the sub-calls the mock answered)."""
+    places = []
+    for tc in _survey_calls(tool_calls):
+        response = _response_body(tc.get("response"))
+        levels = ((response.get("catalog") or {}).get("levels")) if isinstance(response, dict) else None
+        if isinstance(levels, list):
+            places += [lvl.get("place") or "" for lvl in levels if isinstance(lvl, dict)]
+    return places
 
 
 def test_catalog_search_called_and_broadened(tool_calls, test):
-    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the agent must call
-    catalog_search, and when it gets 0 hits, broaden by calling catalog_search
-    again on a wider standardPlace.
-
-    Grades call PRESENCE and COUNT, not the result content: the skill *making*
-    the initial call and then broadening is the behaviour under test. Skips for
-    all other tests — they serve catalog_search only the `catalog-search-empty`
-    fallback, so a call there grades nothing.
+    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the survey's catalog part
+    searched the village and, on 0 hits, climbed to a parent jurisdiction (the text after
+    its first comma). Read from the `catalog.levels` of the `locality_survey` answer.
     """
     if (test.get("id") or "") != "ut_locality_guide_028":
         pytest.skip("not the catalog-search broadening test")
-    calls = [
-        tc for tc in (tool_calls or [])
-        if bare_tool_name(tc.get("tool")) == "catalog_search"
-    ]
-    assert calls, (
-        "ut_locality_guide_028 must call catalog_search at least once"
-    )
-    places = [(tc.get("args") or {}).get("standardPlace") or "" for tc in calls]
+    places = _catalog_places(tool_calls)
+    assert places, "ut_locality_guide_028 must run locality_survey, whose catalog part searches the place"
 
     def parts(place):
         return [p.strip().lower() for p in place.split(",") if p.strip()]
@@ -243,69 +226,94 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
         for i in range(len(places))
         for j in range(i + 1, len(places))
     ), (
-        f"catalog_search places in call order: {places}. After the 0-hit village "
-        "call, a later call must name one of its parent jurisdictions (the text "
-        "after its first comma), not a sibling or the same place"
+        f"catalog levels the survey searched, in order: {places}. After the 0-hit village "
+        "level, a later level must name one of its parent jurisdictions"
     )
 
 
-def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, test):
-    """VR6 (issue #3186) — tag-gated (`single-jurisdiction`): when delegated
-    several separate jurisdictions, the agent must survey only one. Asserts:
+# The counties a several-jurisdictions test's delegation names, by test id. A mapped
+# test must carry the `several-jurisdictions` tag, so the tag cannot be dropped silently.
+_DELEGATED_COUNTIES = {"ut_locality_guide_029": ("Pulaski", "Greenup", "Boyd")}
 
-      1. Exactly one localities[] entry is persisted (not one per county).
-      2. volume_search standardPlace arguments target at most one county
-         (broadening to a parent jurisdiction is allowed).
 
-    Guards the context-overflow bug: surveying three counties in parallel
-    produces ~30 tool calls whose results exceed the agent's context window.
+def _entry_counties(loc, counties):
+    """The delegated counties a localities entry is for: read from `for_place`, else
+    `place`, never from `jurisdictions` (a county formed from another names its parent)."""
+    text = (loc.get("for_place") or loc.get("place") or "").lower()
+    return [c for c in counties if re.search(rf"\b{c.lower()}\b", text)]
+
+
+def test_each_jurisdiction_is_its_own_entry(before_state, after_state, tool_calls, test):
+    """VR6 — tag-gated (`several-jurisdictions`): when one delegation names several
+    counties, the agent may survey one or all of them, but each county it surveys is
+    saved as its own localities entry. Asserts:
+
+      1. At least one localities entry is written.
+      2. No entry is for more than one of the delegated counties, and no county has two.
+      3. Every county `locality_survey` ran for has its own entry.
+
+    Naming the unsurveyed counties is the judge's; naming every entry written is
+    `test_in_project_return_follows_the_contract`'s.
     """
-    if "single-jurisdiction" not in (test.get("tags") or []):
-        pytest.skip("not a single-jurisdiction test")
-    # 1. Exactly one localities entry persisted
+    counties = _DELEGATED_COUNTIES.get(test.get("id"))
+    tagged = "several-jurisdictions" in (test.get("tags") or [])
+    if counties and not tagged:
+        raise AssertionError(f"{test.get('id')} is mapped in _DELEGATED_COUNTIES but has no 'several-jurisdictions' tag")
+    if not tagged:
+        pytest.skip("not a several-jurisdictions test")
+    assert counties, f"{test.get('id')} carries 'several-jurisdictions' but names no counties in _DELEGATED_COUNTIES"
     written = _written_localities(before_state, after_state)
-    assert len(written) == 1, (
-        f"expected exactly 1 localities entry, got {len(written)} — "
-        "the agent should survey one jurisdiction per call, not all of them"
-    )
-    # 2. volume_search calls target at most one county
-    vs_calls = [
-        tc for tc in (tool_calls or [])
-        if bare_tool_name(tc.get("tool")) == "volume_search"
-    ]
-    if vs_calls:
-        # Extract the most-specific component (first comma part) of each
-        # standardPlace argument. Broadening calls (e.g. "Kentucky, United
-        # States") have fewer components than county-level calls (e.g.
-        # "Pulaski, Kentucky, United States"), so only county-level calls
-        # (3+ components for US places) contribute a distinct first part.
-        county_firsts = set()
-        for tc in vs_calls:
-            sp = (tc.get("args") or {}).get("standardPlace") or ""
-            parts = [p.strip() for p in sp.split(",") if p.strip()]
-            if len(parts) >= 3:
-                county_firsts.add(parts[0].lower())
-        assert len(county_firsts) <= 1, (
-            f"volume_search called for multiple counties: {sorted(county_firsts)} — "
-            "the agent should survey only one jurisdiction per call"
+    assert written, "no localities entry was written: the agent must survey at least one of the named counties"
+    owners = {}
+    for loc in written:
+        named = _entry_counties(loc, counties)
+        assert len(named) <= 1, (
+            f"localities[{loc.get('id')}] is for several counties {named}: each county is its own entry"
         )
+        for c in named:
+            owners.setdefault(c, []).append(loc.get("id"))
+    doubled = {c: ids for c, ids in owners.items() if len(ids) > 1}
+    assert not doubled, f"a county has more than one entry: {doubled}"
+    surveyed = set()
+    for tc in _survey_calls(tool_calls):
+        sp = (as_mapping(tc.get("args")).get("standardPlace") or "").lower()
+        surveyed.update(c for c in counties if re.search(rf"\b{c.lower()}\b", sp))
+    unsaved = sorted(surveyed - set(owners))
+    assert not unsaved, f"surveyed {unsaved} but saved no entry for it: each surveyed county is its own entry"
 
 
 # --- The guide is written once (issue #3442) ---------------------------------
 
 
-def _heading(title):
-    """A level-two template heading: line-anchored, case-insensitive, suffix allowed
-    (`## Jurisdiction overview (1840s)` counts; `### Jurisdiction overview` and the
-    words mid-line do not)."""
-    return re.compile(rf"^##[ \t]+{re.escape(title)}", re.IGNORECASE | re.MULTILINE)
+# Every heading of the locality-guide template, in order: `LOCALITY_GUIDE_HEADINGS` in
+# research-append.ts, pinned to this tuple by tests/packaging/locality-guide-headings.test.ts.
+_GUIDE_HEADING_LINES = (
+    "## Jurisdiction overview",
+    "## Boundary changes",
+    "## Research tips",
+)
+
+# The record types a localities entry owes one `record_types` row or more each: the
+# closed `locality_record_type` enum, read from the schema rather than copied.
+_LOCALITY_RECORD_TYPES = tuple(
+    json.loads(
+        (Path(__file__).resolve().parents[3] / "docs" / "specs" / "schemas" / "enums.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )["$defs"]["locality_record_type"]["enum"]
+)
 
 
-_GUIDE_HEADINGS = {
-    title: _heading(title)
-    for title in ("Jurisdiction overview", "Available record types", "Research tips")
-}
-_RECORD_TYPES_HEADING = _GUIDE_HEADINGS["Available record types"]
+def _heading(heading):
+    """A template heading at its own level: line-anchored, case-insensitive, suffix
+    allowed (`## Jurisdiction overview (1840s)` counts; `### Jurisdiction overview`
+    and the words mid-line do not)."""
+    hashes, title = heading.split(" ", 1)
+    return re.compile(rf"^{hashes}[ \t]+{re.escape(title)}", re.IGNORECASE | re.MULTILINE)
+
+
+_GUIDE_HEADINGS = {heading: _heading(heading) for heading in _GUIDE_HEADING_LINES}
+_RETURNED_GUIDE_HEADING = _GUIDE_HEADINGS["## Jurisdiction overview"]
 _POINTER = re.compile(
     r"\bsee\s+(the\s+)?(full\s+guide|research\s+log)\b"
     r"|\bfull\s+guide\s+(text\s+)?(as\s+)?presented\b",
@@ -316,9 +324,9 @@ _IN_PROJECT_RETURN_LIMIT = 3000
 
 def test_persisted_guide_is_the_guide(before_state, after_state):
     """Presence-gated: every localities[] entry this run wrote holds the guide
-    itself in `guide_markdown` — a non-empty string carrying the template's
-    `## Jurisdiction overview`, `## Available record types` and `## Research tips`
-    sections, and no pointer to a guide kept somewhere else.
+    itself in `guide_markdown` — a non-empty string carrying every `## ` section of the
+    template (`_GUIDE_HEADING_LINES`; issue #4602 item 3), and no pointer to a guide kept
+    somewhere else — and a `record_types` row for every `locality_record_type` value.
 
     Why the stub guard exists: inside a project the persisted entry is now the
     only copy of the guide. The return carries the `loc_` id instead (see
@@ -347,11 +355,16 @@ def test_persisted_guide_is_the_guide(before_state, after_state):
                 f"localities[{lid}].guide_markdown must hold the whole guide; got {guide!r:.80}"
             )
             continue
-        missing = [title for title, pattern in _GUIDE_HEADINGS.items() if not pattern.search(guide)]
+        missing = [heading for heading, pattern in _GUIDE_HEADINGS.items() if not pattern.search(guide)]
         if missing:
             problems.append(
-                f"localities[{lid}].guide_markdown is missing the `## ` heading(s) {missing}"
+                f"localities[{lid}].guide_markdown is missing the template heading(s) {missing}"
             )
+        rows = loc.get("record_types") if isinstance(loc.get("record_types"), list) else []
+        have = {r.get("type") for r in rows if isinstance(r, dict)}
+        no_row = [t for t in _LOCALITY_RECORD_TYPES if t not in have]
+        if no_row:
+            problems.append(f"localities[{lid}].record_types has no row for {no_row}")
         pointer = _POINTER.search(guide)
         if pointer:
             problems.append(
@@ -407,9 +420,20 @@ def _refused_localities_write(tool_calls):
             or any(op.get("section") == "localities" for op in _append_ops(tc.get("args")))
         )
         and _response_body(tc.get("response")).get("ok") is False
-        and _response_body(tc.get("response")).get("reason") == "no_project"
+        and (
+            _response_body(tc.get("response")).get("reason") == "no_project"
+            or any(
+                _UNRESOLVED_PLACE in str(e) for e in (_response_body(tc.get("response")).get("errors") or [])
+            )
+        )
         for tc in (tool_calls or [])
     )
+
+
+# research_append's localities first-place refusal: the place is not in FamilySearch's
+# standard, and the tool tells the agent not to write the entry (spec section 5.8), so
+# the guide goes in the return.
+_UNRESOLVED_PLACE = "FamilySearch's place standard has no place"
 
 
 def _names_id(reply, lid):
@@ -430,7 +454,7 @@ def test_in_project_return_follows_the_contract(
     return nothing downstream reads — research-plan reads the persisted entry.
 
     Skips with no project (`before_state["research_json"]` is None):
-    `test_no_project_return_carries_guide` grades that return.
+    locality-guide hands such a delegation back.
 
     Entry written: the return is non-empty, at most 3000 characters (all 32
     October in-project returns that followed this contract are at most 2310) and
@@ -452,7 +476,7 @@ def test_in_project_return_follows_the_contract(
     that writes nothing would fail here; such a test needs a tag exemption.
     """
     if before_state.get("research_json") is None:
-        pytest.skip("no research project: test_no_project_return_carries_guide grades the return")
+        pytest.skip("no research project")
     reply = agent_return_text(agent_returns, "locality-guide")
     written = _written_localities(before_state, after_state)
     if written:
@@ -478,26 +502,7 @@ def test_in_project_return_follows_the_contract(
         "refusal must be fixed and retried, and only a no_project answer falls back "
         "to returning the guide"
     )
-    assert _RECORD_TYPES_HEADING.search(reply), (
+    assert _RETURNED_GUIDE_HEADING.search(reply), (
         "a localities write was refused, so the return must carry the guide in full: "
-        "no `## Available record types` heading in the return"
-    )
-
-
-def test_no_project_return_carries_guide(test, agent_returns=None):
-    """Tag-gated (`no-project`): with no research project there is nowhere to
-    persist the guide, so the agent's return is the guide in full.
-
-    Searches the whole joined return for a line-anchored `## Available record
-    types` (case-insensitive, suffix allowed). No split on `---`: no-project
-    returns open with a narration preamble and a `---`, guides carry internal
-    `---` rules, and `summary_for_user` carries no headings, so a plain search is
-    both simpler and sufficient.
-    """
-    if "no-project" not in (test.get("tags") or []):
-        pytest.skip("not a no-project test")
-    reply = agent_return_text(agent_returns, "locality-guide")
-    assert _RECORD_TYPES_HEADING.search(reply), (
-        "no `## Available record types` heading in the return; with no project "
-        "the guide is the return"
+        "no `## Jurisdiction overview` heading in the return"
     )

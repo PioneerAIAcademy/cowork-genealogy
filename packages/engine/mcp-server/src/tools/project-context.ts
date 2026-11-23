@@ -24,6 +24,9 @@ import { collectionAvailability, type CollectionAvailability } from "../utils/co
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
+import { lookupNameFamily } from "../utils/name-variants.js";
+import { isMachinePageReading, logEntriesById } from "../utils/page-disputes.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
@@ -77,6 +80,87 @@ export interface ProjectContextPerson {
   parentIds?: string[];
   childIds?: string[];
   diedByYear?: number;
+  /** The tree's given name when none of the person's linked `name` assertions
+   *  carries it: a reading in doubt, never the name to search (#4578). */
+  unsupportedGivenName?: { given: string; searchAs: string };
+}
+
+/**
+ * The person's preferred given name, when the person has linked live `name`
+ * assertions and none of their words carries any word of it (`carriesGiven`). A
+ * person with no linked name assertion is not judged: nothing is there to
+ * support or contradict it. `searchAs` is its first letter and `*`: the readings
+ * of one handwritten name agree on little more (Anthony, Armtogne, Ann Tone and
+ * Atonne for one woman).
+ */
+export function unsupportedGivenName(
+  person: any,
+  linkedNameValues: readonly string[],
+): { given: string; searchAs: string } | undefined {
+  if (linkedNameValues.length === 0) return undefined;
+  const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
+  const raw = preferredName(names)?.given;
+  const given = typeof raw === "string" ? raw.trim() : "";
+  const words = nameWords(given);
+  const first = normalizeString(given).match(/\p{L}/u)?.[0];
+  if (words.length === 0 || first === undefined) return undefined;
+  const linked = linkedNameValues.flatMap(nameWords);
+  const carried = words.some((g) => linked.some((w) => carriesGiven(w, g)));
+  return carried ? undefined : { given, searchAs: `${first.toUpperCase()}*` };
+}
+
+/** A linked word carries a given word when either is a prefix or a contraction
+ *  of the other ("Herm", "Saml", "Wm", an initial), when they differ by a letter
+ *  (two from seven letters: Christian, Kristian), or when the bundled given-name
+ *  table puts them in one family (Jno, Polly, Bill). The nickname table is not
+ *  used: it relates Anthony and Anton. */
+function carriesGiven(w: string, given: string): boolean {
+  if (given.startsWith(w) || w.startsWith(given)) return true;
+  if (contracts(w, given) || contracts(given, w)) return true;
+  const shorter = Math.min(w.length, given.length);
+  const allowed = shorter >= 7 ? 2 : shorter >= 4 ? 1 : 0;
+  if (allowed > 0 && levenshteinDistance(w, given) <= allowed) return true;
+  return (lookupNameFamily(given)?.allForms ?? []).some((f) => normalizeString(f).replace(/\.$/, "") === w);
+}
+
+/** `short` keeps `long`'s first and last letters and the rest in order ("Saml", "Wm"). */
+function contracts(short: string, long: string): boolean {
+  if (short[0] !== long[0] || short.at(-1) !== long.at(-1)) return false;
+  let i = 0;
+  for (const c of long) if (c === short[i]) i++;
+  return i === short.length;
+}
+
+/** A name's words, lower-cased with accents folded, split the same way on both
+ *  sides of a comparison; a quoted word ("Maria 'Mary'") keeps its letters. */
+function nameWords(value: string): string[] {
+  return normalizeString(value)
+    .split(/[^\p{L}'-]+/u)
+    .map((w) => w.replace(/^['-]+|['-]+$/g, ""))
+    .filter((w) => /^\p{L}/u.test(w));
+}
+
+/** Each person's live linked `name` assertion values: live rows of person_evidence
+ *  (no `superseded_by`) pointing at live assertions. A machine reading of a page
+ *  (`isMachinePageReading`) is linked evidence but never support, so it counts
+ *  with an empty value. */
+function linkedNameValuesByPerson(research: any): Map<string, string[]> {
+  const logById = logEntriesById(research);
+  const nameById = new Map<string, string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (isLiveAssertion(a) && a.fact_type === "name" && typeof a.id === "string") {
+      nameById.set(a.id, isMachinePageReading(a, logById) ? "" : String(a.value ?? ""));
+    }
+  }
+  const out = new Map<string, string[]>();
+  for (const pe of Array.isArray(research?.person_evidence) ? research.person_evidence : []) {
+    const value = typeof pe?.assertion_id === "string" ? nameById.get(pe.assertion_id) : undefined;
+    if (value === undefined || typeof pe.person_id !== "string" || pe.superseded_by != null) continue;
+    const list = out.get(pe.person_id) ?? [];
+    list.push(value);
+    out.set(pe.person_id, list);
+  }
+  return out;
 }
 
 export interface ProjectContextSource {
@@ -107,6 +191,18 @@ export interface ProjectContextLocality {
     availability?: Extract<CollectionAvailability, "browse-only">;
   }[];
   quirks?: string[];
+  /** The entry's `record_types` rows, without their source URLs (research_query has them). */
+  recordTypes?: {
+    type: string;
+    years?: string;
+    level?: string;
+    heldAt?: string;
+    access?: string;
+    collectionIds?: string[];
+    summary?: string;
+  }[];
+  repositories?: { name: string; holds?: string; access?: string; url?: string }[];
+  losses?: { recordSet: string; years?: string }[];
 }
 
 export type ProjectContextCollection = NonNullable<ProjectContextLocality["collections"]>[number];
@@ -363,6 +459,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   }
 
   const family = familyIndex(tree);
+  const linkedNames = linkedNameValuesByPerson(research);
   const persons: ProjectContextPerson[] = [];
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
@@ -376,6 +473,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         parentIds: f ? [...f.parentIds] : [],
         childIds: f ? [...f.childIds] : [],
         diedByYear: diedByYear(p),
+        unsupportedGivenName: unsupportedGivenName(p, linkedNames.get(p.id) ?? []) ?? null,
       }) as ProjectContextPerson,
     );
   }
@@ -412,8 +510,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   }
 
   // Localities: compact place/locale projection for research-plan — the
-  // actionable bits (jurisdictions, collections, quirks). guide_markdown and
-  // pages_read are left out; research_query serves the whole entry.
+  // actionable bits (jurisdictions, collections, quirks, record-type rows, repositories,
+  // losses). guide_markdown, catalog and pages_read are left out; research_query serves
+  // the whole entry.
   const localities: ProjectContextLocality[] = [];
   const national = new Map<string, Map<string, ProjectContextCollection>>();
   for (const l of Array.isArray(research?.localities) ? research.localities : []) {
@@ -448,6 +547,27 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
     );
+    const str = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
+    const rows = (field: string) => (Array.isArray(l[field]) ? l[field] : []).filter((r: any) => r && typeof r === "object");
+    const recordTypes = rows("record_types")
+      .filter((r: any) => typeof r.type === "string")
+      .map((r: any) =>
+        omitEmpty({
+          type: r.type,
+          years: str(r.years),
+          level: str(r.level),
+          heldAt: str(r.held_at),
+          access: str(r.access),
+          collectionIds: Array.isArray(r.collection_ids) ? r.collection_ids.filter((c: unknown) => typeof c === "string") : [],
+          summary: str(r.summary),
+        }),
+      );
+    const repositories = rows("repositories")
+      .filter((r: any) => typeof r.name === "string")
+      .map((r: any) => omitEmpty({ name: r.name, holds: str(r.holds), access: str(r.access), url: str(r.url) }));
+    const losses = rows("losses")
+      .filter((r: any) => typeof r.record_set === "string")
+      .map((r: any) => omitEmpty({ recordSet: r.record_set, years: str(r.years) }));
     localities.push(
       omitEmpty({
         id: l.id,
@@ -457,6 +577,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         jurisdictions,
         collections,
         quirks,
+        recordTypes,
+        repositories,
+        losses,
       }) as ProjectContextLocality,
     );
   }
@@ -644,14 +767,20 @@ export const projectContextSchema = {
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear}] — every " +
+    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear, " +
+    "unsupportedGivenName}] — every " +
     "tree person with its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
-    "by from its dated Death or Burial facts; and sources [{id, repository, " +
+    "by from its dated Death or Burial facts; unsupportedGivenName {given, searchAs} " +
+    "marks a given name none of the person's linked records gives: brief it as a " +
+    "reading in doubt, keep it out of a subject's names, and search the given name " +
+    "as searchAs; and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount, availability?}], quirks}] — availability \"browse-only\" marks a browse-only collection; a row without it is name-searchable; the " +
+    "recordCount, availability?}], quirks, recordTypes [{type, years, level, heldAt, access, collectionIds, summary}], " +
+    "repositories [{name, holds, access, url}], losses [{recordSet, years}]}] — availability \"browse-only\" marks a " +
+    "browse-only collection; a row without it is name-searchable; the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +

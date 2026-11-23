@@ -30,6 +30,7 @@ import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
 import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
+import { attachIndexReadings } from "../utils/index-readings.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
   compactImageTranscribeAnswer,
@@ -539,7 +540,19 @@ export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse> {
-  return compactImageTranscribeAnswer(await imageTranscribeTool(input, principal));
+  return withIndexReadings(input, compactImageTranscribeAnswer(await imageTranscribeTool(input, principal)));
+}
+
+/** The project leg's index beside the reading (issue #4578). */
+async function withIndexReadings(
+  input: ImageTranscribeInput,
+  out: ImageTranscribeToolResponse,
+): Promise<ImageTranscribeToolResponse> {
+  if (typeof input.projectPath !== "string") return out;
+  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
+  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
+  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
+  return attachIndexReadings(input.projectPath, out, ark);
 }
 
 export const imageTranscribeToolSchema = {
@@ -551,8 +564,9 @@ export const imageTranscribeToolSchema = {
     "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
     "ref: staged.resultsRef }) only when you need it, and hand " +
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). With no " +
-    "project the text comes back inline only when staging failed. Use this for large scans that " +
+    "comes back inline only when staging failed (`stagingError`). In a project " +
+    "it also returns `readingNote`, and `indexReadings`, the held records' " +
+    "indexed names for that page: follow the note. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +

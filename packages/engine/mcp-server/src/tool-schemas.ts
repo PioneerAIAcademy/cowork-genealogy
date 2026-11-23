@@ -20,6 +20,7 @@ import { wikiSearchSchema } from "./tools/wiki-search.js";
 import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
+import { localitySurveySchema } from "./tools/locality-survey.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
@@ -97,6 +98,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "image_read",
   "image_search",
   "image_transcribe",
+  "locality_survey",
   "merge_warnings",
   "person_ancestors",
   "person_person_matches",
@@ -144,6 +146,7 @@ export const allToolSchemas = [
   placeDistanceToolSchema,
   populationToolSchema,
   externalLinksSearchToolSchema,
+  localitySurveySchema,
   imageReadToolSchema,
   imageTranscribeToolSchema,
   recordSearchToolSchema,
