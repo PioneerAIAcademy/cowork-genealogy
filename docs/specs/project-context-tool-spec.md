@@ -312,6 +312,7 @@ outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank unlinked kin, which outranks
+a partly-linked question that never reaches the subject, which outranks
 **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
@@ -422,6 +423,30 @@ LZJF-J13: 15 assertions, 0 links, and the router went on to exhaustiveness and a
 across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run and 21
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
+
+**Some links, none reaching the subject, also routes to person-evidence.** When a
+question that is not resolved and has no proof summary has some assertions with a
+link (`countsForLinkedRung`) and some without, no such link names a
+`subject_person_ids` entry, and at least one subject is a tree person, its
+`nextStep` reads `person-evidence — N of this question's M assertions are unlinked
+and none of its links reaches the project subject (<ids>)`. This is the household
+record linked around the subject: in `flynn-household-skeleton` the 1850 census
+head is linked and the six children are not, and Patrick is not in that household.
+"Any unlinked assertion" would send the 53 partly-linked concluded households to
+person-evidence; requiring the subject to be unreached is what separates this case.
+It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
+and it stops once every assertion is linked, so it cannot loop. It is silent until a
+subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
+dev/measure-question-state-signals.ts --list`, 568 question entries across 222
+scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e
+question-runs, and is in `nextStep` on 2 of each; the rest are masked by the kin
+rung, `flynn-marriage-only-no-child-link` among them. Spot-checked: pe7 and
+`norwegian-patronymic-nil-recovery` (the subject's own birth unlinked, both parents
+linked) are intended; `maria-vazsan-spouse/run-2026-10-30_13-39-29` is real (the
+links go to four "Maria Vázsan" stubs, none to the subject); `jimmie-jewel-neal/run-2026-07-30_23-05-46`
+q_002 is not (the question is about Martha Wood, who is linked). The false route is
+accepted for the same reason as the kin rung's (lead, 2026-11-19): it is rare and
+costs one hop.
 
 **Before any evidence exists, the next search is named by its repository.** A
 `planned` or `searching` question whose log holds a positive or partial entry no
