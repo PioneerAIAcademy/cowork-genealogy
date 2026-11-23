@@ -11,6 +11,9 @@
     "delegation": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "place-search-all-schuylkill",
