@@ -1288,7 +1288,23 @@ export function extractRecord(
   } else if (recordType === "obituary") {
     for (const [id, r] of principalRoles(ps, gx, "deceased")) roles.set(id, r);
   } else if (recordType === "probate") {
-    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent", mode?.decedentId)) roles.set(id, r);
+    if (mode && !mode.decedentId) {
+      // No party carries a probate, will or death fact, so the document does
+      // not say who the testator is and the tool does not choose one. Number
+      // every party; the stated-relation pass below names them from their own
+      // words ("son" -> child_1), as the land arm does for a party on neither
+      // side of a deed. The principal flag and the order of the parties choose
+      // no probate role. `mode &&` keeps the branch document-only: no indexed
+      // record types as probate today (`TITLE_TO_RECORD` has no probate row),
+      // and this holds the old behaviour if one ever does.
+      const counters = new Map<string, number>();
+      for (const p of ps) roles.set(p.id, numbered("other", counters));
+      notes.push(
+        "no party carries a probate, will or death fact, so no testator or decedent role was assigned",
+      );
+    } else {
+      for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent", mode?.decedentId)) roles.set(id, r);
+    }
   } else if (recordType === "newspaper_announcement") {
     for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType, mode?.statedRelations)) roles.set(id, r);
   } else if (recordType === "land" && mode?.landRoles) {

@@ -328,15 +328,28 @@ export function landRoles(doc: StructuredDocument): Map<string, string> {
  *  `probate` fact, else `will`, else `death`; a flagged principal breaks a tie,
  *  then the first in order. Undefined when no party carries any. */
 export function probateDecedentId(doc: StructuredDocument): string | undefined {
-  for (const re of [/^probate$/, /^will$/, /^death$/]) {
+  // The will family is spelled three ways and `hasWill` (below) recognises all
+  // three, so this must too: a `will_execution` carrier invisible here would
+  // make the no-carrier role branch (#4708) fire on a document that plainly
+  // names its testator. Court facts (`letters_of_administration`, `probate`
+  // aside) are deliberately NOT carriers — letters are granted TO the
+  // administrator, and treating them as decedent-identifying is the error
+  // #3660 refuses.
+  for (const re of [/^probate$/, /^(will|will_execution|testament)$/, /^death$/]) {
     const carriers = doc.persons.filter((p) => p.facts.some((f) => re.test(f.type.trim().toLowerCase())));
     if (carriers.length > 0) return (carriers.find((p) => p.principal) ?? carriers[0]).id;
   }
   return undefined;
 }
 
-/** The party the probate roles would make the decedent: the probate/will/death
- *  carrier, else the flagged principal, else the first party. */
+/** The party the two pre-write probate guards check: the probate/will/death
+ *  carrier, else the flagged principal, else the first party.
+ *
+ *  NOT what the role pass assigns (#4708). With no carrier the role pass now
+ *  gives a probate document no testator or decedent at all, so this party is
+ *  the guards' input only — `validateDocumentRoles` below and the probate half
+ *  of `deedFormulaErrors`. Both still read it, which is what keeps #3660's
+ *  administrator refusal pinned. */
 export function probateDecedentOrDefault(doc: StructuredDocument): string | undefined {
   return probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
 }

@@ -712,6 +712,14 @@ describe("the defaulted-classification report", () => {
     };
     const out = extractRecord(doc, { logEntryId: "l_001", questionIds: [] });
     expect(out.recordType).toBe("other");
+    // Forward pin (#4708): a record read WITHOUT document mode never gets the
+    // no-carrier note, because that branch is gated on `mode`. Asserted on the
+    // note rather than on the role: `detectRecordType` has no probate arm and
+    // `TITLE_TO_RECORD` no probate row, so this types as `other` today, and if
+    // probate detection is ever added the correct indexed role is `decedent` —
+    // a role assertion would then red on correct behaviour. The note stays
+    // empty either way, and reds on a gate spelled `!mode?.decedentId`.
+    expect(out.notes).toEqual([]);
     expect(out.defaultedClassifications.length).toBeGreaterThan(0);
     expect(out.defaultedClassifications[0]).toMatch(/unknown\/indeterminate/);
     expect(out.defaultedClassifications[0]).toMatch(/contradiction/i);
