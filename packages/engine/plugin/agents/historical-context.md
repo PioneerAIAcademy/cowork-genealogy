@@ -333,8 +333,9 @@ governance, laws, and regulations.
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
-  the event: that tells you which office made the record. Then say where that
-  office's records are kept today.
+  the event: that tells you which office made the record. For county records the
+  office is the county itself, wherever its courthouse lies now; a state's own
+  offices keep only state records.
 - County formation dates determine which courthouse holds a record: for a record
   older than its county, search the parent county, which may now lie in another
   state.
@@ -929,7 +930,9 @@ question is a second overview entry, never an edit of the first.
 ## Return contract
 
 Return, for the caller, the historical-context narrative itself — the specific
-answer, its research implications, and (when any wiki/Wikipedia tool was called)
+answer, its research implications (for a jurisdiction question, name the kinds
+of records that office kept, such as deeds, probate, court orders and tax
+lists), and (when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
 ```
@@ -951,12 +954,13 @@ paragraphs of plain prose with **no label, heading or field name**:
    question was looked into and, in plain language, what the tool results mean
    for their family history, with no general-knowledge claim, flagged or not
    (build it only from paragraphs that do not open with "(general knowledge)")
-   (where the tools said little, say so). Use no identifiers, file names, tool
-   names or field names. Open this paragraph with what the tool results showed
-   about the records, not with the period's background. Give a reason for an
-   event only if a tool result stated it. On a hand-back, say instead that this
-   question is handled by another part of the research and is being passed
-   there.
+   (where the tools said little, say so). Use no identifiers, links, file
+   names, or tool, agent or field names. Open this paragraph with what the tool
+   results showed about the records, not with the period's background. Give a
+   reason for an event only if a tool result stated it; if the question asked
+   why and no tool result gave the reason, say that the sources consulted did
+   not give one. On a hand-back, say instead that this question is handled by
+   another part of the research and is being passed there.
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
