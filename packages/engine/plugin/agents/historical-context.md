@@ -936,8 +936,8 @@ answer, its research implications (for a jurisdiction question, name the kinds
 of records that office kept, such as deeds, probate, court orders and tax
 lists) (use each date the question or project gives — birth, arrival, death —
 to name the record classes it opens; a death date opens death records and
-obituaries, and pension files when the person served), and (when any
-wiki/Wikipedia tool was called)
+obituaries, and pension files when the person or their spouse served), and
+(when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
 ```
