@@ -116,4 +116,69 @@ describe('The case', () => {
     expect(document.querySelector('section h3')?.textContent).toBeTruthy()
     expect(leftoverIds(body())).toEqual([])
   })
+
+  it('outside collections sit in a closed Other websites group per place, after Background and out of Direct mentions', async () => {
+    const doc = MCANDREW_DOC()
+    const row = (place: string, n: number, url = `https://www.ancestry.com/search/collections/${n}/`) => ({
+      key: `ancestry:${n}`,
+      url,
+      link_text: `Planted collection ${n}`,
+      record_types: ['Census'],
+      place,
+      cost: 'paid',
+      content_type: 'index',
+      start_year: '1900',
+      end_year: '1940'
+    })
+    const outer = 'Mississippi, United States'
+    const inner = 'Scott, Mississippi, United States'
+    const places: Record<string, ReturnType<typeof row>[]> = {
+      [outer]: [row(outer, 1), row(outer, 2, 'http://example.org/2')],
+      'Leake, Mississippi, United States': [],
+      [inner]: [row(inner, 3)]
+    }
+    doc.collections = { places: Object.fromEntries(Object.entries(places).map(([place, rows]) => [place, { rows }])) }
+    await caseOn(doc, { page: 'sources' })
+    const summaryFor = (place: string, n: number) =>
+      `Other websites with records for ${place} (${n}). FamilySearch’s list, for planning: being listed here does not mean a site was searched or paid for.`
+    const section = (title: string) => [...document.querySelectorAll('section')].find((s) => s.querySelector('h3')?.textContent === title)
+    const mentions = section('Direct mentions')
+    const background = section('Background')
+    const other = section('Other websites')
+    expect(mentions).toBeDefined()
+    expect(background).toBeDefined()
+    expect(other).toBeDefined()
+    expect(background!.compareDocumentPosition(other!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    for (const [place, rows] of Object.entries(places)) {
+      for (const { link_text } of rows) {
+        expect(mentions!.textContent).not.toContain(link_text)
+        expect(background!.textContent).not.toContain(link_text)
+        const items = [...document.querySelectorAll('li')].filter((li) => li.textContent?.startsWith(link_text))
+        expect(items).toHaveLength(1)
+        const details = items[0].closest('details')
+        expect(details).not.toBeNull()
+        expect(details!.hasAttribute('open')).toBe(false)
+        expect(details!.querySelector('summary')?.textContent).toBe(summaryFor(place, rows.length))
+        expect(details!.querySelector('summary')?.textContent).toContain('searched')
+      }
+    }
+    expect([...other!.querySelectorAll('details > summary')].map((s) => s.textContent)).toEqual([summaryFor(outer, 2), summaryFor(inner, 1)])
+    expect(leftoverIds(body())).toEqual([])
+  })
+
+  it('a place entry that is not an object draws nothing and does not throw', async () => {
+    const doc = MCANDREW_DOC()
+    doc.collections = {
+      places: {
+        'Null Entry Place': null,
+        'String Entry Place': 'not a place',
+        'Leake, Mississippi, United States': { rows: [{ link_text: 'Planted collection 4', url: 'https://example.org/4' }] }
+      }
+    }
+    await caseOn(doc, { page: 'sources' })
+    expect(body()).toContain('Other websites with records for Leake, Mississippi, United States (1).')
+    expect(body()).toContain('Planted collection 4')
+    expect(body()).not.toContain('Null Entry Place')
+    expect(body()).not.toContain('String Entry Place')
+  })
 })

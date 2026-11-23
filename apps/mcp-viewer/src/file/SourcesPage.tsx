@@ -103,11 +103,9 @@ function LocalityItem({ locality }: { locality: Locality }) {
 }
 
 function Background() {
-  const { research, collections } = useFile()
+  const { research } = useFile()
   const localities = list(research.localities)
-  const places = (collections as { places?: Record<string, { rows?: CollectionRow[]; too_large?: boolean }> } | null)?.places ?? {}
-  const rows = Object.values(places).flatMap((p) => list(p.rows))
-  if (localities.length === 0 && rows.length === 0) return null
+  if (localities.length === 0) return null
   return (
     <section>
       <h3>Background</h3>
@@ -115,17 +113,42 @@ function Background() {
         {localities.map((locality) => (
           <LocalityItem key={locality.id} locality={locality} />
         ))}
-        {rows.map((row, i) => (
-          <li key={`c${i}`} className="file-item">
-            {row.url && /^https:\/\//.test(row.url) ? <a href={row.url}>{row.link_text ?? 'A collection'}</a> : row.link_text}
-            <p>
-              {[row.place, strings(row.record_types).join(', '), [row.start_year, row.end_year].filter(Boolean).join('–')]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-          </li>
-        ))}
       </ul>
+    </section>
+  )
+}
+
+/** FamilySearch's curated outside collections, one closed list per place: a planning list, never a source used. */
+function OtherWebsites() {
+  const { collections } = useFile()
+  const places = (collections as { places?: Record<string, unknown> } | null)?.places ?? {}
+  const kept = Object.entries(places)
+    .map(([place, entry]) => ({ place, rows: list((entry as { rows?: CollectionRow[] } | null)?.rows) }))
+    .filter(({ rows }) => rows.length > 0)
+  if (kept.length === 0) return null
+  return (
+    <section>
+      <h3>Other websites</h3>
+      {kept.map(({ place, rows }) => (
+        <details key={place}>
+          <summary>
+            Other websites with records for {place} ({rows.length}). FamilySearch’s list, for planning: being listed here does not mean a
+            site was searched or paid for.
+          </summary>
+          <ul className="file-list">
+            {rows.map((row, i) => (
+              <li key={i} className="file-item">
+                {row.url && /^https:\/\//.test(row.url) ? <a href={row.url}>{row.link_text ?? 'A collection'}</a> : row.link_text}
+                <p>
+                  {[row.place, strings(row.record_types).join(', '), [row.start_year, row.end_year].filter(Boolean).join('–')]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ))}
     </section>
   )
 }
@@ -156,6 +179,7 @@ export function SourcesPage() {
       <DirectMentions />
       <Leads />
       <Background />
+      <OtherWebsites />
     </div>
   )
 }

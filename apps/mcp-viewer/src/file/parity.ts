@@ -4,7 +4,7 @@ export const SECTION_HOMES: Record<string, string> = {
   questions: 'The case: the question switch, each question with its rationale and stop criteria',
   plans: 'The case: What was searched, each item with its rationale and what it found',
   localities: 'Sources, Background',
-  external_collections: 'Sources, Background',
+  external_collections: 'Sources, Other websites, collapsed',
   log: 'Log, each search opening its results in the pane',
   sources: 'Sources, Direct mentions; the record pane',
   assertions: 'the record pane, What it says',
