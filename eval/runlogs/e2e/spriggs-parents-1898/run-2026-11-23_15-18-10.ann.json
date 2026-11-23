@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Relationship (John W Spriggs -> Reuben) is correctly identified and was newly built by this run, not inherited: the fixture's starting-tree.gedcomx.json has zero parent relationships for Reuben, so the proof narrative's line that this link 'already existed' is misleading taken at face value -- it only meant the link predated the proof-conclusion write-up step within this same run, not that it predates the run. Graded partial, not true: the tree's birth fact is year-range + state only ('Bet 1871 and 1872', place 'Iowa'), not the finding's day/township precision (17 Mar 1872, Decorah Township, Winneshiek Co.), and no Death fact was ever added -- 1934 is absent entirely. The finding's second cited source (1920 census, ark M6N2-M3W) was never found; the relationship rests on the 1910 census (S1) plus the 1898 Lutheran baptism index (named in the proof write-up but not attached to the R2 relationship itself in the tree).",
+    "f2": "Relationship (Charlotte Marie Westby -> Reuben) is correctly identified and explicitly logged by the run's own proof write-up as added during this run. Graded partial, not true: the tree's birth fact is year-range + country only ('Bet 1876 and 1877', place 'Norway'), not the finding's 13 June 1876, Akershus precision, and no immigration fact (1877) was ever added. The proof write-up itself rates her identity link as only 'moderate (score 0.73)', the single weakest point in the whole conclusion. Same evidence pair as f1 (1910 census S1 + 1898 baptism S3, both attached to the R5 relationship); the 1920 census (ark M6N2-M3W) was never found."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "5042c5e0c2abcb35100bc3acd9cd9e3b6d61477805b225a3d823a753fcaf9598"
+}
