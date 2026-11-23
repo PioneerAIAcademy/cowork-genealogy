@@ -15,9 +15,12 @@
  * the repo's own doctrine is that heuristics are flags, never gates.
  */
 
+import type { ExternalSearchSite } from "../tools/build-external-search-url.js";
+
 export interface PlanItemLike {
   jurisdiction?: unknown;
   date_range?: unknown;
+  repository?: unknown;
 }
 
 export interface LocalityLike {
@@ -152,6 +155,124 @@ export function compoundJurisdictionError(
     `jurisdiction '${jurisdiction}' names ${parts.length} places (${parts.join("; ")}). ` +
     `A plan item searches one place: write one item per place, each with its own ` +
     `place_search standardPlace.`
+  );
+}
+
+/** How a model writes each `build_external_search_url` site in prose. The slugs
+ *  ("chronicling_america") match nothing a model writes. Keyed by the site union so
+ *  a new site fails `tsc` until it is named here. `digital_newspaper_archive` is
+ *  left out: it is the generic state-archive entry and has no name; a state
+ *  archive is caught by the project's stored `link_text` instead. */
+export const OUTSIDE_SITE_NAMES: Record<
+  Exclude<ExternalSearchSite, "digital_newspaper_archive">,
+  readonly string[]
+> = {
+  ancestry: ["ancestry", "ancestry.com"],
+  myheritage: ["myheritage", "my heritage"],
+  findmypast: ["findmypast", "find my past"],
+  findagrave: ["find a grave", "findagrave"],
+  newspapers: ["newspapers.com"],
+  chronicling_america: ["chronicling america"],
+  // Not "National Archives" or "NARA": FamilySearch holds National Archives film,
+  // so a FamilySearch item can name them correctly.
+  archives_gov: ["national archives catalog", "archives.gov"],
+  archive_org: ["archive.org", "internet archive"],
+  billiongraves: ["billiongraves", "billion graves"],
+  digitalarkivet: ["digitalarkivet"],
+  antenati: ["antenati"],
+  library_archives_canada: ["library and archives canada"],
+  american_ancestors: ["american ancestors", "americanancestors"],
+  italian_genealogy: ["italiangenealogy", "italian genealogy"],
+  archion: ["archion"],
+  matricula: ["matricula"],
+  // Open Archieven is the site's Dutch name; openarchieven.nl its host.
+  openarch: ["open archives", "openarch", "open archieven", "openarchieven"],
+  blm_glo: ["glorecords", "general land office records", "blm glo"],
+};
+
+/** Lower-cased, "&" read as "and", hyphens and every run of whitespace (a
+ *  non-breaking space included) as one space: "Find-A-Grave" is "find a grave". */
+function normalizeName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[-‐-―]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** `name` as a whole word or phrase of `text` (both normalized by the caller):
+ *  "ancestry" matches "(Ancestry)" and not "ancestryish". */
+function namesPhrase(text: string, name: string): boolean {
+  return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(name)}(?:$|[^a-z0-9])`).test(text);
+}
+
+/** Words that name a kind of record or page, not a site. A stored `link_text` made
+ *  only of these and numbers ("Parish Registers", "Death Certificates", "1871
+ *  Census", "National Archives") describes what a FamilySearch item can also hold,
+ *  so it is never read as a site. */
+const RECORD_WORDS = new Set(
+  (
+    "a about access agricultural and archive archives baptisms bible birth births blocked bot burials " +
+    "card catalog cemeteries cemetery census censuses certificate certificates church churches city " +
+    "collection collections court data database databases death deaths digital directories directory " +
+    "emigration english extractions families family for forbidden funeral genealogies genealogy " +
+    "historic historical home immigration in index indexes land latest libraries library main map " +
+    "marriage marriages military national naturalization naturalizations news newspaper newspapers " +
+    "notices obituaries obituary of online page parish parishes phone population probate query records " +
+    "record register registers research resources schedules search site state surname surnames tax " +
+    "telephone the total verification verify vital will wills"
+  ).split(" ")
+);
+
+function namesOnlyRecords(name: string): boolean {
+  return name.split(/[^a-z0-9]+/).every((w) => w === "" || /^\d+$/.test(w) || RECORD_WORDS.has(w));
+}
+
+/** The refusal for a FamilySearch plan item whose `jurisdiction` names an outside
+ *  site, or `undefined` (#4665). The router sends an item to FamilySearch agents or
+ *  to search-external-sites by its one `repository`, so a site written into a
+ *  FamilySearch item's jurisdiction is never searched.
+ *
+ *  Reads `jurisdiction` only, never `rationale`: a jurisdiction is a place, so a
+ *  site name there is never a passing mention, while most rationales naming a site
+ *  are FamilySearch collection titles ("Find a Grave Index") or availability notes.
+ *  `storedNames` (the project's `external-collections.json` `link_text`s) count
+ *  only when two or more words long, one-word rows ("Search", "Media") matching
+ *  ordinary jurisdiction words, and not made only of `RECORD_WORDS`.
+ *
+ *  A blank `repository` counts as FamilySearch, because the router (`searchStepFor`)
+ *  sends it to search-records. */
+export function outsideSiteJurisdictionError(
+  item: PlanItemLike,
+  storedNames: readonly string[] = []
+): string | undefined {
+  const repository = typeof item?.repository === "string" ? item.repository.trim() : "";
+  if (repository !== "" && !/familysearch/i.test(repository)) return undefined;
+  const jurisdiction = typeof item?.jurisdiction === "string" ? item.jurisdiction : "";
+  const text = normalizeName(jurisdiction);
+  if (text === "") return undefined;
+  const found: string[] = [];
+  for (const names of Object.values(OUTSIDE_SITE_NAMES)) {
+    const hit = names.find((n) => namesPhrase(text, normalizeName(n)));
+    if (hit) found.push(hit);
+  }
+  for (const raw of storedNames) {
+    const name = typeof raw === "string" ? normalizeName(raw) : "";
+    if (name.split(" ").length < 2 || namesOnlyRecords(name)) continue;
+    if (found.some((f) => f.includes(name) || name.includes(f))) continue;
+    if (namesPhrase(text, name)) found.push(name);
+  }
+  if (found.length === 0) return undefined;
+  const sites = found.map((f) => `'${f}'`).join(", ");
+  return (
+    `jurisdiction '${jurisdiction}' names ${sites}, ${found.length === 1 ? "an outside site" : "outside sites"}, ` +
+    `on a FamilySearch item. A plan item searches one repository, and a FamilySearch item ` +
+    `goes only to FamilySearch agents, so ${found.length === 1 ? "that site" : "those sites"} would never be searched: ` +
+    `keep this item's jurisdiction to the place, and write a separate item per site whose ` +
+    `repository is the site, so search-external-sites runs it.`
   );
 }
 
