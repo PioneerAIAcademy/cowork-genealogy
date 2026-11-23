@@ -356,9 +356,11 @@ Two more tags are deterministic:
   After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,
   and the message names neither. ia1's tree holds nothing, so on ia1 it checks that no
   other year appears and that the objective's years are named as the objective's. The
-  delegation may pass them (Ikennaya, 2026-11-17, after 3 of 3 scratch runs of ia1 did so)
-  if a year only the objective holds sits at least once on a line saying "objective", or
-  under a heading line that does. "Tree data: … born ca. 1845" fails.
+  delegation may pass them if a year only the objective holds sits at least once on a line
+  saying "objective", or under a heading line that does. "Tree data: … born ca. 1845" fails.
+  This is Ikennaya's call (2026-11-17, after 3 of 3 scratch runs of ia1 did so), not a lead
+  ruling: the years come from the researcher's own objective, not an outside source or an
+  assumption.
 - **`relays-overview`**: the reply carries the overview's Sources consulted list and not
   its `### Search implications` block (Richard, 2026-11-17).
 
