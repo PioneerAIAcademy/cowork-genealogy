@@ -190,7 +190,10 @@ that would replace it (probed 2026-10-02, §5):
   5 of 9 after (6 of 9 on an earlier wording). The plans that still fail accept
   that the couple is ruled out and keep a Stamford item under another purpose:
   separating the merged 1761 Alexander, or an origin search for any
-  Stamford-born Alexander. Short of 3 of 3, so the test was deleted
+  Stamford-born Alexander. Its last sentence says the rule removes only tree
+  claims: without it `ut_research_plan_010` (a supersede on a death date the
+  user supplies) refused or edited in place in 2 of 4 suite runs, calling the
+  date "not in the project's sources" (0 of 3 on `main`, 0 of 3 after). Short of 3 of 3, so the test was deleted
   (`unit-test-spec.md`, `expected_outcome`) and its restore is on issue #4696.
 - **Not landed: full-text beside indexed search for a pre-1850 New England
   vital, land or court record (item 3).** The 1759 Worcester marriage was found

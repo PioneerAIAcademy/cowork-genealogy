@@ -523,7 +523,9 @@ table and contextual factors checklist.
   their own records (their marriage, their children's baptisms, their
   estates) and nothing in a place only that claim points to, and the
   parents'-marriage item above does not apply to them. A doubt without
-  such a date does not rule a claim out.
+  such a date does not rule a claim out. This rule only removes tree
+  claims; it never holds back a re-plan on new information the user
+  gives you, which you act on as asked.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
