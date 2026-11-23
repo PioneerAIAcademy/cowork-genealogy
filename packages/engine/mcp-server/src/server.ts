@@ -32,6 +32,8 @@ import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import { localitySurveyTool } from "./tools/locality-survey.js";
+import type { LocalitySurveyInput } from "./types/locality-survey.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
@@ -388,6 +390,19 @@ export function createServer(principal: Principal): Server {
         // envelope is the plain one; the wrapper keeps it on the writer path.
         const result: ExternalLinksSearchResult & OkFalseResult = await externalLinksSearchTool(args);
         return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "locality_survey") {
+      try {
+        const args = request.params.arguments as unknown as LocalitySurveyInput;
+        const result = await localitySurveyTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {

@@ -4,6 +4,7 @@
 // `content[].resourceType` ending `/Person` and `/Record`.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { stageSurvey } from "../helpers/locality-survey.js";
 
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
@@ -63,7 +64,6 @@ function locality(collections: unknown[], place = "Ohio, United States") {
   return {
     place,
     collections,
-    pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
   };
 }
@@ -96,9 +96,9 @@ describe("research_append stamps locality collection counts from the catalog", (
     JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).localities.find((l: any) => l.id === locId)
       .collections;
 
-  const appendLocality = (collections: unknown[]) =>
+  const appendLocality = async (collections: unknown[]) =>
     researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: locality(collections) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality(collections) } as never,
       collectionCatalogLoader(LOCAL),
     );
 
@@ -146,14 +146,14 @@ describe("research_append stamps locality collection counts from the catalog", (
   });
 
   it("stamps a research_append call made through the MCP dispatch", async () => {
-    const r = await callTool("research_append", { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) });
+    const r = await callTool("research_append", { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 0)]) });
     expect(r.isError).toBe(false);
     expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
   });
 
   it("stamps an entry the caller sent as a JSON string", async () => {
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: JSON.stringify(locality([col("1803969", 0, 0)])) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: JSON.stringify(locality([col("1803969", 0, 0)])) } as never,
       collectionCatalogLoader(LOCAL),
     );
     expect(warningsOf(r)[0]).toContain("person_count 0 -> 240768");
@@ -212,7 +212,7 @@ describe("research_append stamps locality collection counts from the catalog", (
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       const pending = researchAppendFromCaller(
-        { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) } as never,
+        { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 0)]) } as never,
         loader,
       );
       await vi.advanceTimersByTimeAsync(CATALOG_READ_BUDGET_MS);
@@ -279,8 +279,8 @@ describe("research_append stamps locality collection counts from the catalog", (
       {
         projectPath: dir,
         ops: [
-          { section: "localities", op: "append", entry: locality([col("1803969", 1, 1)]) },
-          { section: "localities", op: "append", entry: locality([col("1803971", 1, 1)]) },
+          { section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 1, 1)]) },
+          { section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803971", 1, 1)]) },
         ],
       } as never,
       collectionCatalogLoader(LOCAL),
@@ -306,9 +306,9 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   // The whole list (spec 5.12): an append gains every catalog collection for its place.
   const ILLINOIS = "Illinois, United States";
-  const appendIn = (place: string, collections: unknown, extra: Record<string, unknown> = {}) =>
+  const appendIn = async (place: string, collections: unknown, extra: Record<string, unknown> = {}) =>
     researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: { ...locality([], place), collections, ...extra } } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: { ...locality([], place), collections, ...extra } } as never,
       collectionCatalogLoader(LOCAL),
     );
   const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123, availability: "name-searchable" };
@@ -322,11 +322,45 @@ describe("research_append stamps locality collection counts from the catalog", (
     ]);
   });
 
+  it("adds the catalog collections the place's wiki pages link, keeping one under the scope that names another part of it out", async () => {
+    clearCollectionsCache();
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...CATALOG,
+          results: 4,
+          entries: [
+            ...(CATALOG.entries ?? []),
+            catalogEntry("1932399", "United States, Civil War Soldiers Index, 1861-1865", 600, 6300000),
+            catalogEntry("1919999", "Illinois, Peoria, Birth Records, 1878-1994", 100, 2000),
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const page = (links: string[]) => links.map((id) => `* [x](https://www.familysearch.org/search/collection/${id}) at FamilySearch`).join("\n");
+    const surveyRef = await stageSurvey(dir, {
+      place: ILLINOIS,
+      pagesRead: [],
+      volumeSummary: null,
+      wikiPages: { online_records: { url: "u", found: true, content: page(["1932399", "1919999", "5555555"]) } },
+    });
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", surveyRef, entry: locality([], ILLINOIS) } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(r.ok).toBe(true);
+    const ids = (await storedCollections()).map((c: any) => c.id);
+    expect(ids).toContain("1932399");
+    expect(ids).not.toContain("5555555");
+    expect(ids).not.toContain("1919999");
+  });
+
   it("an append with no collections key is filled the same way", async () => {
     const entry: Record<string, unknown> = locality([], ILLINOIS);
     delete entry.collections;
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry } as never,
       collectionCatalogLoader(LOCAL),
     );
     expect(r.ok).toBe(true);
@@ -585,7 +619,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   it("does not stamp when the loader is null (the unit eval harness)", async () => {
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 5)]) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 5)]) } as never,
       null,
     );
     expect(warningsOf(r)).toEqual([]);
@@ -594,7 +628,7 @@ describe("research_append stamps locality collection counts from the catalog", (
   });
 
   it("does not stamp an internal researchAppend write", async () => {
-    const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 5)]) });
+    const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 5)]) });
     expect(r.ok).toBe(true);
     expect((await storedCollections())[0]).toMatchObject({ person_count: 0, record_count: 5 });
     expect(mockedGetValidToken).not.toHaveBeenCalled();

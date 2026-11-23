@@ -844,7 +844,58 @@
           "record_count": 93945885,
           "availability": "name-searchable"
         }
-      ]
+      ],
+      "record_types": [
+        {
+          "type": "vital_record",
+          "years": "1893-",
+          "level": "state",
+          "held_at": "the county orphans' court (1893-1905); the Pennsylvania Department of Health from 1906",
+          "access": "unknown",
+          "collection_ids": [],
+          "summary": "Statewide birth and death registration began in 1906; for 1893-1905 the county orphans' courts kept registers of births and deaths; earlier vital events rely on church, cemetery and probate records.",
+          "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records"
+        },
+        {
+          "type": "probate",
+          "years": "1811-",
+          "level": "county",
+          "held_at": "Schuylkill County Register of Wills",
+          "access": "unknown",
+          "collection_ids": [],
+          "summary": "Wills and administrations from 1811, recorded in indexed books; a primary parentage source naming heirs.",
+          "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records"
+        },
+        {
+          "type": "court",
+          "years": "1885-1925",
+          "level": "county",
+          "held_at": "Schuylkill County Orphans' Court",
+          "access": "unknown",
+          "collection_ids": [],
+          "summary": "The orphans' court records include marriages (since 1885), births and deaths (1893-1905) and adoptions (since 1925), besides estate dockets and distributions.",
+          "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Probate_Records"
+        },
+        {
+          "type": "church",
+          "years": null,
+          "level": "parish",
+          "held_at": "the parish, or the Archdiocese of Philadelphia",
+          "access": "unknown",
+          "collection_ids": [],
+          "summary": "Catholic sacramental registers are held at the parish or the diocese, not the county; Schuylkill stayed with Philadelphia until 1961.",
+          "source_url": null
+        }
+      ],
+      "repositories": [
+        {
+          "name": "Schuylkill County Register of Wills",
+          "holds": "wills and administrations from 1811",
+          "access": null,
+          "url": null
+        }
+      ],
+      "losses": []
     }
   ]
 }

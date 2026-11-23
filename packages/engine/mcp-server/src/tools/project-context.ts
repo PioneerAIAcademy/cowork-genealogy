@@ -107,6 +107,18 @@ export interface ProjectContextLocality {
     availability?: Extract<CollectionAvailability, "browse-only">;
   }[];
   quirks?: string[];
+  /** The entry's `record_types` rows, without their source URLs (research_query has them). */
+  recordTypes?: {
+    type: string;
+    years?: string;
+    level?: string;
+    heldAt?: string;
+    access?: string;
+    collectionIds?: string[];
+    summary?: string;
+  }[];
+  repositories?: { name: string; holds?: string; access?: string; url?: string }[];
+  losses?: { recordSet: string; years?: string }[];
 }
 
 export type ProjectContextCollection = NonNullable<ProjectContextLocality["collections"]>[number];
@@ -412,8 +424,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   }
 
   // Localities: compact place/locale projection for research-plan — the
-  // actionable bits (jurisdictions, collections, quirks). guide_markdown and
-  // pages_read are left out; research_query serves the whole entry.
+  // actionable bits (jurisdictions, collections, quirks, record-type rows, repositories,
+  // losses). guide_markdown, catalog and pages_read are left out; research_query serves
+  // the whole entry.
   const localities: ProjectContextLocality[] = [];
   const national = new Map<string, Map<string, ProjectContextCollection>>();
   for (const l of Array.isArray(research?.localities) ? research.localities : []) {
@@ -448,6 +461,27 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
     );
+    const str = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
+    const rows = (field: string) => (Array.isArray(l[field]) ? l[field] : []).filter((r: any) => r && typeof r === "object");
+    const recordTypes = rows("record_types")
+      .filter((r: any) => typeof r.type === "string")
+      .map((r: any) =>
+        omitEmpty({
+          type: r.type,
+          years: str(r.years),
+          level: str(r.level),
+          heldAt: str(r.held_at),
+          access: str(r.access),
+          collectionIds: Array.isArray(r.collection_ids) ? r.collection_ids.filter((c: unknown) => typeof c === "string") : [],
+          summary: str(r.summary),
+        }),
+      );
+    const repositories = rows("repositories")
+      .filter((r: any) => typeof r.name === "string")
+      .map((r: any) => omitEmpty({ name: r.name, holds: str(r.holds), access: str(r.access), url: str(r.url) }));
+    const losses = rows("losses")
+      .filter((r: any) => typeof r.record_set === "string")
+      .map((r: any) => omitEmpty({ recordSet: r.record_set, years: str(r.years) }));
     localities.push(
       omitEmpty({
         id: l.id,
@@ -457,6 +491,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         jurisdictions,
         collections,
         quirks,
+        recordTypes,
+        repositories,
+        losses,
       }) as ProjectContextLocality,
     );
   }
@@ -651,7 +688,9 @@ export const projectContextSchema = {
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
-    "recordCount, availability?}], quirks}] — availability \"browse-only\" marks a browse-only collection; a row without it is name-searchable; the " +
+    "recordCount, availability?}], quirks, recordTypes [{type, years, level, heldAt, access, collectionIds, summary}], " +
+    "repositories [{name, holds, access, url}], losses [{recordSet, years}]}] — availability \"browse-only\" marks a " +
+    "browse-only collection; a row without it is name-searchable; the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and nationalCollections " +
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +
