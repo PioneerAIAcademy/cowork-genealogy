@@ -15,7 +15,7 @@ nothing.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `recordId` | string | yes | A record-persona ARK (`ark:/61903/1:1:QVS9-DHDB`, `record_search`'s `recordId`) or its bare id (`QVS9-DHDB`). |
+| `recordId` | string | yes | A record-persona ARK (`ark:/61903/1:1:QVS9-DHDB`, `record_search`'s `recordId`) or its bare id (`QVS9-DHDB`). A scheme-prefixed id (`legacy-nfs:…`, `capture:…`, `ancestry:…`) is refused (§3). |
 | `resultsRef` | string | no | A `record_search` or `record_read` sidecar ref (`results/.staging/<uuid>.json` or `results/<log_id>.json`). Reads the record from that file, with no FamilySearch call. Requires `projectPath`. |
 | `projectPath` | string | no | The project directory. Required with `resultsRef`. On a live read it stages the record. |
 
@@ -37,6 +37,11 @@ The handler throws; the server returns `{ error }` with `isError: true`.
 - A `1:2:` record ARK (record_search's `recordArk`, or a tree source's `url`)
   or a `3:1:`/`3:2:` document-image ARK: refused by `extractEntityId`, on both
   modes, never resolved to some persona.
+- A scheme-prefixed id: one that is not an ARK once `toArk` has read it and
+  still contains `:` (`legacy-nfs:MMVZ-Z9T`, `capture:…`, `ancestry:…`). It
+  names a source outside FamilySearch's record-persona id space, and its suffix
+  read as a bare id can name an unrelated persona. Refused by
+  `extractEntityId` on both modes, before any fetch.
 - FamilySearch 401 (the rejected-token message), 403 (restricted), 404 (not
   found), 429 (rate limit not cleared within the retry budget), any other
   non-2xx.
