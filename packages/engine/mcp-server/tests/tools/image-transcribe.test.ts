@@ -63,6 +63,7 @@ import {
   OCR_TIMEOUT_MS,
 } from "../../src/utils/ocr.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
+import { compactImageTranscribeAnswer } from "../../src/utils/staged-compaction.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
 import {
   runWithProjectStore,
@@ -1143,6 +1144,34 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     }, LOCAL);
 
     expect(result.found).toBe("FOUND");
+  });
+
+  it("names the forms of a sought name the page carries on a FOUND (#4587)", async () => {
+    mockOpenRouterOk(
+      "LEE  BRN 29 SEP 1821 ELIZABETH  D  JAMES LEE AND MARIA  06132-2\n" +
+      "LEE  BRN 30 JUL 1822 ELIZA      D  JOHN LEE AND ELIZABETH 05476-7",
+    );
+    mockOpenRouterOk("FOUND");
+    const result = await transcribe(
+      { imageId: "009113284_00716", lookingFor: "Lee, Eliza, father James Lee" },
+      LOCAL,
+    );
+    expect(result.found).toBe("FOUND");
+    expect(result.matchedForms).toEqual({ Eliza: ["Elizabeth"] });
+    // It survives the MCP answer's compaction.
+    expect(compactImageTranscribeAnswer({ ...result }).matchedForms).toEqual({ Eliza: ["Elizabeth"] });
+  });
+
+  it("gives no matchedForms on NOT FOUND, or when no other form is on the page", async () => {
+    mockOpenRouterOk("ELIZABETH, daughter of JAMES LEE");
+    mockOpenRouterOk("NOT FOUND");
+    const notFound = await transcribe({ imageId: "009113284_00716", lookingFor: "Eliza Lee" }, LOCAL);
+    expect(notFound.matchedForms).toBeUndefined();
+
+    mockOpenRouterOk("ELIZA, daughter of JOHN LEE");
+    mockOpenRouterOk("FOUND");
+    const sameForm = await transcribe({ imageId: "009113284_00716", lookingFor: "Eliza Lee" }, LOCAL);
+    expect(sameForm.matchedForms).toBeUndefined();
   });
 
   it("leaves the prompt unchanged when lookingFor is absent", async () => {
