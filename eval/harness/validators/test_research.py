@@ -31,7 +31,7 @@ _DELIVERABLE_PREFIX = "deliverable:"
 
 
 def _data_tag(test: dict, prefix: str) -> str | None:
-    found = [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
+    found = _data_tag_values(test, prefix)
     assert len(found) <= 1, (
         f"a test may declare at most one {prefix}<name> tag; got: {found}"
     )
