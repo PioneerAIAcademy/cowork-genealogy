@@ -66,6 +66,10 @@ def test_positive_appends_browse_log_entry(before_state, after_state, test):
         )
     if "confirm-read" in test.get("tags", []):
         pytest.skip("confirm-read: one page read by ARK is not a browse")
+    if "reindex" in test.get("tags", []):
+        pytest.skip("reindex: one page read against its index is not a browse")
+    if "catalog-only" in test.get("tags", []):
+        pytest.skip("catalog-only: a catalog lookup is not a browse, so its entry names catalog_search")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -124,6 +128,11 @@ def test_no_results_sidecar_written(before_state, after_state, test):
     search tools. Pages image_transcribe stages are not sidecars."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests perform a browse")
+    if "confirm-read" in test.get("tags", []) or "reindex" in test.get("tags", []):
+        pytest.skip(
+            "confirm-read / reindex: a page read is logged with its own results "
+            "file, and is not a browse"
+        )
     new_sidecars = _new_result_sidecars(before_state, after_state)
     assert not new_sidecars, (
         "image_search does not stage results, so no results/ sidecar should "
@@ -356,6 +365,8 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
         )
     if "confirm-read" in test.get("tags", []):
         pytest.skip("confirm-read: one page read by ARK is not a browse")
+    if "reindex" in test.get("tags", []):
+        pytest.skip("reindex: one page read against its index is not a browse")
     relabelled = [
         entry.get("id")
         for entry in _new_log_entries(before_state, after_state)
