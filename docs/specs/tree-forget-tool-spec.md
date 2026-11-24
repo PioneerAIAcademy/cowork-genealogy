@@ -341,6 +341,12 @@ radius is not the first one's. A practice run dry-runs before every apply;
 forget-and-rederive's `mode: verify`, run from the research router, skips the
 dry run.
 
+**Known limit (lead, 2026-11-24).** `cleanSlate` chooses sources by where they are
+cited, never by reading a record. A record attached only to the subject that names the
+removed parent or spouse stays. A record attached to both is one tree source cited on
+both (`project_create` reads every relative's attached sources and reuses a description
+already in the tree), so it goes.
+
 ## 3. Return value
 
 Wire-side **camelCase** (a tool output, not a persisted document — the repo's

@@ -180,6 +180,15 @@ def test_a_verify_turn_admits_the_question_but_no_plan():
     assert sb.home_group("forget-and-rederive") == "forget"
 
 
+def test_a_broad_verify_audits_then_checks_the_warnings_in_one_turn():
+    """The audit of the attached sources, then check-warnings; no question, no removal."""
+    assert sb.step_allowed(["source-evaluation"], "check-warnings") is True
+    assert sb.step_allowed(["source-evaluation"], "question-selection") is False
+    assert sb.step_allowed(["source-evaluation"], "forget-and-rederive") is False
+    assert sb.step_allowed(["check-warnings"], "source-evaluation") is False
+    assert sb.offered_step(sb.deny_reason("source-evaluation")) == "source-evaluation"
+
+
 def test_planning_the_searches_runs_locality_guide_then_research_plan():
     """Stop 3: an unsurveyed place is surveyed inside the plan step."""
     assert sb.home_group("locality-guide") == "plan"

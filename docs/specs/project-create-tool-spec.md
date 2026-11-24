@@ -103,20 +103,33 @@ and in this build's place retry.
 | Input | Required | Notes |
 |---|---|---|
 | `projectPath` | yes | Absolute path to the project directory |
-| `objective` | yes | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
+| `objective` | to create | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
 | `title` | no | Omitted from the document when absent, never written empty. Named as `objective` is |
-| `personId` | yes | A FamilySearch person ID, trimmed. This tool reads the person (needs a FamilySearch login) and builds the starting tree from the read |
+| `personId` | to create | A FamilySearch person ID, trimmed. This tool reads the person (needs a FamilySearch login) and builds the starting tree from the read |
+| `fillRelativeSources` | no | Tree person ids, the create's `relativeSourcesSkipped`. The one input valid on an existing project: it reads those relatives' attached sources into the tree and creates nothing ("Filling the relatives' sources" below). Taken with `projectPath` alone |
 | `subjectPersonIds` | no | FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read |
 | `tree` | — | Removed 2026-11-02 (§3). Refused by name (`PROJECT_TREE_REMOVED`), with or without `personId` |
 | `personReadRef` | — | Removed. Refused by name, so a caller built against the old contract is told to pass `personId` |
 
 **Reading the person.** Every refusal that needs no network (below) runs first,
 so a refused call never spends the read, and a create aimed at an existing project
-never reads anyone. The read is `readPerson(personId, { projectPath, deadline },
-principal)`: the tree read, the subject first, the relatives' and the edges'
-sources, and the subject's memories with their transcription, exactly as
-`person_read` returns them, plus each memory's kind (`story` or `document`), which
-`person_read`'s own response does not carry. The principal is the call's, as for
+never reads anyone. The read is `readPerson(personId, { projectPath, deadline,
+relativeSourcesFirst: true }, principal)`: the tree read, the subject first, the
+relatives' and the edges' sources, and the subject's memories with their
+transcription, exactly as `person_read` returns them, plus each memory's kind
+(`story` or `document`), which `person_read`'s own response does not carry, and
+the relatives whose attached sources could not be read (`relativeSourcesSkipped`,
+FamilySearch PIDs).
+
+**The relatives' sources come before memory transcription.** A record attached to
+two people becomes one tree source cited on both, and `tree_forget`'s `cleanSlate`
+removes what a removed parent or spouse shares with the subject by exactly that
+citation, so a relative's sources are structure here. Under `relativeSourcesFirst`
+the memories' transcription starts only once the relatives' and the edges' source
+reads have settled, and spends what they leave of the budget; an untranscribed
+memory comes back with its "read later" note as before. The memories list and
+portrait fetches still run beside them. `person_read` itself reads no relative's
+sources and does not set the option. The principal is the call's, as for
 every FamilySearch tool. An error from the read (no login, a person FamilySearch
 does not hold) is returned as the create's refusal, and nothing is written.
 
@@ -248,7 +261,9 @@ has them), `objective` and `title` as stored, `relatives` (each other person's `
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
-subject's memories that were and were not transcribed), `notes` (a sentence per
+subject's memories that were and were not transcribed), `relativeSourcesSkipped`
+(the tree ids of relatives whose attached sources could not be read; present only
+when there is one, and never trimmed), `notes` (a sentence per
 loop the build broke, first, then the read's own notes), and
 `validation.warnings`. Over the cap, whole entries are dropped, the last
 first, in this order: `warnings`, `notes`, the untranscribed titles, the
@@ -260,6 +275,28 @@ and every person stays findable afterwards in the project tree.
 `idMap` is not returned: its `sources` map runs to hundreds of entries on a
 well-sourced profile, and a caller names people by the summary's tree ids.
 
+
+**Filling the relatives' sources.** `project_create({ projectPath,
+fillRelativeSources: ["I4", "I7"] })` reads the attached sources of the named tree
+persons into an existing project, with a fresh `OCR_PHASE_BUDGET_MS` from the call's
+start, through the same `fetchRelativeSources` the create's read uses. Each id must
+be a tree person whose `ark` names a FamilySearch PID (`treePidOfArk`). Each
+fetched description is shaped as the read shapes it (`shapeDescriptions`, `SD_*`
+entries dropped). A description whose `id/title/citation/author/url` less its id
+matches a tree source is that source, cited again; any other becomes a new source
+with the next free `S` id. Each is cited on the person it is attached to with a
+person-level `{ref}`, never twice. The whole project is validated
+(`validateIntroduced`) and the tree written atomically, with
+`starting-tree.gedcomx.json` alongside it while that baseline still equals the tree
+(the fill adds what the create's read would have put there); research.json is never
+written, and nothing is written when nothing was added. The answer is `filled`
+(`id`, `name`, and how many sources are now cited on each person read),
+`sourcesAdded`, `sourcesReused`, `filesWritten`, `validation.warnings`, and
+`relativeSourcesSkipped` for anyone still unread. Refused, writing nothing and
+before any read: an id that is not a tree person or has no FamilySearch ark (all
+named), an empty or non-string list, a folder with no project, and `personId`,
+`objective`, `title` or `subjectPersonIds` beside it. The eval harness's stand-in
+injects no fetcher, so it refuses this mode.
 
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.
@@ -317,7 +354,7 @@ come from what the researcher actually said, and are written afterwards through
 
 | Condition | Reason |
 |---|---|
-| Either file already exists | Create, never upsert. Overwriting destroys an audit trail that cannot be reconstructed, and a caller wanting to add to a project already has the writer tools |
+| Either file already exists (any call but `fillRelativeSources`) | Create, never upsert. Overwriting destroys an audit trail that cannot be reconstructed, and a caller wanting to add to a project already has the writer tools |
 | An ancestor of `projectPath` already holds `research.json` | The Electron viewer watches one folder; a project created one level down inside another reads to a tester as lost files between sessions. Names the ancestor and points at `research_append` as the way to add to it instead. Checked AFTER the exists-refusals above, so a half-present project at `projectPath` itself keeps its own, more actionable message even when its own parent also holds a project |
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
@@ -395,6 +432,17 @@ the write ahead of the validation and watching two cases go red.
 > holding a ParentChild loop (the create succeeds without the loop-closing edge,
 > the loop sentence is first in `notes` and in `validation.warnings`, a longer
 > loop's wording claims no reciprocal link, a loop-free read adds no note).
+
+> `packages/engine/mcp-server/tests/tools/project-create-relative-sources.test.ts` —
+> the create reads with `relativeSourcesFirst`, names skipped relatives by tree id
+> and carries no list when none were skipped; `fillRelativeSources` cites a
+> relative's sources on her, reuses a source the tree holds, writes the starting
+> tree only while it equals the tree, never writes research.json, is idempotent,
+> reports a relative still unread, and refuses a non-tree id, an id with no ark, a
+> folder with no project, a create input beside it and an empty list, each before
+> any read. `tests/tools/person-read-relatives-first.test.ts` — an OCR leg that
+> spends the whole budget leaves the relatives' sources read under the option, and
+> skipped without it.
 
 > `packages/engine/mcp-server/tests/utils/unknown-args.test.ts` — over MCP, `tree`
 > is refused with `PROJECT_TREE_REMOVED` with or without `personId`, alone or

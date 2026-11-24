@@ -1821,6 +1821,29 @@ def test_reply_adds_nothing_after_the_relay(test, text_response):
     assert not ids, f"the reply names research.json ids: {ids}"
 
 
+_BROAD_VERIFY_TAG = "broad-verify-audits"
+
+
+def test_broad_verify_audits_and_removes_nothing(
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, test
+):
+    """Tag-gated (``broad-verify-audits``). A verify request naming no particular
+    relationship, fact or source runs source-evaluation, then check-warnings, and
+    nothing else: no tree_forget, no question, no baseline read (#4791)."""
+    if _BROAD_VERIFY_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BROAD_VERIFY_TAG} test")
+    taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
+    assert taken == ["source-evaluation", "check-warnings"], (
+        f"a broad verify runs source-evaluation then check-warnings and nothing else; got {taken}"
+    )
+    calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
+    wrote = sorted({
+        bare_tool_name(str(c.get("tool") or "")) for c in calls
+        if bare_tool_name(str(c.get("tool") or "")) in ("tree_forget", "extraction_append", "timeline_build")
+    })
+    assert not wrote, f"a broad verify removes and reads nothing: {wrote}"
+
+
 _NO_NAME_SEARCH_TAG = "no-name-search"
 
 

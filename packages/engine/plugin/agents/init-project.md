@@ -95,6 +95,7 @@ project_create({ projectPath, objective, title, personId: "<id>", subjectPersonI
 - **Refused with `subject_person_ids contains '<id>' which is not in tree.gedcomx.json persons`, or a message naming `personReadRef`:** the installed extension is out of date. Tell the user to update it, and stop.
 - **An auth error:** give the user the tool's message as it is, with any link it carries, and stop.
 - **Any other refusal** is about your call: fix it and call again.
+- **The summary carries `relativeSourcesSkipped`:** call `project_create({ projectPath, fillRelativeSources: <that list> })` once. Its own `relativeSourcesSkipped` names the relatives still unread.
 
 **User-stated facts vs. FamilySearch:**
 - **The tree** is FamilySearch's data (the source being surveyed).
@@ -138,6 +139,7 @@ Report what the import did, the subject's vitals and relatives, and nothing else
 - Items the researcher says they hold, named — not recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
   time (`memories.notTranscribed`) — name each one and say they can be read later
+- Any relative still unread after that second call, by name, as a relative whose sources could not be read yet
 - If the summary carries `notes`, one sentence from them in plain words — "FamilySearch lists a parent for him but gives no record for that person, so they are not in the tree" — never the count or the field name
 - One sentence on what comes next, defining "objective" and "research
   question" on first use: "Your objective is the overall goal — <restate it>.

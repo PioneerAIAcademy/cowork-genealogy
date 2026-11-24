@@ -17,6 +17,7 @@ sys.path.insert(0, str(next(
 )))
 
 from test_research import (  # noqa: E402
+    test_broad_verify_audits_and_removes_nothing as broad_verify,
     test_job_setup_stops_after_init_project as setup_stop,
     test_no_project_from_a_name_search as no_name_search,
     test_plan_turn_relays_both_summaries as relays_both,
@@ -247,3 +248,25 @@ def test_relays_only_fails_on_a_summary_of_its_own_or_a_leaked_id():
         relays_only(test=ONLY, text_response="The parentage is not proved.\n\nA baptism would advance it.\n\nContinue with `planning the searches`? (ps_001)")
     with pytest.raises(AssertionError, match="verbatim"):
         relays_only(test=ONLY, text_response="Not proved; try a baptism.")
+
+
+# ── broad-verify-audits ─────────────────────────────────────────────────────
+
+BROAD = {"skill": "research", "tags": ["broad-verify-audits"]}
+
+
+def _broad(names=("source-evaluation", "check-warnings"), calls=()):
+    broad_verify(skills_invoked=["research"], builtin_tool_calls=[_spawn(n) for n in names],
+                 tool_calls=list(calls), attempted_mcp_calls=[], test=BROAD)
+
+
+def test_broad_verify_passes_and_fails():
+    _broad(calls=[_mcp("project_context", projectPath="/p")])
+    with pytest.raises(AssertionError, match="nothing else"):
+        _broad(names=("source-evaluation", "check-warnings", "question-selection"))
+    with pytest.raises(AssertionError, match="nothing else"):
+        _broad(names=("forget-and-rederive",))
+    with pytest.raises(AssertionError, match="tree_forget"):
+        _broad(calls=[_mcp("tree_forget", forget=[{"selector": "parents-of", "personId": "I1"}], cleanSlate=True)])
+    with pytest.raises(AssertionError, match="extraction_append"):
+        _broad(calls=[_mcp("extraction_append", personId="I1")])

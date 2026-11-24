@@ -163,7 +163,14 @@ entry says so.
     to verify a relationship or fact, or names one or a source as wrong, removes it first,
     as a clean slate: forget-and-rederive's verify mode, `tree_forget` with `cleanSlate`
     (`tree-forget-tool-spec.md`). The research rebuilds it from records ("What the
-    researcher sees", section A).
+    researcher sees", section A). The request is the reply, or with no reply the
+    project's objective (a first message asking to verify a person's facts or
+    relationships is a research job, so it becomes the objective). It is narrow when it
+    names a particular relationship, fact or source, and only a narrow request removes
+    anything. A broad one ("are his facts and relationships correct?") runs
+    source-evaluation, then check-warnings, in one turn, and removes nothing: with no
+    finding the turn ends with no offer; otherwise it lists the findings, asks which to
+    verify first, and each one becomes a narrow request in turn (lead, 2026-11-24).
 
 ## Evidence
 

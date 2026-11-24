@@ -340,7 +340,16 @@ reply to question-selection as `researcherReply:`; `ut_research_pl2` and
 `relays-both-plan-summaries`) run locality-guide then research-plan in one turn
 and relay both summaries in full; `ut_research_nm1`
 (`name-without-pid-asks-for-id.json`, `no-name-search`) makes no `person_search`
-call for a person named with no FamilySearch ID. The validators are pinned in
+call for a person named with no FamilySearch ID; `ut_research_vf1`
+(`verify-first-message-is-a-job.json`, `setup-stop`) sends a first message asking
+to verify a person's facts and relationships to research, not source-evaluation;
+`ut_research_vo1` (`verify-objective-forgets-on-continue.json`) runs the narrow
+verify from an objective that disputes the parents on a bare "Continue.";
+`ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
+source-evaluation then check-warnings for a broad verify and removes nothing; and
+`ut_research_rp1` (`relays-proof-conclusion-without-a-summary.json`,
+`relays-only:`) adds nothing after proof-conclusion's relayed report. The
+validators are pinned in
 `eval/harness/tests/unit/test_research_setup_stops_validators.py`.
 
 `ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`

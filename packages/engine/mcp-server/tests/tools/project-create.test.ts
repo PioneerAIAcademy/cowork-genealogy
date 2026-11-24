@@ -132,7 +132,7 @@ describe("project_create", () => {
     });
 
     expect(r.ok).toBe(true);
-    if (!r.ok) return;
+    if (!r.ok || !("counts" in r)) throw new Error("expected a create summary");
     expect(r.filesWritten).toEqual([
       "tree.gedcomx.json",
       "research.json",

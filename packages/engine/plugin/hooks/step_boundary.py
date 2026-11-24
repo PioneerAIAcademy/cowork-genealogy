@@ -82,6 +82,9 @@ for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
 del _solo
 
+# A broad verify: the audit of the attached sources, then the warnings, in one turn.
+GROUPS["source-evaluation"] = ("source-evaluation", "check-warnings")
+
 # A turn this step opens is grouped by the step AFTER it (spec section H): project
 # creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
 # in the turn that created the project.
@@ -100,6 +103,7 @@ HOME_GROUP: dict[str, str] = {
     "locality-guide": "plan",
     "init-project": "setup",
     "question-selection": "question",
+    "check-warnings": "check-warnings",
     "record-structurer": "search",
 }
 
