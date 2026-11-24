@@ -228,7 +228,7 @@ hypothesis or multi-person timeline is never touched. Ownership: the
 
 - `projectPath` missing or naming no directory, or one project file missing or
   unparseable: `{ ok: false, errors }` naming it. A folder holding neither file:
-  `noProjectResult("write")`.
+  `{ ok: false, errors }` carrying `NO_PROJECT_REFUSAL`.
 - `personId` missing, or naming no tree person: `{ ok: false, errors }`.
 - A write `research_append` refuses: its `{ ok: false, errors }`, and nothing
   written.

@@ -1,0 +1,29 @@
+{
+  "id": "record-set-names-no-person-moses-dustin",
+  "message": "Identify all soldiers in Captain Moses Dustin's Company.",
+  "expected_owner": "search-images",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "image_transcribe"
+    }
+  ],
+  "required_tools": [
+    "project_context",
+    "project_create"
+  ],
+  "forbidden_tools": [
+    "person_search",
+    "tree_gaps"
+  ],
+  "must_not": "No read or search before a project exists: project_create with the request as objective and no personId comes first; no init-project spawn",
+  "caps": {
+    "wall_clock_seconds": 900,
+    "inactivity_seconds": 300,
+    "progress_stall_seconds": 300,
+    "tool_calls": 40,
+    "max_turns": 40,
+    "max_cost_usd": 2.0
+  },
+  "is_plan_ask": false
+}

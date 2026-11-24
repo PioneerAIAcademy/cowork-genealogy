@@ -416,7 +416,7 @@ export type ProjectContextResult =
       signInUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // a failure (project_context runs with no project). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 

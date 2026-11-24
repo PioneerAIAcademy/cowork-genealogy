@@ -5,10 +5,19 @@
     "name": "Translate a Spanish colonial parish baptism record",
     "type": "positive",
     "description": "Spanish colonial (Latin American) Catholic baptism entry. Adds Spanish — a language not yet in the corpus — and exercises colonial-record conventions: the casta/racial designation, the Don/Doña honorifics, and the padrinos (godparents) with their 'parentesco espiritual' (spiritual kinship), which are genealogically significant in colonial research.",
-    "tags": ["spanish", "colonial", "baptism", "padrinos", "casta", "church-record", "direct-arm"]
+    "tags": [
+      "spanish",
+      "colonial",
+      "baptism",
+      "padrinos",
+      "casta",
+      "church-record",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you translate this Spanish colonial baptism record? 'En la Ciudad de México, a quince de enero de mil setecientos cincuenta, yo, el infrascrito cura, bauticé solemnemente a Josefa María, española, hija legítima de Don Juan de Aguilar y de Doña María Ramírez. Fueron sus padrinos Don Pedro Gómez y Doña Ana López, a quienes advertí su obligación y parentesco espiritual.'"
+    "delegation": "Can you translate this Spanish colonial baptism record? 'En la Ciudad de México, a quince de enero de mil setecientos cincuenta, yo, el infrascrito cura, bauticé solemnemente a Josefa María, española, hija legítima de Don Juan de Aguilar y de Doña María Ramírez. Fueron sus padrinos Don Pedro Gómez y Doña Ana López, a quienes advertí su obligación y parentesco espiritual.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
