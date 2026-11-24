@@ -53,7 +53,8 @@ tree_correct split"): a context granted only the correction tool must be
 structurally unable to delete evidence. `tree_forget` does delete persons, and
 cascades their relationships. Folding it into `tree_correct` would hand every
 correction context that power. It stays a distinct, separately grantable tool
-whose whole purpose is destructive, and which no research skill calls.
+whose whole purpose is destructive, and which only forget-and-rederive calls:
+for a practice run, or in `mode: verify` from the research router.
 
 ## 2. The tool
 
@@ -62,8 +63,13 @@ tree_forget({
   projectPath: string,
   forget: ForgetSelector[],
   dryRun?: boolean,
+  cleanSlate?: boolean,
 })
 ```
+
+`cleanSlate: true` also removes everything the selectors' removal leaves
+disconnected from the project's subjects, and every source cited on anything
+removed (§2.2). A call without it behaves as described everywhere else here.
 
 Writes `tree.gedcomx.json` (plus the restore file, §5), and — when the project
 holds a completion-gate baseline (`starting-tree.gedcomx.json`) — rewinds that
@@ -98,7 +104,8 @@ walks the tree's own relationships to resolve relatives. The caller never has to
 read — and is better off not reading — the names and dates it is about to remove.
 
 **The caller never chooses a source itself.** The researcher names the S id,
-read from the viewer's Sources section. Tree sources carry no record type, so
+read from the viewer's Sources section. The one exception is forget-and-rederive's
+`mode: verify`, run from the research router, which may look an S id up. Tree sources carry no record type, so
 nothing tells a source's kind without its text, and the only tool that returns
 source titles also returns the citation, which can hold the answer (a marriage
 index citation ending "…25 June 1786"). The `source` selector never cascades:
@@ -295,11 +302,33 @@ ownerId, factId) scoping as every other selector.
 Removing a person removes **every relationship touching them**, or the tree is
 left with links pointing at people who no longer exist. This is why `person:` and
 the relative selectors are reported with a separate `relationshipsCascaded`
-count, and why the skill dry-runs first: forgetting a father can also cut the
-subject's siblings, that father's own parents, and his marriage. The fact-level
+count, and why a practice run dry-runs first: forgetting a father can also cut
+the subject's siblings, that father's own parents, and his marriage. The fact-level
 selectors (`birth-of`, `death-of`, `facts-of`, `fact`) never cascade.
 
 Facts live on persons **and** on Couple relationships alike; `fact` searches both.
+
+With `cleanSlate`, after the selectors' removal and cascade:
+
+1. Every person connected to a subject (`research.json`
+   `project.subject_person_ids`) through relationships before the call and not
+   after it is removed, with every relationship touching them. For `parents-of`
+   that is the siblings and their families, the parents' own parents, and the
+   parents' other spouses. A person already unconnected before the call stays.
+   The call is refused (nothing written) when no `subject_person_ids` entry is a
+   tree person.
+2. Every source description cited on anything the call removed — a person, a
+   name, a person fact, a relationship or a relationship fact — is removed with
+   all its citations, including citations on persons and relationships that
+   stay (a household census cited on a parent and on the subject).
+3. A source description that a `research.json` `sources` row points at
+   (`gedcomx_source_description_id`, e.g. a transcribed memory) is kept, whether
+   a `source` selector or step 2 chose it, and counted in `sourcesKept`.
+
+Sources are chosen by where they are cited, never by reading a record: a record
+cited only on the subject stays even when it names a parent. Persons, relationships
+and sources removed this way are counted in `removed` like any other; the
+relationships in `relationshipsCascaded` too.
 
 ### 2.3 `dryRun`
 
@@ -308,7 +337,9 @@ neither the tree nor the restore file. Selector errors surface identically under
 `dryRun`, so a dry run is a complete rehearsal.
 
 The cascade depends on the tree's *current* shape, so a second forget's blast
-radius is not the first one's. The skill dry-runs before every apply.
+radius is not the first one's. A practice run dry-runs before every apply;
+forget-and-rederive's `mode: verify`, run from the research router, skips the
+dry run.
 
 ## 3. Return value
 
@@ -325,7 +356,10 @@ identifier-casing rule).
     relationshipsCascaded: number,  // the subset removed because a person went
     factsByType: { [factType: string]: number },
     sources: number,                // source descriptions removed by `source`
+                                    // or by `cleanSlate`
   },
+  sourcesKept: number,              // sources kept because a research.json source
+                                    // row points at them; 0 without `cleanSlate`
   remaining: { persons: number, relationships: number },
   filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"],
                                     // plus "starting-tree.gedcomx.json" when a baseline exists
@@ -356,7 +390,7 @@ What may appear in a result or error: entity **ids** (the caller supplied them,
 and they are opaque), **counts**, **fact type names** (`Birth`, `Marriage` — a
 kind, not a value), and JSON **paths**. A source description's `title`,
 `citation`, `author` and `url` never appear: only its S id and the
-`removed.sources` count.
+`removed.sources` and `sourcesKept` counts.
 
 This constrains the pass-through channels too:
 
@@ -406,7 +440,8 @@ plan.
 The same holds for a `source` forget. A `research.json`
 `sources[i].gedcomx_source_description_id` that points at the removed S id is a
 call-introduced cross-file error, so the forget is refused. `research_append`
-never deletes a row, so the remedy is a new project.
+never deletes a row, so the remedy is a new project. With `cleanSlate` the S id
+is kept instead and counted in `sourcesKept`, and the call goes on (§2.2).
 
 ### Plan-phase precondition
 

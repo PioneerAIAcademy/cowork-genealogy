@@ -66,6 +66,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    main_thread_denial,  # the SHIPPED hook's predicate, not a copy
     route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
     relay_note_hook,  # the SHIPPED relay note, as a hosted plane adds it
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
@@ -2215,6 +2216,28 @@ async def _run_agent(
             )
             _emit(f"[blocked context call] {bare} (main-thread subagent-only tool)")
             return subagent_only_denial(bare)
+
+        # The shipped hook's MAIN_THREAD_DENIED: a tool no step may call on the
+        # main thread, e.g. `person_search` (a project starts from a person ID).
+        if (never := main_thread_denial(input_data)) is not None:
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": f"`{bare}` denied on the main thread — "
+                            + never["hookSpecificOutput"]["permissionDecisionReason"],
+                }
+            )
+            _emit(f"[blocked main-thread call] {bare}")
+            return never
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is

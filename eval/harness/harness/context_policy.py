@@ -373,6 +373,24 @@ async def route_note_hook(input_data, tool_use_id, context):
 #: OWNED_SECTIONS below.
 SUBAGENT_ONLY_TOOLS = _HARNESS_ONLY_SUBAGENT_TOOLS | frozenset(AGENT_ONLY_TOOLS)
 
+#: The shipped hook's MAIN_THREAD_DENIED: tools the main thread may never call,
+#: with their deny text. Same import-don't-copy discipline as AGENT_ONLY_TOOLS.
+MAIN_THREAD_DENIED = _guard.MAIN_THREAD_DENIED
+
+
+def main_thread_denial(input_data: dict[str, Any]) -> dict[str, Any] | None:
+    """The shipped hook's deny of a MAIN_THREAD_DENIED tool on the main thread, or None."""
+    reason = _guard.main_thread_denied(str(input_data.get("tool_name") or ""), input_data)
+    if reason is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
+
 
 #: research.json sections the shipped hook routes to a named agent, mapped to
 #: that agent's bare name. Reached through `_guard` so there is exactly ONE

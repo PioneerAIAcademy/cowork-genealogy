@@ -47,6 +47,7 @@ import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
 import { COUPLE_EVENT_TYPES } from "../utils/record-persona.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
+import { reachable } from "../utils/unanchored-persons.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -118,6 +119,9 @@ export interface TreeForgetInput {
   projectPath: string;
   forget?: ForgetSelector[];
   dryRun?: boolean;
+  /** Also remove every person the removal disconnects from the project's
+   *  subjects, and every source cited on anything removed (spec §2.2). */
+  cleanSlate?: boolean;
 }
 
 export interface TreeForgetRemoved {
@@ -125,8 +129,9 @@ export interface TreeForgetRemoved {
   relationships: number;
   relationshipsCascaded: number;
   factsByType: Record<string, number>;
-  /** Source descriptions removed by the `source` selector. A count only: a
-   *  source's title or citation can state the forgotten answer (spec §3.1). */
+  /** Source descriptions removed by the `source` selector or by `cleanSlate`.
+   *  A count only: a source's title or citation can state the forgotten answer
+   *  (spec §3.1). */
   sources: number;
 }
 
@@ -135,6 +140,9 @@ export type TreeForgetResult =
       ok: true;
       dryRun: boolean;
       removed: TreeForgetRemoved;
+      /** Sources this call would have removed but kept because a research.json
+       *  `sources` row points at them. Always 0 without `cleanSlate`. */
+      sourcesKept: number;
       remaining: { persons: number; relationships: number };
       filesWritten: string[];
       restoreFile: string | null;
@@ -842,10 +850,42 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
  */
 interface ApplyForgetResult {
   removed: TreeForgetRemoved;
+  sourcesKept: number;
   factSharingNotices: string[];
 }
 
-function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
+/** `cleanSlate`'s inputs (spec §2.2). */
+interface CleanSlate {
+  /** The project's subjects that are tree persons; never empty. */
+  subjects: Set<string>;
+  /** The S ids a research.json `sources` row points at, kept rather than removed. */
+  heldSources: Set<string>;
+}
+
+type Citing = { sources?: { ref?: string }[] };
+
+function applyForget(
+  tree: SimplifiedGedcomX,
+  t: Targets,
+  cleanSlate: CleanSlate | null = null,
+): ApplyForgetResult {
+  const connectedBefore = cleanSlate ? reachable(tree, cleanSlate.subjects) : null;
+  // Every S id cited on anything this call removes — the five holders
+  // removeSources strips. Read only under cleanSlate.
+  const citedOnRemoved = new Set<string>();
+  const cite = (holder: Citing): void => {
+    for (const r of holder.sources ?? []) if (r.ref) citedOnRemoved.add(r.ref);
+  };
+  const citePerson = (p: SimplifiedPerson): void => {
+    cite(p);
+    (p.names ?? []).forEach(cite);
+    (p.facts ?? []).forEach(cite);
+  };
+  const citeRelationship = (r: SimplifiedRelationship): void => {
+    cite(r);
+    (r.facts ?? []).forEach(cite);
+  };
+
   // A removed person takes every relationship touching them, or the tree is
   // left with links pointing at people who no longer exist.
   const cascaded = new Set(
@@ -872,6 +912,7 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
       const fid = f.id ?? "";
       const key = factKey(ownerKind, ownerId, fid);
       if (!t.facts.has(key)) return true;
+      cite(f);
       const ftype = f.type ?? "Unknown";
       factsByType[ftype] = (factsByType[ftype] ?? 0) + 1;
       unmatched.delete(key);
@@ -908,10 +949,45 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
     );
   }
 
+  persons(tree).filter((p) => t.persons.has(p.id ?? "")).forEach(citePerson);
+  relationships(tree).filter((r) => deadRels.has(r.id ?? "")).forEach(citeRelationship);
   tree.persons = keptPersons;
   tree.relationships = keptRels;
 
-  const removedSources = removeSources(tree, t.sources);
+  let removedPersonCount = removedPersons;
+  let removedRelCount = removedRels;
+  let cascadedCount = [...cascaded].filter((r) => !t.relationships.has(r)).length;
+  const sourceIds = new Set(t.sources);
+  let sourcesKept = 0;
+  if (cleanSlate && connectedBefore) {
+    // Everyone the removal cut off from every subject goes too, with every
+    // relationship touching them. A person unconnected before the call stays.
+    const connectedAfter = reachable(tree, cleanSlate.subjects);
+    const cut = new Set(
+      persons(tree)
+        .map((p) => p.id ?? "")
+        .filter((id) => connectedBefore.has(id) && !connectedAfter.has(id)),
+    );
+    const touchesCut = (r: SimplifiedRelationship): boolean => endpoints(r).some((id) => cut.has(id));
+    persons(tree).filter((p) => cut.has(p.id ?? "")).forEach(citePerson);
+    relationships(tree).filter(touchesCut).forEach(citeRelationship);
+    const relCount = relationships(tree).length;
+    tree.persons = persons(tree).filter((p) => !cut.has(p.id ?? ""));
+    tree.relationships = relationships(tree).filter((r) => !touchesCut(r));
+    removedPersonCount += cut.size;
+    removedRelCount += relCount - tree.relationships.length;
+    cascadedCount += relCount - tree.relationships.length;
+
+    const present = new Set((tree.sources ?? []).map((s) => s.id ?? ""));
+    for (const id of citedOnRemoved) if (present.has(id)) sourceIds.add(id);
+    for (const id of [...sourceIds]) {
+      if (!cleanSlate.heldSources.has(id)) continue;
+      sourceIds.delete(id);
+      sourcesKept += 1;
+    }
+  }
+
+  const removedSources = removeSources(tree, sourceIds);
 
   // Resolved against the tree AS IT NOW STANDS, post-removal — see
   // resolveFactSharingNotices for why that is the point every pending check
@@ -924,12 +1000,13 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
 
   return {
     removed: {
-      persons: removedPersons,
-      relationships: removedRels,
-      relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
+      persons: removedPersonCount,
+      relationships: removedRelCount,
+      relationshipsCascaded: cascadedCount,
       factsByType,
       sources: removedSources,
     },
+    sourcesKept,
     factSharingNotices,
   };
 }
@@ -1019,8 +1096,32 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     // introduces, not pre-existing drift in a section it never touches (#1572).
     const beforeTree = structuredClone(tree);
 
+    let cleanSlate: CleanSlate | null = null;
+    if (input.cleanSlate === true) {
+      const present = new Set(persons(tree).map((p) => p.id));
+      const subjectIds: unknown[] = Array.isArray(research.project?.subject_person_ids)
+        ? research.project.subject_person_ids
+        : [];
+      const subjects = new Set(
+        subjectIds.filter((id): id is string => typeof id === "string" && present.has(id)),
+      );
+      if (subjects.size === 0) {
+        throw new TreeForgetError(
+          "cleanSlate needs a subject: no research.json project.subject_person_ids entry " +
+            "is a tree person.",
+        );
+      }
+      const sourceRows: any[] = Array.isArray(research.sources) ? research.sources : [];
+      const heldSources = new Set<string>(
+        sourceRows
+          .map((s) => s?.gedcomx_source_description_id)
+          .filter((id): id is string => typeof id === "string" && id !== ""),
+      );
+      cleanSlate = { subjects, heldSources };
+    }
+
     const targets = resolveSelectors(tree, forget);
-    const { removed, factSharingNotices } = applyForget(tree, targets);
+    const { removed, sourcesKept, factSharingNotices } = applyForget(tree, targets, cleanSlate);
 
     // Validate the WHOLE project before persisting. The realistic failure is a
     // dangling person reference from research.json (person_evidence,
@@ -1035,6 +1136,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       ok: true,
       dryRun,
       removed,
+      sourcesKept,
       remaining: { persons: persons(tree).length, relationships: relationships(tree).length },
       filesWritten: [],
       restoreFile: null,
@@ -1108,6 +1210,10 @@ export const treeForgetSchema = {
     "(reported as `relationshipsCascaded`). Fact-level selectors (birth-of, " +
     "death-of, facts-of, facts-before, facts-after, facts-between, fact) " +
     "never cascade.\n" +
+    "\n" +
+    "One exception to the dry run and the source rule: forget-and-rederive's " +
+    "`mode: verify`, run from the research router, skips the dry run and may " +
+    "look a source id up.\n" +
     "\n" +
     "FamilySearch does not guarantee a fact id is unique across owners. " +
     "Removal is always scoped correctly to the owner a selector resolved — " +
@@ -1240,6 +1346,14 @@ export const treeForgetSchema = {
           "Report what would go and write nothing. Always do this first and get the " +
           "researcher's agreement before applying — the cascade depends on the tree's " +
           "current shape, so a second forget's blast radius is not the first one's.",
+      },
+      cleanSlate: {
+        type: "boolean",
+        description:
+          "Also remove every person the removal disconnects from the project's subjects " +
+          "(with their relationships), and every source cited on anything removed, " +
+          "wherever else it is cited. A source a research.json source row points at is " +
+          "kept and counted in sourcesKept. Needs a subject in the tree.",
       },
     },
     required: ["projectPath", "forget"],

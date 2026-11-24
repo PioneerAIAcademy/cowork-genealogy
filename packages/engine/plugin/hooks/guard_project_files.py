@@ -21,7 +21,8 @@ skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
 
 It also denies the main thread the tools only agents hold (AGENT_ONLY_TOOLS,
-issue #3528), naming the agents to delegate to, and denies a fork.
+issue #3528), naming the agents to delegate to, the tools no step may call there
+(MAIN_THREAD_DENIED), and a fork.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent
@@ -236,6 +237,16 @@ AGENT_ONLY_TOOLS = {
         "search-full-text",
     ),
     "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
+}
+
+# Tools the main thread may never call, each with its deny text. Not on
+# AGENT_ONLY_TOOLS: no agent holds them, so there is no agent to delegate to.
+# hooks.json's matcher must name every key here.
+MAIN_THREAD_DENIED = {
+    "person_search": (
+        "Ask the researcher for the FamilySearch person ID; a project never "
+        "starts from a name search."
+    ),
 }
 
 # Tools held only by agents that the main thread may still call, each with the
@@ -1016,6 +1027,16 @@ def agent_only_denied(tool_name: str, payload: dict) -> str | None:
     return bare if bare in AGENT_ONLY_TOOLS else None
 
 
+def main_thread_denied(tool_name: str, payload: dict) -> str | None:
+    """The deny text when a main-thread call reaches MAIN_THREAD_DENIED, else None.
+
+    Told apart and matched as `agent_only_denied` does.
+    """
+    if "agent_id" in payload:
+        return None
+    return MAIN_THREAD_DENIED.get(_basename(tool_name.replace("__", "/")))
+
+
 def agent_only_reason(tool: str) -> str:
     """The deny text for a main-thread call to an AGENT_ONLY_TOOLS member.
 
@@ -1127,6 +1148,16 @@ def decision(payload: dict, env: dict | None = None) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": agent_only_reason(tool),
+            },
+        }
+
+    never = main_thread_denied(tool_name, payload)
+    if never is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": never,
             },
         }
 

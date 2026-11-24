@@ -79,7 +79,7 @@ way project state changes.
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
-| `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run, or, with `cleanSlate`, forget-and-rederive's verify mode: everything the removal cuts off from the subjects and every source cited on what went (project-start only; refused once a plan exists) | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
 | `merge_warnings` | Pre-merge conflict report for two tree persons | None |
 | `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the disagreements between attached sources: the field, the differing values, and each source's link (the `url` `person_read` returns) | OAuth |
