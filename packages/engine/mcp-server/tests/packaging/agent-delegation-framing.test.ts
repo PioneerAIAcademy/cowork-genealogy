@@ -608,7 +608,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     pins: [
       {
         side: "agent",
-        excerpt: "**Only merge when proof-conclusion confirms identity.**",
+        excerpt: "**A merge rests on an identity decision or the user's instruction.**",
       },
     ],
     exempt: {
