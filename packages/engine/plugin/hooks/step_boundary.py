@@ -6,13 +6,12 @@ and gets the same answer. The one exception is a turn init-project opens: the
 step after it is the turn's real step (spec section H), so a bounded first
 message runs its deliverable in the turn that created the project.
 
-**This is a LIBRARY, not a registered hook** (lead, 2026-10-21). The prototype
-worker and both eval harnesses load it with
+**This is a LIBRARY, not a registered hook** (lead, 2026-11-24). The prototype
+worker, the web app and both eval harnesses load it with
 ``importlib.util.spec_from_file_location``, the way
-``eval/harness/harness/context_policy.py`` loads ``guard_project_files.py``.
-Cowork ships no step hook under decision 25, so there is no ``hooks.json`` entry
-and no ``GENEALOGY_STEP_HOST``: one copy, loaded directly, so no parity test is
-needed.
+``eval/harness/harness/context_policy.py`` loads ``guard_project_files.py``, and
+``step_gate_hook.py`` beside it imports it for the connector and Cowork: one
+copy, loaded directly, so no parity test is needed.
 
 Stdlib only, and no I/O of its own -- every caller passes the parsed documents
 in, because the planes read ``research.json`` by different means (the worker with
@@ -664,9 +663,9 @@ class StepGate:
         if decision == "halt" and self.halt_offer is None:
             self.halt_offer = self._b.offered_step(reason)
         if self._log is not None:
-            # Rider 2: log EVERY halt. The router prose is identical on both planes,
+            # Rider 2: log EVERY halt. The router prose is identical on every plane,
             # so this rate is how often a run tries to cross a boundary it was told
-            # to stop at -- the only measure we get of Cowork, which has no hook.
+            # to stop at.
             self._log(ev="step_boundary", turn_id=self._turn_id, decision=decision,
                       candidate=name, opened_with=self.first_step, mode=self.mode,
                       denials=self.denials)
