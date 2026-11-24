@@ -29,5 +29,9 @@
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-ireland-naming-customs",
+    "wiki-read-united-states-naming-customs"
+  ]
 }
