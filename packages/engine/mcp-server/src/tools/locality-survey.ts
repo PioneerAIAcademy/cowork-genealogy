@@ -906,7 +906,7 @@ export const localitySurveySchema = {
       },
       projectPath: {
         type: "string",
-        description: "The project folder. Stages the whole answer and stores the outside links. Omit with no project.",
+        description: "The project folder. Stages the whole answer and stores the outside links.",
       },
     },
     required: ["standardPlace"],

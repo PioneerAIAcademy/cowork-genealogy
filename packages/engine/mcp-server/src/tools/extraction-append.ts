@@ -46,7 +46,7 @@ import {
   type ExtractDocument,
   type ExtractResult,
 } from "../utils/record-extract.js";
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import {
   listStagedEnvelopes,
   checkStagedResults,
@@ -158,14 +158,10 @@ export async function runExtractionAppend(
       ],
     };
   }
-  // Both documents, before any read or write: a folder that is not a project is
-  // an answer (`reason: "no_project"`), and half a project stays loud, as on
-  // every other writer.
   try {
     await readProjectJson(input.projectPath, "research.json");
     await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
-    if (e instanceof NoProjectError) return { ...noProjectResult(), records: [] };
     return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
   }
   if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
@@ -273,8 +269,6 @@ export interface ExtractionBatchResult {
   ok: boolean;
   records: RecordOutcome[];
   errors?: string[];
-  /** The one `ok: false` that is an answer: `projectPath` is not a project. */
-  reason?: "no_project";
   /** Plan items this call completed, present only when it touched one. */
   planItems?: PlanItemsOutcome;
   /** `personId` mode only: the counts, and one code-written line for the call. */

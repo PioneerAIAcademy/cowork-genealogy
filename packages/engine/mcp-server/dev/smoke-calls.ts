@@ -14,6 +14,7 @@
  * a connector-only tool is advertised to the connector and to nobody else.
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { PROJECT_EXEMPT_TOOLS } from "../src/utils/project-gate.js";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, posix } from "node:path";
@@ -320,11 +321,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   {
     tool: "project_create",
-    label: "project_create (no personId)",
+    label: "project_create (blank personId)",
     offline: true,
-    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a create with no person refused?" }),
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a blank personId refused?", personId: " " }),
     expect: (res) => ({
-      ok: res.body?.ok === false && carries(res, "personId is required"),
+      ok: res.body?.ok === false && carries(res, "personId is blank"),
       detail: brief(res, 300),
     }),
   },
@@ -744,7 +745,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "build_external_search_url",
     offline: true,
-    args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
+    args: () => ({ site: "findagrave", baseUrl: "https://www.findagrave.com/memorial/search", attributes: { surname: "Smoke" } }),
     expect: okTrue,
   },
   {
@@ -961,6 +962,13 @@ export interface RunPlanResult {
   failures: string[];
 }
 
+/** Every tool but six requires a project, so a row that names none gets the smoke's own,
+ *  which the driver seeds in the rows that open the plan. */
+function withProject(tool: string, args: Record<string, unknown>, ctx: SmokeCtx): Record<string, unknown> {
+  if (PROJECT_EXEMPT_TOOLS.has(tool) || "projectPath" in args) return args;
+  return { ...args, projectPath: ctx.projectPath };
+}
+
 /** Execute the plan in order, one report line per call; returns the failing labels. */
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
   const steps = CALL_PLAN.filter((s) => (!opts.offlineOnly || s.offline) && (ctx.connector || !s.connectorOnly));
@@ -980,7 +988,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     let verdict: Expectation;
     try {
       if (step.before) await step.before(ctx);
-      const res = await call(step.tool, step.args(ctx));
+      const res = await call(step.tool, withProject(step.tool, step.args(ctx), ctx));
       verdict = step.expect(res, ctx);
       step.after?.(res, ctx);
     } catch (error) {

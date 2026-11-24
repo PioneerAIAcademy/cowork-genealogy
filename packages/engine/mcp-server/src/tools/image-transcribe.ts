@@ -29,13 +29,7 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  noProjectResult,
-  type NoProjectResult,
-} from "../utils/project-io.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import { attachIndexReadings } from "../utils/index-readings.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
@@ -196,7 +190,7 @@ export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
   opts: TranscribeOptions = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
   // Folding is idempotent, so the body's own fold is still correct for a
@@ -218,7 +212,7 @@ async function imageTranscribeToolInner(
    * fetch aborts it for real rather than abandoning the promise.
    */
   opts: TranscribeOptions = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
   // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
@@ -249,13 +243,13 @@ async function imageTranscribeToolInner(
     // No FamilySearch token — the bytes are the researcher's own upload, not an
     // FS-hosted scan — and no transport cap: the file goes host→OpenRouter only.
     // The project is classified FIRST so a folder that is not a project gets the
-    // no-project ANSWER (#1695) rather than a key error or a path error.
+    // refusal rather than a key error or a path error.
     const cls = await classifyProjectPath(input.projectPath);
     if (cls === "missing_arg") {
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);
     }
     if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-    if (cls === "no_project") return noProjectResult("read");
+    if (cls === "no_project") throw new Error(NO_PROJECT_REFUSAL);
     const projectPath = input.projectPath as string;
 
     const problem = fileRefProblem(input.file);
@@ -556,11 +550,9 @@ async function imageTranscribeToolInner(
  * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
  * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
  *
- * With no project — no `projectPath`, or a folder holding neither project file —
- * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
- * is saved or staged anywhere and the text comes back inline (issue #4136, lead
- * ruling 2026-11-02). The read counts under the in-memory no-project image cap
- * (spec §5.8). A `file` keeps its project-relative path, so it still needs one.
+ * Every read has a project (lead, 2026-11-19): `server.ts`'s gate refuses a call with
+ * none before this runs, so there is no unsaved read and no cap for one. A `file`
+ * is project-relative.
  *
  * person_read calls `imageTranscribeTool` directly and keeps the text; the
  * strip lives here so it cannot reach that leg.
@@ -568,36 +560,20 @@ async function imageTranscribeToolInner(
 export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) {
-    return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
-  }
-  const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
-  if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-  if (cls === "missing_arg" || cls === "no_project") {
-    const { projectPath: _dropped, ...unsaved } = input;
-    return compactOrPass(await imageTranscribeTool(unsaved, principal));
-  }
-  return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
+): Promise<ImageTranscribeToolResponse> {
+  return withIndexReadings(input, compactImageTranscribeAnswer(await imageTranscribeTool(input, principal)));
 }
 
-/** The project leg's index beside the reading (issue #4578). A refusal passes. */
+/** The project leg's index beside the reading (issue #4578). */
 async function withIndexReadings(
   input: ImageTranscribeInput,
-  out: ImageTranscribeToolResponse | NoProjectResult,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if ("ok" in out || typeof input.projectPath !== "string") return out;
+  out: ImageTranscribeToolResponse,
+): Promise<ImageTranscribeToolResponse> {
+  if (typeof input.projectPath !== "string") return out;
   if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
   // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
   const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
   return attachIndexReadings(input.projectPath, out, ark);
-}
-
-function compactOrPass(
-  out: ImageTranscribeResult | NoProjectResult,
-): ImageTranscribeToolResponse | NoProjectResult {
-  if ("ok" in out) return out;
-  return compactImageTranscribeAnswer(out);
 }
 
 export const imageTranscribeToolSchema = {
@@ -611,10 +587,7 @@ export const imageTranscribeToolSchema = {
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
     "comes back inline only when staging failed (`stagingError`). In a project " +
     "it also returns `readingNote`, and `indexReadings`, the held records' " +
-    "indexed names for that page: follow the note. With no " +
-    "project (no projectPath, or a folder holding no research.json) the text " +
-    "comes back inline as `transcription` and nothing is saved; those reads " +
-    "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
+    "indexed names for that page: follow the note. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +

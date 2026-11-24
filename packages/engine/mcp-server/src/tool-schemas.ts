@@ -69,6 +69,7 @@ import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.
 import { treeQuerySchema } from "./tools/tree-query.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
 import { getNameVariantsSchema } from "./tools/name-variants.js";
+import { PROJECT_EXEMPT_TOOLS } from "./utils/project-gate.js";
 
 // Tools exempt from ToolSearch deferral: their schemas load up front instead of
 // costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
@@ -232,7 +233,6 @@ export const AGENT_ONLY: ReadonlySet<string> = new Set([
   "place_population",
   "place_search",
   "place_search_all",
-  "project_create",
   "record_search",
   "same_person",
   "source_screen",
@@ -261,3 +261,20 @@ for (const name of AGENT_ONLY) {
 
 mark(ALWAYS_LOAD, "ALWAYS_LOAD", { _meta: { "anthropic/alwaysLoad": true } });
 mark(READ_ONLY, "READ_ONLY", { annotations: { readOnlyHint: true } });
+
+// Every tool outside PROJECT_EXEMPT_TOOLS requires `projectPath` (utils/project-gate.ts;
+// server.ts refuses a call without one). Set in place here so no tool file has to
+// remember it and a new tool cannot be advertised without it; a tool that already
+// describes the parameter keeps its own description. Declared last so the marks above
+// are untouched.
+// Short on purpose: the description is billed on every tool in every session, and the
+// refusal itself says how to start a project.
+const PROJECT_PATH_DESCRIPTION = "Absolute path of the project directory. Required.";
+for (const schema of allToolSchemas as Array<{ name: string; inputSchema: any }>) {
+  if (PROJECT_EXEMPT_TOOLS.has(schema.name)) continue;
+  const input = schema.inputSchema;
+  input.properties ??= {};
+  input.properties.projectPath ??= { type: "string", description: PROJECT_PATH_DESCRIPTION };
+  const required: string[] = (input.required ??= []);
+  if (!required.includes("projectPath")) required.push("projectPath");
+}

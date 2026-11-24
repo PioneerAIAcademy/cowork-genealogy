@@ -1,14 +1,13 @@
 {
   "tool": "source_screen",
-  "description": "source_screen with a projectPath that holds no project (empty-folder-no-project): the real tool answers reason no_project. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario; no matcher call was made.",
+  "description": "Real source_screen answer for KD96-TV2 in the person-less-project scenario, whose tree holds no person: the person is not in tree.gedcomx.json. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario, 2026-11-24 (#4686); no matcher call was made.",
   "args": {
     "personId": "KD96-TV2"
   },
   "response": {
     "ok": false,
-    "reason": "no_project",
     "errors": [
-      "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
+      "Person 'KD96-TV2' not found in tree.gedcomx.json."
     ]
   }
 }

@@ -5,11 +5,17 @@
     "name": "Plain reformatting request must not perform a calendar conversion",
     "type": "negative",
     "description": "User asks to reformat a date string — change '15-Feb-1821' to 'February 15, 1821'. This is cosmetic text formatting, not a calendar-system conversion. The router reliably loads convert-dates on the date-shaped input; the invariant under test is that convert-dates recognizes no conversion is needed and does NOT perform a Julian/Gregorian shift — it just reformats.",
-    "tags": ["near-miss", "convert-dates-vs-formatting", "boundary", "no-spurious-conversion", "direct-arm"]
+    "tags": [
+      "near-miss",
+      "convert-dates-vs-formatting",
+      "boundary",
+      "no-spurious-conversion",
+      "direct-arm"
+    ]
   },
   "input": {
     "delegation": "Can you reformat '15-Feb-1821' to 'February 15, 1821' please?\n\nprojectPath: <workspace>",
-    "scenario": null
+    "scenario": "person-less-project"
   },
   "negative": {
     "correct_skill": [],

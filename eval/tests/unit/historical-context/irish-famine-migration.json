@@ -12,11 +12,13 @@
       "pennsylvania",
       "famine",
       "research-relevant",
-      "topical-fixture-required", "direct-arm"]
+      "topical-fixture-required",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
-    "scenario": null
+    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",

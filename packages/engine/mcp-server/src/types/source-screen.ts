@@ -1,6 +1,5 @@
 // Types for the source_screen tool. Spec: docs/specs/source-screen-tool-spec.md.
 
-import type { NoProjectResult } from "../utils/project-io.js";
 
 export interface SourceScreenInput {
   projectPath: string;
@@ -78,4 +77,4 @@ export interface SourceScreenFailure {
   errors: string[];
 }
 
-export type SourceScreenResponse = SourceScreenResult | SourceScreenFailure | NoProjectResult;
+export type SourceScreenResponse = SourceScreenResult | SourceScreenFailure;

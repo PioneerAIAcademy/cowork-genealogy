@@ -208,11 +208,8 @@ from you. 1 kind of storage artifact, omitted above.)
 
 ### 6. Log the report
 
-If the delegation gave no `projectPath`, or `project_context` returned `reason: "no_project"`, skip this step.
-
 One `research_log_append` call with `projectPath` (the delegation's) and one op: `tool: "source_evaluation"`, `query: {personId, request}` (the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (audit-list sources examined), `notes` set to the **full** report exactly as you return it, never a summary. **You must actually call it — do not just describe it in your response.**
 
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
 
 A hand-back, a `no person named` return, or a list of candidates logs nothing.
