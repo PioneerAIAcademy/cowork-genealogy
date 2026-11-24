@@ -426,12 +426,12 @@ message.
      external errand does not hold the step open.
    - **Dispatching a `search-records` or `search-images` plan item that targets
      a survey of every occurrence/mention of a surname, and relaying its
-     hand-back:** in the line that announces the dispatch, never call it,
-     or the plan item's own rationale, complete, or "every occurrence" —
-     even when the plan item's own `rationale` field uses that phrasing;
-     paraphrase it as a target to search for, not a result already achieved.
-     In the hand-back relay itself: never call it complete, or "every
-     occurrence." Keep the hand-back's own coverage caveats in the step's
+     hand-back:** in the line that announces the dispatch and in the relay,
+     write no "every", "all" or "complete" about the surname's occurrences,
+     mentions or records, in any wording ("every indexed occurrence",
+     "every Smith mention") — even when the plan item's own `rationale`
+     uses it. Announce the dispatch as "Searching for <surname> in <the
+     record set>." Keep the hand-back's own coverage caveats in the step's
      report. Make no negative finding about a locality the hand-back's own
      `place` field can't separate. Offer to read named pages for the
      mentions the index lacks, up to 20 per film/image group, never "per
