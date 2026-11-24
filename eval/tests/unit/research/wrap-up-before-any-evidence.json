@@ -22,23 +22,23 @@
     "stub_skills": [
       {
         "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+        "response": "Wrap-up disposal on pl_001: pli_001 was skipped with skip_category user_declined, before any search ran on it. No open item remains on the plan."
       },
       {
         "skill": "person-evidence",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+        "response": "q_001 has no extracted assertions, so there is nothing to link."
       },
       {
         "skill": "conflict-resolution",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+        "response": "No conflict bears on q_001, so there is nothing to weigh."
       },
       {
         "skill": "research-exhaustiveness",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+        "response": "Search stop recorded on q_001 for the researcher's wrap-up: pli_001 was declined before it ran, so no source was searched."
       },
       {
         "skill": "proof-conclusion",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+        "response": "ps_001 written for q_001 at tier not_proved: no record was searched, so Patrick Flynn's parents are not identified. The search not run: pli_001, declined at wrap-up."
       }
     ]
   },
@@ -49,6 +49,9 @@
     "The dispose delegation's `pli_` ids and the `wrapUp: yes` on research-exhaustiveness and proof-conclusion are asserted deterministically from the spawn prompts (test_spawn_carries_its_step_mode_fields). You cannot see them; do not grade them.",
     "That same validator also asserts that the hand-offs happened: it fails unless research-plan, research-exhaustiveness and proof-conclusion were each spawned. An agent spawn is not an MCP tool call, so the hand-offs never appear in the MCP tool calls you see, and their absence there is NOT evidence that the router skipped them or claimed work it did not do. Do not score Correctness or Completeness on whether the hand-offs ran; grade only the router's reply.",
     "The turn ends with NO \"Continue with …?\" line: nothing is waiting. Do not charge the reply for saying what was concluded.",
-    "Every callee is STUBBED and reports it changed no project state, so describing the wrap-up as done is expected and is not a fabricated claim about the files."
+    "Every callee is STUBBED with the return its real agent would give on this project; nothing is written to the files. Describing the wrap-up from those returns is expected and is not a fabricated claim about the files."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }
