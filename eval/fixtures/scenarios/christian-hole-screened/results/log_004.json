@@ -1,0 +1,85 @@
+{
+  "log_id": "log_004",
+  "tool": "record_read",
+  "retrieved": "2026-11-20T20:23:32.987Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:HOLE-004"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:HOLE-004",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Christian P.",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "1 May 1898",
+                  "place": "Polk, Minnesota, United States"
+                }
+              ],
+              "ark": "ark:/61903/1:1:HOLE-004",
+              "sources": [
+                {
+                  "id": "S1",
+                  "title": "Minnesota, County Marriages, 1860-1949"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Inger",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F2",
+                  "type": "Marriage",
+                  "date": "1 May 1898",
+                  "place": "Polk, Minnesota, United States"
+                }
+              ]
+            }
+          ],
+          "places": [],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            }
+          ],
+          "sources": [
+            {
+              "id": "S1",
+              "title": "Minnesota, County Marriages, 1860-1949",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-004"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

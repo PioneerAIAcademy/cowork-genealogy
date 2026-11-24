@@ -89,7 +89,7 @@ import {
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
-const EMPTY_SECTIONS = [
+export const EMPTY_SECTIONS = [
   "questions",
   "plans",
   "log",

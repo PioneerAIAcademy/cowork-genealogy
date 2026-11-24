@@ -47,7 +47,8 @@
     "record-read-tallman-xfxs-886",
     "record-read-tallman-xfxs-8d3",
     "record-read-tallman-xfxs-8y5",
-    "person-quality-tallman-detail"
+    "person-quality-tallman-detail",
+    "source-screen-tallman-no-project"
   ],
   "judge_context": [
     "A source's age gives a birth window: record year minus age, minus one, to record year minus age. The 1850 census (age 11), the 1865 census (age 26) and the 1910 census (age 71) each give 1838-1839, which contains the profile's 30 November 1838. Showing that window in the table is correct. Marking it [CONFLICT], listing it as a finding or counting it against the profile is the defect this test exists for.",

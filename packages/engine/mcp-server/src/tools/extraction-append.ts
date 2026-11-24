@@ -64,7 +64,7 @@ import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { recordImageReadCap } from "../utils/image-store.js";
 import { waitingPages, pageKey } from "../utils/waiting-pages.js";
 import { extractImageArk } from "./record-read.js";
-import { arkToBareId } from "../utils/ark.js";
+import { RECORD_TOKEN, arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -599,7 +599,6 @@ interface RecordIdsOptions {
  *  composed whole in code (ADR-0006, amended 2026-10-20). */
 export const ATTACHMENT_LINK_SECTIONS: ReadonlySet<string> = new Set(["person_evidence"]);
 
-const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
 
 /**
  * `personId`: the baseline step (lead, 2026-10-19 and 2026-10-20). Extract
