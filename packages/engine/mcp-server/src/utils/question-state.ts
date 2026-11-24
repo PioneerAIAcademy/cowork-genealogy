@@ -966,8 +966,7 @@ export function questionStatus(
     // arms above found nothing open, so the blocker has settled and the next
     // step is to conclude again. Reporting null here would tell the router
     // nothing is left to do.
-    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
-    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
+    nextStep = "proof-conclusion — concluded while blocked: re-conclude this question's proof summary";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.
