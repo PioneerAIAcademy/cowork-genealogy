@@ -2385,15 +2385,27 @@ _ACHIEVED_RE = re.compile(
 )
 
 
+_SURVEY_CLAIM_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[3:]
+
+
 def _completeness_claims(body: str) -> list[str]:
     hits = []
     for i, pattern in enumerate(_FORBIDDEN_COMPLETENESS_PATTERNS):
         for m in pattern.finditer(body):
             if i < len(_SEARCH_TARGET_PATTERNS) and _is_search_target(body, m):
                 continue
+            if pattern in _SURVEY_CLAIM_PATTERNS and _is_open_question(body, m):
+                continue
             hits.append(pattern.pattern)
             break
     return hits
+
+
+def _is_open_question(body: str, m: re.Match) -> bool:
+    """"check whether this survey is exhaustive" asks; it does not claim. A
+    whether/if earlier in the clause, with no comma between, makes it a question."""
+    start = max((b.end() for b in _SENTENCE_BOUNDARY_RE.finditer(body, 0, m.start())), default=0)
+    return re.search(r"\b(?:whether|if)\b[^,]*$", body[start:m.start()], re.IGNORECASE) is not None
 
 
 def _is_search_target(body: str, m: re.Match) -> bool:
