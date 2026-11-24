@@ -57,7 +57,7 @@ export function primaryFacts(tree: any): PrimaryFact[] {
   return treeFacts(tree).filter((x) => x.fact?.primary === true);
 }
 
-const holderKey = (h: PrimaryHolder) => ("personId" in h ? `p:${h.personId}` : `r:${h.relationshipId}`);
+export const holderKey = (h: PrimaryHolder) => ("personId" in h ? `p:${h.personId}` : `r:${h.relationshipId}`);
 
 /** The same holder's fact with the same id in another tree, if any. */
 export function factIn(tree: any, holder: PrimaryHolder, factId: unknown): any | undefined {

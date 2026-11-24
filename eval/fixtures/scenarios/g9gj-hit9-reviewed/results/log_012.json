@@ -1,0 +1,289 @@
+{
+  "log_id": "log_012",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:21:24.257Z",
+  "returned_count": 3,
+  "payload": {
+    "query": {
+      "anyPlace": "White, Indiana, United States",
+      "collectionId": "2221801",
+      "count": 20,
+      "projectPath": "<workspace>",
+      "surname": "Hyde"
+    },
+    "totalMatches": 3,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:Q2DV-R2K4",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Wolcott, White, Indiana, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Hyde Wilson",
+        "score": 3.1418,
+        "confidence": 4,
+        "birthDate": "12 December 1834",
+        "deathDate": "8 February 1910",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Christina Hyde Wilson, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:QLWX-BCSJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102366873577",
+              "ark": "ark:/61903/1:1:Q2DV-R2K4",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina",
+                  "surname": "Hyde Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Wolcott, White, Indiana, United States of America",
+                  "standard_place": "Wolcott, Princeton Township, White, Indiana, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "08 Feb 1910",
+                  "standard_date": "8 Feb 1910"
+                },
+                {
+                  "type": "Birth",
+                  "date": "12 Dec 1834",
+                  "standard_date": "12 Dec 1834"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102946904177",
+              "title": "Entry for Christina Hyde Wilson, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DV-R2K4 : Sun Oct 04 16:11:31 UTC 2026), Entry for Christina Hyde Wilson.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWX-BCSJ"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=171683066"
+            },
+            {
+              "id": "src_p_p_102366873577",
+              "url": "#p_102366873577"
+            }
+          ],
+          "places": [
+            {
+              "id": "4116789",
+              "name": "Wolcott, Princeton Township, White, Indiana, United States",
+              "latitude": 40.7581,
+              "longitude": -87.0417
+            }
+          ]
+        },
+        "primaryId": "p_102366873577"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVKK-PBSL",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Idaville, White, Indiana, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Lucinda Kistler Bernethy Hite",
+        "score": 2.42108,
+        "confidence": 3,
+        "birthDate": "13 October 1829",
+        "deathDate": "14 September 1904",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Mary Lucinda Kistler Bernethy Hite, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q29R-P6GL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101079736281",
+              "ark": "ark:/61903/1:1:QVKK-PBSL",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Lucinda",
+                  "surname": "Kistler Bernethy Hite"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Idaville, White, Indiana, United States of America",
+                  "standard_place": "Idaville, Lincoln Township, White, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "13 Oct 1829",
+                  "standard_date": "13 Oct 1829"
+                },
+                {
+                  "type": "Death",
+                  "date": "14 Sep 1904",
+                  "standard_date": "14 Sep 1904"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102105183381",
+              "title": "Entry for Mary Lucinda Kistler Bernethy Hite, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKK-PBSL : Thu Oct 01 21:41:26 UTC 2026), Entry for Mary Lucinda Kistler Bernethy Hite.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q29R-P6GL"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=48876533"
+            },
+            {
+              "id": "src_p_p_101079736281",
+              "url": "#p_101079736281"
+            }
+          ],
+          "places": [
+            {
+              "id": "4043434",
+              "name": "Idaville, Lincoln Township, White, Indiana, United States",
+              "latitude": 40.7569,
+              "longitude": -86.6494
+            }
+          ]
+        },
+        "primaryId": "p_101079736281"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVK8-R7C1",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1904",
+            "place": "Monticello, White, Indiana, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary J Hiatt",
+        "score": 2.42108,
+        "confidence": 3,
+        "birthDate": "1826",
+        "deathDate": "27 March 1904",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Mary J Hiatt, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q29J-5211",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101073289799",
+              "ark": "ark:/61903/1:1:QVK8-R7C1",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary J",
+                  "surname": "Hiatt"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "27 March 1904",
+                  "standard_date": "27 Mar 1904"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "1904",
+                  "standard_date": "1904",
+                  "place": "Monticello, White, Indiana, United States of America",
+                  "standard_place": "Monticello, Union Township, White, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102098736899",
+              "title": "Entry for Mary J Hiatt, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK8-R7C1 : Sat Oct 03 15:23:06 UTC 2026), Entry for Mary J Hiatt, 1904.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q29J-5211"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=40028020"
+            },
+            {
+              "id": "src_p_p_101073289799",
+              "url": "#p_101073289799"
+            }
+          ],
+          "places": [
+            {
+              "id": "4114301",
+              "name": "Monticello, Union Township, White, Indiana, United States",
+              "latitude": 40.7453,
+              "longitude": -86.7647
+            }
+          ]
+        },
+        "primaryId": "p_101073289799"
+      }
+    ]
+  }
+}

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from e2e.agent_spend_report import collect, format_report
+from e2e.agent_spend_report import collect, format_report, price_helper
 
 
 def _usage(output_tokens=1000, cache_read=50_000):
@@ -229,3 +229,42 @@ def test_a_spawn_with_no_model_keeps_the_flat_figure(tmp_path):
 
     paths = [_run(tmp_path, "fx", [{"agent_type": "old", "usage": _usage()}])]
     assert collect(paths)[0]["old"]["costs"] == [pricing.estimate_cost_usd(_usage())]
+
+
+_HAIKU = "claude-haiku-5-5"
+_LONG = {"input_tokens": 1_000, "output_tokens": 500,
+         "cache_read_input_tokens": 120_000, "cache_creation_input_tokens": 0}
+
+
+def test_a_haiku_5_5_spawn_adds_the_long_prompt_premium_of_its_long_calls():
+    """Its calls over 100,000 prompt tokens bill at 5x: their tokens' flat price is
+    added four more times to the spawn's flat price."""
+    from e2e import pricing
+
+    usage = _usage(cache_read=300_000)
+    cost, how = price_helper({"agent_type": "h", "usage": usage, "models": [_HAIKU],
+                              "peak_window_tokens": 121_000, "long_prompt_usage": _LONG})
+    flat = pricing.estimate_cost_for_model(usage, _HAIKU)
+    assert how == _HAIKU
+    assert cost == pytest.approx(flat + 4 * pricing.estimate_cost_for_model(_LONG, _HAIKU))
+    zeros = dict.fromkeys(_LONG, 0)
+    assert price_helper({"usage": usage, "models": [_HAIKU], "long_prompt_usage": zeros}) == \
+        (pytest.approx(flat), _HAIKU)
+
+
+def test_a_spawn_captured_before_long_prompt_usage_is_priced_only_under_the_line():
+    """No `long_prompt_usage`: a peak at or under 100,000 proves the flat price exact;
+    a peak over it, or none, leaves the spawn unpriced rather than under-priced."""
+    from e2e import pricing
+
+    usage = _usage()
+    flat = pricing.estimate_cost_for_model(usage, _HAIKU)
+    assert price_helper({"usage": usage, "models": [_HAIKU], "peak_window_tokens": 100_000}) == \
+        (pytest.approx(flat), _HAIKU)
+    reason = "a call over 100,000 prompt tokens, captured before long_prompt_usage"
+    assert price_helper({"usage": usage, "models": [_HAIKU], "peak_window_tokens": 100_001}) == \
+        (None, reason)
+    assert price_helper({"usage": usage, "models": [_HAIKU]}) == (None, reason)
+    sonnet = price_helper({"usage": usage, "models": ["claude-sonnet-5"], "peak_window_tokens": 150_000})
+    assert sonnet == (pytest.approx(pricing.estimate_cost_for_model(usage, "claude-sonnet-5")),
+                      "claude-sonnet-5")
