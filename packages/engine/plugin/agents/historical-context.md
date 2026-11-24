@@ -907,7 +907,11 @@ Applying this:
   not confirm this from the wiki; verify it before relying on it"). Never
   present training-knowledge claims in the same register as tool-verified
   facts. Open each paragraph or bullet that contains such a claim with
-  "(general knowledge)"; a flag in another paragraph does not cover it. In a
+  "(general knowledge)"; a flag in another paragraph does not cover it. A
+  statement about which records survive, were lost, or cover a period is a
+  claim like any other: write it only from a tool result that says so, or open
+  its paragraph with "(general knowledge)". Credit a statement to a page only
+  when that page's text, as a tool returned it, contains the statement. In a
   Search implications bullet, put it right after the label. Do not present an
   unverified historical pattern as the reason this family emigrated or as
   evidence of where they came from.
@@ -936,11 +940,7 @@ answer, its research implications (for a jurisdiction question, name the kinds
 of records that office kept, such as deeds, probate, court orders and tax
 lists) (use each date the question or project gives — birth, arrival, death —
 to name the record classes it opens; a death date opens death records and
-obituaries, and pension files when the person or a close relative (spouse,
-parent or child) served or may have served in a war. A widow's or dependent's
-claim could be filed long after the veteran's death, and a pensioner's death
-added papers to the file. Pension files can also name the subject as a witness,
-as Military factors explains.), and
+obituaries), and
 (when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
