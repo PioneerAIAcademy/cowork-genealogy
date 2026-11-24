@@ -24,6 +24,7 @@ import { collectionAvailability, type CollectionAvailability } from "../utils/co
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { treePidOfArk } from "../utils/ark.js";
 import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import { lookupNameFamily } from "../utils/name-variants.js";
 import { isMachinePageReading, logEntriesById } from "../utils/page-disputes.js";
@@ -75,6 +76,8 @@ export interface ProjectContextQuestion {
 export interface ProjectContextPerson {
   id: string;
   name?: string;
+  /** The FamilySearch ID from a tree-person (4:1:) `ark`; absent otherwise. */
+  pid?: string;
   gender?: string;
   spouseIds?: string[];
   parentIds?: string[];
@@ -468,6 +471,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       omitEmpty({
         id: p.id,
         name: preferredDisplayName(p),
+        pid: treePidOfArk(p.ark) ?? null,
         gender: typeof p.gender === "string" ? p.gender : null,
         spouseIds: f ? [...f.spouseIds] : [],
         parentIds: f ? [...f.parentIds] : [],
@@ -767,9 +771,10 @@ export const projectContextSchema = {
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear, " +
+    "[{id, name, pid, gender, spouseIds, parentIds, childIds, diedByYear, " +
     "unsupportedGivenName}] — every " +
-    "tree person with its one-hop family from " +
+    "tree person, its FamilySearch ID (pid, from a tree-person ark only; copy it, never " +
+    "read one out of an ark yourself), and its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
     "by from its dated Death or Burial facts; unsupportedGivenName {given, searchAs} " +
     "marks a given name none of the person's linked records gives: brief it as a " +

@@ -316,6 +316,32 @@ describe("project_context", () => {
     });
   });
 
+  it("gives a person its FamilySearch ID from a 4:1: ark, and none from a record ark or no ark (#4669)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          { id: "I1", gender: "Female", ark: "ark:/61903/4:1:K835-34K" },
+          { id: "I2", gender: "Female", ark: "https://familysearch.org/ark:/61903/4:1:GJ8G-B7K" },
+          // a record persona id is not a tree person: showing it as a PID points at the wrong person
+          { id: "I3", gender: "Male", ark: "ark:/61903/1:1:AAAA-111" },
+          { id: "I4", gender: "Male" },
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.persons).toEqual([
+      { id: "I1", pid: "K835-34K", gender: "Female" },
+      { id: "I2", pid: "GJ8G-B7K", gender: "Female" },
+      { id: "I3", gender: "Male" },
+      { id: "I4", gender: "Male" },
+    ]);
+  });
+
   it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
     const objective =
       "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +
