@@ -63,5 +63,8 @@
       }
     ],
     "sdk_message_silence_seconds": 360
-  }
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

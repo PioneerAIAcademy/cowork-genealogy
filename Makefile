@@ -444,6 +444,9 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
 	# The read case (issue #3836) provokes a built-in Read of research.json and requires
 	# READ_REASON's text. First run 2026-11-05 (Claude Code 2.1.308, SDK 0.2.172, macOS): BOUND.
+	# The relay case spawns a plugin agent on a hosted plane and requires agent_relay_note.py's
+	# PostToolUse note in the session transcript. First run 2026-11-24 (SDK 0.2.172, macOS): BOUND
+	# on all five cases. A VOID arm (the Haiku main thread made no call) runs again, three times at most.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so the Cowork gap (docs/architecture.md

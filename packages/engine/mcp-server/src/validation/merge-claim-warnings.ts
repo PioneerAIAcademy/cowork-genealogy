@@ -5,8 +5,8 @@
 // Fires only where a summary carries claims.
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
-import { claimRuleFindings, namedPersons, type ClaimRuleId } from "./claim-rules.js";
-import { disprovedClaimCovering, disprovedClaimsCovering } from "../utils/claim-join.js";
+import { claimRuleFindings, Evidence, identityCoversMerge, namedPersons, type ClaimRuleId } from "./claim-rules.js";
+import { disprovedClaimCovering, disprovedClaimsCovering, sameSubtype } from "../utils/claim-join.js";
 import { getPersonName } from "../tools/person-warnings.js";
 
 export interface SyntheticWarning {
@@ -149,4 +149,33 @@ function sameEnds(before: any, after: any, merges: ReadonlyArray<readonly [strin
   const a = [m(before.person1), m(before.person2)].sort().join("+");
   const b = [after.person1, after.person2].sort().join("+");
   return a === b;
+}
+
+/** Decision 13: each merge pair no identity claim covers. A merge needs an
+ *  identity decision, or the user's instruction quoted as its justification. Read
+ *  on the pre-merge research; fires with no claims at all. */
+export function mergeIdentityWarnings(before: Side, merges: ReadonlyArray<readonly [string, string]>): SyntheticWarning[] {
+  const summaries = arr(before.research?.proof_summaries);
+  const claims = summaries.flatMap((s) => arr(s?.claims));
+  const nameOf = (id: string) => {
+    const p = (before.tree.persons ?? []).find((x) => x.id === id);
+    return p ? getPersonName(p) : "";
+  };
+  const out: SyntheticWarning[] = [];
+  const ev = new Evidence(before.research, summaries);
+  for (const [survivor, collapsed] of merges) {
+    if (claims.some((c) => identityCoversMerge(c, before.research, summaries, survivor, collapsed, ev))) continue;
+    out.push({
+      warningId: `mergeIdentity|${survivor}|${collapsed}`,
+      issueType: "mergeIdentity",
+      severity: "implausible",
+      personId: survivor,
+      personName: nameOf(survivor),
+      message:
+        `Merging ${collapsed} into ${survivor} needs an identity decision: no identity claim at probable or better ` +
+        "records that they are one person. Quote the user's instruction to merge as the justification, or have " +
+        "proof-conclusion record the identity first.",
+    });
+  }
+  return out;
 }

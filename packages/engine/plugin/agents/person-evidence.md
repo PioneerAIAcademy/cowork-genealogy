@@ -252,6 +252,9 @@ In this mode:
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- A person the record names besides the one being reviewed (a parent,
+  spouse, child) is only linked when that person has their own `pe_`
+  entry. Note explicitly when a named party has none.
 - When the entry under review has a null `match_score`, call
   `same_person({ projectPath, assertionId, treePersonId })` for it before
   judging the tier, as Step 2 requires when linking. It changes neither
@@ -297,16 +300,17 @@ the user changed assertions/links since you last saw them — use
 **`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
-  of every record you are about to link, in one call; group the items by
-  `record_id` + `record_role`.
+  of every record you are about to link, in one call; each item is one
+  persona; two items with the same `record_id` + `record_role` are one
+  persona split across pages.
 - `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
   of those `a_` are already linked; `countById[id]` of 0 means unlinked.
 - `research_query({ section: "person_evidence", personId: [ … ] })` — the
   existing links for every candidate person, when checking for revisions.
 
 A list takes at most 50 ids, and only one filter per call may be a list. While
-`truncated` is true, call again with `offset: nextOffset` until you hold
-`count` items.
+`truncated` is true, call again with `offset: nextOffset` until `truncated` is
+false. On `assertions`, `count` counts assertions, not items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 

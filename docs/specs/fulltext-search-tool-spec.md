@@ -272,6 +272,12 @@ interface FulltextSearchResponse {
    *  `volume_search` via `src/utils/fulltext-searchable.ts`, not re-fetched and
    *  not imported tool-to-tool. */
   notFulltextSearchable?: string;
+
+  // Search advice (see "Search advice" below). Each is serialized before
+  // `results` and withheld from the staged payload.
+  nameFieldRetry?: string;
+  tooManyResults?: string;
+  wordListRead?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   /** Present only when `projectPath` was supplied. `null` if staging failed.
@@ -281,6 +287,36 @@ interface FulltextSearchResponse {
   stagingError?: string;
 }
 ```
+
+## Search advice
+
+Three notes say how to search next. All are computed by one pure function,
+`fulltextAdvice(input, totalResults)` in `src/utils/fulltext-advice.ts`, from the
+call's own arguments and the upstream total. The eval mock runs the same compiled
+function (`eval/harness/harness/mock_mcp.py`), so the tool and the mock cannot
+disagree.
+
+| Field | Fires when | Says |
+|---|---|---|
+| `nameFieldRetry` | `keywords` sent, total is 0, and none of `name`, `nlQuery`, `place`, `collectionId`, `imageGroupNumber`, `yearFrom`, `yearTo`, `recordType`, `recordPlace0`-`recordPlace3` sent | The Name field searches a different index: if no earlier search found this person and the name has not been sent in `name`, send it once before reporting the person not found. |
+| `tooManyResults` | `keywords` sent, no `nlQuery`, total above 500, and `offset` absent or 0 | Do not add another `+required` term. Add probable words without `+`, or scope to one collection from an `includeFacets` response. Probable words do not lower the total. |
+| `wordListRead` | no `nlQuery`, `offset` absent or 0, and `keywords` or `name` carries a letter outside ASCII (an accented vowel, ñ, ß, a non-Latin script); any total | The records are probably not in English: if `{Language}_Genealogical_Word_List` has not been read with `wiki_read` in this task, read it before reporting, check the search terms against the abbreviations and spellings it lists, and say which were checked. |
+
+"Sent" means a non-blank string or a finite number, as `buildUrl` reads its
+arguments. `includeFacets`, `count` and `projectPath` gate no note. A nil held
+by a filter carries no `nameFieldRetry`: that search is repeated without the filter
+first.
+
+The function is stateless, so `nameFieldRetry` also fires on a variant spelling
+that found nothing after another spelling found the person. Its text carries the
+condition ("if no earlier search in this task found this person") for that case.
+
+`wordListRead` is keyed on the spelling the caller chose, because the upstream
+answer carries no language. A query for a non-English record spelled in plain
+ASCII gets no note, and the tool cannot see whether the page was already read,
+so the text carries that condition too.
+
+No note depends on `projectPath`. All are advisory and refuse nothing.
 
 ## Given-name variant queries
 
@@ -453,6 +489,7 @@ query shape.
 | `src/utils/fulltext-searchable.ts` | Create — the group searchability lookup, shared with `volume_search` |
 | `src/utils/results-staging.ts` | Modify — `NOT_FULLTEXT_SEARCHABLE_NOTE`, beside the tool's other model-facing notes |
 | `src/utils/staged-compaction.ts` | Modify — `compactStagedFulltextSearch`, the Answer compaction steps |
+| `src/utils/fulltext-advice.ts` | Create — `fulltextAdvice`, the three search-advice notes, shared with the eval mock |
 
 ## Testing
 

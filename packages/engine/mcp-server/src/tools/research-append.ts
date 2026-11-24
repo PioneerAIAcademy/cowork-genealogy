@@ -146,6 +146,8 @@ import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } fr
 import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
 import { fillRecordTypeRows } from "../utils/locality-record-types.js";
 import {
+  collectionScopeMatcher,
+  collectionScopeTerms,
   isCoreNationalCollection,
   localityNationalCountry,
   nationalCollectionScope,
@@ -302,7 +304,12 @@ const SECTIONS: Record<string, SectionConfig> = {
   project: {
     prefix: "",
     singleton: {
-      // `status` is freely updatable — proof-conclusion flips it to "completed".
+      // `status` is freely updatable — proof-conclusion flips it to "completed",
+      // and the ENGINE itself flips it back to "active" when a call leaves a
+      // question unresolved on a completed project (#4698,
+      // `reopenCompletedProject`). That engine write is not a caller write: it
+      // is why the ownership row still names only init-project and
+      // proof-conclusion as callers.
       // `objective` is rewritable so a researcher can correct it; the plugin
       // hook keeps that write on the main thread (MAIN_THREAD_FIELDS), because
       // the harm the ownership row names is "a skill rewrites the objective,
@@ -7109,6 +7116,111 @@ export function closesLastOpenQuestion(before: any, after: any): boolean {
   return open(before).length > 0 && open(after).length === 0;
 }
 
+/**
+ * Issue #4698. A call that leaves a question it WROTE at a status other than
+ * `resolved`, on a project that was `completed` before the call, sets the
+ * project back to `active` and stamps `updated`. Returns the warning naming the
+ * question, or null when nothing reopens. MUTATES `research.project`.
+ *
+ * A researcher's second question was being researched inside a completed
+ * project: proof-conclusion marked the project `completed` when q_001 was the
+ * only question, the researcher's 1925-census question was written afterwards
+ * as q_002, and nothing reopened the project.
+ *
+ * **Reopen only; never a refusal** (review-ready, 2026-11-19). A refusal of a
+ * completed write while a question is open would not have caught this incident
+ * — q_001 was the only question when `completed` was written — and it would
+ * fire on 12 of 181 completed e2e runs (measured 2026-11-19 by walking
+ * `eval/runlogs/e2e/**\/*.final-research.json` for a `completed` project with
+ * any question not `resolved`; the count moves as runs are committed), which
+ * ADR-0011 limit 2 says must all be read before such a gate ships.
+ *
+ * Three things the signature is load-bearing about:
+ *
+ * - **`applied`, not `ops`.** The question set is what this call actually wrote
+ *   (`!a.noop`), which is what "a question it wrote" means. It is also what
+ *   keeps the warning honest: `anyMutation` is computed ABOVE the call site and
+ *   gates the only `research.json` write, while `planItemWarnings` reaches the
+ *   result unconditionally — so an `ops`-derived set would report `project
+ *   reopened` on a call that wrote nothing to disk. The reachable case is a
+ *   single-field `search_stop` update on an already-declared question, which
+ *   takes the no-op branch in `applyOne`.
+ * - **The outcome, not the op.** An UPDATE that sets a question's status back
+ *   from `resolved` reopens too. Gating on `op.op === "append"` is the mistake
+ *   `oneSummaryPerQuestion` already carries a comment about.
+ * - **Only `completed`.** A `paused` project stays paused: the researcher
+ *   chose that.
+ * - **A caller write only wins when it CHANGES the status.** Re-asserting the
+ *   status the project already had asserts nothing, so it does not suppress
+ *   the reopen — otherwise a batch appending an open question beside
+ *   `{status: "completed"}` on an already-completed project reproduces the
+ *   incident this rule exists to fix.
+ */
+/** The ops in this call that write `project.status`, whatever the op kind and
+ *  whichever key carries it. Two callers ask different questions of the same
+ *  answer: `completingNow` asks whether one of them sets `"completed"`, and
+ *  `reopenCompletedProject` asks whether any of them exists at all. They were
+ *  separate hand-rolled walks with different shapes, which is how a value
+ *  recognised by one but not the other could suppress the reopen while leaving
+ *  the completion-conflict gate unarmed. */
+export function projectStatusOps(ops: readonly any[]): any[] {
+  return (Array.isArray(ops) ? ops : []).filter(
+    (o: any) =>
+      o?.section === "project" &&
+      Object.prototype.hasOwnProperty.call(o?.fields ?? {}, "status"),
+  );
+}
+
+export function reopenCompletedProject(
+  research: any,
+  beforeResearch: any,
+  applied: readonly { section: string; entryId: string; noop?: boolean }[],
+  ops: readonly any[],
+): string | null {
+  if (beforeResearch?.project?.status !== "completed") return null;
+
+  // The caller asserted the project's state in this same call: leave it alone —
+  // but only when the assertion CHANGES something. Keyed on presence alone, a
+  // call that re-asserts the status the project already had suppressed the
+  // reopen while asserting nothing new, and a batch appending an open question
+  // beside `{status: "completed"}` on an already-completed project reproduced
+  // the very incident this rule exists to fix. Reading the prior status from
+  // the pre-call snapshot keeps the caller's real assertions intact: a write of
+  // `active` or `paused` here still stands, because those do change the field.
+  //
+  // Any status VALUE, not just `completed` — but only through `fields`. The
+  // hook's rule reads `entry` too, because it inspects the call's raw input
+  // before dispatch; by the time this runs the ops are applied, and `applyOne`
+  // throws on any op but `update` for a singleton section, so no surviving
+  // `project` op can carry `entry`. An `entry` arm here would be dead code
+  // reading as a live guard.
+  const priorStatus = beforeResearch.project.status;
+  if (projectStatusOps(ops).some((o: any) => o.fields?.status !== priorStatus)) return null;
+
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  for (const a of applied) {
+    if (a.section !== "questions" || a.noop) continue;
+    const q = questions.find((x: any) => x?.id === a.entryId);
+    // Anything that is not exactly `resolved` reopens — tested that way round,
+    // not as `QUESTION_STILL_OPEN.has(...)`, so the open set and the malformed
+    // set fail the same safe direction. `has()` alone is false for `undefined`,
+    // `null` and any off-enum value, which a legacy or hand-edited document
+    // really does produce, and would leave such a question sitting in a
+    // completed project. A status added later still reopens by default.
+    if (!q || q.status === "resolved") continue;
+    research.project.status = "active";
+    // `today()`, not an ISO datetime: this writes outside `applyOne`, so it
+    // misses that stamp, and the project singleton is `kind: "date"`.
+    research.project.updated = today();
+    return (
+      `project reopened: status completed → active because question '${q.id}' is ` +
+      `${q.status}. Research continues in this project; proof-conclusion completes it again ` +
+      `when every question is resolved.`
+    );
+  }
+  return null;
+}
+
 /** The result line naming what the removal took, so the agent can tell the
  *  researcher. The eval validators read its opening words
  *  (`_UNANCHORED_REMOVAL_PREFIX` in eval/harness/validators/test_universal.py)
@@ -11502,25 +11614,33 @@ const COLLECTION_TITLE_TYPE_WORD =
  * places the titles sort as 16 naming the place, 165 naming no part of the scope,
  * and 150 naming another part.
  */
-function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+function titleNamesElsewhere(title: string, isScopePart: (part: string) => boolean, ownTerms: readonly RegExp[]): boolean {
   if (ownTerms.some((re) => re.test(title))) return false;
-  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
   const rest = title
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+    .filter((p) => p !== "" && !isScopePart(p) && !/^[\d\s–-]+$/.test(p));
   return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
 }
 
-/** One whole-word matcher per part of the entry's places below `scope`. */
-function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+/** Whether a comma-separated part of a title or place is the scope `name` derives:
+ *  for a United Kingdom place, a part that starts with one of its
+ *  `collectionScopeTerms` (`England and Wales`, `Great Britain`); elsewhere, one of
+ *  the scope's own parts. */
+function scopePartTest(name: string, scope: string): (part: string) => boolean {
+  if (collectionScopeTerms(name) !== null) return collectionScopeMatcher(name);
   const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  return (part) => scopeParts.has(part.toLowerCase());
+}
+
+/** One whole-word matcher per part of the entry's places below the scope. */
+function ownPlaceTerms(names: readonly unknown[], isScopePart: (part: string) => boolean): RegExp[] {
   const terms = new Set<string>();
   for (const name of names) {
     if (typeof name !== "string") continue;
     for (const raw of name.split(",")) {
       const part = raw.replace(/\([^()]*\)/g, " ").trim();
-      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      if (part.length < 3 || isScopePart(part) || part === "United States") continue;
       terms.add(part);
     }
   }
@@ -11559,9 +11679,11 @@ function fillLocalityCollections(
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
       if (needle === "" || nationalCollectionScope(scope) === scope) continue;
-      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
+      const titleInScope = collectionScopeMatcher(name);
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && titleInScope(c.title));
       if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
-      const own = ownPlaceTerms([...names, entry.for_place], scope);
+      const isScopePart = scopePartTest(name, scope);
+      const own = ownPlaceTerms([...names, entry.for_place], isScopePart);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
       const linkedIds = new Set(SURVEY_WIKI_COLLECTIONS.get(op) ?? []);
@@ -11572,12 +11694,12 @@ function fillLocalityCollections(
       // when its title sits under this scope and names another part of it (`New York, Yonkers, …`).
       const underScope = (title: string) => title.toLowerCase().startsWith(`${needle},`);
       const missing = [
-        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own)),
+        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, isScopePart, own)),
         ...linked.filter(
-          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, scope, own)),
+          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, isScopePart, own)),
         ),
       ];
-      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, isScopePart, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
         id,
@@ -14095,8 +14217,8 @@ export async function researchAppend(
     // conflict gate uses — so it never re-warns on a later write to an
     // already-completed project. Reads the write-once baseline; fails open (no
     // warning) when the project predates it.
-    const completingNow = ops.some(
-      (o) => o.section === "project" && o.op === "update" && (o.fields as any)?.status === "completed",
+    const completingNow = projectStatusOps(ops).some(
+      (o: any) => o.op === "update" && o.fields?.status === "completed",
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
@@ -14161,6 +14283,16 @@ export async function researchAppend(
         if (hint) planItemWarnings.push(hint);
       }
     }
+
+    // #4698. Last thing before validate/write, so it sees the final `research`
+    // and the pre-call `beforeResearch`. Mutates `research.project`; the
+    // warning rides `planItemWarnings` into `validationBlock`.
+    const reopenWarning = reopenCompletedProject(research, beforeResearch, applied, ops);
+    // Its own list, not `planItemWarnings`: that name, both loops that fill it
+    // and its readers are all about plan items, so a project-status message
+    // riding it would be dropped or mis-attributed by the next filter scoped to
+    // the name.
+    const reopenWarnings: string[] = reopenWarning ? [reopenWarning] : [];
 
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
@@ -14257,7 +14389,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...reopenWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<
       BatchSuccess,
