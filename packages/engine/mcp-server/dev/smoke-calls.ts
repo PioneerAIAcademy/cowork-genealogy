@@ -617,6 +617,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // P1 carries no indexed attachment, so this reaches an empty screen: the
+    // transport and the reads, not the checks (Vitest covers those).
+    tool: "source_screen",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
     // transport and the read, not the event logic (Vitest covers that).
     tool: "timeline_build",

@@ -48,6 +48,7 @@ import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
+import { sourceScreenTool } from "../../src/tools/source-screen.js";
 import { censusChildrenGapTool } from "../../src/tools/census-children-gap.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
@@ -177,6 +178,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "person_warnings",
     call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+  },
+  {
+    tool: "source_screen",
+    call: (projectPath) => sourceScreenTool({ projectPath, personId: "I1" } as any, LOCAL),
   },
   {
     tool: "census_children_gap",
