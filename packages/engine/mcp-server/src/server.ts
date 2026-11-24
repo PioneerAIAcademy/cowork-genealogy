@@ -79,6 +79,7 @@ import type { ImageSearchInput } from "./types/image-search.js";
 import { imageIndexTool } from "./tools/image-index.js";
 import type { ImageIndexInput } from "./types/image-index.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
+import { sourceScreenTool, type SourceScreenInput } from "./tools/source-screen.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { personQualityTool } from "./tools/person-quality.js";
 import type { PersonQualityInput } from "./types/person-quality.js";
@@ -154,6 +155,9 @@ import { allToolSchemas } from "./tool-schemas.js";
 import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 import { rejectUnknownArgs } from "./utils/unknown-args.js";
+import { projectGateRefusal } from "./utils/project-gate.js";
+
+const ADVERTISED_TOOLS: ReadonlySet<string> = new Set(allToolSchemas.map((t) => t.name));
 
 export function createServer(principal: Principal): Server {
   // The two view tools and their page exist on this surface alone. The list never
@@ -214,6 +218,20 @@ export function createServer(principal: Principal): Server {
     if (unknownArgs !== null) {
       return {
         content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
+        isError: true
+      };
+    }
+
+    // The one project gate (utils/project-gate.ts): every tool but the six that manage projects or sign-in, and tree_gaps, that
+    // manage projects or sign-in refuses a call with no project and names the two
+    // calls that start one. The two connector-only view tools were dispatched
+    // above, outside this gate on purpose: they resolve the project themselves.
+    const noProject = ADVERTISED_TOOLS.has(request.params.name)
+      ? await projectGateRefusal(request.params.name, request.params.arguments)
+      : null;
+    if (noProject !== null) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: noProject }) }],
         isError: true
       };
     }
@@ -712,6 +730,16 @@ export function createServer(principal: Principal): Server {
         const args = request.params.arguments as unknown as PersonWarningsInput;
         const result = await personWarningsTool(args);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "source_screen") {
+      try {
+        const args = request.params.arguments as unknown as SourceScreenInput;
+        const result = await sourceScreenTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };

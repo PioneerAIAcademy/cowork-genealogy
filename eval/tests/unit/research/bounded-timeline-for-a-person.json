@@ -18,7 +18,8 @@
   },
   "mcp_fixtures": [
     "record-read-becker-1900-mm8c-43q-attached",
-    "record-read-becker-1910-mlfm-gc8-attached"
+    "record-read-becker-1910-mlfm-gc8-attached",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_turns": 20,

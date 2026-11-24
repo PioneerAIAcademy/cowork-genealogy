@@ -2,7 +2,7 @@
 
 Grading dimensions for where-else-to-search unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness, tool arguments).
 
-where-else-to-search runs after a FamilySearch historical-records search, with no project. It resolves the place with `place_search`, makes one `external_links_search` call, picks at most 8 curated rows whose host the URL builder supports, and builds each with `build_external_search_url` (the row's `url` as `baseUrl`). It holds no writer, reads no project file, and never passes `projectPath`.
+where-else-to-search runs after a FamilySearch historical-records search, in a project with no person that the caller created with `project_create`. It resolves the place with `place_search`, makes one `external_links_search` call, picks at most 8 curated rows whose host the URL builder supports, and builds each with `build_external_search_url` (the row's `url` as `baseUrl`). It passes the delegation's `projectPath` to all three tools and reads no project file.
 
 ## Selection
 
@@ -38,4 +38,4 @@ Is the user-facing block readable by a beginner?
 
 - **pass:** Below the `---`, the fixed opening sentence, then each suggestion in the fixed three-line shape (bold `linkText` with the site and free/subscription; its years and how they cover the search, or "Undated collection."; the link), the fixed "that is every collection" sentence when there are 1 or 2, any "Also listed" rows, then the fixed closing sentence — each verbatim from the agent body; a comma is not a defect, an added sentence is (`test_user_block_is_the_fixed_shape_and_nothing_more` fails it). No ids, file names, tool names or field names. Above it, only the place searched, the years used and the counts.
 - **partial:** The block names a tool or field, or a suggestion carries extra sentences beyond the fixed shape (score any fact in them under Grounding).
-- **fail:** There is no `---` block, or the agent created a project, read `research.json`, or called a writer.
+- **fail:** There is no `---` block, or the agent created a project, read `research.json`, or called a tool other than the three.

@@ -92,6 +92,26 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     )
 
 
+def test_cited_record_search_not_logged_negative(before_state, after_state, test):
+    """Tag-gated: when the search returns a record the tree already cites on
+    the subject (issue #4667), no new record_search entry that kept results
+    may be `negative` or `error`, and one that kept results must be `positive`
+    or `partial`. A nil keeps no results and is rightly negative, so an entry
+    without results cannot stand in for the search that returned the record.
+    `research_log_append` refuses the negative write; this confirms the agent
+    recovered from the refusal rather than dodging it."""
+    if "cited-record-not-negative" not in test.get("tags", []):
+        pytest.skip("not a cited-record-not-negative scenario")
+    searches = [e for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"]
+    kept = [e for e in searches if e.get("results_ref")]
+    bad = [e.get("id") for e in kept if e.get("outcome") in ("negative", "error")]
+    assert not bad, f"record_search that returned results logged negative/error despite the cited record: {bad}"
+    assert any(e.get("outcome") in ("positive", "partial") for e in kept), (
+        "expected a new record_search entry that kept its results, logged positive or partial; got "
+        f"{[(e.get('id'), e.get('outcome'), e.get('results_ref')) for e in searches]}"
+    )
+
+
 # --- Pre-1880 census: family structure must be marked inferred --------
 
 _CENSUS_REFUSAL = "relationship-to-head"
@@ -1182,6 +1202,7 @@ _CENSUS_SEARCH_TEST_IDS = frozenset({
     "ut_search_records_017",
     "ut_search_records_018",
     "ut_search_records_027",
+    "ut_search_records_037",
     "ut_search_records_hpi",
     "ut_search_records_hpm",
     "ut_search_records_d01",

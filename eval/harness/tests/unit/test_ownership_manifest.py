@@ -140,9 +140,12 @@ WIDENED: dict[str, set[str]] = {
     #: `log` gains `check-warnings`, `translation`, `convert-dates` and
     #: `validate-schema` (#3524 PR 2), on the same rule: inside a project each
     #: logs its reply as one entry named for the agent, and writes nothing else.
+    #: `log` gains `where-else-to-search` (#4686). Every activity runs in a
+    #: project now, so its `build_external_search_url` calls append their
+    #: in-flight `external_site` entries to the log.
     "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki",
             "historical-context", "source-evaluation", "check-warnings", "translation",
-            "convert-dates", "validate-schema"},
+            "convert-dates", "validate-schema", "where-else-to-search"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write

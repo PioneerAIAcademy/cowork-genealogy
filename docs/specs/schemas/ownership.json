@@ -228,7 +228,8 @@
         "agent:check-warnings",
         "agent:translation",
         "agent:convert-dates",
-        "agent:validate-schema"
+        "agent:validate-schema",
+        "agent:where-else-to-search"
       ],
       "agentCallers": [
         {

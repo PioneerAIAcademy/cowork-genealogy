@@ -359,9 +359,14 @@ them.
   (`baseUrl`) and `research_log_append` (`externalSite.urlGenerated`): each refuses a
   url naming a collection whose key is not stored.
 - **Shown** in the viewer's Collections section, per place and grouped by
-  record type. It reaches the viewer only when the file itself changes: Electron
+  record type. It reaches that section only when the file itself changes: Electron
   `project:collections-updated`; hosted and proto
-  `{type: "document_updated", name: "external-collections.json"}`.
+  `{type: "document_updated", name: "external-collections.json"}`. Separately, the
+  connector's case file gets it as `collections` in the project document
+  (`project-view-tools-spec.md` says how that reaches the page and when it is null),
+  not through a file-change event, and lists it on the Sources page, in the Other
+  websites group: one closed list per place that has any rows, places in name order,
+  each row flat with its record types and years.
 - **Not validated.** It is API data, not a `research.json` section: no schema,
   validator, `ownership.json` or `packages/schema` entry.
 

@@ -76,5 +76,8 @@
     "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists.",
     "This run was opened with --autonomous, so nobody answers a pause. Whether the question-selection spawn carries userPresent: no is asserted by test_spawn_carries_its_step_mode_fields from the hook records; do not grade it."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

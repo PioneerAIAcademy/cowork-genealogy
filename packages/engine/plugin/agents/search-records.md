@@ -317,7 +317,7 @@ calling a secondary-name search a genuine negative, work this order:
    least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.)
    with `subjectId`; the rows come back ranked with attachment status.
    `attachedToSubject: true` is a strong confirming signal
-   here — FamilySearch's own matcher already linked it to this person — even at
+   here — the record is already attached to this person in Family Tree — even at
    an unremarkable `matchScore`. This is the inverse of Step 4's "attached →
    deprioritize", which is for *discovering new* evidence; when the goal is
    *confirming* a fact already suspected (a marriage date, a birth record), an
