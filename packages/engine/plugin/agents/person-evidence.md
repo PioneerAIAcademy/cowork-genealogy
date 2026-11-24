@@ -249,6 +249,14 @@ In this mode:
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- A person the record names besides the one being reviewed (a parent,
+  spouse, child) is only linked when that person has their own `pe_`
+  entry. Note explicitly when a named party has none.
+- When the entry under review has a null `match_score`, call
+  `same_person({ projectPath, assertionId, treePersonId })` for it before
+  judging the tier, as Step 2 requires when linking. It changes neither
+  `research.json` nor the tree. Report the score in your analysis; do not
+  write it onto the entry.
 - **Produce a written analysis only.** Do NOT write to `research.json`
   or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
   modify the entry under review (not its `confidence`, not its
@@ -289,16 +297,17 @@ the user changed assertions/links since you last saw them — use
 **`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
-  of every record you are about to link, in one call; group the items by
-  `record_id` + `record_role`.
+  of every record you are about to link, in one call; each item is one
+  persona; two items with the same `record_id` + `record_role` are one
+  persona split across pages.
 - `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
   of those `a_` are already linked; `countById[id]` of 0 means unlinked.
 - `research_query({ section: "person_evidence", personId: [ … ] })` — the
   existing links for every candidate person, when checking for revisions.
 
 A list takes at most 50 ids, and only one filter per call may be a list. While
-`truncated` is true, re-query with `offset` at 50, then 100, until you hold
-`count` items.
+`truncated` is true, call again with `offset: nextOffset` until `truncated` is
+false. On `assertions`, `count` counts assertions, not items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
@@ -438,7 +447,11 @@ agreement/disagreement list).
 **Call `same_person` BEFORE writing any `pe_` link**, for every serious
 candidate tree person. Do **not** score a stub you minted from the persona you
 would be scoring: comparing a record persona to a person created out of it is
-circular. Leave `match_score` null there and say so in the rationale. A person
+circular. Leave `match_score` null there and say so in the rationale. **This
+exception is narrow:** circular means a *fact-less stub whose only source is
+this record*. A tree person who has facts from other records — even if one of
+those facts is currently sourced to the record under review — is a normal
+candidate; scoring them is not circular. A person
 minted from an *earlier* record is a normal candidate, so score it. The tool
 returns a 0.0-1.0 similarity score that *informs* the correlation analysis; it
 never replaces it (see step 3).
@@ -609,10 +622,12 @@ identity that would let you add them).
 
 **The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
-correlation supports — a high score can firm up a Moderate match; a low
-score you cannot explain should pull a tentative Strong back to Moderate. A low
-score you can explain (a surname spelling variant, a thin tree person) does not
-demote a Strong match: write the link and state the score. But:
+correlation supports — a high score (≥ 0.80) can firm up a Moderate match to
+`confident`; a low score you cannot explain should pull a tentative Strong back
+to Moderate. A low score you can explain (a surname spelling variant, a thin
+tree person) does not demote a Strong match: write the link and state the score.
+A score of 0.80 or above on a qualitatively Strong match supports `confident`
+and does not warrant downgrading to `probable`. But:
 
 - A **qualitative conflict caps confidence regardless of score.** A
   0.85 score paired with a contradicting birthplace, an impossible age,

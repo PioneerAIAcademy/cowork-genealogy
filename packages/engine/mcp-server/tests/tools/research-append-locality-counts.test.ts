@@ -4,6 +4,7 @@
 // `content[].resourceType` ending `/Person` and `/Record`.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { stageSurvey } from "../helpers/locality-survey.js";
 
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
@@ -12,7 +13,12 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { mkdtemp, copyFile, readFile, rm } from "fs/promises";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
-import { researchAppend, researchAppendFromCaller, CATALOG_READ_BUDGET_MS } from "../../src/tools/research-append.js";
+import {
+  researchAppend,
+  researchAppendFromCaller,
+  CATALOG_READ_BUDGET_MS,
+  LOCALITY_COLLECTIONS_FILL_MAX,
+} from "../../src/tools/research-append.js";
 import { markFsRefusal } from "../../src/utils/fs-budget.js";
 import { clearCollectionsCache, collectionCatalogLoader } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -24,7 +30,7 @@ const SCENARIO = resolve(__dirname, "../../../../../eval/fixtures/scenarios/mid-
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
 
-function catalogEntry(id: string, title: string, records: number, persons: number) {
+function catalogEntry(id: string, title: string, records: number, persons: number, startYear: number | null = 1855, endYear: number | null = startYear, images = 7754) {
   return {
     content: {
       gedcomx: {
@@ -35,9 +41,9 @@ function catalogEntry(id: string, title: string, records: number, persons: numbe
             content: [
               { count: records, resourceType: "http://gedcomx.org/Record" },
               { count: persons, resourceType: "http://gedcomx.org/Person" },
-              { count: 7754, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
+              { count: images, resourceType: "http://gedcomx.org/DigitalArtifact#FamilySearch" },
             ],
-            searchMetadata: [{ imageCount: 7754, recordCount: records, startYear: 1855, endYear: 1855 }],
+            searchMetadata: [{ imageCount: 7754, recordCount: records, ...(startYear === null ? {} : { startYear, endYear: endYear ?? startYear }) }],
           },
         ],
       },
@@ -58,7 +64,6 @@ function locality(collections: unknown[], place = "Ohio, United States") {
   return {
     place,
     collections,
-    pages_read: [{ section: "home", url: "u1", found: true }],
     source: "locality-guide",
   };
 }
@@ -91,9 +96,9 @@ describe("research_append stamps locality collection counts from the catalog", (
     JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).localities.find((l: any) => l.id === locId)
       .collections;
 
-  const appendLocality = (collections: unknown[]) =>
+  const appendLocality = async (collections: unknown[]) =>
     researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: locality(collections) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality(collections) } as never,
       collectionCatalogLoader(LOCAL),
     );
 
@@ -141,14 +146,14 @@ describe("research_append stamps locality collection counts from the catalog", (
   });
 
   it("stamps a research_append call made through the MCP dispatch", async () => {
-    const r = await callTool("research_append", { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) });
+    const r = await callTool("research_append", { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 0)]) });
     expect(r.isError).toBe(false);
     expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
   });
 
   it("stamps an entry the caller sent as a JSON string", async () => {
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: JSON.stringify(locality([col("1803969", 0, 0)])) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: JSON.stringify(locality([col("1803969", 0, 0)])) } as never,
       collectionCatalogLoader(LOCAL),
     );
     expect(warningsOf(r)[0]).toContain("person_count 0 -> 240768");
@@ -207,7 +212,7 @@ describe("research_append stamps locality collection counts from the catalog", (
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       const pending = researchAppendFromCaller(
-        { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) } as never,
+        { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 0)]) } as never,
         loader,
       );
       await vi.advanceTimersByTimeAsync(CATALOG_READ_BUDGET_MS);
@@ -274,8 +279,8 @@ describe("research_append stamps locality collection counts from the catalog", (
       {
         projectPath: dir,
         ops: [
-          { section: "localities", op: "append", entry: locality([col("1803969", 1, 1)]) },
-          { section: "localities", op: "append", entry: locality([col("1803971", 1, 1)]) },
+          { section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 1, 1)]) },
+          { section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803971", 1, 1)]) },
         ],
       } as never,
       collectionCatalogLoader(LOCAL),
@@ -301,13 +306,13 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   // The whole list (spec 5.12): an append gains every catalog collection for its place.
   const ILLINOIS = "Illinois, United States";
-  const appendIn = (place: string, collections: unknown, extra: Record<string, unknown> = {}) =>
+  const appendIn = async (place: string, collections: unknown, extra: Record<string, unknown> = {}) =>
     researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: { ...locality([], place), collections, ...extra } } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: { ...locality([], place), collections, ...extra } } as never,
       collectionCatalogLoader(LOCAL),
     );
-  const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123 };
-  const row1865 = { id: "1803971", title: "Illinois, State Census, 1865", date_range: "1855-1855", person_count: 380262, record_count: 95456 };
+  const row1855 = { id: "1803969", title: "Illinois, State Census, 1855", date_range: "1855-1855", person_count: 240768, record_count: 60123, availability: "name-searchable" };
+  const row1865 = { id: "1803971", title: "Illinois, State Census, 1865", date_range: "1855-1855", person_count: 380262, record_count: 95456, availability: "name-searchable" };
 
   it("an append that sends no collections gets every catalog collection for its place", async () => {
     const r = await appendIn(ILLINOIS, []);
@@ -317,11 +322,45 @@ describe("research_append stamps locality collection counts from the catalog", (
     ]);
   });
 
+  it("adds the catalog collections the place's wiki pages link, keeping one under the scope that names another part of it out", async () => {
+    clearCollectionsCache();
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...CATALOG,
+          results: 4,
+          entries: [
+            ...(CATALOG.entries ?? []),
+            catalogEntry("1932399", "United States, Civil War Soldiers Index, 1861-1865", 600, 6300000),
+            catalogEntry("1919999", "Illinois, Peoria, Birth Records, 1878-1994", 100, 2000),
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    const page = (links: string[]) => links.map((id) => `* [x](https://www.familysearch.org/search/collection/${id}) at FamilySearch`).join("\n");
+    const surveyRef = await stageSurvey(dir, {
+      place: ILLINOIS,
+      pagesRead: [],
+      volumeSummary: null,
+      wikiPages: { online_records: { url: "u", found: true, content: page(["1932399", "1919999", "5555555"]) } },
+    });
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", surveyRef, entry: locality([], ILLINOIS) } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(r.ok).toBe(true);
+    const ids = (await storedCollections()).map((c: any) => c.id);
+    expect(ids).toContain("1932399");
+    expect(ids).not.toContain("5555555");
+    expect(ids).not.toContain("1919999");
+  });
+
   it("an append with no collections key is filled the same way", async () => {
     const entry: Record<string, unknown> = locality([], ILLINOIS);
     delete entry.collections;
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry } as never,
       collectionCatalogLoader(LOCAL),
     );
     expect(r.ok).toBe(true);
@@ -422,6 +461,197 @@ describe("research_append stamps locality collection counts from the catalog", (
     });
   });
 
+  describe("a United Kingdom place takes the titles led by its constituent country", () => {
+    const ENGLAND: FSCollectionsResponse = {
+      results: 6,
+      index: 0,
+      entries: [
+        catalogEntry("10", "England and Wales, Census, 1901", 1, 1, 1901),
+        catalogEntry("11", "England, Yorkshire, Parish Registers, 1538-2016", 1, 1, 1538, 2016),
+        catalogEntry("12", "England, Lancashire, Parish Registers, 1538-1910", 1, 1, 1538, 1910),
+        catalogEntry("13", "United Kingdom, Merchant Navy Seamen Records, 1835-1941", 1, 1, 1835, 1941),
+        catalogEntry("14", "Great Britain, Deaths and Burials, 1778-1988", 1, 1, 1778, 1988),
+        catalogEntry("15", "United States, New England Passenger and Crew Lists, 1911-1954", 1, 1, 1911, 1954),
+      ],
+    };
+    const sheffield = (collections: unknown[]) => appendIn("Sheffield, Yorkshire, England, United Kingdom", collections);
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(ENGLAND), { status: 200 }));
+    });
+
+    it("keeps the England and Wales census, its own county's and the kingdom-wide titles, and leaves out another county's", async () => {
+      const r = await sheffield([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["10", "11", "13", "14"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 4 other FamilySearch collections for "England" from the catalog, after the 0 sent; ' +
+          '1 that name another part of "England" were left out',
+      ]);
+    });
+
+    it("leaves other counties out before the cap, so 160 of them ahead of the census take none of its room", async () => {
+      const counties = Array.from({ length: 160 }, (_, i) =>
+        catalogEntry(`c${i}`, `England, Shire${i}, Parish Registers, 1538-1900`, 1, 1, 1538, 1900),
+      );
+      const census = catalogEntry("10", "England and Wales, Census, 1901", 1, 1, 1901);
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ results: 161, index: 0, entries: [...counties, census] }), { status: 200 }),
+      );
+      await sheffield([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["10"]);
+    });
+  });
+
+  describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
+    const NATIONAL: FSCollectionsResponse = {
+      results: 20,
+      index: 0,
+      entries: [
+        catalogEntry("m1", "Michigan, Death Records, 1867-1952", 1, 1, 1867, 1952),
+        catalogEntry("us1850", "United States, Census, 1850", 1, 1, 1850),
+        catalogEntry("us1900", "United States, Census, 1900", 1, 1, 1900),
+        catalogEntry("us1940", "United States, Census, 1940", 1, 1, 1940),
+        catalogEntry("usmort", "United States Census (Mortality Schedule), 1850-1880", 1, 1, 1850, 1880),
+        catalogEntry("usfb", "United States, Freedmen's Bureau Marriages, 1859-1873", 1, 1, 1859, 1873),
+        catalogEntry("usky", "United States, Kentucky, Agricultural Schedules, 1850-1880", 1, 1, 1850, 1880),
+        catalogEntry("usvi", "United States Virgin Islands, Census Records, 1841-1911", 1, 1, 1841, 1911),
+        catalogEntry("ussdi", "United States, Social Security Death Index", 1, 1, null),
+        catalogEntry("ca1901", "Canada, Census, 1901", 1, 1, 1901),
+        catalogEntry("caon", "Canada, Ontario, Births, 1869-1912", 1, 1, 1869, 1912),
+        catalogEntry("caon61", "Canada, Ontario, Census, 1861", 1, 1, 1861),
+        catalogEntry("cauc42", "Canada, Upper Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("calc42", "Canada, Lower Canada, Census, 1842", 1, 1, 1842),
+        catalogEntry("capr16", "Canada, Prairie Provinces, Census, 1916", 1, 1, 1916),
+        catalogEntry("mx1930", "Mexico, National Census, 1930", 1, 1, 1929, 1931),
+        catalogEntry("mxbap", "Mexico, Baptisms, 1560-1950", 1, 1, 1559, 1950),
+        catalogEntry("mxja", "Mexico, Jalisco, Civil Registration, 1857-2000", 1, 1, 1857, 2000),
+        catalogEntry("mxso", "Mexico, Sonora, Catholic Church Records, 1657-1994", 1, 1, 1657, 1994),
+        catalogEntry("nm", "New Mexico, Deaths, 1889-1945", 1, 1, 1889, 1945),
+      ],
+    };
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(NATIONAL), { status: 200 }));
+    });
+    const ids = async () => (await storedCollections()).map((c: any) => c.id);
+    const DETROIT = "Wayne, Michigan, United States";
+
+    it("adds the core national rows that overlap the time period, after the place's own, and says so", async () => {
+      const r = await appendIn(DETROIT, [], { time_period: "1870-1930" });
+      expect(await ids()).toEqual(["m1", "us1900", "usmort", "ussdi"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 1 other FamilySearch collections for "Michigan" from the catalog, after the 0 sent',
+        'localities collections: added the 3 core national FamilySearch collections for "United States" overlapping 1870-1930 from the catalog',
+      ]);
+    });
+
+    it("gives a bare Mexico place its country-wide baptism index when no census falls in the period", async () => {
+      await appendIn("Mexico", [], { time_period: "1880-1920" });
+      expect(await ids()).toEqual(["mxbap"]);
+    });
+
+    it("leaves a national collection that depends on who the person was to the planner's own search", async () => {
+      await appendIn(DETROIT, [], { time_period: "1859-1873" });
+      expect(await ids()).not.toContain("usfb");
+    });
+
+    it("gives a bare country-level place the core rows only, not the country's whole list", async () => {
+      await appendIn("United States", [], { time_period: "1870-1930" });
+      expect(await ids()).toEqual(["us1900", "usmort", "ussdi"]);
+    });
+
+    it("keeps an undated national row, and cuts nothing for a time period with no year", async () => {
+      await appendIn(DETROIT, [], { time_period: "the Detroit years" });
+      expect(await ids()).toEqual(["m1", "us1850", "us1900", "us1940", "usmort", "ussdi"]);
+    });
+
+    it("still adds national rows to an entry that already sent every place row", async () => {
+      const r = await appendIn(DETROIT, [{ id: "m1", title: "Michigan, Death Records, 1867-1952", person_count: 1, record_count: 1 }], { time_period: "1895-1905" });
+      expect(await ids()).toEqual(["m1", "us1900", "ussdi"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 2 core national FamilySearch collections for "United States" overlapping 1895-1905 from the catalog',
+      ]);
+    });
+
+    it("gives Canada its national census, not another province's rows", async () => {
+      await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1910" });
+      expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("gives a regional census only to a locality in a province it covers", async () => {
+      await appendIn("Halifax, Nova Scotia, Canada", [], { time_period: "1836-1920" });
+      expect(await ids()).toEqual(["ca1901"]);
+    });
+
+    it("gives Upper Canada's census to an Ontario locality and the Prairie census to an Alberta one", async () => {
+      await appendIn("Toronto, York, Ontario, Canada", [], { time_period: "1836-1920" });
+      await appendIn("Edmonton, Alberta, Canada", [], { time_period: "1900-1920" });
+      const doc = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const [toronto, edmonton] = doc.localities.slice(-2).map((l: any) => l.collections.map((c: any) => c.id));
+      expect(toronto).toContain("cauc42");
+      expect(toronto).not.toContain("calc42");
+      expect(toronto).not.toContain("capr16");
+      expect(edmonton).toEqual(expect.arrayContaining(["capr16"]));
+      expect(edmonton).not.toContain("cauc42");
+    });
+
+    it("adds no duplicate for a country-level place the place fill already covered", async () => {
+      await appendIn("Canada", [], { time_period: "1890-1910" });
+      const stored = await ids();
+      expect(stored.filter((id: string) => id === "ca1901")).toHaveLength(1);
+    });
+
+    it("gives Mexico its national census, not New Mexico's or another state's rows", async () => {
+      await appendIn("Guadalajara, Jalisco, Mexico", [], { time_period: "1920-1940" });
+      expect(await ids()).toEqual(["mxja", "mx1930", "mxbap"]);
+    });
+
+    it("adds nothing national for a place outside the three countries", async () => {
+      const r = await appendIn("Funchal, Madeira, Portugal", [], { time_period: "1830-1910" });
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r).some((w) => w.includes("national"))).toBe(false);
+    });
+
+    it("holds the whole list at the cap, and says how many of the national rows it added", async () => {
+      const many: FSCollectionsResponse = {
+        results: LOCALITY_COLLECTIONS_FILL_MAX + 5,
+        index: 0,
+        entries: Array.from({ length: LOCALITY_COLLECTIONS_FILL_MAX + 5 }, (_, j) =>
+          catalogEntry(`n${j}`, "United States, Census, 1900", 1, 1, 1900),
+        ),
+      };
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(many), { status: 200 }));
+      const r = await appendIn(DETROIT, [], { time_period: "1870-1930" });
+      expect(await storedCollections()).toHaveLength(LOCALITY_COLLECTIONS_FILL_MAX);
+      expect(warningsOf(r)).toEqual([
+        `localities collections: added ${LOCALITY_COLLECTIONS_FILL_MAX} of the ${LOCALITY_COLLECTIONS_FILL_MAX + 5} core national FamilySearch collections for "United States" overlapping 1870-1930 from the catalog`,
+      ]);
+    });
+  });
+
+  describe("availability (spec 5.12): the label research-plan copies", () => {
+    const THIN: FSCollectionsResponse = {
+      results: 2,
+      index: 0,
+      entries: [
+        catalogEntry("1999196", "Pennsylvania, Probate Records, 1683-1994", 0, 52, 1683, 1994, 3200560),
+        catalogEntry("2466360", "Pennsylvania, Church Marriages, 1682-1976", 4873, 17743, 1682, 1976, 23593),
+      ],
+    };
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(THIN), { status: 200 }));
+    });
+
+    it("stamps a sent collection with a handful of persons over millions of images browse-only", async () => {
+      await appendIn("Schuylkill, Pennsylvania, United States", [{ id: "1999196", title: "Pennsylvania, Probate Records" }]);
+      const byId = Object.fromEntries((await storedCollections()).map((c: any) => [c.id, c.availability]));
+      expect(byId).toMatchObject({ "1999196": "browse-only", "2466360": "name-searchable" });
+    });
+
+    it("sets no label on a collection the catalog does not hold", async () => {
+      await appendIn("Schuylkill, Pennsylvania, United States", [{ id: "SYNTH-1", title: "Synthetic" }]);
+      expect((await storedCollections()).find((c: any) => c.id === "SYNTH-1")).toMatchObject({ availability: null });
+    });
+  });
+
   it("leaves a collections value that is not a list for the validator to refuse", async () => {
     const r = await appendIn(ILLINOIS, "all of them");
     expect(r.ok).toBe(false);
@@ -429,7 +659,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   it("does not stamp when the loader is null (the unit eval harness)", async () => {
     const r = await researchAppendFromCaller(
-      { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 5)]) } as never,
+      { projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 5)]) } as never,
       null,
     );
     expect(warningsOf(r)).toEqual([]);
@@ -438,7 +668,7 @@ describe("research_append stamps locality collection counts from the catalog", (
   });
 
   it("does not stamp an internal researchAppend write", async () => {
-    const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 5)]) });
+    const r = await researchAppend({ projectPath: dir, section: "localities", op: "append", surveyRef: await stageSurvey(dir), entry: locality([col("1803969", 0, 5)]) });
     expect(r.ok).toBe(true);
     expect((await storedCollections())[0]).toMatchObject({ person_count: 0, record_count: 5 });
     expect(mockedGetValidToken).not.toHaveBeenCalled();

@@ -99,15 +99,29 @@ can drop:
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
+    searches?: [{                        // only when nextStep is a search — §2.2.1
+      planItemId: string,
+      agent: "search-records" | "search-images" | "search-full-text"
+           | "search-hints" | "search-external-sites",
+      prompt: string,                    //   the whole delegation, sent as it is
+    }],
+    spawn?: {                            // only when nextStep names one of these — §2.2.2
+      agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking"
+           | "research-exhaustiveness" | "proof-conclusion",
+      prompt: string,
+    },
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
-    name?: string,                       // preferred names entry, "Given Surname"
+    name?: string,                       // preferred names entry, "Given Surname";
+                                         //   the surname alone when
+                                         //   unsupportedGivenName flags the given name
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
     childIds?: string[],                 // I ids that are this person's ParentChild child
     diedByYear?: number,                 // year certainly dead by, from dated Death/Burial facts
+    unsupportedGivenName?: { given: string, searchAs: string }, // a given name no linked record gives
   }],
   sources?: [{
     id: string,                          // src_*
@@ -128,9 +142,24 @@ can drop:
       dateRange?: string,
       personCount?: number,
       recordCount?: number,
+      availability?: "browse-only",      // only on a browse-only row: the stored label, else from personCount
     }],
     quirks?: string[],
+    recordTypes?: [{                     // the entry's record_types rows, without
+      type: string,                      //   source_url (research_query has it), so a
+      years?: string,                    //   planner reading only this answer still sees
+      level?: string,                    //   each record type's years, holder and reach
+      heldAt?: string,
+      access?: string,
+      collectionIds?: string[],
+      summary?: string,
+    }],
+    repositories?: [{ name: string, holds?: string, access?: string, url?: string }],
+    losses?: [{ recordSet: string, years?: string }],
   }],
+  nationalCollections?: {                // country-wide rows, once per country (US, Canada, Mexico)
+    [country: string]: [{ id, title?, dateRange?, personCount?, recordCount? }],
+  },
   awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
@@ -200,13 +229,53 @@ Projection rules:
   it. They exist so person-evidence can name
   a known spouse or child missing from a household record: no other tool
   it holds reads the tree's edges.
+  `unsupportedGivenName` is the preferred name's `given` when the person has at
+  least one linked live `name` assertion (through `person_evidence`) and no word of
+  them carries any word of the given name, compared case-blind with accents folded.
+  A word carries another when either is a prefix of the other (an initial, "Herm"
+  for Hermann, "Georg" for George) or a contraction of it with the same first and
+  last letters and the rest in order ("Saml", "Wm"); when they differ by one letter
+  from four letters up, or two from seven ("Christian" for Kristian); or when the
+  bundled given-name table puts them in one family ("Jno", "Polly", "Bill"). The
+  nickname table is not used, since it relates Anthony and Anton: "Ann", "Anton",
+  "Antone" and "Antoine" do not carry "Anthony". A machine reading of a page (an
+  assertion with `disputes_assertion_id` not logged as `user_provided`) counts as
+  linked evidence but never carries the name; a researcher's own reading does.
+  Measured 2026-11-20 over the 252 committed e2e end states: 18 people flagged in
+  15 runs, against 80 in 64 under a first-word exact match.
+  A person with no linked name assertion is not judged, so a tree read from
+  FamilySearch before any evidence is linked carries none. `searchAs` is the
+  given name's first letter and `*`: one handwritten name read several ways agrees
+  on little more (Anthony, Armtogne, Ann Tone and Atonne for one woman), and
+  FamilySearch's search accepts a one-letter wildcard (measured live 2026-11-18:
+  Tyler, born 1853 in Virginia, gives 7,326 matches under `A*` and 63,855 with no
+  given name). It exists so the router keeps a reading in doubt out of a search
+  brief's `names` and searches the given name as that wildcard.
 - **`sources`** — every `research.sources[]` entry, in array order.
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this
   source's id; `assertionCount` counts those assertions.
 - **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
   and `pages_read` are left out; `research_query` serves the whole entry. A collection count
-  that is not an integer is left out.
+  that is not an integer is left out. A collection carries `availability: "browse-only"` when
+  its stored label (research-append spec §5.12) is browse-only, or, on a row saved before the
+  label existed, when `collectionAvailability(person_count)` is (a count of 0). Any other row
+  carries none and is name-searchable, as on a `collections_search` row. **Why:** a label on
+  every row was 11-13% of the answer on the four planning fixtures.
+- **`nationalCollections`** — the country-wide collections the localities hold, for a
+  locality whose country (its `place`, else its first `jurisdictions[].name` with one) is the
+  United States, Canada or Mexico. Their collections are scoped to the state or province, so
+  `research_append` stores the national rows beside the place's own (research-append spec
+  §5.12, "National collections"). A row is national when `isNationalCollectionTitle` holds
+  for its title. It moves out of its locality's `collections` into the country's list, which
+  holds each id once, sorted by title, in the `collections` row shape. Absent when no locality
+  holds one. It says nothing about the years no row covers: a locality cut to its own period,
+  a capped fill or a fill made while the catalog was unreadable stores a partial list, so
+  research-plan reads coverage from the rows and runs `collections_search` for the country
+  for any year it needs and no row covers. The rows are the core national list only (the
+  censuses and broad indexes); research-plan finds the rest with its own search. **Why:**
+  every US locality holds the same national rows, so one list per country keeps an answer
+  with several localities from repeating them.
 - **`projectStatus`** — `research.project.status`.
 - **`objective`** — `research.project.objective`, verbatim and untruncated. It is the
   only surface that returns the objective: `research_query` serves array sections only, so without it a
@@ -250,13 +319,37 @@ exists and gates nothing. A superseded verdict does not count — a
 replacement is itself present and satisfies the join; if nothing replaced it, the
 critique no longer stands.
 
-`nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks **a conflict that wants evidence already planned**, which
+`nextStep` orders by what blocks what: **an unweighed attached-births identity
+question** outranks **an unsettled conflict that has weighed everything**, which
+outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
-outranks competing parent sets, which outrank **the researcher's choice**, which
+outranks competing parent sets, which outrank unlinked kin, which outranks
+**the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
+
+**An unweighed attached-births identity question comes first.** When a
+person in the question's family (the project's subjects and everyone live-linked
+to an assertion extracted for the question, each with one tree hop) carries two
+FamilySearch-attached births too far apart to be one birth, and no conflict has
+weighed them (an analysed identity conflict naming either record through any
+assertion of the same record party, or an analysed
+fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
+attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
+blocking <q>`, whether or not the question is resolved. `<action>` names the
+conflict already registered for a pair (an identity conflict naming either record,
+or a fact conflict naming both, not yet analysed) as `weigh <c> (registered, not yet
+analysed)`, and asks for `open a conflict_type 'identity' conflict naming the two
+records for <p>` only where none is: told to open one beside an unweighed `c_002`,
+an orchestrator asked for it to be registered again (thomas-hanrahan-marriage,
+2026-11-18). project_context computes the pairs with research_append's
+own scope, pair test and place lookup (`attachedBirthPairsByQuestion`), so the
+rung names exactly the pairs `research_append` refuses a proof summary on; it is
+above every rung that names proof-conclusion because that refusal holds every
+tier but `disproved`, and a lower rung would send proof-conclusion back to it.
+project_view's card reads the same pairs; a caller of `questionStates` that
+passes none (the dev replays) never sees this rung.
 
 **An unsettled conflict that has weighed everything ends the research** (step
 mode, section E; decision 12). When the question is unresolved and every open
@@ -415,6 +508,31 @@ question's assertions are linked to — who is the child of more than two birth-
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
 fires on 5 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).
+
+**Unlinked kin** also needs the tree, and adds no field: only
+`nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person ids>`. It
+fires on an unresolved question that no `hypotheses` entry lists in
+`related_question_ids`, for each tree person linked by live `person_evidence` to
+one of its assertions who has no `ParentChild` or `Couple` path, of any length or
+direction, to a subject, and none of whose linked assertions shares a record
+(`record_id`, else `source_id`) with an assertion linked to a person who has one.
+It is silent until some `subject_person_ids` entry is a tree person, since every
+linked person would otherwise count, the subject included. The question, not
+the person, is what a hypothesis must relate to: hypotheses carry no person ids,
+and matching their `claim` text is fragile. A shared record rules a person out
+because a household member read from the subject's own record is not inferred kin.
+Measured 2026-11-19 (`npx tsx dev/measure-question-state-signals.ts`): 2 scenario
+questions (`unregistered-sibling-premise-scopes-searches`,
+`flynn-marriage-only-no-child-link`) and 8 e2e question-runs on unresolved
+questions, 7 of them in `nextStep` (one is masked by an open conflict). Of those 7,
+a spot-check found 2 real inferred kin, 1 doubtful and 4 not: the subject's own
+duplicate, a duplicated family, unrelated search hits. The 4 are all September 2026
+runs, and all 4 have a subject with no live link. They were accepted on purpose
+(lead, 2026-11-19), overriding the plan's "stop if most hits are not real" rule:
+they are rare, the 20 later runs of the same fixtures produce none, and a false
+route costs one hop that the hypothesis condition stops from repeating. Requiring a
+linked subject would have removed them, but it also silences
+`unregistered-sibling-premise-scopes-searches`, whose subject has no link.
 Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
@@ -471,6 +589,85 @@ projection. Two consequences worth stating so they are not "tidied" later:
 The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
+
+
+### 2.2.1 `searches` — the search step, written out
+
+When a row's `nextStep` starts `search-records`, `search-hints` or
+`search-external-sites`, the row carries `searches`: one entry per open item of
+the question's active plan, lowest `sequence` first, at most four
+(`src/utils/search-delegations.ts`). Each names the agent and the prompt the
+router sends it unchanged:
+
+```
+projectPath: <projectPath>
+questionId: q_001
+planId: pl_001
+planItemId: pli_002
+plan_item: {<the stored item, verbatim>}
+subject: {"subjectId","names","birth","death","parents"}
+```
+
+- **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`);
+  `search-full-text` for "FamilySearch (full-text)" and `search-images` for
+  "FamilySearch (images)", the lanes research-plan writes into `repository`;
+  else `search-records`. The lane is read from the field, never guessed from the
+  rationale's words: "her baptism is unindexed, so search the death index" is a
+  name search. A plan written before the markers has none, and the router reads
+  a browse-only item's rationale itself (research/SKILL.md, the browse row).
+- **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
+  item in `exhaustedImageGroups`, and a fallback whose primary is still open or
+  found something. A fallback runs once every entry its primary logged is
+  `negative`.
+- **A hints item at the head of the plan goes alone**, with a `personId:` line
+  read from its rationale and no subject: its verdicts can save the searches
+  behind it.
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
+  search-records, search-images or search-full-text entry. `parents` is left out when the question
+  asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
+  of`, the same words as the research suite's validator) and when the tree gives
+  more than two. A given name `unsupportedGivenName` flags is replaced by its
+  `searchAs`, and a line after the block names the given name as a reading in
+  doubt.
+- The router adds `userPresent` to a search-external-sites prompt itself; only
+  it knows whether the run is autonomous.
+
+Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
+dropped the subject block or sent one spawn for two items in four research
+tests. Every field is in the project documents (ADR-0011's first question).
+
+The top-level `subject` is the same block for `subject_person_ids[0]`, parents
+included, for a brief the router writes itself (a bounded record ask has no
+plan item); the router leaves `parents` out on a parentage ask.
+
+`attachedSources [{id, title}]` lists that subject's sources attached on
+FamilySearch when the project was made: `project_create` keeps the read's own
+sources as tree `S2…` and points the person's, names' and facts' refs at them
+(`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
+(`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
+attached on FamilySearch afterwards is not in the tree. A record asked for that
+is already listed is not searched for (ut_research_021).
+
+### 2.2.2 `spawn` — the next agent step, written out
+
+When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
+`hypothesis-tracking`, `research-exhaustiveness` or `proof-conclusion`, the row
+carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
+`projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
+and the `nextStep` text:
+
+- person-evidence: `assertionIds:` every live assertion of the question (the
+  rung fires only when none is linked) and `userPresent: yes`, which the router
+  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+- conflict-resolution: one `competingAssertionIds:` line per unregistered
+  disagreement, or `conflictIds:` for an open conflict;
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+
+research-plan gets none: its rung does not know whether the question's
+jurisdiction has had its locality survey, which the router runs first. On Haiku
+5.5 low the router read past `nextStep` to another agent, or spawned nothing
+(ut_research_h22, rx4, 9k4).
 
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 

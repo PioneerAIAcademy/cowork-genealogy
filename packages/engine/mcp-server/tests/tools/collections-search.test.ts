@@ -16,6 +16,7 @@ import {
   collectionCountsById,
   fitToBudget,
   subPlaceTerms,
+  collectionCoverage,
   ANSWER_CHAR_BUDGET,
   COLLECTION_URL_TEMPLATE,
 } from "../../src/tools/collections-search.js";
@@ -49,6 +50,7 @@ function makeEntry(opts: {
   imageCount?: number;
   startYear?: number;
   endYear?: number;
+  typeFacet?: string;
 }): FSCollectionEntry {
   return {
     content: {
@@ -69,6 +71,7 @@ function makeEntry(opts: {
                 startYear: opts.startYear,
                 endYear: opts.endYear,
                 placeIds: opts.placeIds,
+                ...(opts.typeFacet ? { typeFacet: opts.typeFacet } : {}),
               },
             ],
           },
@@ -263,8 +266,17 @@ describe("standardPlaceToCollectionsQuery", () => {
 
   it("all other countries -> country only", () => {
     expect(standardPlaceToCollectionsQuery("Paris, France")).toBe("France");
-    expect(standardPlaceToCollectionsQuery("London, England, United Kingdom")).toBe("United Kingdom");
     expect(standardPlaceToCollectionsQuery("France")).toBe("France");
+  });
+
+  it("a United Kingdom place -> its constituent country; the bare kingdom stays the kingdom", () => {
+    expect(standardPlaceToCollectionsQuery("London, England, United Kingdom")).toBe("England");
+    expect(standardPlaceToCollectionsQuery("Sheffield, Yorkshire, England, United Kingdom")).toBe("England");
+    expect(standardPlaceToCollectionsQuery("Cardiff, Glamorgan, Wales, United Kingdom")).toBe("Wales");
+    expect(standardPlaceToCollectionsQuery("Rosskeen, Ross-shire, Scotland, United Kingdom")).toBe("Scotland");
+    expect(standardPlaceToCollectionsQuery("Belfast, Antrim, Northern Ireland, United Kingdom")).toBe("Northern Ireland");
+    expect(standardPlaceToCollectionsQuery("England, United Kingdom")).toBe("England");
+    expect(standardPlaceToCollectionsQuery("United Kingdom")).toBe("United Kingdom");
   });
 
   it("free-text (non-standardPlace) passes through unchanged", () => {
@@ -405,9 +417,31 @@ describe("collectionsSearchTool field mapping", () => {
     });
   });
 
+  it("marks only a collection with no indexed person, or under one per thousand images, browse-only", async () => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        results: 3,
+        entries: [
+          makeEntry({ id: "1", title: "Pennsylvania, Probate Records, 1683-1994", placeIds: [1], personCount: 52, imageCount: 3200560 }),
+          makeEntry({ id: "2", title: "Pennsylvania, Orphans Court, 1700-1900", placeIds: [1], personCount: 0, imageCount: 900 }),
+          makeEntry({ id: "3", title: "Pennsylvania, County Marriages, 1885-1950", placeIds: [1], personCount: 500, imageCount: 200000 }),
+        ],
+      }),
+    });
+    const result = await collectionsSearchTool({ standardPlace: "Pennsylvania" }, LOCAL);
+    if (!("results" in result)) throw new Error("no results");
+    expect(Object.fromEntries(result.results.map((r) => [r.id, r.availability]))).toEqual({
+      "1": "browse-only",
+      "2": "browse-only",
+      "3": undefined,
+    });
+  });
+
   it("collectionCountsById still derives the /Record count the row no longer carries", () => {
     const counts = collectionCountsById(mockApiResponse);
-    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000 });
+    expect(counts.get("1234")).toMatchObject({ personCount: 1048000, recordCount: 524000, imageCount: expect.any(Number) });
     // The title and years ride along for research_append's locality fill.
     expect(typeof counts.get("1234")?.title).toBe("string");
     expect(counts.get("1234")?.title).not.toBe("");
@@ -524,6 +558,126 @@ describe("subPlaceTerms", () => {
 
   it("has none for free text that is its own scope", () => {
     expect(subPlaceTerms("Census")).toEqual([]);
+  });
+
+  it("drops both the constituent country and the kingdom from a United Kingdom place", () => {
+    expect(subPlaceTerms("Sheffield, Yorkshire, England, United Kingdom")).toEqual(["Sheffield", "Yorkshire"]);
+    expect(subPlaceTerms("United Kingdom")).toEqual([]);
+  });
+});
+
+describe("a United Kingdom place: titles led by its constituent country", () => {
+  const UK_CATALOG: FSCollectionsResponse = {
+    results: 12,
+    entries: [
+      makeEntry({ id: "ew1901", title: "England and Wales, Census, 1901", placeIds: [1986340], startYear: 1901, endYear: 1901, typeFacet: "CENSUS" }),
+      makeEntry({ id: "engmar", title: "England Marriages, 1538–1973", placeIds: [1986340], startYear: 1538, endYear: 1973 }),
+      makeEntry({ id: "yorks", title: "England, Yorkshire, Parish Registers, 1538-2016", placeIds: [1986340], startYear: 1538, endYear: 2016 }),
+      makeEntry({ id: "uknavy", title: "United Kingdom, Merchant Navy Seamen Records, 1835-1941", placeIds: [1], startYear: 1835, endYear: 1941 }),
+      makeEntry({ id: "gbdeath", title: "Great Britain, Deaths and Burials, 1778-1988", placeIds: [1], startYear: 1778, endYear: 1988 }),
+      makeEntry({ id: "newengl", title: "United States, New England Passenger and Crew Lists, 1911-1954", placeIds: [1], startYear: 1911, endYear: 1954 }),
+      makeEntry({ id: "jamaica", title: "Jamaica, Church of England Parish Register Transcripts, 1664-1880", placeIds: [1], startYear: 1664, endYear: 1880 }),
+      makeEntry({ id: "nsw", title: "Australia, New South Wales, Census, 1891", placeIds: [1], startYear: 1891, endYear: 1891 }),
+      makeEntry({ id: "walesprob", title: "Wales, Probate Abstracts, 1544-1858", placeIds: [1], startYear: 1544, endYear: 1858 }),
+      makeEntry({ id: "scotbap", title: "Scotland, Births and Baptisms, 1564-1950", placeIds: [1], startYear: 1564, endYear: 1950 }),
+      makeEntry({ id: "irlciv", title: "Ireland, Civil Registration Indexes, 1845-1958", placeIds: [1], startYear: 1845, endYear: 1958 }),
+      makeEntry({ id: "niprob", title: "Northern Ireland, Probate Calendars, 1858-1965", placeIds: [1], startYear: 1858, endYear: 1965 }),
+    ],
+  };
+  const search = async (standardPlace: string, startYear?: number, endYear?: number) => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => UK_CATALOG });
+    return collectionsSearchTool({ standardPlace, ...(startYear ? { startYear } : {}), ...(endYear ? { endYear } : {}) }, LOCAL);
+  };
+  const ids = (r: CollectionsSearchResult) => r.results.map((c) => c.id);
+
+  it("an English place gets the England and Wales census for its year, at scope England", async () => {
+    const r = await search("Sheffield, Yorkshire, England, United Kingdom", 1901, 1901);
+    expect(r.scope).toBe("England");
+    expect(r.results.map((c) => c.title)).toContain("England and Wales, Census, 1901");
+  });
+
+  it("an English place gets titles that START with England, the United Kingdom or Great Britain, and none that only hold the word", async () => {
+    const r = await search("Sheffield, Yorkshire, England, United Kingdom");
+    expect(ids(r)).toEqual(["ew1901", "engmar", "yorks", "uknavy", "gbdeath"]);
+    expect(r.totalForPlace).toBe(5);
+  });
+
+  it("a Welsh place gets the Wales and England and Wales titles, and no New South Wales or England-only title", async () => {
+    const r = await search("Cardiff, Glamorgan, Wales, United Kingdom");
+    expect(r.scope).toBe("Wales");
+    expect(ids(r)).toEqual(["ew1901", "uknavy", "gbdeath", "walesprob"]);
+  });
+
+  it("a Northern Irish place gets the all-Ireland titles; a Scottish place gets its own and none of Ireland's", async () => {
+    expect(ids(await search("Belfast, Antrim, Northern Ireland, United Kingdom"))).toEqual(["uknavy", "gbdeath", "irlciv", "niprob"]);
+    expect(ids(await search("Rosskeen, Ross-shire, Scotland, United Kingdom"))).toEqual(["uknavy", "gbdeath", "scotbap"]);
+  });
+
+  it("the bare kingdom gets only the kingdom-wide titles", async () => {
+    const r = await search("United Kingdom");
+    expect(r.scope).toBe("United Kingdom");
+    expect(ids(r)).toEqual(["uknavy", "gbdeath"]);
+  });
+
+  it("free text passes through as before: England alone matches any title holding the word", async () => {
+    const r = await search("England");
+    expect(r.scope).toBe("England");
+    expect(ids(r)).toEqual(["ew1901", "engmar", "yorks", "newengl", "jamaica"]);
+  });
+
+  it("tree_gaps' coverage of an English place counts the England and Wales census year", () => {
+    const c = collectionCoverage(UK_CATALOG.entries ?? [], "Sheffield, Yorkshire, England, United Kingdom", 1891, 1911);
+    expect(c.censusYears).toEqual([1901]);
+  });
+});
+
+describe("other places whose titles lead with another name than their standard country", () => {
+  const CATALOG: FSCollectionsResponse = {
+    results: 12,
+    entries: [
+      makeEntry({ id: "guad", title: "Guadeloupe, Civil Registration Records, 1792-1872", placeIds: [1] }),
+      makeEntry({ id: "mart", title: "Martinique, Church Records, 1662-1847", placeIds: [1] }),
+      makeEntry({ id: "frbap", title: "France, Births and Baptisms, 1546-1896", placeIds: [1] }),
+      makeEntry({ id: "maur", title: "Mauritius (Île de France), ANOM, Civil Registration, 1700-1820", placeIds: [1] }),
+      makeEntry({ id: "czech", title: "Czech Republic, Church Books, 1552-1963", placeIds: [1] }),
+      makeEntry({ id: "fsm", title: "Micronesia, Civil Registration, 1883-1986", placeIds: [1] }),
+      makeEntry({ id: "usvi1", title: "Virgin Islands (U.S.), Church Records, 1765-2010", placeIds: [1] }),
+      makeEntry({ id: "usvi2", title: "United States Virgin Islands, Census Records, 1841-1911", placeIds: [1] }),
+      makeEntry({ id: "lucia", title: "St. Lucia, Church Records, 1751-1793", placeIds: [1] }),
+      makeEntry({ id: "verde", title: "Cape Verde, Catholic Church Records, 1787-1957", placeIds: [1] }),
+      makeEntry({ id: "chan", title: "Channel Islands, Births and Baptisms, 1820-1907", placeIds: [1] }),
+      makeEntry({ id: "nj", title: "New Jersey, County Marriages, 1682-1956", placeIds: [1] }),
+    ],
+  };
+  const ids = async (standardPlace: string) => {
+    mockedGetValidToken.mockResolvedValueOnce("test-token");
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => CATALOG });
+    return (await collectionsSearchTool({ standardPlace }, LOCAL)).results.map((c) => c.id);
+  };
+
+  it("a French overseas department is its own scope and keeps France's titles", async () => {
+    expect(standardPlaceToCollectionsQuery("Pointe-à-Pitre, Guadeloupe, France")).toBe("Guadeloupe");
+    expect(await ids("Pointe-à-Pitre, Guadeloupe, France")).toEqual(["guad", "frbap"]);
+    expect(await ids("Fort-de-France, Martinique, France")).toEqual(["mart", "frbap"]);
+  });
+
+  it("metropolitan France keeps its substring match", async () => {
+    expect(standardPlaceToCollectionsQuery("Paris, France")).toBe("France");
+    expect(await ids("Paris, France")).toEqual(["frbap", "maur"]);
+  });
+
+  it("a renamed country gets the titles the catalog names it by", async () => {
+    expect(await ids("Praha, Czechia")).toEqual(["czech"]);
+    expect(await ids("Pohnpei, Federated States of Micronesia")).toEqual(["fsm"]);
+    expect(await ids("Saint Thomas, United States Virgin Islands")).toEqual(["usvi1", "usvi2"]);
+    expect(await ids("Castries, Saint Lucia")).toEqual(["lucia"]);
+    expect(await ids("Praia, Santiago, Cabo Verde")).toEqual(["verde"]);
+  });
+
+  it("Jersey and Guernsey get the Channel Islands title, and Jersey no New Jersey one", async () => {
+    expect(await ids("Jersey")).toEqual(["chan"]);
+    expect(await ids("Sark, Guernsey")).toEqual(["chan"]);
   });
 });
 

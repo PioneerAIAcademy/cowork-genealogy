@@ -1,0 +1,398 @@
+{
+  "run_log": "v21_2026-11-19_18-16-45.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the files and the request. Patrick Flynn (LZNY-BRF), born ~1845 Ireland, died 1908 Schuylkill County, objective \"Identify the parents of Patrick Flynn\". The aunt's history being \"uncertain\" repeats the user's own \"not sure how accurate\". Nothing invented."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Created research.json and tree.gedcomx.json, imported Patrick and his two facts, set the objective, and named both volunteered items (death certificate, aunt's history) without claiming they were saved. It closes by asking which first step to take."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context returned no_project, then project_create with personId LZNY-BRF, subjectPersonIds [LZNY-BRF], the user's objective and a short title. Correct."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tree holds only I1 Patrick Flynn with his name, sex, birth and death from FamilySearch, sourced to S1 at quality 1. No invented relatives (FamilySearch lists none)."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The project block has an id, the objective, a short title distinct from it (\"Patrick Flynn's parents\"), subject I1, status active and dates. The research.json diff touches only the project section."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The objective came from the user, so nothing had to be defaulted, and the reply doesn't claim one was."
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both places come from FamilySearch with their standard forms kept as the tool gave them: Ireland → \"Ireland\", Schuylkill County, Pennsylvania → \"Schuylkill, Pennsylvania, United States\". No hand-entered places."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the calls and the reply. Only project_context ran (no_project), and nothing was created. It accurately says no ID was given and that it doesn't search by name. The description of Patrick is the user's own (born ~1845 Ireland, Schuylkill County). \"KWCJ-RN4\" is clearly an example format, not his ID. Nothing invented."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Asked for Patrick Flynn's FamilySearch ID, named him as the user described him so they know which ID is wanted, explained why (several men could match, no name search), and said where to find the ID. No project_create, no person_search, no stub."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One call, project_context with the right project folder, answered no_project. No other calls were needed."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tree was written: the agent correctly created nothing without a person ID."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No research.json was written, correctly, since no project is created without an ID."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No project was created, so no profile was written. Correct for this case."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No places were written, because no tree was created."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the tree and research.json. Six people imported (Patrick, Mary Kelly, James, Margaret, Michael, Bridget). It flags FamilySearch's Ireland against the user's Pennsylvania and relays the parent FamilySearch names without a record. Nothing invented. The dropped birth facts are scored under Researcher profile, not twice."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_create call, with no person_read and no tree passed in (JC10). Six people (I1–I6) and seven relationships written, with the discrepancy and the unrecorded parent both reported. The next step is named."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context (no_project), then project_create with personId and subjectPersonIds LZNY-BRF, the objective and a short title. Correct."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six people have local I ids and only known fields, with facts sourced to the FamilySearch tree at quality 1 (JC7). Michael and Bridget are treated like the rest (JC8). The source's notes field didn't reach the tree (JC6)."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The project block has an id, objective, a short title, subject I1, status and dates. The sources section is seeded, the write succeeded, and no validator failed."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The user said \"born around 1845 in Pennsylvania and died 1908 in Schuylkill County\". The stored objective, \"Identify the parents of Patrick Flynn.\", keeps the goal but drops both of the user's facts, which JC0 counts as a departure. (The same objective was kept at 3 in main's v20 annotation, so this is a judgment call.)"
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool's standardized values are kept exactly: places \"Ireland\", \"Schuylkill, Pennsylvania, United States\" and \"Branch, Schuylkill, Pennsylvania, United States\", and dates \"Abt 1845\" and \"Abt 1815\" for \"~\" values (JC5)."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the written files. 4 people, 4 relationships and 7 sources (6 from FamilySearch plus the tree source, the count JC0 accepts). The birth and death in Bastogne match. It raises none of the traps the test lists: no \"no sources\" claim from the facts lacking their own refs (JC1), no missing-subtype issue (JC4), no naming-pattern concern (JC5)."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Created the project, imported all 4 people with their relationships and 7 sources, stored the objective, and named the next step without checking or changing any data yet, which is right for project setup."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context (no_project), then project_create with personId and subjectPersonIds MRQ1-JBM, the user's objective and a short title. It succeeded."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "People I1–I4 have only known fields, with facts sourced to S1 at quality 1. Each person's FamilySearch sources point at the tree's own ids: Jean Baptiste S2–S4, Marie S5, Henri S6, Josephine S7 (JC3)."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The project block has an id, the objective verbatim, a short title (\"Jean Baptiste Moreau source review\"), subject I1, status and dates. Valid, and no validator failed."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The objective is the user's own words, stored verbatim, with nothing defaulted or added."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every place came from FamilySearch, with the tool's standard form \"Bastogne, Luxembourg\" kept unchanged. No hand-entered places."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the files. Patrick Flynn (LZNY-BRF), born ~1845 Ireland, died 1908 Schuylkill County, no relatives, one source imported, and the objective \"Identify the parents of Patrick Flynn\". All accurate, nothing invented."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Created research.json and tree.gedcomx.json in one pass, seeded Patrick from FamilySearch, stored the user's goal, and named the next step. It didn't ask about the user or their site access, and didn't mention a default objective (JC3)."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_create with personId and subjectPersonIds LZNY-BRF. The objective and title carry the ID because the user gave only the ID, and the tool is built to swap in the subject's name (JC0); it wrote \"Identify the parents of Patrick Flynn.\" and \"Patrick Flynn's parents\"."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "I1 Patrick Flynn with only known fields (name, sex, birth, death), sourced to S1 at quality 1. No invented relatives, since FamilySearch lists none."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The project block has an id, the objective, a short title distinct from it, subject I1, status and dates. Valid, and no validator failed."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\"I'm experienced\" was not stored (JC2): the profile is the fixed novice house profile, which the validator checks, with no subscriptions field (JC5). The objective is the user's stated goal, not a default."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both places came from FamilySearch with the tool's standard forms kept unchanged: \"Ireland\" and \"Schuylkill, Pennsylvania, United States\"."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the judge. The summary notes Patrick's isolation but omits that the lack of FAN connections makes research harder and increases reliance on direct records."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the judge. The required fixed researcher profile fields are not evidenced as persisted."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the judge. The required experience_level and narration_guidance fields appear to be missing."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the judge. Only subscriptions were explicitly updated; the required novice level and house-style narration guidance were not written."
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

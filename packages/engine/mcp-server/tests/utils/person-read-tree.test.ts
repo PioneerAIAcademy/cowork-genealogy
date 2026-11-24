@@ -147,6 +147,49 @@ describe("buildFromStagedRead — a relationship's own source refs", () => {
   });
 });
 
+// Issue #2475, row from issue #2230 part 1: the opening tree is the one writer that let a
+// name in with no source ref, which tree_edit refuses for a new name.
+describe("buildFromStagedRead — every name, fact and relationship cites S1", () => {
+  it("stamps the S1 ref on each name, keeping a name's own resolvable ref", async () => {
+    const { tree, idMap } = await buildFromStagedRead({
+      staged: {
+        personId: "LZNY-BRF",
+        requestedId: "LZNY-BRF",
+        gedcomx: {
+          persons: [
+            {
+              id: "LZNY-BRF",
+              gender: "Male",
+              living: false,
+              names: [
+                { given: "Patrick", surname: "Flynn" },
+                { given: "Pat", surname: "Flynn", sources: [{ ref: "SRC-BAPTISM" }, { ref: "SRC-GONE" }] },
+              ],
+              facts: [{ type: "Birth", date: "1845" }],
+            },
+            { id: "LZNY-DAD", gender: "Male", living: false, names: [{ given: "Joseph", surname: "Flynn" }] },
+          ],
+          relationships: [{ type: "ParentChild", parent: "LZNY-DAD", child: "LZNY-BRF" }],
+          sources: [{ id: "SRC-BAPTISM", title: "A baptism" }],
+        },
+      },
+      now: NOW,
+    });
+    const s1 = { ref: idMap.familySearchTreeSource, quality: 1 };
+    const names = tree.persons.flatMap((p) => p.names);
+    expect(names).toHaveLength(3);
+    expect(names[0].sources).toEqual([s1]);
+    expect(names[1].sources).toEqual([{ ref: idMap.sources["SRC-BAPTISM"] }, s1]);
+    expect(names[2].sources).toEqual([s1]);
+    const unsourced = [
+      ...names,
+      ...tree.persons.flatMap((p) => p.facts ?? []),
+      ...tree.relationships,
+    ].filter((node) => !node.sources?.some((r: { ref?: string }) => r.ref === "S1"));
+    expect(unsourced).toEqual([]);
+  });
+});
+
 describe("accessDate", () => {
   it("renders the Evidence Explained access-date form in UTC", () => {
     expect(accessDate(new Date("2026-10-01T23:30:00Z"))).toBe("1 October 2026");

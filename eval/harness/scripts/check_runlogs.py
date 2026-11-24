@@ -16,7 +16,12 @@ docs/plan/eval-runlog-versioning.md §C6:
              judge_prompt_hash; satisfy with `make judge-regrade`.
              Downgrades to a warning on a run log rule 2 already
              reports skill-side stale (a regrade cannot satisfy a log
-             that owes a paid `make eval-skill` run).
+             that owes a paid `make eval-skill` run). The render half
+             also warns, on a log the PR did not add, when the PR does
+             not MOVE the hash (`base_judge_render_hash` from
+             `BASE_TREE` equals the current one): that is inherited
+             debt, owed on the PR that moved the render code. With no
+             base to read it blocks as before.
     Rule 2c  the graded run log's `instrument` fingerprint matches the
              current one: BLOCKS on `validators.suite`, warns on
              `tools.fixture` / `validators.shared` / `tools.live` /
@@ -118,8 +123,9 @@ from harness.outcomes import (  # noqa: E402
     consequential,
     refresh_test_entry_outcome,
 )
-from harness.judge_render import judge_render_hash  # noqa: E402
+from harness.judge_render import JudgeRenderGraphError, judge_render_hash  # noqa: E402
 from harness.gate_tags import validator_gate_tags  # noqa: E402
+from harness.main_thread import load_main_thread  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
     harness_import_closure,
@@ -835,6 +841,7 @@ def rule2b_judge_render(
     *,
     graded: str = GRADED_DEFAULT,
     judge_render_touched: bool = False,
+    compare_base: bool = True,
 ) -> int:
     """Rule 2b, render half: `judge_render_hash` matches the current render code.
 
@@ -847,6 +854,18 @@ def rule2b_judge_render(
     whose recomputed hash differs; `make judge-regrade` satisfies it, as for the
     prompt. A log with no `judge_render_hash` at all predates the field and
     warns rather than blocks, as rule 2c does for an absent instrument.
+
+    On a log the PR did not add (`compare_base`), also warns rather than blocks
+    when the PR does not MOVE the hash — `base_judge_render_hash()`, read from
+    the `BASE_TREE` checkout, equals the current one. That mismatch is debt the
+    PR inherited, owed on whichever PR moved the render code, and without this
+    every later PR that merely touches a trigger file inherits it. It is the
+    same arm `rule2c_instrument` carries for a suite validator `main` already
+    has, and it is what makes good on this rule's own documented contract: the
+    trigger paths are "only the TRIGGER for looking", the recompute being the
+    decision. With no base to read it blocks as before. A log the PR ADDS is its
+    own evidence and must match the tree it merges into, so it gets no such
+    downgrade.
 
     Returns 1 on block, 0 otherwise.
     """
@@ -892,6 +911,17 @@ def rule2b_judge_render(
         gh_warning(
             f"{header} This PR did not touch the render code, so the mismatch "
             f"is a mixed-era corpus rather than this PR's doing.",
+        )
+        return 0
+    # Read the base only past the touched guard: the base is then guaranteed to
+    # exist (a render-trigger path puts the workflow's `needs_engine` on), and a
+    # PR that touched no render code keeps the better message above.
+    if compare_base and base_judge_render_hash() == actual:
+        gh_warning(
+            f"{header} This PR does not move the render hash — the base "
+            f"computes the same {actual[:12]}… — so the mismatch is debt this "
+            f"PR inherited rather than caused, owed on the PR that moved the "
+            f"render code.",
         )
         return 0
     gh_error(
@@ -957,7 +987,7 @@ def rule2b_judge_prompt(
     gh_error(
         f"{header} Satisfy by running `make judge-regrade` and committing the "
         f"refreshed run log in this PR. (A regrade stamps the new hash + judge "
-        f"model and costs ~$0.25/skill of judge-only spend; it leaves the "
+        f"model and costs ~$1/skill of judge-only spend; it leaves the "
         f"skill output and the `.ann.json` alone.)",
     )
     return 1
@@ -985,7 +1015,8 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
     r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
-    r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
+    r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json)"
+    r"|packages/engine/plugin/main-thread\.json)$"
 )
 # A per-skill validator file moves its own suite's fingerprint, and every
 # suite's when its harness imports change.
@@ -1016,6 +1047,34 @@ def base_suite_validators(skill: str) -> str | None:
     if not base or not Path(base).is_dir():
         return None
     return validators_fingerprint(skill, Path(base) / "eval" / "harness" / "validators")["suite"]
+
+
+def base_judge_render_hash() -> str | None:
+    """`judge_render_hash` as BASE_SHA has it, from the `BASE_TREE` checkout.
+
+    None when there is no readable base. The caller then KEEPS BLOCKING, the
+    same stance `_harness_imports_moved` takes on an unreadable base: the gate
+    must not pass on a read it skipped.
+
+    `judge_render_hash` takes the tree to read as `validators_dir` and roots the
+    whole module graph at its parent (`instrument._resolve_harness_module`), so
+    no subprocess is needed. It raises `JudgeRenderGraphError` on a base whose
+    roots no longer resolve or which it cannot parse; that is a base we cannot
+    read, so it becomes None rather than a traceback.
+
+    `BASE_TREE` is set only when the workflow's `needs_engine` is true. Every
+    `JUDGE_RENDER_TRIGGER_PATHS` entry is under `eval/harness/`, which
+    `ENGINE_PATTERNS` matches, so the base is always present when the rule-2b
+    arm that calls this can fire. Narrowing `ENGINE_PATTERNS`, or adding a
+    trigger path outside `eval/harness/`, makes it fail closed.
+    """
+    base = os.environ.get("BASE_TREE")
+    if not base or not Path(base).is_dir():
+        return None
+    try:
+        return judge_render_hash(Path(base) / "eval" / "harness" / "validators")
+    except JudgeRenderGraphError:
+        return None
 
 
 def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
@@ -1151,6 +1210,17 @@ def rule2c_instrument(
     live_moved = sorted(t for t, h in stored_live.items() if current["live_modules"].get(t) != h)
     if live_moved:
         warning.append(f"live_modules ({', '.join(live_moved)})")
+    # Every suite's dispatcher, and the research router, run main-thread.json's
+    # model; the envelope's `model` is the one the run used. Not in the snapshot,
+    # so without this a model change would leave every log graded on another
+    # main thread with nothing said.
+    ran_on = log.get("model")
+    main_model = load_main_thread().model
+    if isinstance(ran_on, str) and ran_on and ran_on != main_model:
+        warning.append(
+            f"the main thread (this log ran it on `{ran_on}`; "
+            f"`packages/engine/plugin/main-thread.json` now names `{main_model}`)"
+        )
 
     if warning:
         gh_warning(
@@ -2864,6 +2934,7 @@ def main() -> int:
                 filename,
                 graded=graded,
                 judge_render_touched=judge_render_touched,
+                compare_base=not own_log,
             )
             fails += rule2c_instrument(
                 skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result),

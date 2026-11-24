@@ -29,6 +29,14 @@ import { rejectedTokenMessage } from "../auth/config.js";
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
 
+/** A read's retries: the request's own three in about a second lost three of the
+ *  five records attached to a subject in a thomas-hanrahan-marriage e2e run
+ *  (2026-11-16) to a network blip. Backoff from 400 ms sleeps 6 to 9 s in all
+ *  (jitter included), so every attempt fits `fetchWithRetry`'s 10 s budget; a
+ *  first attempt that times out spends the budget, so a read never retries past
+ *  its own timeout. */
+export const RECORD_READ_RETRY = { attempts: 5, baseMs: 400 } as const;
+
 // ─── MCP schema ───────────────────────────────────────────────────────────
 
 export const recordReadSchema = {
@@ -157,13 +165,19 @@ export async function recordReadTool(
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
 
-  const res = await fsFetch(principal, url, {
-    headers: {
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
+  const res = await fsFetch(
+    principal,
+    url,
+    {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
     },
-  });
+    undefined,
+    RECORD_READ_RETRY,
+  );
 
   if (res.status === 401) {
     throw new Error(await rejectedTokenMessage(principal));
@@ -540,8 +554,22 @@ export function extractEntityId(recordId: string): string {
   // rather than slipping through a check anchored on a literal "ark:/" prefix.
   const typed = toArk(trimmed).match(/^ark:\/61903\/(\d:\d):(.+)$/);
 
-  // Not an ARK at all — a bare entity id, which the schema documents as valid.
-  if (!typed) return trimmed;
+  if (!typed) {
+    // A scheme-prefixed id ("legacy-nfs:MMVZ-Z9T", "capture:…", "ancestry:…")
+    // names a source outside FamilySearch's record-persona id space. Fetching it
+    // as a bare id can return an unrelated persona that shares the suffix.
+    if (trimmed.includes(":")) {
+      throw new Error(
+        `"${trimmed}" names a source that is not a FamilySearch record persona ` +
+          "(a scheme-prefixed id, such as a tree source, capture or another " +
+          "site's record). record_read takes a record-persona ARK " +
+          '("ark:/61903/1:1:QVS9-DHDB") — the `recordId` returned by ' +
+          "record_search — or its bare entity ID.",
+      );
+    }
+    // Not an ARK at all — a bare entity id, which the schema documents as valid.
+    return trimmed;
+  }
 
   const [, arkType, entityId] = typed;
   if (arkType === "1:1") return entityId;

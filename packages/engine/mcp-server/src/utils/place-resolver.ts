@@ -826,13 +826,26 @@ function divisionOf(part: string): string | null {
 
 /** The US state, Puerto Rico or Canadian province a place text's last part
  *  names, after a trailing "United States", "Canada" or "British North
- *  America", else null. */
+ *  America", by full name or postal code (`divisionOf`) or, failing that, by
+ *  an abbreviation the lead's one-word list gives that state or province
+ *  ("Miss", "Tenn", "Penna" — `listedOneWordPlace`, consulted with no record
+ *  country, so only an entry unconditional on it answers): else null. Only
+ *  the TEXT side reads the list; `divisionOf` itself is unchanged; a
+ *  *standard* place's own segments are always full names. */
 function textDivision(place: string): string | null {
   const parts = placeSegments(place);
   const nation = (part: string) =>
     ["united states", "canada"].includes(canonicalCountry(part) ?? "") || foldPlaceName(part) === "british north america";
   while (parts.length > 0 && nation(parts[parts.length - 1])) parts.pop();
-  return parts.length > 0 ? divisionOf(parts[parts.length - 1]) : null;
+  if (parts.length === 0) return null;
+  const last = parts[parts.length - 1];
+  const direct = divisionOf(last);
+  if (direct !== null) return direct;
+  const listed = listedOneWordPlace(last);
+  if (listed === null) return null;
+  const [division, country, ...rest] = placeSegments(listed);
+  if (rest.length > 0 || division === undefined || country === undefined) return null;
+  return nation(country) ? divisionOf(division) : null;
 }
 
 /**
@@ -1729,8 +1742,8 @@ export async function placeSearchNames(
 }
 
 /** Every representation a placeId has had, with its name and range; empty on
- *  failure (not cached). */
-async function placeReps(placeId: string): Promise<PlaceRep[]> {
+ *  failure (not cached). Throws only the FS budget refusal. */
+export async function placeReps(placeId: string): Promise<PlaceRep[]> {
   const cached = placeRepsCache.get(placeId);
   if (cached) return cached;
   let reps: PlaceRep[];

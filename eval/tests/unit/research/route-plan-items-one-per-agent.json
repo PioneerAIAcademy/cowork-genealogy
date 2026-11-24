@@ -63,5 +63,8 @@
     "The project's active plan has two planned items (pli_001 census, pli_002 church) and no evidence yet. The researcher asked for the open searches to run without check-ins, so dispatching both in one step is correct.",
     "search-records is STUBBED: each spawn returns \"Your delegation is recorded and counts as complete\" and runs no search. So saying both searches were handed off, delegated or dispatched is ACCURATE and is NOT a fabricated claim; no search results and no project changes are the expected state. Do not score Correctness or Completeness down for the missing results. Grade only the router's own work: whether it claims records were found or facts learned (that would be fabrication), and whether its state derivation is sound. A scratch run graded Correctness 1 three times for reading the hand-off as false, while every deterministic validator passed."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

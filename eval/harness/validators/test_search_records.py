@@ -92,6 +92,26 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     )
 
 
+def test_cited_record_search_not_logged_negative(before_state, after_state, test):
+    """Tag-gated: when the search returns a record the tree already cites on
+    the subject (issue #4667), no new record_search entry that kept results
+    may be `negative` or `error`, and one that kept results must be `positive`
+    or `partial`. A nil keeps no results and is rightly negative, so an entry
+    without results cannot stand in for the search that returned the record.
+    `research_log_append` refuses the negative write; this confirms the agent
+    recovered from the refusal rather than dodging it."""
+    if "cited-record-not-negative" not in test.get("tags", []):
+        pytest.skip("not a cited-record-not-negative scenario")
+    searches = [e for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"]
+    kept = [e for e in searches if e.get("results_ref")]
+    bad = [e.get("id") for e in kept if e.get("outcome") in ("negative", "error")]
+    assert not bad, f"record_search that returned results logged negative/error despite the cited record: {bad}"
+    assert any(e.get("outcome") in ("positive", "partial") for e in kept), (
+        "expected a new record_search entry that kept its results, logged positive or partial; got "
+        f"{[(e.get('id'), e.get('outcome'), e.get('results_ref')) for e in searches]}"
+    )
+
+
 # --- Pre-1880 census: family structure must be marked inferred --------
 
 _CENSUS_REFUSAL = "relationship-to-head"
@@ -375,6 +395,22 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
         "the agent reported the record set not on FamilySearch without running a "
         "record_search; Step 8 item 7 requires one logged search first"
     )
+
+
+def test_survey_sends_all_three_isprincipal_calls(tool_calls, test):
+    """Issue #4348 -- an every-mention survey sends the plain search, isPrincipal:
+    true and isPrincipal: false, and does not page to retrieve more rows than
+    those three calls return. The judge alone missed both the omitted third call
+    (the original flake) and a run that paged anyway (five `offset` calls plus
+    three per-place calls) despite the agent body saying not to.
+    """
+    if "every-mention-survey" not in test.get("tags", []):
+        pytest.skip("only the every-mention survey test")
+    searches = [c.get("args") or {} for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "record_search"]
+    sent = {a.get("isPrincipal", "omitted") for a in searches}
+    assert {"omitted", True, False} <= sent, f"survey sent isPrincipal values {sent}; it needs none, true and false"
+    paged = [a for a in searches if "offset" in a]
+    assert not paged, f"survey paged {len(paged)} time(s) to retrieve more rows; issue #4348 decided the two filtered totals give the split and a sample is enough"
 
 
 # --- Outside holdings must come from a tool response (issue #4352) -----------
@@ -1166,6 +1202,7 @@ _CENSUS_SEARCH_TEST_IDS = frozenset({
     "ut_search_records_017",
     "ut_search_records_018",
     "ut_search_records_027",
+    "ut_search_records_037",
     "ut_search_records_hpi",
     "ut_search_records_hpm",
     "ut_search_records_d01",
@@ -1223,6 +1260,45 @@ def _research_query_calls(tool_calls):
         c for c in (tool_calls or [])
         if _bare_tool_name(c.get("tool")) == "research_query"
     ]
+
+
+def test_unhanded_plan_item_stays_planned(before_state, after_state, tool_calls, test):
+    """Tag-gated (one-plan-item-per-call): the delegation names pli_001 only, so
+    pli_002 stays ``planned``, gets no log entry, and is not searched.
+
+    The judge scored Completeness 3 on every committed run that ran both items
+    (#4330), and the rule can be read off research.json.
+    """
+    if "one-plan-item-per-call" not in test.get("tags", []):
+        pytest.skip("not a one-plan-item-per-call scenario")
+    after = after_state.get("research_json") or {}
+    statuses = [
+        item.get("status")
+        for plan in after.get("plans") or []
+        for item in plan.get("items") or []
+        if item.get("id") == "pli_002"
+    ]
+    assert statuses == ["planned"], f"pli_002 left `planned`: status {statuses}"
+    logged = [
+        e.get("id")
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("plan_item_id") == "pli_002"
+    ]
+    assert not logged, f"pli_002 was logged in this call: {logged}"
+    church = [
+        c.get("args")
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+        and str(_as_mapping(c.get("args")).get("recordType") or "").lower() != "census"
+        and (
+            "church" in json.dumps(c.get("args") or {}).lower()
+            or (
+                "census" not in (c.get("response_fixture") or "")
+                and "census" not in json.dumps(c.get("args") or {}).lower()
+            )
+        )
+    ]
+    assert not church, f"pli_002's church search ran in this call: {church}"
 
 
 def test_handed_plan_item_skips_research_query(tool_calls, test):
@@ -1615,4 +1691,150 @@ def test_unproven_surname_used_as_search_input(
     assert _norm_name(surname) not in added, (
         f"the marriage to a {surname} is unproven, yet the run gave the subject "
         f"a {surname} name in the tree"
+    )
+
+
+# --- A nil under tight filters is not a death; a found candidate is not filtered out (#4580)
+
+
+def _record_search_calls(tool_calls) -> list[dict]:
+    return [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool", "")) == "record_search"]
+
+
+def _surname_could_be(value, target: str) -> bool:
+    """True when a surname argument (wildcards and all) could match `target`."""
+    import fnmatch
+
+    if not isinstance(value, str) or not value.strip():
+        return False
+    return fnmatch.fnmatchcase(target.lower(), value.strip().lower())
+
+
+def _total_matches(call) -> int | None:
+    response = call.get("response")
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return None
+    if not isinstance(response, dict):
+        return None
+    total = response.get("totalMatches")
+    return total if isinstance(total, int) else None
+
+
+# A death placed by the absence of records: "died between 1900 and approximately
+# 1912", "deceased before 1910", or "suggests she died" in a sentence that also
+# names the empty searches. A death read off a record ("she died 29 October 1923",
+# "the 1923 death registration is likely her") is not one, and neither is a
+# record type searched ("Virginia death records between 1912 and 1940").
+_DEATH_EVENT = (
+    r"\b(?:died|deceased|death(?!\s+(?:records?|certificates?|registers?|"
+    r"registrations?|returns?|indexe?s?|indices|collections?|searches?)\b))\b"
+)
+_DEATH_RANGE = re.compile(
+    _DEATH_EVENT + r"[^.\n]{0,40}?\b(?:between|before|by|prior to)\b[^.\n]{0,30}?\b1[89]\d\d\b",
+    re.IGNORECASE,
+)
+_DEATH_SUGGESTED = re.compile(
+    r"\b(?:suggest|indicat|impl)\w*\b[^.\n]{0,60}?" + _DEATH_EVENT,
+    re.IGNORECASE,
+)
+_NIL_WORDS = re.compile(
+    r"\b(?:no (?:records?|results?|matches)|nil|zero|absence|absent|not found|none|empty)\b",
+    re.IGNORECASE,
+)
+
+
+def nil_death_inference(text: str) -> str | None:
+    """The first sentence of `text` that infers a death from empty searches, or None."""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text or ""):
+        if _DEATH_RANGE.search(sentence):
+            return sentence.strip()
+        if _DEATH_SUGGESTED.search(sentence) and _NIL_WORDS.search(sentence):
+            return sentence.strip()
+    return None
+
+
+def test_nil_not_read_as_death(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (nil-no-death-inference / nil-drops-surname): issue #4580.
+
+    The Tyler session (feedback #4510): four searches under surname Tyler +
+    female + born 1848-1858 came back empty after 1900, and the return said this
+    "strongly suggests she died between 1900 and approximately 1912". She is
+    indexed under her birth surname Lightfoot, with birth years 1837 and 1833.
+
+    Two checks, each under its own tag. `nil-drops-surname`: after the first
+    empty Tyler search, at least one record_search carries no surname or one
+    that could not match Tyler. `nil-no-death-inference`: the agent's own
+    return places no death from the nils (`nil_death_inference`).
+    """
+    from harness.skill_runner import subject_reply_text
+
+    tags = test.get("tags", [])
+    if "nil-no-death-inference" not in tags and "nil-drops-surname" not in tags:
+        pytest.skip("not a nil-death scenario")
+
+    if "nil-drops-surname" in tags:
+        calls = _record_search_calls(tool_calls)
+        first_nil = next(
+            (
+                i for i, c in enumerate(calls)
+                if _surname_could_be(_as_mapping(c.get("args")).get("surname"), "tyler")
+                and _total_matches(c) == 0
+            ),
+            None,
+        )
+        assert first_nil is not None, (
+            "no record_search under surname Tyler came back empty, so the test "
+            "never reached the nil it grades; record_search args: "
+            + repr([_as_mapping(c.get("args")) for c in calls])
+        )
+        later = [_as_mapping(c.get("args")) for c in calls[first_nil + 1:]]
+        dropped = [a for a in later if not _surname_could_be(a.get("surname"), "tyler")]
+        assert dropped, (
+            "after the empty Tyler search, every record_search kept a surname that "
+            "matches Tyler; none dropped it to anchor on the place and a household "
+            "member (issue #4580). Later calls: " + repr(later)
+        )
+
+    if "nil-no-death-inference" in tags:
+        reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+        found = nil_death_inference(reply)
+        assert found is None, (
+            "the return infers a death from empty searches; a nil is 'not found "
+            f"under <the filters>', never a death or a date range for one: {found!r}"
+        )
+
+
+def _year(value) -> int | None:
+    try:
+        return int(str(value).strip()[:4])
+    except (TypeError, ValueError):
+        return None
+
+
+def test_found_candidate_not_excluded(tool_calls, test):
+    """Tag-gated (candidate-not-excluded): issue #4580.
+
+    The delegation hands in Antoine Tyler, indexed female, b. 1833, as a live
+    candidate for the subject (b. about 1853). The session's next search
+    (log_100) kept birthYearFrom 1848 / birthYearTo 1858, which excludes her,
+    and its nil was read as a finding. Every record_search this test makes must
+    carry no birth range or one that includes 1833; and there must be one.
+    """
+    if "candidate-not-excluded" not in test.get("tags", []):
+        pytest.skip("not a found-candidate scenario")
+    candidate_year = 1833
+    calls = [_as_mapping(c.get("args")) for c in _record_search_calls(tool_calls)]
+    assert calls, "no record_search was made for the 1870 census plan item"
+    excluding = []
+    for args in calls:
+        low, high = _year(args.get("birthYearFrom")), _year(args.get("birthYearTo"))
+        if (low is not None and low > candidate_year) or (high is not None and high < candidate_year):
+            excluding.append(args)
+    assert not excluding, (
+        f"a record_search's birth range excludes {candidate_year}, the birth year of "
+        "a candidate this invocation was already handed (issue #4580): "
+        + repr(excluding)
     )

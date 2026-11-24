@@ -1,0 +1,15 @@
+{
+  "tool": "source_attachments",
+  "description": "source_attachments for the three Tyler records in scenario tyler-fluvanna-census (issue #4578, ut_research_iv3): the 1900 census entry, the 1880 census entry and the 1923 death certificate. None is attached to anyone in the bundles' tree (PJHQ-7RG has no sources), so all three come back unattached. The predicate matches any call naming a record persona ARK (1:1:), so a router that checks any of the three gets this answer. source_attachments is not a live tool, so without a fixture the router's attached-sources check would abort the run.",
+  "args": {
+    "uris": "~ark:/61903/1:1:"
+  },
+  "response": {
+    "attachments": {},
+    "unattached": [
+      "ark:/61903/1:1:MMF1-WWF",
+      "ark:/61903/1:1:MC5S-GVQ",
+      "ark:/61903/1:1:QVR7-5LJJ"
+    ]
+  }
+}

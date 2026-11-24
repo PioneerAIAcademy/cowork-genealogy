@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "No Marriage fact on KHGX-XWG and R1 carries no facts, so the pass rule holds. The tree still carries alternate names Thomam Hanrahan and Johan Ryan sourced to the Ballylooby entry (S1).",
+    "f2": "ps_001 is not_proved with shortfall conflict. It sets out the 1865 Northumberland household against the 1868 marriage but leaves c_003 (Ballylooby groom vs 1865 head) unresolved and calls the Ballylooby entry unexplained, so Ballylooby is never rejected. It does not say Ryan is unestablished (the question itself asserts Johanna Ryan), and it resolved c_002 for the Ardfinnan John against the 1880 New York birthplace."
+  },
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "4e9432fe928fed66ab58277ddf857e31b94185a19f068e567b510fe0c2170cbf"
+}

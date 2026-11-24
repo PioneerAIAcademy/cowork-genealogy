@@ -64,6 +64,7 @@ from app.agent.continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     env_float,
@@ -82,7 +83,7 @@ from app.agent.continue_policy import (
 from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
-from app.agent.real_agent import direct_project_file_write
+from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
 from proto.worker.writer_record import writer_record
@@ -109,9 +110,6 @@ GATEWAY_AGENT_MODELS = {
 }
 BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
-# The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
-# raised so one oversized JSON line cannot end a turn.
-MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
 
@@ -727,7 +725,7 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
     "image_index",
-    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "image_read", "image_search", "image_transcribe", "locality_survey", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
@@ -881,12 +879,13 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style. "
         "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+        "one page or compare it with its FamilySearch index, goes to the "
         "search-images agent with no projectPath, even when it names no images; relay "
         "everything after its final --- verbatim."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
-    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{ROUTING_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the

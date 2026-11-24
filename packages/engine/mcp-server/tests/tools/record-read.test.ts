@@ -27,7 +27,9 @@ import { dirname, join, sep } from "path";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { callTool } from "../helpers/call-tool.js";
+import { elapseBackoff } from "../helpers/elapse-backoff.js";
 import {
+  RECORD_READ_RETRY,
   recordReadTool,
   recordReadDocument,
   extractEntityId,
@@ -209,6 +211,20 @@ describe("extractEntityId", () => {
       /document-image ARK/i,
     );
   });
+
+  // A tree-source id ("legacy-nfs:MMVZ-Z9T") read as a bare id returned
+  // persona 1:1:MMVZ-Z9T, an unrelated 1900 census household.
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("rejects the scheme-prefixed id %s as not a record persona", (id) => {
+    expect(() => extractEntityId(id)).toThrow(/not a FamilySearch record persona/);
+  });
+
+  it("still accepts a bare persona id", () => {
+    expect(extractEntityId("QVS9-DHDB")).toBe("QVS9-DHDB");
+  });
 });
 
 // ─── recordReadTool tests ─────────────────────────────────────────────────
@@ -242,6 +258,17 @@ describe("recordReadTool", () => {
     await expect(
       recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }, LOCAL),
     ).rejects.toThrow(/1:2: record ARK/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("refuses the scheme-prefixed id %s without fetching", async (id) => {
+    await expect(recordReadTool({ recordId: id }, LOCAL)).rejects.toThrow(
+      /not a FamilySearch record persona/,
+    );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -340,13 +367,15 @@ describe("recordReadTool", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
+    await expect(elapseBackoff(() => recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL))).rejects.toThrow(
       /rate limit/,
     );
   });
 
   // 11. Error: generic non-OK → includes status code (500 is retried then returned)
   it("throws on unexpected non-OK status with code in message", async () => {
+    // The longest backoff jitter allows: every attempt must still fit the budget.
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
     mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
@@ -354,9 +383,29 @@ describe("recordReadTool", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
+    await expect(elapseBackoff(() => recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL))).rejects.toThrow(
       /500/,
     );
+    expect(mockFetch).toHaveBeenCalledTimes(RECORD_READ_RETRY.attempts);
+  });
+
+  // A thomas-hanrahan-marriage e2e run (2026-11-16) lost three attached records
+  // to "fetch failed" spanning the default retries' one second.
+  it("reads through a network blip that outlasts the default retries", async () => {
+    const blip = () => new TypeError("fetch failed");
+    mockFetch
+      .mockRejectedValueOnce(blip())
+      .mockRejectedValueOnce(blip())
+      .mockRejectedValueOnce(blip())
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MINIMAL_RECORD),
+        headers: new Headers(),
+      });
+    const result = await elapseBackoff(() => recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL));
+    expect(result.persons).toBeDefined();
+    expect(mockFetch).toHaveBeenCalledTimes(4);
   });
 
   // 12. Error: auth failure propagates from getValidToken

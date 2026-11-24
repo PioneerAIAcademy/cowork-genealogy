@@ -145,14 +145,21 @@ leaving the page, so a researcher can compare without losing their place.
   subject ("Mary's son"). A person's page is their life in time order, each fact
   with the evidence behind it and how strongly it is linked, the gaps, and any
   namesakes they are not.
-- **Sources,** in three groups:
+- **Sources,** in four groups:
   - **Direct mentions:** every record with its full citation and classification,
     and a chip per person with their link strength. There is no confidence badge per
     source: the same register can be confident for the child and speculative for the
     mother. The pane shows the page image beside its transcription, then the record's
     findings as labelled facts.
   - **Leads:** the list from The case.
-  - **Background:** the locality guides and outside collections.
+  - **Background:** the locality guides.
+  - **Other websites:** FamilySearch's curated outside collections, one list for each
+    place FamilySearch files links under (a county lookup also brings its state's list),
+    in name order, each closed until opened. A place with no rows is skipped, including
+    one FamilySearch refused as too large to list. Each list's line names the place and the count,
+    marks a place too large to list in full as part of a longer list, and says this is
+    FamilySearch's list for planning: being listed does not mean a site was searched or
+    paid for. It is never presented as a source.
 - **Log:** every search in time order in plain words, filterable by question and
   outcome, opening its results.
 

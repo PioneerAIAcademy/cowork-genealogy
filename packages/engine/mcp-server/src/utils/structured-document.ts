@@ -324,19 +324,43 @@ export function landRoles(doc: StructuredDocument): Map<string, string> {
   return roles;
 }
 
+/** A fact's type, normalised once. The two probate readers below have to agree
+ *  on what a will fact is, and a comment asserting that they do is not a
+ *  mechanism: ` will ` once matched one and not the other, which wrote the
+ *  testator of a will as the decedent. */
+const probateFactType = (f: { type: string }): string => f.type.trim().toLowerCase();
+
+/** The will family, shared by `probateDecedentId` and `hasWill`. */
+const WILL_FACT = /^(will|will_execution|testament|will_proved)$/;
+
+/** The death family. `burial` counts: it says whose estate this is. */
+const DEATH_FACT = /^(death|burial)$/;
+
 /** The decedent or testator of a probate document: the party carrying the
- *  `probate` fact, else `will`, else `death`; a flagged principal breaks a tie,
- *  then the first in order. Undefined when no party carries any. */
+ *  `probate` fact, else a will fact (`will`, `will_execution`, `testament`,
+ *  `will_proved`), else a death fact (`death`, `burial`); a flagged principal
+ *  breaks a tie, then the first in order. Undefined when no party carries any.
+ *
+ *  Court facts (`letters_of_administration`, `administration`) are deliberately
+ *  NOT carriers: letters are granted TO the administrator, so reading them as
+ *  decedent-identifying is the error #3660 refuses. `will_proved` is a carrier
+ *  because a will is proved FOR the decedent, which is the opposite case. */
 export function probateDecedentId(doc: StructuredDocument): string | undefined {
-  for (const re of [/^probate$/, /^will$/, /^death$/]) {
-    const carriers = doc.persons.filter((p) => p.facts.some((f) => re.test(f.type.trim().toLowerCase())));
+  for (const re of [/^probate$/, WILL_FACT, DEATH_FACT]) {
+    const carriers = doc.persons.filter((p) => p.facts.some((f) => re.test(probateFactType(f))));
     if (carriers.length > 0) return (carriers.find((p) => p.principal) ?? carriers[0]).id;
   }
   return undefined;
 }
 
-/** The party the probate roles would make the decedent: the probate/will/death
- *  carrier, else the flagged principal, else the first party. */
+/** The party the two pre-write probate guards check: the probate/will/death
+ *  carrier, else the flagged principal, else the first party.
+ *
+ *  NOT what the role pass assigns (#4708). With no carrier the role pass now
+ *  gives a probate document no testator or decedent at all, so this party is
+ *  the guards' input only — `validateDocumentRoles` below and the probate half
+ *  of `deedFormulaErrors`. Both still read it, which is what keeps #3660's
+ *  administrator refusal pinned. */
 export function probateDecedentOrDefault(doc: StructuredDocument): string | undefined {
   return probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
 }
@@ -371,8 +395,18 @@ function validateDocumentRoles(doc: StructuredDocument, path: string): string[] 
     const id = probateDecedentOrDefault(doc);
     const rel = normRelation(doc.persons.find((p) => p.id === id)?.statedRelation);
     if (id !== undefined && PETITIONER_RELATION.test(rel)) {
+      // Two different facts, so two different sentences. With a carrier this
+      // party really is written as the decedent. With none, since #4708, no
+      // party is — saying otherwise states something the tool's own output
+      // contradicts, and sends the agent looking for a label nobody applied.
+      // The refusal itself is unchanged in both cases.
       errs.push(
-        `${path}.persons: ${nameOf(id)} would be written as the decedent or testator but is stated as "${rel}". ` +
+        probateDecedentId(doc) === undefined
+          ? `${path}.persons: ${nameOf(id)} is stated as "${rel}" and no party carries a probate, will, ` +
+            `death or burial fact, so the document does not say whose estate this is. ` +
+            `Put that fact on the decedent or testator, ` +
+            `even where the letters name the administrator or executor.`
+          : `${path}.persons: ${nameOf(id)} would be written as the decedent or testator but is stated as "${rel}". ` +
           `Put the probate, will or death fact on the decedent or testator, ` +
           `even where the letters name the administrator or executor.`,
       );
@@ -582,8 +616,10 @@ export function documentToExtract(
   const hasWill =
     doc.recordType === "probate"
       ? /\bwill\b|testament/i.test(doc.recordLabel ?? "") ||
-        doc.persons.some((p) => p.facts.some((f) => /^(will|will_execution|testament)$/i.test(f.type)))
+        doc.persons.some((p) => p.facts.some((f) => WILL_FACT.test(probateFactType(f))))
       : undefined;
+
+  const decedentId = doc.recordType === "probate" ? probateDecedentId(doc) : undefined;
 
   return {
     extract: { recordId, gedcomx, indexFields },
@@ -593,7 +629,7 @@ export function documentToExtract(
         ? { censusStates: censusStatedRelationships(doc.census?.jurisdiction, doc.census?.year) }
         : {}),
       ...(hasWill !== undefined ? { hasWill } : {}),
-      ...(doc.recordType === "probate" && probateDecedentId(doc) ? { decedentId: probateDecedentId(doc) } : {}),
+      ...(decedentId ? { decedentId } : {}),
       ...(doc.recordType === "land" ? { landRoles: landRoles(doc) } : {}),
       ...(doc.informant?.name ? { informantName: doc.informant.name } : {}),
       statedRelations,

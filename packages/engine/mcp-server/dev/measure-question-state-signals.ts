@@ -1,7 +1,7 @@
 /**
- * How often do `unregisteredDisagreements`, `competingParentSets` and the
- * no-linked-assertion rung (`nextStep` starting `person-evidence`) fire on the
- * committed corpus?
+ * How often do `unregisteredDisagreements`, `competingParentSets`, the
+ * no-linked-assertion rung (`nextStep` starting `person-evidence`) and the
+ * unlinked-kin rung fire on the committed corpus?
  *
  * The project-context spec quotes these rates, and a rate whose method is not
  * committed cannot be re-derived by the next reviewer, so this is committed
@@ -19,11 +19,16 @@
  * `questionStates`. A "question entry" is one element of `questions[]` with a
  * string id; a "question-run" hit is one such entry whose signal is non-empty.
  * A file that does not parse is dropped and counted under `unreadable`.
+ *
+ * Unlinked kin is counted twice: `raw` is `unlinkedKin` non-empty on a question
+ * that is not resolved (the ladder skips resolved ones); `shipped` is a
+ * `nextStep` that names it, which a higher rung can mask.
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { questionStates } from "../src/utils/question-state.js";
+import { questionStates, unlinkedKin } from "../src/utils/question-state.js";
+import { questionAssertions } from "../src/utils/assertion-liveness.js";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 const SCENARIOS = join(REPO, "eval", "fixtures", "scenarios");
@@ -64,8 +69,8 @@ for (const slug of existsSync(E2E) ? readdirSync(E2E) : []) {
 }
 
 const tally = {
-  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0 },
-  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0 },
+  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0 },
+  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0 },
 };
 const hits: string[] = [];
 for (const d of docs) {
@@ -89,6 +94,17 @@ for (const d of docs) {
       t.noneLinked++;
       hits.push(`none-linked   ${d.label} ${s.id}`);
     }
+    const q = d.research.questions.find((x: any) => x?.id === s.id);
+    if (!(q?.status === "resolved" || q?.resolved)) {
+      const assertionIds = new Set(questionAssertions(d.research, s.id).map((a: any) => a?.id));
+      const kin = unlinkedKin(d.research, d.tree, s.id, assertionIds);
+      if (kin.length > 0) {
+        t.kinRaw++;
+        const shipped = s.nextStep?.startsWith("hypothesis-tracking — unlinked kin") ?? false;
+        if (shipped) t.kinShipped++;
+        hits.push(`unlinked-kin  ${d.label} ${s.id}: ${kin.join(", ")}${shipped ? "" : " (masked)"}`);
+      }
+    }
   }
 }
 
@@ -97,5 +113,6 @@ console.log(`question entries: ${total} (${tally.scenario.questions} in ${tally.
 console.log(`unregistered disagreements: ${tally.e2e.disagreements} e2e question-runs, ${tally.scenario.disagreements} scenario questions`);
 console.log(`competing parent sets:      ${tally.e2e.parentSets} e2e question-runs, ${tally.scenario.parentSets} scenario questions`);
 console.log(`no linked assertion:         ${tally.e2e.noneLinked} e2e question-runs, ${tally.scenario.noneLinked} scenario questions`);
+console.log(`unlinked kin:                ${tally.e2e.kinRaw} e2e question-runs (${tally.e2e.kinShipped} in nextStep), ${tally.scenario.kinRaw} scenario questions (${tally.scenario.kinShipped} in nextStep)`);
 console.log(`unreadable files dropped: ${unreadable}`);
 if (LIST) for (const h of hits.sort()) console.log(h);

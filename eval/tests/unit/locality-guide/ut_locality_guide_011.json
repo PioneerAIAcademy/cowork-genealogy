@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_011",
     "skill": "locality-guide",
-    "name": "Locality guide for Boston, 1840s \u2014 immigration and port records",
+    "name": "Locality guide for Boston, 1840s — immigration and port records",
     "type": "positive",
-    "description": "Verifies that the skill recognizes Boston as a major immigration port in the 1840s and directs researchers to passenger lists, customs records, naturalization files, and church registers. Ensures jurisdiction\u2011aware guidance by highlighting repositories such as the National Archives, Massachusetts State Archives, and local parish archives, while avoiding anachronistic references to Ellis Island records (which began later).",
+    "description": "Verifies that the skill recognizes Boston as a major immigration port in the 1840s and directs researchers to passenger lists, customs records, naturalization files, and church registers. Ensures jurisdiction‑aware guidance by highlighting repositories such as the National Archives, Massachusetts State Archives, and local parish archives, while avoiding anachronistic references to Ellis Island records (which began later).",
     "tags": [
       "Boston",
       "immigration",
@@ -14,13 +14,12 @@
       "archives",
       "jurisdiction-awareness",
       "volume-search",
-      "direct-arm",
-      "no-project"
+      "direct-arm"
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors who arrived in Boston during the 1840s. What records or repositories would help trace immigrants entering through that port?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors who arrived in Boston during the 1840s. What records or repositories would help trace immigrants entering through that port?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -37,6 +36,7 @@
     "wiki-search-massachusetts-naturalization",
     "volume-search-massachusetts",
     "wiki-place-page-any",
+    "wiki-read-massachusetts-naturalization-and-citizenship",
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
@@ -49,6 +49,9 @@
   ],
   "judge_context": [
     "Recognize Boston was a major immigration port in the 1840s. Mention passenger lists, customs records, naturalization files, and church registers. Highlight repositories like the National Archives (Boston), the Massachusetts State Archives, and parish archives. Avoid Ellis Island records for the 1840s.",
-    "volume_search returns one digitized image group of Port of Boston passenger lists (1840-1850) with fulltextSearchable true but recordSearchablePercent only 3. The skill should distinguish that this volume is full-text/OCR searchable even though almost no records are individually name-indexed \u2014 different from a plain browse-only volume \u2014 and should explain what that distinction means for a researcher's search strategy."
-  ]
+    "volume_search returns one digitized image group of Port of Boston passenger lists (1840-1850) with fulltextSearchable true but recordSearchablePercent only 3. The skill should distinguish that this volume is full-text/OCR searchable even though almost no records are individually name-indexed — different from a plain browse-only volume — and should explain what that distinction means for a researcher's search strategy.",
+    "The collections-search-massachusetts fixture returns personCount values 3456789, 1234567, 987654, 345678 and 567890. A guide that reports these counts is quoting the tool result, not inventing figures; do not dock it for them.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }

@@ -1,6 +1,6 @@
 {
   "tool": "external_links_search",
-  "description": "external_links_search for Yorkshire, England - 122 curated links, including http://www.yorkshirebmd.org.uk/ ('Yorkshire Births Marriages & Deaths Indexes') and https://www.freebmd.org.uk/search. Measured live 2026-11-04 with externalLinksSearchTool({ standardPlace: 'Yorkshire, England' }), no projectPath. Predicate matches ~Yorkshire.",
+  "description": "external_links_search for Yorkshire, England - 122 curated links, including http://www.yorkshirebmd.org.uk/ ('Yorkshire Births Marriages & Deaths Indexes') and https://www.freebmd.org.uk/search. Measured live 2026-11-04 with externalLinksSearchTool({ standardPlace: 'Yorkshire, England' }), no projectPath. Predicate matches ~Yorkshire. stored_rows: the live list for Yorkshire, England, United Kingdom with record types and places, captured 2026-11-19 (issue #4602), so locality_survey ranks it as production does.",
   "args": {
     "standardPlace": "~Yorkshire"
   },
@@ -684,5 +684,1506 @@
         "linkText": "A Vision of Britain through Time"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=1351",
+      "linkText": "England and Wales Christening Records, 1530-1906",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1530",
+      "endYear": "1906",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=1352",
+      "linkText": "England & Wales Marriages, 1538-1940",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "1538",
+      "endYear": "1940",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/1904",
+      "linkText": "England & Wales, National Probate Calendar (Index of Wills and Administrations), 1858-1995",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1858",
+      "endYear": "1995",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2252",
+      "linkText": "West Yorkshire, England, Church of England Births and Baptisms, 1813-1910",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1910",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2253",
+      "linkText": "West Yorkshire, England, Church of England Marriages and Banns, 1813-1935",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1935",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2254",
+      "linkText": "West Yorkshire, England, Church of England Deaths and Burials, 1813-1985",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1985",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2255",
+      "linkText": "West Yorkshire, England, Church of England Confirmations, 1859-1915",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1859",
+      "endYear": "1915",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2256",
+      "linkText": "West Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1512-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1512",
+      "endYear": "1812",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2256",
+      "linkText": "West Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1512-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1512",
+      "endYear": "1812",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2256",
+      "linkText": "West Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1512-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1512",
+      "endYear": "1812",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2268",
+      "linkText": "West Yorkshire, Non-Conformist Records, 1646-1985",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1646",
+      "endYear": "1985",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2268",
+      "linkText": "West Yorkshire, Non-Conformist Records, 1646-1985",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1646",
+      "endYear": "1985",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2268",
+      "linkText": "West Yorkshire, Non-Conformist Records, 1646-1985",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1646",
+      "endYear": "1985",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2563",
+      "linkText": "West Yorkshire, England Alehouse Licences, 1771-1962",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1771",
+      "endYear": "1962",
+      "record_type": "Occupations"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2582",
+      "linkText": "West Yorkshire, England Bastardy Records, 1690-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1690",
+      "endYear": "1914",
+      "record_type": "Poor Law Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/3057",
+      "linkText": "West Yorkshire, England, Electoral Registers, 1840-1962",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1840",
+      "endYear": "1962",
+      "record_type": "Voting Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/34590",
+      "linkText": "Abstracts of Yorkshire Wills in the Time of the Commonwealth, at Somerset House, London, 1665-1666",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1665",
+      "endYear": "1666",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/3667",
+      "linkText": "Yorkshire, England Selected Church of England Parish Registers, 1594-1800",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1594",
+      "endYear": "1800",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/3667",
+      "linkText": "Yorkshire, England Selected Church of England Parish Registers, 1594-1800",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1594",
+      "endYear": "1800",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/3667",
+      "linkText": "Yorkshire, England Selected Church of England Parish Registers, 1594-1800",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1594",
+      "endYear": "1800",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5085",
+      "linkText": "West Yorkshire, England Prison Records, 1801-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1801",
+      "endYear": "1914",
+      "record_type": "Court and Criminal Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5085",
+      "linkText": "West Yorkshire, England Prison Records, 1801-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1801",
+      "endYear": "1914",
+      "record_type": "Crime and Punishment"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5105",
+      "linkText": "West Yorkshire, England Police Records, 1833-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1833",
+      "endYear": "1914",
+      "record_type": "Court and Criminal Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5108",
+      "linkText": "West Yorkshire, England, Select Land Tax Records, 1704-1932",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1704",
+      "endYear": "1932",
+      "record_type": "Land Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5108",
+      "linkText": "West Yorkshire, England, Select Land Tax Records, 1704-1932",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1704",
+      "endYear": "1932",
+      "record_type": "Tax Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/5246",
+      "linkText": "Yorkshire, England, Probate Records, 1521-1858",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1521",
+      "endYear": "1858",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/6066",
+      "linkText": "West Yorkshire, England Tax Valuation, 1910",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1910",
+      "endYear": "1910",
+      "record_type": "Tax Records"
+    },
+    {
+      "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=61518",
+      "linkText": "Yorkshire, England Extracted Church of England Parish Records, 1538-1837",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1538",
+      "endYear": "1837",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=61518",
+      "linkText": "Yorkshire, England Extracted Church of England Parish Records, 1538-1837",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1538",
+      "endYear": "1837",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=61518",
+      "linkText": "Yorkshire, England Extracted Church of England Parish Records, 1538-1837",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1538",
+      "endYear": "1837",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62228",
+      "linkText": "North Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1558-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1558",
+      "endYear": "1812",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62228",
+      "linkText": "North Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1558-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1558",
+      "endYear": "1812",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62228",
+      "linkText": "North Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1558-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1558",
+      "endYear": "1812",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62228",
+      "linkText": "North Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1558-1812",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1558",
+      "endYear": "1812",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62236",
+      "linkText": "North Yorkshire, England, Church of England Births and Baptisms, 1813-1921",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1921",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62236",
+      "linkText": "North Yorkshire, England, Church of England Births and Baptisms, 1813-1921",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1921",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62237",
+      "linkText": "North Yorkshire, England, Church of England Marriages and Banns, 1754-1937",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1754",
+      "endYear": "1937",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62237",
+      "linkText": "North Yorkshire, England, Church of England Marriages and Banns, 1754-1937",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1754",
+      "endYear": "1937",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62238",
+      "linkText": "North Yorkshire, England, Church of England Deaths and Burials, 1813-1995",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1995",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62238",
+      "linkText": "North Yorkshire, England, Church of England Deaths and Burials, 1813-1995",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1813",
+      "endYear": "1995",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/62461/",
+      "linkText": "North Yorkshire, Electoral Registers, 1832-1971",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1832",
+      "endYear": "1971",
+      "record_type": "Voting Records"
+    },
+    {
+      "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=8000",
+      "linkText": "Durham, Northumberland, and Yorkshire Royal National Commercial Directory, 1855",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1855",
+      "endYear": "1855",
+      "record_type": "Directories"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/8633",
+      "linkText": "West Yorkshire, England, Reformatory School Records, 1856-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1856",
+      "endYear": "1914",
+      "record_type": "Court and Criminal Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9011",
+      "linkText": "West Yorkshire, England, Occupation Records, 1793-1930",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1793",
+      "endYear": "1930",
+      "record_type": "Occupations"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9012",
+      "linkText": "West Yorkshire, England Estate Rentals, 1380-1932",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1380",
+      "endYear": "1932",
+      "record_type": "Land Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9014",
+      "linkText": "West Yorkshire, England Select Apprenticeship Records, 1627-1894",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1627",
+      "endYear": "1894",
+      "record_type": "Occupations"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9015",
+      "linkText": "West Yorkshire, England Select Removal and Settlement Records, 1689-1866",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1689",
+      "endYear": "1866",
+      "record_type": "Poor Law Records"
+    },
+    {
+      "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=9016",
+      "linkText": "West Yorkshire, England, Select Rate Books, Accounts and Censuses, 1705-1893",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1705",
+      "endYear": "1893",
+      "record_type": "Census"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9017",
+      "linkText": "West Yorkshire, England Select Poor Law and Township Records, 1663-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1663",
+      "endYear": "1914",
+      "record_type": "Poor Law Records"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/9017",
+      "linkText": "West Yorkshire, England Select Poor Law and Township Records, 1663-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1663",
+      "endYear": "1914",
+      "record_type": "Tax Records"
+    },
+    {
+      "url": "http://archive.org/details/westridingelect01ridigoog",
+      "linkText": "West-riding Election Poll, York County, 1841",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1841",
+      "endYear": "1841",
+      "record_type": "Voting Records"
+    },
+    {
+      "url": "http://archive.org/stream/yorkshirearchae04socigoog#page/n238/mode/2up",
+      "linkText": "Part XIII Vol. 14, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://archive.org/stream/yorkshirearchae12socigoog#page/n26/mode/2up",
+      "linkText": "Part XV Vol. 16, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://archive.org/stream/yorkshirearchae14socigoog#page/n384/mode/2up",
+      "linkText": "The Yorkshire Archaeological Journal, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://archive.org/stream/yorkshirearchae14socigoog#page/n78/mode/2up",
+      "linkText": "Part II Vol. 9, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://archive.org/stream/yorkshirearchae22socigoog#page/n204/mode/2up",
+      "linkText": "Part XVI Vol. 17, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://joinermarriageindex.co.uk/",
+      "linkText": "Marriage Record Search, Yorkshire, Pre-1837",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "1837",
+      "endYear": "1837",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-united-kingdom-records-in-birth-marriage-death-and-parish-records",
+      "linkText": "National Burial Index",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/south-yorkshire-asylum-admission-records",
+      "linkText": "South Yorkshire Asylum Admission Records, 1872-1910",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1872",
+      "endYear": "1910",
+      "record_type": "Hospital Records"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/york-peculiars-probate-index-1383-1883?_ga=1.19087288.141134231.1415381737",
+      "linkText": "York Peculiars Probate Index 1383 – 1883",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-baptisms",
+      "linkText": "Yorkshire Baptisms Online",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Births"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-burials",
+      "linkText": "Yorkshire Burials",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-marriages",
+      "linkText": "Yorkshire Marriages",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-memorial-inscriptions",
+      "linkText": "Yorkshire Monumental Inscriptions",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Cemetery Records"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+      "linkText": "Yorkshire Parish Registers and Bishop's Transcripts",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Births"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+      "linkText": "Yorkshire Parish Registers and Bishop's Transcripts",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+      "linkText": "Yorkshire Parish Registers and Bishop's Transcripts",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://specialcollections.le.ac.uk/digital/collection/p16445coll4/search/searchterm/Yorkshire/field/place/mode/exact/conn/and/order/nosort",
+      "linkText": "Historical Directories of England & Wales, 1850-1909",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1850",
+      "endYear": "1909",
+      "record_type": "Directories"
+    },
+    {
+      "url": "http://web.archive.org/web/20101214095040/http://www.origins.net/help/aboutbo-bmi-parish-YOR.aspx",
+      "linkText": "229 Yorkshire Parishes Indexed in Coverage",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "http://www.ancestry.co.uk",
+      "linkText": "Yorkshire Parish Registers",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "http://www.findmypast.co.uk/national-burial-index-coverage-counties.action",
+      "linkText": "Articles on Life Events (BMDs)",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "http://www.genuki.org.uk/big/eng/YKS",
+      "linkText": "GENUKI: Yorkshire",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Civil Registration"
+    },
+    {
+      "url": "http://www.genuki.org.uk/big/eng/YKS/",
+      "linkText": "Yorkshire Records",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "http://www.teesvalley-indexes.co.uk/search_records.php",
+      "linkText": "Tees Valley Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Civil Registration"
+    },
+    {
+      "url": "http://www.ukbmdsearch.org.uk/",
+      "linkText": "UKBMD Multi-Region Search",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Civil Registration"
+    },
+    {
+      "url": "http://www.york.ac.uk/borthwick/",
+      "linkText": "Borthwick Institute for Archives, University of York",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "http://www.yorkcastleprison.org.uk/home.html",
+      "linkText": "York Castle Prison",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Court and Criminal Records"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Births"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Civil Registration"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriage"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriage Bonds and Allegations"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "http://www.yorkshirebmd.org.uk/",
+      "linkText": "Yorkshire Births Marriages & Deaths Indexes",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Municipal"
+    },
+    {
+      "url": "https://archive.org/search.php?query=Yorkshire%20parish%20registers",
+      "linkText": "Yorkshire Parish Registers, 1833-1922",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1833",
+      "endYear": "1922",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://archive.org/search.php?query=Yorkshire%20parish%20registers",
+      "linkText": "Yorkshire Parish Registers, 1833-1922",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1833",
+      "endYear": "1922",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://archive.org/search.php?query=Yorkshire%20parish%20registers",
+      "linkText": "Yorkshire Parish Registers, 1833-1922",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1833",
+      "endYear": "1922",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae00socigoog#page/n222/mode/2up",
+      "linkText": "Part VII Vol. 11, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae02socigoog#page/n416/mode/2up",
+      "linkText": "Part XII Vol. 13, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae04socigoog#page/n480/mode/2up",
+      "linkText": "Part XIV Vol. 14, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n185/mode/2up",
+      "linkText": "Part V Vol. 10, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n461/mode/2up",
+      "linkText": "Part VI Vol. 10, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n51/mode/2up",
+      "linkText": "Part IV Vol. 10, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n134/mode/2up",
+      "linkText": "Part VIII Vol. 12, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n160/mode/2up",
+      "linkText": "Part IX Vol. 12, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n284/mode/2up",
+      "linkText": "Part X Vol. 12, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://archive.org/stream/yorkshirearchae16socigoog#page/n321/mode/2up",
+      "linkText": "Paver's Marriage Licenses Part 1, Vol 7, 1567-1630",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1567",
+      "endYear": "1630",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://babel.hathitrust.org/cgi/pt?id=mdp.39015011269282;view=1up;seq=15Yorkshire",
+      "linkText": "Yorkshire Deeds",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Land and Property"
+    },
+    {
+      "url": "https://exploreyork.org.uk/archives/",
+      "linkText": "Archives and Local History",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Municipal"
+    },
+    {
+      "url": "https://quod.lib.umich.edu/cgi/t/text/text-idx?sid=dc439c6f96f7bc37d167b7f8c11fabd6&c=moa&idno=AHE1867.0001.001&view=toc",
+      "linkText": "The Visitation of the County of Yorke, 1665",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "1665",
+      "endYear": "1665"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/britain-marriage-licences",
+      "linkText": "British Marriage Licences, 1115-1906",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1115",
+      "endYear": "1906",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/durham-diocese-bishops-transcripts-1639-1919-image-browse",
+      "linkText": "Durham Diocese Bishops Transcripts, 1639-1919",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1639",
+      "endYear": "1919",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/durham-diocese-calendar-of-marriage-bonds-and-allegations-1594-1815-image-browse",
+      "linkText": "Durham Diocese, Calendar Of Marriage Bonds & Allegations 1594-1815",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "unknown",
+      "startYear": "1594",
+      "endYear": "1815",
+      "record_type": "Church Records"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/yorkshire-bishops-transcripts-of-baptisms",
+      "linkText": "Yorkshire Bishops Transcripts of Baptisms",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/yorkshire-school-logs",
+      "linkText": "Yorkshire School Logs, various dates",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Schools and Education"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-records/england-and-wales-government-probate-death-index-1858-2019",
+      "linkText": "England & Wales Government Probate Death Index 1858-2019",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1858",
+      "endYear": "2019",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+      "linkText": "Yorkshire Parish Registers and Bishop's Transcripts Browse",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/armley-and-wortley-news",
+      "linkText": "Armley and Wortley News, 1889-1899",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1889",
+      "endYear": "1899",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/barnoldswick-earby-times",
+      "linkText": "Barnoldswick & Earby Times, 1940-1989",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1940",
+      "endYear": "1989",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/brighouse-echo",
+      "linkText": "Brighouse & Rastrick Gazette, 1879-1899",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1879",
+      "endYear": "1899",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/colne-valley-guardian",
+      "linkText": "Colne Valley Guardian Newspaper Archives, 1896-1906",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1896",
+      "endYear": "1906",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/east-riding-telegraph",
+      "linkText": "East Riding Telegraph Newspaper Archives, 1895-1903",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1895",
+      "endYear": "1903",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/eastern-morning-news",
+      "linkText": "Eastern Morning News Newspaper Archives, 1872-1899",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1872",
+      "endYear": "1899",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/farmers-friend-and-freemans-journal",
+      "linkText": "Farmer's Friend and Freeman's Journal, 1850-1855",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1850",
+      "endYear": "1855",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/holmes-brewing-trade-gazette",
+      "linkText": "Holmes' Brewing Trade Gazette, 1878-1886",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1878",
+      "endYear": "1886",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/huddersfield-and-holmfirth-examiner",
+      "linkText": "Huddersfield and Holmfirth Examiner, 1851-1982",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1851",
+      "endYear": "1982",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/ilkley-gazette-and-wharfedale-advertiser",
+      "linkText": "Ilkley Gazette and Wharfedale Advertiser, 1868-1891",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1868",
+      "endYear": "1891",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/midland-northern-coal-iron-trades-gazette",
+      "linkText": "Midland & Northern Coal & Iron Trades Gazette, 1875-1886",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1875",
+      "endYear": "1886",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/national-independent-and-peoples-advocate",
+      "linkText": "National Independent and People's Advocate, 1878-1889",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1878",
+      "endYear": "1889",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/penistone-stocksbridge-and-hoyland-express",
+      "linkText": "Penistone, Stocksbridge and Hoyland Express, 1898-1940",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1898",
+      "endYear": "1940",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/pontefract-advertiser",
+      "linkText": "Pontefract & Castleford Express, 1889-1911",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1889",
+      "endYear": "1911",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/pudsey-stanningley-news",
+      "linkText": "Pudsey & Stanningley News, 1881-1903",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1881",
+      "endYear": "1903",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/redcar-and-saltburn-news",
+      "linkText": "Redcar and Saltburn-by-the-Sea Gazette, 1869-1900",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1869",
+      "endYear": "1900",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/richmond-and-twickenham-times",
+      "linkText": "Richmond & Ripon Chronicle, 1855-1894",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1855",
+      "endYear": "1894",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/south-bank-express",
+      "linkText": "South Bank Express Newspaper Archives, 1909-1948",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1909",
+      "endYear": "1948",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/south-yorkshire-times-and-mexborough-swinton-times",
+      "linkText": "South Yorkshire Times and Mexborough & Swinton Times, 1877-1983",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1877",
+      "endYear": "1983",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/star-green-un",
+      "linkText": "Star Green 'un Newspaper Archives, 1907-1985",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1907",
+      "endYear": "1985",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/teesside-weekly-herald",
+      "linkText": "Tees-side Weekly Herald, 1904-1918",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1904",
+      "endYear": "1918",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/todmorden-district-news",
+      "linkText": "Todmorden Advertiser and Hebden Bridge Newsletter, 1862-1934",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1862",
+      "endYear": "1934",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-early-bird",
+      "linkText": "Yorkshire Early Bird Newspaper Archives, 1910",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1910",
+      "endYear": "1910",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-news",
+      "linkText": "Yorkshire Evening News Newspaper Archives, 1907-1914",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1907",
+      "endYear": "1914",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-post",
+      "linkText": "Yorkshire Evening Post Newspaper Archives, 1890-1954",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1890",
+      "endYear": "1954",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-press",
+      "linkText": "Yorkshire Evening Press Newspaper Archives, 1885-1918",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1885",
+      "endYear": "1918",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-factory-times",
+      "linkText": "Yorkshire Factory Times Newspaper Archives, 1889-1926",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1889",
+      "endYear": "1926",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/newspapers/england/yorkshire-gazette",
+      "linkText": "Yorkshire Gazette Newspaper Archives, 1819-1920",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1819",
+      "endYear": "1920",
+      "record_type": "Newspapers"
+    },
+    {
+      "url": "https://www.findmypast.com/search/results?datasetname=britain%2c+marriage+licences&sid=103&county=yorkshire",
+      "linkText": "Britain Marriage Licences",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.findmypast.com/search/results?datasetname=england%20%26%20wales%20births%201837-2006&sid=103&county=yorkshire",
+      "linkText": "England & Wales Births, 1837-2006",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1837",
+      "endYear": "2006",
+      "record_type": "Births"
+    },
+    {
+      "url": "https://www.findmypast.com/search/results?datasetname=england+%26+wales+deaths+1837-2007&sid=103&county=yorkshire",
+      "linkText": "England & Wales Deaths, 1837-2007",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1837",
+      "endYear": "2007",
+      "record_type": "Deaths"
+    },
+    {
+      "url": "https://www.findmypast.com/search/results?datasetname=england+%26+wales+marriages+1837-2005&sid=103&county=yorkshire",
+      "linkText": "England & Wales Marriages 1837-2005",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "1837",
+      "endYear": "2008",
+      "record_type": "Marriages"
+    },
+    {
+      "url": "https://www.freebmd.org.uk/search",
+      "linkText": "FreeBMD Search",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "https://www.genealogycenter.info/persi/",
+      "linkText": "Periodical Source Index - ACPL Genealogy Center",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Periodicals"
+    },
+    {
+      "url": "https://www.genuki.org.uk/big/eng/YKS/",
+      "linkText": "Yorkshire Records",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Municipal"
+    },
+    {
+      "url": "https://www.genuki.org.uk/big/eng/YKS/#ProbateRecords",
+      "linkText": "Yorkshire Records, GENUKI",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Probate Records"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-50172/bulmers-history-topography-directory-of-east-yorkshire-with-hull",
+      "linkText": "Bulmer's History, Topography and Directory of East Yorkshire",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index & images",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Directories"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-50209/yorkshire-inquisitions",
+      "linkText": "Yorkshire Inquisitions, 1892-1906",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1892",
+      "endYear": "1906",
+      "record_type": "Land Records"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-50273/yorkshire-fines-1486-1625",
+      "linkText": "Yorkshire Fines, 1486-1625",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1486",
+      "endYear": "1625",
+      "record_type": "Land Records"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-50937/north-yorkshire-1890-history-topography-directory-part-2",
+      "linkText": "North Yorkshire 1890 History, Topography, Directory, Part 2",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "paid",
+      "content_type": "images only",
+      "startYear": "1890",
+      "endYear": "1890",
+      "record_type": "Directories"
+    },
+    {
+      "url": "https://www.ukbmd.org.uk/county/yorkshire/parish_records/",
+      "linkText": "Yorkshire Parish Records: Births, Marriages, Deaths",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Church"
+    },
+    {
+      "url": "https://www.visionofbritain.org.uk/",
+      "linkText": "A Vision of Britain through Time",
+      "place": "Yorkshire, England, United Kingdom",
+      "cost": "free",
+      "content_type": "unknown",
+      "startYear": "",
+      "endYear": "",
+      "record_type": "Probate Records"
+    }
+  ]
 }

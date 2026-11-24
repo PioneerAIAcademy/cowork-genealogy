@@ -315,7 +315,7 @@ calling a secondary-name search a genuine negative, work this order:
    least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.)
    with `subjectId`; the rows come back ranked with attachment status.
    `attachedToSubject: true` is a strong confirming signal
-   here — FamilySearch's own matcher already linked it to this person — even at
+   here — the record is already attached to this person in Family Tree — even at
    an unremarkable `matchScore`. This is the inverse of Step 4's "attached →
    deprioritize", which is for *discovering new* evidence; when the goal is
    *confirming* a fact already suspected (a marriage date, a birth record), an
@@ -329,7 +329,13 @@ are exhausted (the “Search strategy levers” reference at the end of this fil
 
 **Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). When the delegation gives the subject a surname, search with it first; never build one from a parent's given name (Hans → "Hansen"). If that finds nobody, try the surnameVariantHints forms, then search with no surname, keeping the given name, place, years and the parents' given names. If the subject is still not among the results, the next search varies the spelling of the given name, keeping the same anchors, before you change dates, change or drop the collection, or change the parents' names. A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
 
-**A survey of every occurrence or mention of a surname in a record set is not a search for one person's own record — the `isPrincipal` parameter's "pick by intent, do not default to omitting" guidance does not apply to it.** Recognize this from phrasing like "every occurrence/mention of," "identify each instance of," or a request for an index/abstract of every record carrying a surname, rather than one person's vital record. For this case: do not narrow with `isPrincipal`. Run the plain search with no `isPrincipal` key, then the same search again with `isPrincipal: true`, then again with `isPrincipal: false`, and carry all three `totalMatches` into Step 9 — do not page through every row by hand to tally `role`; the two filtered calls already give the split cheaply. Keep the unfiltered call on the normal broad-to-narrow, fuzzy-first strategy above — a survey gains nothing from forcing `surnameExact`, and the request may depend on fuzzy matching to catch the misspellings and declensions an exact match would drop.
+**A survey of every occurrence or mention of a surname in a record set is not a search for one person's own record — the `isPrincipal` parameter's "pick by intent, do not default to omitting" guidance does not apply to it.** Recognize this from phrasing like "every occurrence/mention of," "identify each instance of," or a request for an index/abstract of every record carrying a surname, rather than one person's vital record. For this case, call `record_search` **exactly three times**, in this order, before moving to Step 9 — none is optional and none substitutes for another:
+
+1. The plain search with no `isPrincipal` key — the headline, unfiltered total.
+2. The same search again with `isPrincipal: true`.
+3. The same search again with `isPrincipal: false`. Subtracting call 2's total from call 1's does not replace it.
+
+Carry all three `totalMatches` into Step 9. Call `record_search` exactly three times for this survey and then stop, even when the delegation's own wording asks for "each occurrence" or "an abstract of every record" — do not page (`offset`), narrow by place, or narrow by any other field to retrieve more rows than these three calls return. Report the sample you have, say how many of the total you have abstracts for, and leave further retrieval as a next step the researcher can ask for. Before you write Step 9, check: does this turn's tool-call history actually contain a `record_search` call with `isPrincipal: false`? If it does not, make that call now. Keep the unfiltered call on the normal broad-to-narrow, fuzzy-first strategy above — a survey gains nothing from forcing `surnameExact`, and the request may depend on fuzzy matching to catch the misspellings and declensions an exact match would drop.
 
 ### 3. Execute the search
 
@@ -400,8 +406,11 @@ unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
 the ranker missed), `matchScore` (0–1),
-`candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
-carries counts and diagnostics only. The bulk GedcomX stays host-side.
+`candidateFactCount`, and `attachedToSubject` / `attachedToOther` (present only
+when `true`). `ranked` carries counts and diagnostics only.
+A row at or below `ranked.realNegativeFloor` lists only identity fields; a
+missing field there is not evidence the record lacks it — `record_read` gives the
+full record. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
@@ -562,7 +571,9 @@ candidates; you still confirm the top ones:
   it as `needs-review` and confirm by other means.
 - **Attachment status** is already on each match: attached-to-subject → note and
   deprioritize *when the goal is discovering new evidence*; attached-to-other →
-  potentially relevant; unattached → prioritize (new evidence). **When the goal is
+  potentially relevant; unattached (flag absent or false) → prioritize (new
+  evidence), unless `ranked.attachmentsChecked` is `false`: then attachment status
+  is unknown and is no reason to prioritize. **When the goal is
   instead confirming a specific fact already suspected** (e.g. "did this marriage
   happen, and when"), an attached-to-subject candidate is exactly the target, not
   noise — read it via `record_read` even at a moderate `matchScore`.
@@ -601,7 +612,7 @@ to examine before extraction.
 
 ### 5. Log the search
 
-Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically.
+Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. The one exception is a zero-result `record_search`, which logs itself (below).
 
 **A read-style entry has no search parameters — it still needs a `query` object, with the identifier under a canonical key and the prose in `notes`:**
 
@@ -615,7 +626,7 @@ Never write a bare sentence there — a prose `query` carrying an ARK is rejecte
 
 **A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (the parameters you sent, as sent; leave out a filter you did not send instead of writing it as 'none'), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
+**A zero-result search logs itself.** Pass `planItemId` and `note` (why you are running it) on the `record_search` call; when it finds nothing the tool writes the entry and returns `logId`. Do NOT call `research_log_append` for it — the logged query is the search's own arguments. If the response carries `nilLogRefused` instead, the write was refused: log that nil by hand, batched in one `research_log_append` call with the retry the message names — `projectPath`, `tool`, `planItemId`, `query` (the parameters you sent, as sent; leave out a filter you did not send instead of writing it as 'none'), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
@@ -652,7 +663,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 6b. Record namesakes
 
-For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. For a pool (Step 4) write one row instead: `record_ids: []`; `name`, `place` and `time_period` the pool's; `notes` starting `pool:`, then each candidate's `recordId` and why each stays possible. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
+For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. For a pool (Step 4) write one row instead: `record_ids: []`; `log_entry_ids` the `log_` id Step 5 returned; `name`, `place` and `time_period` the pool's; `notes` starting `pool:`, then each candidate's `recordId` and why each stays possible. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
 
 ### 7. Pass records to extraction
 
@@ -670,15 +681,17 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
-1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below.
+1. **The nil is already logged** — `record_search` wrote it when you passed `planItemId`. When its response carries `planRationale`, search next what that rationale names and you have not searched, then carry on with the levers below. Only a `nilLogRefused` response needs a hand-written entry.
    If the subject is not among the results, that search is a nil for the subject, whether it returned nothing or a pool of other people. This is for choosing the next search; log the search as Step 5 says, keeping stagedResultsRef when it returned rows. A plan rationale that says 'if nil' covers this case too. The next search varies the spelling of the given name, using the spelling the plan rationale names if it names one, before you add a place, change dates, change or drop the collection, or change the surname. For a patronymic surname, follow Step 2's order instead. Changing the surname's spelling or abbreviation (for example a patronymic written -dr. or -dtr.) is changing the surname; it is not a given-name variant. Run the spelling variants yourself; don't hand back with an untried variant listed as a next step.
-2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
+2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Each retry that nils is logged by the tool, so long as you pass `planItemId`.** A retry that RETURNS results still needs its own `research_log_append` with the `stagedResultsRef`; send those as they complete rather than holding the ladder for one call at the end, since a batch still unsent when a run aborts loses every entry inside it.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
    old "no wildcards" rule was measured and withdrawn. Order matters: explicit variants
    first (they are checkable and you can say which letter changed), then a wildcard to
    catch the shape you could not guess.
+   **Loosen the unstable filter first.** When the subject's surname or age was unstable (born enslaved, or a widow who may have remarried or reverted to her birth name), loosen the surname and birth year first and keep the place tight. Before reporting a nil for a woman, drop `surname` and anchor on the place plus a household member (`otherGivenName`/`otherSurname`, with `recordCountry`); then drop the birth range.
+   **Never exclude a candidate this invocation has already found** — not with a search filter, and not on a birth year alone. A record in hand that gives her a birth year outside your range means the range widens to include it, and the disagreement is reported as needs-review, never as "not the subject".
    **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **hand back to `research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this agent's. Before you hand back a search where the subject was not found, check that you have run at least one given-name spelling variant, unless Step 5's collection-mismatch case applies. If you haven't, run it now instead of handing back. Do not look up place history or hardcode per-country rules here. See the “Search strategy levers” reference at the end of this file.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations. **That figure is a floor for a well-covered collection, not a ceiling.** A high-coverage collection (a well-indexed census, a large civil-registration index) earns more persistence than a thin one — the mirror of item 5's low-coverage pivot below. Reaching 5 variations on a collection you know covers the place and period well is a reason to try the levers you have not yet tried, not a reason to stop, when the likelier explanation is still an untried spelling or lever rather than genuine absence.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
@@ -686,7 +699,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    (b) the collection is reasonably complete for the period,
    (c) the subject should have appeared based on known facts.
    State each condition clearly. **Condition (b) is answered from the collection, not from impression** — read its description for what it actually contains (a title like "U.S. Marriage Records" may cover only some states and years), whether it is index-only or carries images, its time and geographic bounds, who indexed it (volunteer, professional, or OCR/HTR, each with its own error profile), and any gaps it declares. A collection you have not read cannot support a claim that absence is meaningful. If all three hold, note in the log and suggest recording it with `extraction_append({ absences })`. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
-5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
+5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies. Report a nil as "not found under <the filters, named>" — never as a death, emigration or absence, and never as a date range for one.
    **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. `outcome` is still **`negative`** — that field records what the search returned, not what it means. The *interpretation* goes in `notes` and in the plan-item status: say the collection is browse-only / near-zero indexed and the record is very likely present as un-indexed page text, and keep the plan item **`in_progress`**. **Never let the narrative claim absence** — "no estate record exists" is the error, not the `negative` enum. Then report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. (Example: a pre-1911 Kentucky death has no statewide certificate; it is established from the county estate administration — bond and settlement — which `record_search` on a ~1%-indexed probate collection will never surface.)
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
    **Prior log entries finding the record do NOT override current nil results.** A nil with different parameters documents that those query shapes fail — log each nil honestly as that evidence.
@@ -702,7 +715,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
 
-   In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
+   Hand back to `search-external-sites`: FamilySearch variants being exhausted is what that hand-back reports, and prose offering Ancestry is not it. The nil entry's `notes` are written for you — pass the reason as `note` on the search. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
 
 ### 9. Present results
 
@@ -733,7 +746,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 ## Re-invocation behavior
 
-**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up, or one for a pool of them not yet told apart (Step 6b).
+**Writes:** a new `log[]` entry in `research.json` — via `research_log_append`, or written by `record_search` itself for a zero-result search — plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up, or one for a pool of them not yet told apart (Step 6b).
 
 **On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one; update the plan item's `status` in place. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
 
@@ -754,7 +767,7 @@ Do not reproduce result lists or sidecar payloads.
 
 After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
+1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly. For a survey of every occurrence or mention of a surname, say the total and how many named the person in a role other than the one asked about, and say whether the hits never showed up in a role such as a godparent or witness — the caller prints only this paragraph.
 2. One sentence: what happens next, in plain language. After a `search-external-sites` hand-back, this sentence is exactly: "Next, other genealogy websites will be checked for these records."
 
 Neither paragraph names a site or archive outside FamilySearch.
