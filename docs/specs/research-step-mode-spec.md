@@ -147,10 +147,9 @@ entry says so.
 
 ## Evidence
 
-Alpha feedback, November 2026 (issue #4688). Feedback issue #4636: a tester read "linking
-the records" as attaching records to the FamilySearch Family Tree, so the label now names
-the project. Feedback issue #4642: in one session the main thread ended 8 turns with the
-link offer, and each time the tester answered with another search request ("I was asked
+Alpha feedback, November 2026. A tester read "linking the records" as attaching records
+to the FamilySearch Family Tree, so the label now names the project. In another session
+the main thread ended 8 turns with the link offer, and each time the tester answered with another search request ("I was asked
 whether the records found should be linked, when the research was still quite
 incomplete"). The tester was passing over the offer, not refusing the step, so a search
 step opened by a steer keeps the same offer. The sentence before it says linking can wait
