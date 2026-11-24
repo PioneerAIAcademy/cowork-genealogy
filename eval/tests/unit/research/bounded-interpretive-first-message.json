@@ -1,0 +1,73 @@
+{
+  "test": {
+    "id": "ut_research_ia2",
+    "skill": "research",
+    "name": "A bounded interpretive first message with a PID runs historical-context in the turn that creates the project",
+    "type": "positive",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "bounded-request",
+      "bounded-after-init",
+      "deliverable:historical-context",
+      "delegates-verbatim",
+      "delegates-tree-facts",
+      "relays-overview"
+    ],
+    "description": "Issue #4381, the lead's 2026-11-15 comment on feedback #4564 ('For Mary KWVS-WLX, can you survey her records and tell me what took her to Illinois where she apparently died?', which skipped creating the project). An interpretive first message with a PID and no project: init-project runs live, then historical-context in the same turn, with no question, locality survey or plan, under #4350's paragraph once the ask is on the bounded list. A /research test: #4564's skip was the main thread spawning historical-context directly, which the beta acceptance run covers (Richard on #4381, 2026-11-17), and the unit harness never adds Cowork's routing sentence. After init-project the tree holds Birth ~1845 Ireland and Death 1908 Schuylkill County; the message names neither, so delegates-tree-facts reads them from the spawn. historical-context is stubbed with its real return shape, so relays-overview can check the reply relays the narrative and Sources consulted, not the Search implications block."
+  },
+  "input": {
+    "user_message": "/research For Patrick Flynn, FamilySearch ID LZNY-BRF, can you tell me what took him to Pennsylvania, where he apparently died?",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "A bounded interpretive first message (why a person moved) with a FamilySearch ID and no project. The router creates the project with init-project, which runs for real here, and then hands the question to historical-context in the SAME turn: no question-selection, locality-guide or research-plan first (issue #4381; the lead's comment on feedback #4564).",
+    "The reply must end on a \"Continue with …?\" offer; which step it offers is the router's call. It must leave out init-project's sentence about a first research question. Both, with the hand-offs, the delegation carrying the message verbatim and the tree's places and years, and the reply relaying the overview's Sources consulted and not its Search implications block, are checked deterministically (test_bounded_first_message_runs_its_deliverable_after_init_project, test_person_evidence_spawn_carries_the_users_words, test_deliverable_spawn_carries_the_tree_facts, test_reply_relays_the_overview). Do not re-grade them.",
+    "historical-context is stubbed: the transcript shows no wiki or Wikipedia calls because the stub returned a canned overview, and relaying that overview, its Sources consulted list included, is correct, not fabrication. Grade the reply on relaying it honestly, on saying the project was made, and on offering, in the sentence before the \"Continue with …?\" line, to check the facts the explanation rests on. Mark it down for naming any site, archive or record set that neither a tool nor the stub returned.",
+    "Do not mark the reply down for not writing a research question, a plan or a locality survey: on a bounded ask those are the failure this test exists to catch."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "historical-context",
+        "response": "Patrick Flynn was born in Ireland about 1845 and died in Schuylkill County, Pennsylvania, in 1908. After the Famine of the late 1840s, Schuylkill County's coal mines drew many Irish labourers, often by chain migration through relatives already there. These are general patterns from the sources below, not evidence of why Patrick himself came.\n\n**Sources consulted**\n- [Pennsylvania Emigration and Immigration](https://www.familysearch.org/en/wiki/Pennsylvania_Emigration_and_Immigration)\n- [Schuylkill County, Pennsylvania Genealogy](https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy)\n\n### Search implications\n- hypothesis-tracking: chain migration to the Schuylkill coal region\n- research-plan: a naturalization record names his arrival year\n---\nI looked into what may have drawn Patrick Flynn from Ireland to Pennsylvania's coal country. Many Irish families came there after the Famine for mining work; that is a general pattern, not proof of his reasons.\n\nNext, we can look for records that show when he arrived."
+      }
+    ]
+  }
+}
