@@ -947,6 +947,19 @@ describe("materialize_facts", () => {
         expect(names[0]).toMatchObject({ given: "Benjamin Fairbanks", surname: "Phipps", sources: [{ ref: "S1" }] });
       });
 
+      it("prefers an equal blank-surname name already on the person", async () => {
+        const legacy = { id: "I2", gender: "Unknown", names: [
+          { id: "N2", given: "Mary L", surname: "Childs" },
+          { id: "N3", given: "Mary L.", surname: "" },
+        ] };
+        const out = await linkPersona(legacy, givenOnly("Mary L."));
+        expect(out.ok).toBe(true);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(2);
+        expect(names[0].sources ?? []).toHaveLength(0);
+        expect(names[1].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+      });
+
       it("is a no-op on a re-run", async () => {
         await linkPersona(person("I2", "Benjamin Fairbanks", "Phipps"), givenOnly("Benjamin F."));
         const before = await readTree();
