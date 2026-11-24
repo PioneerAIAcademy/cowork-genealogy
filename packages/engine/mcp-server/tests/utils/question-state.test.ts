@@ -1026,6 +1026,28 @@ describe("questionStatus — a partly-linked question that never reaches the sub
     expect(step(research, tree)).not.toMatch(UNREACHED);
   });
 
+  it("stops once every leftover assertion is rejected against the subject, so it cannot loop", () => {
+    const { research, tree } = load(PE7);
+    const leftovers = research.assertions.slice(1);
+    research.rejected_links = [{ id: "rj_1", assertion_id: leftovers[0].id, person_id: "I1", created: "2026-11-24" }];
+    expect(step(research, tree)).toBe(
+      "person-evidence — 5 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+    research.rejected_links = leftovers.map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I1", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("still fires when the leftover assertions are rejected against someone other than the subject", () => {
+    const { research, tree } = load(PE7);
+    research.rejected_links = research.assertions.slice(1).map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I2", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).toMatch(UNREACHED);
+  });
+
   it("is silent when no subject is a tree person", () => {
     const { research, tree } = load(PE7);
     research.project.subject_person_ids = ["PID-TODO"];

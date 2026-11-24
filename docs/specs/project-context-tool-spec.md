@@ -435,7 +435,8 @@ head is linked and the six children are not, and Patrick is not in that househol
 "Any unlinked assertion" would send the 53 partly-linked concluded households to
 person-evidence; requiring the subject to be unreached is what separates this case.
 It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
-and it stops once every assertion is linked, so it cannot loop. It is silent until a
+and it stops once every assertion is linked or rejected against a subject
+(`rejected_links`), so it cannot loop. It is silent until a
 subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
 dev/measure-question-state-signals.ts --list`, 568 question entries across 222
 scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e

@@ -311,8 +311,9 @@ export function competingParentSets(
 
 /** The person-evidence rung for a partly-linked question: some of its
  *  assertions are linked and some are not, yet no live link reaches a project
- *  subject. Null when every assertion is linked (person-evidence has nothing
- *  left to do, so the rung cannot loop), when a link already names a subject,
+ *  subject. Null when every assertion is linked or rejected against a subject
+ *  (`rejected_links`; person-evidence has nothing left to do, so the rung
+ *  cannot loop), when a link already names a subject,
  *  or when no subject is a tree person. `linkedAssertionIds` holds the links
  *  `countsForLinkedRung` admits. */
 export function subjectUnreached(
@@ -327,7 +328,10 @@ export function subjectUnreached(
     (id): id is string => typeof id === "string" && persons.has(id),
   );
   if (subjects.length === 0) return null;
-  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id)).length;
+  const rejected = new Set(
+    arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
+  );
+  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id) && !rejected.has(a?.id)).length;
   if (unlinked === 0 || unlinked === assertions.length) return null;
   const ids = new Set(assertions.map((a) => a?.id));
   const reaches = arr(research?.person_evidence).some(
