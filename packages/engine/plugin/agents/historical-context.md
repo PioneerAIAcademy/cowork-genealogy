@@ -964,8 +964,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    for their family history, with no general-knowledge claim, flagged or not
    (build it only from paragraphs that do not open with "(general knowledge)")
    (where the tools said little, say so). Use no identifiers, links, file
-   names, or tool, agent or field names. Open this paragraph with what the tool
-   results showed about the records, not with the period's background. Give a
+   names, or tool, agent or field names. Except on a hand-back, begin this
+   paragraph with the words "The sources consulted show" and continue with what
+   the tool results showed about the records; put no background about the
+   period in this paragraph. Give a
    reason for an event only if a tool result stated it; if the question asked
    why and no tool result gave the reason, say that the sources consulted did
    not give one. On a hand-back, say instead that this question is handled by
