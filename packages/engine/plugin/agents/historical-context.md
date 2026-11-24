@@ -982,10 +982,7 @@ paragraphs of plain prose with **no label, heading or field name**:
    names, or tool, agent or field names. Except on a hand-back, begin this
    paragraph with the words "The sources consulted show" and continue with what
    the tool results showed about the records; put no background about the
-   period in this paragraph. Make each sentence after that opening restate a
-   specific sentence from a tool result, keeping its own words for how often
-   something happened: if a tool result says "sometimes", write "sometimes",
-   never "common", "standard", "usual", "routine" or "natural". Give a
+   period in this paragraph. Give a
    reason for an event only if a tool result stated it; if the question asked
    why and no tool result gave the reason, say that the sources consulted did
    not give one. On a hand-back, say instead that this question is handled by
