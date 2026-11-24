@@ -1213,8 +1213,9 @@ export const samePersonSchema = {
     "that party, leave `match_score` null and say so in the rationale.\n" +
     "\n" +
     "2. EXPLICIT (two documents): when you already hold both GedcomX documents " +
-    "and there is no project to resolve against — comparing two search results " +
-    "to each other, for instance. Nothing is recorded on this path.\n" +
+    "rather than an assertion and a tree person — comparing two search results " +
+    "to each other, for instance. It still needs a `projectPath`; nothing is " +
+    "recorded on this path.\n" +
     "\n" +
     "A `record_search` result carries no document. Get each record's document " +
     "from `record_read` on the result's `recordId` and pass it straight " +

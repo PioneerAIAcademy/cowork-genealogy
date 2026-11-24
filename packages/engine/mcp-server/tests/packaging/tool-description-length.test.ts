@@ -201,7 +201,10 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // chars), since the hook denies record_search to the main thread. Measured
   // independently (2810 tool-level + 15119 params), not copied from the failure
   // message.
-  ["record_search", 17929],
+  // 17929 -> 17849: the `projectPath` parameter description no longer says "Supply it
+  // whenever the search will be logged (the normal case)", since every call carries
+  // one (#4686): 80 chars shorter, measured from the compiled allToolSchemas.
+  ["record_search", 17849],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured

@@ -285,8 +285,8 @@ still requires a `projectPath`.
 
 Four required fields: two simplified-GedcomX documents and two
 in-document person IDs identifying which person in each document is
-the focus of the comparison. Use it when both documents are already in hand and
-there is no project to resolve against. **Nothing is recorded on this arm** — it
+the focus of the comparison. Use it when you already hold both GedcomX documents rather than an assertion and a tree person.
+It still needs a `projectPath`. **Nothing is recorded on this arm** — it
 has neither a project nor a record identity to key an attestation on.
 
 | Field | Type | Required | Description |

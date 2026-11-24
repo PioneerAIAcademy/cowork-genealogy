@@ -2657,10 +2657,8 @@ async function applyLogAppendOp(
     warnings.push(
       `${logId}: ${op.tool} reported ${resultsAvailableCoerced} available result(s) but ` +
         `retained none — no results/${logId}.json sidecar was written, and the raw ` +
-        `response is unrecoverable. Pass \`projectPath\` to ${op.tool} so it stages ` +
-        `its response, then hand the returned \`staged.resultsRef\` back here as ` +
-        `\`stagedResultsRef\`. Omit \`projectPath\` only for an exploratory search ` +
-        `you do not intend to log.`,
+        `response is unrecoverable. Hand the \`staged.resultsRef\` that ${op.tool} ` +
+        `returned back here as \`stagedResultsRef\`.`,
     );
   }
 
