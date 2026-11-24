@@ -2458,9 +2458,27 @@ def test_review_gaps_passes_a_review_naming_both():
     # The call and its number in adjacent sentences.
     _I2_OK_LEAD + "I also ran `same_person` for a_013 against I1. That call returned a score "
     "of 0.86 and recorded it in the project, but it did not change the entry.",
+    # a_013 is named early, but the I2 gap is raised several sentences later
+    # without repeating "a_013" — the review still refers to "the record".
+    "`same_person` returned 0.86 for a_013 against I1, a strong band. "
+    "The residence check and date check lines are both present and correct. "
+    "The record names Thomas Flynn as father, from a non-present son-in-law "
+    "informant. Thomas Flynn (I2) has no persona on this record and is not "
+    "linked here. pe_005's match score is not disclosed.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
+
+
+def test_review_gaps_still_fails_when_a_013_is_never_named():
+    """The I2-gap sentence alone, with no a_013 mention anywhere, must still
+    fail: the widened match only drops the same-pair requirement, not the
+    requirement that a_013 appear in the reply at all."""
+    with pytest.raises(AssertionError, match="a_013"):
+        _gaps(
+            "Thomas Flynn (I2) has no persona on this record and is not "
+            "linked here. " + _SCORE_OK
+        )
 
 
 _I2_OK = "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "

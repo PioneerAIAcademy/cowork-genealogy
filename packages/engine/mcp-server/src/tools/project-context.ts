@@ -24,6 +24,7 @@ import { collectionAvailability, type CollectionAvailability } from "../utils/co
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { treePidOfArk } from "../utils/ark.js";
 import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import { lookupNameFamily } from "../utils/name-variants.js";
 import { isMachinePageReading, logEntriesById } from "../utils/page-disputes.js";
@@ -41,14 +42,17 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { attachedSources, searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
+import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
+import { historicalContextSpawn, type HistoricalContextSpawn } from "../utils/historical-context-spawn.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
  *  "persons" and "sources" are returned regardless of `include` until #4422
- *  stage 3 flips the default; "status" is returned only when named. */
-export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
+ *  stage 3 flips the default; "status" and "historicalContext" are returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status", "historicalContext"] as const;
 export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
 
 export interface ProjectContextInput {
@@ -75,6 +79,8 @@ export interface ProjectContextQuestion {
 export interface ProjectContextPerson {
   id: string;
   name?: string;
+  /** The FamilySearch ID from a tree-person `ark` (4:1: or tree URL); absent otherwise. */
+  pid?: string;
   gender?: string;
   spouseIds?: string[];
   parentIds?: string[];
@@ -229,7 +235,17 @@ export type ProjectContextQuestionStatus = Pick<QuestionStatus, "id" | "state" |
   storedStatus?: string;
   unregisteredDisagreements?: QuestionStatus["unregisteredDisagreements"];
   competingParentSets?: QuestionStatus["competingParentSets"];
+  /** When `nextStep` is a search: one spawn per open item of the active plan,
+   *  its agent and the prompt to send it as it is. */
+  searches?: SearchDelegation[];
+  /** When `nextStep` names conflict-resolution, person-evidence,
+   *  hypothesis-tracking, research-exhaustiveness or proof-conclusion: the agent
+   *  and the prompt to send it as it is. */
+  spawn?: StepSpawn;
 };
+
+/** A `nextStep` that runs the plan's search agents. */
+const SEARCH_STEP = /^search-(?:records|hints|external-sites)\b/;
 
 /** Each exhausted film with the open plan items whose `image_search` log
  *  entries browsed it. Only `image_search` entries: that is what search-images
@@ -340,6 +356,12 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only). The
        *  router has no other way to see who the research is about. */
       subjectPersonIds?: string[];
+      /** The first subject as a search agent's `subject:` block: names (a doubted
+       *  given name as its searchAs), birth, death and up to two parents. */
+      subject?: Record<string, unknown>;
+      /** The first subject's sources attached on FamilySearch when the project was
+       *  made, as project_create stored them in the tree. */
+      attachedSources?: { id: string; title: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
@@ -368,6 +390,9 @@ export type ProjectContextResult =
       claimKinds: string[];
       owedFindings?: OwedFinding[];
       status?: StatusRow[];
+      /** Only under `include: ["historicalContext"]`: the historical-context
+       *  spawn for the first subject, the router appending the researcher's message. */
+      historicalContext?: HistoricalContextSpawn;
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -464,16 +489,21 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
     const f = family.get(p.id);
+    const doubted = unsupportedGivenName(p, linkedNames.get(p.id) ?? []);
+    // A given name no linked record carries is a reading in doubt: the name is
+    // the surname alone, so no reader takes the reading for the person's name.
+    const surname = preferredName(Array.isArray(p.names) ? p.names : [])?.surname;
     persons.push(
       omitEmpty({
         id: p.id,
-        name: preferredDisplayName(p),
+        name: doubted ? (typeof surname === "string" && surname.trim() !== "" ? surname.trim() : null) : preferredDisplayName(p),
+        pid: treePidOfArk(p.ark)?.toUpperCase() ?? null,
         gender: typeof p.gender === "string" ? p.gender : null,
         spouseIds: f ? [...f.spouseIds] : [],
         parentIds: f ? [...f.parentIds] : [],
         childIds: f ? [...f.childIds] : [],
         diedByYear: diedByYear(p),
-        unsupportedGivenName: unsupportedGivenName(p, linkedNames.get(p.id) ?? []) ?? null,
+        unsupportedGivenName: doubted ?? null,
       }) as ProjectContextPerson,
     );
   }
@@ -611,15 +641,42 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // #4444: the identity rung's pairs, by research_append's own pair test and
   // place lookup, so the rung and the proof gate cannot disagree.
   const attachedBirthPairs = await attachedBirthPairsByQuestion(research, tree);
-  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map(
-    ({ id, ...rest }) =>
-      omitEmpty({ id, question: questionText.get(id) ?? "", ...rest }, ["nextStep"]) as ProjectContextQuestionStatus,
+  const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
+  const exhaustedItemIds = new Set(exhausted.flatMap((g) => g.planItemIds ?? []));
+  const subjectId = Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids[0] : undefined;
+  const subjectUnsupported = persons.find((p) => p.id === subjectId)?.unsupportedGivenName;
+  const questionById = new Map<string, any>(
+    (Array.isArray(research?.questions) ? research.questions : [])
+      .filter((q: any) => q && typeof q === "object" && typeof q.id === "string")
+      .map((q: any) => [q.id, q]),
   );
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map((status) => {
+    const { id, ...rest } = status;
+    const searches =
+      typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
+        ? searchDelegations(input.projectPath, research, tree, questionById.get(id), exhaustedItemIds, subjectUnsupported)
+        : [];
+    const spawn = stepSpawn(input.projectPath, research, status);
+    return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches, ...(spawn ? { spawn } : {}) }, [
+      "nextStep",
+    ]) as ProjectContextQuestionStatus;
+  });
+  const subject =
+    typeof subjectId === "string" ? subjectBlock(tree, subjectId, "", subjectUnsupported) : null;
 
   // Decision 33: what the project still owes. Before questionStatuses in the
   // answer, so a reader scoping to that array by its key does not take these
   // items' own `nextStep` for a question's.
   const owed = owedFindings(research, tree);
+  const historicalContext = input.include?.includes("historicalContext")
+    ? historicalContextSpawn(
+        input.projectPath,
+        research,
+        tree,
+        typeof subjectId === "string" ? subjectId : undefined,
+        typeof subjectId === "string" ? family.get(subjectId) : undefined,
+      )
+    : null;
   const status = input.include?.includes("status")
     ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
     : undefined;
@@ -643,7 +700,6 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     undefined,
   ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
-  const exhausted = (await exhaustedGroupsWithPlanItems(input.projectPath, research)).map((row) => omitEmpty(row));
   const uploads = await projectUploads(input.projectPath);
   const links = await projectLinks(principal);
   // A connector caller whose FamilySearch session has ended gets the link here
@@ -665,6 +721,8 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    ...(subject ? { subject } : {}),
+    attachedSources: typeof subjectId === "string" ? attachedSources(tree, subjectId) : [],
     narrationGuidance:
       typeof research?.researcher_profile?.narration_guidance === "string"
         ? research.researcher_profile.narration_guidance
@@ -677,6 +735,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     owedFindings: owed,
     questionStatuses,
     ...(status ? { status } : {}),
+    ...(historicalContext ? { historicalContext } : {}),
     persons,
     sources,
     localities,
@@ -761,15 +820,17 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
-    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
+    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
+    "the larger lists you read; persons and sources are returned whether or not you pass it, status and " +
+    "historicalContext only when named. " +
     "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear, " +
+    "[{id, name, pid, gender, spouseIds, parentIds, childIds, diedByYear, " +
     "unsupportedGivenName}] — every " +
-    "tree person with its one-hop family from " +
+    "tree person, its FamilySearch ID (pid, from a tree-person ark or URL only), " +
+    "and its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
     "by from its dated Death or Burial facts; unsupportedGivenName {given, searchAs} " +
     "marks a given name none of the person's linked records gives: brief it as a " +
@@ -786,10 +847,14 @@ export const projectContextSchema = {
     "{country: [same rows]} — the localities' country-wide collections for the United States, " +
     "Canada and Mexico, once per country and left out of each locality's collections; and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
-    "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
+    "competingParentSets, searches}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
-    "what it is waiting on, and storedStatus, the question's own questions[].status " +
+    "what it is waiting on; searches [{planItemId, agent, prompt}], present when nextStep is a search, " +
+    "is the search step written out: spawn each agent with its prompt as the whole delegation; " +
+    "spawn {agent, prompt}, present when nextStep names conflict-resolution, person-evidence, " +
+    "hypothesis-tracking, research-exhaustiveness or proof-conclusion, is that step written out the same way; " +
+    "and storedStatus, the question's own questions[].status " +
     "verbatim when it is a string. state is DERIVED from the documents " +
     "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
@@ -805,7 +870,9 @@ export const projectContextSchema = {
     "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
-    "subjectPersonIds are the project's subject " +
+    "subject is the first subject as a search agent's subject: block, a doubted given name already " +
+    "searched as its searchAs; attachedSources [{id, title}] are that subject's sources attached on " +
+    "FamilySearch when the project was made. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +
@@ -825,7 +892,9 @@ export const projectContextSchema = {
     "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
     "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
     "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
-    "and relationship with its status read from claims. " +
+    "and relationship with its status read from claims. With include: [\"historicalContext\"], historicalContext " +
+    "{agent, prompt} is the historical-context step written out for the first subject: spawn the agent with " +
+    "prompt as given, then a line message: and the researcher's message copied verbatim, and nothing else. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -847,10 +916,12 @@ export const projectContextSchema = {
         type: "array",
         items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
         description:
-          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status", ' +
+          '"historicalContext". ' +
           '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
           "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
-          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named. " +
+          '"historicalContext": the historical-context spawn for the first subject, returned only when named.',
       },
     },
     required: ["projectPath"],

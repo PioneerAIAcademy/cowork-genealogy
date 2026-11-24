@@ -51,6 +51,7 @@ import { validateIntroduced } from "../validation/introduced-errors.js";
 import {
   MaterializeFactsError,
   copyPersonaFacts,
+  sameName,
   normNamePart,
   resolveSourceRef,
   upsertName,
@@ -789,7 +790,10 @@ function linkGate(
 
 /** Where a person minted from record `recordId` came from. `thisParty`: a fact
  *  backlinked to one of the party's one-party assertions, a live `probable` or
- *  `confident` link from one, or a name equal to one of the party's names.
+ *  `confident` link from one, or a name that is one of the party's names
+ *  (`sameName`). A given-only party name that only abbreviates a fuller name
+ *  does not count: "Mary" the mother is not the "Mary Phipps" stub minted for
+ *  her daughter.
  *  `other`: the first other role of the record whose one-party assertion a fact
  *  is backlinked to or such a link comes from; names do not count there, since
  *  two people on one record can share a name. A `speculative` link is a
@@ -814,11 +818,10 @@ function partyTrace(
     const link = links.find((e) => ids.has(e.assertion_id));
     return link ? { assertionId: String(link.assertion_id), evidence: `link '${link.id}'` } : null;
   };
-  const key = (n: { given?: string; surname?: string }) => `${normNamePart(n.given)}\u0000${normNamePart(n.surname)}`;
-  const partyNames = new Set(party.names.map(key).filter((k) => k !== "\u0000"));
+  const partyNames = party.names.filter((pn) => normNamePart(pn.given) !== "" || normNamePart(pn.surname) !== "");
   const thisParty =
     traced(onePartyAssertionIds(research, recordId, party.isThisRole)) !== null ||
-    (person?.names ?? []).some((n) => partyNames.has(key(n)));
+    (person?.names ?? []).some((n) => partyNames.some((pn) => sameName(n, pn.given, pn.surname)));
   const hit = traced(onePartyAssertionIds(research, recordId, (role) => !party.isThisRole(role)));
   if (hit === null) return { thisParty, other: null };
   const role = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find(

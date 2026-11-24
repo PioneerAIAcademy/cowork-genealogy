@@ -40,14 +40,15 @@ part 2a branch, `owedFindings` included). This tool computes it host-side.
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string, include?: ("persons" | "sources" | "status")[] })
+project_context({ projectPath: string, include?: ("persons" | "sources" | "status" | "historicalContext")[] })
 ```
 
 `include` is an optional closed list naming the larger lists to return; an
 unknown value is refused with `{ ok: false, errors, buildId }`, the errors
-reading `include must be an array of: persons, sources, status.` `"persons"` and
-`"sources"` are returned whether or not they are passed (§3, "A projection, not
-a query language"); `"status"` is returned only when named (§2.9).
+reading `include must be an array of: persons, sources, status, historicalContext.`
+`"persons"` and `"sources"` are returned whether or not they are passed (§3, "A
+projection, not a query language"); `"status"` (§2.9) and `"historicalContext"`
+(§2.2.3) are returned only when named.
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -99,10 +100,24 @@ can drop:
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
+    searches?: [{                        // only when nextStep is a search — §2.2.1
+      planItemId: string,
+      agent: "search-records" | "search-images" | "search-full-text"
+           | "search-hints" | "search-external-sites",
+      prompt: string,                    //   the whole delegation, sent as it is
+    }],
+    spawn?: {                            // only when nextStep names one of these — §2.2.2
+      agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking"
+           | "research-exhaustiveness" | "proof-conclusion",
+      prompt: string,
+    },
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
-    name?: string,                       // preferred names entry, "Given Surname"
+    name?: string,                       // preferred names entry, "Given Surname";
+                                         //   the surname alone when
+                                         //   unsupportedGivenName flags the given name
+    pid?: string,                        // FamilySearch ID, from a tree-person ark or URL only
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -200,7 +215,10 @@ Projection rules:
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; absent when the
-  person has no names). The `S` ids a person cites are not here: `tree_query`
+  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`),
+  uppercased: the FamilySearch ID of a tree-person (`4:1:`) ark or a tree person
+  URL. A record or image ark, or no ark, leaves it out, so a record persona id is
+  never shown as a PID. The `S` ids a person cites are not here: `tree_query`
   returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's
@@ -273,7 +291,9 @@ Projection rules:
   only). Every skill's Narration line and `search-external-sites` read these;
   no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
   facts are not here: `tree_query` serves them, so this projection does not grow for callers
-  that never need them.
+  that never need them. Lead ruling 2026-11-23: the PID exception to
+  "No identifiers" belongs in the main thread's house text (`HOUSE_RESEARCHER_PROFILE`)
+  only; the plugin agents' "No identifiers" return-contract lines stay unchanged.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
@@ -577,6 +597,85 @@ The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
 
+
+### 2.2.1 `searches` — the search step, written out
+
+When a row's `nextStep` starts `search-records`, `search-hints` or
+`search-external-sites`, the row carries `searches`: one entry per open item of
+the question's active plan, lowest `sequence` first, at most four
+(`src/utils/search-delegations.ts`). Each names the agent and the prompt the
+router sends it unchanged:
+
+```
+projectPath: <projectPath>
+questionId: q_001
+planId: pl_001
+planItemId: pli_002
+plan_item: {<the stored item, verbatim>}
+subject: {"subjectId","names","birth","death","parents"}
+```
+
+- **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`);
+  `search-full-text` for "FamilySearch (full-text)" and `search-images` for
+  "FamilySearch (images)", the lanes research-plan writes into `repository`;
+  else `search-records`. The lane is read from the field, never guessed from the
+  rationale's words: "her baptism is unindexed, so search the death index" is a
+  name search. A plan written before the markers has none, and the router reads
+  a browse-only item's rationale itself (research/SKILL.md, the browse row).
+- **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
+  item in `exhaustedImageGroups`, and a fallback whose primary is still open or
+  found something. A fallback runs once every entry its primary logged is
+  `negative`.
+- **A hints item at the head of the plan goes alone**, with a `personId:` line
+  read from its rationale and no subject: its verdicts can save the searches
+  behind it.
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
+  search-records, search-images or search-full-text entry. `parents` is left out when the question
+  asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
+  of`, the same words as the research suite's validator) and when the tree gives
+  more than two. A given name `unsupportedGivenName` flags is replaced by its
+  `searchAs`, and a line after the block names the given name as a reading in
+  doubt.
+- The router adds `userPresent` to a search-external-sites prompt itself; only
+  it knows whether the run is autonomous.
+
+Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
+dropped the subject block or sent one spawn for two items in four research
+tests. Every field is in the project documents (ADR-0011's first question).
+
+The top-level `subject` is the same block for `subject_person_ids[0]`, parents
+included, for a brief the router writes itself (a bounded record ask has no
+plan item); the router leaves `parents` out on a parentage ask.
+
+`attachedSources [{id, title}]` lists that subject's sources attached on
+FamilySearch when the project was made: `project_create` keeps the read's own
+sources as tree `S2…` and points the person's, names' and facts' refs at them
+(`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
+(`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
+attached on FamilySearch afterwards is not in the tree. A record asked for that
+is already listed is not searched for (ut_research_021).
+
+### 2.2.2 `spawn` — the next agent step, written out
+
+When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
+`hypothesis-tracking`, `research-exhaustiveness` or `proof-conclusion`, the row
+carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
+`projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
+and the `nextStep` text:
+
+- person-evidence: `assertionIds:` every live assertion of the question (the
+  rung fires only when none is linked) and `userPresent: yes`, which the router
+  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+- conflict-resolution: one `competingAssertionIds:` line per unregistered
+  disagreement, or `conflictIds:` for an open conflict;
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+
+research-plan gets none: its rung does not know whether the question's
+jurisdiction has had its locality survey, which the router runs first. On Haiku
+5.5 low the router read past `nextStep` to another agent, or spawned nothing
+(ut_research_h22, rx4, 9k4).
+
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 
 Decided by the lead 2026-09-30. In an alpha-feedback session the agent
@@ -799,6 +898,23 @@ proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
 scoping to that array by its key does not take an owed item's step for a
 question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
 
+### 2.2.3 `historicalContext` — the historical-context step, written out
+
+Only under `include: ["historicalContext"]`, and only when the tree holds
+`subject_person_ids[0]`: `historicalContext: {agent: "historical-context", prompt}`
+(`src/utils/historical-context-spawn.ts`). The prompt is a `projectPath:` line, the
+objective on a line naming it as the researcher's and not a tree fact, then one line
+per person, the subject first and then its parents, spouses and children from the
+tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
+place as `Type date, place`, or "no dated or placed facts". The router spawns the
+agent with that prompt as given, then a `message:` line holding the researcher's
+message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+
+Why a tool writes it: told to call `tree_query` and hand over only the places and
+years it returned, a Haiku 5.5 low router added its own era ranges and a candidate
+answer in 3 of 8 runs of `ut_research_ia2`. Every line is in the project documents
+(ADR-0011's first question).
+
 `status` (only under `include: ["status"]`) lists one row per tree fact and edge
 from `src/utils/conclusion-status.ts` (Decision 6): `{holder, factId?, label,
 claim?, winner?, rivalsWithoutVerdict?, nearMiss?, subtypeLabel?}`. The label is
@@ -816,7 +932,7 @@ the project has one. Pinned by `docs/specs/schemas/conclusion-status-vectors.jso
 - **A projection, not a query language.** The shape is stable so an agent
   prompt can say "check `persons[].parentIds`"; the only selector is `include`,
   a **closed list** of the larger lists to return (values `"persons"`,
-  `"sources"` and `"status"`), not open-ended field selection. A list rather
+  `"sources"`, `"status"` and `"historicalContext"`), not open-ended field selection. A list rather
   than `includeX` booleans because the conclusion-tree work adds `"status"` and
   `"view"` to the same list (lead, 2026-11-09). Several readers consume the tool
   (the research skill, question-selection, hypothesis-tracking,
@@ -910,7 +1026,7 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
-| `include` is not an array, or names a value other than `"persons"` or `"sources"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
+| `include` is not an array, or names a value outside `"persons"`, `"sources"`, `"status"` and `"historicalContext"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else absent |

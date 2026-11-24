@@ -83,7 +83,7 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
   "relativesHasEventBeforeBirth365_2",
   "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
-  "hasBlankName",                 // a name node with empty given/surname — named-party materializations
+  "hasBlankName",                 // a name node with empty given/surname — a record naming someone by one part only, when the person has no matching full name
 
   // One person recorded twice: the duplicate-person class, which is what an
   // import produces rather than a claim the writer is making.

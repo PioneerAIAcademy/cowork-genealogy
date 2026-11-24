@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Relationship (John W Spriggs -> Reuben) correctly identified and was newly built by this run, not inherited: the fixture's starting-tree.gedcomx.json has zero parent relationships for Reuben, so the proof narrative's line that this link 'already existed' is misleading taken at face value -- it only meant the link predated the proof-conclusion write-up step within this same run, not that it predates the run. Graded true: the fact under test is the identity of Reuben's father, not a full biographical reconstruction of John William Spriggs -- consistent with this fixture's calibration (5 of 6 prior graded runs graded an identical gap shape true, with the 8 Sep and 19 Oct notes stating this reasoning explicitly). The tree's birth fact is year-range + state only ('Bet 1871 and 1872', place 'Iowa'), not the finding's day/township precision, and no Death fact (1934) was added; the 1920 census (ark M6N2-M3W) was never found. These are vital-detail gaps, not a failure to recover the father -- the relationship rests on the 1910 census (S1) plus the 1898 Lutheran baptism index named in the proof write-up (not attached to the R2 relationship itself in the tree).",
+    "f2": "Relationship (Charlotte Spriggs -> Reuben) correctly identified and explicitly logged by the run's own proof write-up as added during this run. Graded partial, not true: the maiden name Westby was never recovered -- the tree's only name record for I2 is 'Charlotte Spriggs' (no surname of origin), and the only 'Westby' anywhere in this run's search results (log_011) belongs to a different, ruled-out woman (Emma B. Westby Spriggs, wife of Frederick Elmer Spriggs, ranker score below 0.01). The tree's birth fact is also year-range + country only ('Bet 1876 and 1877', place 'Norway'), not the finding's 13 June 1876, Akershus precision, and no immigration fact (1877) was added. The proof write-up itself rates her identity link as only 'moderate (score 0.73)'. Same evidence pair as f1 (1910 census S1 + 1898 baptism S3, both attached to the R5 relationship); the 1920 census (ark M6N2-M3W) was never found. Consistent with this fixture's calibration: every prior run missing the maiden name (14 Oct, 19 Oct) graded f2 partial for that reason."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "5042c5e0c2abcb35100bc3acd9cd9e3b6d61477805b225a3d823a753fcaf9598"
+}

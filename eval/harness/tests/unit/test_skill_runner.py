@@ -665,7 +665,11 @@ def _ownership_payload(section):
 
 
 def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None, **run_kwargs):
-    """Run run_skill with the given PreToolUse inputs; return (result, returns)."""
+    """Run run_skill with the given hook inputs; return (result, returns).
+
+    An input with a `tool_response` key drives the PostToolUse hook, every other
+    one the PreToolUse hook.
+    """
     import asyncio
 
     from claude_agent_sdk import ResultMessage
@@ -676,7 +680,13 @@ def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None, **run_k
     returns = []
 
     def fake_query(**kw):
-        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        pre = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        post = kw["options"].hooks["PostToolUse"][0].hooks[0]
+
+        async def hook(inp, tool_use_id, ctx):
+            # An input carrying `tool_response` is a PostToolUse event.
+            return await (post if "tool_response" in inp else pre)(inp, tool_use_id, ctx)
+
         return _HookDrivingStream(
             hook,
             hook_inputs,
@@ -726,36 +736,141 @@ def test_a_delegation_is_forced_to_the_foreground(tmp_path, monkeypatch):
     assert returns[1] == {}
 
 
-def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
-    """The wiring, not just `spawn_stub_denial`: `run_skill` must hand
-    `stub_agents` to its real hook closure (issue #2825)."""
-    _, returns = _drive_hook(
-        tmp_path, monkeypatch, [_spawn_input("locality-guide")],
-        stub_agents={"locality-guide": None},
-    )
-    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
-    assert "continue_" not in returns[0]
+_AGENT_OUTPUT = {"status": "completed", "agentId": "a9", "content": [{"type": "text", "text": "done"}]}
+
+
+def _post_input(tool_name="Agent", tool_response=None):
+    return {
+        "tool_name": tool_name,
+        "tool_input": {"subagent_type": "general-purpose"},
+        "tool_response": _AGENT_OUTPUT if tool_response is None else tool_response,
+    }
 
 
 @pytest.mark.parametrize(
-    "hook_input",
-    [
-        _spawn_input("locality-guide"),
-        {"tool_name": "Skill", "tool_input": {"skill": "locality-guide"}},
-    ],
-    ids=["agent_spawn", "skill_call"],
+    "stubs,expected",
+    [({"locality-guide": None}, "Step complete."), ({"locality-guide": "CANNED RESULT"}, "CANNED RESULT")],
+    ids=["bare", "canned"],
 )
-def test_the_hook_returns_the_stub_denial_unchanged(tmp_path, monkeypatch, hook_input):
-    """The text the model reads is built by `stub_denial`; the hook must pass it
-    through whole. Dropping `additionalContext` or rebuilding the deny would strip
-    the hand-back that keeps a router going after the stub (issue #3740), and
-    every other wiring test only checks the decision."""
+def test_a_stubbed_spawn_runs_a_no_op_agent_and_hands_back_the_stub(tmp_path, monkeypatch, stubs, expected):
+    """The wiring, not just `spawn_stub_text`: `run_skill` must hand `stub_agents`
+    to its real hook closure (issue #2825), rewrite the spawn so the callee never
+    runs, and replace the no-op agent's return with the stub text, so the caller
+    reads an ordinary hand-back rather than an error."""
+    from harness.skill_stubs import STUB_RUNNER_AGENT, STUB_RUNNER_PROMPT, stub_reported_usage
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
+        stub_agents=stubs,
+    )
+    pre = returns[0]["hookSpecificOutput"]
+    assert pre["permissionDecision"] == "allow"
+    assert pre["updatedInput"] == {
+        "subagent_type": STUB_RUNNER_AGENT, "prompt": STUB_RUNNER_PROMPT, "run_in_background": False,
+    }
+    assert "continue_" not in returns[0]
+    post = returns[1]["hookSpecificOutput"]
+    assert post["hookEventName"] == "PostToolUse"
+    assert post["updatedToolOutput"] == {
+        **_AGENT_OUTPUT, **stub_reported_usage("tool-use-id"), "content": [{"type": "text", "text": expected}],
+    }
+
+
+def test_a_default_stubbed_spawn_hands_back_the_bare_return(tmp_path, monkeypatch):
+    """An agent no test opts in is stubbed by default (#3568), the same way."""
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("research-plan"), _post_input()],
+        live_agents=["research"],
+    )
+    assert returns[0]["hookSpecificOutput"]["updatedInput"]["prompt"] != "p"
+    assert returns[1]["hookSpecificOutput"]["updatedToolOutput"]["content"] == [
+        {"type": "text", "text": "Step complete."}
+    ]
+
+
+def test_post_tool_use_leaves_an_unstubbed_return_alone_but_adds_the_relay_note(tmp_path, monkeypatch):
+    """Only a spawn the pre hook stubbed has its return replaced: a live agent's
+    report passes through, with the relay note a hosted plane adds to every
+    main-thread agent return; any other tool's output gets nothing."""
+    from harness.context_policy import RELAY_NOTE
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_post_input(), _post_input("Read", {"file": "x"})],
+    )
+    assert returns == [
+        {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": RELAY_NOTE}},
+        {},
+    ]
+
+
+def test_a_plugin_prefixed_spawn_is_stubbed_and_recorded_as_its_agent(tmp_path, monkeypatch):
+    """As the hosted planes' foreground_rewrite drops the `plugin:`, the harness hook
+    checks, stubs and records the spawn under the agent's own name."""
+    from harness.skill_stubs import STUB_RUNNER_AGENT
+
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("plugin:locality-guide"), _post_input()],
+        stub_agents={"locality-guide": "CANNED"},
+    )
+    assert returns[0]["hookSpecificOutput"]["updatedInput"]["subagent_type"] == STUB_RUNNER_AGENT
+    assert returns[1]["hookSpecificOutput"]["updatedToolOutput"]["content"] == [{"type": "text", "text": "CANNED"}]
+    recorded = [r for r in result.builtin_tool_calls if r.get("tool") in ("Agent", "Task")]
+    import json
+
+    assert recorded and all("plugin:" not in json.dumps(r) for r in recorded), recorded
+
+
+def test_a_plugin_prefixed_live_spawn_runs_the_agent(tmp_path, monkeypatch):
+    spawn = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "plugin:research-plan", "prompt": "p", "run_in_background": False},
+    }
+    _, returns = _drive_hook(tmp_path, monkeypatch, [spawn])
+    hso = returns[0]["hookSpecificOutput"]
+    assert hso["permissionDecision"] == "allow"
+    assert hso["updatedInput"]["subagent_type"] == "research-plan"
+
+
+def test_a_stubbed_return_carries_the_relay_note_too(tmp_path, monkeypatch):
+    from harness.context_policy import RELAY_NOTE
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
+        stub_agents={"locality-guide": "CANNED"},
+    )
+    post = returns[1]["hookSpecificOutput"]
+    assert post["updatedToolOutput"]["content"] == [{"type": "text", "text": "CANNED"}]
+    assert post["additionalContext"] == RELAY_NOTE
+
+
+@pytest.mark.parametrize("agent", ["historical-context", "init-project"])
+def test_a_stubbed_return_gets_the_relay_note_of_the_agent_the_model_named(tmp_path, monkeypatch, agent):
+    """The stub runs as STUB_RUNNER_AGENT, so the post hook sees that name; the note
+    must be the one production gives the agent the model spawned."""
+    from harness.context_policy import RELAY_NOTE, _relay
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input(agent), _post_input()],
+        stub_agents={agent: "CANNED"},
+    )
+    note = returns[1]["hookSpecificOutput"]["additionalContext"]
+    assert note == _relay.AGENT_NOTES[agent]
+    assert note != RELAY_NOTE
+
+
+def test_the_hook_returns_the_skill_stub_denial_unchanged(tmp_path, monkeypatch):
+    """The text the model reads on a `Skill`-call stub is built by `stub_denial`;
+    the hook must pass it through whole. Dropping `additionalContext` or
+    rebuilding the deny would strip the hand-back that keeps a router going
+    after the stub (issue #3740), and every other wiring test only checks the
+    decision."""
     from harness.skill_stubs import stub_denial
 
     rows = {"locality-guide": "CANNED RESULT"}
     _, returns = _drive_hook(
         tmp_path, monkeypatch,
-        [{"tool_name": "Skill", "tool_input": {"skill": "research"}}, hook_input],
+        [{"tool_name": "Skill", "tool_input": {"skill": "research"}},
+         {"tool_name": "Skill", "tool_input": {"skill": "locality-guide"}}],
         stub_skills=rows, stub_agents=rows,
     )
     assert returns[1] == stub_denial("locality-guide", "CANNED RESULT")
@@ -1980,9 +2095,15 @@ async def _run_stop_at_stub(
     from harness.auth import AuthConfig
 
     def fake_query(**kw):
-        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        pre = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        post = kw["options"].hooks["PostToolUse"][0].hooks[0]
+
+        async def hook(inp, tool_use_id, ctx):
+            # An input carrying `tool_response` is a PostToolUse event.
+            return await (post if "tool_response" in inp else pre)(inp, tool_use_id, ctx)
+
         if message_first:
-            return _MessageFirstHookStream(hook, hook_inputs, messages)
+            return _MessageFirstHookStream(pre, hook_inputs, messages)
         return _HookDrivingStream(hook, hook_inputs, messages, returns=returns)
 
     monkeypatch.setattr(sr, "open_query", fake_query)
@@ -3005,7 +3126,7 @@ def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp
 # ---- deny-by-default spawns (#3568) --------------------------------------
 #
 # `live_agents` is the suite's own agent plus the test's `execution.run_agents`.
-# Every other main-thread spawn is denied — after, never before, the routing
+# Every other main-thread spawn is stubbed — after, never before, the routing
 # short-circuit, `stop_at_stub` and an explicit stub's canned text.
 
 _LIVE = {"research"}
@@ -3037,12 +3158,31 @@ def _denied(out):
     return bool(out) and out.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
 
 
-def test_a_spawn_outside_live_agents_is_denied_and_the_run_continues(tmp_path, monkeypatch):
-    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn("init-project")], live_agents=_LIVE)
+_STUB_OUTPUT = {"status": "completed", "content": [{"type": "text", "text": "done"}]}
+_STUB_POST = {"tool_name": "Agent", "tool_input": {}, "tool_response": _STUB_OUTPUT}
 
-    assert _denied(out)
-    assert "init-project" in _reason(out)
-    assert "continue_" not in out, "a default denial is a stub, not a stop"
+
+def _stubbed(out):
+    from harness.skill_stubs import STUB_RUNNER_PROMPT
+
+    hso = (out or {}).get("hookSpecificOutput", {})
+    return hso.get("permissionDecision") == "allow" and (
+        hso.get("updatedInput", {}).get("prompt") == STUB_RUNNER_PROMPT
+    )
+
+
+def _handed_back(out):
+    return out["hookSpecificOutput"]["updatedToolOutput"]["content"][0]["text"]
+
+
+def test_a_spawn_outside_live_agents_is_stubbed_and_the_run_continues(tmp_path, monkeypatch):
+    pre, post = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("init-project"), _STUB_POST], live_agents=_LIVE
+    )
+
+    assert _stubbed(pre)
+    assert _handed_back(post) == "Step complete."
+    assert "continue_" not in pre, "a default stub is not a stop"
 
 
 def test_a_spawn_inside_live_agents_runs(tmp_path, monkeypatch):
@@ -3052,40 +3192,44 @@ def test_a_spawn_inside_live_agents_runs(tmp_path, monkeypatch):
     )
 
     assert not _denied(out)
+    assert not _stubbed(out)
 
 
-def test_a_general_purpose_spawn_with_no_subagent_type_is_denied_by_name(tmp_path, monkeypatch):
-    """A general-purpose spawn carries only {description, prompt}. It is denied
-    under the name the model would see, never as 'None'."""
-    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn()], live_agents=_LIVE)
+@pytest.mark.parametrize("agent", [None, "general-purpose", "claude", "Explore"])
+def test_a_main_thread_spawn_of_a_built_in_agent_is_denied_by_name(tmp_path, monkeypatch, agent):
+    """As the shipped hook denies it: a built-in agent runs a step without any plugin
+    agent's instructions or tool limits. A spawn with no `subagent_type` is
+    general-purpose, and is denied under that name, never as 'None'."""
+    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn(agent)], live_agents=_LIVE)
 
     assert _denied(out)
-    assert "general-purpose" in _reason(out)
+    assert f'"{agent or "general-purpose"}"' in _reason(out)
     assert "None" not in _reason(out)
+    assert "continue_" not in out
 
 
 def test_an_explicit_stub_keeps_its_canned_text_under_the_default(tmp_path, monkeypatch):
-    [out] = _hook_returns(
-        monkeypatch, tmp_path, [_spawn("locality-guide")],
+    _, post = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("locality-guide"), _STUB_POST],
         live_agents=_LIVE,
         stub_skills={"locality-guide": "CANNED-GUIDE"},
         stub_agents={"locality-guide": "CANNED-GUIDE"},
     )
 
-    assert "CANNED-GUIDE" in _reason(out)
+    assert _handed_back(post) == "CANNED-GUIDE"
 
 
 def test_a_skill_and_agent_name_keeps_its_canned_text(tmp_path, monkeypatch):
     """A `stub_skills` name that still has a skill directory is not in
     `stub_agents`, so only the default reaches its agent half — with the same
     canned text the test gave it."""
-    [out] = _hook_returns(
-        monkeypatch, tmp_path, [_spawn("twin")],
+    pre, post = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("twin"), _STUB_POST],
         live_agents=_LIVE, stub_skills={"twin": "CANNED-TWIN"}, stub_agents={},
     )
 
-    assert _denied(out)
-    assert "CANNED-TWIN" in _reason(out)
+    assert _stubbed(pre)
+    assert _handed_back(post) == "CANNED-TWIN"
 
 
 def test_stop_at_stub_still_stops_at_a_stubbed_spawn(tmp_path, monkeypatch):
@@ -3122,3 +3266,19 @@ def test_no_live_agents_means_todays_behaviour(tmp_path, monkeypatch):
     [out] = _hook_returns(monkeypatch, tmp_path, [_spawn("init-project")])
 
     assert not _denied(out)
+
+
+def test_a_stub_names_the_hit_its_spawn_was_given_and_reports_its_own_figures():
+    """One canned evaluator text answers every hit, so `{hitRef}` takes each spawn's
+    own; identical returns read to a router as one report copied (ut_research_hv3)."""
+    from harness.skill_stubs import fill_stub_fields, stub_reported_usage
+
+    text = "hitRef: {hitRef}\nverdict: match"
+    a = fill_stub_fields(text, {"prompt": "projectPath: /p\nhitRef: results/log_008.json#AAA\ntarget: I1"})
+    b = fill_stub_fields(text, {"prompt": "hitRef: results/log_008.json#BBB"})
+    assert a.startswith("hitRef: results/log_008.json#AAA\n")
+    assert b.startswith("hitRef: results/log_008.json#BBB\n")
+    assert fill_stub_fields("no placeholder", {"prompt": "hitRef: x"}) == "no placeholder"
+    assert stub_reported_usage("t1") != stub_reported_usage("t2")
+    assert stub_reported_usage("t1") == stub_reported_usage("t1")
+    assert all(v > 0 for v in stub_reported_usage("t1").values())
