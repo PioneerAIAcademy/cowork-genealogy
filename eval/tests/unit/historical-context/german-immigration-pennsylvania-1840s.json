@@ -20,7 +20,10 @@
     "wiki-read-germany-civil-registration",
     "wiki-read-any",
     "wikipedia-search-any",
-    "wiki-search-any", "place-search-pennsylvania-united-states"
+    "wiki-search-any",
+    "place-search-pennsylvania-united-states",
+    "place-search-pennsylvania-bare",
+    "place-search-any"
   ],
   "judge_context": [
     "This test's primary purpose is the Citation completeness dimension: the narrative must end with a \"Sources consulted\"-style list (directly above the Search implications block) naming every wiki/Wikipedia page it actually drew from, each with its real URL (`source_url` on `wiki_search` results, `url` from `wiki_read`/`wikipedia_search`) — not just the article title. Grade that end-of-response list, not scattered inline citation. Do not let an unrelated Source quality concern (e.g. a claim stated too confidently) pull this dimension down.",

@@ -14,7 +14,8 @@
   "mcp_fixtures": [
     "wiki-search-guardianship-stepchildren",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-any"
   ],
   "judge_context": [
     "Must recognize that a man appointed guardian of minors bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather — the children are almost certainly the wife's children by a prior marriage, so the differing surname is the expected pattern here, not evidence they are unrelated to him or that a generation is missing.",

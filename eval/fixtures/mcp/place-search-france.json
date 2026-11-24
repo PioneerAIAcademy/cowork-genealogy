@@ -1,0 +1,103 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'France', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts.",
+  "args": {
+    "placeName": "~France"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "France",
+        "type": "Country",
+        "dateRange": "+843/",
+        "latitude": 46,
+        "longitude": 2,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=France&focusedId=204",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/France"
+      },
+      {
+        "standardPlace": "Île-de-France, France",
+        "type": "Region",
+        "dateRange": "+941/",
+        "latitude": 48.87471,
+        "longitude": 2.5002,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=%C3%8Ele-de-France&focusedId=2746",
+        "wikipediaUrl": "https://fr.wikipedia.org/wiki/%C3%8Ele-de-France"
+      },
+      {
+        "standardPlace": "Fort-de-France, Martinique, France",
+        "type": "District",
+        "latitude": 14.601,
+        "longitude": -61.083,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Fort-de-France&focusedId=442141",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Fort-de-France,_Martinique"
+      },
+      {
+        "standardPlace": "Hauts-de-France, France",
+        "type": "Region",
+        "dateRange": "+2016/",
+        "latitude": 49.9206,
+        "longitude": 2.703,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Hauts-de-France&focusedId=10743181",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Hauts-de-France"
+      },
+      {
+        "standardPlace": "Mauritius",
+        "type": "Country",
+        "dateRange": "+1598/",
+        "latitude": -20.3,
+        "longitude": 57.583,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mauritius&focusedId=199",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mauritius"
+      },
+      {
+        "standardPlace": "Terrebonne, Quebec, Canada",
+        "type": "County",
+        "dateRange": "+1867/+1983",
+        "latitude": 45.9574,
+        "longitude": -74.1428,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Terrebonne&focusedId=445327",
+        "wikipediaUrl": "https://fr.wikipedia.org/wiki/Comt%C3%A9_de_Terrebonne"
+      },
+      {
+        "standardPlace": "La Chapelle-du-Mont-de-France, Saône-et-Loire, France",
+        "type": "Municipality",
+        "latitude": 46.3817,
+        "longitude": 4.5361,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=La%20Chapelle-du-Mont-de-France&focusedId=10910947",
+        "wikipediaUrl": "https://fr.wikipedia.org/wiki/La_Chapelle-du-Mont-de-France"
+      },
+      {
+        "standardPlace": "New France",
+        "type": "Territory",
+        "dateRange": "+1534/+1867",
+        "latitude": 46.8,
+        "longitude": -71.25,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=New%20France&focusedId=10930143",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/New_France"
+      },
+      {
+        "standardPlace": "Roissy-en-France, Val-d'Oise, France",
+        "type": "Municipality",
+        "dateRange": "+1968/",
+        "latitude": 49.004,
+        "longitude": 2.5152,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Roissy-en-France&focusedId=6839516",
+        "wikipediaUrl": "https://fr.wikipedia.org/wiki/Roissy-en-France"
+      },
+      {
+        "standardPlace": "France, Fremont, Idaho, United States",
+        "type": "Town",
+        "dateRange": "+1934/",
+        "latitude": 43.972499,
+        "longitude": -111.274439,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=France&focusedId=4000776"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "France",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

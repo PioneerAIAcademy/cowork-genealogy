@@ -12,11 +12,11 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "place-search-any",
     "wiki-search-hollow-creek-empty",
     "wikipedia-search-hollow-creek-error",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-any"
   ],
   "judge_context": [
     "No wiki/Wikipedia tool call returns anything specific to 'Hollow Creek Settlement' itself — direct-name lookups return empty results or a 404-style error; the model may reasonably also search broader background topics (frontier settlement naming, courthouse fires, etc.), which the fixtures let succeed with real, general, non-place-specific content. Grade what the response does with this mix, not a single expected tool-call pattern",
