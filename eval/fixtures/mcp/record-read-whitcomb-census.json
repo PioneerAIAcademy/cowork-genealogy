@@ -1,0 +1,46 @@
+{
+  "tool": "record_read",
+  "description": "record_read of W7CN-R90, Reuben Whitcomb's 1790 census entry, Westmoreland. Stocked; the test does not require the read. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "recordId": "~W7CN-R90"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Reuben",
+            "surname": "Whitcomb",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Census",
+            "date": "1790",
+            "place": "Westmoreland, Cheshire, New Hampshire, United States"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1790"
+          }
+        ],
+        "ark": "ark:/61903/1:1:W7CN-R90"
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1790"
+      }
+    ]
+  }
+}

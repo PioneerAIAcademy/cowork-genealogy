@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all nil for any other spelling of the Whitcomb surname (Witcomb, Whetcomb, Whitcombe). Keep it LAST in the test's mcp_fixtures list: matching is first-match-wins in list order. Same pattern as record-search-flynn-any-variant-no-results. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "surname": "~comb"
+  },
+  "response": {
+    "query": {
+      "surname": "Witcomb"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

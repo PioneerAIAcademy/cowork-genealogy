@@ -1,0 +1,113 @@
+{
+  "tool": "record_search",
+  "description": "Any other record_search for Whitcomb returns one Cheshire County birth: Asa Whitcomb, 11 March 1773, Keene, son of Reuben Whitcomb and Molly Towne. The subject was born about 1745, so this Asa is a namesake, and Reuben is linked to the subject by no record. The collection id and title are synthetic. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "surname": "~Whitcomb"
+  },
+  "response": {
+    "query": {
+      "surname": "Whitcomb"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "W7BK-A73",
+        "recordId": "W7BK-A73",
+        "personName": "Asa Whitcomb",
+        "score": 0.82,
+        "sex": "Male",
+        "birthDate": "11 March 1773",
+        "events": [
+          {
+            "type": "Birth",
+            "date": "11 March 1773",
+            "place": "Keene, Cheshire, New Hampshire, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:W7BK-A73",
+        "collectionId": "9990173",
+        "collectionTitle": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)",
+        "recordTitle": "Birth of Asa Whitcomb, son of Reuben Whitcomb and Molly Towne",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Asa",
+                  "surname": "Whitcomb",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "11 March 1773",
+                  "place": "Keene, Cheshire, New Hampshire, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Reuben",
+                  "surname": "Whitcomb",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Molly",
+                  "surname": "Towne",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            },
+            {
+              "id": "R3",
+              "type": "Couple",
+              "person1": "P2",
+              "person2": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

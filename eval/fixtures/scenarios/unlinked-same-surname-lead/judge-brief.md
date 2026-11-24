@@ -1,0 +1,5 @@
+The researcher is looking for the kin of Asa Whitcomb, born about 1745, who died in Westmoreland, Cheshire County, New Hampshire, in 1784 leaving minor children. His parents and siblings are not known. A man counts as Asa's kin only when a record links him to Asa.
+
+The search being run covers Cheshire County birth records and the 1790 census. FamilySearch holds two Whitcomb records there: a 1773 birth in Keene of an Asa Whitcomb, son of Reuben Whitcomb and Molly Towne, and a 1790 census entry naming Reuben Whitcomb as head of a household in Westmoreland. The 1773 Asa, born 28 years after the subject, is a different man. Neither record names the subject, and no record in the project links Reuben to him. That Reuben gave a son the name Asa is not a record of kinship. The two records are in different towns, and nothing shows the Reuben of one is the Reuben of the other.
+
+The project state staged for this test is the state immediately before this delegation arrived. The model is graded only on its response to this delegation.

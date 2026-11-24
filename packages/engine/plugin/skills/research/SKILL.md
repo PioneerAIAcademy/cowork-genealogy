@@ -61,6 +61,9 @@ first message with no project runs init-project first, then its deliverable
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
 
+In your own sentences, never state or imply a kinship between people no record
+names together; say what they share and that no record links them.
+
 | Next step | `<label>` |
 |---|---|
 | init-project, question-selection, locality-guide | setting up the project |
@@ -328,10 +331,9 @@ message.
 
    **Unregistered inferred relationships — check before anything else.**
    Before consulting the routing table or acting on `project_context.nextStep`,
-   scan every log entry's `notes` field for hedged language about family
-   relationships: "look like", "appear to be", "likely are", or "seem to be"
-   used to infer that people are relatives from shared surname, place or era
-   with no record linking them. If any such phrasing exists and `hypotheses`
+   scan every log entry's `notes` field for a note that states or implies a
+   kinship between people that no record in the project names together, hedged
+   or flat. If one exists and `hypotheses`
    has no entry for that relationship, the one step this turn is
    `@plugin:hypothesis-tracking`, naming the people and the inferred
    relationship. Do not read the table or follow `nextStep` until this check
@@ -356,9 +358,8 @@ message.
    not present the record's facts as support for that hypothesis or any theory
    built on it. The same holds for
    a relationship you or an earlier log note inferred from shared surname,
-   place or era with no record linking the people: it is a hypothesis, not a
-   fact. Log notes that say people "look like", "appear to be", "likely are",
-   or "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
+   place or era with no record linking the people, hedged or flat: it is a
+   hypothesis, not a fact. Spawn `@plugin:hypothesis-tracking` to
    hand it off — the agent writes the entry; say only that it was handed off,
    not that it is registered. When reporting, describe the inferred
    relationship as the log's speculation ("the log treats them as siblings"),

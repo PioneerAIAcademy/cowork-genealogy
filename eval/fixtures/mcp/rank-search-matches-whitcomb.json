@@ -1,0 +1,46 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches against subject I1 for the two Whitcomb records: the 1773 Keene birth of an Asa (28 years after the subject's about 1745) and Reuben's 1790 census entry. Matched on subjectId. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 2,
+    "returnedCount": 2,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:W7BK-A73",
+        "primaryId": "P1",
+        "personName": "Asa Whitcomb",
+        "sex": "Male",
+        "birthDate": "11 March 1773",
+        "collectionTitle": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)",
+        "matchScore": 0.21,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": true,
+        "birthYearGap": 28
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:W7CN-R90",
+        "primaryId": "P1",
+        "personName": "Reuben Whitcomb",
+        "sex": "Male",
+        "birthDate": null,
+        "collectionTitle": "United States Census, 1790",
+        "matchScore": 0.12,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": false,
+        "birthYearGap": null
+      }
+    ]
+  }
+}

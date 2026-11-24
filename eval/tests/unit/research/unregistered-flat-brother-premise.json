@@ -1,0 +1,82 @@
+{
+  "test": {
+    "id": "ut_research_fbp",
+    "skill": "research",
+    "name": "Routes to hypothesis-tracking when a log note states, with no hedge, that a same-surname man is the subject's brother",
+    "type": "positive",
+    "description": "Issue #4432, from alpha feedback #4379 (Philip and Jonathan Eastman). After a 1790 census search that did not find the subject, the log note states flatly that a same-surname head of household is Asa's older brother, with none of the hedge phrases the router's check used to look for. No record links them, Reuben is not a tree person, hypotheses is empty, and project_context's next step is search-records. The first hand-off must be @plugin:hypothesis-tracking, not search-records. Sibling of ut_research_9k4, whose note is hedged and whose people are tree persons that project_context already routes. Names and ids are synthetic.",
+    "tags": [
+      "routing",
+      "routes-to:hypothesis-tracking",
+      "from-feedback",
+      "claims-no-hypothesis-write"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching this project — drive the workflow forward.",
+    "scenario": "unregistered-flat-brother-premise"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The first hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records; do not grade which callee was reached, or in what order, from the transcript. Hand-offs to skills and agents are not in the tool calls you are shown, which list MCP calls only, so a hand-off missing from that list is not evidence it did not happen.",
+    "The project state: one 1790 census search is done and did not find Asa. Its log note states that Reuben Whitcomb, a head of household in Westmoreland, is Asa's older brother and concludes Asa's parents lived in Westmoreland. No record links Reuben to Asa, the tree holds only Asa, and hypotheses is empty. A relationship inferred from shared surname, place and era is a hypothesis until evidenced, and a search scoped by it is scoped by an unproven premise.",
+    "The unproven brother premise counts against Correctness in exactly these three ways, and any one of them makes Correctness 1. (a) A sentence whose own subject is the router or the facts, not the log, that calls Reuben Asa's brother or relative. A sentence whose subject is the log, the log note or the notes (\"the log treats him as Asa's older brother\", \"the note calls him Asa's brother\") reports the log's claim and never counts as (a), whatever words follow it in that sentence; (b) and (c) apply to every sentence. (b) Asa's parents placed in Westmoreland, or Reuben's household treated as Asa's family. (c) A search scoped to Westmoreland or to Reuben's household on the strength of the premise. If none of the three occurs, the brother premise does not lower Correctness. Any other unsupported claim, such as a search the router says it ran but did not, or a record the project does not hold, is graded as the base rubric says.",
+    "How the reply describes the hand-off to hypothesis-tracking (\"handed off to be registered\", \"I've handed that claim off to be registered as a working hypothesis\", \"queued for registration\") is checked by the validator test_reply_does_not_claim_hypothesis_written, not by you: do not lower any dimension for it. The hypothesis-tracking callee is a stub that writes nothing, so hypotheses staying empty after the hand-off is expected and is not evidence the delegation was invented. Mentioning the subject's own family or household (\"may show the family closer to his birth year\") is not (a) or (c).",
+    "Do not grade whether the router identifies Asa's parents, names any candidate family, or would have found one. Grade only how it treats the unproven premise.",
+    "Every callee is stubbed and tells the router to stop. Do not penalize it, on any dimension, for not completing the research cycle, not dispatching pli_002 or any other plan item, or not writing the hypothesis itself. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of the unproven relationship."
+  ],
+  "judge_reads_files": true
+}

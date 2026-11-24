@@ -1817,3 +1817,79 @@ def test_found_candidate_not_excluded(tool_calls, test):
         "a candidate this invocation was already handed (issue #4580): "
         + repr(excluding)
     )
+
+
+# Issue #4432: a person no record links to the subject is an unlinked lead. The
+# lead's given name, per test id; a test carrying the tag must be in this map and
+# a test in the map must carry the tag.
+UNLINKED_LEAD_TAG = "unlinked-lead-no-kinship"
+UNLINKED_LEADS = {"ut_search_records_ull": "Reuben"}
+
+# "father"/"son" are left out: a record may state them (the 1773 birth names
+# Reuben as that Asa's father), and the subject-as-son error is the namesake rule's.
+_KINSHIP = re.compile(
+    r"\b(?:brothers?|sisters?|siblings?|uncles?|nephews?|nieces?|cousins?|kin|kinsm[ae]n|relatives?|related)\b",
+    re.IGNORECASE,
+)
+_LIKELIHOOD = re.compile(
+    r"\b(?:almost certainly|certainly|probabl[ey]|likely|perhaps|possibly|presumably|"
+    r"(?:appears?|seems?) to be|(?:may|might|could|must) be(?=\s+(?:a|an|the|his|her|their|\w+'s)\b))\b",
+    re.IGNORECASE,
+)
+# A kinship word is left open, not claimed, when one of these comes before it in
+# its sentence: "whether Reuben is related", "nothing yet shows Reuben is his brother",
+# "the census did not record how Reuben was related to the head", "Reuben is a
+# candidate kin only, with no link to Asa established".
+_KINSHIP_OPENED = re.compile(
+    r"\b(?:whether|if|how|candidate|no records?|nothing\b[^.;]{0,40}?\b(?:shows?|links?|connects?|ties?|proves?)|"
+    r"not (?:shown|established|proven|known)|unproven|unknown|no evidence)\b",
+    re.IGNORECASE,
+)
+
+
+def unlinked_lead_kinship(text: str, lead: str) -> str | None:
+    """The first sentence of `text` that ties `lead` to someone by kinship, or None.
+
+    A sentence naming the lead fails when it carries a kinship word and a
+    likelihood word ("almost certainly his brother, though no record yet links
+    them"), or a kinship word that no "whether"/"if" or denial before it leaves open.
+    """
+    name = re.compile(rf"\b{re.escape(lead)}\b", re.IGNORECASE)
+    for sentence in re.split(r"(?<=[.!?;])\s+|\n+", text or ""):
+        if not name.search(sentence):
+            continue
+        kin = list(_KINSHIP.finditer(sentence))
+        if not kin:
+            continue
+        if _LIKELIHOOD.search(sentence):
+            return sentence.strip()
+        if any(not _KINSHIP_OPENED.search(sentence[: m.start()]) for m in kin):
+            return sentence.strip()
+    return None
+
+
+def test_unlinked_lead_states_no_kinship(before_state, after_state, agent_returns, text_response, test):
+    """Tag-gated (unlinked-lead-no-kinship): issue #4432, feedback #4379.
+
+    A same-surname man the search turned up, whom no record links to the subject,
+    is reported as an unlinked lead: neither the agent's return nor a log note this
+    run wrote ties him to anyone by kinship, flatly or hedged.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    test_id = test.get("id")
+    tags = test.get("tags", [])
+    assert (UNLINKED_LEAD_TAG in tags) == (test_id in UNLINKED_LEADS), (
+        f"{test_id}: the '{UNLINKED_LEAD_TAG}' tag and UNLINKED_LEADS must agree"
+    )
+    if UNLINKED_LEAD_TAG not in tags:
+        pytest.skip("not an unlinked-lead scenario")
+    lead = UNLINKED_LEADS[test_id]
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    found = unlinked_lead_kinship(reply, lead)
+    assert found is None, f"the return ties {lead}, an unlinked lead, to someone by kinship: {found!r}"
+    for entry in _new_log_entries(before_state, after_state):
+        found = unlinked_lead_kinship(str(entry.get("notes") or ""), lead)
+        assert found is None, (
+            f"log entry {entry.get('id')}'s notes tie {lead}, an unlinked lead, to someone by kinship: {found!r}"
+        )

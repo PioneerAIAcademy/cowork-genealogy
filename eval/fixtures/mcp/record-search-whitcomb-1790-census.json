@@ -1,0 +1,67 @@
+{
+  "tool": "record_search",
+  "description": "record_search for Whitcomb with a census recordType returns one 1790 census entry: Reuben Whitcomb, head of household, Westmoreland, Cheshire County, New Hampshire. Nothing in it names Asa or his parents. Listed before record-search-whitcomb-births, which would otherwise match first. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "surname": "~Whitcomb",
+    "recordType": "~census"
+  },
+  "response": {
+    "query": {
+      "surname": "Whitcomb",
+      "recordType": "census"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "W7CN-R90",
+        "recordId": "W7CN-R90",
+        "personName": "Reuben Whitcomb",
+        "score": 0.61,
+        "sex": "Male",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Westmoreland, Cheshire, New Hampshire, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:W7CN-R90",
+        "collectionId": "1803959",
+        "collectionTitle": "United States Census, 1790",
+        "recordTitle": "Reuben Whitcomb, head of household, Westmoreland, 1790",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Reuben",
+                  "surname": "Whitcomb",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Census",
+                  "date": "1790",
+                  "place": "Westmoreland, Cheshire, New Hampshire, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

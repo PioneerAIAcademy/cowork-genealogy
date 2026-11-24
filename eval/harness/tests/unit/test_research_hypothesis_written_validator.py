@@ -39,6 +39,7 @@ OVERCLAIMS = [
     "Hypothesis h_001 has been registered for the sibling link.",
     "The sibling premise is now a registered hypothesis.",
     "The inference is now on record as a hypothesis.",
+    "The brother premise is now registered as hypothesis h_001.",
     "Registered: the Nora and Lois sibling link as h_001.",
     "With those hypotheses on record, the next step is pli_002.",
     "With the sibling hypotheses now on record, the 1910 search can go ahead.",
