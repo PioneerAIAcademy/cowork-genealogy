@@ -314,46 +314,37 @@ why that was accepted rather than worked around.
 measurements: **the halt is built on the FS prototype only.** Cowork gets
 `AskUserQuestion` plus router prose and NO hook. See the plan's decision 25.
 
-**Amended 2026-10-21 (lead).** The alpha no longer "gets nothing": its Stop veto
-goes OFF (cap 0, in PR 1), and it then runs the way Cowork does — router prose plus
-`AskUserQuestion`, no hook, "keep going" as a single bounded turn, no reply buttons.
-Nothing else of step mode is built there. Nobody has measured `AskUserQuestion` on
-the alpha, so PR 2's verification carries a manual check that a step there ends at
-its question and waits; item 10 below measured Cowork, not the alpha.
+**Amended 2026-11-19 and 2026-11-24 (lead): every plane now gates.** The alpha (the
+web app) loads `step_boundary.py` in process and denies, then halts, as the prototype
+does. The connector (Claude's chat) and Cowork get a registered plugin hook,
+`step_gate_hook.py`, which imports `step_boundary.py` and denies every out-of-group
+spawn, never halting: a deny makes the model report and end its turn (item 9's
+message-3 control), while a halt ends a Cowork turn with nothing on screen.
+`step_boundary.py` stays a library the worker, the web app, both harnesses and that hook
+import. This replaces the 2026-10-21 amendment, under which the alpha ran on router
+prose alone, "keep going" was one bounded turn, and no plugin step hook existed. "Keep
+going" itself is retired: it runs one step, like "Continue.". The hook is silent under
+`GENEALOGY_HOSTED_PLANE`, so `make hook-smoke`, which drives the hosted loader, cannot
+show it binds; only a live connector or Cowork session can, and none has been run yet
+(2026-11-24).
 
-**And there is no plugin step hook at all.** The prototype worker enforces with its
-own `PreToolUse`, and neither harness loads `hooks.json`, so the only plane a plugin
-step hook could run on is Cowork — which gets none. `step_boundary.py` ships in
-`plugin/hooks/` as a library the worker and both harnesses import, never registered
-as a hook.
-
-- A halt can end a Cowork turn (item 9), and `AskUserQuestion` waits there without
-  ending one (item 10). Both are measured; neither is being built on that plane.
-- The plan's fallback, "Cowork runs on router prose alone" if the hook cannot find
-  turns or keep state, is now the chosen design rather than a fallback. It was not
-  triggered by a failure: the hook could have done it.
-
-**PARKED for a possible future Cowork hook** (lead, 2026-10-19: "PR 1 doesn't need
-them. Please write them into ADR-0005 with today's date, so they're there if we
-build the Cowork hook later"). None of the following is an input to PR 1, and they
-are recorded here so they do not have to be re-measured:
+**What the Cowork hook was built on** (lead, 2026-10-19: "Please write them into
+ADR-0005 with today's date, so they're there if we build the Cowork hook later"). The
+first four are what `step_gate_hook.py` relies on:
 
 - The turn is findable from `prompt_id`, and `UserPromptSubmit` is NOT a turn
   counter: it fires for every subagent hand-back carrying the researcher's own
-  `prompt_id` (above). Key turns on `prompt_id`.
+  `prompt_id` (above). The hook starts a turn only on a prompt that is not an
+  `<agent-message` hand-back and whose `prompt_id` is absent or new.
 - Cowork's spawn tool is `Agent`, not `Task`, and `subagent_type` arrives
   plugin-prefixed (`genealogy-research:record-extractor`), so a name comparison
   has to cut at the last `:`.
 - A Cowork agent outlives its first hand-back.
 - A state file beside the hook persists between calls within a session, not across
-  sessions.
-- `ctx` cannot come from the hook's cwd (item 7), so a Cowork hook would have to
-  derive it from the transcript (item 4).
-
-**What the prototype halt is expected to tell us about Cowork.** The router prose
-is the same on both planes, so the prototype's halt rate measures how often a model
-starts a step without asking. If it is high, the Cowork hook gets built with
-numbers behind it rather than on a guess (lead, 2026-10-19).
+  sessions. The hook keeps the turn in one per session, under a lockfile.
+- `ctx` cannot come from the hook's cwd (item 7). The hook does not derive it: it
+  passes `open_items` true in a wrap-up turn and nothing otherwise, so a dispose after
+  an exhaustiveness decline waits one turn.
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding

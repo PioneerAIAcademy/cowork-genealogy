@@ -659,7 +659,7 @@ and the `nextStep` text:
 
 - person-evidence: `assertionIds:` every live assertion of the question (the
   rung fires only when none is linked) and `userPresent: yes`, which the router
-  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+  turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict;
 - hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.

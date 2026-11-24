@@ -233,7 +233,7 @@ def test_the_host_replies_between_turns(tmp_path, monkeypatch):
         step_mode="unattended",
     )
     assert len(client.sent) >= 2, client.sent
-    assert client.sent[1] == "Continue.", client.sent
+    assert client.sent[1] == "/research --autonomous Continue.", client.sent
 
 
 def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):

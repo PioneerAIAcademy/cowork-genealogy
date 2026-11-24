@@ -365,8 +365,9 @@ incidents, and what the probe retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
-The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
-Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
+The plugin's hooks are the **only** guardrails that reach Cowork and the connector:
+the guard, `guard_project_files.py`, and the step gate, `step_gate_hook.py`, both on
+`PreToolUse`. `hooks=` is an SDK argument the hosted control plane can set and Cowork
 cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. The hosted
 path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 `"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
@@ -393,6 +394,14 @@ pinned by `test_the_sources_sentence_is_the_one_the_plugin_hook_adds` and
 `test_the_routing_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add those two
 as `UserPromptSubmit` context (`context_policy.sources_note_hook`), since they measure the
 hosted main thread, and not the conditional no-project sentence.
+
+**The step gate, `step_gate_hook.py`,** holds one step per turn on the connector and in
+Cowork: a second `PreToolUse` entry on `Agent|Task|Skill` and a second `UserPromptSubmit`
+entry. It imports `step_boundary.py`, which stays a library (lead, 2026-11-24), keeps the
+turn in a per-session state file under a lockfile, and denies every out-of-group
+main-thread spawn, never halting. It is silent under `GENEALOGY_HOSTED_PLANE`: the web app
+and the prototype gate in process. `make hook-smoke` drives the hosted loader, where it is
+silent, so only a live connector or Cowork session proves it binds.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
@@ -435,7 +444,9 @@ shipped hook already does it: it routes `research_append` by caller identity
 denies the main thread every tool only agents hold (`AGENT_ONLY_TOOLS`), naming
 the agents to delegate to; a tool only agents hold goes on that map or on
 `MAIN_THREAD_OK` with its reason, **by hand, never derived** (lead, 2026-10-20),
-and `plugin-hooks.test.ts` fails until it does. Grant a new tool to an agent and
+and `plugin-hooks.test.ts` fails until it does. A tool no agent holds that the main
+thread must never call goes on `MAIN_THREAD_DENIED` with its deny text
+(`person_search`). Grant a new tool to an agent and
 you owe that line, plus the `hooks.json` matcher if it is denied. The one arm
 still harness-only is `image_read`, which no agent holds; porting it was
 **declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006

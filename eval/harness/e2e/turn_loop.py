@@ -3,7 +3,8 @@
 Section F. A turn runs one step and ends, so a one-shot query would stop after
 the first step and the run would look finished. This drives turn after turn on
 one `ClaudeSDKClient` session, answering each boundary as a researcher would:
-`next_reply` is the simulated researcher, which sends "Continue." at each offer
+`next_reply` is the simulated researcher, which sends "Continue." at each offer,
+flagged `--autonomous` as the opener is,
 and stops where only a real researcher could answer. No production plane sends
 a reply of its own; this picker exists only because an e2e run is unattended.
 
@@ -63,6 +64,11 @@ class Turn:
 
 #: How many replies one run may send.
 MAX_REPLIES = 30
+
+#: The simulated researcher's "Continue.": the run is unattended, so each reply
+#: carries the opener's `--autonomous` flag and the router keeps passing
+#: `userPresent: no`. "Wrap it up." goes bare: a wrap-up turn already passes it.
+UNATTENDED_CONTINUE = "/research --autonomous Continue."
 
 
 def _reply_state(state: dict | None) -> tuple[int, int, list, int]:
@@ -190,7 +196,7 @@ def next_reply(
 
     if offer == "plan" and rounds >= 1:
         return done(boundary.REPLY_WRAP_UP)
-    return done(boundary.REPLY_CONTINUE)
+    return done(UNATTENDED_CONTINUE)
 
 
 async def stream_turns(

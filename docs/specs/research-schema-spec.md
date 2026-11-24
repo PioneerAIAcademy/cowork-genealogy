@@ -1177,8 +1177,8 @@ the minted person it names (`research-append-tool-spec.md` §5.11).
 **Only the researcher creates a rejection** (lead, 2026-10-20). A rejection is the
 researcher's statement that a record is not this person. The person-evidence agent
 writes one only when the researcher clearly says the pair is not a match; when they
-are unsure, it neither links nor rejects. In an autonomous or "Keep going" turn a
-weak match is simply left unlinked. The engine cannot see who spoke, so each row
+are unsure, it neither links nor rejects. In an autonomous or wrap-up turn a weak
+match is simply left unlinked. The engine cannot see who spoke, so each row
 carries the researcher's exact words in `researcher_words`: a hedge read as a no,
 or a rejection written in a turn the researcher never spoke in, is then visible in
 the viewer and in feedback triage. That makes a slip visible, not impossible.

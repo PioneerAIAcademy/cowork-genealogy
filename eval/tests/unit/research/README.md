@@ -320,13 +320,28 @@ suite's snapshot**, so an init-project body edit now owes a research run.
 `ut_research_b4p` (`bounded-plan-first-message-stops-after-setup.json`) is the
 one bounded deliverable that does not run in the setup turn: a research plan with a
 FamilySearch ID and no project runs init-project alone and ends on "Continue with
-`setting up the project`?", so the researcher confirms the question before anything
+`choosing the question`?", so the researcher confirms the question before anything
 is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
 deterministic through the `bounded-plan-after-init` tag and
 `test_bounded_plan_first_message_stops_after_init_project`, which reads the
 hand-off list, that the project exists with no question or plan, and that the offer
 names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
 because on a plan ask the next step is the first research question.
+
+Issue #4791's three stops before a job searches each have a deterministic test:
+`ut_research_js1` (`job-setup-stops-after-init.json`, tag `setup-stop`) runs
+init-project alone and asks what to verify or research; `ut_research_vr1`
+(`verify-reply-forgets-then-selects.json`, `verify-forget-then-select`) runs
+forget-and-rederive's verify mode with `cleanSlate`, the baseline and then
+question-selection with a `statedQuestion:` line; `ut_research_sr1`
+(`setup-reply-reaches-question-selection.json`, `qs-reply-carries:`) hands the
+reply to question-selection as `researcherReply:`; `ut_research_pl2` and
+`ut_research_pr2` (`plan-turn-…`, `plan-turn-locality-then-plan`,
+`relays-both-plan-summaries`) run locality-guide then research-plan in one turn
+and relay both summaries in full; `ut_research_nm1`
+(`name-without-pid-asks-for-id.json`, `no-name-search`) makes no `person_search`
+call for a person named with no FamilySearch ID. The validators are pinned in
+`eval/harness/tests/unit/test_research_setup_stops_validators.py`.
 
 `ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`
 (`bounded-interpretive-first-message.json`) cover the interpretive ask (issue #4381).

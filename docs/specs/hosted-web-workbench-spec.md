@@ -619,31 +619,26 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   `reply_options(offered_step, research)`. The web shows one button per phrase
 >   and nothing else, and each sends its phrase **verbatim** — `step_mode(text)`
 >   is exact-phrase only, so a button sending its friendly label would start no
->   run. The field is left OUT when empty, as `reply_follows` is -- which the prototype sets from the reply it actually queued, not the one it planned, since `queue_auto_reply` refuses when a held row exists or Stop is set. No client reads `reply_follows` yet; a step that
->   ended on a question for the researcher renders no buttons.
+>   run. The field is left OUT when empty; a step that ended on a question for the
+>   researcher renders no buttons. `options` is "Continue.", plus "Wrap it up." and,
+>   at the low-risk choice, "Search more." where they apply; there is no "Keep going."
+>   button (research-step-mode-spec.md §A).
 >
->   **"Keep going" is the host replying for the researcher**, not one long turn.
->   `next_auto_reply` decides the reply after each turn; the prototype queues it
->   inside `complete()`'s own transaction as a held turn row
->   (`outcome='queued'`, `message.auto=true`) under the session's queue lock, and
->   the existing `release_next_held` sends it. The run state lives in
->   `sessions.auto_reply` because it spans turns. A turn the host answered itself
->   carries no `options`: the choice is already made. The reply reaches the
->   browser as a `user_msg` frame with `auto: true` and is drawn as the
->   researcher's own message, marked "sent automatically".
+>   **No plane replies for the researcher.** "Keep going" is retired: a typed
+>   "Keep going." runs one step, as "Continue." does (decision 7). The prototype's
+>   automatic reply chain is deleted, and migration `020_close_held_auto_replies.sql`
+>   closes any reply it had queued and nothing had claimed, so it is never released
+>   ahead of the researcher's next message. `sessions.auto_reply` stays, unread,
+>   until a contracting migration drops it once no earlier worker serves.
 >
->   **Stop and typing win over a held reply.** Neither tier's claim releases a
->   held `auto` row while Stop is set, and neither clears Stop for one
->   (`turn_message.CLAIM_HELD_SQL`). The researcher's own message closes any held
->   reply as `superseded` before it is admitted, so their words are the next turn.
->   The SSE banner's `has_queued` leaves `auto` rows out. Claiming an open turn
->   the researcher sent clears `sessions.auto_reply`, so a new "Keep going." never
->   inherits a spent budget. A `job` turn is still bounded on this plane: the gate
->   enforces `step` (`step_boundary.gate_mode`) while the turn records `job`.
->
->   `MAX_AUTO_REPLIES` (30) in `step_boundary.py` is the prototype's and the e2e
->   harness's reply cap. Neither the alpha nor Cowork loads `step_boundary.py`
->   (decision 25), so neither gets the host's replies: there "keep going." is one bounded turn (research-step-mode-spec.md §A2).
+>   **The alpha enforces one step per turn too** (decision 25, widened 2026-11-19).
+>   `real_agent.py` loads `step_boundary.py` (`app/agent/step_boundary_loader.py`),
+>   builds the turn's `StepGate` from its text in `_begin_turn_hook_state` before the
+>   query, and consults it in `PreToolUse` on `Agent`, `Skill` and `Task`, main thread
+>   only: the first out-of-group step is denied, a second attempt halts the turn. A
+>   halted turn whose last line offers nothing ends on the halt's offer line, since
+>   `stopReason` never reaches the browser on this plane. The alpha sends no
+>   `options`.
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)

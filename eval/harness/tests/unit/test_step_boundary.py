@@ -561,7 +561,7 @@ def test_the_wrapup_offer_round_trips_too():
          "zero Matches", "extracting no Match", "a count on another label"],
 )
 def test_a_line_naming_no_entry_is_no_offer(text):
-    """No offer ends a "Keep going" run, so every one of these must read as None --
+    """No offer ends an unattended e2e run, so every one of these must read as None --
     a parser that guessed here would keep a run going past a question for the
     researcher, which is the failure the step boundary exists to prevent."""
     assert sb.offered_step(text) is None
