@@ -33,13 +33,7 @@ import {
 import { arkToBareId } from "../utils/ark.js";
 import { fitPage, requireWholeNumber } from "../utils/text-page.js";
 import { fillWholeFirst } from "../utils/share-budget.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 
 // `fitPage` lives in utils/text-page.ts, shared with the wiki tools. This module
 // still exports it: its callers and its tests import it from here.
@@ -79,7 +73,7 @@ export interface SidecarReadInput {
   maxChars?: number;
 }
 
-export type SidecarReadFailureReason = "no_project" | "invalid_ref" | "not_found" | "not_text";
+export type SidecarReadFailureReason = "invalid_ref" | "not_found" | "not_text";
 
 export type SidecarReadResult =
   | {
@@ -114,7 +108,7 @@ export type SidecarReadBatchResult =
  *  opposed to the thrown argument/path errors the dispatch arm's catch owns. */
 class SidecarReadFailure extends Error {
   constructor(
-    readonly reason: Exclude<SidecarReadFailureReason, "no_project">,
+    readonly reason: SidecarReadFailureReason,
     message: string,
   ) {
     super(message);
@@ -462,7 +456,7 @@ async function readRefText(projectPath: string, ref: string): Promise<RefText> {
       case "missing_dir":
         throw new Error(missingProjectDirMessage(projectPath));
       case "no_project":
-        throw new NoProjectError();
+        throw new Error(NO_PROJECT_REFUSAL);
     }
 
     // NOT `store.exists`: it swallows every access() failure as "absent", so an
@@ -506,7 +500,6 @@ async function readRefText(projectPath: string, ref: string): Promise<RefText> {
     if (looksBinary(text)) throw new SidecarReadFailure("not_text", `${ref}: ${NOT_TEXT_MESSAGE}`);
     return { ok: true, text, hit: hitFields };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof SidecarReadFailure) return { ok: false, reason: e.reason, errors: [e.message] };
     throw e;
   }

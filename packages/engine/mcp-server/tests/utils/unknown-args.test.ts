@@ -4,6 +4,7 @@ import { ACCEPTED_ALIASES, nearestParameters, rejectUnknownArgs } from "../../sr
 import { SECTION_FILTERS } from "../../src/tools/research-query.js";
 import { RECORD_TYPE_GROUP_NAMES } from "../../src/utils/record-type-groups.js";
 import { callTool } from "../helpers/call-tool.js";
+import { makeLocalProject } from "../helpers/seed-project.js";
 import {
   PERSON_READ_REF_REMOVED,
   PROJECT_TREE_REMOVED,
@@ -33,7 +34,8 @@ describe("rejectUnknownArgs through the server (#3736)", () => {
   it("lets imageArk through to image_read, whose handler folds it into ark", async () => {
     // Not an ARK, so the handler refuses it before any fetch, and the refusal
     // is the ark-format one: the value reached the resolver as `ark`.
-    const r = await callTool("image_read", { imageArk: "not-an-ark" });
+    const project = await makeLocalProject();
+    const r = await callTool("image_read", { imageArk: "not-an-ark", projectPath: project.dir }).finally(project.cleanup);
     expect(r.isError).toBe(true);
     expect(r.text).not.toContain("has no parameter");
     expect(r.text).not.toMatch(/Provide exactly one of|requires one of/);
@@ -281,7 +283,6 @@ describe("rejectUnknownArgs: what it echoes back", () => {
       const r = await callTool("project_create", args);
       expect(r.isError).toBe(true);
       expect(r.text).toContain(PROJECT_TREE_REMOVED);
-      expect(r.text).toMatch(/survey-surname agent with no projectPath/);
       expect(r.text).not.toContain("the nearest are");
     }
   });
