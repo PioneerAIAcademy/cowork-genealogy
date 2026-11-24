@@ -22,6 +22,7 @@ drift too.
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import sys
@@ -80,8 +81,9 @@ def test_house_style_is_byte_identical_to_the_shipped_string():
         "HOUSE_RESEARCHER_PROFILE.narration_guidance have diverged.\n"
         f"  engine:        {_shipped_guidance()!r}\n"
         f"  _HOUSE_STYLE:  {_HOUSE_STYLE!r}\n"
-        "Change BOTH, and see docs/plan/research-as-a-job-phase5-prose.md for the "
-        "four other verbatim copies that also have to move."
+        "Change BOTH, and the four other verbatim copies that "
+        "test_the_seeded_copies_carry_the_shipped_string and "
+        "test_the_documented_copies_carry_the_shipped_string compare."
     )
 
 
@@ -170,4 +172,23 @@ def test_the_seeded_copies_carry_the_shipped_string(read):
     """The e2e template seeds every e2e project, so a stale copy there would
     measure every future e2e reply against the OLD string; the mock agent stands
     in for production's project. Both were hand-copied and nothing compared them."""
+    assert read() == _shipped_guidance()
+
+
+def _e2e_spec_guidance() -> str:
+    path = REPO / "docs" / "specs" / "e2e-test-spec.md"
+    m = re.search(r'^\s*"narration_guidance": "([^"\\]*)"', path.read_text(encoding="utf-8"), re.MULTILINE)
+    assert m, "could not find e2e-test-spec.md's narration_guidance; fix this locator, do not delete the test"
+    return m.group(1)
+
+
+def _onboarding_slides_guidance() -> str:
+    path = REPO / "docs" / "onboarding-slides.html"
+    m = re.search(r"<em>(Plain language for someone[^<]*)</em>", path.read_text(encoding="utf-8"))
+    assert m, "could not find onboarding-slides.html's house text; fix this locator, do not delete the test"
+    return html.unescape(m.group(1))
+
+
+@pytest.mark.parametrize("read", [_e2e_spec_guidance, _onboarding_slides_guidance], ids=["e2e-spec", "onboarding-slides"])
+def test_the_documented_copies_carry_the_shipped_string(read):
     assert read() == _shipped_guidance()

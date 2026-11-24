@@ -628,9 +628,10 @@ def test_status_question_answered_from_project_context_only(
 # A FamilySearch ID (PID) is the one identifier narration may show. Its halves
 # can look like a tree id (`K835-R12`, `F123-ABC`), so PID-shaped tokens are
 # removed before the tree-id search, unless both halves are tree ids: a range
-# such as `I1-I5` or `I100-I200` is still caught. Links are removed first: an
-# image ARK's third part (`3:1:939K-8LJ5-F9`) can look like a tree id too.
-_LINK_RE = re.compile(r"(?:https?://|ark:/)\S+")
+# such as `I1-I5` or `I100-I200` is still caught. Links, and record or image ids
+# written without `ark:/`, are removed first: an image id's third part
+# (`3:1:939K-8LJ5-F9`) can look like a tree id too.
+_LINK_RE = re.compile(r"(?:https?://|ark:/)\S+|\b\d:\d:\S+")
 _PID_TOKEN_RE = re.compile(r"\b([A-Za-z0-9]{4})-([A-Za-z0-9]{3,4})\b")
 _TREE_ID_RE = re.compile(r"\b" + _TREE_ID_PATTERN + r"\b")
 _WHOLE_TREE_ID_RE = re.compile(_TREE_ID_PATTERN)

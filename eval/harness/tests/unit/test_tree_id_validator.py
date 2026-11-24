@@ -41,6 +41,7 @@ from test_research import test_reply_names_no_tree_id as no_tree_id  # noqa: E40
         # A known, accepted false positive: nothing like it is in any committed reply.
         ("She entered on an F1 visa.", ["F1"]),
         ("See https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9; she is I13.", ["I13"]),
+        ("Page image 3:1:33SQ-GG8M-S133 shows I13.", ["I13"]),
     ],
 )
 def test_a_reply_naming_a_tree_id_fails(reply, expected):
@@ -62,6 +63,10 @@ def test_a_reply_naming_a_tree_id_fails(reply, expected):
         "the record ark:/61903/4:1:94Z5-N1F",
         "Open https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9 to see the page.",
         "[the page](https://www.familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133)",
+        "Page image 3:1:33SQ-GG8M-S133 shows the entry.",
+        "the page ark:/61903/3:1:939K-8LJ5-F9 shows it",
+        "Her FamilySearch ID is KWCJ-S123.",
+        "Y-DNA haplogroup R1b, saved as UTF8.",
         "",
         None,
     ],
