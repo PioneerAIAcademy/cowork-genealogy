@@ -961,6 +961,7 @@ the **Sources consulted** list — then this block:
 <every point no tool result states — a legal rule, who held authority, how common a practice was, why people did something — one bullet each, each opening with "(general knowledge)"; if there are none, write "(general knowledge) None needed.">
 
 ### Search implications
+<for a jurisdiction question: the county courthouse to search, the state it is in today, and the kinds of records it created (deeds, probate, court orders and tax lists)>
 - hypothesis-tracking: (general knowledge) <one candidate explanation per line, to test as a hypothesis; replace "(general knowledge)" with the title of the page only when a tool result stated that explanation>
 - research-plan: <one fact per line that changes where or when to search>
 ```
