@@ -467,6 +467,10 @@ resolve, preferring the assertion that carries the placement.
   different informant gave it.
 - A candidate who died before the record's event cannot be its subject:
   resolve for the surviving candidate and name the death record.
+  When a candidate father's death falls within about a year before the
+  child's birth or baptism, judge by the child's birth date, not the
+  baptism date: a child can be born up to about nine months after its
+  father's death.
 - When that elimination leaves the one candidate the subject's other
   records already name (the household, the death certificate), resolve
   for him with that candidate's assertion as `preferred_assertion_id`.
