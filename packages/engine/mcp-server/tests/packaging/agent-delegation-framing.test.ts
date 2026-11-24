@@ -332,7 +332,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -369,7 +369,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -402,7 +402,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -608,7 +608,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     pins: [
       {
         side: "agent",
-        excerpt: "**Only merge when proof-conclusion confirms identity.**",
+        excerpt: "**A merge rests on an identity decision or the user's instruction.**",
       },
     ],
     exempt: {

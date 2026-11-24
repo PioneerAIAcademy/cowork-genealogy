@@ -1,0 +1,143 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Who raised Thomas Hughes after his father died?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-01-01",
+    "updated": "2026-01-02"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was William Price Thomas Hughes's stepfather?",
+      "rationale": "The 1871 census places Thomas in William's household.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-01-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1871 England census, Merthyr Tydfil, Glamorgan, William Price household",
+      "citation_detail": {
+        "who": "Enumerator",
+        "what": "Census household",
+        "when_created": "1871",
+        "when_accessed": "2026-01-01",
+        "where": "Merthyr Tydfil",
+        "where_within": "schedule 112"
+      },
+      "source_classification": "original",
+      "repository": "The National Archives",
+      "access_date": "2026-01-01"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "rec_1871",
+      "record_role": "head",
+      "fact_type": "name",
+      "value": "William Price",
+      "information_quality": "primary",
+      "informant": "head",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "rec_1871",
+      "record_role": "stepson",
+      "fact_type": "relationship",
+      "value": "Thomas Hughes, stepson, 9",
+      "information_quality": "primary",
+      "informant": "head",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": 0.9,
+      "rationale": "Name, age and place match.",
+      "created": "2026-01-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.9,
+      "rationale": "Name, age and place match.",
+      "created": "2026-01-02",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "shortfall": "ceiling",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched the 1871 and 1881 censuses for Merthyr Tydfil; no other household holds Thomas.",
+      "narrative_markdown": "## Thomas Hughes's stepfather\n\nThe 1871 census lists Thomas Hughes, 9, as William Price's stepson.",
+      "claims": [
+        {
+          "claim": "William Price is Thomas's stepfather",
+          "proof_tier": "probable",
+          "supporting_assertion_ids": [
+            "a_001",
+            "a_002"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "subtype": "Step",
+            "parent": "I2",
+            "child": "I1"
+          }
+        }
+      ]
+    }
+  ],
+  "evaluations": []
+}

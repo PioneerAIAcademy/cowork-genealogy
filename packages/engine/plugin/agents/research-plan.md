@@ -715,7 +715,7 @@ research_append({
         record_type: "probate",
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
-        repository: "FamilySearch",
+        repository: "FamilySearch (images)",
         rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
@@ -735,7 +735,8 @@ research_append({
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
   NARA, state_archives, county_courthouse, other. These are examples,
   not a closed list — name the actual repository rather than forcing it
-  to `other`.
+  to `other`. A FamilySearch item that browses browse-only images is
+  `FamilySearch (images)`, and a full-text search is `FamilySearch (full-text)`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
