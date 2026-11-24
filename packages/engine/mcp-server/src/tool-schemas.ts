@@ -230,7 +230,6 @@ export const AGENT_ONLY: ReadonlySet<string> = new Set([
   "place_population",
   "place_search",
   "place_search_all",
-  "project_create",
   "record_search",
   "same_person",
   "tree_correct",
