@@ -146,6 +146,8 @@ import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } fr
 import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
 import { fillRecordTypeRows } from "../utils/locality-record-types.js";
 import {
+  collectionScopeMatcher,
+  collectionScopeTerms,
   isCoreNationalCollection,
   localityNationalCountry,
   nationalCollectionScope,
@@ -11612,25 +11614,33 @@ const COLLECTION_TITLE_TYPE_WORD =
  * places the titles sort as 16 naming the place, 165 naming no part of the scope,
  * and 150 naming another part.
  */
-function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+function titleNamesElsewhere(title: string, isScopePart: (part: string) => boolean, ownTerms: readonly RegExp[]): boolean {
   if (ownTerms.some((re) => re.test(title))) return false;
-  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
   const rest = title
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+    .filter((p) => p !== "" && !isScopePart(p) && !/^[\d\s–-]+$/.test(p));
   return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
 }
 
-/** One whole-word matcher per part of the entry's places below `scope`. */
-function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+/** Whether a comma-separated part of a title or place is the scope `name` derives:
+ *  for a United Kingdom place, a part that starts with one of its
+ *  `collectionScopeTerms` (`England and Wales`, `Great Britain`); elsewhere, one of
+ *  the scope's own parts. */
+function scopePartTest(name: string, scope: string): (part: string) => boolean {
+  if (collectionScopeTerms(name) !== null) return collectionScopeMatcher(name);
   const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  return (part) => scopeParts.has(part.toLowerCase());
+}
+
+/** One whole-word matcher per part of the entry's places below the scope. */
+function ownPlaceTerms(names: readonly unknown[], isScopePart: (part: string) => boolean): RegExp[] {
   const terms = new Set<string>();
   for (const name of names) {
     if (typeof name !== "string") continue;
     for (const raw of name.split(",")) {
       const part = raw.replace(/\([^()]*\)/g, " ").trim();
-      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      if (part.length < 3 || isScopePart(part) || part === "United States") continue;
       terms.add(part);
     }
   }
@@ -11669,9 +11679,11 @@ function fillLocalityCollections(
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
       if (needle === "" || nationalCollectionScope(scope) === scope) continue;
-      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
+      const titleInScope = collectionScopeMatcher(name);
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && titleInScope(c.title));
       if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
-      const own = ownPlaceTerms([...names, entry.for_place], scope);
+      const isScopePart = scopePartTest(name, scope);
+      const own = ownPlaceTerms([...names, entry.for_place], isScopePart);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
       const linkedIds = new Set(SURVEY_WIKI_COLLECTIONS.get(op) ?? []);
@@ -11682,12 +11694,12 @@ function fillLocalityCollections(
       // when its title sits under this scope and names another part of it (`New York, Yonkers, …`).
       const underScope = (title: string) => title.toLowerCase().startsWith(`${needle},`);
       const missing = [
-        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own)),
+        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, isScopePart, own)),
         ...linked.filter(
-          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, scope, own)),
+          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, isScopePart, own)),
         ),
       ];
-      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, isScopePart, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
         id,

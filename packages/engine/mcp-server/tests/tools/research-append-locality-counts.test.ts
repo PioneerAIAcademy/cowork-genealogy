@@ -461,6 +461,46 @@ describe("research_append stamps locality collection counts from the catalog", (
     });
   });
 
+  describe("a United Kingdom place takes the titles led by its constituent country", () => {
+    const ENGLAND: FSCollectionsResponse = {
+      results: 6,
+      index: 0,
+      entries: [
+        catalogEntry("10", "England and Wales, Census, 1901", 1, 1, 1901),
+        catalogEntry("11", "England, Yorkshire, Parish Registers, 1538-2016", 1, 1, 1538, 2016),
+        catalogEntry("12", "England, Lancashire, Parish Registers, 1538-1910", 1, 1, 1538, 1910),
+        catalogEntry("13", "United Kingdom, Merchant Navy Seamen Records, 1835-1941", 1, 1, 1835, 1941),
+        catalogEntry("14", "Great Britain, Deaths and Burials, 1778-1988", 1, 1, 1778, 1988),
+        catalogEntry("15", "United States, New England Passenger and Crew Lists, 1911-1954", 1, 1, 1911, 1954),
+      ],
+    };
+    const sheffield = (collections: unknown[]) => appendIn("Sheffield, Yorkshire, England, United Kingdom", collections);
+    beforeEach(() => {
+      mockFetch.mockResolvedValue(new Response(JSON.stringify(ENGLAND), { status: 200 }));
+    });
+
+    it("keeps the England and Wales census, its own county's and the kingdom-wide titles, and leaves out another county's", async () => {
+      const r = await sheffield([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["10", "11", "13", "14"]);
+      expect(warningsOf(r)).toEqual([
+        'localities collections: added the 4 other FamilySearch collections for "England" from the catalog, after the 0 sent; ' +
+          '1 that name another part of "England" were left out',
+      ]);
+    });
+
+    it("leaves other counties out before the cap, so 160 of them ahead of the census take none of its room", async () => {
+      const counties = Array.from({ length: 160 }, (_, i) =>
+        catalogEntry(`c${i}`, `England, Shire${i}, Parish Registers, 1538-1900`, 1, 1, 1538, 1900),
+      );
+      const census = catalogEntry("10", "England and Wales, Census, 1901", 1, 1, 1901);
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ results: 161, index: 0, entries: [...counties, census] }), { status: 200 }),
+      );
+      await sheffield([]);
+      expect((await storedCollections()).map((c: any) => c.id)).toEqual(["10"]);
+    });
+  });
+
   describe("national collections (spec 5.12): the US, Canada and Mexico get their core country-wide rows", () => {
     const NATIONAL: FSCollectionsResponse = {
       results: 20,
