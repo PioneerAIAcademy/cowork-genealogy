@@ -99,10 +99,23 @@ can drop:
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
+    searches?: [{                        // only when nextStep is a search — §2.2.1
+      planItemId: string,
+      agent: "search-records" | "search-images" | "search-full-text"
+           | "search-hints" | "search-external-sites",
+      prompt: string,                    //   the whole delegation, sent as it is
+    }],
+    spawn?: {                            // only when nextStep names one of these — §2.2.2
+      agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking"
+           | "research-exhaustiveness" | "proof-conclusion",
+      prompt: string,
+    },
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
-    name?: string,                       // preferred names entry, "Given Surname"
+    name?: string,                       // preferred names entry, "Given Surname";
+                                         //   the surname alone when
+                                         //   unsupportedGivenName flags the given name
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -577,6 +590,85 @@ projection. Two consequences worth stating so they are not "tidied" later:
 The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
+
+
+### 2.2.1 `searches` — the search step, written out
+
+When a row's `nextStep` starts `search-records`, `search-hints` or
+`search-external-sites`, the row carries `searches`: one entry per open item of
+the question's active plan, lowest `sequence` first, at most four
+(`src/utils/search-delegations.ts`). Each names the agent and the prompt the
+router sends it unchanged:
+
+```
+projectPath: <projectPath>
+questionId: q_001
+planId: pl_001
+planItemId: pli_002
+plan_item: {<the stored item, verbatim>}
+subject: {"subjectId","names","birth","death","parents"}
+```
+
+- **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`);
+  `search-full-text` for "FamilySearch (full-text)" and `search-images` for
+  "FamilySearch (images)", the lanes research-plan writes into `repository`;
+  else `search-records`. The lane is read from the field, never guessed from the
+  rationale's words: "her baptism is unindexed, so search the death index" is a
+  name search. A plan written before the markers has none, and the router reads
+  a browse-only item's rationale itself (research/SKILL.md, the browse row).
+- **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
+  item in `exhaustedImageGroups`, and a fallback whose primary is still open or
+  found something. A fallback runs once every entry its primary logged is
+  `negative`.
+- **A hints item at the head of the plan goes alone**, with a `personId:` line
+  read from its rationale and no subject: its verdicts can save the searches
+  behind it.
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
+  search-records, search-images or search-full-text entry. `parents` is left out when the question
+  asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
+  of`, the same words as the research suite's validator) and when the tree gives
+  more than two. A given name `unsupportedGivenName` flags is replaced by its
+  `searchAs`, and a line after the block names the given name as a reading in
+  doubt.
+- The router adds `userPresent` to a search-external-sites prompt itself; only
+  it knows whether the run is autonomous.
+
+Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
+dropped the subject block or sent one spawn for two items in four research
+tests. Every field is in the project documents (ADR-0011's first question).
+
+The top-level `subject` is the same block for `subject_person_ids[0]`, parents
+included, for a brief the router writes itself (a bounded record ask has no
+plan item); the router leaves `parents` out on a parentage ask.
+
+`attachedSources [{id, title}]` lists that subject's sources attached on
+FamilySearch when the project was made: `project_create` keeps the read's own
+sources as tree `S2…` and points the person's, names' and facts' refs at them
+(`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
+(`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
+attached on FamilySearch afterwards is not in the tree. A record asked for that
+is already listed is not searched for (ut_research_021).
+
+### 2.2.2 `spawn` — the next agent step, written out
+
+When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
+`hypothesis-tracking`, `research-exhaustiveness` or `proof-conclusion`, the row
+carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
+`projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
+and the `nextStep` text:
+
+- person-evidence: `assertionIds:` every live assertion of the question (the
+  rung fires only when none is linked) and `userPresent: yes`, which the router
+  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+- conflict-resolution: one `competingAssertionIds:` line per unregistered
+  disagreement, or `conflictIds:` for an open conflict;
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+
+research-plan gets none: its rung does not know whether the question's
+jurisdiction has had its locality survey, which the router runs first. On Haiku
+5.5 low the router read past `nextStep` to another agent, or spawned nothing
+(ut_research_h22, rx4, 9k4).
 
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 

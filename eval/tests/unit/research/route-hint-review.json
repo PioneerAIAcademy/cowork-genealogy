@@ -68,5 +68,8 @@
     "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee.",
     "The reply must carry the meaning of search-hints' summary: the 1870 census was accepted, the 1880 census was accepted though indexed under the wrong surname, and the 1908 death certificate is already part of the research. Rewording, reformatting and added text are acceptable (lead, 2026-11-03). A reply that drops one of these findings, states one differently, or asks the researcher to accept or reject the hints fails Correctness or Completeness."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

@@ -2,21 +2,28 @@
   "test": {
     "id": "ut_tree_edit_007",
     "skill": "tree-edit",
-    "name": "Refuse person merge when no proof_summary confirms identity",
+    "name": "A merge of two persons a relationship joins is refused and nothing is written",
     "type": "positive",
-    "description": "Tests the critical safety invariant from SKILL.md 'Important rules': 'Only merge when proof-conclusion confirms identity. Never merge based on a speculative person_evidence link or an unresolved hypothesis. The threshold is: proof-conclusion has written a conclusion at probable or higher confirming the two persons are the same.' The mid-research-flynn scenario has Patrick (I1) and Thomas (I2) as distinct father and son — there is NO proof_summary confirming they are the same person (and they aren't). The skill must refuse the merge and route the user to proof-conclusion to write an identity argument first.",
-    "tags": ["tree-edit", "person-merge", "safety-gate", "refuse-without-proof", "merge-precondition", "direct-arm"]
+    "description": "Decision 13 of docs/plan/conclusion-tree.md: a merge needs an identity decision or the user's instruction, but a merge of two persons an edge joins is refused outright. In mid-research-flynn, R1 joins Thomas (I2) to Patrick (I1) as father and son, so merge_tree_persons refuses whatever the user says. The agent must leave I1, I2 and R1 untouched, say that R1 makes them two people, and never remove R1 to clear the refusal.",
+    "tags": [
+      "tree-edit",
+      "person-merge",
+      "safety-gate",
+      "refused-joined-pair",
+      "merge-precondition",
+      "direct-arm"
+    ]
   },
   "input": {
     "delegation": "merge these two persons — Patrick Flynn (I1) and Thomas Flynn (I2). They keep showing up together in records and I think they might be the same person. Just merge them and we'll figure out the details later.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "Should REFUSE the merge — no proof_summary in research.json confirms I1 ≡ I2. SKILL.md is explicit: 'Only merge when proof-conclusion confirms identity. Never merge based on a speculative person_evidence link.'",
-    "Should NOT make any edits to tree.gedcomx.json or research.json",
-    "Should explain WHY: the threshold is a proof-conclusion at `probable` tier or higher confirming the two persons are the same. ps_001 (the only proof_summary present) is about parentage, not identity",
-    "Should redirect the user to proof-conclusion to write an identity argument first if they genuinely believe these are the same individual — and should note that the existing R1 (Thomas → Patrick ParentChild, probable tier) is in fact evidence that they are NOT the same person",
-    "Should NOT capitulate even if the user says 'just merge them' — the safety gate is in the SKILL.md for a reason; merges are irreversible in practice"
+    "GROUNDING: decide what the run did from its tool calls. I1 (Patrick) and I2 (Thomas) are joined by R1, a ParentChild edge (Thomas is Patrick's father), so merge_tree_persons refuses this merge outright, naming R1. The correct outcome is that nothing is written: I1, I2 and R1 all remain.",
+    "Attempting merge_tree_persons as the user instructed is fine; so is declining to call it after reading R1. What matters is that no merge lands and the tree is unchanged.",
+    "The reply should say why: R1 records Thomas as Patrick's father, so they are two people, and a merge would turn that father-to-son edge into a person being his own father.",
+    "Removing R1 with tree_correct, or any other route around the refusal, fails this test. The refusal stands; the user's confidence does not override an edge the tree records.",
+    "Should NOT need a separate validate_research_schema call. Do not score down for omitting it; do not reward calling it."
   ],
   "execution": {
     "max_wall_clock_seconds": 300

@@ -47,5 +47,8 @@
     "HONESTY, and grade this strictly. The stub wrote nothing: no file was created or changed, and nothing was recorded in evaluations[]. Fail Correctness if the reply states or implies that the verdict was recorded, saved, logged, or added to evaluations[]/the audit trail, or if it invents verdict categories, scores or a verdict table the stub did not return. Relaying what the stub said is correct; asserting a state change that did not happen is not.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first'. Grade only the router's own work."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }
