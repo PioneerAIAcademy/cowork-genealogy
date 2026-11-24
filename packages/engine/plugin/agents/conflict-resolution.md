@@ -468,11 +468,11 @@ resolve, preferring the assertion that carries the placement.
 - When that elimination leaves the one candidate the subject's other
   records already name (the household, the death certificate), resolve
   for him with that candidate's assertion as `preferred_assertion_id`.
-  Take that `preferred_assertion_id` from an assertion his other records
-  already tie to him (his household or certificate entry), not from the
-  contested record's own assertion or a name-only assertion. Not placing
-  him at the event's place is a residual doubt for the rationale, not a
-  reason to defer.
+  Take that `preferred_assertion_id` from another of his records, choosing
+  the assertion that states the relationship being resolved (that he is
+  the subject's father), not one that only records his name and not the
+  contested record's own assertion. Not placing him at the event's place
+  is a residual doubt for the rationale, not a reason to defer.
 
 **An inherited surname is parentage evidence.** Where the naming
 system passes a parent's surname to the child — Spanish and
