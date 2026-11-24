@@ -1,0 +1,149 @@
+{
+  "persons": [
+    {
+      "id": "GJ72-9WD",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Cornelius",
+          "surname": "Driscoll",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1814",
+          "place": "Ireland"
+        },
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "1849-06-09",
+          "place": "Sherbrooke, Canada East"
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1851",
+          "place": "Sherbrooke, Canada East"
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1861",
+          "place": "Sherbrooke, Canada East"
+        },
+        {
+          "id": "F4",
+          "type": "Burial",
+          "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S5"
+        },
+        {
+          "ref": "S6"
+        },
+        {
+          "ref": "S7"
+        }
+      ]
+    },
+    {
+      "id": "GJ72-9WF",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Margaret",
+          "surname": "Hayes",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "primary": true,
+          "date": "1822",
+          "place": "Ireland"
+        },
+        {
+          "id": "F6",
+          "type": "Marriage",
+          "date": "1849-06-09",
+          "place": "Sherbrooke, Canada East"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GJ72-9WD",
+      "person2": "GJ72-9WF"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from Cornelius Driscoll, GJ72-9WD)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 14 August 2026), read from the page of Cornelius Driscoll (GJ72-9WD).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "Cornelius Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
+      "citation": "\"Ireland, Catholic Parish Registers, 1655-1915\", database with images, FamilySearch, baptism of Cornelius Driscoll, 12 March 1814, Skibbereen, Co. Cork.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-001"
+    },
+    {
+      "id": "S3",
+      "title": "Cornelius Driscoll, \"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\"",
+      "citation": "\"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\", database with images, FamilySearch, marriage of Cornelius Driscoll and Margaret Hayes, St. Patrick's, Sherbrooke.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-002"
+    },
+    {
+      "id": "S4",
+      "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" — burial",
+      "citation": "\"Quebec, Catholic Parish Registers, 1621-1979\", database with images, FamilySearch, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-003"
+    },
+    {
+      "id": "S5",
+      "title": "Cornelius Driscoll, \"Quebec, Civil Registration Deaths, 1867-1900\"",
+      "citation": "\"Quebec, Civil Registration Deaths, 1867-1900\", database, FamilySearch, entry for Cornelius Driscoll, Sherbrooke district.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-004"
+    },
+    {
+      "id": "S6",
+      "title": "Cornelius Driscoll, \"Census of Canada East, 1851\"",
+      "citation": "\"Census of Canada East, 1851\", database, FamilySearch, entry for Cornelius Driscoll, Canada East.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-005"
+    },
+    {
+      "id": "S7",
+      "title": "Cornelius Driscoll, \"Census of Canada, 1861\"",
+      "citation": "\"Census of Canada, 1861\", database with images, FamilySearch, entry for Cornelius Driscoll, Sherbrooke, Canada East.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
+    }
+  ]
+}

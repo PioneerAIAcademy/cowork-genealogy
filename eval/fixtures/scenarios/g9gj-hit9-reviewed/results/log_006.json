@@ -1,0 +1,2514 @@
+{
+  "log_id": "log_006",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:11:14.963Z",
+  "returned_count": 30,
+  "payload": {
+    "query": {
+      "count": 30,
+      "projectPath": "<workspace>",
+      "recordType": "census",
+      "residencePlace": "Jackson, Washington, New York, United States",
+      "residenceYearFrom": 1800,
+      "residenceYearTo": 1840,
+      "surname": "Hyde"
+    },
+    "totalMatches": 66,
+    "paginationCappedAt": 4999,
+    "returned": 30,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:XHBS-T7X",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Jackson, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Irain Hyde",
+        "score": 3.6418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Irain Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-H7X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423157564",
+              "ark": "ark:/61903/1:1:XHBS-T7X",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Irain"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791275364",
+              "title": "Household of Irain Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHBS-T7X : Thu Mar 07 03:16:58 UTC 2024), Entry for Irain Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-H7X"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YTB-961T"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423157564",
+              "url": "#p_10423157564"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608450",
+              "name": "Jackson, Washington, New York, United States",
+              "latitude": 43.0883,
+              "longitude": -73.3767
+            }
+          ]
+        },
+        "primaryId": "p_10423157564"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH5Q-5YH",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1830",
+            "place": "Jackson, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Iam Hyde",
+        "score": 3.6418,
+        "confidence": 4,
+        "collectionId": "1803958",
+        "collectionTitle": "United States, Census, 1830",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803958",
+        "recordTitle": "Household of Iam Hyde, \"United States, Census, 1830\"",
+        "recordArk": "ark:/61903/1:2:1TVV-C2V",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10419970418",
+              "ark": "ark:/61903/1:1:XH5Q-5YH",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Iam",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21787874718",
+              "title": "Household of Iam Hyde, \"United States, Census, 1830\"",
+              "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5Q-5YH : Sun Mar 10 02:07:36 UTC 2024), Entry for Iam Hyde, 1830.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TVV-C2V"
+            },
+            {
+              "id": "sd_c_1803958",
+              "title": "United States, Census, 1830",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803958"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-SCSF"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10419970418",
+              "url": "#p_10419970418"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608450",
+              "name": "Jackson, Washington, New York, United States",
+              "latitude": 43.0883,
+              "longitude": -73.3767
+            }
+          ]
+        },
+        "primaryId": "p_10419970418"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHBS-13K",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "David W Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of David W Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-8T1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423160209",
+              "ark": "ark:/61903/1:1:XHBS-13K",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "David W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791278709",
+              "title": "Household of David W Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHBS-13K : Sat Mar 09 03:28:12 UTC 2024), Entry for David W Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-8T1"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYTB-96D2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423160209",
+              "url": "#p_10423160209"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10423160209"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHBS-RY9",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Greenwich, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-HPL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423157311",
+              "ark": "ark:/61903/1:1:XHBS-RY9",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Greenwich, Washington, New York, United States",
+                  "standard_place": "Greenwich, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791275911",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHBS-RY9 : Sat Mar 09 21:18:29 UTC 2024), Entry for Benjamin Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-HPL"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YTB-96L1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423157311",
+              "url": "#p_10423157311"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608384",
+              "name": "Greenwich, Washington, New York, United States",
+              "latitude": 43.09719,
+              "longitude": -73.50484
+            }
+          ]
+        },
+        "primaryId": "p_10423157311"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHB3-9RZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Kingsbury, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiel Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Hiel Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-XFZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423162660",
+              "ark": "ark:/61903/1:1:XHB3-9RZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Kingsbury, Washington, New York, United States",
+                  "standard_place": "Kingsbury, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791281060",
+              "title": "Household of Hiel Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHB3-9RZ : Fri Mar 08 23:03:37 UTC 2024), Entry for Hiel Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-XFZ"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YTB-9NM3"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423162660",
+              "url": "#p_10423162660"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608429",
+              "name": "Kingsbury, Washington, New York, United States",
+              "latitude": 43.3389,
+              "longitude": -73.5481
+            }
+          ]
+        },
+        "primaryId": "p_10423162660"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHBS-556",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-4JP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423156333",
+              "ark": "ark:/61903/1:1:XHBS-556",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791274833",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHBS-556 : Sun Mar 10 19:18:46 UTC 2024), Entry for Benjamin Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-4JP"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YTB-9XSH"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423156333",
+              "url": "#p_10423156333"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10423156333"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHBS-RDB",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alonzo Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Alonzo Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-41V",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423156888",
+              "ark": "ark:/61903/1:1:XHBS-RDB",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Alonzo",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791275188",
+              "title": "Household of Alonzo Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHBS-RDB : Wed Mar 06 23:58:38 UTC 2024), Entry for Alonzo Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-41V"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYTB-9NNK"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423156888",
+              "url": "#p_10423156888"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10423156888"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHB3-SQ5",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Kingsbury, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Roswell Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Roswell Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-X55",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423162944",
+              "ark": "ark:/61903/1:1:XHB3-SQ5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Roswell"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Kingsbury, Washington, New York, United States",
+                  "standard_place": "Kingsbury, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791281344",
+              "title": "Household of Roswell Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHB3-SQ5 : Sat Mar 09 19:49:47 UTC 2024), Entry for Roswell Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-X55"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YTB-9FBC"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423162944",
+              "url": "#p_10423162944"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608429",
+              "name": "Kingsbury, Washington, New York, United States",
+              "latitude": 43.3389,
+              "longitude": -73.5481
+            }
+          ]
+        },
+        "primaryId": "p_10423162944"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH5Q-YB9",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1830",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alonzo Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803958",
+        "collectionTitle": "United States, Census, 1830",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803958",
+        "recordTitle": "Household of Alonzo Hyde, \"United States, Census, 1830\"",
+        "recordArk": "ark:/61903/1:2:1TVV-DL8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10419973141",
+              "ark": "ark:/61903/1:1:XH5Q-YB9",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Alonzo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21787877441",
+              "title": "Household of Alonzo Hyde, \"United States, Census, 1830\"",
+              "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5Q-YB9 : Fri Mar 08 21:35:18 UTC 2024), Entry for Alonzo Hyde, 1830.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TVV-DL8"
+            },
+            {
+              "id": "sd_c_1803958",
+              "title": "United States, Census, 1830",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803958"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YY8-9P1W"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10419973141",
+              "url": "#p_10419973141"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10419973141"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH5Q-YPF",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1830",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803958",
+        "collectionTitle": "United States, Census, 1830",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803958",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1830\"",
+        "recordArk": "ark:/61903/1:2:1TVV-DNR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10419973005",
+              "ark": "ark:/61903/1:1:XH5Q-YPF",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21787877305",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1830\"",
+              "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5Q-YPF : Sun Mar 10 09:10:23 UTC 2024), Entry for Benjamin Hyde, 1830.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TVV-DNR"
+            },
+            {
+              "id": "sd_c_1803958",
+              "title": "United States, Census, 1830",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803958"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-S44G"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10419973005",
+              "url": "#p_10419973005"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10419973005"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHG4-9Y7",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Easton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anna Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of Anna Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-R47",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418410715",
+              "ark": "ark:/61903/1:1:XHG4-9Y7",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Anna",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Easton, Washington, New York, United States",
+                  "standard_place": "Easton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786160715",
+              "title": "Household of Anna Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHG4-9Y7 : Sat Mar 09 21:09:41 UTC 2024), Entry for Anna Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-R47"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-6CN"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418410715",
+              "url": "#p_10418410715"
+            }
+          ],
+          "places": [
+            {
+              "id": "4653919",
+              "name": "Easton, Washington, New York, United States",
+              "latitude": 42.9933,
+              "longitude": -73.5528
+            }
+          ]
+        },
+        "primaryId": "p_10418410715"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHGW-BKX",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of Joseph Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-L1X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418407784",
+              "ark": "ark:/61903/1:1:XHGW-BKX",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Joseph"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786157784",
+              "title": "Household of Joseph Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-BKX : Sun Mar 10 23:47:33 UTC 2024), Entry for Joseph Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-L1X"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-X91"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418407784",
+              "url": "#p_10418407784"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10418407784"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHGW-BVR",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "David H Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of David H Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-LBR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418407765",
+              "ark": "ark:/61903/1:1:XHGW-BVR",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "David H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786157765",
+              "title": "Household of David H Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-BVR : Sun Mar 10 23:47:33 UTC 2024), Entry for David H Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-LBR"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-X91"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418407765",
+              "url": "#p_10418407765"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10418407765"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHGW-BVT",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joel Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of Joel Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-LBT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418407766",
+              "ark": "ark:/61903/1:1:XHGW-BVT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Joel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786157766",
+              "title": "Household of Joel Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-BVT : Sun Mar 10 23:47:33 UTC 2024), Entry for Joel Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-LBT"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-X91"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418407766",
+              "url": "#p_10418407766"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10418407766"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHGW-1J2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-GY2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418408630",
+              "ark": "ark:/61903/1:1:XHGW-1J2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786158630",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-1J2 : Sat Mar 09 17:38:07 UTC 2024), Entry for Benjamin Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-GY2"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB4-6M4"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418408630",
+              "url": "#p_10418408630"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10418408630"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHGW-BK5",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Josephus Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of Josephus Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-L15",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418407794",
+              "ark": "ark:/61903/1:1:XHGW-BK5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Josephus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786157794",
+              "title": "Household of Josephus Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-BK5 : Sun Mar 10 14:14:29 UTC 2024), Entry for Josephus Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-L15"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB4-6HX"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418407794",
+              "url": "#p_10418407794"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10418407794"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-64L",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Hartford, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-WJL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417259931",
+              "ark": "ark:/61903/1:1:XH25-64L",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Hartford, Washington, New York, United States",
+                  "standard_place": "Hartford, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785009931",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-64L : Sat Mar 09 23:52:20 UTC 2024), Entry for Benjamin Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-WJL"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYR-W7D"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417259931",
+              "url": "#p_10417259931"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608345",
+              "name": "Hartford, Washington, New York, United States",
+              "latitude": 43.3606,
+              "longitude": -73.4219
+            }
+          ]
+        },
+        "primaryId": "p_10417259931"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-FJ3",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Joseph Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-HY3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417262013",
+              "ark": "ark:/61903/1:1:XH25-FJ3",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785012013",
+              "title": "Household of Joseph Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-FJ3 : Mon Mar 11 02:18:12 UTC 2024), Entry for Joseph Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-HY3"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYR-7VP"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417262013",
+              "url": "#p_10417262013"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10417262013"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-DCW",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Queensbury, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of William Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-7KW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417259076",
+              "ark": "ark:/61903/1:1:XH25-DCW",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "William"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Queensbury, Washington, New York, United States",
+                  "standard_place": "Queensbury, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785009076",
+              "title": "Household of William Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-DCW : Sun Mar 10 14:10:23 UTC 2024), Entry for William Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-7KW"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYR-WQT"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417259076",
+              "url": "#p_10417259076"
+            }
+          ],
+          "places": [
+            {
+              "id": "12246960",
+              "name": "Queensbury, Washington, New York, United States",
+              "latitude": 43.3538,
+              "longitude": -73.6832
+            }
+          ]
+        },
+        "primaryId": "p_10417259076"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-XG8",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Chester, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Joseph Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-HS8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417261271",
+              "ark": "ark:/61903/1:1:XH25-XG8",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Joseph"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Chester, Washington, New York, United States",
+                  "standard_place": "Chester, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785011271",
+              "title": "Household of Joseph Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-XG8 : Sun Mar 10 14:58:42 UTC 2024), Entry for Joseph Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-HS8"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYR-7GG"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417261271",
+              "url": "#p_10417261271"
+            }
+          ],
+          "places": [
+            {
+              "id": "11024399",
+              "name": "Chester, Washington, New York, United States",
+              "latitude": 43.6881,
+              "longitude": -73.8697
+            }
+          ]
+        },
+        "primaryId": "p_10417261271"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-6KV",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Hebron, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Amos W Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Amos W Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-4SB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417260288",
+              "ark": "ark:/61903/1:1:XH25-6KV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Amos W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Hebron, Washington, New York, United States",
+                  "standard_place": "Hebron, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785010388",
+              "title": "Household of Amos W Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-6KV : Fri Mar 08 04:56:13 UTC 2024), Entry for Amos W Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-4SB"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYR-WM5"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417260288",
+              "url": "#p_10417260288"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608340",
+              "name": "Hebron, Washington, New York, United States",
+              "latitude": 43.2742,
+              "longitude": -73.3219
+            }
+          ]
+        },
+        "primaryId": "p_10417260288"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH25-FFH",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joel Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Joel Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TFS-HRH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417261958",
+              "ark": "ark:/61903/1:1:XH25-FFH",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joel",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21785011958",
+              "title": "Household of Joel Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH25-FFH : Mon Mar 11 02:18:13 UTC 2024), Entry for Joel Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TFS-HRH"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYR-7VP"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417261958",
+              "url": "#p_10417261958"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10417261958"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH5Q-YVV",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1830",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joel Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803958",
+        "collectionTitle": "United States, Census, 1830",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803958",
+        "recordTitle": "Household of Joel Hyde, \"United States, Census, 1830\"",
+        "recordArk": "ark:/61903/1:2:1TVV-D8B",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10419972858",
+              "ark": "ark:/61903/1:1:XH5Q-YVV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joel",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21787877158",
+              "title": "Household of Joel Hyde, \"United States, Census, 1830\"",
+              "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5Q-YVV : Tue Sep 22 21:17:49 UTC 2026), Entry for Joel Hyde, 1830.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TVV-D8B"
+            },
+            {
+              "id": "sd_c_1803958",
+              "title": "United States, Census, 1830",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803958"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-S4C9"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_10419972858",
+              "url": "#p_10419972858"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10419972858"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH5Q-YVJ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1830",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hyde",
+        "score": 3.3318,
+        "confidence": 4,
+        "collectionId": "1803958",
+        "collectionTitle": "United States, Census, 1830",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803958",
+        "recordTitle": "Household of Joseph Hyde, \"United States, Census, 1830\"",
+        "recordArk": "ark:/61903/1:2:1TVV-D8Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10419972857",
+              "ark": "ark:/61903/1:1:XH5Q-YVJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21787877157",
+              "title": "Household of Joseph Hyde, \"United States, Census, 1830\"",
+              "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5Q-YVJ : Tue Sep 22 21:17:49 UTC 2026), Entry for Joseph Hyde, 1830.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TVV-D8Y"
+            },
+            {
+              "id": "sd_c_1803958",
+              "title": "United States, Census, 1830",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803958"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-S4C9"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_10419972857",
+              "url": "#p_10419972857"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10419972857"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHYH-TJD",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Daniel Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Daniel Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TGM-C4D",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10422509922",
+              "ark": "ark:/61903/1:1:XHYH-TJD",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Daniel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21790628322",
+              "title": "Household of Daniel Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHYH-TJD : Tue Jan 21 14:40:54 UTC 2025), Entry for Daniel Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TGM-C4D"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBS-8NR"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10422509922",
+              "url": "#p_10422509922"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10422509922"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHYC-9HW",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Erastus Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Erastus Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TGM-6BW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10422514146",
+              "ark": "ark:/61903/1:1:XHYC-9HW",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Erastus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21790632546",
+              "title": "Household of Erastus Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHYC-9HW : Sun Jan 19 19:04:47 UTC 2025), Entry for Erastus Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TGM-6BW"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBS-ZFP"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10422514146",
+              "url": "#p_10422514146"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10422514146"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHYH-Y34",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Mary Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TGM-CP4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10422510397",
+              "ark": "ark:/61903/1:1:XHYH-Y34",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21790628797",
+              "title": "Household of Mary Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHYH-Y34 : Mon Jan 20 22:58:28 UTC 2025), Entry for Mary Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TGM-CP4"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBS-ZKD"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10422510397",
+              "url": "#p_10422510397"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10422510397"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHRK-32X",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1T2Z-N65",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10421166314",
+              "ark": "ark:/61903/1:1:XHRK-32X",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21789284814",
+              "title": "Household of Benjamin Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHRK-32X : Mon Apr 29 16:49:27 UTC 2024), Entry for Benjamin Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1T2Z-N65"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YT5-9W5J"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10421166314",
+              "url": "#p_10421166314"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10421166314"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHRK-3WQ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Duer Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of Duer Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1T2Z-FTQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10421165884",
+              "ark": "ark:/61903/1:1:XHRK-3WQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Duer"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21789284284",
+              "title": "Household of Duer Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHRK-3WQ : Mon Apr 29 18:36:48 UTC 2024), Entry for Duer Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1T2Z-FTQ"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YT5-9WP2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10421165884",
+              "url": "#p_10421165884"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10421165884"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHYH-Y69",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Hyde",
+        "score": 3.0418,
+        "confidence": 4,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of John Hyde, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TGM-Z39",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10422510691",
+              "ark": "ark:/61903/1:1:XHYH-Y69",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21790629091",
+              "title": "Household of John Hyde, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHYH-Y69 : Fri Jul 12 17:38:11 UTC 2024), Entry for John Hyde, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TGM-Z39"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBS-8FF"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10422510691",
+              "url": "#p_10422510691"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10422510691"
+      }
+    ]
+  }
+}

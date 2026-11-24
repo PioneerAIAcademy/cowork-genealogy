@@ -15,6 +15,7 @@ import {
   wholeSectionOwners,
 } from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
+import { AGENT_ONLY, AGENT_ONLY_NOTE, allToolSchemas } from "../../src/tool-schemas.js";
 
 // The plugin's PreToolUse hook is the ONLY guardrail that reaches Cowork.
 //
@@ -205,7 +206,7 @@ const PYTHON: string[] | null = resolvePython();
  * pass here and still break in the VM. Every other third-party import is
  * caught on every machine.
  */
-function execGuard(input: string): string {
+function execGuard(input: string, env?: NodeJS.ProcessEnv): string {
   if (!PYTHON) {
     throw new Error(
       `No Python 3 found (tried: ${describePythonCandidates()}). The plugin's ` +
@@ -213,13 +214,16 @@ function execGuard(input: string): string {
     );
   }
   const [cmd, ...pre] = PYTHON;
-  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8" });
+  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8", ...(env ? { env } : {}) });
 }
 
 /** Run the guard script the way the runtime does: payload on stdin, JSON out. */
-function runGuard(payload: unknown): any {
-  return JSON.parse(execGuard(JSON.stringify(payload)));
+function runGuard(payload: unknown, env?: NodeJS.ProcessEnv): any {
+  return JSON.parse(execGuard(JSON.stringify(payload), env));
 }
+
+/** The environment a hosted plane gives the hook (`GENEALOGY_HOSTED_PLANE`). */
+const HOSTED_ENV = { ...process.env, GENEALOGY_HOSTED_PLANE: "1" };
 
 /**
  * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
@@ -609,6 +613,17 @@ describe("plugin hooks are packaged and wired", () => {
       ).toEqual(agents.get(tool) ?? []);
     }
   });
+
+  it("opens the description of exactly the tools the hook denies the main thread with the agents-only note", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    expect(
+      [...AGENT_ONLY].sort(),
+      "src/tool-schemas.ts AGENT_ONLY differs from AGENT_ONLY_TOOLS in hooks/guard_project_files.py: " +
+        "a tool the hook denies must say so in its description, and one it allows must not",
+    ).toEqual(Object.keys(agentOnly).sort());
+    const noted = allToolSchemas.filter((s) => s.description.startsWith(AGENT_ONLY_NOTE)).map((s) => s.name);
+    expect(noted.sort()).toEqual([...AGENT_ONLY].sort());
+  });
 });
 
 describe("the guard script's decisions", () => {
@@ -626,13 +641,36 @@ describe("the guard script's decisions", () => {
   it.each([
     ["Agent", { subagent_type: "record-extractor", prompt: "p" }],
     ["Agent", { subagent_type: "genealogy-research:record-extractor", prompt: "p" }],
-    ["Task", { subagent_type: "general-purpose", prompt: "p" }],
-    ["Agent", { prompt: "p" }],
-    ["Agent", { subagent_type: null, prompt: "p" }],
     ["Agent", { subagent_type: ["fork"], prompt: "p" }],
     ["mcp__genealogy__record_read", { subagent_type: "fork" }],
   ])("has no opinion on %s %j", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  it.each([
+    ["Task", { subagent_type: "general-purpose", prompt: "p" }, "general-purpose"],
+    ["Agent", { prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: null, prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: "claude", prompt: "p" }, "claude"],
+    ["Agent", { subagent_type: "Explore", prompt: "p" }, "Explore"],
+  ])("denies a hosted plane's main thread %s %j, a built-in agent, and names the way out", (tool_name, tool_input, name) => {
+    const out = runGuard({ tool_name, tool_input }, HOSTED_ENV);
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`"${name}"`);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("Spawn the plugin agent the step calls for");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("leaves a built-in agent type alone inside a subagent", () => {
+    expect(
+      runGuard({ tool_name: "Agent", agent_id: "a1", tool_input: { subagent_type: "claude", prompt: "p" } }, HOSTED_ENV),
+    ).toEqual({});
+  });
+
+  it.each(["claude", "general-purpose"])("leaves Cowork and Desktop free to spawn %s", (subagent_type) => {
+    const env = { ...process.env };
+    delete env.GENEALOGY_HOSTED_PLANE;
+    expect(runGuard({ tool_name: "Agent", tool_input: { subagent_type, prompt: "p" } }, env)).toEqual({});
   });
 
   it.each([
@@ -1702,8 +1740,13 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(
       /Name a source, collection, book or citation only if a tool result in this session returned it/,
     );
-    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from a collections search, which the locality-guide and research-plan agents run/);
     expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("does not add the hosted planes' routing sentence in Cowork and Desktop", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Investigate Patrick Flynn." }));
+    expect(out.hookSpecificOutput.additionalContext).not.toMatch(/Hand each genealogy request/);
   });
 
   it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
@@ -1821,5 +1864,43 @@ describe("the main thread is denied the tools only agents hold", () => {
 
   it("does not deny image_read, which no agent holds", () => {
     expect(runGuard({ tool_name: "mcp__genealogy__image_read", tool_input: {} })).toEqual({});
+  });
+});
+
+const AGENT_RELAY_NOTE = join(PLUGIN_DIR, "hooks", "agent_relay_note.py");
+
+function runRelayNote(input: string, hosted: boolean): any {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const env = { ...process.env };
+  delete env.GENEALOGY_HOSTED_PLANE;
+  if (hosted) env.GENEALOGY_HOSTED_PLANE = "1";
+  return JSON.parse(execFileSync(cmd, [...pre, AGENT_RELAY_NOTE], { input, encoding: "utf-8", env }));
+}
+
+describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
+  it("is bound on Agent|Task returns", () => {
+    const hooks = JSON.parse(readFileSync(HOOKS_JSON, "utf-8")).hooks;
+    const [entry] = hooks.PostToolUse;
+    expect(entry.matcher).toBe("Agent|Task");
+    expect(entry.hooks[0].command).toContain("agent_relay_note.py");
+  });
+
+  it.each(["Agent", "Task"])("tells a hosted main thread to relay a %s return word for word", (tool_name) => {
+    const out = runRelayNote(JSON.stringify({ tool_name, tool_input: {}, tool_response: {} }), true);
+    expect(out.hookSpecificOutput.hookEventName).toBe("PostToolUse");
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/after the final `---` word for word/);
+  });
+
+  it.each([
+    ["Cowork and Desktop", { tool_name: "Agent" }, false],
+    ["a subagent's call", { tool_name: "Agent", agent_id: "a1" }, true],
+    ["another tool", { tool_name: "Read" }, true],
+  ])("says nothing for %s", (_label, payload, hosted) => {
+    expect(runRelayNote(JSON.stringify(payload), hosted as boolean)).toEqual({});
+  });
+
+  it("says nothing on bad input rather than raising", () => {
+    expect(runRelayNote("not json", true)).toEqual({});
   });
 });

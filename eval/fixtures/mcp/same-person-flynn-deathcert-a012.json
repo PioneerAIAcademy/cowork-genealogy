@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1908 death certificate's decedent (a_012, the birth assertion, role deceased) against the tree's Patrick Flynn (I1), for ut_person_evidence_027 in mid-research-flynn. Same persona and pairing as same-person-flynn-deathcert-a013.json (a_011/a_012/a_013 are all the one 'deceased' persona on src_004); score hand-set high on the same basis — the certificate's name, place and time of death match the subject's known identity. The mock adds `warningsIfLinked` itself.",
+  "args": {
+    "assertionId": "a_012",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.86,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "P1",
+      "name": "Patrick Flynn",
+      "role": "deceased"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
+  }
+}
