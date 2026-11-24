@@ -1,11 +1,70 @@
+/** A country whose places' collection titles lead with another name than the
+ *  country a `standardPlace` ends with: `parts` by the part below it, `terms` for
+ *  the rest of the country (null: the rest keeps the substring match). */
+interface LeadingTermsRow {
+  parts?: Readonly<Record<string, readonly string[]>>;
+  terms: readonly string[] | null;
+}
+
+/** The places whose catalog titles do not lead with their standard place's
+ *  country, and the terms their titles start with. A title is in scope when it
+ *  STARTS with a term, so the match is anchored: as a substring, "England" would
+ *  also take "United States, New England …", "Wales" every "Australia, New South
+ *  Wales, …" title and "Jersey" every "New Jersey, …" one.
+ *   - The United Kingdom's countries ("England, …", "England and Wales, …",
+ *     "England Marriages, …", "Scotland, …") and the kingdom-wide titles. Northern
+ *     Ireland takes "Ireland" for the pre-1922 collections that cover the island.
+ *   - France's overseas departments Guadeloupe and Martinique, nested under France.
+ *   - Countries the catalog names otherwise: Czechia's titles say "Czech Republic".
+ *   - Jersey and Guernsey, whose collection is "Channel Islands, …".
+ *  Measured against the live catalog: `dev/probe-collection-scope-nesting.ts`. */
+const LEADING_TERMS: Readonly<Record<string, LeadingTermsRow>> = {
+  "United Kingdom": {
+    parts: {
+      England: ["England", "United Kingdom", "Great Britain"],
+      Wales: ["Wales", "England and Wales", "United Kingdom", "Great Britain"],
+      Scotland: ["Scotland", "United Kingdom", "Great Britain"],
+      "Northern Ireland": ["Northern Ireland", "Ireland", "United Kingdom", "Great Britain"],
+    },
+    terms: ["United Kingdom", "Great Britain"],
+  },
+  France: {
+    parts: { Guadeloupe: ["Guadeloupe", "France"], Martinique: ["Martinique", "France"] },
+    terms: null,
+  },
+  Czechia: { terms: ["Czechia", "Czech Republic"] },
+  "Federated States of Micronesia": { terms: ["Federated States of Micronesia", "Micronesia"] },
+  "United States Virgin Islands": { terms: ["United States Virgin Islands", "Virgin Islands (U.S.)"] },
+  "Saint Lucia": { terms: ["Saint Lucia", "St. Lucia"] },
+  "Cabo Verde": { terms: ["Cabo Verde", "Cape Verde"] },
+  Jersey: { terms: ["Jersey", "Channel Islands"] },
+  Guernsey: { terms: ["Guernsey", "Channel Islands"] },
+};
+
+/** The row of `LEADING_TERMS` for a place's last part, and the part below it
+ *  when that part has a row of its own. */
+function leadingTermsOf(standardPlace: string): { below?: string; terms: readonly string[] | null } | null {
+  const parts = standardPlace.split(",").map((p) => p.trim()).filter(Boolean);
+  const country = parts[parts.length - 1];
+  if (country === undefined || !Object.hasOwn(LEADING_TERMS, country)) return null;
+  const row = LEADING_TERMS[country];
+  const below = parts.length >= 2 ? parts[parts.length - 2] : undefined;
+  if (below !== undefined && row.parts && Object.hasOwn(row.parts, below)) return { below, terms: row.parts[below] };
+  return { terms: row.terms };
+}
+
 /**
  * Derive the collection-title search term from a place. FamilySearch organizes
  * record collections at the state/province level for the United States, Canada,
- * and Mexico, and at the country level everywhere else. Given a `standardPlace`
- * (the fully-qualified name from place_search, e.g.
- * "Schuylkill, Pennsylvania, United States"), return the right title-match term:
+ * and Mexico, at the constituent-country level in the United Kingdom, and at the
+ * country level everywhere else. Given a `standardPlace` (the fully-qualified
+ * name from place_search, e.g. "Schuylkill, Pennsylvania, United States"),
+ * return the right title-match term:
  *   - United States   -> the state            ("Pennsylvania")
  *   - Canada / Mexico  -> "Country, State"      ("Canada, Ontario")
+ *   - United Kingdom   -> England, Wales, Scotland or Northern Ireland
+ *   - a part below the country with its own `LEADING_TERMS` row -> that part
+ *     ("Guadeloupe" for "…, Guadeloupe, France")
  *   - everywhere else  -> the country          ("France")
  *
  * The standardPlace format is comma-separated with the country last and the
@@ -27,7 +86,30 @@ export function standardPlaceToCollectionsQuery(value: string): string {
   if (country === "Canada" || country === "Mexico") {
     return state ? `${country}, ${state}` : country;
   }
+  const below = leadingTermsOf(value)?.below;
+  if (below !== undefined) return below;
   return country;
+}
+
+/** The terms a place's collection titles start with, from `LEADING_TERMS`
+ *  (a United Kingdom place: its country's row, else the kingdom-wide terms).
+ *  Null for a place the table does not name, which keeps the substring match. */
+export function collectionScopeTerms(standardPlace: string): readonly string[] | null {
+  return leadingTermsOf(standardPlace)?.terms ?? null;
+}
+
+/** Whether a collection title is in a place's scope. For a place with
+ *  `collectionScopeTerms`, the title starts with one of them followed by a
+ *  non-letter; anywhere else, the title holds the scope
+ *  `standardPlaceToCollectionsQuery` derives, ignoring case. Built once per place. */
+export function collectionScopeMatcher(standardPlace: string): (title: string) => boolean {
+  const terms = collectionScopeTerms(standardPlace);
+  if (terms === null) {
+    const needle = standardPlaceToCollectionsQuery(standardPlace).toLowerCase();
+    return (title) => title.toLowerCase().includes(needle);
+  }
+  const lead = new RegExp(`^(?:${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?!\\p{L})`, "iu");
+  return (title) => lead.test(title);
 }
 
 /** The countries whose FamilySearch collections are scoped below the country, so a
