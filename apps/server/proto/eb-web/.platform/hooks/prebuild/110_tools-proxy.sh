@@ -12,8 +12,10 @@
 # A prebuild hook, because Beanstalk runs prebuild before it configures the web server
 # from the staged .platform/nginx; files under conf.d/elasticbeanstalk/ are included
 # inside its default server block. Hooks do not inherit the application's environment,
-# so the value is read with get-config; with no get-config (tests, offline smoke) it is
-# read from this process's environment. A configuration-only deploy does not re-run it:
+# so the value is read from get-config's whole environment object, never `-k`, whose
+# answer for a missing key -- the default, unset case -- is not documented; with no
+# get-config (offline smoke) it is read from this process's environment. GENEALOGY_GET_CONFIG
+# points the tests at a stand-in. A configuration-only deploy does not re-run it:
 # change the value with an application deploy (every Blueprint deploy is one).
 set -euo pipefail
 
@@ -26,12 +28,17 @@ fail() {
   exit 1
 }
 
-GET_CONFIG=/opt/elasticbeanstalk/bin/get-config
+GET_CONFIG="${GENEALOGY_GET_CONFIG:-/opt/elasticbeanstalk/bin/get-config}"
 staging=""
 url=""
 if [ -x "$GET_CONFIG" ]; then
   staging="$("$GET_CONFIG" platformconfig -k AppStagingDir 2>/dev/null || true)"
-  url="$("$GET_CONFIG" environment -k TOOLS_UPSTREAM_URL 2>/dev/null || true)"
+  env_json="$("$GET_CONFIG" environment 2>/dev/null)" || fail "get-config environment failed"
+  url="$(printf '%s' "$env_json" | python3 -c '
+import json, sys
+value = json.load(sys.stdin).get("TOOLS_UPSTREAM_URL", "")
+print(value if isinstance(value, str) else "")
+' 2>/dev/null)" || fail "get-config environment did not print a JSON object"
 else
   url="${TOOLS_UPSTREAM_URL:-}"
 fi

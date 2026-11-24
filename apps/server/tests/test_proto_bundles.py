@@ -474,12 +474,14 @@ def _web_staging(tmp_path: Path) -> Path:
     return staging
 
 
-def _run_proxy_hook(staging: Path, url: str | None) -> subprocess.CompletedProcess:
+def _run_proxy_hook(staging: Path, url: str | None, get_config: Path | None = None) -> subprocess.CompletedProcess:
     import os
 
-    env = {k: v for k, v in os.environ.items() if k != "TOOLS_UPSTREAM_URL"}
+    env = {k: v for k, v in os.environ.items() if k not in ("TOOLS_UPSTREAM_URL", "GENEALOGY_GET_CONFIG")}
     if url is not None:
         env["TOOLS_UPSTREAM_URL"] = url
+    if get_config is not None:
+        env["GENEALOGY_GET_CONFIG"] = str(get_config)
     return subprocess.run(["bash", str(WEB_PROXY_HOOK)], cwd=staging, env=env, capture_output=True,
                           text=True, encoding="utf-8", check=False)
 
@@ -552,3 +554,54 @@ def test_web_proxy_hook_refuses_a_url_with_anything_after_the_host(tmp_path, url
 def test_web_proxy_hook_refuses_a_staging_dir_that_is_not_the_web_bundle(tmp_path):
     proc = _run_proxy_hook(tmp_path, "http://tools.example")
     assert proc.returncode != 0 and "not the web bundle" in proc.stderr
+
+
+def _fake_get_config(tmp_path: Path, staging: Path, environment: str, *, rc: int = 0) -> Path:
+    """A stand-in for Beanstalk's get-config: `platformconfig -k AppStagingDir` names the staging
+    dir, `environment` prints the given text and exits rc, and `environment -k` -- which the hook
+    must not use -- prints a not-found message on STDOUT with exit 0, the shape that would leak
+    into the URL."""
+    import shlex
+
+    (tmp_path / "env.out").write_text(environment, encoding="utf-8")
+    script = tmp_path / "get-config"
+    script.write_text(
+        "#!/bin/bash\n"
+        f'if [ "$1" = platformconfig ]; then echo {shlex.quote(str(staging))}; exit 0; fi\n'
+        'if [ "$1" = environment ] && [ "${2:-}" = -k ]; then echo "key not found: $3"; exit 0; fi\n'
+        f'if [ "$1" = environment ]; then cat {shlex.quote(str(tmp_path / "env.out"))}; exit {rc}; fi\n'
+        "exit 1\n", encoding="utf-8")
+    script.chmod(0o755)
+    return script
+
+
+@pytest.mark.parametrize("environment", ['{"PORT": "8000"}', '{"TOOLS_UPSTREAM_URL": ""}',
+                                         '{"TOOLS_UPSTREAM_URL": null}'], ids=["absent", "empty", "null"])
+def test_web_proxy_hook_reads_unset_from_get_config(tmp_path, environment):
+    """The default for every chat-on web deploy: get-config holds no value, and the hook writes
+    nothing and passes -- even though this get-config answers `-k` with text on stdout. The
+    process environment is ignored when get-config exists."""
+    staging = _web_staging(tmp_path)
+    fake = _fake_get_config(tmp_path, staging, environment)
+    proc = _run_proxy_hook(tmp_path, "http://from-the-process-env", get_config=fake)
+    assert proc.returncode == 0, proc.stderr
+    assert not (staging / WEB_PROXY_OUT).exists()
+
+
+def test_web_proxy_hook_reads_the_url_from_get_config(tmp_path):
+    staging = _web_staging(tmp_path)
+    fake = _fake_get_config(tmp_path, staging, '{"PORT": "8000", "TOOLS_UPSTREAM_URL": "http://tools.internal:8080"}')
+    proc = _run_proxy_hook(tmp_path, None, get_config=fake)
+    assert proc.returncode == 0, proc.stderr
+    text = (staging / WEB_PROXY_OUT).read_text(encoding="utf-8")
+    assert "set $genealogy_tools_upstream http://tools.internal:8080;" in text.splitlines()
+
+
+@pytest.mark.parametrize("environment,rc", [("key not found", 0), ("[]", 0), ("", 0), ('{"PORT": "8000"}', 1)],
+                         ids=["not-json", "not-an-object", "empty", "get-config-fails"])
+def test_web_proxy_hook_fails_loudly_when_get_config_is_unreadable(tmp_path, environment, rc):
+    staging = _web_staging(tmp_path)
+    fake = _fake_get_config(tmp_path, staging, environment, rc=rc)
+    proc = _run_proxy_hook(tmp_path, None, get_config=fake)
+    assert proc.returncode != 0 and "get-config environment" in proc.stderr, proc.stderr
+    assert not (staging / WEB_PROXY_OUT).exists()
