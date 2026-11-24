@@ -34,6 +34,8 @@ from test_research import test_reply_names_no_tree_id as no_tree_id  # noqa: E40
         ("The couple R4 and the name N7.", ["N7", "R4"]),
         ("Persons I1-I5 are the children.", ["I1", "I5"]),
         ("Persons I1–I5 are the children.", ["I1", "I5"]),
+        ("Persons I100-I200 are the children.", ["I100", "I200"]),
+        ("I123-I45", ["I123", "I45"]),
         ("(I1)", ["I1"]),
         ("Mary (K835-34K) is I2 in the tree.", ["I2"]),
         # A known, accepted false positive: nothing like it is in any committed reply.
