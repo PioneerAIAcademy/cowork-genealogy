@@ -3073,12 +3073,13 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
         theirs = pricing.MODEL_RATES[model]
         assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
-        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(spend.rates_for(model)["cache_read"]), model
         assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
-        # And a million 1-hour write tokens through the proxy's meter cost exactly the
-        # harness's write rate, which is the 1-hour one.
-        assert spend.price_usd((0, 10**6, 0, 0), model, cache_write_1h=10**6) == \
-            pytest.approx(theirs["cache_creation_input_tokens"]), model
+        # And 100K 1-hour write tokens through the proxy's meter cost exactly the harness's
+        # write rate, which is the 1-hour one (100K: one call no longer is a long prompt).
+        assert spend.price_usd((0, 10**5, 0, 0), model, cache_write_1h=10**5) == \
+            pytest.approx(theirs["cache_creation_input_tokens"] / 10), model
+    assert spend.LONG_PROMPT == pricing.LONG_PROMPT, "the two tables bill long prompts differently"
 
 
 def test_1h_writes_are_clamped_to_the_write_total_and_default_to_none():
@@ -3103,8 +3104,24 @@ def test_a_call_is_priced_at_its_own_models_rates():
     assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
     assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
     assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.price_usd((0, 0, 1_000_000, 0), "claude-sonnet-5-5") == pytest.approx(0.10)
     assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
     assert spend.rates_for(None) is spend.PRICE_PER_MTOK
+
+
+def test_a_haiku_5_5_call_over_100k_prompt_tokens_bills_five_times():
+    """The prompt is input + cache write + cache read; over 100,000 every class bills 5x,
+    the 1-hour write premium included. Output does not count toward the threshold."""
+    from app.agent import spend
+
+    at = (1_000, 9_000, 90_000, 500_000)
+    base = spend.price_usd(at, "claude-haiku-5-5", cache_write_1h=9_000)
+    assert base == pytest.approx((1_000 * 0.10 + 9_000 * 0.20 + 90_000 * 0.01 + 500_000 * 0.50) / 1e6)
+    over = (1_001, 9_000, 90_000, 500_000)
+    assert spend.price_usd(over, "claude-haiku-5-5-20260101", cache_write_1h=9_000) == \
+        pytest.approx(5 * (base + 0.10 / 1e6))
+    assert spend.price_usd(over, "claude-haiku-4-5") == \
+        pytest.approx((1_001 * 1 + 9_000 * 1.25 + 90_000 * 0.1 + 500_000 * 5) / 1e6)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
