@@ -946,7 +946,7 @@ the **Sources consulted** list — then this block:
 
 ```
 ### Search implications
-- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis; open with "(general knowledge)" unless a tool result stated it>
+- hypothesis-tracking: (general knowledge) <one candidate explanation per line, to test as a hypothesis; replace "(general knowledge)" with the title of the page only when a tool result stated that explanation>
 - research-plan: <one fact per line that changes where or when to search>
 ```
 
