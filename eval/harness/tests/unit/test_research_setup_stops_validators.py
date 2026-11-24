@@ -255,18 +255,18 @@ def test_relays_only_fails_on_a_summary_of_its_own_or_a_leaked_id():
 BROAD = {"skill": "research", "tags": ["broad-verify-audits"]}
 
 
-def _broad(names=("source-evaluation", "check-warnings"), calls=()):
+def _broad(names=("source-evaluation", "check-warnings"), calls=(), text="Two findings. Start a new project for each."):
     broad_verify(skills_invoked=["research"], builtin_tool_calls=[_spawn(n) for n in names],
-                 tool_calls=list(calls), attempted_mcp_calls=[], test=BROAD)
+                 tool_calls=list(calls), attempted_mcp_calls=[], text_response=text, test=BROAD)
 
 
 def test_broad_verify_passes_and_fails():
-    _broad(calls=[_mcp("project_context", projectPath="/p")])
+    _broad(calls=[_mcp("project_context", projectPath="/p"), _mcp("extraction_append", personId="I1")])
     with pytest.raises(AssertionError, match="nothing else"):
         _broad(names=("source-evaluation", "check-warnings", "question-selection"))
     with pytest.raises(AssertionError, match="nothing else"):
         _broad(names=("forget-and-rederive",))
     with pytest.raises(AssertionError, match="tree_forget"):
         _broad(calls=[_mcp("tree_forget", forget=[{"selector": "parents-of", "personId": "I1"}], cleanSlate=True)])
-    with pytest.raises(AssertionError, match="extraction_append"):
-        _broad(calls=[_mcp("extraction_append", personId="I1")])
+    with pytest.raises(AssertionError, match="no \"Continue with"):
+        _broad(text="Two findings.\n\nContinue with `choosing the question`?")

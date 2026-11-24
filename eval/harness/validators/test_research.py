@@ -1825,11 +1825,14 @@ _BROAD_VERIFY_TAG = "broad-verify-audits"
 
 
 def test_broad_verify_audits_and_removes_nothing(
-    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, test
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, text_response, test
 ):
     """Tag-gated (``broad-verify-audits``). A verify request naming no particular
-    relationship, fact or source runs source-evaluation, then check-warnings, and
-    nothing else: no tree_forget, no question, no baseline read (#4791)."""
+    relationship, fact or source is its project's whole work: source-evaluation,
+    then check-warnings, and nothing else; no tree_forget; and no "Continue with
+    …?" line, since each finding is offered as a new project (#4791)."""
+    from harness.skill_runner import load_step_boundary
+
     if _BROAD_VERIFY_TAG not in test.get("tags", []):
         pytest.skip(f"not a {_BROAD_VERIFY_TAG} test")
     taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
@@ -1837,11 +1840,10 @@ def test_broad_verify_audits_and_removes_nothing(
         f"a broad verify runs source-evaluation then check-warnings and nothing else; got {taken}"
     )
     calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
-    wrote = sorted({
-        bare_tool_name(str(c.get("tool") or "")) for c in calls
-        if bare_tool_name(str(c.get("tool") or "")) in ("tree_forget", "extraction_append", "timeline_build")
-    })
-    assert not wrote, f"a broad verify removes and reads nothing: {wrote}"
+    forgot = [c for c in calls if bare_tool_name(str(c.get("tool") or "")) == "tree_forget"]
+    assert not forgot, "a broad verify removes nothing: tree_forget was called"
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered is None, f"a broad verify ends with no \"Continue with …?\" line; it offers {offered!r}"
 
 
 _NO_NAME_SEARCH_TAG = "no-name-search"

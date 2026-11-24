@@ -346,7 +346,8 @@ to verify a person's facts and relationships to research, not source-evaluation;
 `ut_research_vo1` (`verify-objective-forgets-on-continue.json`) runs the narrow
 verify from an objective that disputes the parents on a bare "Continue.";
 `ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
-source-evaluation then check-warnings for a broad verify and removes nothing; and
+source-evaluation then check-warnings for a broad verify, removes nothing and offers
+each finding as a new project; and
 `ut_research_rp1` (`relays-proof-conclusion-without-a-summary.json`,
 `relays-only:`) adds nothing after proof-conclusion's relayed report. The
 validators are pinned in

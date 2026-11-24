@@ -1,0 +1,3851 @@
+{
+  "project": {
+    "id": "rp_kenneth_quass_death",
+    "objective": "When and where did Kenneth Werner Quass die?",
+    "subject_person_ids": [
+      "KNS4-P6W"
+    ],
+    "status": "completed",
+    "created": "2026-06-15",
+    "updated": "2026-11-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Kenneth Werner Quass, born 4 December 1917 in Sumner, Bremer County, Iowa, son of Ralph Kennedy Quass and Emma Wilhelmina Nehls, die?",
+      "rationale": "Single event objective (death date and place) for the subject KNS4-P6W. The tree holds no death fact. The last dated residence is Marshall, Minnesota (1940) and a move to Los Angeles, California is dated 2 July 1962, so the death could fall in either place. Two uploaded captures (a Find a Grave memorial and a Texas death certificate) are present and not yet read; they are for later research to use, not evidence yet.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1962-2024",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-11-24",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_003"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "Overturn risk: high. The place and date of death are not established. The only dated death record for the subject's name in Texas (Texas Death Index, record VZZJ-TBB, Kenneth Quass, died 17 Sep 1982, Tarrant County) is an unlinked candidate (h_001; person-evidence declined, same_person 0.35). Its certificate image was never read: the Ancestry capture is an index page, and the uploaded PDF was not re-read as text in this pass. The Find a Grave memorial (QVK1-PM77, linked to KNS4-P6W) shares the 17 Sep 1982 date but gives a Madelia, Minnesota burial and a contributor note disputing the Texas place (death on a Miami-to-San Diego flight, landed at Dallas). That dispute is not extracted or resolved. Wrap-up stop on pl_001: pli_001, pli_002, pli_004, pli_005, pli_006 and pli_012 are completed; pli_003, pli_013 and pli_010 are skipped as fallbacks never triggered; pli_007 and pli_009 are skipped for no coverage and a declined request; pli_011 is skipped as out of scope. Not searched: (1) the readable Texas death certificate image, which would give parents, birth date, informant and place of death (Texas Deaths 1977-1986 and 1890-1977 image sets; the Bureau of Vital Statistics order is paid); (2) Texas residence before 1982, by city directory, Texas census or Texas obituaries (GenealogyBank); (3) an obituary or SSDI entry with the middle name Werner and birth date 4 Dec 1917 (the two SSDI name searches, log_007 and log_008, returned no Kenneth Werner Quass, which is unexplained and does not settle the identity); (4) Minnesota: Madelia and Watonwan County burial and death records for the Riverside Cemetery burial, which have no kept locality and were never planned, and the Lyon County courthouse request (pli_009, declined by the researcher); (5) Los Angeles County death records and cemetery files (Evergreen, Rose Hills), since the California Death Index pool was only partly read (log_001) and no California entry was found by the principal-only search (log_011). These unsearched sources can change the answer; the accessible evidence does not support a defensible place of death. Stop recorded under wrap-up, with no recommendation.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_007 Los Angeles City death index 1877-1962 (browse-only, catalog 1173324) not browsed: it ends in 1962 and cannot reach a 1982 death (skip_category no_coverage)."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "pli_009 Lyon County Courthouse death series (607 W Main St, Marshall MN) not requested: the researcher has not requested it (skip_category user_declined)."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Texas_Online_Genealogy_Records",
+            "description": "Texas Deaths, 1977-1986 image set (FamilySearch collection 1930157) and Texas Deaths, 1890-1977 (collection 1983324): death certificate or register images that could show parents, birth date and place of death for a 1982 death. Only the index entry was read (pli_001, log_004). Skipped as fallbacks never triggered (pli_003)."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Texas_Online_Genealogy_Records",
+            "description": "Texas death certificate ordered from the Texas Bureau of Vital Statistics (paid order), the only route to a certificate image not online."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Texas_Research_Tips_and_Strategies",
+            "description": "Texas obituaries and newspapers, including GenealogyBank Obituaries 1980-2015 (collection 2333694), for an obituary naming the middle name Werner, birth date 4 Dec 1917 or Texas residence before 1982. Not searched."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Lyon_County,_Minnesota_Genealogy",
+            "description": "Lyon County probate and will records (Clerk of District Court, Marshall; Minnesota Will Records 1849-1985, collection 1607922), not searched."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Lyon_County,_Minnesota_Genealogy",
+            "description": "Marshall Cemetery alphabetized index (catalog koha:525977) and Calvary Cemetery church records (catalog koha:390369), not searched (pli_010 skipped as a fallback never triggered)."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Minnesota_Online_Genealogy_Records",
+            "description": "Minnesota statewide death records beyond the death index: Minnesota Deaths, 1887-2001 (collection 3398461), Minnesota Death Certificates Index 1904-2001 at the Minnesota Historical Society, and Minnesota Obituaries 1865-2006 (collection 2469546). Only the Minnesota Death Index was searched (log_005, log_006); the Marshall obituary files (pli_011) were skipped as out of scope."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Los_Angeles_County,_California_Genealogy",
+            "description": "Los Angeles County Hall of Records death records (County Recorder, 320 W Temple St), access to post-1962 certificates unconfirmed; not searched."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Los_Angeles_County,_California_Genealogy",
+            "description": "Los Angeles cemetery files not searched: Evergreen Memorial Park deceased card file 1877-1989 (collection 3259479) and the Rose Hills burial database from 1914."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "California_Online_Genealogy_Records",
+            "description": "California death certificate images for 1962 onward (not confirmed online); the California Death Index 1940-1997 was searched (log_001, log_010, log_011), but the pool was only partly read."
+          }
+        ]
+      },
+      "created": "2026-11-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1964-1998",
+          "repository": "FamilySearch",
+          "rationale": "Statewide Texas death index (Texas, Death Index, 1964-1998, collection 1375599) is name-searchable and is the state index to read first for deaths after 1964 (loc_002). It gives a death year and county to test against the Texas capture and the 1962 move to Los Angeles. An index entry does not by itself establish the place of death; confirm from a certificate or other record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1962-2024",
+          "repository": "other: local upload of Texas death certificate capture (uploads/ancestry-texas-death-cert-quass.pdf)",
+          "rationale": "Read the place of death, date of death and certifying details from the pre-provided Texas death certificate capture in the project uploads folder, when this item is reached. The capture is a lead only and is not established until its own record is confirmed (the statewide index entry and the certificate itself must agree). Its stated place of death, if it names a Texas county, selects which Texas county series and cemetery records to search next. The survey did not place the decedent in Texas (loc_002 notes the death place must be read from the capture).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1977-1986",
+          "repository": "FamilySearch (images)",
+          "rationale": "Texas Deaths, 1977-1986 (collection 1930157) is name-searchable with images (loc_002). It is the only listed Texas death image set overlapping the early part of the window after 1977, so it can supply a certificate or register image once the index entry is found. Fallback to the Texas death index entry when that entry gives a 1977-1986 death year; not a standalone search for later years.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback for pli_001. pli_001 returned a candidate (Kenneth Quass, death 17 Sep 1982, Tarrant, Texas, log_004), so the fallback condition was not triggered. Not searched."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "California, United States (Los Angeles County)",
+          "date_range": "1940-1997",
+          "repository": "FamilySearch",
+          "rationale": "California Death Index, 1940-1997 (collection 2015582) is the statewide index that spans the 2 July 1962 move to Los Angeles (loc_003). Name-searchable. Its entry gives a year and county, which tests the Los Angeles death place directly. An entry is not itself a place-of-death proof; the Los Angeles County records (loc_003) carry the confirmation.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Lyon, Minnesota, United States (Marshall, Lyon County)",
+          "date_range": "1908-2002",
+          "repository": "FamilySearch",
+          "rationale": "Minnesota Death Index, 1908-2002 (collection 1937234) is the statewide Minnesota index and is name-searchable (loc_001). The tree's 1940 draft-registration and 1940 residence entries name Marshall, Watonwan County, and Madelia, Watonwan County (not Lyon). Marshall city lies in Lyon County, so the index hit must be read against the county recorded before assuming loc_001's Lyon County series applies. Confirm which Marshall, and do not apply Marshall County, Minnesota records to Marshall in Lyon County.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "United States (national)",
+          "date_range": "1875-2014",
+          "repository": "FamilySearch",
+          "rationale": "United States, Social Security Death Index (collection 1202535) is name-searchable and gives a death date and the last residence ZIP code where the person's Social Security record reached the death file. It can narrow the state before the state indexes are searched. It runs to 2014, so a death after that year is not covered and must rest on the state indexes and records. The index does not establish a place of death by itself.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Los Angeles, California, United States",
+          "date_range": "1877-1962",
+          "repository": "FamilySearch (images)",
+          "rationale": "Los Angeles City, California, index of deaths, 1877-1962 (FamilySearch Library catalog 1173324) is browse-only and ends at the 2 July 1962 move date (loc_003). It can only reach a death in the first half of 1962 or earlier, so it is a fallback for pli_004 for a 1962 death in the city and not for later deaths. Browse image by image; there is no name search.",
+          "fallback_for": "pli_004",
+          "status": "skipped",
+          "skip_category": "no_coverage",
+          "skip_reason": "Browse-only Los Angeles City death index ends in 1962 (catalog 1173324). It cannot reach a death in 1982, the date of the candidate death (17 Sep 1982). Not browsed."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "cemetery",
+          "jurisdiction": "Los Angeles, California, United States",
+          "date_range": "1884-2002",
+          "repository": "FamilySearch",
+          "rationale": "Angelus-Rosedale Cemetery/Crematory Records, 1884-2002 (collection 3583819) is name-searchable (loc_003). A cemetery or crematory entry can give the date and place of death together, and it is the next check if pli_004 finds a Los Angeles County death. Also consider the Pierce Brothers mortuary death records 1950-1978 (catalog 771104) and the Rose Hills burial database (from 1914) if no cemetery entry turns up.",
+          "fallback_for": "pli_004",
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Lyon, Minnesota, United States (Marshall, Lyon County)",
+          "date_range": "1874-2024",
+          "repository": "county_courthouse",
+          "rationale": "Lyon County Courthouse, Clerk of District Court, 607 W Main St, Marshall MN (holds birth and death records from 1874 per loc_001). This is the county series for a Marshall death, but it is a request to the courthouse, not an online search; the survey did not confirm post-1955 access. Run only if pli_005 places the decedent in Lyon County or an obituary or other record does. Fallback for pli_005 if that index is negative.",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "user_declined",
+          "skip_reason": "Lyon County Courthouse death request is an offline request, not an online search, and the Minnesota death index (pli_005) returned no Lyon County death for the subject. Not run; the researcher has not requested it."
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "cemetery",
+          "jurisdiction": "Marshall, Lyon, Minnesota, United States",
+          "date_range": "1940-2024",
+          "repository": "FamilySearch Library",
+          "rationale": "Marshall Cemetery alphabetized index (catalog koha:525977, typescript about 1992) lists those interred in Marshall Cemetery. It is a finding aid for a burial that may follow a Marshall death, and it is not a digitized burial register. Its three numeric columns are unexplained, so read it as a lead. Fallback for pli_009 when the county series returns nothing.",
+          "fallback_for": "pli_009",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback for pli_009, which was skipped, so the county series it falls back from never ran. Marshall Cemetery index not searched."
+        },
+        {
+          "id": "pli_011",
+          "sequence": 11,
+          "record_type": "newspaper",
+          "jurisdiction": "Marshall, Lyon, Minnesota, United States",
+          "date_range": "1985-1990",
+          "repository": "Southwest Minnesota Historical Center / Southwest State University (obituary files)",
+          "rationale": "Marshall obituary files ca. 1985-1990 (catalog 409008) and the statewide Minnesota Obituaries 1865-2006 collection (2469546, name-searchable) cover a Marshall death of that period. The Marshall obituary volumes are name-indexed but not full-text searchable, so they must be browsed once the name is located. Relevant only if pli_005 or pli_009 suggests a Marshall death.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "out_of_scope",
+          "skip_reason": "Marshall obituary files (1985-1990) are relevant only if a Marshall death is suggested. None is: the Minnesota index gave no Lyon County death and the candidate death is in Texas (log_004, log_002). Not searched."
+        },
+        {
+          "id": "pli_012",
+          "sequence": 12,
+          "record_type": "cemetery",
+          "jurisdiction": "Find a Grave (online memorial)",
+          "date_range": "1962-2024",
+          "repository": "other: local upload of Find a Grave capture (uploads/findagrave-quass-54602333.pdf)",
+          "rationale": "Read the uploaded Find a Grave capture for the memorial's stated death date and place. A memorial is a secondary, user-submitted lead and is not evidence of death until the death date and place are confirmed by one of the record items above. Use it to choose the state and county to test; do not write its dates into the tree from this item alone.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 13,
+          "record_type": "vital_record",
+          "jurisdiction": "Texas, United States",
+          "date_range": "1890-1977",
+          "repository": "FamilySearch (images)",
+          "rationale": "Texas, Deaths, 1890-1977 (collection 1983324) is name-searchable with images and overlaps the 1962-1963 gap in the Texas index that begins in 1964 (loc_002). Fallback for pli_001 only for a death in 1962 or 1963; the collection ends in 1977, so it does not reach later deaths.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback for pli_001 for a death in 1962 or 1963 only. pli_001 returned a candidate (death 17 Sep 1982, log_004), so the fallback condition was not triggered. Not searched."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-24T17:20:52.865Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "2015582",
+        "deathYearFrom": 1940,
+        "deathYearTo": 1997
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 115,
+      "notes": "California Death Index 1940-1997. 115 matches; first 50 ranked. Ranker: no candidate scored above floor (0.01); subject not resolvable on this pool. Top 50 are almost all Quass/Kaas-variant entries with role Father or Mother (none principal Kenneth Quass). One principal hit (Cecelia W Quasser, b. 1909 Kansas) is a different person by sex and name. Not a confirmed nil: pool of 115 only partly read; a principal-only Kenneth search follows.",
+      "staged_ref": "results/.staging/01aab6ab-fbd1-45a7-a0c8-a755f72eec32.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-24T17:20:54.843Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Texas, U.S., Death Certificates, 1903-1982 (collection 2272)",
+        "name": "Kenneth Quass",
+        "upload": "uploads/ancestry-texas-death-cert-quass.pdf"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/2272/records/99712",
+        "capture_received": true,
+        "capture_filename": "ancestry-texas-death-cert-quass.pdf"
+      },
+      "results_ref": null,
+      "notes": "Pre-provided capture of an Ancestry index detail page (not the certificate image). Kenneth Quass, b. 4 Dec 1917 Iowa, age 64; death 17 Sep 1982, Grapevine, Tarrant, Texas; residence abt 1982 San Diego, California; father Ralph K Quass, mother Emma Nehls, spouse Ivyl Greenley; certificate no. 76852. Page shows no certifier, informant, physician or cause. Lead only; index transcription, not confirmed against the certificate image or Texas death index. Name is \"Kenneth Quass\" with no middle name Werner on the page."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-24T17:20:57.822Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "1375599",
+        "anyPlace": "Texas, United States",
+        "anyYearFrom": 1964,
+        "anyYearTo": 1998
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Pinned search to Texas Death Index 1964-1998 (collection 1375599) returned 0. Pinned nil does not rule out the record; the unpinned retry below is the operative search."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-24T17:20:57.822Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "anyPlace": "Texas, United States",
+        "anyYearFrom": 1964,
+        "anyYearTo": 1998
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 258,
+      "notes": "Unpinned retry: 258 hits, 50 examined. Only Texas candidate of the subject name: Kenneth Quass, death 17 Sep 1982, Tarrant, Texas (collection 1949337, Texas Death Index 1903-2000), matchScore 0.02, no birth date on record, surnameNotOnSubject flagged. Needs-review: identity unconfirmed (no birth date to test against 1917; the score is very low); not adopted as the subject. Remaining hits are other surnames or other collections (Quasney, Kaas, Qassim and similar) and were triaged as not the subject. Index entry only; place of death not confirmed from a certificate.",
+      "staged_ref": "results/.staging/fab3f82b-856e-42f3-83f3-a823997666f1.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-24T17:20:58.703Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "1937234",
+        "deathPlace": "Lyon, Minnesota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "pli_005 pinned search: Minnesota Death Index 1908-2002 (collection 1937234), Lyon County scope, subject Kenneth Werner Quass (born 4 Dec 1917, Sumner, Iowa). Zero results. Nil under the collection pin does not rule out the record in another collection; the unpinned retry below was run for that reason."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-24T17:20:58.703Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "deathPlace": "Lyon, Minnesota, United States"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 253,
+      "notes": "pli_005 unpinned retry: 253 matches, none a Minnesota death record for Kenneth Werner Quass in Lyon County. Top-ranked hit ark:/61903/1:1:6YJ9-NVFJ (Kenneth Quass, born December 1917, collection 5000290 Residence Database 1970-2024, residence Sep 1982, matchScore 0.91) is a residence record, not a death; its place and state are not stated in the stub, so it is not confirmed as the subject and needs review before any use. The remaining hits are military muster rolls (Paul W./Albert W Quass), 1930/1950 census and NUMIDENT entries for other Kenneths or Quas/Quasney/Kaas variants, and a Minnesota Deaths and Burials 1835-1990 collection (1680831) hit for James K. Kaas only. No Quass death record for Lyon County surfaced. Cross-check: the top hit's birth month and year match the subject's but its residence is undated in place and it carries no death event; surname Quass is not tied to the subject by any linked record here, so the tree-subject link remains unconfirmed.",
+      "staged_ref": "results/.staging/52de7a47-ef80-4beb-a4af-d9a8b6891374.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-24T17:20:59.297Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "1202535"
+      },
+      "outcome": "negative",
+      "results_examined": 25,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 25,
+      "notes": "SSDI name search, full given name. 25 returned, none is Kenneth Werner Quass; ranker scored none above floor (0.01). Nearest names are other surnames (Kaas, Quasney, Kaveckas). Subject not found under this query.",
+      "staged_ref": "results/.staging/21942702-dcf6-413f-bf8e-c859d0e2a7d4.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-24T17:20:59.298Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "1202535"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 10,
+      "notes": "SSDI name search, first given name only (variant lever). 10 returned, no Quass with Kenneth; ranker scored none above floor. Subject still not found. Index may not hold a death under this name, or the death falls after 2014 (outside this collection's coverage).",
+      "staged_ref": "results/.staging/1103cb98-c8d6-44b9-8e37-d6dcea31091e.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_012",
+      "performed": "2026-11-24T17:20:59.993Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave",
+        "givenName": "Kenneth Werner",
+        "surname": "Quass",
+        "birthYear": 1917,
+        "memorialId": "54602333"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?firstname=Kenneth+Werner&lastname=Quass&birthyear=1917",
+        "capture_received": true,
+        "capture_filename": "findagrave-quass-54602333.pdf"
+      },
+      "results_ref": null,
+      "notes": "Local capture of Find a Grave memorial 54602333, Kenneth Werner Quass Sr. Memorial states birth 4 Dec 1917 Buchanan County, Iowa; death 17 Sep 1982 (aged 64) Grapevine, Tarrant County, Texas; burial Riverside Cemetery, Madelia, Watonwan County, Minnesota. Contributor bio (D. A. Greeley, son) says the death certificate place is false: he died on a commercial flight Miami to San Diego, found dead and the plane landed at Dallas; no autopsy; cause unknown. Headstone photo (photographed evidence) reads Kenneth W., Dec 4, 1917 - Sept 17, 1982 (partly legible). Contributor-entered text and family links are compiled and unverified; a lead only, not written to the tree. Parents Ralph Kennedy Quass and Emma Wilhelmina Nehls; spouse Ivyl Phylena Greenley (m. 1938)."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-24T17:21:10.718Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "2015582",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Variant of pli_004: principal-only Kenneth Quass in California Death Index 1940-1997. Zero results. The tool refused the automatic nil log, so logged by hand. Zero-hit pinned search does not rule out the record in another collection; see the unpinned retry in the next entry."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-24T17:21:10.718Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "isPrincipal": true,
+        "recordCountry": "United States",
+        "deathYearFrom": 1940,
+        "deathYearTo": 1997
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 559,
+      "notes": "Unpinned retry, 559 matches, first 50 read. Subject-matching principals: (a) Kenneth Werner Quass, Sr, birth 4 Dec 1917, death 17 Sep 1982, Find a Grave Index (2221801), burial Madelia, Minnesota; (b) Kenneth Quass, death 17 Sep 1982, death place Tarrant, Texas, Texas Death Index 1903-2000 (1949337), sex male, no birth date, match score 0.02, not ranked as subject; needs review; the 17 Sep 1982 date agrees with (a). Neither is in the California Death Index pool. Other Kenneths in the list have birth years or places that conflict with the subject (1914, 1915, 1924, 1928, 1938, 1945, 1974 and others) and are not the subject. Ranker note: the subject-level score is high for the Find a Grave and Iowa baptism rows, but those rows are not California death entries. The planned Los Angeles death test is not supported by these results; no California death entry for this subject was found in the pinned search.",
+      "staged_ref": "results/.staging/8be223c8-09eb-4a4c-ae15-d9f62a070268.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-11-24T17:21:55.618Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:VZZJ-TBB"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "staged_ref": "results/.staging/74979e1f-5f05-485e-bcbf-d9c2edc51a40.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-11-24T17:21:55.619Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVK1-PM77"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "staged_ref": "results/.staging/89e1c791-d825-4f6d-964b-297116480876.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-24T17:23:19.017Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "3583819",
+        "anyPlace": "Los Angeles, California, United States",
+        "anyYearFrom": 1884,
+        "anyYearTo": 2002
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "written_by": "record_search",
+      "notes": "Fallback for pli_004 (California Death Index nil): Angelus-Rosedale Cemetery/Crematory Records, Los Angeles, 1884-2002, for Kenneth Werner Quass."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-24T17:23:22.538Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "3583819",
+        "anyPlace": "Los Angeles, California, United States",
+        "anyYearFrom": 1884,
+        "anyYearTo": 2002
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "written_by": "record_search",
+      "notes": "Variant: given name shortened to Kenneth (call name), same collection and place and years, after the full given name nilled."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-24T17:23:28.790Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "collectionId": "3583819",
+        "anyPlace": "Los Angeles, California, United States",
+        "anyYearFrom": 1884,
+        "anyYearTo": 2002
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 1,
+      "notes": "Surname-only lever (given name dropped) in Angelus-Rosedale Cemetery/Crematory Records, Los Angeles, 1884-2002. One hit: Mable M Quass, burial 6 Aug 1986, born 30 Jan 1900. Not the subject: female, different given name, birth year 17 years before the subject's 1917. Not recorded as a namesake because the given name does not match the subject. No record of Kenneth Quass in this collection from this search. Cross-check: role Principal, no parents or spouse named in the stub; not extracted.",
+      "staged_ref": "results/.staging/0acd486f-b3ae-4701-b330-890d0ab3aa9c.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Texas, Death Index, 1903-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZZJ-TBB : Wed Sep 17 17:48:07 UTC 2025), Entry for Kenneth Quass, 17 Sep 1982.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Kenneth Quass, \"Texas, Death Index, 1903-2000\"",
+        "when_created": "1982",
+        "when_accessed": "2026-11-24",
+        "where": "Texas, Death Index, 1903-2000",
+        "where_within": "ark:/61903/1:1:VZZJ-TBB"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-24",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MSW-XFBB",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK1-PM77 : Sat Oct 03 05:48:53 UTC 2026), Entry for Kenneth Werner Quass, Sr.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Kenneth Werner Quass, Sr, \"Find a Grave Index\"",
+        "when_created": "1917",
+        "when_accessed": "2026-11-24",
+        "where": "Find a Grave Index",
+        "where_within": "ark:/61903/1:1:QVK1-PM77"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-24",
+      "log_entry_id": "log_013",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q2S7-GFR7",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:VZZJ-TBB",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Kenneth Quass",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth",
+        "surname": "Quass"
+      },
+      "record_persona_id": "p_13373583268",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9MSW-XFBB"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:VZZJ-TBB",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13373583268",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9MSW-XFBB"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:VZZJ-TBB",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 Sep 1982",
+      "place": "Tarrant, Texas",
+      "record_persona_id": "p_13373583268",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:9MSW-XFBB",
+      "standard_place": "Tarrant, Texas, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Kenneth Werner Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth Werner",
+        "surname": "Quass"
+      },
+      "record_persona_id": "p_101087811155",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q2S7-GFR7"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "04 Dec 1917",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "inferred",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "04 Dec 1917",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_101087811155",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q2S7-GFR7"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Madelia, Watonwan, Minnesota, United States of America",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Madelia, Watonwan, Minnesota, United States of America",
+      "record_persona_id": "p_101087811155",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q2S7-GFR7",
+      "standard_place": "Madelia Township, Watonwan, Minnesota, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QVK1-PM77",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 Sep 1982",
+      "record_persona_id": "p_101087811155",
+      "informant_bias_notes": "a burial or cemetery index names no informant",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:Q2S7-GFR7"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_004",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.9583978,
+      "rationale": "Find a Grave index persona (record ark:/61903/1:1:QVK1-PM77, persona p_101087811155) named Kenneth Werner Quass Sr, matched to Kenneth Werner Quass (KNS4-P6W). Name: full given name Kenneth Werner and surname agree exactly with the tree. Date check: 04 Dec 1917 (record, approximate, inferred) vs 4 December 1917 (tree birth): gap 0 years. Residence check: Madelia, Minnesota, 1982 burial vs Marshall, Minnesota, 1940 (Draft Registration; undated Residence fact in the tree): same state (Minnesota), no state-line move, so no bridge needed; place_distance returned 499 km between the two standard places. Score 0.958 (same_person). Caveats: the index names no informant, and the record carries no parents, spouse or children, so relationship fit is not tested; the 'Sr' suffix implies a junior of the same name, which is not yet identified in the tree. Death date 17 Sep 1982 is carried as a stated, indeterminate-quality fact, not as established.",
+      "created": "2026-11-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_005",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.9583978,
+      "rationale": "Birth fact on the Find a Grave persona (p_101087811155, ark:/61903/1:1:QVK1-PM77), linked with the persona's name link to KNS4-P6W. Date check: 04 Dec 1917 vs tree birth 4 December 1917: gap 0 years. Same-persona score 0.958 (same_person). Record quality indeterminate (no informant); the birth date is inferred, so it corroborates rather than establishes the birth.",
+      "created": "2026-11-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_006",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.9583978,
+      "rationale": "Burial place on the Find a Grave persona (p_101087811155) linked to KNS4-P6W. Residence check: Madelia, Minnesota vs Marshall, Minnesota (1940 Draft Registration; undated Residence fact): same state, no state-line move; place_distance 499 km. Same-persona score 0.958 (same_person). Burial index names no informant.",
+      "created": "2026-11-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_007",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.9583978,
+      "rationale": "Death date 17 Sep 1982 on the Find a Grave persona (p_101087811155) linked to KNS4-P6W, so the person's identity is tied to this death entry. Identity rests on exact name, birth date 4 Dec 1917 (gap 0 years), Minnesota burial in the state of the subject's 1940 residence, and same_person score 0.958. The death date itself is not established: the record is an indeterminate-quality index with no informant, and proof-conclusion must weigh it against the Texas death entry.",
+      "created": "2026-11-24"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Kenneth Quass who died 17 September 1982 in Tarrant County, Texas (Texas Death Index 1903-2000, record ark:/61903/1:1:VZZJ-TBB) is the same person as Kenneth Werner Quass (KNS4-P6W), born 4 December 1917 in Sumner, Bremer County, Iowa, son of Ralph Kennedy Quass and Emma Wilhelmina Nehls.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003"
+      ],
+      "contradicting_assertion_ids": [
+        "a_006"
+      ],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Candidate identity, not adopted. Starts active; no promotion or elimination made. Candidate-side evidence: a_003 (Texas death 17 Sep 1982, primary quality, certifying official, Tarrant, Texas) and a_001/a_002 (name 'Kenneth Quass' and sex male; secondary quality, reported by a family survivor, not witnessed; the record gives no middle name and no birth date, so the given name agrees only partly with 'Kenneth Werner'). Subject-side evidence: a_007 gives the same death date, 17 Sep 1982, but it comes from the Find a Grave index (src_002, indeterminate quality, no informant) which is linked to the subject (pe_004), so the date match is shared by both records and is not independent support for the Texas candidate on its own. Contradicting-side tension (not refutation): a_006 places the subject's burial at Madelia, Watonwan, Minnesota in 1982; a Texas death followed by a Minnesota burial is possible but needs a transport or family-return explanation that the project does not yet document. Person-evidence declined to link the Texas entry to the subject (same_person score 0.35); no birth date on the Texas record, no bridge between Texas and the subject's Minnesota or Iowa residences in the project. Find a Grave memorial's Texas death place is NOT yet extracted as an assertion in the project and is therefore not weighed here; a contributor note disputes it and that dispute is unresolved. Unstated assumption to watch: that two records sharing a death date and surname describe one man. Evidence that would settle it: (1) a readable Texas death certificate showing parents (Ralph Quass / Emma Nehls), birth date or birthplace, and informant; (2) evidence of a Texas residence before 1982 (city directory, census, employment or Social Security earnings in Texas); (3) an obituary or Social Security Death Index entry giving the middle name Werner and birth date 4 December 1917; (4) the Find a Grave Texas death place source and contributor note, extracted and weighed.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "argument",
+      "shortfall": "gap",
+      "supporting_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_003"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched and read: the Texas Death Index 1903-2000 entry for Kenneth Quass (record ark:/61903/1:1:VZZJ-TBB, log_012), the Find a Grave Index entry for Kenneth Werner Quass, Sr (record ark:/61903/1:1:QVK1-PM77, log_013), the Minnesota Death Index (log_005, log_006), the California Death Index (partly read, log_001, log_010, log_011) and two SSDI name searches (log_007, log_008, no Kenneth Werner Quass returned). Not searched, and able to change the answer: the Texas death certificate image (Texas Deaths 1977-1986, collection 1930157, or a paid Bureau of Vital Statistics order), which would give parents, birth date, informant and place of death and would settle hypothesis h_001 and the place; Texas obituaries (GenealogyBank Obituaries 1980-2015) and pre-1982 Texas residence; Madelia and Watonwan County burial and death records; Minnesota Deaths 1887-2001 and Minnesota obituaries; Lyon County courthouse and probate records (request declined by the researcher); Los Angeles County death records and cemetery files. Stop recorded under wrap-up as resources_spent, overturn risk high.",
+      "narrative_markdown": "## Question\nWhen and where did Kenneth Werner Quass (KNS4-P6W), born 4 December 1917 in Sumner, Bremer County, Iowa, son of Ralph Kennedy Quass and Emma Wilhelmina Nehls, die?\n\n## Answer in brief\nThe evidence points to a death on 17 September 1982, but only as a possible answer. The place of death is not established (not proved). This is a wrap-up conclusion, written while important records remain unsearched.\n\n## Date: possible\nThe Find a Grave Index entry for Kenneth Werner Quass, Sr (\"Find a Grave Index\", FamilySearch, record ark:/61903/1:1:QVK1-PM77) gives a death of 17 Sep 1982, birth 04 Dec 1917 and burial at Madelia, Watonwan, Minnesota. It is a derivative index of indeterminate quality: it names no informant and the birth is inferred. It is linked to the subject with confidence (exact full name, birth date gap of 0 years, same-person score 0.958), so it is the only record tied to the subject's identity. The Texas Death Index entry (\"Texas, Death Index, 1903-2000\", record ark:/61903/1:1:VZZJ-TBB) gives Kenneth Quass, male, died 17 Sep 1982, Tarrant, Texas, and its death fact is primary information from a certifying official. Two sources agreeing on a date would normally strengthen it, but the Texas entry is not linked to the subject (same-person score 0.35: no middle name, no birth date, no parents). Its date agreement therefore cannot be counted as independent support, and the subject's date rests on one index of indeterminate quality. The coincidence of surname, given name and exact date is suggestive, which is why the date is possible rather than not proved.\n\n## Place: not proved\nThree leads name Tarrant County, Texas: the Texas index entry, the Find a Grave memorial and an uploaded Ancestry index capture. The linked Find a Grave index entry supplies only a Minnesota burial (Madelia), which is a burial place and not a place of death. A contributor note on the memorial says the Texas place is false, describing a death on a Miami-to-San Diego flight that landed at Dallas, with burial in Madelia. That note is unsourced and has not been extracted or weighed as evidence. The uploaded memorial and certificate captures were not read as evidence. A Texas death followed by a Minnesota burial is plausible but undocumented. No place of death is concluded and nothing is written to the tree for it.\n\n## Open candidate h_001\nHypothesis h_001 (active, not adopted) asks whether the Kenneth Quass of the Texas index is the subject. It is unresolved. It would be settled by: (1) the readable Texas death certificate showing parents (Ralph Quass and Emma Nehls), birth date or birthplace and informant; (2) a Texas residence before 1982; (3) an obituary or Social Security record giving the middle name Werner and birth date 4 December 1917; (4) the Find a Grave Texas-place source and contributor note, extracted and weighed. Minnesota death or burial records at Madelia or Watonwan County, and Los Angeles County records (the subject was in Los Angeles in 1962), could independently establish the place. No conflict is registered; the disagreement over place is an unresolved candidate question, not an adjudicated conflict.\n\n## Tree\nThe tree already carries Death F2 (17 Sep 1982, from the Find a Grave Index, source S2) and Burial F1 (Madelia, Minnesota). No place of death and no Texas fact is encoded. These are evidence facts, not a concluded proof.\n\n## Limits\nThe unsearched records listed in the search summary can change this answer; the finding is possible, not settled.",
+      "updated": "2026-11-24T17:27:37.997Z",
+      "claims": [
+        {
+          "claim": "date of death 17 September 1982",
+          "proof_tier": "possible",
+          "shortfall": "gap",
+          "supporting_assertion_ids": [
+            "a_007",
+            "a_003"
+          ],
+          "fact": {
+            "subject": "KNS4-P6W",
+            "fact_type": "Death",
+            "date": "17 Sep 1982"
+          }
+        }
+      ]
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Lyon, Minnesota, United States",
+      "for_place": "Marshall, Lyon, Minnesota, United States",
+      "time_period": "1940-2024",
+      "jurisdictions": [
+        {
+          "name": "Lyon, Minnesota, United States",
+          "date_range": "+1869/"
+        },
+        {
+          "name": "Marshall, Lyon, Minnesota, United States",
+          "date_range": "+1870/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1937234",
+          "title": "Minnesota, Death Index, 1908-2002",
+          "date_range": "1908-2002",
+          "person_count": 4529429,
+          "record_count": 2931700,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3398461",
+          "title": "Minnesota, Deaths, 1887-2001",
+          "date_range": "1887-2001",
+          "person_count": 4441146,
+          "record_count": 1455734,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2185953",
+          "title": "Minnesota, County Deaths, 1850-2001",
+          "date_range": "1850-2001",
+          "person_count": 2484554,
+          "record_count": 1242397,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2477957",
+          "title": "Minnesota, Death Records and Certificates, 1900-1955",
+          "date_range": "1900-1955",
+          "person_count": 2331846,
+          "record_count": 697277,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1680831",
+          "title": "Minnesota, Deaths and Burials, 1835-1990",
+          "date_range": "1835-1990",
+          "person_count": 2433002,
+          "record_count": 828782,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2469546",
+          "title": "Minnesota, Obituaries 1865-2006",
+          "date_range": "1865-2006",
+          "person_count": 977881,
+          "record_count": 977877,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1607922",
+          "title": "Minnesota, Will Records, 1849-1985",
+          "date_range": "1849-1985",
+          "person_count": 189457,
+          "record_count": 189458,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4489446",
+          "title": "Minnesota, Veterans Grave Registration Reports, 1930-1975",
+          "date_range": "1930-1975",
+          "person_count": 105070,
+          "record_count": 71386,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949334",
+          "title": "Minnesota, Birth Index, 1935-2002",
+          "date_range": "1935-2002",
+          "person_count": 12782752,
+          "record_count": 4267568,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1858352",
+          "title": "Minnesota, Birth and Death Records, 1866-1916",
+          "date_range": "1866-1916",
+          "person_count": 830015,
+          "record_count": 379392,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1680827",
+          "title": "Minnesota, Births and Christenings, 1840-1980",
+          "date_range": "1840-1980",
+          "person_count": 2554339,
+          "record_count": 925816,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3748255",
+          "title": "Minnesota, Blue Earth County, Glenwood Cemetery, Burial Records, ca. 1869-1990",
+          "date_range": "1868-1991",
+          "person_count": 4955,
+          "record_count": 4955,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4328761",
+          "title": "Minnesota, Brown County, Obituaries, 1855-1990",
+          "date_range": "1855-1990",
+          "person_count": 180301,
+          "record_count": 175623,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2790243",
+          "title": "Minnesota, Church Records, 1798-1991",
+          "date_range": "1798-1991",
+          "person_count": 10551,
+          "record_count": 4977,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1762576",
+          "title": "Minnesota, Clay County Land and Property Records, 1872-1947",
+          "date_range": "1872-1947",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1760963",
+          "title": "Minnesota, Clay County, School Census Records, 1909-1962",
+          "date_range": "1909-1962",
+          "person_count": 296251,
+          "record_count": 296251,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2281907",
+          "title": "Minnesota, Clay and Steele County Obituaries, 1865-2006",
+          "date_range": "1865-2006",
+          "person_count": 197540,
+          "record_count": 197560,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4328756",
+          "title": "Minnesota, Cottonwood County, Obituaries, 1850-1990",
+          "date_range": "1850-1990",
+          "person_count": 5130,
+          "record_count": 5410,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1920099",
+          "title": "Minnesota, County Birth Records, 1863-1983",
+          "date_range": "1863-1983",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1803974",
+          "title": "Minnesota, County Marriages, 1853-1983",
+          "date_range": "1853-1983",
+          "person_count": 1916364,
+          "record_count": 946278,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1967743",
+          "title": "Minnesota, Divorce Index, 1970-1995",
+          "date_range": "1970-1995",
+          "person_count": 732700,
+          "record_count": 366350,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4373186",
+          "title": "Minnesota, Douglas County, Obituaries, 1860-1990",
+          "date_range": "1860-1990",
+          "person_count": 72807,
+          "record_count": 72740,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2239221",
+          "title": "Minnesota, Grand Army of the Republic Membership Records, 1869-1940",
+          "date_range": "1869-1940",
+          "person_count": 164338,
+          "record_count": 164338,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3733110",
+          "title": "Minnesota, Hennepin County, Minneapolis, Layman Cemetery Burial Records, 1860-1926",
+          "date_range": "1860-1926",
+          "person_count": 23762,
+          "record_count": 23762,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2030516",
+          "title": "Minnesota, Itasca County Land Records, 1872-1930",
+          "date_range": "1872-1930",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1949335",
+          "title": "Minnesota, Marriage Index, 1958-2001",
+          "date_range": "1958-2001",
+          "person_count": 4828072,
+          "record_count": 2414036,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1680832",
+          "title": "Minnesota, Marriages, 1849-1950",
+          "date_range": "1849-1950",
+          "person_count": 687867,
+          "record_count": 340746,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4122682",
+          "title": "Minnesota, Military Discharge Records, ca.1917 - ca.1990",
+          "date_range": "1917-1990",
+          "person_count": 6152,
+          "record_count": 6152,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2120721",
+          "title": "Minnesota, Naturalization Card Index, 1930-1988",
+          "date_range": "1930-1988",
+          "person_count": 71367,
+          "record_count": 0,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2632486",
+          "title": "Minnesota, Naturalization Records and Indexes, 1872-1962",
+          "date_range": "1872-1962",
+          "person_count": 89103,
+          "record_count": 89054,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3740257",
+          "title": "Minnesota, Olmsted County, Oakwood Cemetery Records, 1863-1998",
+          "date_range": "1863-1998",
+          "person_count": 31571,
+          "record_count": 31571,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2426329",
+          "title": "Minnesota, Passenger and Crew Lists, 1912-1956",
+          "date_range": "1912-1956",
+          "person_count": 51505,
+          "record_count": 51504,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2019834",
+          "title": "Minnesota, Roseau County Land Records, 1892-1930",
+          "date_range": "1892-1930",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1503054",
+          "title": "Minnesota, State Census, 1865 ",
+          "date_range": "1865-1865",
+          "person_count": 246591,
+          "record_count": 246591,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1503053",
+          "title": "Minnesota, State Census, 1875",
+          "date_range": "1875-1875",
+          "person_count": 639530,
+          "record_count": 612847,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1503044",
+          "title": "Minnesota, State Census, 1885",
+          "date_range": "1885-1885",
+          "person_count": 1133198,
+          "record_count": 1133198,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1503031",
+          "title": "Minnesota, State Census, 1895",
+          "date_range": "1895-1895",
+          "person_count": 1570739,
+          "record_count": 1570739,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1503056",
+          "title": "Minnesota, State Census, 1905",
+          "date_range": "1905-1905",
+          "person_count": 1973899,
+          "record_count": 1973884,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1419635",
+          "title": "Minnesota, Stevens County Genealogical Society Records, 1876-2006",
+          "date_range": "1876-2006",
+          "person_count": 83390,
+          "record_count": 55602,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1503055",
+          "title": "Minnesota, Territorial Census, 1857",
+          "date_range": "1857-1857",
+          "person_count": 169497,
+          "record_count": 156888,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3744865",
+          "title": "Minnesota, Waseca County Historical Society, Burial Cards, ca.1860-1992",
+          "date_range": "1859-1993",
+          "person_count": 10351,
+          "record_count": 10352,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2421524",
+          "title": "Minnesota, World War I Records, 1918-1941",
+          "date_range": "1914-1941",
+          "person_count": 380876,
+          "record_count": 51314,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2759155",
+          "title": "Minnesota, World War II Draft Registration Cards, 1940-1947",
+          "date_range": "1940-1947",
+          "person_count": 1383484,
+          "record_count": 693535,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2849252",
+          "title": "Minnesota, Wright County, City of St. Michael and Frankfort Township, Birth and Death Records, 1900-1953",
+          "date_range": "1900-1953",
+          "person_count": 9703,
+          "record_count": 3349,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2026973",
+          "title": "BillionGraves Index",
+          "date_range": "1750-2013",
+          "person_count": 31966496,
+          "record_count": 31122746,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2185932",
+          "title": "United States, Border Crossings from Canada to United States, 1894-1954",
+          "date_range": "1894-1954",
+          "person_count": 210125,
+          "record_count": 210106,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2074276",
+          "title": "United States, Bureau of Land Management Tract Books, 1800-c. 1955",
+          "date_range": "1799-1956",
+          "person_count": 7493425,
+          "record_count": 7213160,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1877095",
+          "title": "United States, Census of Union Veterans and Widows of the Civil War, 1890",
+          "date_range": "1890-1890",
+          "person_count": 1012702,
+          "record_count": 864707,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1471019",
+          "title": "United States, Civil War and Later Pension Index, 1861-1917",
+          "date_range": "1861-1917",
+          "person_count": 2990891,
+          "record_count": 2990891,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1417695",
+          "title": "United States, Freedman's Bank Records, 1865-1874",
+          "date_range": "1865-1874",
+          "person_count": 1082119,
+          "record_count": 480597,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1414908",
+          "title": "United States, Freedmen's Bureau Marriages, 1859-1873",
+          "date_range": "1859-1873",
+          "person_count": 40347,
+          "record_count": 20133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333694",
+          "title": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015",
+          "date_range": "1980-2015",
+          "person_count": 272579000,
+          "record_count": 28662107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2075263",
+          "title": "United States, Internal Revenue Assessment Lists, 1862-1874",
+          "date_range": "1862-1874",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "5000290",
+          "title": "United States, Residence Database, 1970-2024",
+          "date_range": "1970-2024",
+          "person_count": 413857770,
+          "record_count": 413857770,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000016",
+          "title": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+          "date_range": "1936-2007",
+          "person_count": 151308217,
+          "record_count": 63700462,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2513098",
+          "title": "United States, YMCA World War I Service Cards, 1917-1919",
+          "date_range": "1917-1919",
+          "person_count": 27354,
+          "record_count": 27352,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2000219",
+          "title": "United States, Census, 1940",
+          "date_range": "1940-1940",
+          "person_count": 134826560,
+          "record_count": 134826560,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4464515",
+          "title": "United States, Census, 1950",
+          "date_range": "1950-1950",
+          "person_count": 157892854,
+          "record_count": 157892854,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1339071",
+          "title": "United States, World War II Draft Registration Cards, 1942",
+          "date_range": "1942-1942",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1861144",
+          "title": "United States, World War II Draft Registration Cards, 1942",
+          "date_range": "1942-1942",
+          "person_count": 15714756,
+          "record_count": 12217993,
+          "availability": "name-searchable"
+        }
+      ],
+      "quirks": [
+        "No tool result places Kenneth Werner Quass's death in Marshall or anywhere else; this guide lists where a death record for Marshall would be held, not a confirmed place of death.",
+        "Marshall, Lyon County, Minnesota is a different place from Marshall County, Minnesota (a separate county). The survey's county-page sections came from Marshall County, Minnesota Genealogy; do not apply that county's records to Marshall in Lyon County.",
+        "The Lyon County Courthouse Clerk of District Court holds birth and death records from 1874 (per the Lyon County Genealogy wiki page), so the county series is the first place to search for a Marshall death.",
+        "The FamilySearch Minnesota death collections are statewide and are index-only or index-and-image; their entries give the county and do not by themselves establish a place of death.",
+        "The Lyon County cemetery volumes returned by the survey cover Custer, Amiret, Eidsvold, Coon Creek and Grandview townships, not the city of Marshall; do not treat them as Marshall cemetery records.",
+        "The Calvary Cemetery church-records microfilm (catalog koha:390369) is catalogued under Marshall, Minnesota; the survey did not confirm the denomination or parish that kept its register, so treat the parish affiliation as unconfirmed.",
+        "The Marshall city obituary volumes (1985) are name-indexed but not full-text searchable; they must be browsed by name once located in the index.",
+        "The survey returned no Marshall-specific death series for 1940-2024 beyond the statewide collections and the Lyon County courthouse series; a post-1955 Marshall death may need a direct request to the county or the state."
+      ],
+      "record_types": [
+        {
+          "type": "vital_record",
+          "level": "county",
+          "held_at": "Lyon County Courthouse, Clerk of District Court, 607 W Main St, Marshall MN 56258",
+          "summary": "The Clerk of District Court holds birth and death records from 1874 (per the Lyon County wiki page); the statewide Minnesota Death Index covers 1908-2002 and Minnesota Deaths 1887-2001 is index and images on FamilySearch; no death series for 1940-2024 is confirmed by this survey beyond the statewide collections.",
+          "source_url": "https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "1937234",
+            "3398461",
+            "2185953",
+            "2477957",
+            "1949334",
+            "1858352",
+            "1920099",
+            "1803974",
+            "1967743",
+            "1949335",
+            "1680832",
+            "2849252",
+            "1414908",
+            "1202535"
+          ]
+        },
+        {
+          "type": "vital_record",
+          "level": "state",
+          "held_at": "Minnesota Historical Society (free index); FamilySearch collections",
+          "summary": "Statewide indexes: Minnesota Death Index 1908-2002 (FamilySearch 1937234), Minnesota Deaths 1887-2001 (3398461), Minnesota Death Records and Certificates 1900-1955 (2477957), and the Minnesota Historical Society free Minnesota Death Certificates Index 1904-2001 at mnhs.org/search/people.",
+          "source_url": "https://www.familysearch.org/en/wiki/Minnesota_Vital_Records",
+          "access": "unknown"
+        },
+        {
+          "type": "probate",
+          "level": "county",
+          "held_at": "Lyon County Courthouse, Clerk of District Court, Marshall",
+          "summary": "Probate and court records from 1880 (per the Lyon County wiki page); look for wills (testate) and administrations (intestate) for the decedent; statewide Minnesota Will Records 1849-1985 is on FamilySearch (1607922). Whether a Marshall probate file exists is not confirmed by this survey.",
+          "source_url": "https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "1607922"
+          ]
+        },
+        {
+          "type": "land",
+          "level": "county",
+          "held_at": "Lyon County Recorder, Marshall",
+          "summary": "County Recorder has land records (per the Lyon County wiki page); not relevant to a death date unless a property transfer followed a death.",
+          "source_url": "https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "1762576",
+            "2030516",
+            "2019834",
+            "2074276"
+          ]
+        },
+        {
+          "type": "church",
+          "level": null,
+          "held_at": "Calvary Cemetery (Marshall, Minnesota) church records, held on microfilm at FamilySearch Library",
+          "summary": "Church records 1883-1990 for the Marshall Calvary Cemetery series; film notes list Deaths 1898-1925 and Calvary cemetery records ca. 1900-1990 (with owner, deceased, date and place of death); text in Latin and English; the parish and denomination that kept the church register are not confirmed by this survey.",
+          "source_url": "https://www.familysearch.org/en/wiki/Minnesota_Church_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1680827",
+            "2790243"
+          ]
+        },
+        {
+          "type": "military",
+          "level": "state",
+          "held_at": "FamilySearch (Minnesota, Veterans Grave Registration Reports, 1930-1975)",
+          "summary": "Veterans grave registration reports 1930-1975 (FamilySearch 4489446) for a veteran buried in Minnesota; applies only if the decedent was a veteran.",
+          "source_url": "https://www.familysearch.org/en/wiki/Minnesota_Vital_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "2239221",
+            "4122682",
+            "2421524",
+            "2759155",
+            "1471019",
+            "2513098",
+            "1339071",
+            "1861144"
+          ]
+        },
+        {
+          "type": "newspaper",
+          "level": null,
+          "held_at": "FamilySearch (Marshall volumes); Southwest Minnesota Historical Center and Prairieland Genealogical Society, Marshall",
+          "summary": "Six digitized Marshall volumes: obituary volumes (1985, four image groups) and obituary indexes (1873-1953); name-indexed but not full-text searchable. Catalog obituary files: Southwest Minnesota Historical Center obituary file index ca. 1873-1953 (catalog 408979), SW State University obituary files ca. 1985-1990 (409008), Prairieland Genealogical Society obituary file ca. 1960-2003 (1197876) and index card file ca. 1873-1961 (1197864); statewide obituaries 1865-2006 on FamilySearch (2469546). (held at: local)",
+          "source_url": "https://www.familysearch.org/en/wiki/Marshall_County,_Minnesota_Genealogy#Obituaries",
+          "access": "unknown",
+          "collection_ids": [
+            "2469546",
+            "4328761",
+            "2281907",
+            "4328756",
+            "4373186",
+            "2333694"
+          ]
+        },
+        {
+          "type": "cemetery",
+          "level": null,
+          "held_at": "FamilySearch Library (catalog koha:525977); Marshall Cemetery",
+          "summary": "Typescript alphabetized index of those reposing in Marshall Cemetery (compiled by Marvin Castle, about 1992; FamilySearch Library); the three numeric columns are unexplained. Calvary Cemetery records (see church row) also include burial and death data. No digitized Marshall burial register for 1940-2024 is confirmed by this survey. (held at: local)",
+          "source_url": "https://www.familysearch.org/en/wiki/Marshall_County,_Minnesota_Genealogy#Obituaries",
+          "access": "unknown",
+          "collection_ids": [
+            "1680831",
+            "4489446",
+            "3748255",
+            "3733110",
+            "3740257",
+            "3744865"
+          ]
+        },
+        {
+          "type": "census",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a census row bearing on a 1940-2024 death in Marshall.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1760963",
+            "1503054",
+            "1503053",
+            "1503044",
+            "1503031",
+            "1503056",
+            "1503055",
+            "1877095",
+            "2000219",
+            "4464515"
+          ]
+        },
+        {
+          "type": "tax",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a tax row for Marshall.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2075263"
+          ]
+        },
+        {
+          "type": "immigration",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm an immigration row for a death in Marshall; the statewide naturalization indexes it returned are external links, not death records.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2120721",
+            "2632486",
+            "2426329",
+            "2185932"
+          ]
+        },
+        {
+          "type": "court",
+          "level": "county",
+          "held_at": "Lyon County Courthouse, Clerk of District Court, Marshall",
+          "summary": "Court records from 1880 (per the Lyon County wiki page); the survey did not confirm a court record of a death.",
+          "source_url": "https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "other",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey returned no other record class for a death in Marshall; obituary and cemetery files are under their rows.",
+          "source_url": null,
+          "access": "unknown"
+        }
+      ],
+      "repositories": [
+        {
+          "name": "Lyon County Courthouse, Clerk of District Court, 607 W Main St, Marshall MN 56258",
+          "holds": "birth and death records from 1874, marriage records from 1872, divorce, probate and court records from 1880",
+          "access": null,
+          "url": "http://www.lyonco.org/"
+        },
+        {
+          "name": "Lyon County Recorder, Marshall",
+          "holds": "land records",
+          "access": null,
+          "url": "http://www.lyonco.org/"
+        },
+        {
+          "name": "Minnesota Historical Society",
+          "holds": "free Minnesota Death Certificates Index 1904-2001 (index; images at fee)",
+          "access": null,
+          "url": "http://www.mnhs.org/search/people"
+        },
+        {
+          "name": "Southwest Minnesota Historical Center, Southwest State University, Marshall",
+          "holds": "obituary file index ca. 1873-1953 and obituary files ca. 1985-1990",
+          "access": null,
+          "url": "https://www.familysearch.org/en/search/catalog/408979"
+        },
+        {
+          "name": "Prairieland Genealogical Society, Southwest State University, Marshall",
+          "holds": "obituary file ca. 1960-2003 and obituary index card file ca. 1873-1961",
+          "access": null,
+          "url": "https://www.familysearch.org/en/search/catalog/1197876"
+        },
+        {
+          "name": "FamilySearch Library",
+          "holds": "Marshall Cemetery alphabetized index (koha:525977) and Calvary Cemetery church records microfilm (koha:390369)",
+          "access": null,
+          "url": null
+        }
+      ],
+      "losses": [],
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Minnesota_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Minnesota_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Minnesota_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1940,
+        "end_year": 2024,
+        "total_volumes": 6,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Death",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Newspapers",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "catalog": [
+        {
+          "id": "koha:525977",
+          "title": "Cemetery records from the Marshall Cemetery, Marshall, Lyon County, Minnesota : an alphabetized index of those reposing in the Marshall Cemetery, Lyon County, Minnesota",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:390369",
+          "title": "Church records, 1883-1990",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "Online at FamilySearch Center",
+            "Online at Affiliate Library"
+          ],
+          "film_count": 5
+        },
+        {
+          "id": "koha:258273",
+          "title": "Church records, 1885-1956",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:699400",
+          "title": "Marshall, Minnesota, city directory : also included Lyon County taxpayers directory",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [],
+          "film_count": 0
+        },
+        {
+          "id": "koha:408979",
+          "title": "Obituary file index, ca. 1873-1953",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 6
+        },
+        {
+          "id": "koha:409008",
+          "title": "Obituary files, ca. 1985-1990",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 7
+        },
+        {
+          "id": "koha:635698",
+          "title": "The sounds of a developing prairie town : Marshall, Minnesota: 1872-1918/ MaryKay Broesder",
+          "place": "Marshall, Lyon, Minnesota, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        }
+      ],
+      "created": "2026-11-24",
+      "guide_markdown": "# Locality Guide: Marshall, Lyon, Minnesota, United States (1940-2024)\n\n## Jurisdiction overview\n- **Formed:** Lyon County organized March 9, 1875, from Redwood County (per the Lyon County wiki page); Marshall is its county seat (FamilySearch place dates from +1870).\n- **County seat / administrative center:** Marshall, Lyon County.\n- **Parent jurisdiction:** Minnesota, United States.\n- **Population during period:** The survey returned only statewide totals (Minnesota about 2.8 million in 1940 and 4.9 million in 2000); no Marshall or Lyon County figures were returned.\n- **Economy:** Not confirmed by this survey.\n- **Ethnic composition:** Not confirmed by this survey.\n- **Religious denominations:** Calvary Cemetery (Marshall) church records and a St. Paul's Icelandic Lutheran Church series (Minneota) appear in the catalog; the Marshall congregations are not otherwise confirmed.\n- **Key historical events:** Not confirmed by this survey.\n- **Coverage of this survey:** Marshall has 6 digitized volumes, all listed (total 6, complete); Lyon County as a whole has 82 volumes, of which the survey listed the first page only.\n\n## Boundary changes\n- Lyon County was organized March 9, 1875, out of Redwood County (per the Lyon County wiki page). The survey returned no later boundary change for Lyon County or for Marshall.\n- Marshall, Lyon County is not Marshall County, Minnesota; the two are separate places.\n- The survey did not confirm any boundary change affecting the Marshall records themselves.\n\n## Research tips\n- **Search order:** Start with the Lyon County Clerk of District Court, which holds birth and death records from 1874 (per [Lyon County, Minnesota Genealogy](https://www.familysearch.org/en/wiki/Lyon_County,_Minnesota_Genealogy)), then the statewide FamilySearch indexes: Minnesota Death Index 1908-2002 (collection 1937234), Minnesota Deaths 1887-2001 (3398461), and Minnesota Death Records and Certificates 1900-1955 (2477957). Then check the Marshall obituaries: the 1985 volumes and obituary indexes 1873-1953 on FamilySearch, which are name-indexed but not full-text searchable. Browse-only or offline sources come last.\n- Minnesota's statewide death indexes are free to search on FamilySearch, but index entries do not themselves establish a place of death; confirm the death place from the certificate or an obituary.\n- **Obituaries:** The Minnesota Obituaries 1865-2006 collection (2469546) is on FamilySearch; the Southwest Minnesota Historical Center obituary file index (catalog 408979), Southwest State University obituary files (409008), and Prairieland Genealogical Society obituary files (1197876) and index cards (1197864) are offline, catalogued for Marshall, Minnesota ([Marshall County, Minnesota Genealogy, Obituaries](https://www.familysearch.org/en/wiki/Marshall_County,_Minnesota_Genealogy#Obituaries)). Note this wiki page is for Marshall County; the catalog entries name Marshall, Minnesota in Lyon County.\n- **Cemetery:** The Marshall Cemetery alphabetized index (catalog koha:525977, FamilySearch Library) is a typescript, about 1992; its three numeric columns are unexplained. The Calvary Cemetery records microfilm (catalog koha:390369) includes death entries 1898-1925 and cemetery records ca. 1900-1990; it is at the FamilySearch Library, Granite Mountain Record Vault (storage), and online at FamilySearch Centers and affiliate libraries.\n- **Church records:** Minnesota church records are incomplete online ([Minnesota Church Records](https://www.familysearch.org/en/wiki/Minnesota_Church_Records)); the parish or denomination for Calvary is unconfirmed.\n- **Alternative sources:** Veterans Grave Registration Reports 1930-1975 (4489446) apply only if the decedent was a veteran. Minnesota Will Records 1849-1985 (1607922) may hold a probate file.\n- **Finding aids:** Lyon County Courthouse, 607 W Main St, Marshall MN 56258, phone 507-537-6734, with the county website at http://www.lyonco.org/. A negative online result is not absence: the record may be undigitized, unindexed, or held only at the courthouse."
+    },
+    {
+      "id": "loc_002",
+      "place": "Texas, United States",
+      "for_place": "Texas, United States (state-level death records)",
+      "time_period": "1962-2024",
+      "jurisdictions": [
+        {
+          "name": "Texas, United States",
+          "date_range": "+1845/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1983324",
+          "title": "Texas, Deaths, 1890-1977",
+          "date_range": "1890-1977",
+          "person_count": 12507763,
+          "record_count": 4539443,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681049",
+          "title": "Texas, Deaths and Burials, 1903-1973",
+          "date_range": "1903-1973",
+          "person_count": 584602,
+          "record_count": 241388,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949337",
+          "title": "Texas, Death Index, 1903-2000",
+          "date_range": "1903-2000",
+          "person_count": 7255794,
+          "record_count": 7255830,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1375599",
+          "title": "Texas, Death Index, 1964-1998",
+          "date_range": "1964-1998",
+          "person_count": 4113934,
+          "record_count": 4113934,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930157",
+          "title": "Texas, Deaths, 1977-1986",
+          "date_range": "1977-1986",
+          "person_count": 308503,
+          "record_count": 108598,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1828544",
+          "title": "Texas, Bexar County, San Antonio Cemetery Records, 1893-2007",
+          "date_range": "1893-2007",
+          "person_count": 59252,
+          "record_count": 59251,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803956",
+          "title": "Texas, Birth Certificates, 1903-1936",
+          "date_range": "1903-1936",
+          "person_count": 6612281,
+          "record_count": 2280173,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949342",
+          "title": "Texas, Birth Index, 1903-1997",
+          "date_range": "1903-1997",
+          "person_count": 47587776,
+          "record_count": 17102106,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681015",
+          "title": "Texas, Births and Christenings, 1840-1981",
+          "date_range": "1840-1981",
+          "person_count": 3953531,
+          "record_count": 1339376,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2534480",
+          "title": "Texas, Church Marriages, 1839-1982",
+          "date_range": "1839-1982",
+          "person_count": 138,
+          "record_count": 69,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2534484",
+          "title": "Texas, Church Records, 1845-1957",
+          "date_range": "1845-1957",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2790180",
+          "title": "Texas, Church Records, 1852-1994",
+          "date_range": "1852-1994",
+          "person_count": 14134,
+          "record_count": 6107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932381",
+          "title": "Texas, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 956501,
+          "record_count": 956501,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932425",
+          "title": "Texas, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 33955,
+          "record_count": 33955,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930271",
+          "title": "Texas, Coleman County Records, 1849-2008",
+          "date_range": "1849-2008",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1831470",
+          "title": "Texas, Comanche County Records, 1858-1955",
+          "date_range": "1858-1955",
+          "person_count": 125654,
+          "record_count": 48522,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930272",
+          "title": "Texas, Concho County Records, 1849-2008",
+          "date_range": "1849-2008",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "3736261",
+          "title": "Texas, Confederate Army and Commanding Officer Card Index, ca.1861-ca.1865",
+          "date_range": "1860-1866",
+          "person_count": 83002,
+          "record_count": 83001,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2691683",
+          "title": "Texas, Cooke County, Birth Records 1873-1876",
+          "date_range": "1873-1876",
+          "person_count": 486,
+          "record_count": 162,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2804974",
+          "title": "Texas, Cooke County, Deeds, 1895-1924",
+          "date_range": "1895-1924",
+          "person_count": 67856,
+          "record_count": 32795,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2804902",
+          "title": "Texas, Cooke County, Probate Records, 1849-1982",
+          "date_range": "1849-1982",
+          "person_count": 4854,
+          "record_count": 4854,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803987",
+          "title": "Texas, County Marriage Index, 1837-1977",
+          "date_range": "1837-1977",
+          "person_count": 3170766,
+          "record_count": 1579466,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803985",
+          "title": "Texas, County Marriage Records, 1837-2010",
+          "date_range": "1837-2010",
+          "person_count": 4319782,
+          "record_count": 2149016,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1827575",
+          "title": "Texas, County Tax Rolls, 1837-1910",
+          "date_range": "1837-1910",
+          "person_count": 4575346,
+          "record_count": 4575333,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3656813",
+          "title": "Texas, Dallas County, Oakland Cemetery Interment Cards, 1891-1999",
+          "date_range": "1891-1999",
+          "person_count": 87779,
+          "record_count": 79888,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2038378",
+          "title": "Texas, Divorce Index, 1968-2010",
+          "date_range": "1968-2010",
+          "person_count": 7198522,
+          "record_count": 3599261,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1911179",
+          "title": "Texas, Eastland County Records, 1868-1949",
+          "date_range": "1868-1949",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1989155",
+          "title": "Texas, Freedmen's Bureau Field Office Records, 1865-1870",
+          "date_range": "1865-1870",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "3023822",
+          "title": "Texas, Gonzales County, Birth Records, 1878-1945",
+          "date_range": "1878-1945",
+          "person_count": 215511,
+          "record_count": 55105,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2761118",
+          "title": "Texas, Gonzales County, Death records, 1863-1985",
+          "date_range": "1863-1985",
+          "person_count": 98218,
+          "record_count": 36321,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3029257",
+          "title": "Texas, Gonzales County, Divorce Records, 1911-1958",
+          "date_range": "1911-1958",
+          "person_count": 3868,
+          "record_count": 1934,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3019663",
+          "title": "Texas, Gonzales County, School Records, 1910-1970",
+          "date_range": "1910-1970",
+          "person_count": 453948,
+          "record_count": 453948,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1918470",
+          "title": "Texas, Gonzalez de la Garza Genealogy Collection",
+          "date_range": "1892-2010",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "4129993",
+          "title": "Texas, Grimes County, Deed Records, 1869-1917",
+          "date_range": "1869-1917",
+          "person_count": 28592,
+          "record_count": 14873,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3518927",
+          "title": "Texas, Grimes County, Marriage Records, 1916-1971",
+          "date_range": "1916-1971",
+          "person_count": 23294,
+          "record_count": 6237,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3661039",
+          "title": "Texas, Grimes County, Probate Records of Births, 1939-1957",
+          "date_range": "1870-1957",
+          "person_count": 30228,
+          "record_count": 10138,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502088",
+          "title": "Texas, Hardin County Clerk, Death Records, 1908-1948",
+          "date_range": "1908-1948",
+          "person_count": 11210,
+          "record_count": 4017,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502091",
+          "title": "Texas, Hardin County, Deed Records, 1840-1920",
+          "date_range": "1840-1920",
+          "person_count": 70182,
+          "record_count": 37487,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502089",
+          "title": "Texas, Hardin County, Marriage Records, 1837-2009",
+          "date_range": "1837-2009",
+          "person_count": 113378,
+          "record_count": 56689,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502087",
+          "title": "Texas, Hardin County, Registers of Births, 1882-1939",
+          "date_range": "1882-1939",
+          "person_count": 18140,
+          "record_count": 6107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3460988",
+          "title": "Texas, Harrison County Delayed Birth Records, 1860-1960",
+          "date_range": "1860-1960",
+          "person_count": 18754,
+          "record_count": 6319,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2526188",
+          "title": "Texas, Manifests of Permanent and Statistical Alien Arrivals at El Paso, 1924-1954",
+          "date_range": "1924-1954",
+          "person_count": 81013,
+          "record_count": 81002,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681052",
+          "title": "Texas, Marriages, 1837-1973",
+          "date_range": "1837-1973",
+          "person_count": 2396528,
+          "record_count": 1155237,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2031191",
+          "title": "Texas, Marriages, 1966-2010",
+          "date_range": "1966-2010",
+          "person_count": 15212254,
+          "record_count": 7606127,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1390096",
+          "title": "Texas, Matagorda County, School Census Records, 1923-1946",
+          "date_range": "1923-1946",
+          "person_count": 114526,
+          "record_count": 114526,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3734716",
+          "title": "Texas, Military Discharge Records, 1916-1990",
+          "date_range": "1916-1990",
+          "person_count": 43215,
+          "record_count": 43059,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1837923",
+          "title": "Texas, Mills County Clerk Records, 1841-1985",
+          "date_range": "1841-1985",
+          "person_count": 17658,
+          "record_count": 8828,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1389983",
+          "title": "Texas, Naturalization Records, 1906-1989",
+          "date_range": "1906-1989",
+          "person_count": 85638,
+          "record_count": 85937,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1425534",
+          "title": "Texas, Nolan County, Civil Court Minutes and Case Files, 1881-1938",
+          "date_range": "1881-1938",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2141045",
+          "title": "Texas, Passenger and Crew List of Airplanes, 1931-1964",
+          "date_range": "1931-1964",
+          "person_count": 374857,
+          "record_count": 374851,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3348478",
+          "title": "Texas, Passenger and Crew Lists Arriving at Various Ports, 1896-1951",
+          "date_range": "1896-1951",
+          "person_count": 196101,
+          "record_count": 196075,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3160706",
+          "title": "Texas, Passenger and Crew Lists of Vessels Arriving at Corpus Christi, Texas, and Vicinity, June 1948-January 1959",
+          "date_range": "1948-1959",
+          "person_count": 80009,
+          "record_count": 80009,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2016287",
+          "title": "Texas, Probate Records, 1800-1990",
+          "date_range": "1800-1990",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2103490",
+          "title": "Texas, Swisher County Records, 1879-2012",
+          "date_range": "1879-2012",
+          "person_count": 29340,
+          "record_count": 11410,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3163398",
+          "title": "Texas, Voter Records, 1867-1918",
+          "date_range": "1867-1918",
+          "person_count": 163551,
+          "record_count": 158565,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3748251",
+          "title": "Texas, Washington County, Birth Records, 1903-1991",
+          "date_range": "1901-1991",
+          "person_count": 51038,
+          "record_count": 17807,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3158845",
+          "title": "Texas, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 72846,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2202707",
+          "title": "Texas, World War I Records, 1917-1920",
+          "date_range": "1917-1920",
+          "person_count": 217025,
+          "record_count": 209675,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2729394",
+          "title": "Texas, World War II Draft Registration Cards, 1940-1947",
+          "date_range": "1940-1947",
+          "person_count": 3576567,
+          "record_count": 1794395,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2026973",
+          "title": "BillionGraves Index",
+          "date_range": "1750-2013",
+          "person_count": 31966496,
+          "record_count": 31122746,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333694",
+          "title": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015",
+          "date_range": "1980-2015",
+          "person_count": 272579000,
+          "record_count": 28662107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000016",
+          "title": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+          "date_range": "1936-2007",
+          "person_count": 151308217,
+          "record_count": 63700462,
+          "availability": "name-searchable"
+        }
+      ],
+      "quirks": [
+        "Survey gap: the FamilySearch volumes lookup for Texas timed out on both attempts, so this guide lists no digitized volume counts for Texas; the Catalog and collection lists are reported as returned.",
+        "FamilySearch Wiki question lookup timed out on both attempts; the wiki sections for this question were not read. Re-run locality-guide before relying on their absence.",
+        "Statewide registration start date conflicts within the Wiki: the Texas Vital Records page states statewide registration of births and deaths began in 1903 with the formation of the Texas Department of Public Health (https://www.familysearch.org/en/wiki/Texas_Vital_Records); the Texas Research Tips page states statewide registration began in 1908 and was generally complied with by the 1930s (https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies). Both are reported; the 1903 date is the one on the vital-records page.",
+        "Local registration: the Texas Research Tips page states that as early as 1873 some cities and towns authorized registration of births and deaths; it does not name the towns, so a death in a city or town must be checked against that place's own local series.",
+        "Period gap: the Texas Death Index 1964-1998 collection begins in 1964, so deaths in 1962-1963 are not covered by the name index in this survey; the Texas Deaths 1977-1986 and 1890-1977 image collections were the only listed death image sets overlapping the period, and no death collection listed here covers 1999-2024.",
+        "The Texas Deaths 1890-1977 collection is titled by its catalog range; the Texas Vital Records page gives the FamilySearch death image collection as 1890-1976. Use the collection's own title and years when citing it.",
+        "Death-certificate images for 1903-1982 are offered by Ancestry on a subscription basis (Texas Online Genealogy Records page, https://www.familysearch.org/en/wiki/Texas_Online_Genealogy_Records); the FamilySearch death collections above are index-and-image or index-only as their rows state.",
+        "Cross-border: the survey returned no neighboring-county list for Texas; search adjoining states only where the death place is near a border."
+      ],
+      "registration_start": [
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1903,
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "town",
+          "year": 1873,
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies"
+        }
+      ],
+      "record_types": [
+        {
+          "type": "vital_record",
+          "level": "state",
+          "held_at": "Texas Department of State Health Services, Bureau of Vital Statistics (formerly Texas Department of Health), 1100 West 49th Street, Austin, TX 78756-3191",
+          "summary": "Statewide death registration from 1903 per the Vital Records page (1908 per the Research Tips page). FamilySearch has Texas Deaths, 1977-1986 (index and images) and Texas Death Index, 1964-1998 (index only) covering this period; Texas Death Index, 1903-2000 (index only) overlaps it too. For copies not found online, the Wiki directs requesters to the Bureau of Vital Statistics, and order copies are sold by the state.",
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Vital_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1983324",
+            "1949337",
+            "1375599",
+            "1930157",
+            "1803956",
+            "1949342",
+            "2691683",
+            "1803987",
+            "1803985",
+            "2038378",
+            "3023822",
+            "2761118",
+            "3029257",
+            "3518927",
+            "3502088",
+            "3502089",
+            "3502087",
+            "3460988",
+            "1681052",
+            "2031191",
+            "3748251",
+            "1202535"
+          ]
+        },
+        {
+          "type": "census",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a census row for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1390096"
+          ]
+        },
+        {
+          "type": "probate",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey returned Texas, Wills and Deeds, ca. 1700s-2017 (FamilySearch collection 3158845) but did not confirm a probate series for deaths in 1962-2024 at state level.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2804902",
+            "3661039",
+            "2016287",
+            "3158845"
+          ]
+        },
+        {
+          "type": "land",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a land row for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2804974",
+            "4129993",
+            "3502091"
+          ]
+        },
+        {
+          "type": "church",
+          "level": null,
+          "held_at": null,
+          "summary": "Texas, Church Records, 1852-1994 (FamilySearch collection 2790180) is listed as index and images, very incomplete; the Wiki warns that online databases are incomplete. Denominations and language were not confirmed by this survey.",
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Church_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1681015",
+            "2534480",
+            "2534484",
+            "2790180"
+          ]
+        },
+        {
+          "type": "military",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a military row for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1932381",
+            "1932425",
+            "3736261",
+            "3734716",
+            "2202707",
+            "2729394"
+          ]
+        },
+        {
+          "type": "newspaper",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a newspaper row; the Wiki Research Tips page points to Texas Newspapers and Texas Obituaries pages, which were not read.",
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies",
+          "access": "unknown",
+          "collection_ids": [
+            "2333694"
+          ]
+        },
+        {
+          "type": "cemetery",
+          "level": "county",
+          "held_at": null,
+          "summary": "FamilySearch has Texas, Dallas County, Oakland Cemetery Interment Cards, 1891-1999 and Texas, Harris, Houston, Historic Hollywood Cemetery Records, 1895-2008 (county-level, not statewide). No statewide cemetery series was confirmed.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1681049",
+            "1828544",
+            "3656813"
+          ]
+        },
+        {
+          "type": "tax",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a tax row for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1827575"
+          ]
+        },
+        {
+          "type": "immigration",
+          "level": null,
+          "held_at": null,
+          "summary": "Ancestry's Texas Arriving and Departing Passenger and Crew Lists, 1893-1963 is listed; it ends before the target period and does not cover deaths.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1389983",
+            "2141045",
+            "3348478",
+            "3160706"
+          ]
+        },
+        {
+          "type": "court",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a court row for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1425534"
+          ]
+        },
+        {
+          "type": "other",
+          "level": null,
+          "held_at": null,
+          "summary": "Texas, Death Index, 1903-2000 and Texas, Death Index, 1964-1998 are index-only FamilySearch collections; the Texas Death Index 1964-1998 is the state index to read first for deaths after 1964. Obituary and substitute sources were not read.",
+          "source_url": "https://www.familysearch.org/en/wiki/Texas_Online_Genealogy_Records",
+          "access": "unknown"
+        }
+      ],
+      "repositories": [
+        {
+          "name": "Texas Department of State Health Services, Bureau of Vital Statistics",
+          "holds": "Texas death certificates from statewide registration (copies ordered from the state)",
+          "access": "paid (certificate orders are marked as paid on the Wiki page)",
+          "url": "http://www.dshs.state.tx.us/vs/default.shtm"
+        },
+        {
+          "name": "FamilySearch",
+          "holds": "Texas Deaths, 1890-1977; Texas Deaths and Burials, 1903-1973; Texas Death Index, 1903-2000; Texas Death Index, 1964-1998; Texas Deaths, 1977-1986",
+          "access": "free",
+          "url": "https://www.familysearch.org/search/collection/1983324"
+        }
+      ],
+      "losses": [],
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Texas,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Texas_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Texas_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "catalog": [
+        {
+          "id": "koha:1399490",
+          "title": "Hope has a name - Texas : the emigration to America from villages Bordovice and Lichnov during 1860-1914/ Josef \u0160im\u00ed\u010dek",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:166689",
+          "title": "\"In the shade of Los Ebanos\" : a survey of Ebony Grove cemetery and Immanuel Lutheran Cemetery, Mercedes, Texas/ compiled by Frances Richmond Cooper and Colleen Dodson Ferguson",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:568416",
+          "title": "100 Moore years : a history of Moore County, Texas.",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Las Vegas Nevada FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:419073",
+          "title": "100 Women of the Rio Grande Valley of Texas/ The Rio writers",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:2392389",
+          "title": "100 years in Bandera, 1853-1953 : a story of sturdy pioneers, their struggles and hardship, and their heroic achievements",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:204483",
+          "title": "100 years in Montague County, Texas/ edited by Jeff S. Henderson",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:208343",
+          "title": "100 years of progress, panorama of the past, Parker County, Texas, 1856-1956 : presented at Weatherford, Texas, May 10-11-12, 1956",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:187432",
+          "title": "100 years, Alto Methodist Church, 1852-1952",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:2228003",
+          "title": "1001 Texas place names/ by Fred Tarpley ; sketches by Sally Blakemore",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:488288",
+          "title": "1001 Texas place names/ by Fred Tarpley ; sketches by Sally Blakemore",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:760780",
+          "title": "112 Years in Little Elm community/ by Mrs. J. M. Harris",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4579754",
+          "title": "112 years in Little Elm community/ organized by Mrs. J.M. Harris from material given by pioneer residents and their descendants ; business managers: Mrs. R.M. Mitchell, Mrs. Annie Young Hughey, Mrs. H.M. Branch.",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1285193",
+          "title": "125 years in the heart of the city : First United Methodist Church, Grand Prairie, Texas 1880-2005",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1409521",
+          "title": "125 years of God's grace 1873-1998, Holy Cross Lutheran Church, Warda, Texas : 1873-1998 Holy Cross Lutheran Church, Warda, Texas = 125 Jahre mit Gottes Gnade : Evangelical Lutheran Kreuz-Gemeinde U.A.C., Warda, Texas",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:617494",
+          "title": "135 years of history, 1856-1991 : London Baptist Church, New London, Texas/ by Frances H. Jones",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:587461",
+          "title": "150 years of cemetery records in Milam County, Texas/ by Perry C. Holder ; editors, Norinne Holder Holman, Charles V. Powell",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:627960",
+          "title": "1692 population census of El Paso/ compiled by J. Richard Salazar",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1236442",
+          "title": "170 years of cemetery records in Milam County, Texas/ by Norinne Holder Holman",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2713584",
+          "title": "1790 census of the civilians of San Antonio Texas/ translated by John Ogden Leal, modified by Steve Gibson",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:27578",
+          "title": "1830 citizens of Texas/ Gifford White",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "HSB (Headquarters Storage Building)"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:164080",
+          "title": "1835 Sabine District, Texas, census/ Mrs. Helen Gomer Schluter",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:182196",
+          "title": "1835, San Augustine District, Texas : an edited census with 1837-1839-1840-1842-1844-1846-1848 San Augustine County tax rolls and 1826 muster roll, Ayish Bayou District/ by McXie Whitton Martin",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:190198",
+          "title": "The 1840 census of the Republic of Texas/ edited by Gifford White ; foreward by James M. Day",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Oakland California FamilySearch Library",
+            "HSB (Headquarters Storage Building)",
+            "Monterey California Family History Center",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2623858",
+          "title": "1840 citizens of Texas/ by Gifford White",
+          "place": "Texas, United States",
+          "repository_calls": [],
+          "film_count": null
+        },
+        {
+          "id": "koha:199515",
+          "title": "1840 citizens of Texas/ by Gifford White",
+          "place": "Texas, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "HSB (Headquarters Storage Building)",
+            "Orange County California FamilySearch Library"
+          ],
+          "film_count": null
+        }
+      ],
+      "created": "2026-11-24",
+      "guide_markdown": "# Locality Guide: Texas, United States (state-level death records) (1962-2024)\n\n## Jurisdiction overview\n- **Formed:** Texas was admitted to the Union on 29 December 1845 as the 28th state, created from the Republic of Texas (https://www.familysearch.org/en/wiki/Texas,_United_States_Genealogy)\n- **County seat / administrative center:** Austin (state capital; same source)\n- **Parent jurisdiction:** United States\n- **Population during period:** United States figures only were returned by the survey (345,426,571 in 2024; 186,724,272 in 1962); no Texas-only population figure was returned\n- **Economy:** not confirmed by this survey\n- **Ethnic composition:** not confirmed by this survey\n- **Religious denominations:** not confirmed by this survey beyond the Texas Church Records page\n- **Key historical events:** not confirmed by this survey\n- **Coverage of this survey:** The volumes lookup timed out on both attempts, so no digitized-volume counts are reported. The Catalog returned 10,070 hits for Texas, most of them local histories and family histories rather than death series; no Texas death-register catalog entry was read in this survey.\n\n## Boundary changes\n- Texas's boundaries were not reported as changed during 1962-2024 by any tool result in this survey; the state was admitted in 1845 and is the same jurisdiction for the whole period.\n- Statewide death registration is the relevant administrative change: the Texas Vital Records page states it began in 1903 with the formation of the Texas Department of Public Health (https://www.familysearch.org/en/wiki/Texas_Vital_Records). The Texas Research Tips page gives 1908 for statewide registration (https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies). The two Wiki pages disagree; both are reported.\n- Before statewide registration, some cities and towns authorized local registration as early as 1873, per the Research Tips page. Those town series are not named by this survey.\n\n## Research tips\n- **Search order:** Start with FamilySearch's Texas Death Index, 1964-1998 (collection 1375599; index only, free), since it is the only listed index that covers the period from 1964. Then search Texas Deaths, 1977-1986 (collection 1930157; index and images, free), and Texas Death Index, 1903-2000 (collection 1949337; index only, free) to cover the whole period. Texas Deaths, 1890-1977 (collection 1983324) and Texas Deaths and Burials, 1903-1973 (collection 1681049) overlap the early years of the period and are free on FamilySearch.\n- **Gap at the start of the period:** the name indexes begin in 1964 and the image collections end in 1977 or 1986. Deaths in 1962-1963 are not covered by the listed index; check the image collection 1983324 and then the Bureau of Vital Statistics.\n- **Gap after 1986 for images:** the survey listed no FamilySearch death image collection covering 1987-2024. For deaths after 1998 the survey returned only the 1903-2000 index and Ancestry's subscription collections; for an image, order the certificate from the state (http://www.dshs.state.tx.us/vs/default.shtm), which the Texas Vital Records page directs requesters to (https://www.familysearch.org/en/wiki/Texas_Vital_Records).\n- **Jurisdiction-specific advice:** The Texas Research Tips page notes that death records from 1903 onward asked for the deceased's birth and parent information, though accuracy depended on relatives' memory (https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies).\n- **Naming conventions:** The United States Naming Customs page returned only links to abbreviation and name-variation guides, so no Texas-specific naming practice was confirmed (https://www.familysearch.org/en/wiki/United_States_Naming_Customs).\n- **Alternative sources when primary records are missing:** obituaries, church records (incomplete; Texas, Church Records, 1852-1994, collection 2790180), cemetery interment cards for Dallas County (collection 3656813) and Harris County Hollywood Cemetery records (collection 2040173). Cite the county-level cemetery sets only for their named counties.\n- **Finding aids:** the Texas Record Finder and the Guided Research page for Texas births, marriages and deaths are named on the Texas Research Tips page (https://www.familysearch.org/en/wiki/Texas_Research_Tips_and_Strategies).\n- **Place-of-death check:** The survey cannot confirm the county or city of death for the uploaded Texas death certificate capture. Its place must be read from the capture itself before any county series is searched."
+    },
+    {
+      "id": "loc_003",
+      "place": "Los Angeles, California, United States",
+      "for_place": "Los Angeles County, California",
+      "time_period": "1962-2024",
+      "jurisdictions": [
+        {
+          "name": "Los Angeles, California, United States",
+          "date_range": "+1850/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2015582",
+          "title": "California, Death Index, 1940-1997",
+          "date_range": "1940-1997",
+          "person_count": 19084669,
+          "record_count": 9366541,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3518938",
+          "title": "California, Deaths and Burials, 1776-2000",
+          "date_range": "1776-2000",
+          "person_count": 1485266,
+          "record_count": 585672,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2001287",
+          "title": "California, County Birth and Death Records, 1800-1994",
+          "date_range": "1800-1994",
+          "person_count": 12575865,
+          "record_count": 6431812,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3583819",
+          "title": "California, Los Angeles, Angelus-Rosedale Cemetery/Crematory Records, 1884-2002",
+          "date_range": "1884-2002",
+          "person_count": 393700,
+          "record_count": 372033,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2125028",
+          "title": "California County Naturalizations, 1831-1985",
+          "date_range": "1831-1985",
+          "person_count": 594407,
+          "record_count": 509128,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2427229",
+          "title": "California, Airplane Passenger Lists from Honolulu, Hawaii, 1947-1948",
+          "date_range": "1947-1948",
+          "person_count": 31256,
+          "record_count": 31256,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2001879",
+          "title": "California, Birth Index, 1905-1995",
+          "date_range": "1905-1995",
+          "person_count": 49149073,
+          "record_count": 24589357,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674703",
+          "title": "California, Births and Christenings, 1812-1988",
+          "date_range": "1812-1988",
+          "person_count": 563877,
+          "record_count": 195340,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1985807",
+          "title": "California, Cemetery Transcriptions, 1850-1960",
+          "date_range": "1850-1960",
+          "person_count": 105241,
+          "record_count": 105227,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2790461",
+          "title": "California, Church Records, 1864-1985",
+          "date_range": "1864-1985",
+          "person_count": 11517,
+          "record_count": 1926,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1385527",
+          "title": "California, Collections of the California Genealogical Society, 1700-1942",
+          "date_range": "1700-1942",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1804002",
+          "title": "California, County Marriages, 1849-1957",
+          "date_range": "1849-1957",
+          "person_count": 9281707,
+          "record_count": 1957921,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3477658",
+          "title": "California, Customs Passenger Lists of Vessels Arriving at San Francisco, 1903-1918",
+          "date_range": "1903-1918",
+          "person_count": 346900,
+          "record_count": 346894,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932433",
+          "title": "California, Death Index, 1905-1939",
+          "date_range": "1905-1939",
+          "person_count": 2086653,
+          "record_count": 2086638,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2015584",
+          "title": "California, Divorce Index, 1966-1984",
+          "date_range": "1966-1984",
+          "person_count": 7037598,
+          "record_count": 3518798,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3029259",
+          "title": "California, Geographical and Name Index of Californians who served in WWI, 1914-1918",
+          "date_range": "1914-1918",
+          "person_count": 27306,
+          "record_count": 27306,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1935764",
+          "title": "California, Great Registers, 1848-1921",
+          "date_range": "1848-1921",
+          "person_count": 3338908,
+          "record_count": 3334121,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3029261",
+          "title": "California, Honor Roll of Californians who served in WWI, 1914-1918",
+          "date_range": "1914-1918",
+          "person_count": 22952,
+          "record_count": 9280,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2427230",
+          "title": "California, Immigration Registers of Japanese, Filipinos, and Hawaiians at San Francisco, 1928-1942",
+          "date_range": "1928-1942",
+          "person_count": 6994,
+          "record_count": 6994,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3241369",
+          "title": "California, Lassen County, State Board of Health, Burial Permits, 1931-1988",
+          "date_range": "1931-1988",
+          "person_count": 18146,
+          "record_count": 8961,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3235392",
+          "title": "California, Los Angeles County, North Hollywood, Pierce Brothers Memorial Park Cemetery, Memorial Tablets, 1943-1983",
+          "date_range": "1943-1983",
+          "person_count": 52725,
+          "record_count": 52723,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3259479",
+          "title": "California, Los Angeles, Evergreen Memorial Park Cemetery, Deceased Card File Index, 1877-1989",
+          "date_range": "1877-1989",
+          "person_count": 89443,
+          "record_count": 89433,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1916084",
+          "title": "California, Los Angeles, Passenger Lists, 1907-1948",
+          "date_range": "1907-1948",
+          "person_count": 633908,
+          "record_count": 633878,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3694058",
+          "title": "California, Los Angeles, San Gabriel Cemetery Association, Cemetery Index 1872-2003",
+          "date_range": "1872-2003",
+          "person_count": 22623,
+          "record_count": 22622,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949339",
+          "title": "California, Marriage Index, 1960-1985",
+          "date_range": "1960-1985",
+          "person_count": 9758404,
+          "record_count": 4879198,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674735",
+          "title": "California, Marriages, 1850-1945",
+          "date_range": "1850-1945",
+          "person_count": 1879181,
+          "record_count": 536518,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3259465",
+          "title": "California, Mendocino County, Ukiah, Russian River Cemetery District, Index to Burials, 1850-1990",
+          "date_range": "1850-1990",
+          "person_count": 12389,
+          "record_count": 11094,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4110911",
+          "title": "California, Military Discharges, 1856-1965",
+          "date_range": "1856-1965",
+          "person_count": 4349,
+          "record_count": 4338,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000183",
+          "title": "California, Naturalization Records, 1883-1991",
+          "date_range": "1883-1991",
+          "person_count": 1017466,
+          "record_count": 769308,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1849982",
+          "title": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+          "date_range": "1852-1989",
+          "person_count": 1743434,
+          "record_count": 1391725,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3477653",
+          "title": "California, Passenger and Crew Lists at Various Ports, 1907-1957",
+          "date_range": "1907-1957",
+          "person_count": 394736,
+          "record_count": 383373,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2137266",
+          "title": "California, Pioneer Migration Index, Compiled 1906-1935",
+          "date_range": "1906-1935",
+          "person_count": 22628,
+          "record_count": 6659,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1999181",
+          "title": "California, Probate Estate Files, 1833-1991",
+          "date_range": "1833-1991",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "3477655",
+          "title": "California, San Francisco Chinese passenger lists, 1882-1947",
+          "date_range": "1882-1947",
+          "person_count": 407807,
+          "record_count": 407807,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1402856",
+          "title": "California, San Francisco County Records, 1824-1997",
+          "date_range": "1824-1997",
+          "person_count": 3584318,
+          "record_count": 1607150,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1878749",
+          "title": "California, San Mateo County Records, 1851-1991",
+          "date_range": "1851-1991",
+          "person_count": 41594,
+          "record_count": 14144,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1922526",
+          "title": "California, San Mateo County, Colma, Italian Cemetery Records, 1899-2011",
+          "date_range": "1899-2011",
+          "person_count": 87726,
+          "record_count": 87716,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3161103",
+          "title": "California, Santa Clara County, San Jose, Oak Hill Cemetery Headstone Inscriptions, 1838-1985",
+          "date_range": "1838-1985",
+          "person_count": 70873,
+          "record_count": 62469,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3245343",
+          "title": "California, Solano County Genealogical Society, Burial Records",
+          "date_range": "1860-1900",
+          "person_count": 56801,
+          "record_count": 50547,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3583823",
+          "title": "California, Sonoma County, Sebastopol, Evergreen Lawn Cemetery Burial Records, 1800-2010",
+          "date_range": "1800-2010",
+          "person_count": 16621,
+          "record_count": 14963,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1849628",
+          "title": "California, Southern District Court (Central) Naturalization Index, 1915-1976",
+          "date_range": "1915-1976",
+          "person_count": 562928,
+          "record_count": 562928,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1771089",
+          "title": "California, State Census, 1852",
+          "date_range": "1852-1852",
+          "person_count": 188578,
+          "record_count": 188578,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3241370",
+          "title": "California, Tulare County, Visalia Cemetery Records, 1875-1990",
+          "date_range": "1875-1990",
+          "person_count": 55598,
+          "record_count": 55596,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3158865",
+          "title": "California, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 69729,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2786603",
+          "title": "California, World War II Draft Registration Cards, 1940-1947",
+          "date_range": "1940-1947",
+          "person_count": 4134464,
+          "record_count": 2081599,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2026973",
+          "title": "BillionGraves Index",
+          "date_range": "1750-2013",
+          "person_count": 31966496,
+          "record_count": 31122746,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2074276",
+          "title": "United States, Bureau of Land Management Tract Books, 1800-c. 1955",
+          "date_range": "1799-1956",
+          "person_count": 7493425,
+          "record_count": 7213160,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333694",
+          "title": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015",
+          "date_range": "1980-2015",
+          "person_count": 272579000,
+          "record_count": 28662107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2075263",
+          "title": "United States, Internal Revenue Assessment Lists, 1862-1874",
+          "date_range": "1862-1874",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "5000290",
+          "title": "United States, Residence Database, 1970-2024",
+          "date_range": "1970-2024",
+          "person_count": 413857770,
+          "record_count": 413857770,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000016",
+          "title": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+          "date_range": "1936-2007",
+          "person_count": 151308217,
+          "record_count": 63700462,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1854302",
+          "title": "United States, Western States Marriage Index",
+          "date_range": "1846-2008",
+          "person_count": 1828958,
+          "record_count": 914500,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1968530",
+          "title": "United States, World War I Draft Registration Cards, 1917-1918",
+          "date_range": "1917-1918",
+          "person_count": 44906705,
+          "record_count": 32592786,
+          "availability": "name-searchable"
+        }
+      ],
+      "quirks": [
+        "The Los Angeles County home page says the County Recorder holds birth, marriage, death and land records, and gives 1874 as the known beginning date for county death records; statewide registration of births and deaths started in 1905, with general compliance by 1920 (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy).",
+        "The California Death Index, 1940-1997 is the statewide index that spans the whole 1962 move window; an index entry gives a year and county, and the survey did not confirm that the certificate itself is online.",
+        "The Los Angeles City death index (catalog 1173324) covers 1877-1962 and the Los Angeles City death records volume covers 1930-1963; both end at or near the 2 July 1962 move date, so a death later in 1962 may fall outside them.",
+        "The Southern California Genealogical Society's Los Angeles Times Obituary Index covers only 1988 to 2004, with some gaps, so it does not reach 1962-1987; copies of obituaries must be bought from the Society.",
+        "The survey's volume summary counts 1,709 Death-group volumes for Los Angeles, of which 255 are browse-only and 1,091 full-text searchable; browse-only volumes must be read image by image with no name search.",
+        "The Los Angeles County wiki lists neighbouring counties Kern, Orange, San Bernardino and Ventura; search those counties too, since a death near a county line may be filed across it.",
+        "The FamilySearch Wiki's California Online Genealogy Records and Research Tips pages returned no body text in this survey, so no claim about them is made here.",
+        "The survey does not establish where Kenneth Werner Quass died; the Find a Grave capture and the Texas death certificate capture are not treated as the place of death in this guide."
+      ],
+      "registration_start": [
+        {
+          "event": "death",
+          "level": "county",
+          "year": 1874,
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1905,
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy"
+        }
+      ],
+      "record_types": [
+        {
+          "type": "vital_record",
+          "level": "state",
+          "held_at": "FamilySearch (online index)",
+          "summary": "California Death Index, 1940-1997 (collection 2015582) and California Deaths and Burials, 1776-2000 (collection 3518938) are indexed online; statewide death registration began 1905. The survey did not confirm whether death certificate images for 1962 onward are online.",
+          "source_url": "https://www.familysearch.org/en/wiki/California_Vital_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "2015582",
+            "2001287",
+            "2001879",
+            "1804002",
+            "1932433",
+            "2015584",
+            "1949339",
+            "1674735",
+            "1202535",
+            "1854302"
+          ]
+        },
+        {
+          "type": "vital_record",
+          "level": "county",
+          "held_at": "Los Angeles County Recorder, Hall of Records, 320 W. Temple Street, Los Angeles",
+          "summary": "The County Recorder holds birth, marriage, death and land records per the county wiki; the county death-record series begins 1874 per its date table. Access to post-1962 death certificates was not confirmed by this survey.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "vital_record",
+          "level": null,
+          "held_at": "FamilySearch Library catalog (Los Angeles City)",
+          "summary": "Los Angeles City, California, index of deaths, 1877-1962 and death records, 1930-1963 (catalog 1173324), and death records 1905-1930 (catalog 1139406). The city index ends in 1962, the year of the move. (held at: city)",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "cemetery",
+          "level": null,
+          "held_at": "Angelus-Rosedale Cemetery/Crematory, Los Angeles",
+          "summary": "Angelus-Rosedale Cemetery/Crematory Records, 1884-2002 (collection 3583819) are indexed online; the catalog lists ownership and interment files 1884-1976 (catalog 1045904). Other Los Angeles cemetery files named by the wiki: Evergreen Memorial Park deceased card file index 1877-1989 (collection 3259479); San Gabriel Cemetery Association index 1872-2003 (collection 3694058).",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "3518938",
+            "3583819",
+            "1985807",
+            "3241369",
+            "3235392",
+            "3259479",
+            "3694058",
+            "3259465",
+            "1922526",
+            "3161103",
+            "3245343",
+            "3583823",
+            "3241370"
+          ]
+        },
+        {
+          "type": "cemetery",
+          "level": null,
+          "held_at": "Rose Hills Memorial Park (online database)",
+          "summary": "Rose Hills Memorial Park database lists burials from 1914 to the present, with some obituaries from 2011 to the present, per the county wiki.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "newspaper",
+          "level": null,
+          "held_at": "Southern California Genealogical Society",
+          "summary": "Los Angeles Times Obituary Index covers 1988 to 2004 with gaps, and copies must be purchased from the Society. The survey counts 60 Newspapers-group volumes for Los Angeles (33 browse-only, 26 full-text searchable). The survey did not confirm obituary coverage for 1962-1987.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "2333694"
+          ]
+        },
+        {
+          "type": "census",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a census series for Los Angeles that would bear on a 1962-2024 death.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "1771089"
+          ]
+        },
+        {
+          "type": "probate",
+          "level": "county",
+          "held_at": "Los Angeles County Clerk, Hall of Records, 320 W. Temple Street",
+          "summary": "The County Clerk holds probate and court records from 1850 per the county wiki. The survey did not confirm whether a probate file exists for this man, and did not determine testate or intestate status.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "1999181",
+            "3158865"
+          ]
+        },
+        {
+          "type": "land",
+          "level": "county",
+          "held_at": "Los Angeles County Recorder",
+          "summary": "Land records from 1850 per the county wiki's date table; not a death-record source.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown",
+          "collection_ids": [
+            "2074276"
+          ]
+        },
+        {
+          "type": "church",
+          "level": null,
+          "held_at": null,
+          "summary": "California, Church Records, 1864-1985 (collection 2790461) is indexed online per the California wiki. The survey did not confirm denomination or parish affiliation for this family, and the wiki notes online church indexes are incomplete.",
+          "source_url": "https://www.familysearch.org/en/wiki/California_Church_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1674703",
+            "2790461"
+          ]
+        },
+        {
+          "type": "military",
+          "level": null,
+          "held_at": null,
+          "summary": "The survey counts 23 Military-group volumes for Los Angeles, all full-text searchable; it did not confirm a military death series for this man.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "4110911",
+            "2786603",
+            "1968530"
+          ]
+        },
+        {
+          "type": "newspaper",
+          "level": null,
+          "held_at": null,
+          "summary": "Newspaper obituaries for Los Angeles are covered by the Southern California Genealogical Society index above; the survey did not name other LA newspaper death notices.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "tax",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm a tax series for Los Angeles for this period.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2075263"
+          ]
+        },
+        {
+          "type": "immigration",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey did not confirm an immigration or passenger series bearing on a 1962-2024 death.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "2125028",
+            "2427229",
+            "3477658",
+            "2427230",
+            "1916084",
+            "5000183",
+            "1849982",
+            "3477653",
+            "3477655",
+            "1849628"
+          ]
+        },
+        {
+          "type": "court",
+          "level": "county",
+          "held_at": "Los Angeles County Superior Court",
+          "summary": "Circuit court microfilm for 1854-1938 is at the FamilySearch Library, outside this period; the survey did not confirm court records for 1962-2024.",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        },
+        {
+          "type": "other",
+          "level": null,
+          "held_at": "Pierce Brothers Cunningham & O'Connor Mortuary, Hollywood (catalog)",
+          "summary": "Pierce Brothers Cunningham & O'Connor Mortuary death records, 1950-1978 (catalog 771104). The survey counts 1,709 Death volumes for Los Angeles, of which 255 are browse-only and 1,091 full-text searchable, and a Los Angeles funeral home volume for 1955-1963 (full-text searchable).",
+          "source_url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "access": "unknown"
+        }
+      ],
+      "repositories": [
+        {
+          "name": "Los Angeles County Hall of Records, 320 W. Temple Street, Los Angeles, CA 90012 (County Recorder and County Clerk)",
+          "holds": "County Recorder: birth, marriage, death and land records. County Clerk: divorce records from 1880, probate and court records from 1850.",
+          "access": null,
+          "url": "http://www.lacounty.gov/"
+        },
+        {
+          "name": "Southern California Genealogical Society",
+          "holds": "Los Angeles Times Obituary Index, 1988-2004 with gaps; copies bought from the Society.",
+          "access": "paid (copies purchased from the Society)",
+          "url": "https://www.scgsgenealogy.com/obit-search_soundex.html"
+        },
+        {
+          "name": "Rose Hills Memorial Park",
+          "holds": "Burial database, 1914 to present; some obituaries 2011 to present.",
+          "access": null,
+          "url": "http://www.rosehills.com/dm20/en_US/main/rh/search/index.page"
+        },
+        {
+          "name": "FamilySearch Library",
+          "holds": "Catalog items for Los Angeles City death indexes and records, Angelus-Rosedale files, and Pierce Brothers mortuary records.",
+          "access": "free",
+          "url": null
+        }
+      ],
+      "losses": [],
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/California_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/California_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/California_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1962,
+        "end_year": 2024,
+        "total_volumes": 1801,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Genealogies",
+            "volumes": 24,
+            "browse_only": 16,
+            "fulltext_only": 8
+          },
+          {
+            "group": "Biography",
+            "volumes": 3,
+            "browse_only": 1,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Vital",
+            "volumes": 1713,
+            "browse_only": 255,
+            "fulltext_only": 1095
+          },
+          {
+            "group": "Birth",
+            "volumes": 4,
+            "browse_only": 0,
+            "fulltext_only": 4
+          },
+          {
+            "group": "Death",
+            "volumes": 1709,
+            "browse_only": 255,
+            "fulltext_only": 1091
+          },
+          {
+            "group": "Cemetery",
+            "volumes": 100,
+            "browse_only": 0,
+            "fulltext_only": 43
+          },
+          {
+            "group": "Marriage",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Religious",
+            "volumes": 6,
+            "browse_only": 6,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 2,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Military",
+            "volumes": 23,
+            "browse_only": 0,
+            "fulltext_only": 23
+          },
+          {
+            "group": "Migration",
+            "volumes": 5,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Naturalization",
+            "volumes": 5,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Legal",
+            "volumes": 16,
+            "browse_only": 0,
+            "fulltext_only": 15
+          },
+          {
+            "group": "Court",
+            "volumes": 2,
+            "browse_only": 0,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Probate",
+            "volumes": 1,
+            "browse_only": 0,
+            "fulltext_only": 1
+          },
+          {
+            "group": "Land",
+            "volumes": 14,
+            "browse_only": 0,
+            "fulltext_only": 13
+          },
+          {
+            "group": "Reference",
+            "volumes": 3,
+            "browse_only": 0,
+            "fulltext_only": 3
+          },
+          {
+            "group": "Miscellaneous",
+            "volumes": 4,
+            "browse_only": 0,
+            "fulltext_only": 4
+          },
+          {
+            "group": "Newspapers",
+            "volumes": 60,
+            "browse_only": 33,
+            "fulltext_only": 26
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "catalog": [
+        {
+          "id": "koha:2013808",
+          "title": "125 years of Glendale Presbyterian Church : with addenda/ Darlene E. McClain",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:233664",
+          "title": "1836 Mexican census of Los Angeles and Orange County area : including the Rancho Santiago de Santa Ana after which the Rancho Santiago Community was named",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:4498881",
+          "title": "1860 and 1870 United States census : Santa Ana township (including Anaheim), Los Angeles County/ compiled by Agnes B. Pearlman & Marian Peer.",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:1935747",
+          "title": "1892 Los Angeles County California : great register of voters",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:658480",
+          "title": "1925 name only census of Burbank",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:1787282",
+          "title": "7-generation charts",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:468612",
+          "title": "70 years on Hope Street : a history of the Church of the Open Door, 1915-1985/ G. Michael Cocoris",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:692878",
+          "title": "90 years in the life of First Presbyterian Church of Downey/ co-editors: Myda Bartgis, Dorothy Crotser",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:4500498",
+          "title": "A Graduate's Memories, 1926",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:94013",
+          "title": "Abstract of title of the interest of Edward D. Gibson, Fielding H. Gibson, Brace S. Gibson, Gadi S. Gibson, and Blanche A. Gibson now Blanche A. Chapman and their grantees in and to that certain real property in the Rancho San Francisquito, County of Los Angeles : bounded and described as follows, T. W. Gibson Tract El Monte according to map of said tract recorded in Book 15, page 39, Miscellaneous records Los Angeles County",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:125086",
+          "title": "Accession lists of books and microfilm, section \"J\" contained in the Los Angeles Temple Genealogical Library",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2270817",
+          "title": "Acropolis",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:754024",
+          "title": "African Americans in Los Angeles and Los Angeles Township : extracts from U.S. censuses/ California African American Genealogical Society",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1037909",
+          "title": "Alhambra (California) city directories",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Online at FamilySearch Center",
+            "Online at Affiliate Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:22715",
+          "title": "Alhambra (San Gabriel - Monterey Park) community book/ William M. Northrup, supervising editor; Paul E. Gross, F. W. Seibel, associate editors",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4139783",
+          "title": "Alhambra (San Gabriel - Monterey Park) community book/ William M. Northrup, supervising editor; Paul E. Gross, F. W. Seibel, associate editors",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Los Angeles California FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4372373",
+          "title": "Alhambra, Arcadia and El Monte ... telephone directory.",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [],
+          "film_count": null
+        },
+        {
+          "id": "koha:2739265",
+          "title": "Alhambran",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2493531",
+          "title": "The almanac yearbook/ Franklin High School",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2146194",
+          "title": "Along the rails from Lancaster to Mojave/ compiled by Glen A. Settle",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2087534",
+          "title": "Alpha class directory",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:620456",
+          "title": "Alphabetical list of surnames for Wags seminar on Germany, Pennsylvania & Missouri/ compiled by Richard and Audrey Soll",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Granite Mountain Record Vault",
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:2091707",
+          "title": "Alphabits",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4502243",
+          "title": "Alvernian : yearbook/ St. Francis High Schoo",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [],
+          "film_count": null
+        },
+        {
+          "id": "koha:127999",
+          "title": "Los Angeles : epic of a city/ Lynn Bowman",
+          "place": "Los Angeles, California, United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        }
+      ],
+      "created": "2026-11-24",
+      "guide_markdown": "# Locality Guide: Los Angeles County, California (1962-2024)\n\n## Jurisdiction overview\n- **Formed:** 18 February 1850 as one of the 27 original California counties (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy)\n- **County seat / administrative center:** Los Angeles\n- **Parent jurisdiction:** California, United States\n- **Population during period:** California state totals from the survey: 186,724,272 (1962) to 345,426,571 (2024); the survey gave no county-level figures for this period.\n- **Economy:** not confirmed by this survey.\n- **Ethnic composition:** not confirmed by this survey beyond the county wiki's note on Hispanic and Asian American history.\n- **Religious denominations:** the county wiki names Baptist and Lutheran church records only in part; the survey did not confirm the denominations present.\n- **Key historical events:** none affecting records is stated in a tool result for this period.\n- **Coverage of this survey:** the Los Angeles volume summary is complete at 1,801 volumes; the survey lists only a few of them. Of those, 1,709 are Death-group, 255 of them browse-only.\n\n## Boundary changes\n- The original County of Los Angeles covered parts of what are now Kern, San Bernardino, Riverside and Orange counties. San Bernardino County split off in 1853, Kern in 1866, and Orange in 1889; in 1893 part of San Bernardino County that had been Los Angeles territory became part of Riverside County (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy).\n- Before the county existed, the records were at city or Franciscan mission places (same page, Boundary Changes).\n- For a 1962-2024 death in Los Angeles County, the county boundary itself is stable in the sources read; the 1850s-1890s changes do not bear on this period.\n\n## Research tips\n- **Search order:** Start with the California Death Index, 1940-1997 (FamilySearch collection 2015582), the only indexed statewide death source that spans the whole 1962 move window; it gives a year and county to test against the move date. Next, the Los Angeles City death index and records (catalog 1173324, 1877-1962 and 1930-1963), then the cemetery and mortuary files, and then the browse-only volumes last (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy).\n- **Statewide and county series:** Statewide registration of deaths began in 1905, and the county's death dates begin in 1874. The County Recorder holds death records at Hall of Records, 320 W. Temple Street (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy; https://www.familysearch.org/en/wiki/California_Vital_Records).\n- **Obituaries:** The Los Angeles Times Obituary Index (Southern California Genealogical Society) covers 1988-2004 only, so it does not reach 1962-1987; copies must be bought from the Society (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy#Obituaries).\n- **Cemeteries and mortuaries:** Angelus-Rosedale Cemetery/Crematory Records 1884-2002 (collection 3583819), Evergreen Memorial Park deceased card file 1877-1989 (collection 3259479), Pierce Brothers Cunningham & O'Connor Mortuary death records 1950-1978 (catalog 771104), and the Rose Hills database of burials from 1914 (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy#Obituaries).\n- **Browse-only volumes:** The survey counts 255 browse-only Death volumes for Los Angeles; these must be read image by image.\n- **Adjoining counties:** Search Kern, Orange, San Bernardino and Ventura counties too, since a death near a county line may be filed across it (https://www.familysearch.org/en/wiki/Los_Angeles_County,_California_Genealogy).\n- **Not established:** The survey does not place Kenneth Werner Quass's death in Los Angeles or anywhere else. The Find a Grave and Texas death certificate captures are not treated as the place of death."
+    }
+  ]
+}

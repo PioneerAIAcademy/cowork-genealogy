@@ -399,7 +399,8 @@ hosted main thread, and not the conditional no-project sentence.
 Cowork: a second `PreToolUse` entry on `Agent|Task|Skill` and a second `UserPromptSubmit`
 entry. It imports `step_boundary.py`, which stays a library (lead, 2026-11-24), keeps the
 turn in a per-session state file under a lockfile, and denies every out-of-group
-main-thread spawn, never halting. It is silent under `GENEALOGY_HOSTED_PLANE`: the web app
+main-thread spawn, never halting. It gates only this plugin's research steps: the plugin's
+hooks load in Claude Code too, so any other agent or skill is left alone. It is silent under `GENEALOGY_HOSTED_PLANE`: the web app
 and the prototype gate in process. `make hook-smoke` drives the hosted loader, where it is
 silent, so only a live connector or Cowork session proves it binds.
 

@@ -115,7 +115,9 @@ entry says so.
       instruction to report and end the turn; a second attempt in the same turn **halts**
       it, and the halt also denies the call it stops (`StepGate` in `step_boundary.py`).
     - **Connector and Cowork.** A plugin hook, `step_gate_hook.py`, **denies** every
-      out-of-group step and never halts. A deny makes the model report and end its turn;
+      out-of-group step and never halts. It gates only this plugin's research steps, so
+      Claude Code's own agents and skills, where the plugin also loads, pass untouched.
+      A deny makes the model report and end its turn;
       a halt ends a Cowork turn with nothing on screen (ADR-0005).
     - **Rider 1:** the rule is "no new step until the researcher has answered since the
       last one", not "one step per turn". In Cowork the answer to `AskUserQuestion`
@@ -167,10 +169,12 @@ entry says so.
     project's objective (a first message asking to verify a person's facts or
     relationships is a research job, so it becomes the objective). It is narrow when it
     names a particular relationship, fact or source, and only a narrow request removes
-    anything. A broad one ("are his facts and relationships correct?") runs
-    source-evaluation, then check-warnings, in one turn, and removes nothing: with no
-    finding the turn ends with no offer; otherwise it lists the findings, asks which to
-    verify first, and each one becomes a narrow request in turn (lead, 2026-11-24).
+    anything. A broad one ("are his facts and relationships correct?") is its project's
+    whole work: the attached-records baseline, then source-evaluation and check-warnings
+    in one turn, removing nothing. The turn ends with no offer, and gives each finding as
+    its own next project: a new project from the same person ID whose setup reply is the
+    narrow request (lead, 2026-11-24: an audit, broad or narrow, is its own project, as a
+    chat is).
 
 ## Evidence
 

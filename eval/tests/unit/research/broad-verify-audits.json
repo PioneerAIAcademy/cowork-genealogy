@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_research_bv1",
     "skill": "research",
-    "name": "A broad verify request audits the sources and checks the warnings, and removes nothing",
+    "name": "A broad verify request audits the sources and checks the warnings, removes nothing, and offers each finding as a new project",
     "type": "positive",
-    "description": "Issue #4791 (lead, 2026-11-24): a verify request that names no particular relationship, fact or source does not clear the tree. The router runs source-evaluation, then check-warnings in the same turn, relays both, lists the findings and asks which to verify first. No tree_forget, no question and no baseline read in this turn. Both agents are stubbed with known findings.",
+    "description": "Issue #4791 (lead, 2026-11-24): a verify request that names no particular relationship, fact or source does not clear the tree, and is its project's whole work. The router runs the attached-records baseline, source-evaluation, then check-warnings in the same turn, relays both, and gives each finding as its own next project, started from the same person ID with the narrow request. No tree_forget, no question, and no \"Continue with …?\" line. Both agents are stubbed with known findings.",
     "tags": [
       "routing",
       "routes-to:source-evaluation",
@@ -65,8 +65,9 @@
     ]
   },
   "judge_context": [
-    "The two hand-offs and the absence of any removal, question or baseline read are checked by test_broad_verify_audits_and_removes_nothing. Do not re-grade them.",
-    "Grade the reply on relaying both findings (the 1900 census birth year that does not fit, and the 1910 residence after his death), asking which to verify first and saying the first is taken if the researcher does not say, and ending on \"Continue with `choosing the question`?\".",
+    "The two hand-offs, the absence of any removal or question, and the absence of a \"Continue with …?\" line are checked by test_broad_verify_audits_and_removes_nothing. Do not re-grade them.",
+    "Grade the reply on relaying both findings (the 1900 census birth year that does not fit, and the 1910 residence after his death) and giving each as its own next project: start a new project from Christian P. Hole's FamilySearch person ID (KD96-TV2) and answer its setup step with the narrow request, such as \"Verify his birth date.\". A reply that offers to verify a finding in this project, or asks which to verify first here, fails that.",
+    "The attached-records baseline (extraction_append with personId) may run before the audit; it is not a failure.",
     "ROUTING IS NOT YOURS TO GRADE. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
   ],
   "judge_reads_files": true

@@ -1,7 +1,8 @@
 """The step gate on the connector (Claude's chat) and in Cowork: one step per turn.
 
 `UserPromptSubmit` starts a turn and `PreToolUse` on `Agent|Task|Skill` asks
-`step_boundary.StepGate` whether the spawn may run. Every out-of-group spawn is
+`step_boundary.StepGate` whether the spawn may run. Only this plugin's research steps
+are gated; any other agent or skill is left alone (`is_research_step`). Every out-of-group spawn is
 DENIED with `deny_reason`, never halted: a deny makes the model report and end
 its turn, while a halt ends a Cowork turn with nothing on screen.
 
@@ -30,6 +31,7 @@ from pathlib import Path
 HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 STATE_DIR_ENV = "GENEALOGY_STEP_GATE_DIR"
 HAND_BACK_PREFIX = "<agent-message"
+PLUGIN_NAME = "genealogy-research"
 LOCK_WAIT_SECONDS = 2.0
 STALE_LOCK_SECONDS = 20.0
 
@@ -111,6 +113,22 @@ def on_prompt(payload: dict, boundary) -> dict:
     return {}
 
 
+def is_research_step(candidate, boundary) -> bool:
+    """Whether a spawn or skill call is one of this plugin's research steps.
+
+    The plugin's hooks load wherever the plugin does, Claude Code included, so a
+    spawn or skill from anywhere else (a built-in agent, another plugin, another
+    skill) is left alone: only this plugin's steps are gated.
+    """
+    if not candidate:
+        return False
+    prefix, _, _ = str(candidate).rpartition(":")
+    if prefix and prefix.strip() != PLUGIN_NAME:
+        return False
+    name = boundary.bare_name(candidate)
+    return name == boundary.ROUTER or boundary.home_group(name) is not None
+
+
 def _deny(reason: str) -> dict:
     return {
         "hookSpecificOutput": {
@@ -126,7 +144,10 @@ def on_tool(payload: dict, boundary) -> dict:
     tool_name = str(payload.get("tool_name") or "")
     tool_input = payload.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
-    if "agent_id" in payload or boundary.step_candidate(tool_name, tool_input) is None:
+    if "agent_id" in payload:
+        return {}
+    candidate = boundary.step_candidate(tool_name, tool_input)
+    if not is_research_step(candidate, boundary):
         return {}
     session = payload.get("session_id")
     if not isinstance(session, str) or not session:

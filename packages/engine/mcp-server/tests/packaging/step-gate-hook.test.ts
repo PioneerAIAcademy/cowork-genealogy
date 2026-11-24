@@ -138,6 +138,21 @@ describe("step_gate_hook.py", () => {
     expect(allowed(run(spawnPayload("search-records", "p1", SESSION, { agent_id: "a1" })))).toBe(true);
   });
 
+  it("leaves every agent and skill that is not a research step alone", () => {
+    prompt("Continue.", "p1");
+    expect(allowed(run(spawnPayload("research-plan", "p1")))).toBe(true);
+    const other = (tool_name: string, tool_input: object) =>
+      run({ hook_event_name: "PreToolUse", session_id: SESSION, prompt_id: "p1", tool_name, tool_input });
+    expect(allowed(other("Agent", { subagent_type: "Explore" }))).toBe(true);
+    expect(allowed(other("Agent", { subagent_type: "general-purpose" }))).toBe(true);
+    expect(allowed(other("Agent", { prompt: "no agent named" }))).toBe(true);
+    expect(allowed(other("Skill", { skill: "review" }))).toBe(true);
+    expect(allowed(other("Agent", { subagent_type: "other-plugin:timeline" }))).toBe(true);
+    // A research step is still gated, bare or prefixed.
+    expect(denied(other("Agent", { subagent_type: "search-records" }))).toBe(true);
+    expect(denied(other("Agent", { subagent_type: "genealogy-research:timeline" }))).toBe(true);
+  });
+
   it("has no opinion under GENEALOGY_HOSTED_PLANE", () => {
     const hosted = { GENEALOGY_HOSTED_PLANE: "1" };
     run({ hook_event_name: "UserPromptSubmit", session_id: SESSION, prompt: "Continue.", prompt_id: "p1" }, hosted);
