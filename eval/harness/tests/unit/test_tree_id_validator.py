@@ -40,6 +40,7 @@ from test_research import test_reply_names_no_tree_id as no_tree_id  # noqa: E40
         ("Mary (K835-34K) is I2 in the tree.", ["I2"]),
         # A known, accepted false positive: nothing like it is in any committed reply.
         ("She entered on an F1 visa.", ["F1"]),
+        ("See https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9; she is I13.", ["I13"]),
     ],
 )
 def test_a_reply_naming_a_tree_id_fails(reply, expected):
@@ -59,6 +60,8 @@ def test_a_reply_naming_a_tree_id_fails(reply, expected):
         "I",
         "Henry VIII and Louis XIV",
         "the record ark:/61903/4:1:94Z5-N1F",
+        "Open https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9 to see the page.",
+        "[the page](https://www.familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133)",
         "",
         None,
     ],

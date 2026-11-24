@@ -628,7 +628,9 @@ def test_status_question_answered_from_project_context_only(
 # A FamilySearch ID (PID) is the one identifier narration may show. Its halves
 # can look like a tree id (`K835-R12`, `F123-ABC`), so PID-shaped tokens are
 # removed before the tree-id search, unless both halves are tree ids: a range
-# such as `I1-I5` or `I100-I200` is still caught.
+# such as `I1-I5` or `I100-I200` is still caught. Links are removed first: an
+# image ARK's third part (`3:1:939K-8LJ5-F9`) can look like a tree id too.
+_LINK_RE = re.compile(r"(?:https?://|ark:/)\S+")
 _PID_TOKEN_RE = re.compile(r"\b([A-Za-z0-9]{4})-([A-Za-z0-9]{3,4})\b")
 _TREE_ID_RE = re.compile(r"\b" + _TREE_ID_PATTERN + r"\b")
 _WHOLE_TREE_ID_RE = re.compile(_TREE_ID_PATTERN)
@@ -642,7 +644,7 @@ def _drop_pid(m: re.Match) -> str:
 
 def tree_ids_named(text: str | None) -> list[str]:
     """The tree ids (`I13`, `S2`, `F4`...) a reply names, distinct and sorted."""
-    return sorted(set(_TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, text or ""))))
+    return sorted(set(_TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, _LINK_RE.sub(" ", text or "")))))
 
 
 def test_reply_names_no_tree_id(text_response):
