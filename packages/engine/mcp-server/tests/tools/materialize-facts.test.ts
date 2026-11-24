@@ -1032,9 +1032,10 @@ describe("materialize_facts", () => {
       });
 
       // A person this research added carries no ref, so a speculative link lets
-      // the first copy through; the re-run then reads her as minted from this
-      // record, and only her matching full name ties her to this party.
-      it("re-runs onto a research-added person whose full name the record cited", async () => {
+      // the first copy through. The re-run reads her as minted from this record,
+      // and a name that only abbreviates hers is no party trace, so the gate
+      // asks for the link to be raised rather than guess.
+      it("re-runs onto a research-added person only once the link is raised", async () => {
         const added = person("I3", "Mary L", "Childs");
         const r = research({ sources: [S1], assertions: givenOnly("Mary L.") });
         r.person_evidence = [pe("speculative", { assertion_id: "a_201", person_id: "I3" })];
@@ -1044,6 +1045,12 @@ describe("materialize_facts", () => {
         const first = single(await materializeFacts(op));
         expect(first.ok).toBe(true);
         expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+        const refused = single(await materializeFacts(op));
+        expect(refused.ok).toBe(false);
+        if (!refused.ok) expect(refused.errors[0]).toContain("research_append");
+        const raised = research({ sources: [S1], assertions: givenOnly("Mary L.") });
+        raised.person_evidence = [pe("probable", { assertion_id: "a_201", person_id: "I3" })];
+        await writeFile(join(dir, "research.json"), JSON.stringify(raised, null, 2), "utf-8");
         const again = single(await materializeFacts(op));
         expect(again.ok).toBe(true);
         if (again.ok) expect(again.namesAdded).toBe(0);
@@ -1067,6 +1074,82 @@ describe("materialize_facts", () => {
         const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
         expect(out.ok).toBe(false);
         expect(findPerson(await readTree(), "I4").names).toHaveLength(1);
+      });
+
+      it("refuses it too when the mother's link to the stub is only speculative", async () => {
+        const daughter = { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "Phipps", sources: [{ ref: "S1" }] }] };
+        const r = research({
+          sources: [S1],
+          assertions: [
+            ...givenOnly("Mary"),
+            assertion("a_301", { record_id: "REC-D", record_role: "child", fact_type: "name", value: "Mary Phipps" }),
+          ],
+        });
+        r.person_evidence = [pe("speculative", { assertion_id: "a_201", person_id: "I4" })];
+        await writeProject(tree({ persons: [daughter] }), r, { link: false });
+        await seedStart([]);
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(false);
+      });
+
+      // Trees written before this rule hold a value-only "Mary L" split as
+      // "Mary" / "L"; the new split reads it as "Mary L" with no surname.
+      it("re-runs onto a name stored with its initial split off as a surname", async () => {
+        const old = { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "L", sources: [{ ref: "S1" }] }] };
+        const out = await linkPersona(old, [
+          assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary L" }),
+        ]);
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(0);
+        expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+      });
+
+      it("keeps the party trace of a stub stored with its initial split off as a surname", async () => {
+        const stub = { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "L", sources: [{ ref: "S1" }] }] };
+        const r = research({
+          sources: [S1],
+          assertions: [assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary L" })],
+        });
+        await writeProject(tree({ persons: [stub] }), r, { link: false });
+        await seedStart([]);
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(0);
+      });
+
+      it("cites a name of the record's own type first", async () => {
+        const two = { id: "I2", gender: "Female", names: [
+          { id: "N2", given: "Mary", surname: "Smith", type: "BirthName" },
+          { id: "N3", given: "Mary", surname: "Phipps", type: "MarriedName" },
+        ] };
+        const out = await linkPersona(two, [
+          assertion("a_201", {
+            record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary",
+            structured_value: { given: "Mary", surname: "", type: "married" },
+          }),
+        ]);
+        expect(out.ok).toBe(true);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(2);
+        expect(names[0].sources ?? []).toHaveLength(0);
+        expect(names[1].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+      });
+
+      it("does not depend on the order of a persona's name assertions", async () => {
+        const r = research({
+          sources: [S1],
+          assertions: [
+            ...givenOnly("Mary"),
+            assertion("a_202", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary Phipps" }),
+          ],
+        });
+        await writeProject(tree(), r, { link: false });
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I9", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(1);
+        expect(findPerson(await readTree(), "I9").names).toEqual([
+          expect.objectContaining({ given: "Mary", surname: "Phipps" }),
+        ]);
       });
 
       it("matches an initial-final value with no structured_value", async () => {

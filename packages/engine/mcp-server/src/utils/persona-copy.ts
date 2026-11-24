@@ -52,24 +52,33 @@ export function normNamePart(v: string | undefined): string {
  *  token equals the full given's token at its position or is a one-letter
  *  initial of it, with or without the period ("Benjamin F." of "Benjamin
  *  Fairbanks", "Mary" of "Mary L"; not "Una" of "Unna"). Ruling on #4722. */
+const nameTokens = (v: string | undefined) => normNamePart(v).normalize("NFC").split(/\s+/).filter(Boolean);
+
 export function givenAbbreviates(given: string, full: string | undefined): boolean {
-  const tokens = (v: string | undefined) => normNamePart(v).split(/\s+/).filter(Boolean);
+  const tokens = nameTokens;
   const g = tokens(given);
   const f = tokens(full);
   if (g.length === 0 || g.length > f.length) return false;
   return g.every((t, i) => t === f[i] || (isInitialToken(t) && f[i].startsWith([...t][0])));
 }
 
-/** Whether a record's name (`given`, `surname`) is person name `n`: equal
- *  given + surname (trimmed, case-insensitive), or a blank surname whose given
- *  abbreviates the given of `n`, which has a surname. `upsertName` and the
- *  materialize gate's party trace both read a name through this. */
-export function nameAnswers(
-  n: { given?: string; surname?: string },
-  given: string | undefined,
-  surname: string | undefined,
-): boolean {
+type NameLike = { given?: string; surname?: string };
+
+/** Whether a record's name (`given`, `surname`) is person name `n` itself:
+ *  equal given + surname (trimmed, case-insensitive), or `n` is the same
+ *  given-only name as an older `nameParts` stored it, with its final initial
+ *  split off as a surname ("Mary" / "L" for "Mary L"). The materialize gate's
+ *  party trace reads a name through this. */
+export function sameName(n: NameLike, given: string | undefined, surname: string | undefined): boolean {
   if (normNamePart(n.given) === normNamePart(given) && normNamePart(n.surname) === normNamePart(surname)) return true;
+  if (normNamePart(surname) !== "" || !isInitialToken(normNamePart(n.surname))) return false;
+  return nameTokens(`${n.given ?? ""} ${n.surname ?? ""}`).join(" ") === nameTokens(given).join(" ");
+}
+
+/** `sameName`, or a blank surname whose given abbreviates the given of `n`,
+ *  which has a surname. */
+export function nameAnswers(n: NameLike, given: string | undefined, surname: string | undefined): boolean {
+  if (sameName(n, given, surname)) return true;
   return normNamePart(surname) === "" && normNamePart(n.surname) !== "" && givenAbbreviates(given ?? "", n.given);
 }
 
@@ -129,8 +138,9 @@ const TREE_NAME_TYPE: Readonly<Record<string, string | undefined>> = Object.assi
 
 /** Upsert one SOURCED name onto a person: union the ref onto an equivalent
  *  existing name, else mint a new one carrying it. Equivalence is
- *  `nameAnswers`: an equal name first, else the first surnamed name a
- *  given-only record name abbreviates. That is what makes a re-run a no-op
+ *  `nameAnswers`: the same name first, else the first surnamed name of the
+ *  record's name type, then of any type, that a given-only record name
+ *  abbreviates. That is what makes a re-run a no-op
  *  rather than a duplicate, and keeps "Benjamin F." with no surname from
  *  minting a blank-surname name beside "Benjamin Fairbanks Phipps".
  *
@@ -151,9 +161,11 @@ export function upsertName(
   nameType?: string,
 ): { namesAdded: number; refsAttached: number } {
   person.names ??= [];
-  const exact = (n: SimplifiedName) =>
-    normNamePart(n.given) === normNamePart(given) && normNamePart(n.surname) === normNamePart(surname);
-  const match = person.names.find(exact) ?? person.names.find((n) => nameAnswers(n, given, surname));
+  const answers = (n: SimplifiedName) => nameAnswers(n, given, surname);
+  const match =
+    person.names.find((n) => sameName(n, given, surname)) ??
+    (nameType === undefined ? undefined : person.names.find((n) => n.type === nameType && answers(n))) ??
+    person.names.find(answers);
   if (match) {
     return { namesAdded: 0, refsAttached: unionRef(match, ref) ? 1 : 0 };
   }
@@ -206,7 +218,11 @@ export function copyPersonaFacts(
   let refsAttached = 0;
   const doubted = doubtedPlaces(research, recordId);
 
-  for (const a of assertions) {
+  // A given-only name answers a surnamed one (`upsertName`), so the surnamed
+  // names go first: the result must not depend on assertion order.
+  const givenOnlyName = (a: any) =>
+    NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()) && normNamePart(nameParts(a).surname) === "" ? 1 : 0;
+  for (const a of [...assertions].sort((x, y) => givenOnlyName(x) - givenOnlyName(y))) {
     const rawType = String(a.fact_type ?? "").toLowerCase();
 
     // Purely-argumentative / negative evidence is not a positive tree fact

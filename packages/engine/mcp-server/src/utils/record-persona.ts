@@ -314,13 +314,16 @@ const SURNAME_PARTICLES = new Set([
 
 /** A one-letter token, with or without its period: an initial ("F.", "L"). */
 export function isInitialToken(token: string): boolean {
-  return /^\p{L}\.?$/u.test(token);
+  return /^\p{Script=Latin}\.?$/u.test(token.normalize("NFC"));
 }
+
+const isParticle = (token: string) => SURNAME_PARTICLES.has(token.replace(/\.$/, "").toLowerCase());
 
 /** Given/surname from a name assertion — its structured_value when present, else
  *  parsed from `value`: the surname is the last token plus every particle token
  *  directly before it, always leaving one given token. A last token that is an
- *  initial is not a surname: "Benjamin F." is all given, with a blank surname. Both parts are always returned
+ *  initial, and follows no particle, is not a surname: "Benjamin F." is all
+ *  given, with a blank surname; "Maria de la O" keeps "de la O". Both parts are always returned
  *  (empty string, not undefined) so the minted name satisfies the tree schema's
  *  present-and-string given/surname requirement. `type` is the structured
  *  value's own word (`birth`, `married`…), absent when it states none. */
@@ -333,9 +336,10 @@ export function nameParts(assertion: any): { given: string; surname: string; typ
   }
   const tokens = String(assertion.value ?? "").trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return { given: "", surname: "" };
-  if (tokens.length === 1 || isInitialToken(tokens[tokens.length - 1])) return { given: tokens.join(" "), surname: "" };
-  let start = tokens.length - 1;
-  while (start > 1 && SURNAME_PARTICLES.has(tokens[start - 1].replace(/\.$/, "").toLowerCase())) start--;
+  const last = tokens.length - 1;
+  if (last === 0 || (isInitialToken(tokens[last]) && !isParticle(tokens[last - 1]))) return { given: tokens.join(" "), surname: "" };
+  let start = last;
+  while (start > 1 && isParticle(tokens[start - 1])) start--;
   return { given: tokens.slice(0, start).join(" "), surname: tokens.slice(start).join(" ") };
 }
 
