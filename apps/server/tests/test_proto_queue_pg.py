@@ -513,7 +513,10 @@ def test_020_closes_a_held_host_reply_and_leaves_the_researcher_s_own(pg_dsn):
     auto = turn(pg_dsn, row.session_id, row.project_id, "Keep going.", outcome="queued")
     sql(pg_dsn, "UPDATE turns SET message = message || %s::jsonb WHERE turn_id = %s",
         (json.dumps({"auto": True}), auto))
-    sql(pg_dsn, (PROTO / "sql" / "020_close_held_auto_replies.sql").read_text(encoding="utf-8"))
+    sql(pg_dsn, (PROTO / "sql" / "020_retire_auto_reply.sql").read_text(encoding="utf-8"))
     assert held(pg_dsn, row.session_id) == ["C"]
     assert sql(pg_dsn, "SELECT outcome, completed_at IS NOT NULL FROM turns WHERE turn_id = %s",
                (auto,))[0] == ("superseded", True)
+    assert sql(pg_dsn, "SELECT count(*) FROM information_schema.columns "
+                       "WHERE table_name = 'sessions' AND column_name = 'auto_reply'")[0][0] == 0
+    assert sql(pg_dsn, "SELECT count(*) FROM pg_indexes WHERE indexname = 'turns_session_step_idx'")[0][0] == 0

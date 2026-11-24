@@ -626,10 +626,9 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >
 >   **No plane replies for the researcher.** "Keep going" is retired: a typed
 >   "Keep going." runs one step, as "Continue." does (decision 7). The prototype's
->   automatic reply chain is deleted, and migration `020_close_held_auto_replies.sql`
+>   automatic reply chain is deleted, and migration `020_retire_auto_reply.sql`
 >   closes any reply it had queued and nothing had claimed, so it is never released
->   ahead of the researcher's next message. `sessions.auto_reply` stays, unread,
->   until a contracting migration drops it once no earlier worker serves.
+>   ahead of the researcher's next message, then drops `sessions.auto_reply`.
 >
 >   **The alpha enforces one step per turn too** (decision 25, widened 2026-11-19).
 >   `real_agent.py` loads `step_boundary.py` (`app/agent/step_boundary_loader.py`),

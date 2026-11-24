@@ -410,11 +410,9 @@ choice. The alpha sends no `options`.
   which step is offered. `offered_step(text)` reads the turn's **last** line; a line that
   names no entry is no offer. `offer_line` and `offer_key` are the write side.
 - **Prototype.** The host's automatic reply chain is gone. Migration
-  `apps/server/proto/sql/020_close_held_auto_replies.sql` closes `superseded` any reply
-  the chain queued that nothing claimed, so it is never released ahead of the
-  researcher's next message. Migrations only expand, so `sessions.auto_reply` and
-  `turns_session_step_idx` stay, unread, until a contracting change drops them once no
-  earlier worker serves.
+  `apps/server/proto/sql/020_retire_auto_reply.sql` closes `superseded` any reply the
+  chain queued that nothing claimed, so it is never released ahead of the researcher's
+  next message, then drops `sessions.auto_reply` and `turns_session_step_idx`.
 - **The resume prompt** (`RESUME_CONTINUE_TEXT`, `options.py`) tells a redelivered attempt
   to finish the step and end with its "Continue with …?" line.
 - **e2e** answers each boundary with a simulated researcher (section F).

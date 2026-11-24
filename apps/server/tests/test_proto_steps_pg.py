@@ -149,7 +149,7 @@ def test_a_typed_phrase_reads_as_step_mode_reads_it(pg_steps_dsn):
 
 def test_a_superseded_host_reply_is_not_credited_as_the_answer(pg_steps_dsn):
     """A turn closed `superseded` -- a host reply the retired automatic chain queued,
-    closed by the researcher's message or by 020_close_held_auto_replies.sql -- never
+    closed by the researcher's message or by 020_retire_auto_reply.sql -- never
     ran. Counting it would report the boundary as answered by a reply that did not
     happen, and hide the researcher's real one, the next row after it."""
     dsn = pg_steps_dsn

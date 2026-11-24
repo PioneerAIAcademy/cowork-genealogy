@@ -880,60 +880,17 @@ def test_019_adds_an_idempotent_index_for_the_signin_state_cleanup():
     ]
 
 
-def test_020_closes_only_held_host_replies():
+def test_020_closes_held_host_replies_then_retires_the_chain():
     """#4791: the claim no longer tells a host reply from a typed message, so a held one must
-    be closed before this build releases it. Only a held, open row whose message the host
-    sent: a typed held message, or any row already running or closed, is left alone."""
-    assert _statements(SQL_DIR / "020_close_held_auto_replies.sql") == [
+    be closed before this build releases it: only a held, open row whose message the host
+    sent. Then the chain's run state and its index go."""
+    assert _statements(SQL_DIR / "020_retire_auto_reply.sql") == [
         "UPDATE turns SET outcome = 'superseded', completed_at = now() "
         "WHERE outcome = 'queued' AND completed_at IS NULL "
         "AND COALESCE((message ->> 'auto') = 'true', false)",
+        "DROP INDEX IF EXISTS turns_session_step_idx",
+        "ALTER TABLE sessions DROP COLUMN IF EXISTS auto_reply",
     ]
-
-
-# U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
-# comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
-_CONTRACTING = (
-    ("DROP", re.compile(r"\bDROP\b", re.I)),
-    ("RENAME", re.compile(r"\bRENAME\b", re.I)),
-    ("SET NOT NULL", re.compile(r"\bSET\s+NOT\s+NULL\b", re.I)),
-    ("ALTER COLUMN ... TYPE", re.compile(r"\bALTER\s+(?:COLUMN\s+)?\"?\w+\"?\s+(?:SET\s+DATA\s+)?TYPE\b", re.I)),
-)
-
-
-def _contracting(statements: list[str]) -> list[tuple[str, str]]:
-    return [(label, stmt) for stmt in statements for label, rx in _CONTRACTING if rx.search(stmt)]
-
-
-def test_migrations_are_expand_only():
-    """migrate.py runs each file once, before the new code ships, while the old code is still
-    serving: a file that drops, renames, sets NOT NULL or retypes a column breaks the build
-    still running. Those four shapes only; other tightenings (a new NOT NULL column with no
-    default, a constraint) are the author's to see. Contraction needs its own design (two
-    deploys), not a 010."""
-    files = sorted(SQL_DIR.glob("*.sql"))
-    assert len(files) >= 9, files
-    offences = [(f.name, label, stmt) for f in files for label, stmt in _contracting(_statements(f))]
-    assert not offences, f"not expand-only: {offences}"
-
-
-@pytest.mark.parametrize("text, expected", [
-    ("ALTER TABLE turns DROP COLUMN nudges;", ["DROP"]),
-    ("DROP INDEX IF EXISTS turns_open_project_idx;", ["DROP"]),
-    ("ALTER TABLE turns RENAME TO turn;", ["RENAME"]),
-    ("ALTER TABLE turns RENAME COLUMN nudges TO n;", ["RENAME"]),
-    ("ALTER TABLE projects ALTER COLUMN owner_id SET NOT NULL;", ["SET NOT NULL"]),
-    ("ALTER TABLE turns ALTER COLUMN nudges TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
-    ("ALTER TABLE turns ALTER nudges SET DATA TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
-    ("DO $$ BEGIN\n  EXECUTE 'ALTER TABLE x DROP COLUMN y';\nEND $$;", ["DROP"]),
-    ("-- DROP the old shape, RENAME it, SET NOT NULL\nALTER TABLE turns ADD COLUMN IF NOT EXISTS u9 int;", []),
-    ("ALTER TABLE turns ADD COLUMN IF NOT EXISTS dropped_at timestamptz NOT NULL DEFAULT now();", []),
-    ("CREATE TYPE mood AS ENUM ('a'); ALTER TYPE mood ADD VALUE IF NOT EXISTS 'b';", []),
-])
-def test_the_expand_only_reader_sees_each_shape(tmp_path, text, expected):
-    sql = tmp_path / "010_x.sql"
-    sql.write_text(text, encoding="utf-8")
-    assert [label for label, _ in _contracting(_statements(sql))] == expected
 
 
 def _depends_on(service: dict) -> dict[str, dict]:

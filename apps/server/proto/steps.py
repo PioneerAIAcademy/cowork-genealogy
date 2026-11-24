@@ -72,7 +72,7 @@ SELECT t.step,
           AND n.enqueued_at > t.enqueued_at
           -- A turn closed `superseded` never ran: a host reply the retired
           -- automatic chain queued and the researcher displaced, or one closed by
-          -- 020_close_held_auto_replies.sql. Nobody saw it, so it answered no boundary.
+          -- 020_retire_auto_reply.sql. Nobody saw it, so it answered no boundary.
           AND n.outcome IS DISTINCT FROM 'superseded'
         ORDER BY n.enqueued_at
         LIMIT 1

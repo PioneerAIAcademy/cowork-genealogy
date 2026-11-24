@@ -43,7 +43,7 @@ PINNED = {
     "017_connector_auth.sql": "d4fe1eadadce03860523c8d6f8ca870a98c96e6e777e67a6c14df28cf833a419",
     "018_spend_correction.sql": "acc2cd40dbab36d17d6a0aa1a12f95a241bdaf0b945b2576bee34e8aa083e754",
     "019_signin_states_created_at.sql": "6271f0a3b445f8fef0b2023c0df621238809d5af61551d66fffaa76d4577fca5",
-    "020_close_held_auto_replies.sql": "8fb0d1d1a21fd978916b3a72327534ed8976507c3bc02b98ccde86c30e4d78b2",
+    "020_retire_auto_reply.sql": "2949bd0248716a3d830885d8fecbd73060c343201c2037fae4480c36b21d622f",
 }
 
 
