@@ -328,7 +328,7 @@ governance, laws, and regulations.
 - Political boundaries change over time. Records usually stay with the office
   that created them: when a county moves into a new state, its earlier records
   stay in that same county's courthouse, now under the new state. Say which
-  state that courthouse is in today and what kinds of records it keeps (such as
+  state that courthouse is in today and what kinds of records it created (such as
   deeds, probate, court orders and tax lists).
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
