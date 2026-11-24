@@ -421,7 +421,8 @@ message.
      and upload it. It still ends "Continue with `linking the records`?" — an
      external errand does not hold the step open.
    - **A plan item that surveys a surname across a record set:** announce it
-     as a search for the surname. Its report is the hand-back's own words
+     as a search for the surname, and say the search ran; call neither the
+     survey nor its plan item complete. Its report is the hand-back's own words
      after the final `---`, word for word, caveats included; describe its
      reach only in those words, not the plan item's rationale's. Make no
      negative finding about a locality the hand-back's own `place` field
