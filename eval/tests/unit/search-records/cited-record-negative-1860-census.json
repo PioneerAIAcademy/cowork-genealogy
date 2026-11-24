@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_search_records_037",
+    "skill": "search-records",
+    "name": "The subject's attached 1860 census under another surname is found, not logged negative",
+    "type": "positive",
+    "description": "Replays the Phipps feedback session (issue #4667). Execute plan item pli_001: the 1860 census for Benjamin Fairbanks Phipps in Thompson, Windham, Connecticut. The first row returned is ark:/61903/1:1:MHR9-JWT, 'Benj Phillips', which the ranking flags attachedToSubject: true with surnameNotOnSubject: true (candidateSurname Phillips), and which the project tree already cites on the subject as S4. In the session the agent logged the search negative ('Phillips rows not treated as the subject') and reported the household not found. research_log_append now refuses that negative entry, naming the record and S4. The skill must log the search positive or partial and report the Phillips row as the subject's 1860 census household, noting the surname indexing difference.",
+    "tags": [
+      "search",
+      "census",
+      "1860",
+      "attachment-check",
+      "rank-search-matches",
+      "census-search",
+      "direct-arm",
+      "cited-record-not-negative"
+    ]
+  },
+  "input": {
+    "delegation": "Search the 1860 census for Benjamin Fairbanks Phipps in Thompson, Windham, Connecticut per plan item pli_001. We need the 1860 household to identify missing children.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Thompson, Windham, Connecticut\",\n  \"date_range\": \"1860\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1860 census household lists the children at home between the 1850 and 1870 enumerations.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Benjamin Fairbanks\",\n      \"surname\": \"Phipps\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"30 January 1816\",\n    \"place\": \"Thompson, Windham, Connecticut, United States\"\n  },\n  \"death\": {\n    \"date\": \"16 August 1893\",\n    \"place\": \"Thompson, Windham, Connecticut, United States\"\n  }\n}",
+    "scenario": "phipps-1860-cited-census"
+  },
+  "mcp_fixtures": [
+    "record-search-1860-census-phipps",
+    "record-search-catch-all-empty",
+    "rank-search-matches-phipps-1860",
+    "record-read-benj-phillips-mhr9-jwt",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked`.",
+    "The first row, ark:/61903/1:1:MHR9-JWT 'Benj Phillips' in Thompson, 1860, is attachedToSubject: true: it is already attached to this person in Family Tree, and the project tree cites it on I1 as S4. Its indexed surname differs from Phipps (surnameNotOnSubject). The harm this test guards against is the record being left out and the household reported as not found.",
+    "PASS line for Correctness and Completeness: the final reply reports the Benj Phillips 1860 household (MHR9-JWT) as the record the family tree already cites or links for the subject, and notes that the surname is indexed as Phillips. Calling the identification not yet confirmed, or recommending the page image or another record be checked before children are extracted, is acceptable caution and does NOT lower the score. Saying no record was found 'under the name Phipps' is acceptable when the same reply then reports the Phillips household as the tree-cited match.",
+    "FAIL line: the reply says the subject's 1860 household could not be found or located, or that no record gives the household, or it does not mention the Phillips record at all. A final log entry of 'negative' for the search that returned MHR9-JWT is also a failure.",
+    "research_log_append refuses a negative record_search entry whose rows include a record the tree cites on the subject. If the skill first tries 'negative' and is refused, then logs a corrected outcome and reports the record, that is acceptable: score the final log entry and the reply, not the refused attempt.",
+    "Reading MHR9-JWT with record_read before reporting is sound practice and optional; do not score either path down.",
+    "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything."
+  ],
+  "judge_reads_files": true
+}
