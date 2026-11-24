@@ -320,6 +320,10 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+A `framed` question's `nextStep` is `research-plan`, or `locality-guide, then
+research-plan` while the project has no `localities` entry at all (issue #4791: the plan
+step opens with the locality survey).
+
 `critiqued` is reached only when the user asked for a gps-mentor review — the
 mentor is not on the default `/research` path — so it records that a critique
 exists and gates nothing. A superseded verdict does not count — a

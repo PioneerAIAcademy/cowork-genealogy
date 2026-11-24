@@ -848,9 +848,9 @@ def load_caps(caps_raw: dict[str, Any]) -> FixtureCaps:
 # A fixture may bundle external-evidence captures (PDFs the real /research
 # flow expects a USER to upload from sites with no API — Ancestry, Find A
 # Grave, …). A headless run has no human, so the harness pre-provides them:
-# the docs live in `provided-documents/` and are copied into the workspace
-# root, exactly where search-external-sites expects an uploaded capture
-# (it reads them by `capture_filename`). See spec §6.2.
+# the docs live in `provided-documents/` and are copied into the workspace's
+# `uploads/`, exactly where search-external-sites and record-structurer read an
+# uploaded capture (`uploads/<name>`). See spec §6.2.
 PROVIDED_DOCS_DIRNAME = "provided-documents"
 
 
@@ -931,10 +931,13 @@ def build_workspace(
                     encoding="utf-8",
                 )
 
-    # Drop bundled captures into the workspace root, where an uploaded PDF
-    # would land — the agent reads them by filename like a user upload.
-    for doc in provided_documents(fixture):
-        shutil.copy(doc, target / doc.name)
+    # Drop bundled captures into `uploads/`, where an uploaded file lands and
+    # the only place the agents' read tools reach.
+    docs = provided_documents(fixture)
+    if docs:
+        (target / "uploads").mkdir(exist_ok=True)
+    for doc in docs:
+        shutil.copy(doc, target / "uploads" / doc.name)
     return target
 
 
@@ -949,10 +952,10 @@ def _render_user_message(fixture: Fixture) -> str:
     docs = provided_documents(fixture)
     if not docs:
         return base
-    names = ", ".join(d.name for d in docs)
+    names = ", ".join(f"uploads/{d.name}" for d in docs)
     return (
         f"{base}\n\n"
-        f"(Pre-provided external captures are in the working directory: {names}. "
+        f"(Pre-provided external captures are in the project's uploads folder: {names}. "
         "When research calls for a document from an external site that's among "
         "these, read the local file instead of asking me to upload it.)"
     )

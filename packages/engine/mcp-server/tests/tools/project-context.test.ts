@@ -1608,7 +1608,7 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
 
   it("carries no searches when the next step is not a search", async () => {
     const row = await contextFor([]);
-    expect(row.nextStep).toBe("research-plan");
+    expect(row.nextStep).toBe("locality-guide, then research-plan");
     expect(row.searches).toBeUndefined();
   });
 });

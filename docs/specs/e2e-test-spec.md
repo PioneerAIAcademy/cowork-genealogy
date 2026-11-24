@@ -1377,10 +1377,11 @@ So a fixture may **bundle** the captures it needs:
 
 - Place them in `eval/tests/e2e/<slug>/provided-documents/` (e.g.
   `findagrave-quass.pdf`).
-- The harness copies each into the **workspace root** — exactly where an
-  uploaded capture lands — and names them in the user message so the
-  agent reads the local file instead of pausing to ask for an upload.
-- The agent uses its ordinary `Read` tool. No new MCP tool, no live
+- The harness copies each into the workspace's **`uploads/`** — exactly where an
+  uploaded capture lands — and names them (`uploads/<name>`) in the user message
+  so the agent reads the file instead of pausing to ask for an upload.
+- The agent reads it as it reads any upload (`sidecar_read` or
+  `image_transcribe` with `file: "uploads/<name>"`). No new MCP tool, no live
   network; the harness simply plays the role of the user who provides
   the documents.
 

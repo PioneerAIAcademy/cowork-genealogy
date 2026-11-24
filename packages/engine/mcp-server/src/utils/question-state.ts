@@ -973,7 +973,11 @@ export function questionStatus(
     // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
-    nextStep = "research-plan";
+    // A project with no localities entry at all has surveyed no place, so the plan
+    // step opens with locality-guide (issue #4791, stop 3). Whether an entry covers
+    // this question's own place is research-plan's to judge, and it hands back.
+    const surveyed = Array.isArray(research?.localities) && research.localities.length > 0;
+    nextStep = surveyed ? "research-plan" : "locality-guide, then research-plan";
   } else if (state === "evidence-gathered") {
     // Not preempted by an uncited positive/partial entry: agents log
     // inconclusive searches as `partial` and link lists as `positive`, and those
