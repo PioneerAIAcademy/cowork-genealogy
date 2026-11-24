@@ -1,0 +1,212 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Iram F.",
+          "surname": "Hyde"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1797",
+          "place": "New Hampshire, United States",
+          "standard_place": "New Hampshire, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S1"
+            },
+            {
+              "quality": 2,
+              "ref": "S2"
+            },
+            {
+              "quality": 2,
+              "ref": "S4"
+            },
+            {
+              "quality": 2,
+              "ref": "S5"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1873-09-03",
+          "place": "Wolcott, Princeton Township, White, Indiana, United States",
+          "standard_place": "Wolcott, Princeton Township, White, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jackson, Washington, New York, United States",
+          "standard_place": "Jackson, Washington, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1855",
+          "place": "Jackson, Washington, New York, United States",
+          "standard_place": "Jackson, Washington, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Jackson, Washington, New York, United States",
+          "standard_place": "Jackson, Washington, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1870",
+          "place": "West Point Township, White, Indiana, United States",
+          "standard_place": "West Point Township, White, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Mary",
+          "preferred": true,
+          "surname": "Robertson",
+          "id": "N2"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "date": "~1796",
+          "place": "New York, United States",
+          "sources": [
+            {
+              "quality": 2,
+              "ref": "S2"
+            }
+          ],
+          "type": "Birth",
+          "id": "F7",
+          "standard_place": "New, Chuuk, Federated States of Micronesia"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Margaret E.",
+          "preferred": true,
+          "surname": "Hyde",
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    }
+  ],
+  "relationships": [
+    {
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "quality": 3,
+          "ref": "S6"
+        }
+      ],
+      "type": "Couple",
+      "id": "R1"
+    },
+    {
+      "child": "I3",
+      "parent": "I1",
+      "sources": [
+        {
+          "quality": 2,
+          "ref": "S8"
+        }
+      ],
+      "type": "ParentChild",
+      "id": "R2"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
+      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
+      "author": "FamilySearch community contributors",
+      "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
+    },
+    {
+      "title": "1850 U.S. census, Jackson, Washington Co., New York, household of Iram Hyde",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZM9-GG4",
+      "id": "S2"
+    },
+    {
+      "title": "1855 New York state census, Jackson, Washington Co., household of Hiram Hide",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:K63S-P69",
+      "id": "S3"
+    },
+    {
+      "title": "1860 U.S. census, Jackson, Washington Co., New York, household of Isaac [Iram] Hyde",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MCQZ-FKJ",
+      "id": "S4"
+    },
+    {
+      "title": "1870 U.S. census, West Point Twp., White Co., Indiana, household of Oliver Wilson",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MX6L-K5Z",
+      "id": "S5"
+    },
+    {
+      "title": "Washington Co., NY, mortgage, Iram & Mary Hyde of Jackson to McNeil & McNaughton, 18 Mar 1826",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WC-F61H",
+      "id": "S6"
+    },
+    {
+      "title": "1880 U.S. census, Mina, Chautauqua Co., New York, household of Iil Clark (Margret Clark, line 46)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZZC-8WS",
+      "id": "S8"
+    }
+  ]
+}

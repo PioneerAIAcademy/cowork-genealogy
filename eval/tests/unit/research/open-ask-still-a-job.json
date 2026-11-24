@@ -74,5 +74,8 @@
     "Do not penalise the reply for not naming a deliverable. The failure this test exists to catch is treating an open ask as a bounded one — ending with a deliverable instead of entering the routing table. Ending after the FIRST step of that table, with its offer line, is correct.",
     "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

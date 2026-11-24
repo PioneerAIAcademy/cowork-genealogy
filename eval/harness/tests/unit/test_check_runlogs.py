@@ -3211,6 +3211,26 @@ def test_rule2c_only_warns_on_a_change_outside_the_suite_validator(monkeypatch, 
     assert "::error" not in out
 
 
+def test_rule2c_warns_when_the_log_ran_another_main_thread_model(monkeypatch, capsys):
+    """The main thread's model is not in the snapshot, so a move to a new one would
+    leave every suite graded on the old dispatcher with nothing said."""
+    _stub_current_instrument(monkeypatch, _instr())
+    current = check_runlogs.load_main_thread().model
+    log = {"snapshot": {}, "instrument": _instr(), "model": f"{current}-older"}
+    rc = check_runlogs.rule2c_instrument("demo", log, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "the main thread" in out and f"{current}-older" in out
+    assert "::error" not in out
+
+
+def test_rule2c_says_nothing_when_the_log_ran_the_current_main_thread_model(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr())
+    log = {"snapshot": {}, "instrument": _instr(), "model": check_runlogs.load_main_thread().model}
+    assert check_runlogs.rule2c_instrument("demo", log, "v1.json") == 0
+    assert capsys.readouterr().out == ""
+
+
 def test_rule2c_warns_and_passes_on_a_log_with_no_instrument(monkeypatch, capsys):
     monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: pytest.fail("catalog read for nothing"))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}}, "v1.json")
@@ -3356,6 +3376,7 @@ def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed
         (["eval/harness/harness/mock_mcp.py"], {"demo", "convert-dates"}),
         (["packages/engine/mcp-server/src/tool-schemas.ts"], {"demo", "convert-dates"}),
         (["packages/engine/mcp-server/package-lock.json"], {"demo", "convert-dates"}),
+        (["packages/engine/plugin/main-thread.json"], {"demo", "convert-dates"}),
         (["eval/harness/validators/test_convert_dates.py"], {"convert-dates"}),
         (["eval/harness/validators/test_no_such_suite.py"], set()),
         (["eval/harness/e2e/orchestrator.py"], set()),
@@ -3364,7 +3385,7 @@ def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed
     ],
     ids=[
         "shared-universal", "shared-lib", "instrument-module", "mock-mcp", "engine-src",
-        "engine-lockfile", "suite-validator", "unknown-suite", "e2e", "engine-tests", "docs",
+        "engine-lockfile", "main-thread", "suite-validator", "unknown-suite", "e2e", "engine-tests", "docs",
     ],
 )
 def test_instrument_touched_suites(paths, expected, monkeypatch):

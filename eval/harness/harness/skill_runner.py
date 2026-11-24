@@ -53,6 +53,8 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    builtin_spawn_denial,
+    relay_note_context,
     sources_note_hook,
     owned_section_denial,
     owner_denied,
@@ -60,11 +62,17 @@ from harness.context_policy import (
     subagent_only_denial,
     subagent_only_violation,
 )
-from harness.delegation import foreground_rewrite
+from harness.delegation import foreground_rewrite, keeping_the_rewrite, without_plugin_prefix
 from harness.main_thread import MAIN_THREAD
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
-from harness.skill_stubs import stub_denial
+from harness.skill_stubs import (
+    fill_stub_fields,
+    stub_denial,
+    stub_return_output,
+    stub_return_text,
+    stub_spawn_rewrite,
+)
 
 
 _STEP_BOUNDARY = (
@@ -502,10 +510,10 @@ def judge_skills_slot(
     return out + remaining
 
 
-def spawn_stub_denial(
+def spawn_stub_text(
     tool_name: str, input_data: dict[str, Any], stub_agents: dict[str, str | None]
-) -> dict[str, Any] | None:
-    """The stub denial for a main-thread spawn of a stubbed agent, else None.
+) -> str | None:
+    """What a main-thread spawn of a stubbed agent hands back, else None.
 
     The spawn-side twin of the `Skill`-call stub in `run_skill`'s hook: once a
     stubbed callee is converted to an agent the router spawns it, and without
@@ -517,33 +525,33 @@ def spawn_stub_denial(
     name = (input_data.get("tool_input") or {}).get("subagent_type")
     if name not in stub_agents:
         return None
-    return stub_denial(name, stub_agents[name])
+    return stub_return_text(stub_agents[name])
 
 
-def default_spawn_denial(
+def default_spawn_stub_text(
     tool_name: str,
     input_data: dict[str, Any],
     live_agents: set[str] | None,
     stub_skills: dict[str, str | None],
-) -> dict[str, Any] | None:
-    """The stub denial for a main-thread spawn of any agent not in `live_agents`.
+) -> str | None:
+    """What a main-thread spawn of any agent not in `live_agents` hands back.
 
     Deny-by-default (#3568): the orchestrator passes the suite's own agent plus
     the test's `execution.run_agents`, and every other spawn — a built-in type
-    such as `general-purpose` included — is denied, so an agent no test opts in
+    such as `general-purpose` included — is stubbed, so an agent no test opts in
     never runs and its body cannot change the result. A spawn with no
     `subagent_type` is a general-purpose spawn and is named so. A name the test
     also lists in `stub_skills` (a skill-and-agent name) keeps its canned text.
-    `live_agents=None` (callers outside the unit orchestrator) denies nothing.
+    `live_agents=None` (callers outside the unit orchestrator) stubs nothing.
     The hook reaches this only after the routing short-circuit, `stop_at_stub`
-    and explicit `spawn_stub_denial` branches have passed on the spawn.
+    and explicit `spawn_stub_text` branches have passed on the spawn.
     """
     if live_agents is None or tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
         return None
     name = (input_data.get("tool_input") or {}).get("subagent_type") or "general-purpose"
     if name in live_agents:
         return None
-    return stub_denial(name, stub_skills.get(name))
+    return stub_return_text(stub_skills.get(name))
 
 
 def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
@@ -1110,11 +1118,12 @@ async def run_skill(
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
     # The same stub for a callee converted to an agent: a main-thread spawn of
-    # one of these names is denied and continued the same way (issue #2825).
+    # one of these names never runs the callee, and the caller gets the canned
+    # text back as the agent's return (issue #2825; skill_stubs.py).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
     # Deny-by-default (#3568): the agents a main-thread spawn may reach for real.
-    # Any other spawn is denied after the branches above (`default_spawn_denial`).
+    # Any other spawn is stubbed after the branches above (`default_spawn_stub_text`).
     # None = deny nothing (callers outside the unit orchestrator).
     _live_agents = set(live_agents) if live_agents is not None else None
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
@@ -1182,7 +1191,30 @@ async def run_skill(
     _spawn_ids: dict[str, str] = {}
     agent_returns: list[dict[str, Any]] = []
 
+    # tool_use_id -> the text a stubbed spawn hands back (`posttool_hook`).
+    _stub_returns: dict[str, str] = {}
+
+    async def posttool_hook(input_data, tool_use_id, ctx):
+        text = _stub_returns.pop(tool_use_id, None)
+        out = (
+            stub_return_output(input_data.get("tool_response"), text, str(tool_use_id))
+            if text is not None
+            else {}
+        )
+        # The relay note a hosted plane adds to every main-thread agent return.
+        if (note := relay_note_context(input_data)) is not None:
+            out.setdefault("hookSpecificOutput", {"hookEventName": "PostToolUse"})["additionalContext"] = note
+        return out
+
     async def pretool_hook(input_data, tool_use_id, ctx):
+        # A `plugin:` on a spawn is dropped first, as the hosted planes'
+        # `foreground_rewrite` drops it, so every check below sees that agent.
+        fixed = without_plugin_prefix(input_data)
+        if fixed is None:
+            return await _pretool(input_data, tool_use_id, ctx)
+        return keeping_the_rewrite(await _pretool(fixed, tool_use_id, ctx), fixed["tool_input"])
+
+    async def _pretool(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
         # Telemetry only — never gates, denies, or counts toward any limit.
         if (builtin_record := builtin_call_record(tool_name, input_data)):
@@ -1304,12 +1336,24 @@ async def run_skill(
         ):
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
-        elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
-            return denial
-        elif (denial := default_spawn_denial(tool_name, input_data, _live_agents, _stub_skills)):
+        elif (builtin_denial := builtin_spawn_denial(input_data)) is not None:
+            # The shipped hook's deny of a built-in agent type on the main thread,
+            # before any stub: production never runs one in a plugin agent's place.
+            return builtin_denial
+        elif (
+            (stub_text := spawn_stub_text(tool_name, input_data, _stub_agents)) is not None
             # Last on purpose: the short-circuit, the stop and an explicit stub's
             # canned text all win over the default (#3568).
-            return denial
+            or (
+                stub_text := default_spawn_stub_text(
+                    tool_name, input_data, _live_agents, _stub_skills
+                )
+            ) is not None
+        ):
+            # The callee never runs: a no-op agent does, and `posttool_hook`
+            # hands its caller `stub_text` as that agent's return (skill_stubs.py).
+            _stub_returns[tool_use_id] = fill_stub_fields(stub_text, input_data.get("tool_input"))
+            return stub_spawn_rewrite(input_data.get("tool_input"))
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read and the shipped hook's
         # AGENT_ONLY_TOOLS; `extraction_append` left the set in issue #2937) on
@@ -1447,6 +1491,7 @@ async def run_skill(
         env=env_for_sdk(auth, tool_search=tool_search),
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[posttool_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
             "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
         },

@@ -42,5 +42,8 @@
     "`@plugin:question-selection` is STUBBED: it changes nothing, so no new question appears in the project and that is not a failure. Grade the router's own reply: that it says it is setting up the parentage question, and does not re-offer the same step or call the research complete.",
     "Re-offering \"Continue with setting up the project?\" without running it, or heading for the completion write, is the failure."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }
