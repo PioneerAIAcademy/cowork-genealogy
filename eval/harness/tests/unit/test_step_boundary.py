@@ -130,13 +130,60 @@ def test_a_turn_init_project_opens_is_grouped_by_the_step_after_it():
     assert sb.step_allowed(["init-project", "search-hints"], "search-records") is False
 
 
-def test_a_job_after_init_project_keeps_the_setup_chain():
-    assert sb.step_allowed(["init-project"], "question-selection") is True
-    assert sb.step_allowed(["init-project", "question-selection"], "locality-guide") is True
-    assert sb.step_allowed(["init-project", "question-selection"], "research-plan") is False
-    # The bounded locality deliverable fixes `setup` too, so question-selection
-    # may follow it: only the router's prose keeps it out of a bounded turn.
-    assert sb.step_allowed(["init-project", "locality-guide"], "question-selection") is True
+def test_a_job_stops_after_init_project():
+    """Stop 1: a turn init-project opens never chooses or plans the question."""
+    assert sb.step_allowed(["init-project"], "question-selection") is False
+    assert sb.step_allowed(["init-project"], "research-plan") is False
+    # The bounded deliverables still run in the turn that created the project.
+    assert sb.step_allowed(["init-project"], "search-records") is True
+    assert sb.step_allowed(["init-project"], "locality-guide") is True
+
+
+def test_a_bounded_locality_turn_admits_nothing_further():
+    """locality-guide's home group is `plan`, which would admit research-plan."""
+    assert sb.step_allowed(["init-project", "locality-guide"], "research-plan") is False
+    assert sb.step_allowed(["init-project", "locality-guide"], "question-selection") is False
+    assert sb.step_allowed(["init-project", "locality-guide"], "locality-guide") is True
+
+
+def test_a_denial_after_init_project_offers_choosing_the_question():
+    for candidate in ("research-plan", "question-selection", "person-evidence"):
+        reason = sb.deny_reason(candidate, "step", ["init-project"])
+        assert "choosing the question" in reason, candidate
+        assert sb.offered_step(reason) == "question", candidate
+    late = sb.deny_reason("research-plan", "step", ["init-project", "locality-guide"])
+    assert sb.offered_step(late) == "question"
+    # Once a bounded step fixed the group, an out-of-group step offers itself.
+    assert sb.offered_step(
+        sb.deny_reason("person-evidence", "step", ["init-project", "search-records"])
+    ) == "link"
+
+
+def test_choosing_the_question_is_its_own_step():
+    """Stop 2: question-selection ends its turn before any plan."""
+    assert sb.home_group("question-selection") == "question"
+    assert sb.step_allowed(["question-selection"], "locality-guide") is False
+    assert sb.step_allowed(["question-selection"], "research-plan") is False
+    assert sb.offered_step(sb.deny_reason("research-plan", "step", ["question-selection"])) == "plan"
+
+
+def test_a_verify_turn_admits_the_question_but_no_plan():
+    """forget-and-rederive in verify mode, then the question, in one turn."""
+    opened = ["forget-and-rederive"]
+    assert sb.step_allowed(opened, "question-selection") is True
+    assert sb.step_allowed(opened, "locality-guide") is False
+    assert sb.step_allowed(opened, "research-plan") is False
+    # A practice run keeps its chain.
+    assert sb.step_allowed(opened, "init-project") is True
+    assert sb.step_allowed(opened, "record-structurer") is True
+    assert sb.home_group("forget-and-rederive") == "forget"
+
+
+def test_planning_the_searches_runs_locality_guide_then_research_plan():
+    """Stop 3: an unsurveyed place is surveyed inside the plan step."""
+    assert sb.home_group("locality-guide") == "plan"
+    assert sb.step_allowed(["locality-guide"], "research-plan") is True
+    assert sb.step_allowed(["locality-guide", "research-plan"], "search-records") is False
 
 
 def test_after_init_project_a_spawn_that_is_no_step_is_still_denied():
@@ -428,8 +475,11 @@ def test_no_wrap_it_up_beside_a_proof_conclusion_offer():
 
 
 def test_no_wrap_it_up_beside_a_question_selection_offer():
-    """The offer after a wrap-up, where the question may be one a conflict held open."""
+    """The offer after setup or a wrap-up, where the question may be one a conflict
+    held open."""
     assert sb.REPLY_WRAP_UP not in sb.reply_options("question-selection", _with_question())
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("question", _with_question())
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("setup", _with_question())
 
 
 def test_only_wrap_it_up_for_a_wrap_up_offer():
@@ -568,7 +618,7 @@ def test_a_wrap_up_that_has_concluded_names_the_next_step_not_wrapping_up():
     under_way = sb.deny_reason("question-selection", "wrapup", ["research-plan"])
     assert "wrapping up" in under_way
     done = sb.deny_reason("question-selection", "wrapup", ["research-plan", "proof-conclusion"])
-    assert "wrapping up" not in done and sb.STEP_LABELS["setup"] in done
+    assert "wrapping up" not in done and sb.STEP_LABELS["question"] in done
 
 
 # ---------------------------------------------------------------------------

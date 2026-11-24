@@ -35,7 +35,8 @@ ROUTER = "research"
 # (`eval/harness/tests/unit/test_step_boundary.py`) fails when one is in none, so a new agent cannot ship without a decision about what may
 # follow it in a turn.
 GROUPS: dict[str, tuple[str, ...]] = {
-    "setup": ("init-project", "question-selection", "locality-guide"),
+    "setup": ("init-project",),
+    "question": ("question-selection",),
     "plan": ("research-plan", "locality-guide"),
     "search": (
         "search-records",
@@ -49,7 +50,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "hypothesis": ("hypothesis-tracking",),
     "assess": ("research-exhaustiveness", "research-plan"),
     "conclude": ("proof-conclusion",),
-    "forget": ("forget-and-rederive", "init-project", "record-structurer"),
+    "forget": ("forget-and-rederive", "init-project", "record-structurer", "question-selection"),
 }
 
 # One member each: every other agent the router can spawn. A turn one of these
@@ -84,8 +85,12 @@ del _solo
 
 # A turn this step opens is grouped by the step AFTER it (spec section H): project
 # creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
-# and a job its question in the turn that created the project.
+# in the turn that created the project.
 UNGROUPED_OPENER = "init-project"
+
+# Never in a turn `UNGROUPED_OPENER` opened, at any point: a job stops after setup,
+# so the researcher can say what to verify before a question is chosen or planned.
+_NOT_AFTER_SETUP = frozenset({"question-selection", "research-plan"})
 
 # A step that OPENS a turn uses its home group. The overlaps above only admit a
 # follower -- they never change what a step means when it comes first. So a turn
@@ -93,8 +98,9 @@ UNGROUPED_OPENER = "init-project"
 # assess step, and a turn opened by record-structurer is a search step.
 HOME_GROUP: dict[str, str] = {
     "research-plan": "plan",
-    "locality-guide": "setup",
+    "locality-guide": "plan",
     "init-project": "setup",
+    "question-selection": "question",
     "record-structurer": "search",
 }
 
@@ -118,6 +124,7 @@ WRAPUP_ORDER: tuple[str, ...] = (
 # plan, search and link.
 STEP_LABELS: dict[str, str] = {
     "setup": "setting up the project",
+    "question": "choosing the question",
     "plan": "planning the searches",
     "search": "running the searches",
     "link": "linking the records",
@@ -247,6 +254,8 @@ def step_allowed(
     if name in steps:
         # A step may always repeat itself: the search step fans out.
         return True
+    if steps[0] == UNGROUPED_OPENER and name in _NOT_AFTER_SETUP:
+        return False
 
     opener = opening_step(steps)
     if opener is None:
@@ -275,12 +284,17 @@ def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = No
     up" there would re-run a wrap-up on a question already concluded.
 
     A record-structurer stopped in a turn a search-hit review opened names the
-    extraction that review offers, not "running the searches".
+    extraction that review offers, not "running the searches". A step stopped in a
+    turn init-project opened offers choosing the question, the step a job takes
+    next, when init-project ran alone or the step was one that turn never admits.
     """
     name = bare_name(candidate)
     taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
     done = "proof-conclusion" in taken
     key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
+    if mode != "wrapup" and taken[:1] == [UNGROUPED_OPENER] \
+            and (opening_step(taken) is None or name in _NOT_AFTER_SETUP):
+        key = "question"
     if mode != "wrapup" and name == "record-structurer" \
             and opening_step(taken) == "evaluate-search-results":
         key = "extract-matches"
@@ -501,9 +515,9 @@ def reply_options(offered_step, research: dict | None = None) -> list[str]:
     options = [REPLY_CONTINUE]
 
     # Not beside proof-conclusion (Continue already concludes), and not beside
-    # question-selection (the offer after a wrap-up, where the current question
-    # may be one a conflict held open).
-    if question is not None and offer not in ("conclude", "setup"):
+    # question-selection (the offer after setup or a wrap-up, where the current
+    # question may be one a conflict held open).
+    if question is not None and offer not in ("conclude", "setup", "question"):
         options.append(REPLY_WRAP_UP)
     if offer == "conclude" and _is_low_risk_choice(question, research):
         options.append(REPLY_SEARCH_MORE)

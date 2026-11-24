@@ -1,8 +1,9 @@
 ---
 name: forget-and-rederive
-description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct), to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
+description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct) — except in verify mode, invoked by the research router —, to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
 allowed-tools:
   - project_context
+  - tree_query
   - tree_forget
 ---
 
@@ -53,6 +54,35 @@ This is a **project-start** exercise. `tree_forget` refuses the call once
 `research.json` holds any plan — the project has moved past setup. If the
 researcher asks to forget mid-project, tell them to start a new project seeded
 from the same FamilySearch person.
+
+## Verify mode
+
+The research router invokes this skill with `mode: verify` and the researcher's
+reply verbatim, when the reply asks to verify a relationship or fact of the
+subject or names a fact or source as wrong. The project is left as if the tree
+never held it, and the research rebuilds it from records. Only the router uses
+this mode.
+
+1. Map the reply to selectors on the subject (`project_context`'s
+   `subjectPersonIds`): parents → `parents-of`; spouse → `spouses-of`; birth →
+   `birth-of`; death → `death-of`; another named fact → `facts-of` with its
+   `factType`; a named source → `source` with its S id. To match a source the
+   reply names by title, call `tree_query({ projectPath, personIds: [<subject>],
+   includeSources: true })`. Step 1's bans on `tree_query` and on looking a
+   source id up are the practice run's only.
+2. One call, with no dry run: the reply is the researcher's agreement.
+   `tree_forget({ projectPath, forget: [ … ], cleanSlate: true })`.
+3. Report the tool's counts only: persons removed (the parents and everyone
+   reachable only through them), relationships, facts and sources removed, and
+   `sourcesKept`, the sources kept because the project already holds them. A
+   kept source is one of the researcher's transcribed memories: say it stays in
+   the project and that their doubt goes to the research question. Then one
+   line: undoing this means a new project from the same person ID.
+4. The second half below holds: do not look the removed people up again.
+5. Return to the router. Step 4 is the router's, so spawn nothing.
+
+On `{ ok: false, errors }`, nothing was written: Step 3's error notes apply.
+Relay the error and stop.
 
 ## The two halves — both are required
 

@@ -1560,7 +1560,7 @@ def test_bounded_plan_first_message_stops_after_init_project(
 ):
     """Tag-gated (``bounded-plan-after-init``). A bounded research-plan ask with a
     PID and no project runs init-project and nothing else, then ends on "Continue
-    with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
+    with `choosing the question`?" (issue #2813, lead 2026-11-10): the researcher
     confirms the question before anything is planned, because question-selection
     is where feedback #4237 drifted. The project exists with no question or plan.
     Unlike the record ask, the reply may keep init-project's next-step sentence:
@@ -1584,8 +1584,8 @@ def test_bounded_plan_first_message_stops_after_init_project(
     assert not written, f"the turn that created the project wrote {written}"
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
     offered = load_step_boundary().offered_step(text_response)
-    assert offered == "setup", (
-        f"the reply must end on \"Continue with `setting up the project`?\"; "
+    assert offered == "question", (
+        f"the reply must end on \"Continue with `choosing the question`?\"; "
         f"it offers {offered!r}: {lines[-1:]}"
     )
 

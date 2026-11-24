@@ -57,7 +57,7 @@ Asking a question and then stopping to wait is a failure: the project never gets
 
 ## Holdings the researcher mentions
 
-Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them. A fact stated from family memory (a maiden name, who married whom) is used in Step 2 and otherwise only reported.
+Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them: the research router asks what the researcher holds after your report. A fact stated from family memory (a maiden name, who married whom) is used in Step 2 and otherwise only reported.
 
 ## Setting up a forget-and-rederive test
 
@@ -128,10 +128,11 @@ One `research_append` after Step 2, only when there is something to write.
 
 ### 4. Report the import
 
-Report what the import did, and nothing else. You do not review the tree: no gaps, errors, research targets or advice.
+Report what the import did, the subject's vitals and relatives, and nothing else. You do not review the tree: no gaps, errors, research targets or advice.
 
 **Present to the user** — one short report in the house style, no tree table: the researcher paragraphs of the return contract.
 - That the project was created for the subject, and how many people were imported
+- The subject's birth and death as the tree gives them (`subject.birth`, `subject.death`; say "not given" for one that is absent), and each relative in `relatives` by name and relationship
 - The objective as stored, in one sentence; when it was defaulted, the sentence from "Opening turn" step 2, exactly
 - Any discrepancy between what the user stated and the tree, and any person not added because the tree already holds someone in that place
 - Items the researcher says they hold, named — not recorded (if any)
@@ -140,8 +141,8 @@ Report what the import did, and nothing else. You do not review the tree: no gap
 - If the summary carries `notes`, one sentence from them in plain words — "FamilySearch lists a parent for him but gives no record for that person, so they are not in the tree" — never the count or the field name
 - One sentence on what comes next, defining "objective" and "research
   question" on first use: "Your objective is the overall goal — <restate it>.
-  The next step is the first research question: the single fact we go after
-  first."
+  The next step is choosing the first research question: the single fact we go
+  after first."
 
 ## Example
 
@@ -150,7 +151,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 1. `project_context` → no project here.
 2. `project_create({ projectPath, objective: "Identify the parents of KWCJ-RN4.", title: "KWCJ-RN4's parents", personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn, stored as "Identify the parents of Patrick Flynn."; a spouse and two children; no parents.
 3. No stubs: the user named no one. No subscriptions: nothing to write.
-4. Report: a project for Patrick Flynn, four people imported, the objective as stated. No review of the tree.
+4. Report: a project for Patrick Flynn, four people imported, his birth and death as the tree gives them, his wife and two children by name, the objective as stated. No review of the tree.
 
 ## Important rules
 
