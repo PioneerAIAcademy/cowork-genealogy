@@ -4,18 +4,27 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — researching German ancestors",
     "type": "positive",
-    "description": "User asks how to research German ancestors, with NO project (scenario null, no projectPath). research_log_append answers reason no_project, so the agent logs nothing and returns the filled template above the `---` line instead. Tests the country/region how-to path listed in the agent description and the no-project path.",
-    "tags": ["fs-wiki", "how-to", "germany", "country-research", "no-project", "direct-arm"]
+    "description": "User asks how to research German ancestors, in a project with no person. The agent logs the filled template in one research_log_append entry and returns the one line. Tests the country/region how-to path listed in the agent description.",
+    "tags": [
+      "fs-wiki",
+      "how-to",
+      "germany",
+      "country-research",
+      "person-less-project",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Search the FamilySearch wiki for how to research my German ancestors",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to research my German ancestors\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
-  "mcp_fixtures": ["wiki-search-german-ancestors"],
+  "mcp_fixtures": [
+    "wiki-search-german-ancestors"
+  ],
   "judge_context": [
     "Should call wiki_search with a natural-language query about researching German ancestors",
     "Summary should cover what records exist for Germany and how to find them on FamilySearch",
     "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
-    "There is no research project here, so `(no file changes)` is correct: the agent's return carries the filled template (summary plus Sources) above the `---` line instead of logging it. Grade the summary and Sources from that return. Its presence is checked by test_no_project_returns_template, not by you."
+    "The agent logs its guidance in one research_log_append entry; grade the summary and Sources from that entry."
   ]
 }

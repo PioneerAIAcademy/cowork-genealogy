@@ -24,6 +24,14 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(autouse=True)
+def _project_gate_off(monkeypatch):
+    """These tests exercise one handler's own behaviour; the project gate has its own tests (test_mock_mcp.py)."""
+    import harness.mock_mcp as _mock
+
+    monkeypatch.setattr(_mock, "PROJECT_GATE_ENABLED", False)
+
+
 def _survey(tmp_path, args):
     for name in ("research.json", "tree.gedcomx.json"):
         if (_SCENARIO / name).exists():

@@ -297,6 +297,21 @@ tree_edit({
     biological father" leaves a Step edge free. Only proof-conclusion can revise
     the claim, which lifts it. It refuses at once, with no warn mode: no
     disproved claim existed before Stage 1b.
+- **Synthetic warnings that fire without claims** (Decisions 7 and 32 of `docs/plan/conclusion-tree.md`), justified through the warning gate like any
+  introduced warning:
+  - `removeImport|<holder>|<factId>` or `removeImport|<relationshipId>` — a `remove`
+    that drops a fact or edge the import baseline (Decision 7, built on the
+    pre-call tree from `starting-tree.gedcomx.json`) reads as an import, which no
+    live `disproved` claim covers. With no starting tree, a ref-less object reads as
+    an import too, and the message says so. A fact that leaves with its removed
+    Couple edge is that edge's to answer only when the edge itself warns or a
+    disproof covers it; on any other removed edge its facts are judged on their own.
+    A fact edited in place stops matching the baseline, so editing an import and
+    then removing it warns on neither write (Stage 1b warns on removals and retypes,
+    not edits).
+  - `retypeUnclaimed|<relationshipId>|<subtype>` — an `update_relationship` to a
+    subtype no live affirmed claim covering the edge names (untyped and
+    Biological agreeing: an untyped claim names Biological).
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
@@ -904,7 +919,7 @@ Sequence (validate-before-persist, tree-only):
 | FamilySearch standardized a fact's place text differently on the record personas it is about | leave `standard_place` unset, look nothing up, and add a warning naming the values (§4.1.1) |
 | A supplied `standard_place` on a fact with no place, naming another country, its place text does not confirm, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
 | `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
-| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 | Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
 

@@ -1,0 +1,25 @@
+{
+  "id": "project-before-read-stephen-mcelwee",
+  "message": "Stephen McElwee KHCM-61R has 5 children listed on his FS profile. Eliza is born about when he dies. Does she belong?",
+  "expected_owner": "init-project",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "source_evaluation"
+    }
+  ],
+  "required_tools": [
+    "project_context",
+    "project_create"
+  ],
+  "must_not": "No person_read, record_read or other read before a project exists: project_create (through init-project) comes first, and source-evaluation is never spawned with no projectPath",
+  "caps": {
+    "wall_clock_seconds": 1800,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}
