@@ -22,6 +22,7 @@ import { sourceScreenTool, type SourceScreenOptions, flaggedForImage } from "../
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { arkToBareId } from "../../src/utils/ark.js";
 import { LOCAL } from "../../src/auth/principal.js";
+import { NO_PROJECT_REFUSAL } from "../../src/utils/project-io.js";
 import { configureTranscriptionCap, withTranscriptionSlot, __resetTranscriptionSlotsForTests } from "../../src/utils/ocr.js";
 import { writeProjectFile } from "../helpers/project-files.js";
 import type { SourceScreenAttachment, SourceScreenResult } from "../../src/types/source-screen.js";
@@ -458,11 +459,12 @@ describe("source_screen", () => {
     expect(r.errors[0]).toMatch(/extraction_append\(\{ projectPath, personId: "I1" \}\)/);
   });
 
-  it("answers no_project outside a project", async () => {
+  it("refuses outside a project, with the start-a-project rule", async () => {
     const empty = await mkdtemp(join(tmpdir(), "source-screen-empty-"));
     try {
       const r: any = await sourceScreenTool({ projectPath: empty, personId: "I1" }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      expect(r.ok).toBe(false);
+      expect(r.errors[0]).toBe(NO_PROJECT_REFUSAL);
     } finally {
       await rm(empty, { recursive: true, force: true });
     }

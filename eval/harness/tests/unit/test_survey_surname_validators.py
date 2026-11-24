@@ -24,7 +24,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_survey_surname import (  # noqa: E402
     HEDGE,
     test_household_grouping_and_slave_schedule as check_grouping,
-    test_no_project_returns_the_tables_in_its_reply as check_no_project,
+    test_tables_name_the_town_and_group_the_household as check_town,
     test_negative_makes_no_write as check_negative,
     test_one_log_entry_appended as check_one_entry,
     test_table_has_rubric_columns as check_columns,
@@ -250,40 +250,39 @@ def test_grouping_fails_on_a_split_household_under_plain_headings():
                     after_state=_state([_entry(notes=split)]), test=POSITIVE)
 
 
-# --- no project (issue #4130): the tables are the agent's reply ---------
+# --- the town as indexed and the household as one row (issue #4130) ------
 
-NO_PROJECT = {"type": "positive", "tags": ["survey", "no-project"], "skill": "survey-surname"}
-_REPLY = """Surveyed Clinton County, New York, 1850.
----
-I searched the 1850 census for Clinton County and found two Tollman families.
-
-### 1850 - United States Census, 1850
+TOWN = {"type": "positive", "tags": ["survey", "town-household"], "skill": "survey-surname"}
+_TOWN_TABLE = """### 1850 - United States Census, 1850
 | Census year | Place as indexed | Head of household | Members | Record ARK | Ruled out |
 |---|---|---|---|---|---|
 | 1850 | Au Sable, Clinton | Joseph Tollman, 1798, Vermont | Polly, 1802, Vermont; Harvey, 1829, New York; Lucinda, 1834, New York | ark:/61903/1:2:XTLM-AS1850 | |
 | 1850 | Peru, Clinton | Nathan Tollman, 1824, New York | Abigail, 1826, New York | ark:/61903/1:2:XTLM-PE1850 | |
-
-Next you can choose which family to follow."""
+"""
 _SEARCH = [{"tool": "mcp__genealogy__record_search", "args": {"surname": "Tollman"}}]
 
 
-def test_no_project_reply_passes():
-    assert _run(check_no_project, tool_calls=_SEARCH, test=NO_PROJECT, text_response=_REPLY) == "passed"
-    assert _run(check_columns, before_state=EMPTY, after_state=EMPTY, test=NO_PROJECT, text_response=_REPLY) == "passed"
-    assert _run(check_one_entry, before_state=EMPTY, after_state=EMPTY, test=NO_PROJECT) == "skipped"
+def _town_state(table):
+    return _state([_entry(notes=table)])
 
 
-_SPLIT = _REPLY.replace(
+def test_town_and_household_pass():
+    assert _run(check_town, tool_calls=_SEARCH, before_state=EMPTY, after_state=_town_state(_TOWN_TABLE), test=TOWN) == "passed"
+
+
+_SPLIT = _TOWN_TABLE.replace(
     "| Polly, 1802, Vermont; Harvey, 1829, New York; Lucinda, 1834, New York |", "| |"
-) + "\n| 1850 | Au Sable, Clinton | Polly Tollman | | ark:/61903/1:2:XTLM-AS1850 | |"
+) + "| 1850 | Au Sable, Clinton | Polly Tollman | | ark:/61903/1:2:XTLM-AS1850 | |\n"
 
 
-@pytest.mark.parametrize("calls,reply,match", [
+@pytest.mark.parametrize("calls,table,match", [
     (_SEARCH, _SPLIT, "only in Joseph's row"),
-    (_SEARCH, _REPLY.replace("Au Sable, Clinton", "Clinton"), "Au Sable"),
-    (_SEARCH + [{"tool": "mcp__genealogy__research_log_append", "args": {}}], _REPLY, "research_log_append"),
-    ([{"tool": "mcp__genealogy__record_search", "args": {"projectPath": "/p"}}], _REPLY, "passed projectPath"),
-    ([], _REPLY, "no record_search"),
-], ids=["household-split", "county-only", "logged", "staged", "no-search"])
-def test_no_project_reply_fails(calls, reply, match):
-    _expect_failure(check_no_project, match, tool_calls=calls, test=NO_PROJECT, text_response=reply)
+    (_SEARCH, _TOWN_TABLE.replace("Au Sable, Clinton", "Clinton"), "Au Sable"),
+    ([], _TOWN_TABLE, "no record_search"),
+], ids=["household-split", "county-only", "no-search"])
+def test_town_and_household_fail(calls, table, match):
+    _expect_failure(check_town, match, tool_calls=calls, before_state=EMPTY, after_state=_town_state(table), test=TOWN)
+
+
+def test_town_check_skips_without_its_tag():
+    assert _run(check_town, tool_calls=_SEARCH, before_state=EMPTY, after_state=EMPTY, test=POSITIVE) == "skipped"

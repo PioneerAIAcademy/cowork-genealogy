@@ -8,13 +8,13 @@
     "tags": [
       "name-variant",
       "census-variance-trap",
-      "no-project",
+      "person-less-project",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Evaluate the sources attached to Orpha (Brooks) Wheaton, FamilySearch person ID LZPF-WMT. Tell me whether each one belongs on her profile and whether anything in them was indexed wrong. Use the project path /project if a project exists there, otherwise operate without one.",
-    "scenario": "empty-folder-no-project"
+    "delegation": "Evaluate the sources attached to Orpha (Brooks) Wheaton, FamilySearch person ID LZPF-WMT. Tell me whether each one belongs on her profile and whether anything in them was indexed wrong. Use the project path /project if a project exists there, otherwise operate without one.\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "execution": {
     "max_wall_clock_seconds": 1500
@@ -39,6 +39,6 @@
     "Reporting the variants outside the numbered findings, as forms of the name she was recorded under, is the expected behaviour and must not be deducted for Completeness or Classification. A reply that does not mention the variants at all is a Completeness partial, not a fail.",
     "The 1850 census's age-derived birth (1785-1786) and the 1865 census's (1784-1785) against the profile's 11 November 1784 are ordinary census variance and must not be counted as findings.",
     "The New York City municipal death (William Wheaton, 1893) and the two Michigan death records (Silas W. Wheaton, 1896, naming parents William and Orpha Wheaton) record her sons' deaths, not hers. Treating them as records naming her as a parent is correct. Do not grade whether the reply judges them as belonging on her profile, except that recommending an index correction for her name in them is the defect above.",
-    "No project exists: person_warnings is not called or answers no_project, and the reply should say impossible-date checks need a project. Seven attached sources carry no record ARK (an Ancestry link, four FamilySearch image links, a MyHeritage tree entry, an uploaded memory image); naming them as unchecked is correct."
+    "The project has no person: person_warnings is not called or finds no such person, and the reply should say impossible-date checks need a project. Seven attached sources carry no record ARK (an Ancestry link, four FamilySearch image links, a MyHeritage tree entry, an uploaded memory image); naming them as unchecked is correct."
   ]
 }

@@ -37,7 +37,7 @@ import { Mob } from "../utils/mob.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { relationshipCategory } from "../utils/relationship-category.js";
 import { introducedByLink } from "../utils/persona-copy.js";
-import { NoProjectError, noProjectResult, readProjectJson } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { VITAL_EVENT, yearsOf } from "../utils/question-state.js";
 import { personaFor, selectSubjectPersona } from "../utils/record-persona-select.js";
 import { readStagedResults } from "../utils/results-staging.js";
@@ -159,7 +159,6 @@ export async function sourceScreenTool(
     research = await readProjectJson(input.projectPath, "research.json");
     tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
   let person: SimplifiedPerson;
@@ -469,8 +468,7 @@ export async function sourceScreenTool(
       else if ("err" in out) {
         const msg = out.err instanceof Error ? out.err.message : String(out.err);
         row.out.signals.e = { not_run: /already running .*transcription/i.test(msg) ? `slot_limit: ${msg}` : `error: ${msg}` };
-      } else if ("ok" in out.r) row.out.signals.e = { not_run: `error: ${out.r.errors.join(" ")}` };
-      else if (out.r.found) row.out.signals.e = { lookingFor, fact, found: out.r.found };
+      } else if (out.r.found) row.out.signals.e = { lookingFor, fact, found: out.r.found };
       else row.out.signals.e = { not_run: "no_answer: the image read gave no FOUND / NOT FOUND" };
     });
   }

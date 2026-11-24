@@ -1,14 +1,13 @@
 {
   "tool": "source_screen",
-  "description": "Real source_screen answer for KPQ5-V9F in an empty folder (no research.json), captured 2026-11-20: no_project.",
+  "description": "Real source_screen answer for KPQ5-V9F in the person-less-project scenario, whose tree holds no person: the person is not in tree.gedcomx.json. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario, 2026-11-24 (#4686); no matcher call was made.",
   "args": {
     "personId": "KPQ5-V9F"
   },
   "response": {
     "ok": false,
-    "reason": "no_project",
     "errors": [
-      "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
+      "Person 'KPQ5-V9F' not found in tree.gedcomx.json."
     ]
   }
 }

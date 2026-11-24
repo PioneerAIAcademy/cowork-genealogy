@@ -26,7 +26,7 @@ from test_search_images import (  # noqa: E402
     test_reindex_reply_pairs_readings_without_a_verdict as check_reply,
 )
 
-TEST = {"type": "positive", "tags": ["no-project", "reindex", "direct-arm"]}
+TEST = {"type": "positive", "tags": ["person-less-project", "reindex", "direct-arm"]}
 IMG = "ark:/61903/3:1:33SQ-GYY1-B2G"
 
 GOOD = """Index list read (27 entries); page read once.
@@ -44,7 +44,10 @@ def _call(tool, **args):
     return {"tool": f"mcp__genealogy__{tool}", "args": args}
 
 
-GOOD_CALLS = [_call("image_index", imageId=IMG), _call("image_transcribe", imageId=IMG)]
+GOOD_CALLS = [
+    _call("image_index", projectPath="/tmp/p", imageId=IMG),
+    _call("image_transcribe", projectPath="/tmp/p", imageId=IMG),
+]
 
 
 # --- the reply check: bad replies fail, and say why ------------------------
@@ -125,8 +128,7 @@ BAD_CALLS = {
     "no image_index": [GOOD_CALLS[1]],
     "transcribe first": [GOOD_CALLS[1], GOOD_CALLS[0]],
     "second OCR pass": GOOD_CALLS + [GOOD_CALLS[1]],
-    "projectPath on a no-project read": [GOOD_CALLS[0], _call("image_transcribe", imageId=IMG, projectPath="/tmp/p")],
-    "logged with no project": GOOD_CALLS + [_call("research_log_append", projectPath="/tmp/p")],
+    "no projectPath on the read": [GOOD_CALLS[0], _call("image_transcribe", imageId=IMG)],
     "never read the page": [GOOD_CALLS[0]],
 }
 

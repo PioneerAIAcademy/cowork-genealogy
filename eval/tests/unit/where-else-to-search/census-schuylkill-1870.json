@@ -7,15 +7,15 @@
     "description": "A FamilySearch 1870 census search for a man in Schuylkill County, Pennsylvania. external_links_search returns 200 real rows (inline cap hit), most on ancestry.com, some dated and many undated. The agent must pick at most 8 buildable rows, build them in one batch, and ground each reason in the row's linkText and years.",
     "tags": [
       "where-else",
-      "no-project",
+      "person-less-project",
       "direct-arm",
       "census",
       "cap"
     ]
   },
   "input": {
-    "delegation": "I searched FamilySearch for Patrick Flynn in the 1870 census in Schuylkill County, Pennsylvania and didn't find him. Where else could I look?\n\ngivenName: Patrick\nsurname: Flynn\nevent: residence\nyear: 1870\nplace: Schuylkill County, Pennsylvania\ncollection: United States Census, 1870",
-    "scenario": null
+    "delegation": "I searched FamilySearch for Patrick Flynn in the 1870 census in Schuylkill County, Pennsylvania and didn't find him. Where else could I look?\n\ngivenName: Patrick\nsurname: Flynn\nevent: residence\nyear: 1870\nplace: Schuylkill County, Pennsylvania\ncollection: United States Census, 1870\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
@@ -27,7 +27,7 @@
     "max_wall_clock_seconds": 300
   },
   "judge_context": [
-    "This is the direct-agent arm with no project (scenario null, no projectPath). The agent holds only place_search, external_links_search and build_external_search_url; it must not look for research.json, create a project, or pass projectPath to any tool.",
+    "This is the direct-agent arm in the person-less project the caller created (scenario person-less-project, projectPath <workspace>). The agent holds only place_search, external_links_search and build_external_search_url; it must pass the delegation's projectPath to all three, and must not look for research.json or create a project.",
     "Grounding: each suggestion's reason may use only the row's linkText, its startYear-endYear (or 'undated'), and the access value build_external_search_url returned. A statement about a site, place or record set that no tool returned is unsupported.",
     "Every link in the reply must be a url a tool returned in this run, character for character. A hand-written or edited URL is a fail.",
     "The return ends with the summary_for_user block: a `---` line, an opening sentence, then each suggestion in the agent's fixed three-line shape (bold linkText with site and free/subscription; its years and how they cover the search, or 'Undated collection.'; the full link), then one closing sentence. Any extra sentence about a collection, the person's name or origin, or the period's history is a fact no tool returned: score it as ungrounded.",

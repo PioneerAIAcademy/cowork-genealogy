@@ -249,8 +249,11 @@ describe("tree_query", () => {
     expect(r.relationships).toHaveLength(1);
   });
 
-  it("returns the no_project answer outside a project and a loud error for an unreadable tree", async () => {
-    expect(await treeQuery({ projectPath: dir })).toMatchObject({ ok: false, reason: "no_project" });
+  it("fails with the project refusal outside a project and loudly for an unreadable tree", async () => {
+    const outside: any = await treeQuery({ projectPath: dir });
+    expect(outside.ok).toBe(false);
+    expect(outside.reason).toBeUndefined();
+    expect(outside.errors.join(" ")).toContain("No project:");
     await writeFile(join(dir, "research.json"), "{}");
     await writeFile(join(dir, "tree.gedcomx.json"), "{not json");
     const r = await treeQuery({ projectPath: dir });

@@ -74,7 +74,7 @@ CLAUDE.md, "Identifier casing"):
   missingPersonIds: string[],            // requested ids matching nothing
 }
 // on failure: { ok: false, errors: string[] }
-// outside a project: { ok: false, reason: "no_project", ... } — the shared answer, not an error
+// outside a project: refused by the gate in server.ts; called directly, { ok: false, errors } with NO_PROJECT_REFUSAL
 ```
 
 Rules:

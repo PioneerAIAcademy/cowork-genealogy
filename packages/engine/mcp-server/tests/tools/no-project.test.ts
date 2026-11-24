@@ -52,16 +52,7 @@ import { sourceScreenTool } from "../../src/tools/source-screen.js";
 import { censusChildrenGapTool } from "../../src/tools/census-children-gap.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
-import {
-  NO_PROJECT_MESSAGE_CONTEXT,
-  NO_PROJECT_MESSAGE_READ,
-  NO_PROJECT_MESSAGE_WRITE,
-} from "../../src/utils/project-io.js";
-
-/** The five tools that are not writers. Telling someone who asked "where are
- *  we?" in a non-project folder that their work was not saved is both wrong and
- *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "tree_query", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema", "source_screen"]);
+import { NO_PROJECT_MESSAGE_CONTEXT, NO_PROJECT_REFUSAL } from "../../src/utils/project-io.js";
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -211,27 +202,28 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
 ];
 
-// ── the no-project answer ─────────────────────────────────────────────────────
+// ── no project ────────────────────────────────────────────────────────────────
 
 describe("an existing directory holding neither project file", () => {
-  for (const { tool, call } of CALLS) {
-    it(`${tool} answers with reason: "no_project" and no error`, async () => {
+  it("project_context, the one tool that runs with no project, answers reason: no_project", async () => {
+    const r: any = await projectContext({ projectPath: dir } as any, LOCAL);
+    expect(r.reason).toBe("no_project");
+    expect(r.ok).toBe(false);
+    expect(r.errors).toEqual([NO_PROJECT_MESSAGE_CONTEXT]);
+  });
+
+  // Every other tool is refused by server.ts's gate (tests/packaging/project-gate.test.ts).
+  // Called directly, it still fails loudly with the same words and no reason to branch on.
+  for (const { tool, call } of CALLS.filter((c) => c.tool !== "project_context")) {
+    it(`${tool} fails with the refusal that names project_create and init-project`, async () => {
+      if (THROWERS.has(tool)) {
+        await expect(call(dir)).rejects.toThrow(NO_PROJECT_REFUSAL);
+        return;
+      }
       const r = await call(dir);
-      expect(r.reason, `${tool} must carry the no_project discriminator`).toBe("no_project");
       expect(r.ok).toBe(false);
-      // The text is relayed to a person unedited, so it is pinned, not just present.
-      // project_context has its own text (not shared with other readers) carrying the routing rule.
-      const expectedMessage =
-        tool === "project_context"
-          ? NO_PROJECT_MESSAGE_CONTEXT
-          : READERS.has(tool)
-            ? NO_PROJECT_MESSAGE_READ
-            : NO_PROJECT_MESSAGE_WRITE;
-      expect(r.errors).toEqual([expectedMessage]);
-      expect(r.errors[0]).not.toMatch(/projectPath|research\.json not found|tree\.gedcomx/);
-      // A read must not claim the user's work went unsaved — it was never asked
-      // to save anything.
-      if (READERS.has(tool)) expect(r.errors[0]).not.toMatch(/saved/);
+      expect(r.reason, `${tool} must not carry a no_project discriminator`).toBeUndefined();
+      expect(r.errors[0]).toBe(NO_PROJECT_REFUSAL);
     });
   }
 });
@@ -355,13 +347,16 @@ describe("build_external_search_url with projectPath", () => {
   const call = (projectPath: any) =>
     buildExternalSearchUrlTool({ site: "findagrave", attributes: { surname: "Flynn" }, projectPath });
 
-  it("an empty directory returns the URL, no logId, and the write sentence as a note", async () => {
-    const r = await call(dir);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.url).toMatch(/^https:\/\/www\.findagrave\.com\//);
-    expect(r.logId).toBeUndefined();
-    expect(r.notes).toContain(NO_PROJECT_MESSAGE_WRITE);
+  it("an empty directory is refused by the log write, with the refusal", async () => {
+    const r = await buildExternalSearchUrlTool({
+      site: "findagrave",
+      attributes: { surname: "Flynn" },
+      baseUrl: "https://www.findagrave.com/memorial/search",
+      projectPath: dir,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toContain(NO_PROJECT_REFUSAL);
   });
 
   it("a directory that does not exist stays loud", async () => {

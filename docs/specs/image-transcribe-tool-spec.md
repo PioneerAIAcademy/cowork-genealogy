@@ -446,8 +446,7 @@ consistent across schema, manifest, and skill.)*
   an uploaded PDF did (the model opened it itself). Contract:
   - **Requires `projectPath`**; the ref is relative to it. The directory is classified first
     (`classifyProjectPath`): a missing `projectPath` and a missing directory are the shared
-    loud errors, a folder holding neither project file is the no-project *answer*
-    (`{ ok: false, reason: "no_project" }`, the no-project rule) — before any key or path error.
+    loud errors, a folder holding neither project file throws `NO_PROJECT_REFUSAL` — before any key or path error.
   - **Shape, before any I/O:** no leading slash or drive letter, no backslash, no NUL, no
     empty / `.` / `..` segment. Any ref *inside* the project is allowed; the containment guard
     is the store's (`FsProjectStore.readableReal`: realpath'd, symlink-aware, regular files
@@ -804,7 +803,7 @@ writes the reply, with no lookup to forget.
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
-| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
+| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file throws `NO_PROJECT_REFUSAL` (the gate in `server.ts` refuses first) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
