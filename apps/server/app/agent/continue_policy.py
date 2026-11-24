@@ -56,8 +56,8 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # in the deleted research_delivered guidance (step mode phase 2) and moved here rather
 # than going with it.
 NO_PROJECT_NOTE = (
-    "While no project exists yet (`project_context` returns `no_project`), every tool but "
-    "project_create refuses. An activity with no person in it (a page read, a record set's names, "
+    "While no project exists yet (`project_context` returns `no_project`), a call to any tool but "
+    "project_create, project_context and project_list is refused. An activity with no person in it (a page read, a record set's names, "
     "a surname survey) starts a project first: project_create with the researcher's request as "
     "objective and no personId. A request about a named FamilySearch person starts one through the "
     "research skill, which needs the person's FamilySearch ID; with no ID, ask for it and create nothing."
@@ -77,12 +77,26 @@ NO_PROJECT_NOTE = (
 SOURCES_GUIDANCE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
-    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "a collections search, which the locality-guide and research-plan agents run. This rule is about "
     "what you name, not about which agent a question goes to. "
     "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
     "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
     "such as a merge or a wrong parent link, give the researcher the steps to make it on "
     "FamilySearch.org, and never offer to make it yourself."
+)
+
+
+# The main thread's one routing sentence, with or without a project. The plugin hook
+# carries the same text as `no_project_route.ROUTING_NOTE`;
+# `test_the_routing_sentence_is_the_one_the_plugin_hook_adds` fails if they differ.
+ROUTING_GUIDANCE = (
+    "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
+    "what it returns. Researching, investigating or finding a person, a relative or a record, "
+    "or carrying the research on, goes to the research skill, with or without a project; any "
+    "other request, such as one about a place's history or a person's data problems, goes to "
+    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "or from the project's state. A question about where the project stands you answer from "
+    "project_context."
 )
 
 
@@ -124,6 +138,9 @@ DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
 
+PLUGIN_PREFIX = "plugin:"
+
+
 def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """An allow-with-rewrite forcing a delegation to the foreground, or None.
 
@@ -134,13 +151,25 @@ def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> 
     in the background by default", its own tool text from 2.1.215 through 2.1.308) and
     both measured incidents carried no key at all.
 
+    It also drops a `plugin:` the router copied onto `subagent_type` from
+    research/SKILL.md's `@plugin:<name>` notation: no agent is registered under that
+    name, and a Haiku 5.5 router wrote it in spite of the skill saying not to
+    (ut_research_b4p, cq7). A call carrying one is rewritten even when it is already
+    in the foreground.
+
     It outlives the Stop veto, which never covered this: see `DELEGATION_TOOLS`. Without
     it a turn ends while its delegations still run. The prototype worker then kills the
     CLI (`_run_turn`), so the delegation dies mid-run; on the alpha its report arrives
     after the turn, where `_drain_background` discards it.
     """
     data = dict(tool_input or {})
-    if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:
+    if tool_name not in DELEGATION_TOOLS:
+        return None
+    name = data.get("subagent_type")
+    prefixed = isinstance(name, str) and name.startswith(PLUGIN_PREFIX) and len(name) > len(PLUGIN_PREFIX)
+    if prefixed:
+        data["subagent_type"] = name[len(PLUGIN_PREFIX):]
+    elif data.get("run_in_background") is False:
         return None
     return {
         "hookSpecificOutput": {

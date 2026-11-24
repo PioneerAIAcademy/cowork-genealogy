@@ -39,6 +39,7 @@ import { countsForLinkedRung } from "./tree-person.js";
 import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
+import { routesToFamilySearch } from "./plan-item-plausibility.js";
 
 export type QuestionState =
   | "framed"
@@ -100,7 +101,8 @@ function pendingExtraction(research: any, logs: any[]): any[] {
 }
 
 /** Which search destination a plan item wants: search-hints for a `fs_hints`
- *  item (issue #3153), else by its repository.
+ *  item (issue #3153), else by its repository. `routesToFamilySearch` is the one
+ *  FamilySearch-or-not rule, shared with research_append's outside-site check.
  *
  *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
  *  cannot disagree. They would: the plan writes E's arm as "the next step is
@@ -109,9 +111,8 @@ function pendingExtraction(research: any, logs: any[]): any[] {
  *  spawn the wrong agent. */
 function searchStepFor(item: any): string {
   if (item?.record_type === "fs_hints") return `search-hints — ${item.id}`;
-  const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
-  if (!repo || /familysearch/i.test(repo)) return "search-records";
-  return `search-external-sites — ${item.id} (${repo})`;
+  if (routesToFamilySearch(item)) return "search-records";
+  return `search-external-sites — ${item.id} (${item.repository.trim()})`;
 }
 
 /** The lowest-sequence `planned`/`in_progress` item on a plan that is still
@@ -965,8 +966,7 @@ export function questionStatus(
     // arms above found nothing open, so the blocker has settled and the next
     // step is to conclude again. Reporting null here would tell the router
     // nothing is left to do.
-    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
-    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
+    nextStep = "proof-conclusion — concluded while blocked: re-conclude this question's proof summary";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

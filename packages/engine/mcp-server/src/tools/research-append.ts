@@ -21,9 +21,15 @@
 import { collectionAvailability } from "../utils/collection-availability.js";
 import { assertionsCoveredBy, rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
-import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
+import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
-import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
+import {
+  compoundJurisdictionError,
+  outsideSiteJurisdictionError,
+  planItemFlags,
+  planWindowFlag,
+  routesToFamilySearch,
+} from "../utils/plan-item-plausibility.js";
 import { objectiveTarget, objectiveTargetLeadError, ORDER_FIELDS } from "../utils/objective-target.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
@@ -48,15 +54,7 @@ import {
   unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
 import {
   readMatchScores,
@@ -134,11 +132,14 @@ import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, findDocumentImageArk, toArk } from "../utils/ark.js";
 import { personaFor } from "../utils/record-persona-select.js";
-import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, readStagedResults, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
-import { GUIDE_SECTION_MAX_CHARS, mergeGuideSection } from "../utils/locality-guide-sections.js";
-import { normalizeRegistrationStart } from "../utils/registration-level.js";
+import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } from "../utils/locality-guide-sections.js";
+import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
+import { fillRecordTypeRows } from "../utils/locality-record-types.js";
 import {
+  collectionScopeMatcher,
+  collectionScopeTerms,
   isCoreNationalCollection,
   localityNationalCountry,
   nationalCollectionScope,
@@ -156,6 +157,7 @@ import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
   loadStoredCollectionUrls,
+  loadStoredLinkTexts,
   readExternalCollections,
   EXTERNAL_COLLECTIONS_FILE,
   type StoredCollectionUrls,
@@ -294,7 +296,12 @@ const SECTIONS: Record<string, SectionConfig> = {
   project: {
     prefix: "",
     singleton: {
-      // `status` is freely updatable — proof-conclusion flips it to "completed".
+      // `status` is freely updatable — proof-conclusion flips it to "completed",
+      // and the ENGINE itself flips it back to "active" when a call leaves a
+      // question unresolved on a completed project (#4698,
+      // `reopenCompletedProject`). That engine write is not a caller write: it
+      // is why the ownership row still names only init-project and
+      // proof-conclusion as callers.
       // `objective` is rewritable so a researcher can correct it; the plugin
       // hook keeps that write on the main thread (MAIN_THREAD_FIELDS), because
       // the harm the ownership row names is "a skill rewrites the objective,
@@ -1388,12 +1395,6 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
  *  `[?]`"). Nothing else in the entry marks doubt structurally. */
 function hasUncertainReading(assertion: any): boolean {
   return typeof assertion?.value === "string" && assertion.value.includes("[?]");
-}
-
-/** A researcher's own reading of a page (#4286): a disputing assertion cited
- *  under a `user_provided` log entry. */
-function isResearcherReading(a: any, logById: Map<string, any>): boolean {
-  return typeof a?.disputes_assertion_id === "string" && logById.get(a?.log_entry_id)?.tool === "user_provided";
 }
 
 /** Ruling 10 (#4286): an assertion is doubtful when its value carries `[?]`, or
@@ -7107,6 +7108,111 @@ export function closesLastOpenQuestion(before: any, after: any): boolean {
   return open(before).length > 0 && open(after).length === 0;
 }
 
+/**
+ * Issue #4698. A call that leaves a question it WROTE at a status other than
+ * `resolved`, on a project that was `completed` before the call, sets the
+ * project back to `active` and stamps `updated`. Returns the warning naming the
+ * question, or null when nothing reopens. MUTATES `research.project`.
+ *
+ * A researcher's second question was being researched inside a completed
+ * project: proof-conclusion marked the project `completed` when q_001 was the
+ * only question, the researcher's 1925-census question was written afterwards
+ * as q_002, and nothing reopened the project.
+ *
+ * **Reopen only; never a refusal** (review-ready, 2026-11-19). A refusal of a
+ * completed write while a question is open would not have caught this incident
+ * — q_001 was the only question when `completed` was written — and it would
+ * fire on 12 of 181 completed e2e runs (measured 2026-11-19 by walking
+ * `eval/runlogs/e2e/**\/*.final-research.json` for a `completed` project with
+ * any question not `resolved`; the count moves as runs are committed), which
+ * ADR-0011 limit 2 says must all be read before such a gate ships.
+ *
+ * Three things the signature is load-bearing about:
+ *
+ * - **`applied`, not `ops`.** The question set is what this call actually wrote
+ *   (`!a.noop`), which is what "a question it wrote" means. It is also what
+ *   keeps the warning honest: `anyMutation` is computed ABOVE the call site and
+ *   gates the only `research.json` write, while `planItemWarnings` reaches the
+ *   result unconditionally — so an `ops`-derived set would report `project
+ *   reopened` on a call that wrote nothing to disk. The reachable case is a
+ *   single-field `search_stop` update on an already-declared question, which
+ *   takes the no-op branch in `applyOne`.
+ * - **The outcome, not the op.** An UPDATE that sets a question's status back
+ *   from `resolved` reopens too. Gating on `op.op === "append"` is the mistake
+ *   `oneSummaryPerQuestion` already carries a comment about.
+ * - **Only `completed`.** A `paused` project stays paused: the researcher
+ *   chose that.
+ * - **A caller write only wins when it CHANGES the status.** Re-asserting the
+ *   status the project already had asserts nothing, so it does not suppress
+ *   the reopen — otherwise a batch appending an open question beside
+ *   `{status: "completed"}` on an already-completed project reproduces the
+ *   incident this rule exists to fix.
+ */
+/** The ops in this call that write `project.status`, whatever the op kind and
+ *  whichever key carries it. Two callers ask different questions of the same
+ *  answer: `completingNow` asks whether one of them sets `"completed"`, and
+ *  `reopenCompletedProject` asks whether any of them exists at all. They were
+ *  separate hand-rolled walks with different shapes, which is how a value
+ *  recognised by one but not the other could suppress the reopen while leaving
+ *  the completion-conflict gate unarmed. */
+export function projectStatusOps(ops: readonly any[]): any[] {
+  return (Array.isArray(ops) ? ops : []).filter(
+    (o: any) =>
+      o?.section === "project" &&
+      Object.prototype.hasOwnProperty.call(o?.fields ?? {}, "status"),
+  );
+}
+
+export function reopenCompletedProject(
+  research: any,
+  beforeResearch: any,
+  applied: readonly { section: string; entryId: string; noop?: boolean }[],
+  ops: readonly any[],
+): string | null {
+  if (beforeResearch?.project?.status !== "completed") return null;
+
+  // The caller asserted the project's state in this same call: leave it alone —
+  // but only when the assertion CHANGES something. Keyed on presence alone, a
+  // call that re-asserts the status the project already had suppressed the
+  // reopen while asserting nothing new, and a batch appending an open question
+  // beside `{status: "completed"}` on an already-completed project reproduced
+  // the very incident this rule exists to fix. Reading the prior status from
+  // the pre-call snapshot keeps the caller's real assertions intact: a write of
+  // `active` or `paused` here still stands, because those do change the field.
+  //
+  // Any status VALUE, not just `completed` — but only through `fields`. The
+  // hook's rule reads `entry` too, because it inspects the call's raw input
+  // before dispatch; by the time this runs the ops are applied, and `applyOne`
+  // throws on any op but `update` for a singleton section, so no surviving
+  // `project` op can carry `entry`. An `entry` arm here would be dead code
+  // reading as a live guard.
+  const priorStatus = beforeResearch.project.status;
+  if (projectStatusOps(ops).some((o: any) => o.fields?.status !== priorStatus)) return null;
+
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  for (const a of applied) {
+    if (a.section !== "questions" || a.noop) continue;
+    const q = questions.find((x: any) => x?.id === a.entryId);
+    // Anything that is not exactly `resolved` reopens — tested that way round,
+    // not as `QUESTION_STILL_OPEN.has(...)`, so the open set and the malformed
+    // set fail the same safe direction. `has()` alone is false for `undefined`,
+    // `null` and any off-enum value, which a legacy or hand-edited document
+    // really does produce, and would leave such a question sitting in a
+    // completed project. A status added later still reopens by default.
+    if (!q || q.status === "resolved") continue;
+    research.project.status = "active";
+    // `today()`, not an ISO datetime: this writes outside `applyOne`, so it
+    // misses that stamp, and the project singleton is `kind: "date"`.
+    research.project.updated = today();
+    return (
+      `project reopened: status completed → active because question '${q.id}' is ` +
+      `${q.status}. Research continues in this project; proof-conclusion completes it again ` +
+      `when every question is resolved.`
+    );
+  }
+  return null;
+}
+
 /** The result line naming what the removal took, so the agent can tell the
  *  researcher. The eval validators read its opening words
  *  (`_UNANCHORED_REMOVAL_PREFIX` in eval/harness/validators/test_universal.py)
@@ -7747,6 +7853,26 @@ function compoundJurisdictionInvariants(item: any, research: any): string[] {
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
+/** A FamilySearch plan item names no outside site in its jurisdiction
+ *  (`outsideSiteJurisdictionError`, #4665). Checked on an append and on a change
+ *  to `jurisdiction` or to where `repository` and `record_type` route the item: the
+ *  rule reads them,
+ *  so an edit moving a site's item onto FamilySearch is the same gap. An edit
+ *  touching neither, including a repository respelling that routes the same way
+ *  ("" for a missing one, "familysearch" for "FamilySearch"), leaves an item
+ *  written before the rule editable. */
+function outsideSiteRuleInputsChanged(stored: any, next: any): boolean {
+  return (
+    stored?.jurisdiction !== next?.jurisdiction ||
+    routesToFamilySearch(stored) !== routesToFamilySearch(next)
+  );
+}
+
+function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly string[]): string[] {
+  const error = outsideSiteJurisdictionError(item ?? {}, storedLinkTexts);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -8075,6 +8201,7 @@ export interface ResearchAppendOp {
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
   edits?: NarrativeEdit[]; // op = update of proof_summaries: exact-match edits, expanded into `fields`
   guideSection?: string; // op = update of localities: one guide section, placed into `fields.guide_markdown`
+  surveyRef?: string; // localities: locality_survey's staged ref; fills pages_read and volume_summary
   planId?: string; // required for section = "plan_items"
 }
 
@@ -8103,6 +8230,7 @@ export interface ResearchAppendInput {
   fields?: Record<string, unknown>;
   edits?: NarrativeEdit[];
   guideSection?: string;
+  surveyRef?: string;
   planId?: string;
   // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
@@ -8209,10 +8337,7 @@ export interface ExtractionEcho {
 export type ResearchAppendResult =
   | SingleSuccess
   | BatchSuccess
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; opsReceived?: number; reason?: "no_project" };
+  | { ok: false; errors: string[]; opsReceived?: number };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
@@ -8236,10 +8361,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — the outer catch turns it into
-    // noProjectResult(). Flattening it into ResearchAppendError here would lose
-    // the `reason` discriminator and ship it with isError.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -9552,6 +9673,11 @@ function applyOne(
   // lock. `null` is UNKNOWN and refuses nothing, which is what every other entry
   // point (and every direct-call test) gets by omitting it.
   fulltextSearchable: FulltextSearchability | null = null,
+  // #4665: the project's stored `external-collections.json` link_texts, read once
+  // per call before the apply loop. `[]` narrows the outside-site jurisdiction
+  // check to its fixed site names; the end-to-end tests go through
+  // `researchAppend` so an omitted argument here cannot pass them.
+  storedLinkTexts: readonly string[] = [],
 ): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -10202,6 +10328,9 @@ function applyOne(
         if (item && storedItem?.jurisdiction !== item.jurisdiction) {
           invariantErrors.push(...compoundJurisdictionInvariants(item, research));
         }
+        if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
+          invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         invariantErrors.push(...planItemVoidSearchInvariants(item, research, fulltextSearchable));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -10293,6 +10422,9 @@ function applyOne(
     }
     if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
       invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
+      invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
@@ -11361,23 +11493,28 @@ function localityBody(op: any): unknown {
   return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
 }
 
-/** The locality-guide template's level-two headings a saved guide must carry
- *  (spec §5.14). The template is `agents/locality-guide.md`'s output format;
- *  `tests/packaging/locality-guide-headings.test.ts` fails when they part. */
-export const LOCALITY_GUIDE_HEADINGS = ["Jurisdiction overview", "Available record types", "Research tips"] as const;
+/** Every heading of the locality-guide template a saved guide must carry, `## ` sections and
+ *  `### ` subsections, in template order (spec §5.14). From `LOCALITY_GUIDE_OUTLINE`;
+ *  `tests/packaging/locality-guide-headings.test.ts` fails when the template parts from it. */
+export const LOCALITY_GUIDE_HEADINGS: readonly string[] = LOCALITY_GUIDE_OUTLINE.flatMap(([section, subs]) => [
+  `## ${section}`,
+  ...subs.map((sub) => `### ${sub}`),
+]);
 
 /** `_heading()` in eval/harness/validators/test_locality_guide.py, which grades
- *  the saved guide: `^##[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
+ *  the saved guide: `^<hashes>[ \t]+<title>` under Python's IGNORECASE | MULTILINE.
  *  The lookbehind and `u` keep it to Python's answers: JS `m` also starts a line
  *  after a lone `\r`, U+2028 and U+2029, and `i` without `u` does not fold `ſ`.
  *  Python alone still matches `İ` or `ı` for an `i`. */
-const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map(
-  (title) => [title, new RegExp(`(?<![^\\n])##[ \\t]+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu")] as const,
-);
+const GUIDE_HEADING_PATTERNS = LOCALITY_GUIDE_HEADINGS.map((heading) => {
+  const [hashes, ...rest] = heading.split(" ");
+  const title = rest.join(" ").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [heading, new RegExp(`(?<![^\\n])${hashes}[ \\t]+${title}`, "iu")] as const;
+});
 
-/** The template headings `markdown` lacks, in template order. */
+/** The template headings `markdown` lacks, in template order, as `## Title` / `### Title`. */
 export function missingGuideHeadings(markdown: string): string[] {
-  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([title]) => title);
+  return GUIDE_HEADING_PATTERNS.filter(([, pattern]) => !pattern.test(markdown)).map(([heading]) => heading);
 }
 
 /**
@@ -11410,6 +11547,13 @@ function localityGuideWholeRefusals(
   return out;
 }
 
+/** `guide[].next` once an entry's guide carries every heading: the agent's work on this
+ *  delegation is done (issue #4602: Haiku went on to survey the other places a
+ *  delegation listed). */
+const GUIDE_COMPLETE_NEXT =
+  "The guide is complete. Return now: the loc_ id line and summary_for_user, naming any other " +
+  "place the delegation listed as still needing its own survey. Survey no other place.";
+
 /** What each `localities` entry this call wrote still needs in its guide. */
 function localityGuideStatus(
   research: any,
@@ -11419,16 +11563,14 @@ function localityGuideStatus(
   return [...new Set(entryIds)].flatMap((entryId) => {
     const entry = localities.find((l: any) => l?.id === entryId);
     if (!entry) return [];
-    const missing = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
-    return [
-      missing.length === 0
-        ? { entryId, missing }
-        : {
-            entryId,
-            missing: missing.map((t) => `## ${t}`),
-            next: `Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`,
-          },
-    ];
+    const headings = missingGuideHeadings(typeof entry.guide_markdown === "string" ? entry.guide_markdown : "");
+    const rows = missingRecordTypes(entry.record_types);
+    const missing = [...headings, ...rows];
+    const next = [
+      ...(rows.length > 0 ? [RECORD_TYPE_ROWS_HOW] : []),
+      ...(headings.length > 0 ? [`Send the guide ${GUIDE_SECTION_HOW} At most ${GUIDE_SECTION_MAX_CHARS} characters a call.`] : []),
+    ].join(" ");
+    return [missing.length === 0 ? { entryId, missing, next: GUIDE_COMPLETE_NEXT } : { entryId, missing, next }];
   });
 }
 
@@ -11474,25 +11616,33 @@ const COLLECTION_TITLE_TYPE_WORD =
  * places the titles sort as 16 naming the place, 165 naming no part of the scope,
  * and 150 naming another part.
  */
-function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+function titleNamesElsewhere(title: string, isScopePart: (part: string) => boolean, ownTerms: readonly RegExp[]): boolean {
   if (ownTerms.some((re) => re.test(title))) return false;
-  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
   const rest = title
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+    .filter((p) => p !== "" && !isScopePart(p) && !/^[\d\s–-]+$/.test(p));
   return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
 }
 
-/** One whole-word matcher per part of the entry's places below `scope`. */
-function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+/** Whether a comma-separated part of a title or place is the scope `name` derives:
+ *  for a United Kingdom place, a part that starts with one of its
+ *  `collectionScopeTerms` (`England and Wales`, `Great Britain`); elsewhere, one of
+ *  the scope's own parts. */
+function scopePartTest(name: string, scope: string): (part: string) => boolean {
+  if (collectionScopeTerms(name) !== null) return collectionScopeMatcher(name);
   const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  return (part) => scopeParts.has(part.toLowerCase());
+}
+
+/** One whole-word matcher per part of the entry's places below the scope. */
+function ownPlaceTerms(names: readonly unknown[], isScopePart: (part: string) => boolean): RegExp[] {
   const terms = new Set<string>();
   for (const name of names) {
     if (typeof name !== "string") continue;
     for (const raw of name.split(",")) {
       const part = raw.replace(/\([^()]*\)/g, " ").trim();
-      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      if (part.length < 3 || isScopePart(part) || part === "United States") continue;
       terms.add(part);
     }
   }
@@ -11531,13 +11681,27 @@ function fillLocalityCollections(
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
       if (needle === "" || nationalCollectionScope(scope) === scope) continue;
-      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
-      if (inScope.length === 0) continue;
-      const own = ownPlaceTerms([...names, entry.for_place], scope);
+      const titleInScope = collectionScopeMatcher(name);
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && titleInScope(c.title));
+      if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
+      const isScopePart = scopePartTest(name, scope);
+      const own = ownPlaceTerms([...names, entry.for_place], isScopePart);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
-      const missing = inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own));
-      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
+      const linkedIds = new Set(SURVEY_WIKI_COLLECTIONS.get(op) ?? []);
+      const linked = [...catalog].filter(
+        ([id, c]) => linkedIds.has(id) && typeof c.title === "string" && !inScope.some(([other]) => other === id),
+      );
+      // A collection the place's own wiki page links is the page's choice: it is left out only
+      // when its title sits under this scope and names another part of it (`New York, Yonkers, …`).
+      const underScope = (title: string) => title.toLowerCase().startsWith(`${needle},`);
+      const missing = [
+        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, isScopePart, own)),
+        ...linked.filter(
+          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, isScopePart, own)),
+        ),
+      ];
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, isScopePart, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
         id,
@@ -12931,9 +13095,54 @@ const GUIDE_SECTION_OPS = new WeakSet<object>();
 /** How a guide is sent, for the refusals and the `guide.next` line. */
 const GUIDE_SECTION_HOW =
   "one section per research_append call, never several in `ops`: op 'update', the entry's id as " +
-  "entryId, and guideSection holding that section's '## ' heading line with its text under it. Each " +
-  "'### ' subsection of Available record types and of Repository guide is its own call, beginning " +
-  "with its '### ' line.";
+  "entryId, and guideSection holding that section's '## ' heading line with its text under it.";
+
+/** The record types a locality's `record_types` rows must cover, in enum order. */
+export const LOCALITY_RECORD_TYPES: readonly string[] = [...VALIDATOR_ENUMS.locality_record_type];
+
+/** The record types `rows` has no row for, as `record_types: <type>`. */
+export function missingRecordTypes(rows: unknown): string[] {
+  const have = new Set(
+    (Array.isArray(rows) ? rows : []).flatMap((r: any) => (r && typeof r === "object" && typeof r.type === "string" ? [r.type] : [])),
+  );
+  return LOCALITY_RECORD_TYPES.filter((t) => !have.has(t)).map((t) => `record_types: ${t}`);
+}
+
+const RECORD_TYPE_ROWS_HOW =
+  "Send the missing rows as one update: op 'update', the entry's id as entryId, fields: { record_types: " +
+  "[{ type, held_at, level, summary, source_url }] } — one row or more per type named; a type the survey " +
+  "says nothing about gets a summary saying so. The tool fills each row's collection_ids; send access " +
+  "only for lost, microfilm or physical-only records. Rows you sent before are kept.";
+
+/**
+ * Merge each localities update's `fields.record_types` into the stored list, in place: the
+ * update's rows of a type replace every stored row of that type, and the stored rows of other
+ * types are kept. An earlier op of the batch counts as stored (spec §5.14).
+ */
+function expandRecordTypeRows(ops: ResearchAppendOp[], research: any): void {
+  const pending = new Map<string, unknown[]>();
+  const stored = (id: string) =>
+    (Array.isArray(research?.localities) ? research.localities : []).find((l: any) => l?.id === id);
+  for (const op of ops) {
+    if (!op || typeof op !== "object" || op.section !== "localities") continue;
+    if (op.op === "append") continue;
+    const fields = op.fields;
+    if (!fields || typeof fields !== "object" || Array.isArray(fields)) continue;
+    const sent = (fields as Record<string, unknown>).record_types;
+    if (!Array.isArray(sent) || typeof op.entryId !== "string") continue;
+    const before = pending.get(op.entryId) ?? stored(op.entryId)?.record_types;
+    const base = Array.isArray(before) ? before : [];
+    const sentTypes = new Set(sent.flatMap((r: any) => (r && typeof r === "object" && typeof r.type === "string" ? [r.type] : [])));
+    const merged = [...base.filter((r: any) => !(r && typeof r === "object" && sentTypes.has(r.type))), ...sent];
+    const order = (r: any) => {
+      const i = LOCALITY_RECORD_TYPES.indexOf(r?.type);
+      return i < 0 ? LOCALITY_RECORD_TYPES.length : i;
+    };
+    merged.sort((a, b) => order(a) - order(b));
+    (fields as Record<string, unknown>).record_types = merged;
+    pending.set(op.entryId, merged);
+  }
+}
 
 /** Read each localities op's `registration_start` levels into the closed list, in
  *  place (utils/registration-level.ts). */
@@ -12945,6 +13154,9 @@ function normalizeLocalityRegistration(ops: ResearchAppendOp[]): void {
       const rows = (holder as Record<string, unknown>).registration_start;
       const next = normalizeRegistrationStart(rows, VALIDATOR_ENUMS.registration_level);
       if (next !== rows) (holder as Record<string, unknown>).registration_start = next;
+      const typeRows = (holder as Record<string, unknown>).record_types;
+      const nextTypes = normalizeRowLevels(typeRows, [...VALIDATOR_ENUMS.registration_level]);
+      if (nextTypes !== typeRows) (holder as Record<string, unknown>).record_types = nextTypes;
     }
   }
 }
@@ -13024,6 +13236,171 @@ function expandGuideSections(
     delete op.guideSection;
     GUIDE_SECTION_OPS.add(op);
   });
+  return errors;
+}
+
+/** The FamilySearch collection ids a staged survey's wiki pages link to, in page order: the
+ *  online-records page lists a place's collections as links, and the survey shows the agent
+ *  only a share of it (spec §5.14, "Collections the wiki links"). */
+/** A staged survey's wiki pages that carry text: the four place pages and the topic pages. */
+function surveyPages(survey: any, topics: readonly string[]): { url: unknown; content: string }[] {
+  const pages = survey?.wikiPages && typeof survey.wikiPages === "object" ? Object.values(survey.wikiPages) : [];
+  const out: { url: unknown; content: string }[] = [];
+  for (const page of [...pages, ...topics.map((k) => survey?.[k])]) {
+    if (page && typeof page === "object" && typeof (page as any).content === "string") out.push(page as any);
+  }
+  return out;
+}
+
+export function wikiLinkedCollectionIds(survey: any): string[] {
+  const texts = surveyPages(survey, ["vitalRecords", "churchRecords", "question"]).map((p) => p.content);
+  const ids: string[] = [];
+  for (const text of texts) {
+    for (const m of text.matchAll(/familysearch\.org\/(?:[a-z]{2}\/)?search\/collection\/(\d+)/g)) {
+      if (!ids.includes(m[1])) ids.push(m[1]);
+    }
+  }
+  return ids;
+}
+
+/** A wiki page's title from its URL, so `.../wiki/Portugal_Civil_Registration` and its
+ *  encoded or spaced forms compare equal. Null for a URL that is not a wiki page. */
+function wikiTitleOf(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  const m = url.match(/\/wiki\/([^?#]+)/);
+  if (!m) return null;
+  let t = m[1];
+  try {
+    t = decodeURIComponent(t);
+  } catch {
+    /* keep it encoded */
+  }
+  return t.replace(/ /g, "_").toLowerCase();
+}
+
+/**
+ * Each `registration_start` row whose `source_url` is a page the survey read, and whose
+ * `year` that page's text does not contain (spec §5.14). A row citing a page the survey
+ * did not read is not checked here: its text is not in the staged answer.
+ */
+export function registrationYearsOffPage(rows: unknown, survey: any): string[] {
+  if (!Array.isArray(rows)) return [];
+  const byTitle = new Map<string, string>();
+  for (const p of surveyPages(survey, ["vitalRecords", "churchRecords", "namingCustoms", "searchHelp", "question"])) {
+    const t = wikiTitleOf(p.url);
+    if (t) byTitle.set(t, (byTitle.get(t) ?? "") + "\n" + p.content);
+  }
+  const out: string[] = [];
+  for (const [j, row] of rows.entries()) {
+    if (!row || typeof row !== "object") continue;
+    const { year, source_url } = row as Record<string, unknown>;
+    if (typeof year !== "number" || !Number.isInteger(year)) continue;
+    const text = byTitle.get(wikiTitleOf(source_url) ?? "");
+    if (text === undefined || new RegExp(`(?<!\\d)${year}(?!\\d)`).test(text)) continue;
+    out.push(
+      `registration_start[${j}] gives ${year}, which ${String(source_url)} does not contain: ` +
+        "save the year that page gives, or cite the page that gives this one.",
+    );
+  }
+  return out;
+}
+
+/** A localities append's wiki-linked collection ids, from its survey, for the collections fill. */
+const SURVEY_WIKI_COLLECTIONS = new WeakMap<object, string[]>();
+
+/** The `localities` fields only a `locality_survey` answer may write. */
+const SURVEY_FIELDS = ["pages_read", "volume_summary", "catalog"] as const;
+
+const SURVEY_HOW =
+  "call locality_survey with projectPath and pass its staged.resultsRef as `surveyRef`; " +
+  "the tool writes pages_read, volume_summary and catalog from it.";
+
+/** A staged survey's catalog hits as `catalog` rows: one per hit of each level that answered. */
+export function catalogRowsFromSurvey(survey: any): Record<string, unknown>[] {
+  const levels = Array.isArray(survey?.catalog?.levels) ? survey.catalog.levels : [];
+  const rows: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  for (const level of levels) {
+    if (!level || typeof level !== "object" || !Array.isArray(level.hits)) continue;
+    for (const hit of level.hits) {
+      if (!hit || typeof hit !== "object" || typeof hit.title !== "string") continue;
+      const key = typeof hit.id === "string" ? hit.id : `${level.place}|${hit.title}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const films = Array.isArray(hit.filmNotes) ? hit.filmNotes.length : 0;
+      rows.push({
+        id: typeof hit.id === "string" ? hit.id : null,
+        title: hit.title,
+        place: typeof level.place === "string" ? level.place : null,
+        repository_calls: Array.isArray(hit.repositoryCalls) ? hit.repositoryCalls.filter((c: unknown) => typeof c === "string") : [],
+        film_count: hit.hydrated === true ? (typeof hit.filmNotesTotal === "number" ? hit.filmNotesTotal : films) : null,
+      });
+    }
+  }
+  return rows;
+}
+
+/**
+ * Place a `locality_survey` answer's `pagesRead` and `volumeSummary` into a `localities`
+ * write, in place, and return every refusal (spec §5.14). A `localities` append must carry
+ * `surveyRef`, so a locality is never saved without its survey; neither field is written by hand.
+ */
+async function expandSurveyRefs(
+  ops: ResearchAppendOp[],
+  projectPath: string,
+  fmt: (i: number, msg: string) => string,
+): Promise<string[]> {
+  const errors: string[] = [];
+  for (const [i, op] of ops.entries()) {
+    if (!op || typeof op !== "object") continue;
+    if (op.surveyRef == null) delete op.surveyRef;
+    const refuse = (msg: string) => errors.push(fmt(i, msg));
+    const hasRef = Object.prototype.hasOwnProperty.call(op, "surveyRef");
+    if (op.section !== "localities") {
+      if (hasRef) refuse("`surveyRef` applies only to a `localities` write.");
+      continue;
+    }
+    const holderKey = op.op === "append" ? "entry" : "fields";
+    const holder = op[holderKey];
+    const body = holder && typeof holder === "object" && !Array.isArray(holder) ? (holder as Record<string, unknown>) : undefined;
+    const handWritten = SURVEY_FIELDS.filter((f) => body && Object.prototype.hasOwnProperty.call(body, f));
+    if (handWritten.length > 0) {
+      refuse(`${handWritten.join(" and ")} ${handWritten.length > 1 ? "are" : "is"} not written by hand: drop ${handWritten.length > 1 ? "them" : "it"} and ${SURVEY_HOW}`);
+      continue;
+    }
+    if (!hasRef) {
+      if (op.op === "append") refuse(`a localities append needs its survey: ${SURVEY_HOW}`);
+      continue;
+    }
+    if (typeof op.surveyRef !== "string" || op.surveyRef.trim() === "") {
+      refuse("`surveyRef` must be the `staged.resultsRef` string locality_survey returned.");
+      continue;
+    }
+    let survey: any;
+    try {
+      survey = (await readStagedResults(projectPath, op.surveyRef))[0];
+    } catch (e) {
+      refuse(`surveyRef '${op.surveyRef}': ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
+    if (!survey || typeof survey !== "object" || !Array.isArray(survey.pagesRead)) {
+      refuse(`surveyRef '${op.surveyRef}' is not a locality_survey answer.`);
+      continue;
+    }
+    const offPage = registrationYearsOffPage(body?.registration_start, survey);
+    if (offPage.length > 0) {
+      for (const m of offPage) refuse(m);
+      continue;
+    }
+    const filled: Record<string, unknown> = { ...(body ?? {}), pages_read: survey.pagesRead };
+    if (survey.volumeSummary && typeof survey.volumeSummary === "object") filled.volume_summary = survey.volumeSummary;
+    const catalog = catalogRowsFromSurvey(survey);
+    if (catalog.length > 0) filled.catalog = catalog;
+    const linked = wikiLinkedCollectionIds(survey);
+    if (linked.length > 0) SURVEY_WIKI_COLLECTIONS.set(op, linked);
+    (op as any)[holderKey] = filled;
+    delete op.surveyRef;
+  }
   return errors;
 }
 
@@ -13562,6 +13939,7 @@ export async function researchAppend(
           fields: input.fields,
           ...(input.edits != null ? { edits: input.edits } : {}),
           ...(input.guideSection != null ? { guideSection: input.guideSection } : {}),
+          ...(input.surveyRef != null ? { surveyRef: input.surveyRef } : {}),
           planId: input.planId,
         },
       ];
@@ -13622,6 +14000,9 @@ export async function researchAppend(
     }
     const guideErrors = expandGuideSections(ops, research, fmt);
     if (guideErrors.length > 0) return fail(boundErrors(guideErrors));
+    const surveyErrors = await expandSurveyRefs(ops, input.projectPath, fmt);
+    if (surveyErrors.length > 0) return fail(boundErrors(surveyErrors));
+    expandRecordTypeRows(ops, research);
     normalizeLocalityRegistration(ops);
 
     let retracted = new Set<string>();
@@ -13664,6 +14045,9 @@ export async function researchAppend(
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
       : undefined;
+    const storedLinkTexts = ops.some((o: any) => o?.section === "plans" || o?.section === "plan_items")
+      ? await loadStoredLinkTexts(projectPath)
+      : [];
 
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
@@ -13693,6 +14077,7 @@ export async function researchAppend(
         // green. The must-fire tests go through `researchAppend` end to end
         // rather than calling the guard directly for exactly this reason.
         options.fulltextSearchable ?? null,
+        storedLinkTexts,
       ),
       opIndex,
     });
@@ -13740,6 +14125,18 @@ export async function researchAppend(
         // written on either path.
         return firstOnly();
       }
+    }
+
+    // §5.14: which of the entry's collections each record-type row covers, on the localities this
+    // call writes only: another writer's call must leave every stored entry as it was.
+    const priorLocalityIds = new Set(
+      (Array.isArray(beforeResearch?.localities) ? beforeResearch.localities : []).map((l: any) => l?.id),
+    );
+    const writtenLocalityIds = new Set(
+      ops.flatMap((op: any) => (op && op.section === "localities" && op.op === "update" && typeof op.entryId === "string" ? [op.entryId] : [])),
+    );
+    for (const loc of Array.isArray(research?.localities) ? research.localities : []) {
+      if (!priorLocalityIds.has(loc?.id) || writtenLocalityIds.has(loc?.id)) fillRecordTypeRows(loc);
     }
 
     const originalRefusals = originalWithoutEvidenceRefusals(beforeResearch, research, ops, applied);
@@ -13822,8 +14219,8 @@ export async function researchAppend(
     // conflict gate uses — so it never re-warns on a later write to an
     // already-completed project. Reads the write-once baseline; fails open (no
     // warning) when the project predates it.
-    const completingNow = ops.some(
-      (o) => o.section === "project" && o.op === "update" && (o.fields as any)?.status === "completed",
+    const completingNow = projectStatusOps(ops).some(
+      (o: any) => o.op === "update" && o.fields?.status === "completed",
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
@@ -13888,6 +14285,16 @@ export async function researchAppend(
         if (hint) planItemWarnings.push(hint);
       }
     }
+
+    // #4698. Last thing before validate/write, so it sees the final `research`
+    // and the pre-call `beforeResearch`. Mutates `research.project`; the
+    // warning rides `planItemWarnings` into `validationBlock`.
+    const reopenWarning = reopenCompletedProject(research, beforeResearch, applied, ops);
+    // Its own list, not `planItemWarnings`: that name, both loops that fill it
+    // and its readers are all about plan items, so a project-status message
+    // riding it would be dropped or mis-attributed by the next filter scoped to
+    // the name.
+    const reopenWarnings: string[] = reopenWarning ? [reopenWarning] : [];
 
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
@@ -13984,7 +14391,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...claimRules.warnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...reopenWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<
       BatchSuccess,
@@ -14026,7 +14433,6 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchAppendError) {
       // Single-op path (and pre-pass throws): the section is only known when
       // the caller used the non-batch form.
@@ -14516,6 +14922,15 @@ const EDITS_SCHEMA = {
   },
 };
 
+/** `surveyRef` on the top-level call and on each batch op. */
+const SURVEY_REF_SCHEMA = {
+  type: "string",
+  description:
+    "localities append or update: the `staged.resultsRef` locality_survey returned. The tool writes " +
+    "`pages_read`, `volume_summary` and `catalog` from that survey; a localities append needs it, and none " +
+    "of them is sent by hand.",
+};
+
 /** `guideSection` on the top-level call and on each batch op. */
 const GUIDE_SECTION_SCHEMA = {
   type: "string",
@@ -14587,6 +15002,7 @@ export const researchAppendSchema = {
       },
       edits: EDITS_SCHEMA,
       guideSection: GUIDE_SECTION_SCHEMA,
+      surveyRef: SURVEY_REF_SCHEMA,
       planId: {
         type: "string",
         description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
@@ -14616,6 +15032,7 @@ export const researchAppendSchema = {
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },
             edits: EDITS_SCHEMA,
             guideSection: GUIDE_SECTION_SCHEMA,
+            surveyRef: SURVEY_REF_SCHEMA,
             planId: { type: "string", description: "Required when section is 'plan_items' — the parent pl_ id." },
           },
           required: ["section", "op"],

@@ -140,7 +140,7 @@ describe("project_create", () => {
       "research.json",
       "starting-tree.gedcomx.json",
     ]);
-    expect(r.counts).toEqual({ persons: 1, relationships: 0, sources: 1, memorySources: 0 });
+    expect("counts" in r ? r.counts : undefined).toEqual({ persons: 1, relationships: 0, sources: 1, memorySources: 0 });
 
     const research = await readResearch();
     expect(research.project.objective).toBe("Identify the parents of Patrick Flynn");

@@ -654,10 +654,38 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     },
   },
   {
+    // No identity claim covers P1 and P2, so the merge is refused until justified
+    // (Decision 13 of docs/plan/conclusion-tree.md).
     tool: "merge_tree_persons",
+    label: "merge_tree_persons (refused: no identity claim)",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath, merges: [["P1", "P2"]] }),
-    expect: okTrue,
+    expect: (res) => ({
+      ok: res.body?.ok === false && res.body?.reason === "unjustified_warnings",
+      detail: brief(res),
+    }),
+    after: (res, ctx) => {
+      ctx.values.mergeWarningIds = (res.body?.warnings ?? []).map((w: any) => w?.warningId).filter(Boolean);
+    },
+  },
+  {
+    tool: "merge_tree_persons",
+    label: "merge_tree_persons (justified)",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      merges: [["P1", "P2"]],
+      warningJustifications: ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).map((warningId) => ({
+        warningId,
+        justification: "The user instructed this merge.",
+      })),
+    }),
+    // With no warning ids the refused step above already failed; say so here
+    // rather than report the re-merge's unrelated error.
+    expect: (res, ctx) =>
+      ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).length === 0
+        ? { ok: false, detail: "skipped: the refused merge above returned no warning ids to justify" }
+        : okTrue(res),
   },
   {
     tool: "tree_forget",
@@ -853,6 +881,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
     expect: (res) => ({
       ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "locality_survey",
+    args: (ctx) => ({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1850, endYear: 1880, projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok:
+        !res.isError &&
+        Array.isArray(res.body?.pagesRead) &&
+        res.body.pagesRead.length === 4 &&
+        typeof res.body?.staged?.resultsRef === "string",
       detail: brief(res),
     }),
   },

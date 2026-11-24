@@ -1,0 +1,510 @@
+{
+  "run_log": "v7_2026-11-24_00-40-02.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked each claim against the four wiki fixtures. The Famine timing, chain migration, manifest and Castle Garden claims match the tools. Two claims from no tool are wrong: Schuylkill County was never in the Diocese of Harrisburg (it stayed with Philadelphia until the Diocese of Allentown, 1961), and pre-1906 naturalization papers usually give only the country, not \"the specific county and townland\". It also says Griffith's Valuation (1847–1864) helps find a family that left before 1844, which it can't. Not a 1: the core context is right and sourced."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call matched its fixture: wiki_search, wikipedia_search, and both wiki_reads. research_log_append was refused once for calling the 1850 household a fact; the agent fixed the note and the retry succeeded. One clean retry, so full credit."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tied to Patrick throughout: his ~1845 birth against the Famine, the Ireland-or-Pennsylvania birthplace question, Schuylkill County by 1850, and the 1908 death. Not generic context."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked which claims a tool returned. The 1906 civil registration, Griffith's and Tithe dates, Diocese of Harrisburg and naturalization-townland claims came from no tool, and none is marked \"(general knowledge)\" as the agent's rules require. Two of them are wrong (see Correctness). The sourced claims are fine."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The Sources consulted list names the three pages actually used, with real URLs (Pennsylvania Irish Immigration, Great Famine, United States Emigration and Immigration). The generic Schuylkill page it read was rightly left out."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete next steps: pull the full 1850 census page for neighbours, the 1908 death certificate with an informant check, Thomas's naturalization papers, pre-1850 Catholic parish registers, full manifest pages, and Civil War service files. The townland promise for naturalization papers is overstated, but that's scored under Correctness, not counted twice."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked each claim against the fixtures. 1 July 1837 and the Registration Act 1836, baptism rather than birth registers, bishop's transcripts, Nonconformist registers surrendered in 1837 and 1857 and now in RG 4–8 at Kew, Methodist chapels in Dorset, the Dorset History Centre, and weak registration up to 1875 all come from the England Civil Registration and Dorset wiki fixtures. One small slip: it says Dorset parish registers and RG 4–8 are on Findmypast, but the fixture names Findmypast only for the civil registration indexes. Minor, so 3."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the test's five points. It covers 1 July 1837, baptism registers before 1837, incomplete early registration, bishop's transcripts and Nonconformist records. It never mentions census records (1841 on). It names the \"GRO indexes\" only in passing, in one research-plan line, without saying they are the quarterly finding aid, though the fixture explains this. The judge says the indexes don't appear at all; they do, briefly. Still 2 for the missing census."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "wiki_read used the exact England_Civil_Registration URL as expected; the England_Church_Records read returned a generic page, which the agent flagged and didn't use; wiki_search included \"Dorset\" as required. research_log_append returned no_project, which is expected in a folder with no project."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answers this researcher's question directly: why no certificate exists for a birth around 1820, with Dorset-specific places to look (Dorset History Centre, Methodist chapels in Dorset) and advice to find the parish first."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Substantive claims are tied to the wiki pages in the text (\"the England Civil Registration wiki notes…\", \"the Dorset Genealogy wiki notes…\"), and the generic Church Records page is flagged as unused. The one unsourced detail is the Findmypast hosting claim; it's minor and scored under Correctness."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the two pages actually used, England Civil Registration and Dorset Genealogy, with real URLs, and leaves out the generic page with a note saying why."
+    },
+    {
+      "test_id": "ut_historical_context_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: identify the parish first, search baptism registers at the Dorset History Centre, use bishop's transcripts as a cross-check, try RG 4–8 if the family was Nonconformist, and check parish records alongside the GRO indexes for children born 1837–1875."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The cause rule isn't triggered: the one paragraph giving 1840s causes opens with \"(general knowledge)\", and the closing summary states none. The judge's rationale itself concludes 3. But the plan tells the researcher to search Hamburg passenger lists for this ancestor's departure, and those lists start in 1850; an 1845 emigrant won't be in them. The fixture says only \"many decades\", so dating it was the agent's job. Everything else checks out (Kirchenbücher, 1875–1876, Heimatort, 1850 census birthplaces, 1860 personal estate)."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers what the test asks: the 1840s context, why Pennsylvania, church books as the German source before 1876, finding the Heimatort in American records first, passenger lists, the census, Pennsylvania church records, name changes and chain migration. Nothing missing."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call matched its predicate (wiki_search with \"German\", wiki_reads, wikipedia_searches). It read the Germany_Emigration_and_Immigration page twice, getting the generic page both times: one wasted call, but the arguments are right."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tied to an 1845 German immigrant to Pennsylvania throughout: village of origin first, which American records hold it, and which records exist on each side. Not encyclopedia content."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge says every unverified passage is flagged, but two paragraphs aren't. The U.S. Customs passenger lists since 1820 paragraph and the Pennsylvania church records and 1906 paragraph came from no tool (the U.S. immigration page returned generic content) and carry no \"(general knowledge)\" flag. The claims are right, but the rule needs the flag in the same paragraph. The flagged paragraphs and the quoted Heimatort sentence (from the Germany Genealogy page) are fine."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the pages the narrative drew on, with real URLs: two Germany Genealogy section anchors and the German Emigration Records anchor from the wiki_search results, plus the Germany_Genealogy page it read. Generic pages are left out, with a note saying why. This is the test's main dimension, and it passes."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: find the Heimatort in naturalization papers, death certificates, obituaries and church records; pull full manifest pages; check 1850 and 1860 census neighbours; search German-language congregations; use state emigration lists once the state is known. The Hamburg date problem is scored under Correctness, not counted twice."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against the test's rules. It rightly leads with the stepfather reading, tied to the marriage six months before the bond, treats the Barlow surname as expected, and doesn't read the bond as proof the children were orphans. But it states the step reading as settled (\"almost certainly\", then \"they are his stepchildren through Sarah\" and a hypothesis line saying so), and it assumes Barlow was Sarah's previous married name, which is the very thing the record doesn't say. The test calls asserting the step reading as settled a fail on that rule; the rest is right, so 2."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the required elements. It gives the step reading with its timing and names what would settle it (Sarah's earlier marriage record, a Barlow estate or probate file naming the children, the bond's condition clause). But it never names the uncle-by-marriage reading at all, which the test requires as an unresolved alternative. That's a separate miss from overstating the step reading, which is scored under Correctness."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both wiki_search calls matched their fixtures: the first query contains \"guardianship\" as expected; the second matched the open predicate."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Built around this record: the 1821 bond, the six-month gap after the marriage, the Barlow surname, and what the bond's condition clause and the court's probate docket should show."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked which claims the guardianship fixture holds. The quoted court-bond and probate passages match it. But the 1851 Massachusetts adoption statute, children keeping their father's surname, and a stepfather having no automatic authority in 1821 appear in no tool result and carry no \"(general knowledge)\" flag. The judge notes they're unflagged and gives 3 anyway, but the test says an unflagged passage gets no allowance. The claims are accurate, so 2, not 1."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the three pages the narrative drew on, with their real section URLs from the search results: Court Bonds (Types of Bonds), United States Probate Process (Guardianship), and Massachusetts Death 1841–1899 (Guardianship)."
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: read the bond's condition clause for the deceased parent, search the same court's probate or orphans' court docket for a Barlow estate before 1821, and find Sarah's earlier marriage record and her marriage bond with Josiah. The missing uncle alternative is scored under Correctness and Completeness, not counted again here."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked each claim against the six fixtures. Population (29,053 / 60,713 / 89,510), the Famine dates, Castle Garden opening in 1855, the 1819 Steerage Act, the payroll ledgers and the Molly Maguires records all match. But it says Pennsylvania had no statewide registration of \"births, marriages, and deaths until 1906\". Births and deaths began in 1906; Pennsylvania never had statewide marriage registration, and no tool said otherwise. A researcher could go looking for a state marriage record that doesn't exist."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers all four of the test's points: the Great Famine (1845–1852) as the driver; Schuylkill's anthracite mines and Philadelphia as the port; at least two research consequences (Catholic parish registers, pre-Castle Garden manifests, neighbour and chain-migration research); and full manifest pages listing infants and children."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call matched its fixture: wiki_search for Irish immigration and Schuylkill, both wikipedia_searches, place_search, place_population (1830–1870), and the U.S. Emigration wiki_read. Two wiki_reads returned generic pages, and the agent said so instead of using them."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Built around Irish Catholic miners reaching Schuylkill County in the Famine years: Philadelphia arrivals, parish registers, colliery payrolls, the county's population jump, and later Molly Maguires records for families still there."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked each passage against its cited source. The chain-migration paragraph cites the FamilySearch \"Settlement Patterns\" page, but that page says nothing about chain migration, townlands or neighbours witnessing records. The naturalization, name-variation and 1906 passages come from no tool and carry no \"(general knowledge)\" flag, though the judge says they're flagged. The claims are mainstream, so partial, not fail."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the six pages the narrative drew on, with their real URLs: Pennsylvania Irish Immigration, the two Schuylkill wiki section anchors (Coal Mining Records, Molly Maguires), U.S. Emigration and Immigration, and the Schuylkill County and Great Famine Wikipedia articles. The wrong citation on the chain-migration paragraph is scored under Source quality."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: Philadelphia customs manifests for 1845–1855 with full pages, Schuylkill Catholic parish registers, county court naturalization papers, colliery payroll ledgers at the Historical Society, and Molly Maguires records for families still there in the 1860s–70s."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked each claim against the fixtures. The Diocese of Allentown covering Schuylkill County and the pre-1900 registers at the Philadelphia Archdiocesan Historical Research Center, the 1906 registration date, the Famine years, settlement in Schuylkill, Luzerne and Carbon, and manifests naming every passenger all come from the tool results. The 1850 census having no relationship column comes from the tool's own correction. Nothing wrong."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the test's four points. It ends with a ### Search implications block above the --- line, with hypothesis-tracking and research-plan labels; hands two competing explanations (born in Ireland and arrived as an infant, or born in Pennsylvania) to hypothesis-tracking without resolving them; hands the 1850 census page, manifests and parish registers to research-plan; and spawns no agent itself."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call matched its fixture. The overview log entry was refused once for treating the 1850 household as stated; the agent added the inference note and the retry succeeded. One clean retry, so full credit."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Built around Patrick's actual problem: a 1908 death record saying Pennsylvania against an Irish family, the Famine starting the year he was born, Schuylkill as the endpoint, and the project's own 1850 census evidence. (The judge mentions a son-in-law informant, James Brown, that the reply doesn't name; that doesn't change the score.)"
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked each passage for a tool source or a flag. Most are sourced and attributed (the Irish Immigration, U.S. Emigration and Church Records pages), and it even marks the 1906 date for confirmation. But the opening paragraph on death-certificate informants being unreliable for birthplace came from no tool (that search returned a generic page) and carries no \"(general knowledge)\" flag. The rubric counts unflagged, unverified material as partial. The claim is sound method, so not a fail."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the four pages actually used, with real URLs: Pennsylvania Irish Immigration, U.S. Emigration and Immigration, and two Pennsylvania Church Records section anchors. The generic pages are reported as gaps, not cited."
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps with dates and places: Thomas Flynn family manifests 1844–1848 with full pages, Schuylkill Catholic baptisms 1845–1847 at the Archdiocesan Historical Research Center or in the FamilySearch Catalog, the birthplace column on the 1850 census page, and checking the 1906 date."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against the Norway Genealogy fixture. Patronymic surnames until the late 19th–early 20th century, Eriksen as son of Erik and Pedersen as son of Peder or Per, surnames changing every generation, farm names as the steadier identifier, and parish registers as the main source all match. One small slip: it glosses farm names as \"bygdenavn/bruk\"; bygdenavn is a district name, and a farm name is gårdsnavn. Minor, so 3.\n"
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked the test's seven points. All five \"Must\" items are covered: patronymics, the two fathers so likely two men, surnames changing each generation, farm names, and searching by given name plus farm or parish. But it misses both \"Should\" items: it never mentions emigration records (the judge says it does; it doesn't, though the fixture calls them essential), and it says nothing about spelling variations in American records."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both wiki_search queries contain \"Norwegian\" or \"Norway\" and matched the expected predicate. The second search was nearly identical to the first and returned the same page, a redundant call, but the arguments are right."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answers the researcher's actual question, whether Lars Eriksen and Lars Pedersen are one man, by reading what each patronymic says about the father, and gives next steps for these two records."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the one page used, Norway Genealogy (Names and Naming Practices), with the URL the search returned."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each substantive claim comes from the Norway Genealogy page and is cited in the text. The only unsourced detail is the \"bygdenavn/bruk\" label (noted under Correctness); everything else is tool-backed or plain research method."
+    },
+    {
+      "test_id": "ut_historical_context_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: compare farm names, check ages and dates, find baptisms naming a father Erik and a father Peder, and use confirmation records, which name both person and father. The missing emigration records are scored under Completeness, not counted twice."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked each claim against the fixtures. The population figures, Welsh chapels, St. Patrick's Pottsville (1827), payroll repositories, inspector reports from 1870 and the Molly Maguires records all match. The \"Diocese of Harrisburg\" line comes straight from the church-records fixture, so it isn't the agent's error, though the fixture is wrong: Schuylkill stayed with Philadelphia until the Diocese of Allentown in 1961, as k7p's fixture says. One small slip of the agent's own: it says the Philadelphia and Reading Coal and Iron Company had company towns \"by the 1850s\", but that company was formed in 1871. Background only, so 3."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The test asks for research-useful context, e.g. accident or union records, or how the ethnic mix changed. It covers the Welsh, Irish and later Eastern European waves and what each means for records, plus accident reports through the 1870-on inspector reports. (The judge counts the Molly Maguires as \"labor organization\", but they weren't a union; it doesn't matter, since the test only needs one of the examples.) Not just \"coal was big\"."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every call matched its fixture: the wiki_searches (anthracite, Schuylkill, church records), the wikipedia_searches, place_search, and place_population for 1840–1870. Two wiki_reads returned generic pages, and the agent said so."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Built around an 1850s Schuylkill miner: which ethnic community he likely belonged to and its records, the company-town system and why he may be missing from deeds, what \"miner\" and \"laborer\" mean in a census, and where payroll books survive."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked each section for a tool source or a flag. Most are tool-backed, but the occupational terms (miner, laborer, breaker boy), the 1906/1885 registration dates, the census mortality schedules and the deed-records point came from no tool and carry no \"(general knowledge)\" flag. The judge counts the closing note as cover, but that note covers only the two generic page reads, and the rubric wants the flag in the paragraph. The claims are mainstream, so partial."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the eight pages drawn on, with real URLs: four Schuylkill wiki section anchors, the Pennsylvania Mining Records anchor, and the Schuylkill County, Anthracite coal region and Company town Wikipedia articles."
+    },
+    {
+      "test_id": "ut_historical_context_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Concrete steps: Welsh-language chapel registers, Catholic parish registers (with the earlier Philadelphia jurisdiction), payroll books at three named repositories, inspector reports from 1870, census mortality schedules, and Molly Maguires records as neighbour evidence."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against the test's rule that pre-1863 county records stay with the county, whose courthouse is now in West Virginia. The reply contradicts itself: one bullet gets it right (\"the Virginia county courthouse (now located in West Virginia)\"), but the first bullet, the research-plan line and the closing all send the researcher to \"Virginia county records, not West Virginia ones\". The test calls that a Correctness error. The statehood facts (20 June 1863, 35th state, 50 counties, no move) are right."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Checked the required points. It explains the 1863 split and that the ancestor didn't move; it does say the records are at the county courthouse now in West Virginia (second bullet), though it contradicts this elsewhere, which is scored under Correctness, not twice; and it names county-level record types (deeds, court, probate, church). Only tax lists are missing from the test's suggested list."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "wiki_read used the West_Virginia,_United_States_Genealogy URL as expected, and wikipedia_search included \"West Virginia statehood\". Both matched their fixtures."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answers the actual question, the 1860 \"Virginia\" against the 1870 \"West Virginia\" entry, and explains each census line by the 1863 split."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked what the two fixtures hold: only the statehood facts (20 June 1863, 35th state, 50 counties). The records advice (where pre-1863 records are held, indexers varying on the state name) came from no tool and carries no \"(general knowledge)\" flag, though the judge says no unverified passages appear. Part of it is also wrong (see Correctness). Partial, not fail."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sources consulted lists the two pages used, the FamilySearch West Virginia Genealogy page and the West Virginia Wikipedia article, with the URLs the tools returned."
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked the test's four requirements against the agent's return. It grounds the context in Patrick's timeline, names record classes, and explains that manifests list every passenger including infants. For the 1908 death it opens death certificates and pension files but not obituaries, which the test names. The judge says it mentions an obituary in the Pottsville Republican; the agent's return doesn't."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Concrete steps: identify the birth county, search both \"Virginia\" and \"West Virginia\" as state filters, and separate pre- and post-1863 records by county. The wrong direction on where pre-1863 records sit is scored under Correctness, not counted again here."
+    }
+  ]
+}

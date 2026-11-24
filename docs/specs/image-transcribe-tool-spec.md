@@ -446,8 +446,7 @@ consistent across schema, manifest, and skill.)*
   an uploaded PDF did (the model opened it itself). Contract:
   - **Requires `projectPath`**; the ref is relative to it. The directory is classified first
     (`classifyProjectPath`): a missing `projectPath` and a missing directory are the shared
-    loud errors, a folder holding neither project file is the no-project *answer*
-    (`{ ok: false, reason: "no_project" }`, the no-project rule) — before any key or path error.
+    loud errors, a folder holding neither project file throws `NO_PROJECT_REFUSAL` — before any key or path error.
   - **Shape, before any I/O:** no leading slash or drive letter, no backslash, no NUL, no
     empty / `.` / `..` segment. Any ref *inside* the project is allowed; the containment guard
     is the store's (`FsProjectStore.readableReal`: realpath'd, symlink-aware, regular files
@@ -524,6 +523,14 @@ periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
+A name is matched with the punctuation beside it stripped: leading `(`, `[`
+and quotes (straight or curly), and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]`
+and quotes. A
+trailing period is kept when the form with it is in the table (`Jas.`) and
+dropped otherwise (`daughter of James.`). So `"Lee, Eliza, father James Lee"`
+expands both Eliza and James, and a page holding Elizabeth, daughter of James
+Lee, is credited.
+
 When expansion fires, `imageTranscribeTool`'s in-process result carries a
 `nameExpansion` field:
 
@@ -533,9 +540,19 @@ When expansion fires, `imageTranscribeTool`'s in-process result carries a
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-The MCP answer drops it (see "Output"). It was added so a genealogist could see which
-name forms the found check credited, but no caller relays it, and the
-search-images agent reads every `FOUND` page in full before it reports one.
+The MCP answer drops it (see "Output").
+
+What the MCP answer carries instead is `matchedForms`, present only with
+`found: "FOUND"`: for each given name in `lookingFor`, the other forms of it
+that appear on the page, keyed by the name as the caller wrote it —
+`{ "Eliza": ["Elizabeth"] }` for `"Lee, Eliza, father James Lee"` on a page
+holding ELIZABETH, daughter of JAMES LEE. A form counts when it appears as a
+whole word, ignoring case (`formsOnPage`, `src/utils/name-variants.ts`); a name
+whose only form on the page is itself is left out, a form that is also an
+ordinary word (`May`, `Will`, `Ed`) is never counted, and the field is absent
+when none qualifies. A caller told only `FOUND` reads the Elizabeth entry, sees a
+name that differs from the one sought, and reports it as a different person;
+`matchedForms` states, from the table, that it is the same name.
 
 This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
@@ -660,6 +677,7 @@ Text only, no image block:
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
                              // AND the text-only found check (§6.1) replied with a parseable marker —
                              // omitted when that second call fails (it is best-effort)
+  matchedForms?: Record<string, string[]>  // only with found: "FOUND" — other forms of each sought given name on the page (§5.3.1)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
@@ -673,6 +691,9 @@ Text only, no image block:
   metadata?: {               // present only when a Memories page URL was resolved
     memoryArtifactUrl: string
   }
+  readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
+  indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
+                             // in a project, for an `ark` read whose page a held source's image_ark names
 }
 ```
 
@@ -733,6 +754,47 @@ Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is
 shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
 refused (403) and 4 answered 400.
 
+#### Index readings
+
+In a project, every answer across the MCP boundary carries `readingNote`, and, when held
+records sit on the page read, `indexReadings`. Added by `attachIndexReadings`
+(`src/utils/index-readings.ts`) after the compactor, on the project legs of
+`imageTranscribeMcpTool` only: never with no project, and never on person_read's
+in-process call.
+
+- `indexReadings`: `{ sourceId, recordId, role, name }` for each live `fact_type: "name"`
+  assertion of every source whose `image_ark` names the page read, joined on
+  `pageKey` (`src/utils/waiting-pages.ts`), the same key `waitingPages` uses. So a `cc=`
+  query on either side still matches, and an `i=` or `groupId=` ARK matches nothing. A
+  reading of the page, a machine's or the researcher's (an assertion with
+  `disputes_assertion_id`, research-append §11.9), is not the index and is left out. A
+  given name the index left blank is simply absent from `name`. Joined for an `ark` (or
+  its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
+- `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
+  of the page, and its text is never "the name as written". Where it and the index
+  differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
+  Call neither reading the answer or the likelier one, never call the index wrong or a
+  misread, and never state a correction. A reading the researcher gives of the page ranks
+  with the index: it is shown beside the transcription the same way and never corrected
+  from it. A line the transcription leaves blank where the index
+  has a person is a difference between the readings, never evidence the person is absent.
+  A second transcription of the same page, or one
+  made after declining to read it, confirms nothing; only a different record or a
+  different person's reading does. Report each other record's name as that record writes
+  it: it challenges the reading, so never call it a rendering, variant or split of another
+  name, never call a disagreeing spelling consistent, and never drop a reading on a
+  premise the project's own files contradict. The router's skill carries none of these
+  rules itself; it follows the note.
+
+Never an error: an unreadable `research.json` gives the note alone. The unit harness
+calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).
+
+Why a tool and not prose: the same rules as `research/SKILL.md` lines were followed in
+4 of 5 runs of `ut_research_iv1` in one round and 0 of 5 in the next, with the text
+unchanged. Four of those five runs skipped the index lookup the lines asked for
+(scratch 2026-11-18). In the tool result, the index is in front of the model when it
+writes the reply, with no lookup to forget.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
@@ -741,7 +803,7 @@ refused (403) and 4 answered 400.
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
-| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
+| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file throws `NO_PROJECT_REFUSAL` (the gate in `server.ts` refuses first) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |

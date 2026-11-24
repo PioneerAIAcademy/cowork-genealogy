@@ -92,5 +92,4 @@ export interface PersonWarningsList {
  *  Discriminate with `"ok" in result`; a list call answers `results`. */
 export type PersonWarningsResult =
   | PersonWarningsFound
-  | PersonWarningsList
-  | { ok: false; reason: "no_project"; errors: string[] };
+  | PersonWarningsList;

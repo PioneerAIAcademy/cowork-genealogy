@@ -147,6 +147,15 @@ entry says so.
 
 ## Evidence
 
+Alpha feedback, November 2026. A tester read "linking the records" as attaching records
+to the FamilySearch Family Tree, so the label now names the project. In another session
+the main thread ended 8 turns with the link offer, and each time the tester answered with another search request ("I was asked
+whether the records found should be linked, when the research was still quite
+incomplete"). The tester was passing over the offer, not refusing the step, so a search
+step opened by a steer keeps the same offer. The sentence before it says linking can wait
+and another search can be named. Keeping the offer leaves the last-line format that
+`offered_step` parses unchanged.
+
 Alpha feedback, October 2026: after question selection, one run cost $49.84 over about 361 live
 minutes. Each "not exhaustive" verdict auto-produced a new plan, in three passes
 ($22.65, $5.73, $20.15). No one was asked, and the second verdict named the best
@@ -159,7 +168,7 @@ committed runs (17%) gave one question two or more plans.
 |---|---|---|
 | Setup: init-project (new project), the attached-records baseline (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `research-append-tool-spec.md` §11.8), question-selection, locality-guide if the place is unsurveyed | always | what the attached records show, then the question, then "Continue with planning the searches?" |
 | Plan: research-plan | always | the plan, then "Continue with running the searches?" |
-| Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records?" |
+| Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records to people in this project?"; when a steer opened the step and the previous turn offered linking, the sentence before that line says linking can wait and another search can be named |
 | Link: person-evidence | always | what attaches to whom |
 | Conflict resolution | only on a conflict | its own step; when the evidence in hand cannot settle it, the record that could, then "Continue with planning the searches?" (section E) |
 | Hypothesis tracking | only on competing identities | its own step |
@@ -582,7 +591,7 @@ router sentence: plan at most one extra round, then wrap up.
   extraction for a found record not yet extracted, otherwise the next item's search. A
   conflict not yet analysed still goes to conflict-resolution first.
 - **Ladder: after the round settles the conflict,** the concluded-but-open arm routes to
-  proof-conclusion ("concluded while blocked: re-conclude <ps_id>").
+  proof-conclusion ("concluded while blocked: re-conclude this question's proof summary").
 - **Ending on an unsettled conflict.**
   - **`weighed_log_entry_ids`** (optional, on a conflict): conflict-resolution sends it
     on an analysis that finds nothing left to search. `research_append` fills the value

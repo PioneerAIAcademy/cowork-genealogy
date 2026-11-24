@@ -70,6 +70,11 @@ read the extraction logs itself. An `image_transcribe` entry logged without its 
 refused (§6.1). An acquisition file that is never finalized is removed by the TTL prune like any
 other.
 
+**`locality_survey`** (given a `projectPath`) stages its whole answer as a one-element
+`results`, so a `localities` write can read `pagesRead` and `volumeSummary` from it
+(`surveyRef`; `locality-survey-tool-spec.md` §6). It is in neither tool set: no search
+notes fire on it, and it is not a log sidecar.
+
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
 so none of the search notes fire on it. Its file is not a log sidecar: no shipped flow

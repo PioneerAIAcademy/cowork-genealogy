@@ -1371,6 +1371,7 @@ audit's recommendation #5):
 | A `plan_items` append, or an inline item of a `plans` append, whose `repository` is not FamilySearch and that has no `collection_url` | **a warning, never a refusal**, listing the stored collections that fit it: rows of a stored place whose first part names a part of the item's jurisdiction, narrowed to its record type | The agent sees its choices as it writes. The free-text jurisdiction is matched loosely, which a hint can afford and a refusal could not. Silent when nothing fits or nothing is stored. `storedCollectionsHint` |
 | A `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update setting `date_range` or `status: "skipped"`, on a question with a `date_window` | **a warning, never a refusal**, when the span of the question's live plan items (no `superseded` plan, no `skipped` item) leaves more than half of the window uncovered; once per question per call, on the end state | A plan can stop short of the years its question needs, which a lifetime cannot stand in for — [`guardrail-enforcement-spec.md` §"A plan should reach its question's date window"](guardrail-enforcement-spec.md#a-plan-should-reach-its-questions-date-window) |
 | A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
+| A `plan_items` append, a `plan_items` update that changes `jurisdiction` or where `repository` and `record_type` route the item, or an inline item of a `plans` op whose `jurisdiction` or routing changed (a respelling that routes the same way, `""` for a missing repository or `familysearch` for `FamilySearch`, is no change) | **refused** when the router (`searchStepFor`) sends the item to FamilySearch agents (`routesToFamilySearch`): a `fs_hints` item whatever its `repository` (search-hints), otherwise a `repository` matching `familysearch` (case-insensitive) or blank (search-records) — and `jurisdiction` names an outside site, as a whole word or phrase, both sides lower-cased with `&` read as "and" and hyphens and whitespace runs as one space: a display name of a `build_external_search_url` site (`OUTSIDE_SITE_NAMES`; a test fails until every advertised site is named; `digital_newspaper_archive` is generic and has none; Find a Grave, BillionGraves and Newspapers.com do not count inside a FamilySearch collection title, the name, up to three words, then "index" or "indexes", with up to three characters of punctuation before it: "Find a Grave Index", "Newspapers.com Obituary Index", "Find a Grave (index)"; "(Ancestry index)" still counts, as no FamilySearch collection is so titled), or a `link_text` of the project's `external-collections.json` that is not one comma segment of its own row's `place` and **looks like a site** (`looksLikeSite`): a domain ("Genealogy.net"), or two or more words, not made only of record words and numbers (`RECORD_WORDS`: "Parish Registers", "1871 Census", "National Archives"), holding a fixed site name or a site word (archive(s), library/libraries, society, newspaper(s), digital) — and never one naming FamilySearch, nor one followed by "film" or "microfilm" in the same way, which is film FamilySearch holds ("Texas State Library and Archives microfilm"), as "National Archives" film is (live rows include "images at FamilySearch" and "Vermont Historical Society and the FamilySearch Library"). The refusal quotes a `link_text` as stored. "National Archives" and "NARA" are not fixed names either: FamilySearch holds National Archives film. A missing or malformed `external-collections.json` narrows the check to the fixed names and never refuses on its own | The router dispatches a plan item on its one `repository`, so a site written into a FamilySearch item's jurisdiction goes to FamilySearch agents only and is never searched (the Hagell alpha session of 2026-11-18: its `pli_006`, `jurisdiction: "Utah Territory and outside papers (Utah Digital Newspapers, Chronicling America)"`, left both archives unsearched for 68 minutes). **Reads `jurisdiction` only, never `rationale`** (decided 2026-11-20): a jurisdiction is a place, so a site there is never a passing mention, while of 103 FamilySearch items whose rationale names a site (84 on the fixed name list, none with an `external_site` log entry on the item) about 80 are FamilySearch collection titles ("Find a Grave Index") or availability notes. The `link_text` half is what catches a state archive, which has no fixed name. Its two cuts are measured: every live row word-bounded refused "Alabama (statewide search, …)" on the one-word row "Search"; a row listing a place's own page under the place's name ("New York" under "New York, United States", "South Africa") refused 87 ordinary jurisdictions. **A stored `link_text` is ignored unless it looks like a site**, rather than read as one unless cut: live `link_text`s are mostly collection titles ("Civil Marriage Records, 1894-1896", "Passenger Lists") and smaller places ("Los Angeles" under a California row), and no word list cuts them all. Over the live rows of the corpus's own localities, 839 of the 7,363 `link_text`s that are two or more words or a domain look like a site (archives, libraries, societies, newspaper sites, domains) and 6,524 do not; the sites lost are the ones whose name carries no site word ("Magyar Levéltári Portál", "Vision of Britain"). Missing one costs a search; refusing a sound FamilySearch item costs a plan. Printed by the replay below, through the shipped `looksLikeSite`. The `repository` trigger is wider than the compound row's because this rule reads `repository`: an edit moving a site's item onto FamilySearch opens the same gap. **Replay: 0 of 1,756** FamilySearch items (0 of them with a blank repository, counted by the guard's own `routesToFamilySearch`) across 252 e2e final states refused, each run matched against the live rows of its own `localities[]` (93 of 101 places resolved; 8 ambiguous names contributed no rows), re-run on this rule by `packages/engine/mcp-server/dev/replay-outside-site-guard.ts`. The corpus is autonomous one-turn runs. Not covered: a site named in `repository` itself beside FamilySearch (3 corpus items, `"FamilySearch (collection 2285732); FreeBMD; LancashireBMD"`), and a site named only in `rationale` (about 20 items; a research-plan prose change). The message tells the agent to write a separate item per site whose `repository` is the site, so search-external-sites runs it | `outsideSiteJurisdictionError`, `siteLinkTexts` |
 | A `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update changing `sequence`, `jurisdiction`, `record_type` or `fallback_for`, on a plan for the **first** question | **refused** when `project.objective` names a target record (an explicit record noun: "baptism record", "death certificate", "1851 census") and the place of that event (the first capitalised word after "in"/"at", or "of" for a census, in the clause after the event's own verb: "born … in Kongsberg"), some item searches that record at that place (its `jurisdiction` contains the place and no place the objective ties to a different event, and its `record_type` fits the event), and the earliest such item either does not lead the plan or is a `fallback_for` an item that does not search it. Judged once per plan on the call's end state. Silent when no item searches the target, so an objective the parser misreads can never refuse; not applied to a plan that already buried the target before the call, so a plan written before the rule stays editable. The message names the item to move to sequence 1, or the `fallback_for` to clear, and says the rule applies only when the objective states both the record and its place | An alpha feedback session: the objective asked for a Kongsberg baptism and the plan put it at sequence 6 of 11, behind Trysil burial work that re-derived what the objective already stated; the session spent 3h18m in Trysil images and never searched Kongsberg. Lead decision 2026-08-31: a writer precondition, with the refusal rate measured before merging. Measured 2026-11-19 over the 241 first-question plans in the committed e2e corpus: it applies to **1** and refuses **0** (`npx tsx dev/measure-objective-target-lead.ts`). `objectiveTargetLeadError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | `sources` append or update | **`original` needs stored evidence**: refused when the call's end state leaves a source `original` that it was not before, or an `original` that had evidence with none, and the source has no non-empty `transcription`, no non-empty `image_filename` and no FamilySearch document-image ARK (`3:1:`/`3:2:`, `findDocumentImageArk`) in `url`. `image_ark` does not count: the extractor stamps it on every index read. Exempt: a batch with at least one assertion append, every one `record_role: "absent"` (the absence browse). An `original` that never had evidence stays writable | `guardrail-enforcement-spec.md` §5 "`original` needs stored evidence"; lead ruling 2026-09-02 |
@@ -2176,6 +2177,73 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.11a A write that leaves a question open reopens a completed project
+
+When a call leaves a question **it wrote** at a status other than `resolved`,
+on a project whose status was `completed` before the call, the same write sets
+`project.status` to `active`, stamps `project.updated`, and returns a warning
+naming the question and its status.
+
+**Why.** A researcher named two questions; only the first was written. The first
+was concluded, proof-conclusion marked the project `completed` — correctly, as
+every question then stood resolved — and the hosted completion halt ended the
+turn. The second question was written afterwards, and nothing reopened the
+project, so it was researched inside a completed one.
+
+**Reopen only; no refusal** (review-ready, 2026-11-19). Refusing a `completed`
+write while a question is open would not have caught this: the first question
+was the only one when `completed` was written. It would also fire on 12 of 181 completed
+end-to-end runs — measured 2026-11-19 by walking
+`eval/runlogs/e2e/**/*.final-research.json` for `project.status == "completed"`
+with any `questions[].status != "resolved"` (8 `open`, 7 `exhaustive_declared`;
+the count moves as new runs are committed) — and the ADR on writer-tool
+preconditions requires every one of those refusals to be read before such a
+gate ships.
+
+Four properties of the trigger, each load-bearing:
+
+- **The outcome, not the op.** An `update` that sets a question's status back
+  from `resolved` reopens, exactly as an `append` of an open question does.
+  Testing the op leaves a question reopened by update sitting in a completed
+  project.
+- **Every status but `resolved`.** The predicate is derived from the
+  `question_status` enum, so a status added later reopens by default.
+  `exhaustive_declared` and `in_progress` reopen; only `resolved` does not.
+- **Questions this call actually wrote.** The set comes from the applied ops
+  with their no-ops excluded. A settled no-op write changes no file, and the
+  warning channel reaches the result whether or not the document was written,
+  so counting no-ops would report a reopen that never happened.
+- **Only `completed`.** A `paused` project stays paused: the researcher chose
+  that.
+- **A caller's own `project.status` write stands, when it changes the field.**
+  Suppression is keyed on a change, not on the field being present: a call that
+  re-asserts the status the project already had asserts nothing, so it does not
+  suppress the reopen. Keyed on presence, a batch appending an open question
+  beside `{status: "completed"}` on an already-completed project reproduced the
+  incident this rule exists to fix. A write of `active` or `paused` does change
+  the field, so it stands and the engine leaves it.
+
+**This is an engine write, not a caller write.** The ownership row for `project`
+still names only init-project and proof-conclusion as callers, and the plugin
+hook keys on `project.status` in the call's *input*, so it does not see this
+write.
+
+**What else reads `project.status`.** The hosted halt keys on the transition
+*into* `completed`, so a reopened project that proof-conclusion completes again
+halts again — intended. The beta web tier's session card reads the field from
+the newest `research.json`, so after a reopen a card that read "done" reads
+"stopped" or "needs you" — the intended direction, since calling an unfinished
+project done is the failure that card guards against.
+
+Two end-to-end **corpus** readers also key on it, and for them "intended
+direction" does not apply — they classify committed runs after the fact, so the
+number simply moves. `derive_stop_reason` reads the final `research.json`, so a
+run that completed and was then reopened by a later question write is recorded
+`natural_end` rather than `completed`. The nudge report tallies on
+`project.status == "completed"`, so the same run moves from a completion to a
+vetoed-yield run. Neither is wrong, but a metric drawn across the change date
+mixes two populations.
+
 ### 5.12 A caller's `localities` collection counts are stamped from the catalog
 
 On a `localities` append, and on an update whose `fields` sets `collections`,
@@ -2227,7 +2295,12 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `{ id, title, date_range, person_count, record_count, availability }`, after the rows it sent.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
-  else from the first `jurisdictions[].name` whose scope matches a title. At most
+  else from the first `jurisdictions[].name` whose scope matches a title. A scope
+  with leading terms (`collectionScopeTerms`; `England`, `United Kingdom`, `Great
+  Britain` for England, and the other places the collections_search spec lists) is
+  a set: a title is in scope when it starts with one, and a title or place part
+  that starts with one counts as the scope itself, so `England and Wales, Census,
+  1901` names no other part. At most
   `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all, core national rows below included;
   the largest place list in 18 surveyed places was 65. A scope that is the United
   States, Canada or Mexico itself (an entry whose place is the bare country) is skipped:
@@ -2246,8 +2319,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `collections_search` returned for 18 real places, 16 name the place, 165 name no
   part of the scope, and 150 name another part. The rule reads titles only, so a
   collection for one county whose title runs the place and the type together
-  (`Pennsylvania, Philadelphia City Death Certificates`) counts as naming no part
-  and is added. A collection the entry itself sent is always kept.
+  (`Pennsylvania, Philadelphia City Death Certificates`; for a Yorkshire entry,
+  `England, Cumberland Parish Registers, 1538-1990`) counts as naming no part
+  and is added, and a national one whose first part holds no record-type word
+  (`England, Royal Naval Volunteer Reserve Ratings, Medal Roll, 1914-1920`) is
+  left out. A collection the entry itself sent is always kept.
 
   Nothing is added, and nothing is said, on an update, when the catalog cannot be
   read, when no title holds the scope, or when the entry already holds them all.
@@ -2442,6 +2518,10 @@ facts belong to that person and are already linked to them.
 `guide_markdown` on a `localities` entry is built by this tool. The caller appends
 the entry without it, then sends the guide one section per call with `guideSection`
 on an update of that entry. A write that sets `guide_markdown` itself is refused.
+The guide is three prose sections (Jurisdiction overview, Boundary changes, Research
+tips); what the place's records are, where they are held and what was lost are the
+entry's `record_types`, `repositories` and `losses` rows, sent with the append, and the
+Catalog hits are its `catalog` rows, written from the survey.
 The wiring is `expandGuideSections` and `localityGuideWholeRefusals` in
 `research-append.ts`; the placing is `mergeGuideSection` in
 `src/utils/locality-guide-sections.ts`.
@@ -2464,12 +2544,11 @@ saved.
   (compared without case, at the same level and, for a `### `, under the same `## `).
   A new `## ` block goes in the order of `LOCALITY_GUIDE_OUTLINE`, the template's
   headings; one the outline does not name goes after those it does. A `### ` block
-  goes under the `## ` heading sent above it in the same call; else under the outline
-  section that names it; else under `## Available record types`. The tool adds that
-  `## ` line when the guide has none. A sent heading matches an outline title when it
-  begins with it, so `### Vital records (civil registration)` is `Vital records`. A
-  `## ` block sent again replaces that section's heading and the text before its first
-  `### `; the `### ` blocks under it stay.
+  goes under the `## ` heading sent above it in the same call, and a `### ` block with
+  none above it is refused, naming the three sections. A sent heading matches an
+  outline title when it begins with it, ignoring case. A `## ` block sent again
+  replaces that section's heading and the text before its first `### `; the `### `
+  blocks under it stay.
 - **The title line.** The guide's `# Locality Guide: <for_place or place> (<time_period>)`
   line is written by the tool, unless the stored guide already has text before its
   first heading or the call sends a `# ` line above its first block.
@@ -2482,11 +2561,62 @@ saved.
   the project lock on the guide the one before it left. In a batch, each op is placed
   on the guide the earlier op left.
 - **What is still missing.** Every successful `localities` write returns
-  `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists,
-  as `## <title>`, each of `LOCALITY_GUIDE_HEADINGS` (`## Jurisdiction overview`,
-  `## Available record types`, `## Research tips`) the entry's guide lacks, matched by
-  `missingGuideHeadings`; `next` says how to send them and is absent when `missing` is
-  empty. No write is refused for a missing heading.
+  `guide: [{ entryId, missing, next? }]`, one row per entry written. `missing` lists
+  each of `LOCALITY_GUIDE_HEADINGS` the entry's guide lacks, as `## <title>`, matched by
+  `missingGuideHeadings`, then each `locality_record_type` value the entry has no
+  `record_types` row for, as `record_types: <type>` (`missingRecordTypes`); `next` says
+  how to send them, and once
+  `missing` is empty says the guide is complete: return now, naming any other place
+  the delegation listed rather than surveying it (Haiku 5.5 went on to survey every
+  county a delegation listed). No write is refused for a missing heading.
+- **The survey's fields.** A `localities` append must carry `surveyRef`, the
+  `staged.resultsRef` of a `locality_survey` call with a `projectPath`; the tool reads that
+  staged answer and writes `pages_read` from its `pagesRead`, `volume_summary` from its
+  `volumeSummary` (left out when that is null), and `catalog` from its `catalog.levels[]`
+  (`catalogRowsFromSurvey`: a level that failed is skipped; one row per hit, the first of
+  any id; `{ id or null, title, place: the level searched, repository_calls, film_count:
+  filmNotesTotal else the number of filmNotes, null when the hit's detail was not read }`;
+  left out when no level returned a hit). An update may carry `surveyRef` to refresh all three.
+  **Collections the wiki links.** The append's survey also names the FamilySearch collections its
+  wiki pages link (`wikiLinkedCollectionIds`: every `familysearch.org/search/collection/<id>` in the
+  full text of the staged pages; an online-records page lists a state's or country's collections
+  this way, 33 for England and 48 for New York, and the survey shows the agent only a share of it).
+  The §5.12 whole-list fill adds each one FamilySearch's catalog holds, with its catalog title and
+  counts, beside the catalog's own collections for the place; one whose title begins with the scope
+  and names another part of it (`New York, Yonkers, …` for Saratoga County) is left out, and an id
+  the catalog lacks is never added.
+  **A registration year is checked against the page it cites.** Each `registration_start` row in a
+  write carrying `surveyRef` whose `source_url` names a page the survey read (a place page or a
+  topic page, compared by wiki title, case and encoding aside) must give a `year` that page's text
+  contains as a whole number (`registrationYearsOffPage`). A row citing a page the survey did not
+  read is not checked: its text is not staged, and `research_append` reads no network. In the four
+  real-place single-ask runs on Haiku 5.5 at low (2026-11-22), every saved year (Michigan 1867,
+  1893, 1897; Nova Scotia 1763, 1864; Portugal 1878) cited the survey's own vital-records or
+  civil-registration page and appears on it.
+  Refused: a registration year off its cited survey page; an append with no `surveyRef`; `pages_read`, `volume_summary` or `catalog` in an append's `entry`
+  or an update's `fields`; a `surveyRef` that is not a string, does not exist, or is not a
+  survey answer; a `surveyRef` on another section. The wiring is `expandSurveyRefs`. A survey
+  cannot be skipped and its counts cannot be copied wrong: 10 of 90 unit saving runs had
+  copied `volume_summary` wrong.
+- **The record-type rows.** An update's `fields.record_types` is merged into the stored
+  list before validation (`expandRecordTypeRows`): its rows of a type replace every stored
+  row of that type, rows of other types are kept, and the list is ordered by the enum. In a
+  batch, each op merges onto the list the op before left. So an update carrying only the
+  rows `missing` named keeps the others. An append's `record_types` is stored as sent.
+  After the ops apply and before validation, every localities entry's rows get their
+  `collection_ids` from the entry's own `collections` (`fillRecordTypeRows`,
+  `utils/locality-record-types.ts`): a collection goes to the first type its title names
+  (`recordTypeOfTitle`, an ordered word list; a title naming none goes to no row), and the first
+  row of a type gets those ids when it sent none. A row with no `access` gets `unknown`. Nothing
+  else is filled: one type spans several events and centuries, so a years span or an online access
+  word computed across its collections misstates the years a reader asks about (death
+  certificates from 1906 would make an 1897 birth read as indexed). A reader takes each listed
+  collection's own `date_range` and `person_count`. A field the agent sent is never changed; the
+  agent sends `access` only for `microfilm`, `physical` or `lost`.
+  A row's `level` is read into the closed list the way `registration_start`'s is (below),
+  except that a row is never split and gains no key (`normalizeRowLevels`): the narrowest
+  level the text names, in enum order, becomes `level`; text naming none sets `level: null`;
+  text that said more than one level word is appended to `summary` as `(held at: <text>)`.
 - **Refusals**, one per op, `ops[i]:`-prefixed in a batch, nothing written:
   - `guide_markdown` set to anything but `null` in an append's `entry` or an update's
     `fields`: `guide_markdown is not written directly: this tool builds it. Append this
@@ -2502,7 +2632,8 @@ saved.
   sent to it is placed into it.
 - **The heading matcher.** `missingGuideHeadings` is the eval validator's `_heading()`
   (`eval/harness/validators/test_locality_guide.py`): a line that starts with exactly
-  two `#`s, then spaces or tabs, then the title, in any case, with anything after it.
+  the heading's `#`s (two or three), then spaces or tabs, then the title, in any case,
+  with anything after it.
   The JS form is `(?<![^\n])##[ \t]+<title>` with the flags `iu`, because JS's `m`
   also starts a line after a lone `\r`, U+2028 or U+2029, and JS's `i` without `u`
   does not match `ſ` for `s`. The parity table in `research-append.test.ts` and its
@@ -2516,6 +2647,8 @@ saved.
   drops one of `LOCALITY_GUIDE_HEADINGS`, when its `## ` and `### ` headings differ
   from `LOCALITY_GUIDE_OUTLINE` in title or order, or when the eval validator's title
   tuple differs from `LOCALITY_GUIDE_HEADINGS`.
+  `tests/packaging/locality-record-type-vocabulary.test.ts` fails when
+  `locality_record_type` parts from `record_type_recommended`'s examples.
 
 **A locality's registration levels.** `registration_start[].level` is a closed list,
 and the agent writes it with a note in brackets (`national (GRO)`), as two levels
@@ -2690,7 +2823,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | A `plans` append whose plan ends the call empty **while the same call carries `plan_items` append ops naming some other plan** (§5) | op-indexed hard error on that `plans` op, opening `plan '<newId>' was created for question '<qid>' and ends this call with no items, which cannot be persisted.` and closing `Do not add "items": [] to the plan shell instead; that is what makes the document schema-invalid.` **Two causes, and the middle clause names whichever applies** — they need opposite fixes. (a) The item ops wrote into a plan the call did **not** create: `this call's plan_items ops wrote into '<other>' (<status> plan for <question>) instead — the items went to a plan this call did not create. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one. Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours.` (b) They named only a **sibling plan this same call created**: `this call's plan_items ops named only '<other>', which this same call also created. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one.` When **more than one** created plan ends the call empty, that single-id prescription is replaced in both branches by `<N> of the plans this call created (<ids>) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.` — because naming one id would empty the others. Prescribing (a)'s fix for (b) would likewise empty the sibling and reproduce the loop with the two plans swapped, which is why the branch exists. A `plan_items` **update** never triggers either: its item already lives in the plan it names. **Branch (a) now reaches only a non-terminal `<other>`** — a `completed` or `superseded` one is refused by the row above before this post-pass runs, so `<status>` renders `active` here. Its same-question form survives only where the created plan is itself terminal, since the one-active-plan rule returns early on a non-active entry; every other same-question input is terminal and refused above. The `plans` worked example is attached, which is the batched call. Write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
-| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. A directory holding exactly one of the two files is a *broken* project and stays loud. |
 | Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---
@@ -3868,7 +4001,7 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
 | order | array order of `persons` | Replaces `FS_SORT_KEY`. |
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
-| land and probate roles | `statedRelation`, `couple` edges, facts | **Land:** a party's `statedRelation` is their part in the deed, the principal's included: grantor → `grantor_N`; grantee → `grantee` (`grantee_N` if several); witness and officer words fall through to the row above. A spouse word with a `couple` edge to a grantor is `grantor_N` (a wife releasing dower); to a grantee, a grantee. Position and `principal` choose no land role in document mode. A land document with no grantor or no grantee is **refused** before anything is written. **Probate:** the decedent or testator is the party carrying the `probate` fact, else `will`, else `death`; a flagged principal breaks a tie, then the first in order. A document whose chosen decedent is stated as administrator, administratrix, executor or executrix is **refused**. |
+| land and probate roles | `statedRelation`, `couple` edges, facts | **Land:** a party's `statedRelation` is their part in the deed, the principal's included: grantor → `grantor_N`; grantee → `grantee` (`grantee_N` if several); witness and officer words fall through to the row above. A spouse word with a `couple` edge to a grantor is `grantor_N` (a wife releasing dower); to a grantee, a grantee. Position and `principal` choose no land role in document mode. A land document with no grantor or no grantee is **refused** before anything is written. **Probate:** the decedent or testator is the party carrying the `probate` fact, else a will fact (`will`, `will_execution`, `testament`, `will_proved`), else a death fact (`death`, `burial`); where several carry one, a flagged principal breaks the tie, then the first in order. Court facts (`letters_of_administration`, `administration`) are not carriers — letters are granted to the administrator — while `will_proved` is, because a will is proved for the decedent. **When no party carries any of those facts, no party is the decedent or testator:** the flagged principal and the order of the parties choose no probate role, every party takes its stated relation (so a party stated "son" is `child_1`), and the extraction summary carries a note saying the tool chose no testator or decedent and each party takes its own stated relation (so a party stated "testator" is `testator_1`, which the note does not contradict). A full-text will excerpt cannot name a testator it does not contain, and refusing it would leave the agent no way to write the evidence it does carry. A document is still **refused** when the party the two pre-write guards check — the carrier, else the flagged principal, else the first in order — is stated as administrator, administratrix, executor or executrix. Those guards say two different things: with a carrier, that the party would be written as the decedent, which is true; with none, that the document does not say whose estate this is, which is what is actually wrong. Neither names a role nobody is written as. |
 | couples | `relationships`, `statedRelation` | On a `land` or `probate` document a `couple` is **refused** unless one of its two parties has a spouse-word `statedRelation` (wife, husband, widow, widower, spouse; not "wife's mother" or "daughter-in-law"). Scoped to these two types: an obituary sends "John (Mary) Smith" as a couple with no spouse word, and marriage and newspaper principals carry no `statedRelation`. The indexed land path stays positional. |
 | roles against the transcription | `transcriptionRef`, `statedRelation` | On a `land` or `probate` document that carries a `transcriptionRef`, the tool reads the staged text and **refuses** a label a phrase contradicts, quoting it. Precision over recall: a wrong refusal leaves the agent no way to write the deed, so a missed refusal is the accepted direction. **Land:** "Know ye / Know all men by these presents that [I/we] ___" names the grantor (refused when a named party is labelled grantee, witness or officer and none is the grantor). "paid by ___", with only the filler words "to me, me, in hand, at, or, before, the, ensealing, and, delivery, of, these, presents, hereof" between (up to ten, any order), names the payer; it is consulted **only when no "Know ye" phrase names a party labelled grantor**, and it is not read when the word just before "paid" is be/been/is/are/was/were (so "borne and paid by" and "being paid by" are still read). A payer labelled grantor, witness or officer is refused. "in presence of ___", read to the end of its own line, names witnesses (refused when labelled grantor or grantee); a party the grantor or payer phrase already names is never read as a witness. Officers (justice of the peace, register, notary, clerk) count as witnesses for these checks. **Probate:** "___ Administrator [or Administratrix] on/of the Estate of ___"; refused when the person named as administrator, read as the name directly before the phrase, is the chosen decedent. A caption that puts "of <place>" or "Esq." between the name and the phrase is not read: reaching back over it reads the decedent's own caption. Names are read as a strict list of capitalized words (2-4 per name, split by a comma, "and" or "&"; a ";" or ":" ends the list; clause-opening words such as Whereas and That are not names); a name matching no party or more than one (a father and son, Johnson and Johnston) is dropped, and a phrase left with no name counts for nothing. A formula matched more than once refuses only when every occurrence that names a party contradicts. **Silent** on every other form ("unto", "received", indentures "between X of the one part", abstracts, recording certificates), and on an unreadable transcription; the check runs before anything is logged. Edit-distance-one drift is allowed for words of five letters or more, and a clerk's given-name abbreviation (Jno., Wm., Thos., Chas., Geo., Jas., Robt., Saml., Benj.) reads as the full name. The probate administrator is read on the phrase's own line only. **Known limits:** a pasted-text document (inline text, no `transcriptionRef`) is unchecked; a page whose OCR puts a glyph between "in presence of" and the names reads no witnesses; a signer on the same line as the witnesses, in a form with no "Know ye" or "paid by" phrase naming them, is read as a witness (a signature block on the lines below is not); a neighbouring deed's grantor listed as a party can switch the swapped-label refusal off; a form with no "Know ye" phrase whose tax or mortgage clause says "paid by" the grantor can still be refused; on a page holding two deeds in a chain of title, a grantor whose short given name the OCR drifts (Ely / Eli) loses its own phrase, so the next deed's grantor phrase refuses the correct labels. |
 | `record_basis` | `computed`, the age | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. A stated age also turns a computed birth year inside its range into the range, or adds one where no birth is written (§11.6, "Which birth is a range"): `inferred`. |
@@ -3915,7 +4048,10 @@ submitting family knows them firsthand, as with a surviving spouse's name.
 **Roles and obituary corners on this path** (genealogist ruling, 2026-09-30):
 
 - **The principal's role:** `deceased` on an obituary. On probate, `testator`
-  when the file holds a will and `decedent` when it is intestate. On a
+  when the file holds a will and `decedent` when it is intestate — and
+  **neither** when no party carries a `probate`, will (`will`, `will_execution`,
+  `testament`, `will_proved`) or death (`death`, `burial`) fact, where
+  every party takes its stated relation instead. On a
   newspaper announcement, the event's subject: `child` for a birth, `bride` /
   `groom` for an engagement or wedding, `husband` / `wife` for an
   anniversary, and `principal` otherwise. A pair event (marriage, engagement,

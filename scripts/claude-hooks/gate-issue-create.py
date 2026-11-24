@@ -3,7 +3,7 @@
 
 Wired from .claude/settings.json against the Bash tool. Reads the hook payload
 on stdin, and when the command would file a GitHub issue, returns an "ask"
-decision so the lead sees the filing before it happens.
+decision so the filing is seen before it happens.
 
 Why a hook and not more prose: the rule already lives in CLAUDE.md and
 DEVELOPMENT.md at length, and restating it is the move ADR-0011 measured and
@@ -26,20 +26,19 @@ import sys
 # quoted in an echo) costs one extra prompt, which is the safe direction.
 GH_ISSUE_CREATE = re.compile(r"\bgh\b.{0,200}?\bissue\b\s+\bcreate\b", re.DOTALL)
 
-REASON = """Before filing, walk the order in CLAUDE.md > "Work you find along the way"
-and stop at the first that fits:
+REASON = """The project winds down at the end of 2026. CLAUDE.md > "Work you find along
+the way": finish what your task turns up in this PR. Stop at the first that fits:
 
-  1. Fix it in this PR. The default, and the right answer about 2 times in 3 --
-     the context is loaded now and the ticket-taker would rebuild it from zero.
-  2. Drop it. A nit costs triage every morning for as long as it stays open.
-  3. Comment on the issue that already covers it (one search, then stop).
-  4. File -- only by naming which exemption applies: different reviewer/skill;
-     a decision only the lead can make AND he is not reachable (a decision is a
-     question -- if you can ask, ask); a different skill's paid eval slot; or
-     too big for this PR AFTER opening the call sites and counting files/lines.
+  1. Fix it in this PR -- always, for what your change broke, left half-done
+     or made stale.
+  2. Comment on the issue that already covers it (one search, then stop).
+  3. Drop it -- improvements, nits, open questions, anything that would cost a
+     second paid eval run.
+  4. File -- only a bug that harms researchers' data, or a missing guard, that
+     needs a different skill or is too big here AFTER counting files/lines.
 
-"I noticed it in passing" and "I'm not sure if this is in scope" are not
-exemptions -- they are reasons to fix it now or to drop it."""
+A failing test is never a new issue: make it pass, or put its restore in the
+done-when of the issue that owns the fix."""
 
 
 def main() -> int:

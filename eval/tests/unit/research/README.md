@@ -255,6 +255,51 @@ that it called `image_transcribe` with a `projectPath`, read the staged page wit
 `sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
 handed off to nothing.
 
+Three tests pin one rule from the Tyler census bundles (feedback #4490–#4538): a single
+machine reading of a handwritten name challenges the index, never overrules it. The
+tester put the damage at "40-50% erroneous project conclusions". All three run on
+scenario `tyler-fluvanna-census`:
+- `ut_research_iv1` (`index-vs-reading-repeat-pass.json`): a second machine pass over
+  the 1900 page.
+- `ut_research_iv2` (`index-vs-reading-name-as-written.json`): the 1880 upload,
+  compared with the 1923 certificate.
+- `ut_research_iv3` (`index-vs-reading-search-brief.json`): a search for the subject.
+
+The `image_transcribe` mocks for iv1 and iv2 return what the OCR actually read
+("Tyler Anthony", "Tyler Armistead"), never the correct value (Antone, Anntogne). A
+mock holding the right answer reproduces nothing, and every check passes against it.
+The correct values appear only in each test's `description` and `judge_context`.
+
+Three deterministic validators, driven by the tests' data tags:
+- **`index-vs-reading`** (iv1, iv2, with `transcribes-in-place`):
+  `test_index_and_machine_reading_shown_side_by_side` requires both readings and the
+  line number in the reply, and forbids a verdict ("is clear", "index was wrong",
+  "both … agree", "confirmed", "the indexer got it wrong", "the enumerator wrote '…'",
+  "her correct name is …", "both passes match"); "no doubt" before a verdict affirms it,
+  so it is not read as a denial. With `as-written:` it also requires that record's
+  name as written, never as a "rendering", "variant" or "split" of another.
+- **`brief-no-disputed-reading`** (iv3), on what the researcher sees:
+  `test_reply_never_names_the_subject_by_the_disputed_reading` applies the brief's name
+  test to what the researcher sees: the reply and each search spawn's `description`
+  ("Why are you searching for 'Anthony'?", feedback #4510).
+- **`brief-no-disputed-reading`** (iv3): `test_search_brief_never_carries_the_disputed_reading`
+  reads the spawn prompts. No search brief may name the subject by the machine
+  reading, a given name it does search on must be the `agreed-prefix:` wildcard
+  (`A*`, `project_context`'s `unsupportedGivenName.searchAs`), a brief that never
+  searches it fails as a dropped name, and a run that briefs no search fails. It cannot ride on iv1 or iv2: a
+  transcription takes no hand-off, so no brief would ever be checked. iv3 is a
+  bounded record ask that stops at the search-records hand-off. A bare "continue" was
+  rejected, because `project_context.nextStep` there offers "search-records … or
+  research-plan".
+
+Both directions are proven in `tests/unit/test_research_index_vs_reading_validator.py`.
+A grade from the judge alone was rejected because the judge cannot see spawn prompts.
+
+Two things no test covers:
+- The main thread reading an uploaded crop itself with `Read` (feedback #4528).
+- Whether the rule holds late in a long, compacted session, which is where these
+  failures happened.
+
 `ut_research_b4i` (`bounded-first-message-runs-in-the-setup-turn.json`) and
 `ut_research_b4w` (`…-step-gate.json`) cover a bounded first message with a
 FamilySearch ID and no project (issue #2813 item 3, feedback #4237): init-project
@@ -282,6 +327,48 @@ deterministic through the `bounded-plan-after-init` tag and
 hand-off list, that the project exists with no question or plan, and that the offer
 names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
 because on a plan ask the next step is the first research question.
+
+`ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`
+(`bounded-interpretive-first-message.json`) cover the interpretive ask (issue #4381).
+Why a move or event in the family happened, what could explain a pattern in it, or
+historical background for either, is bounded and goes to `historical-context` (lead,
+2026-11-09). Feedback #4300 asked "can you explain what could be behind the migration
+patterns?"; question-selection made it a records question, and the run made 11 locality
+surveys and 2 plans and never answered it. The same tester's #3244 and #3930 went the
+same way.
+- **ia1** runs on `empty-project-just-created`. It has no questions, so the job path's
+  first hand-off is question-selection, and `routes-to:historical-context` tells the two
+  apart.
+- **ia2** is feedback #4564's shape: a first message with a PID and no project, under
+  #4350's paragraph. The `bounded-after-init` validator checks it. Its `routes-to:` is
+  init-project, so the deliverable's owner comes from a new `deliverable:<agent>` tag. With
+  no such tag the owner is search-records, so b4i and b4w are unchanged.
+  `delegates-verbatim` reads its callee the same way: `deliverable:`, else `routes-to:`,
+  else person-evidence.
+
+Two more tags are deterministic:
+- **`delegates-tree-facts`**: the session calls `tree_query`, and the spawn names every year
+  and leading place word of the subject's tree facts, and no year outside those facts, what
+  `tree_query` returned (a spouse's or child's years), the message and the project objective.
+  The `tree_query` half is what tells ia1 apart on
+  main's SKILL.md: in a scratch run there, the router reached historical-context from the
+  agent's own description, skipped `tree_query`, and handed over the objective's years.
+  After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,
+  and the message names neither. ia1's tree holds nothing, so on ia1 it checks that no
+  other year appears and that the objective's years are named as the objective's. The
+  delegation may pass them if a year only the objective holds sits at least once on a line
+  saying "objective", or under a heading line that does. "Tree data: … born ca. 1845" fails.
+  This is Ikennaya's call (2026-11-17, after 3 of 3 scratch runs of ia1 did so), not a lead
+  ruling: the years come from the researcher's own objective, not an outside source or an
+  assumption.
+- **`relays-overview`**: the reply carries the overview's Sources consulted list and not
+  its `### Search implications` block (Richard, 2026-11-17).
+
+ia2 is a `/research` test on purpose. #4564's skip was the main thread spawning
+historical-context directly. No unit test here can see that, because the harness never
+adds Cowork's routing sentence; the beta acceptance run covers it. ia2 stubs
+historical-context with its return contract's shape: narrative, Sources consulted,
+Search implications, `---`, summary. A change to that contract should update the stub.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius

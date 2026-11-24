@@ -24,13 +24,14 @@ from validators_lib import bare_ark_id, bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
 from validators_lib import existing_plan_changes, new_plan_ids
+from validators_lib import response_strings
 
 _ROUTES_TO_PREFIX = "routes-to:"
+_DELIVERABLE_PREFIX = "deliverable:"
 
 
-def _expected_skill(test: dict) -> str | None:
-    prefix = _ROUTES_TO_PREFIX
-    found = [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
+def _data_tag(test: dict, prefix: str) -> str | None:
+    found = _data_tag_values(test, prefix)
     assert len(found) <= 1, (
         f"a test may declare at most one {prefix}<name> tag; got: {found}"
     )
@@ -38,6 +39,17 @@ def _expected_skill(test: dict) -> str | None:
     if value is not None:
         assert value, f"empty {prefix} tag value — fill in the skill name or remove the tag"
     return value
+
+
+def _expected_skill(test: dict) -> str | None:
+    return _data_tag(test, _ROUTES_TO_PREFIX)
+
+
+def _deliverable(test: dict) -> str | None:
+    """The agent that owns a bounded deliverable, named by a ``deliverable:<agent>``
+    tag. A no-project test's first hand-off (``routes-to:``) is init-project, so the
+    owner it hands to next needs a tag of its own."""
+    return _data_tag(test, _DELIVERABLE_PREFIX)
 
 
 def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
@@ -402,45 +414,26 @@ def test_hint_review_runs_once(skills_invoked, builtin_tool_calls, tool_calls, t
     )
 
 
-# The search steps a bounded request must not reach when the answer is already
-# attached. MCP side and delegation side are listed separately because the rule
-# is defeated by either: an inline `record_search` and a hand-off to
-# `search-records` both spend a paid call to re-find what the project holds.
+# The search tools a router must not call itself for a record that is already
+# attached: each spends a paid call to re-find what the project holds.
 _SEARCH_MCP_TOOLS = frozenset({
     "record_search", "person_search", "fulltext_search", "collections_search",
     "volume_search", "image_search", "external_links_search", "catalog_search",
 })
-# Derived from the skills tree, not recalled: an omission here is silent, because a
-# hand-off to a step missing from this set passes the assertion below.
-_SEARCH_STEPS = frozenset({
-    "search-records", "search-images", "search-familysearch-wiki",
-    "search-full-text", "search-external-sites", "search-wikipedia",
-    # Not reachable from the router's table today, but it searches: it tabulates
-    # households across a place's censuses. Listed because reachability changes and
-    # the comment above is right that an omission here is silent.
-    "survey-surname",
-})
 
 
-def test_reads_attachments_before_searching(
-    test, tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls
-):
+def test_reads_attachments_before_searching(test, tool_calls, attempted_mcp_calls):
     """Tag-gated (``attached-first``). Issue #2813 item 4.
 
-    "Before any search, read the person's attached sources and relatives. Never
-    search for a record that is already attached."
+    "Never search for a record that is already attached" yourself.
 
-    Graded on the MCP call log and the hand-off list rather than on the reply,
-    for the reason the routing validator gives: a turn that only NARRATES having
-    checked ("I'll first look at what's already attached") cannot satisfy it.
-
-    This is the assertion the unit suite could not previously make. Neither
-    ``person_read`` nor ``source_attachments`` is in ``mock_mcp.LIVE_TOOLS``, so
-    the mock registers them only for a test that declares fixtures; a body that
-    skipped the rule entirely passed every unit test in the suite.
+    Graded on the router's own MCP calls: it runs no search itself. It may learn
+    what is attached from ``project_context``'s ``attachedSources`` (the sources
+    ``project_create`` stored), from a ``person_read`` / ``source_attachments``
+    read, or from a search-records hand-off whose return reports the record as
+    attached (lead, 2026-11-24); which one is not graded. That the reply names the
+    attached record is the judge's to grade.
     """
-    from harness.skill_runner import handoffs
-
     if "attached-first" not in test.get("tags", []):
         pytest.skip("not an attached-first test")
 
@@ -451,24 +444,11 @@ def test_reads_attachments_before_searching(
     # `attempted_mcp_calls` instead -- and reading only the first list would let
     # the exact behaviour this test forbids pass silently.
     attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
-    read_first = {"person_read", "source_attachments"} & set(called)
-    assert read_first, (
-        "The router must read what is already attached before routing a request "
-        "anywhere. Neither person_read nor source_attachments was called. "
-        f"MCP calls={called}"
-    )
 
     searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
     assert not searched, (
         "The requested record is already attached, so searching for it spends a paid "
         f"call to re-find what the project holds. Search tools called: {searched}"
-    )
-
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    search_steps = [s for s in handed if s in _SEARCH_STEPS]
-    assert not search_steps, (
-        "Handing off to a search step re-finds an already-attached record just as an "
-        f"inline search call would. Hand-offs: {handed}"
     )
 
 
@@ -1005,33 +985,187 @@ def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
     return None
 
 
-_DELEGATES_VERBATIM_TAG = "delegates-verbatim"
-
-
 def _quote_and_space_normal(text: str) -> str:
     text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return " ".join(text.split())
 
 
 def test_person_evidence_spawn_carries_the_users_words(test, builtin_tool_calls):
-    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends a researcher
-    who doubts or denies that a record is this person to person-evidence with
-    their message copied verbatim (#3601): a hedge relayed as a "no" becomes a
-    rejection the researcher never made. The spawn prompt is invisible to the
-    judge, so it is read from the hook records. The user message without
-    ``/research`` must appear in at least one person-evidence spawn prompt,
-    with whitespace collapsed and straight and curly quotes made equal on both
-    sides."""
-    if _DELEGATES_VERBATIM_TAG not in (test.get("tags") or []):
+    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends some bounded asks
+    to their owner with the message copied verbatim: a researcher who doubts or
+    denies that a record is this person to person-evidence (#3601), where a hedge
+    relayed as a "no" becomes a rejection the researcher never made; an interpretive
+    ask to historical-context (#4381). The callee is the ``deliverable:`` tag, else
+    the ``routes-to:`` tag, else person-evidence. The spawn prompt is invisible to
+    the judge, so it is read from the hook records. The user message without
+    ``/research`` must appear in at least one of the callee's spawn prompts, with
+    whitespace collapsed and straight and curly quotes made equal on both sides."""
+    if "delegates-verbatim" not in (test.get("tags") or []):
         pytest.skip("not a delegates-verbatim test")
+    callee = _deliverable(test) or _expected_skill(test) or "person-evidence"
     message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip()).strip()
     assert message, "the test has no user message to relay"
-    prompts = _spawn_prompts(builtin_tool_calls, "person-evidence")
-    assert prompts, "no person-evidence spawn to carry the user's words"
+    prompts = _spawn_prompts(builtin_tool_calls, callee)
+    assert prompts, f"no {callee} spawn to carry the user's words"
     wanted = _quote_and_space_normal(message)
     assert any(wanted in _quote_and_space_normal(p) for p in prompts), (
-        "no person-evidence spawn carries the user's message verbatim.\n"
+        f"no {callee} spawn carries the user's message verbatim.\n"
         f"  message: {message!r}\n  prompts: {[p[:400] for p in prompts]!r}"
+    )
+
+
+_YEAR = re.compile(r"\b(1[5-9]\d\d|20\d\d)s?\b")
+_PLACE_TAIL = re.compile(r"\s+(?:county|parish|township)$", re.I)
+
+
+def _subject_fact_marks(state: dict) -> tuple[set[str], set[str]]:
+    """The years, and the leading place words, of the project subject's tree facts:
+    each fact's `date` and `standard_date` years, and the first comma-separated part
+    of its `place` with a trailing County/Parish/Township dropped."""
+    research = state.get("research_json") or {}
+    tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+    subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
+    years: set[str] = set()
+    places: set[str] = set()
+    for person in tree.get("persons") or []:
+        if not isinstance(person, dict) or person.get("id") not in subjects:
+            continue
+        for fact in person.get("facts") or []:
+            if not isinstance(fact, dict):
+                continue
+            years.update(_YEAR.findall(f"{fact.get('date') or ''} {fact.get('standard_date') or ''}"))
+            lead = _PLACE_TAIL.sub("", str(fact.get("place") or "").split(",")[0].strip())
+            if lead:
+                places.add(lead)
+    return years, places
+
+
+def _historical_context_of(response) -> dict | None:
+    """A ``project_context`` response's ``historicalContext``, whether logged as an
+    object, as JSON text, or as the MCP content list holding that text."""
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return None
+    if isinstance(response, list):
+        for item in response:
+            found = _historical_context_of(item.get("text") if isinstance(item, dict) else item)
+            if found:
+                return found
+        return None
+    if isinstance(response, dict):
+        if isinstance(response.get("historicalContext"), dict):
+            return response["historicalContext"]
+        for key in ("content", "text", "result"):
+            if key in response and (found := _historical_context_of(response[key])):
+                return found
+    return None
+
+
+def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool_calls, after_state):
+    """Tag-gated (``delegates-tree-facts``), issue #4381. research/SKILL.md has the
+    router hand historical-context ``project_context``'s ``historicalContext.prompt``,
+    the tree's places and years written out by the tool, and never a place or year
+    the tree does not hold. The session must hold a ``tree_query`` call or a
+    ``project_context`` call that returned ``historicalContext``. Read from the
+    callee's spawn prompts (the ``deliverable:`` tag, else ``routes-to:``), against
+    the project subject's tree facts in the after state: every fact year and leading
+    place word appears, and no year appears that is in none of those facts, the
+    session's ``tree_query`` responses and ``historicalContext`` prompt, the user's
+    message and the project objective. A year only the objective holds must be named
+    as the objective's at least once in the prompt that gives it: on a line saying
+    "objective", or under a heading line (one ending in a colon) that does. Places are
+    checked one way only: telling an invented place from a real one would need a
+    gazetteer."""
+    if "delegates-tree-facts" not in (test.get("tags") or []):
+        pytest.skip("not a delegates-tree-facts test")
+    callee = _deliverable(test) or _expected_skill(test)
+    assert callee, "delegates-tree-facts needs a deliverable: or routes-to: tag naming the callee"
+    prompts = _spawn_prompts(builtin_tool_calls, callee)
+    assert prompts, f"no {callee} spawn to carry the tree's places and years"
+    queries = [
+        c for c in tool_calls or []
+        if isinstance(c, dict) and bare_tool_name(c.get("tool") or "") in ("tree_query", "project_context")
+    ]
+    assert any(
+        bare_tool_name(c.get("tool") or "") == "tree_query" or _historical_context_of(c.get("response"))
+        for c in queries
+    ), (
+        f"the session makes no tree_query call and no project_context call returning historicalContext, "
+        f"so what {callee} was handed was not read from the tree"
+    )
+    text = " ".join(prompts)
+    years, places = _subject_fact_marks(after_state or {})
+    missing = sorted(y for y in years if not re.search(rf"\b{y}\b", text))
+    missing += sorted(p for p in places if p.lower() not in text.lower())
+    assert not missing, (
+        f"no {callee} spawn names {missing}, which the subject's tree facts hold"
+    )
+    objective = ((after_state or {}).get("research_json") or {}).get("project") or {}
+    objective_years = set(_YEAR.findall(str(objective.get("objective") or "")))
+    sourced = years | set(_YEAR.findall(test.get("user_message") or ""))
+    sourced |= {
+        y for c in queries if bare_tool_name(c.get("tool") or "") == "tree_query"
+        for s in response_strings(c.get("response")) for y in _YEAR.findall(s)
+    }
+    sourced |= {
+        y for c in queries if (hc := _historical_context_of(c.get("response")))
+        for y in _YEAR.findall(str(hc.get("prompt") or ""))
+    }
+    invented = sorted(set(_YEAR.findall(text)) - sourced - objective_years)
+    assert not invented, (
+        f"a {callee} spawn names the year(s) {invented}, which none of the subject's "
+        f"tree facts ({sorted(years)}), the tree_query responses, the user's message "
+        f"and the project objective hold"
+    )
+    unnamed = sorted(_unnamed_objective_years(prompts, objective_years - sourced))
+    assert not unnamed, (
+        f"a {callee} spawn gives the year(s) {unnamed}, which only the project objective "
+        f"holds, without naming them as the objective's"
+    )
+
+
+_HEADING_LINE = re.compile(r"^\s*(?:#{1,6}\s.*|\*\*[^*]+\*\*:?|.*:(?:\*\*)?)\s*$")
+
+
+def _unnamed_objective_years(prompts: list[str], only_objective: set[str]) -> set[str]:
+    unnamed: set[str] = set()
+    for prompt in prompts:
+        heading = ""
+        under = False
+        given: set[str] = set()
+        named: set[str] = set()
+        for line in prompt.splitlines():
+            if not line.strip():
+                if under:
+                    heading = ""
+                continue
+            found = set(_YEAR.findall(line)) & only_objective
+            given |= found
+            if "objective" in line.lower() or "objective" in heading:
+                named |= found
+            if _HEADING_LINE.match(line):
+                heading, under = line.lower(), False
+            else:
+                under = True
+        unnamed |= given - named
+    return unnamed
+
+
+def test_reply_relays_the_overview(test, text_response):
+    """Tag-gated (``relays-overview``), Richard on #4381, 2026-11-17: from
+    historical-context the router relays everything above its
+    ``### Search implications`` heading (the narrative and its Sources consulted
+    list) and not that block, which names agents for the main thread."""
+    if "relays-overview" not in (test.get("tags") or []):
+        pytest.skip("not a relays-overview test")
+    reply = (text_response or "").lower()
+    assert re.search(r"(?m)^\W*sources consulted\W*$", reply), (
+        "the reply does not relay the overview's Sources consulted list"
+    )
+    assert "search implications" not in reply, (
+        "the reply relays historical-context's Search implications block, which is for the main thread"
     )
 
 
@@ -1055,9 +1189,10 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
 def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_calls):
     """Tag-gated (``no-wrong-project-path``). The hosted ``project_list`` answer
     gives a ``newProjectPath``, so the router reads project state there or not at
-    all, never at another path, the working folder included. The first hand-off
-    goes to tree-survey, which takes no ``projectPath``, so it names neither
-    ``newProjectPath`` nor a listed project's path."""
+    all, never at another path, the working folder included. A message that names
+    no person gets a project there: ``project_create`` at ``newProjectPath`` with
+    no ``personId``, and the first hand-off, to tree-survey, names that
+    ``projectPath``, and no listed project's."""
     if "no-wrong-project-path" not in (test.get("tags") or []):
         pytest.skip("not a no-wrong-project-path test")
     listing = _hosted_listing(tool_calls)
@@ -1066,10 +1201,21 @@ def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_c
     read_paths = _project_context_paths(tool_calls)
     other = [p for p in read_paths if p != new_path]
     assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    creates = [
+        c for c in tool_calls or []
+        if bare_tool_name(c.get("tool", "")) == "project_create"
+    ]
+    assert creates, "a request with no person in it must start a project: project_create was never called"
+    assert all((c.get("args") or {}).get("projectPath") == new_path for c in creates), (
+        f"project_create must create at newProjectPath {new_path!r}: {[c.get('args') for c in creates]}"
+    )
+    assert not any((c.get("args") or {}).get("personId") for c in creates), (
+        "project_create was given a personId for a request that names no person"
+    )
     callee = _expected_skill(test)
     handoff = _first_handoff_args(callee, builtin_tool_calls)
     assert handoff is not None, f"no hand-off to '{callee}'"
-    assert new_path not in handoff, f"the '{callee}' hand-off names newProjectPath {new_path!r}: {handoff[:300]}"
+    assert new_path in handoff, f"the '{callee}' hand-off must name the project just created, {new_path!r}: {handoff[:300]}"
     named = _listed_paths_named(listing, handoff)
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
@@ -1122,11 +1268,31 @@ def test_bounded_transcription_is_delivered_in_place(
         for c in transcribes
     } - {None}
     assert refs, "no image_transcribe call staged its page (no staged.resultsRef came back)"
+    # sidecar_read corrects a near-copy of a staged ref (`locateStagedRef`), so a
+    # read under a mistyped ref still served the staged page when it answered with
+    # that page's length.
+    staged_chars = {
+        ((c.get("response") or {}).get("digest") or {}).get("chars") for c in transcribes
+    } - {None}
+
+    def _reads_staged_page(call: dict) -> bool:
+        args = call.get("args") or {}
+        if args.get("ref") in refs or set(args.get("refs") or []) & refs:
+            return True
+        response = call.get("response") or {}
+        ref = str(args.get("ref") or "")
+        near_copy = any(
+            len(ref) == len(r) and sum(a != b for a, b in zip(ref, r)) <= 2 for r in refs
+        )
+        return (
+            near_copy
+            and response.get("ok") is True
+            and response.get("totalChars") in staged_chars
+        )
+
     read = [
         c for c in (tool_calls or [])
-        if bare_tool_name(c.get("tool", "")) == "sidecar_read"
-        and ((c.get("args") or {}).get("ref") in refs
-             or set((c.get("args") or {}).get("refs") or []) & refs)
+        if bare_tool_name(c.get("tool", "")) == "sidecar_read" and _reads_staged_page(c)
     ]
     assert read, (
         f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
@@ -1141,17 +1307,262 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+_READING_TAG = "index-vs-reading"
+_INDEX_READING_PREFIX = "index-reading:"
+_MACHINE_READING_PREFIX = "machine-reading:"
+_ON_LINE_PREFIX = "on-line:"
+_AS_WRITTEN_PREFIX = "as-written:"
+_AGREED_PREFIX_PREFIX = "agreed-prefix:"
+_SURNAME_PREFIX = "surname:"
+# `index-reading:blank` is an index entry with no given name at all.
+_BLANK_INDEX = re.compile(
+    r"\b(no|blank|without|empty|missing|omits?|left\s+out)\b[^.\n]{0,60}\bgiven[\s-]?name"
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)",
+    re.IGNORECASE,
+)
+# A single machine reading overruling the index, or a repeat pass counted as agreement.
+_VERDICT = re.compile(
+    r"\bis\s+clear\b|\bimage\s+(is|was)\s+clear\b"
+    r"|\bindex\s+(is|was)\s+(wrong|an\s+error|a\s+misread)"
+    r"|\bbadly\s+misread|\bpoor\s+attempt"
+    r"|\bboth\b[^.\n]*\bagree"
+    r"|(?<!not\s)(?<!n't\s)(?<!be\s)(?<!un)(?<!not\sa\s)(?<!not\san\s)\bconfirmed\b"
+    r"|\bmore\s+(?:plausible|likely|accurate)\s+reading\b"
+    r"|(?<!transcription of the )(?<!transcript of the )(?<!reading of the )(?<!OCR of the )"
+    r"\b(?:image|scan)\s+reads\b"
+    r"|\bas\s+written\s+on\s+(?:the\s+)?(?:page|image|scan)\b"
+    r"|\bindex(?:er)?\s+(?:got\s+it\s+wrong|(?:is|was)\s+(?:incorrect|mistaken))"
+    r"|\benumerator\s+wrote\s*:?\s*[\"'“‘]"
+    r"|\b(?:correct|true|actual)\s+(?:given\s+)?name\s+(?:is|was)\s+[\"'“‘]?\w"
+    r"|\bboth\b[^.\n]*\bmatch(?:es|ed)?\b",
+    re.IGNORECASE,
+)
+# The index called a misread, with nothing denying it between the two words.
+_INDEX_MISREAD = re.compile(
+    r"\bindex(?:er|ing)?\b(?P<gap>(?:\s+[\w'-]+){0,5}?)\s+misread", re.IGNORECASE
+)
+# "no doubt", "without question" affirm what follows; they never deny it.
+_AFFIRMING = re.compile(r"\b(?:no|without|beyond)\s+(?:a\s+)?(?:doubt|question)\b", re.IGNORECASE)
+_GAP_NEGATION = re.compile(r"\b(?:not|never|no)\b|n't\b", re.IGNORECASE)
+_NEGATION_WORD = re.compile(r"^(?:not|never|no|cannot|can't|won't|don't|isn't|wasn't)$", re.IGNORECASE)
+
+
+# "as written on the page" sent to be checked ("to verify the given name as written on the
+# page, check the image") asks the researcher to look; it claims nothing.
+_TO_CHECK = re.compile(r"\b(?:verify|check|confirm|see|look|compare)\w*\b", re.IGNORECASE)
+
+# "confirmed" is a verdict only about a reading: "the upload is confirmed" is not one.
+_ABOUT_A_READING = re.compile(r"\b(?:read\w*|names?|line|transcri\w*|index\w*|spell\w*|given)\b", re.IGNORECASE)
+
+
+def _clause_around(text: str, start: int, end: int) -> str:
+    left = _CLAUSE_BREAK.split(text[:start])[-1]
+    right = _CLAUSE_BREAK.split(text[end:])[0]
+    return left + text[start:end] + right
+
+
+def _negated_just_before(text: str, start: int, words: int = 4) -> bool:
+    """A negation among the last few words before `start`, in the same clause:
+    "I can't say the index is wrong" denies the verdict. Adjacent only, so a
+    negation earlier in a long clause cannot excuse a verdict after it."""
+    clause = _AFFIRMING.sub(" ", _CLAUSE_BREAK.split(text[:start])[-1])
+    return any(_NEGATION_WORD.match(w.strip("\"'*_")) for w in clause.split()[-words:])
+# A record's name folded into another record's.
+_FOLDED = re.compile(r"\brendering\s+of\b|\bvariant\s+of\b|\bsplit\b", re.IGNORECASE)
+# A fold named only to deny it ("neither can be called a variant of the other") is not one.
+_NEGATED_CLAUSE = re.compile(r"\b(?:not|neither|nor|never|no|none|cannot)\b|n't\b", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[.!?;:\n—,]")
+_SEARCH_CALLEES = ("search-records", "search-images", "search-full-text")
+# `_field_values` stops a value at `*`, which is the wildcard this check looks for.
+_GIVEN_FIELD = re.compile(
+    r"(?<![A-Za-z])(?:given(?:[\s_-]?names?)?|first[\s_-]?name)[`*\"']*\s*[:=][\s`*\"']*"
+    r"(?P<v>[A-Za-z][\w*?-]*)",
+    re.IGNORECASE,
+)
+
+
+def _one_tag_value(test: dict, prefix: str) -> str | None:
+    return _data_tag(test, prefix)
+
+
+def test_index_and_machine_reading_shown_side_by_side(test, text_response):
+    """Tag-gated (``index-vs-reading``), issue #4578. When a record's index and a
+    single machine reading of its page disagree, the reply shows both, names the
+    line on the image, and calls neither the answer: no "the image is clear", no
+    "the index misread it", and no second pass of the same page counted as
+    agreement. Requiring the machine reading too is what stops a reply that hides
+    it from passing. With an ``as-written:`` tag, the reply also reports that
+    record's name as written, never as a rendering or variant of another record's.
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _READING_TAG not in test.get("tags", []):
+        pytest.skip(f"not an {_READING_TAG} test")
+    reply = _MD_LINK.sub(r"\1", text_response or "").replace("*", "").replace("_", " ")
+    index = _one_tag_value(test, _INDEX_READING_PREFIX)
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    line = _one_tag_value(test, _ON_LINE_PREFIX)
+    assert index and machine and line, (
+        f"an {_READING_TAG} test names {_INDEX_READING_PREFIX}, {_MACHINE_READING_PREFIX} "
+        f"and {_ON_LINE_PREFIX} tags; got {test.get('tags')}"
+    )
+    problems = []
+    if index == "blank":
+        if not _BLANK_INDEX.search(reply):
+            problems.append("it never says the index gives no given name")
+    elif not re.search(rf"\b{re.escape(index)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the index reading {index!r}")
+    if not re.search(rf"\b{re.escape(machine)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never shows the machine reading {machine!r}")
+    if not re.search(rf"\bline\s*(no\.?|number|#)?\s*{re.escape(line)}\b", reply, re.IGNORECASE):
+        problems.append(f"it never points to line {line} on the image")
+    verdicts = sorted(
+        {m.group(0) for m in _VERDICT.finditer(reply)
+         if not _negated_just_before(reply, m.start())
+         and not (m.group(0).lower().startswith("as")
+                  and _TO_CHECK.search(_CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+         and (m.group(0).lower() != "confirmed"
+              or (not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+                  and _ABOUT_A_READING.search(_clause_around(reply, m.start(), m.end()))))}
+        | {m.group(0) for m in _INDEX_MISREAD.finditer(reply)
+           if not _GAP_NEGATION.search(m.group("gap"))
+           and not _negated_just_before(reply, m.start())}
+    )
+    if verdicts:
+        problems.append(f"it gives a verdict one machine reading cannot support: {verdicts}")
+    written = _one_tag_value(test, _AS_WRITTEN_PREFIX)
+    if written:
+        if not re.search(r"\s+".join(map(re.escape, written.split())), reply, re.IGNORECASE):
+            problems.append(f"it never reports the name as written, {written!r}")
+        folded = sorted({
+            m.group(0) for m in _FOLDED.finditer(reply)
+            if not _NEGATED_CLAUSE.search(_AFFIRMING.sub(" ", _CLAUSE_BREAK.split(reply[:m.start()])[-1]))
+        })
+        if folded:
+            problems.append(f"it folds a record's name into another's: {folded}")
+    assert not problems, (
+        "a single machine reading must be shown beside the index reading, never "
+        "over it: " + "; ".join(problems)
+    )
+
+
+_BRIEF_TAG = "brief-no-disputed-reading"
+# A sentence that holds the reading as one in doubt, not as her name.
+_IN_DOUBT = re.compile(
+    r"\b(?:disput\w*|in\s+doubt|unconfirmed|uncertain|proposed\s+reading"
+    r"|machine\s+(?:reading|transcription)"
+    r"|no\s+(?:linked\s+)?name\s+assertion|not\s+(?:confirmed|supported))\b",
+    re.IGNORECASE,
+)
+
+
+def _sentence_around(text: str, start: int, end: int) -> str:
+    left = max(text.rfind(c, 0, start) for c in ".!?\n")
+    rights = [i for i in (text.find(c, end) for c in ".!?\n") if i != -1]
+    return text[left + 1: min(rights) if rights else len(text)]
+
+
+def test_search_brief_never_carries_the_disputed_reading(test, builtin_tool_calls):
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. A name only a machine
+    reading gives is not the subject's name: no search spawn (search-records,
+    search-images, search-full-text) writes it as a given name, beside the surname or
+    in a given-name field, and a given name a brief does search on is the wildcard on
+    the prefix every reading agrees on (``agreed-prefix:``). The disputed reading may
+    still appear in a brief as a reading in doubt. The test asks for a search, so a
+    run that briefs none fails rather than passing with nothing checked.
+
+    Spawn prompts are read from the hook records, because the judge cannot see them
+    (``_spawn_prompts``). Proven both ways in
+    ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    prefix = _one_tag_value(test, _AGREED_PREFIX_PREFIX)
+    assert machine and surname and prefix, (
+        f"an {_READING_TAG} test names {_MACHINE_READING_PREFIX}, {_SURNAME_PREFIX} and "
+        f"{_AGREED_PREFIX_PREFIX} tags; got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    briefs = [(c, p) for c in _SEARCH_CALLEES for p in _spawn_prompts(builtin_tool_calls, c)]
+    assert briefs, (
+        f"the test asks for a search, but no {', '.join(_SEARCH_CALLEES)} spawn was "
+        "briefed, so there is no brief to check"
+    )
+    problems = []
+    for callee, prompt in briefs:
+        if any(
+            not _IN_DOUBT.search(_sentence_around(prompt, hit.start(), hit.end()))
+            for hit in as_name.finditer(prompt)
+        ):
+            problems.append(f"{callee} was briefed with {machine!r} as the subject's name")
+        for g in _GIVEN_FIELD.finditer(prompt):
+            if g.group("v").lower() == machine.lower() and not _IN_DOUBT.search(
+                _sentence_around(prompt, g.start(), g.end())
+            ):
+                problems.append(
+                    f"{callee} was briefed to search the given name {machine!r}, not {prefix!r}"
+                )
+    wildcard = re.compile(rf"(?<![A-Za-z]){re.escape(prefix)}", re.IGNORECASE)
+    if not any(wildcard.search(prompt) for _, prompt in briefs):
+        problems.append(f"no brief searches the given name as {prefix!r}, so the name was dropped")
+    assert not problems, (
+        "a name only a machine reading gives is a reading in doubt, not the subject's "
+        "name: " + "; ".join(problems)
+    )
+
+
+def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_response, builtin_tool_calls):
+    """Tag-gated (``brief-no-disputed-reading``), issue #4578. What the researcher
+    sees, the reply and each search spawn's ``description`` (the task's label),
+    names the subject by the machine reading only as a reading in doubt: the rule
+    ``test_search_brief_never_carries_the_disputed_reading`` applies to the prompt.
+    Feedback #4510: "Why are you searching for 'Anthony'?"
+
+    Proven both ways in ``tests/unit/test_research_index_vs_reading_validator.py``.
+    """
+    if _BRIEF_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BRIEF_TAG} test")
+    machine = _one_tag_value(test, _MACHINE_READING_PREFIX)
+    surname = _one_tag_value(test, _SURNAME_PREFIX)
+    assert machine and surname, (
+        f"a {_BRIEF_TAG} test names {_MACHINE_READING_PREFIX} and {_SURNAME_PREFIX} tags; "
+        f"got {test.get('tags')}"
+    )
+    m, s = re.escape(machine), re.escape(surname)
+    as_name = re.compile(rf"\b{m}\s+{s}\b|\b{s},?\s+{m}\b", re.IGNORECASE)
+    texts = [("the reply", (text_response or "").replace("*", ""))] + [
+        (
+            f"the {(c.get('args') or {}).get('subagent_type')} task label",
+            str((c.get("args") or {}).get("description") or ""),
+        )
+        for c in builtin_tool_calls or []
+        if (c.get("args") or {}).get("subagent_type") in _SEARCH_CALLEES
+    ]
+    named = sorted({
+        where for where, text in texts for hit in as_name.finditer(text)
+        if not _IN_DOUBT.search(_sentence_around(text, hit.start(), hit.end()))
+    })
+    assert not named, (
+        f"{', '.join(named)} names the subject {machine!r}, a reading in doubt, as her name"
+    )
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
-    """Tag-gated (``bounded-after-init``). A bounded record ask with a PID and no
-    project creates the project and runs the search in the same turn (plan section
-    H, issue #2813): the hand-offs are init-project then search-records, repeats
-    allowed and nothing else; init-project made the project; the search is handed
-    the subject's tree id, not the FamilySearch ID; no step denial cut it short; the
-    reply drops init-project's next-step sentence; and it ends on an offer. Which
-    step it offers is the router's call: 2 of 6 scratch runs offered "setting up
-    the project" when the router was told to, so a fixed label is not pinned.
+    """Tag-gated (``bounded-after-init``). A bounded ask with a PID and no project
+    creates the project and runs its deliverable in the same turn (plan section H,
+    issue #2813; #4381 for an interpretive ask): the hand-offs are init-project then
+    the deliverable's owner — the ``deliverable:`` tag, else search-records —
+    repeats allowed and nothing else; init-project made the project; a search is
+    handed the subject's tree id, not the FamilySearch ID; no step denial cut it
+    short; the reply drops init-project's next-step sentence; and it ends on an
+    offer. Which step it offers is the router's call: 2 of 6 scratch runs offered
+    "setting up the project" when the router was told to, so a fixed label is not
+    pinned.
 
     A gate denial and a stub's reply both come back as the spawn's result, so a
     denial is told apart by its text, which carries the gate's own reason."""
@@ -1159,18 +1570,19 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
 
     if "bounded-after-init" not in test.get("tags", []):
         pytest.skip("not a bounded-first-message test")
+    owner = _deliverable(test) or "search-records"
     skill_under_test = test.get("skill")
     taken: list[str] = []
     for name in handoffs(skills_invoked, builtin_tool_calls):
         if name != skill_under_test and name not in taken:
             taken.append(name)
-    assert taken == ["init-project", "search-records"], (
-        f"a bounded record ask with no project hands off to init-project, then "
-        f"search-records, and nothing else; got {taken}"
+    assert taken == ["init-project", owner], (
+        f"a bounded ask with no project hands off to init-project, then "
+        f"{owner}, and nothing else; got {taken}"
     )
     research = after_state.get("research_json")
     tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
-    assert research is not None, "init-project made no project, yet the turn went on to search"
+    assert research is not None, f"init-project made no project, yet the turn went on to {owner}"
     problems = [
         p for p in (_handed_subject(prompt, tree, research)[1]
                     for prompt in _spawn_prompts(builtin_tool_calls, "search-records")) if p
@@ -1681,7 +2093,10 @@ def test_search_hit_review_spawns_one_agent_per_hit(test, builtin_tool_calls, be
         problems.append(f"{len(prompts)} spawns for {len(expected)} hits")
 
     boundary = load_step_boundary()
-    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    lines = [
+        line.strip() for line in (text_response or "").splitlines()
+        if line.strip() and not boundary._LINK_ONLY_RE.match(line.strip())
+    ]
     if boundary.offered_step(text_response) != "extract-matches":
         problems.append(f"the last line does not offer extracting the Matches: {lines[-1:]}")
     else:
@@ -1871,24 +2286,8 @@ def _italic_titles(reply: str) -> list[str]:
     return titles
 
 
-def _strings(value) -> list[str]:
-    """Every string leaf of a tool response, unescaped, so a title that wraps a line or
-    holds a quote in the result still matches. A string response holding JSON is parsed."""
-    if isinstance(value, str):
-        try:
-            parsed = json.loads(value)
-        except ValueError:
-            return [value]
-        return [parsed] if isinstance(parsed, str) else _strings(parsed)
-    if isinstance(value, dict):
-        return [s for v in value.values() for s in _strings(v)]
-    if isinstance(value, list):
-        return [s for v in value for s in _strings(v)]
-    return [] if value is None else [str(value)]
-
-
 def _tool_result_text(tool_calls) -> str:
-    return _normalised_title(" ".join(s for call in tool_calls or [] for s in _strings(call.get("response"))))
+    return _normalised_title(" ".join(s for call in tool_calls or [] for s in response_strings(call.get("response"))))
 
 
 def test_names_works_only_from_tool_results(text_response, tool_calls, test):
@@ -1917,6 +2316,59 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
     )
 
 
+# ---------------------------------------------------------------------------
+# `claims-no-hypothesis-write` tag
+# ---------------------------------------------------------------------------
+
+_WRITTEN = r"(?:registered|recorded|written|created|tracked|logged|on\s+record)"
+_HYPOTHESIS_WRITTEN_RE = re.compile(
+    r"formal tracking entry"
+    r"|\bhypothes[ie]s\b(?:\s+h_\d+)?\s+(?:(?:has|have)\s+(?:now\s+)?been|is|are|was|were)"
+    rf"\s+(?:now\s+)?{_WRITTEN}\b"
+    r"|\bhypothes[ie]s\b(?:\s+h_\d+)?\s+(?:now\s+)?on\s+record\b"
+    rf"|\bnow\s+(?:{_WRITTEN}\s+as\s+an?\s+(?:\w+\s+)?hypothesis"
+    r"|an?\s+(?:registered|recorded|tracked)\s+hypothesis)\b"
+    r"|\bI(?:['’]ve|\s+have)?\s+(?:now\s+)?(?:registered|recorded|created|written|logged)"
+    r"\s+(?:the|a|this|that)\s+(?:\w+\s+)?hypothesis\b"
+    r"|\b(?:registered|recorded|created)\b[^.\n]{0,80}?\bas\s+h_\d+\b",
+    re.IGNORECASE,
+)
+_CLAUSE_BOUNDARY_RE = re.compile(r"[.;:!?\n,—–]")
+_CONDITION_OR_NEGATION_RE = re.compile(
+    r"\b(?:when|if|whether|once|until|before|after|unless|no|not|never|cannot)\b|n['’]t\b",
+    re.IGNORECASE,
+)
+
+
+def _hypothesis_written_claim(reply: str) -> str | None:
+    for m in _HYPOTHESIS_WRITTEN_RE.finditer(reply):
+        start = max((b.end() for b in _CLAUSE_BOUNDARY_RE.finditer(reply, 0, m.start())), default=0)
+        if not _CONDITION_OR_NEGATION_RE.search(reply[start:m.start()]):
+            return m.group(0)
+    return None
+
+
+def test_reply_does_not_claim_hypothesis_written(text_response, test):
+    """Tag-gated (``claims-no-hypothesis-write``), issue #4432: the router only hands
+    the inference to hypothesis-tracking, so a reply that says the hypothesis now
+    exists overclaims. The judge passed ``v49.json`` run 4's "now has a formal
+    tracking entry" under a judge_context that names that very phrase.
+
+    A hand-off described by its purpose ("handed off to register it as a
+    hypothesis"), and a claim whose own clause carries a negation ("no sibling
+    hypothesis has been registered") or a condition ("when", "if", "whether",
+    "once") all pass, as does "now recorded" said of anything but a hypothesis.
+    Proven both ways in ``tests/unit/test_research_hypothesis_written_validator.py``.
+    """
+    if "claims-no-hypothesis-write" not in test.get("tags", []):
+        pytest.skip("not a claims-no-hypothesis-write test")
+    claim = _hypothesis_written_claim(text_response or "")
+    assert claim is None, (
+        f"the reply claims the hypothesis now exists: {claim!r}. The router only "
+        "handed it to hypothesis-tracking; describe the hand-off by its purpose."
+    )
+
+
 # ── Issue #4348: relaying an every-mention survey hand-back ───────────────
 
 _SURVEY_RELAY_TAG = "every-mention-survey-relay"
@@ -1931,6 +2383,51 @@ _FORBIDDEN_COMPLETENESS_PATTERNS = [
     re.compile(r"\bsurvey\b[^.]{0,40}\b(is|was)\b[^.]{0,20}\b(complete|exhaustive)\b", re.IGNORECASE),
     re.compile(r"\b(complete(d)?|exhaustive)\b[^.]{0,40}\bsurvey\b", re.IGNORECASE),
 ]
+
+_SEARCH_TARGET_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[:2]
+_SENTENCE_BOUNDARY_RE = re.compile(r"[.;:!?\n]|—")
+_SEARCH_VERB_RE = re.compile(
+    r"\b(?:(?:search|look|survey|dispatch)(?:ing|ed)|scann(?:ing|ed)|quer(?:ying|ied)"
+    r"|to\s+(?:search|look|survey|scan|dispatch|query))\b",
+    re.IGNORECASE,
+)
+_ACHIEVED_RE = re.compile(
+    r"\b(?:found|find(?:s|ing)?|captured?|cover(?:s|ed|ing)?|accounted|returned|located|identified|turned\s+up)\b",
+    re.IGNORECASE,
+)
+
+
+_SURVEY_CLAIM_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[3:]
+
+
+def _completeness_claims(body: str) -> list[str]:
+    hits = []
+    for i, pattern in enumerate(_FORBIDDEN_COMPLETENESS_PATTERNS):
+        for m in pattern.finditer(body):
+            if i < len(_SEARCH_TARGET_PATTERNS) and _is_search_target(body, m):
+                continue
+            if pattern in _SURVEY_CLAIM_PATTERNS and _is_open_question(body, m):
+                continue
+            hits.append(pattern.pattern)
+            break
+    return hits
+
+
+def _is_open_question(body: str, m: re.Match) -> bool:
+    """"check whether this survey is exhaustive" asks; it does not claim. A
+    whether/if earlier in the clause, with no comma between, makes it a question."""
+    start = max((b.end() for b in _SENTENCE_BOUNDARY_RE.finditer(body, 0, m.start())), default=0)
+    return re.search(r"\b(?:whether|if)\b[^,]*$", body[start:m.start()], re.IGNORECASE) is not None
+
+
+def _is_search_target(body: str, m: re.Match) -> bool:
+    start = max((b.end() for b in _SENTENCE_BOUNDARY_RE.finditer(body, 0, m.start())), default=0)
+    before = body[start:m.start()]
+    if not re.search(r"\bfor\s+$", before, re.IGNORECASE):
+        return False
+    verbs = list(_SEARCH_VERB_RE.finditer(before))
+    return bool(verbs) and _ACHIEVED_RE.search(before[verbs[-1].end():]) is None
+
 
 _FORBIDDEN_LOCALITY_PATTERN = re.compile(
     r"\b(?:W[oó]jtowa|Pagorzyna)\b[^.]{0,60}\bno\s+(?:\w+\s+){0,2}"
@@ -1984,7 +2481,7 @@ def test_survey_handback_relay_has_no_completeness_claim(text_response, test):
     body = text_response or ""
     assert body, "the router produced no text to relay the survey hand-back"
 
-    completeness_hits = [p.pattern for p in _FORBIDDEN_COMPLETENESS_PATTERNS if p.search(body)]
+    completeness_hits = _completeness_claims(body)
     assert not completeness_hits, (
         "the reply calls the survey complete or claims every occurrence/mention "
         f"was found; matched: {completeness_hits}"

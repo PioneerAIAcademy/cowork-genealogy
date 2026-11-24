@@ -64,6 +64,7 @@ from app.agent.continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     env_float,
@@ -724,7 +725,7 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
     "image_index",
-    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "image_read", "image_search", "image_transcribe", "locality_survey", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
@@ -884,7 +885,7 @@ def build_worker_options(
         "everything after its final --- verbatim."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
-    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{ROUTING_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the

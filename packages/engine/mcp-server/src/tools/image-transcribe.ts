@@ -15,7 +15,7 @@ import {
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
-import { expandLookingFor } from "../utils/name-variants.js";
+import { expandLookingFor, formsOnPage } from "../utils/name-variants.js";
 import {
   runOcr,
   runFoundCheck,
@@ -29,13 +29,8 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  noProjectResult,
-  type NoProjectResult,
-} from "../utils/project-io.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
+import { attachIndexReadings } from "../utils/index-readings.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
   compactImageTranscribeAnswer,
@@ -185,7 +180,7 @@ export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
   // Folding is idempotent, so the body's own fold is still correct for a
@@ -207,7 +202,7 @@ async function imageTranscribeToolInner(
    * fetch aborts it for real rather than abandoning the promise.
    */
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+): Promise<ImageTranscribeResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
   // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
@@ -236,13 +231,13 @@ async function imageTranscribeToolInner(
     // No FamilySearch token — the bytes are the researcher's own upload, not an
     // FS-hosted scan — and no transport cap: the file goes host→OpenRouter only.
     // The project is classified FIRST so a folder that is not a project gets the
-    // no-project ANSWER (#1695) rather than a key error or a path error.
+    // refusal rather than a key error or a path error.
     const cls = await classifyProjectPath(input.projectPath);
     if (cls === "missing_arg") {
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);
     }
     if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-    if (cls === "no_project") return noProjectResult("read");
+    if (cls === "no_project") throw new Error(NO_PROJECT_REFUSAL);
     const projectPath = input.projectPath as string;
 
     const problem = fileRefProblem(input.file);
@@ -444,6 +439,12 @@ async function imageTranscribeToolInner(
       found = undefined;
     }
   }
+  // Name the forms that let a FOUND page match, so a caller never reads
+  // "Elizabeth" on a FOUND page for "Eliza" as a different person (#4587).
+  const matchedForms =
+    found === "FOUND" && lookingForExpansion
+      ? formsOnPage(lookingForExpansion.byWrittenName, transcription)
+      : null;
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants
@@ -499,6 +500,7 @@ async function imageTranscribeToolInner(
     ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
+    ...(matchedForms ? { matchedForms } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
@@ -544,15 +546,20 @@ async function imageTranscribeToolInner(
 export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  return compactOrPass(await imageTranscribeTool(input, principal));
+): Promise<ImageTranscribeToolResponse> {
+  return withIndexReadings(input, compactImageTranscribeAnswer(await imageTranscribeTool(input, principal)));
 }
 
-function compactOrPass(
-  out: ImageTranscribeResult | NoProjectResult,
-): ImageTranscribeToolResponse | NoProjectResult {
-  if ("ok" in out) return out;
-  return compactImageTranscribeAnswer(out);
+/** The project leg's index beside the reading (issue #4578). */
+async function withIndexReadings(
+  input: ImageTranscribeInput,
+  out: ImageTranscribeToolResponse,
+): Promise<ImageTranscribeToolResponse> {
+  if (typeof input.projectPath !== "string") return out;
+  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
+  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
+  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
+  return attachIndexReadings(input.projectPath, out, ark);
 }
 
 export const imageTranscribeToolSchema = {
@@ -564,8 +571,9 @@ export const imageTranscribeToolSchema = {
     "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
     "ref: staged.resultsRef }) only when you need it, and hand " +
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). With no " +
-    "project the text comes back inline only when staging failed. Use this for large scans that " +
+    "comes back inline only when staging failed (`stagingError`). In a project " +
+    "it also returns `readingNote`, and `indexReadings`, the held records' " +
+    "indexed names for that page: follow the note. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
@@ -627,7 +635,10 @@ export const imageTranscribeToolSchema = {
           "or slants the full transcription. The pointer is withheld on a " +
           "truncated read (`truncated: true`): a half-read page cannot support a " +
           "clean NOT FOUND, so `found` is absent there — judge from the returned " +
-          "lines and treat the rest of the page as unread.",
+          "lines and treat the rest of the page as unread. On a FOUND, " +
+          "`matchedForms` lists the other forms of a sought given name that the " +
+          "page carries (`{ Eliza: [\"Elizabeth\"] }`): an entry under one of " +
+          "them carries the name sought, not a different name.",
       },
       projectPath: {
         type: "string",

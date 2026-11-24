@@ -1220,7 +1220,6 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.include_partial_messages is True
     assert opts.max_buffer_size == options.MAX_BUFFER_BYTES > 1024 * 1024
     assert opts.resume is None and opts.session_id is None
-    assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
     assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
@@ -3073,12 +3072,13 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
         theirs = pricing.MODEL_RATES[model]
         assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
-        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(spend.rates_for(model)["cache_read"]), model
         assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
-        # And a million 1-hour write tokens through the proxy's meter cost exactly the
-        # harness's write rate, which is the 1-hour one.
-        assert spend.price_usd((0, 10**6, 0, 0), model, cache_write_1h=10**6) == \
-            pytest.approx(theirs["cache_creation_input_tokens"]), model
+        # And 100K 1-hour write tokens through the proxy's meter cost exactly the harness's
+        # write rate, which is the 1-hour one (100K: one call no longer is a long prompt).
+        assert spend.price_usd((0, 10**5, 0, 0), model, cache_write_1h=10**5) == \
+            pytest.approx(theirs["cache_creation_input_tokens"] / 10), model
+    assert spend.LONG_PROMPT == pricing.LONG_PROMPT, "the two tables bill long prompts differently"
 
 
 def test_1h_writes_are_clamped_to_the_write_total_and_default_to_none():
@@ -3103,8 +3103,24 @@ def test_a_call_is_priced_at_its_own_models_rates():
     assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
     assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
     assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.price_usd((0, 0, 1_000_000, 0), "claude-sonnet-5-5") == pytest.approx(0.10)
     assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
     assert spend.rates_for(None) is spend.PRICE_PER_MTOK
+
+
+def test_a_haiku_5_5_call_over_100k_prompt_tokens_bills_five_times():
+    """The prompt is input + cache write + cache read; over 100,000 every class bills 5x,
+    the 1-hour write premium included. Output does not count toward the threshold."""
+    from app.agent import spend
+
+    at = (1_000, 9_000, 90_000, 500_000)
+    base = spend.price_usd(at, "claude-haiku-5-5", cache_write_1h=9_000)
+    assert base == pytest.approx((1_000 * 0.10 + 9_000 * 0.20 + 90_000 * 0.01 + 500_000 * 0.50) / 1e6)
+    over = (1_001, 9_000, 90_000, 500_000)
+    assert spend.price_usd(over, "claude-haiku-5-5-20260101", cache_write_1h=9_000) == \
+        pytest.approx(5 * (base + 0.10 / 1e6))
+    assert spend.price_usd(over, "claude-haiku-4-5") == \
+        pytest.approx((1_001 * 1 + 9_000 * 1.25 + 90_000 * 0.1 + 500_000 * 5) / 1e6)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
@@ -4675,6 +4691,7 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     tool result, the same text the alpha and the Cowork hook carry."""
     opts = _options(config_dir=str(tmp_path))
     assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
+    assert options.ROUTING_GUIDANCE in opts.system_prompt["append"]
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
@@ -6529,9 +6546,9 @@ def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
     """A model that wrote its own offer before the halted spawn has asked its question;
     a second one from the halt would ask two, which may disagree."""
     turn_env["conn"].research = _RESEARCH
-    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records to people in this project?"))
     texts = _text_events(turn_env["conn"])
-    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records to people in this project?"
     assert "Continue with running the searches?" not in texts
 
 

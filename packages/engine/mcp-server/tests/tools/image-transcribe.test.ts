@@ -63,6 +63,7 @@ import {
   OCR_TIMEOUT_MS,
 } from "../../src/utils/ocr.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
+import { compactImageTranscribeAnswer } from "../../src/utils/staged-compaction.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
 import {
   runWithProjectStore,
@@ -78,7 +79,6 @@ async function transcribe(
   ...args: Parameters<typeof imageTranscribeTool>
 ): Promise<ImageTranscribeResult> {
   const r = await imageTranscribeTool(...args);
-  if ("ok" in r) throw new Error(`unexpected no-project answer: ${r.errors.join(" ")}`);
   return r;
 }
 
@@ -1146,6 +1146,34 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     expect(result.found).toBe("FOUND");
   });
 
+  it("names the forms of a sought name the page carries on a FOUND (#4587)", async () => {
+    mockOpenRouterOk(
+      "LEE  BRN 29 SEP 1821 ELIZABETH  D  JAMES LEE AND MARIA  06132-2\n" +
+      "LEE  BRN 30 JUL 1822 ELIZA      D  JOHN LEE AND ELIZABETH 05476-7",
+    );
+    mockOpenRouterOk("FOUND");
+    const result = await transcribe(
+      { imageId: "009113284_00716", lookingFor: "Lee, Eliza, father James Lee" },
+      LOCAL,
+    );
+    expect(result.found).toBe("FOUND");
+    expect(result.matchedForms).toEqual({ Eliza: ["Elizabeth"] });
+    // It survives the MCP answer's compaction.
+    expect(compactImageTranscribeAnswer({ ...result }).matchedForms).toEqual({ Eliza: ["Elizabeth"] });
+  });
+
+  it("gives no matchedForms on NOT FOUND, or when no other form is on the page", async () => {
+    mockOpenRouterOk("ELIZABETH, daughter of JAMES LEE");
+    mockOpenRouterOk("NOT FOUND");
+    const notFound = await transcribe({ imageId: "009113284_00716", lookingFor: "Eliza Lee" }, LOCAL);
+    expect(notFound.matchedForms).toBeUndefined();
+
+    mockOpenRouterOk("ELIZA, daughter of JOHN LEE");
+    mockOpenRouterOk("FOUND");
+    const sameForm = await transcribe({ imageId: "009113284_00716", lookingFor: "Eliza Lee" }, LOCAL);
+    expect(sameForm.matchedForms).toBeUndefined();
+  });
+
   it("leaves the prompt unchanged when lookingFor is absent", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
@@ -1366,11 +1394,10 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
     ).rejects.toThrow(/projectPath does not exist/);
   });
 
-  it("answers no_project (not an error) for a folder holding neither project file", async () => {
+  it("is refused for a folder holding neither project file", async () => {
     const plain = await mkdtemp(join(tmpdir(), "imgt-plain-"));
     try {
-      const r = await imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeTool({ file: "uploads/x.jpg", projectPath: plain }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     } finally {
       await rm(plain, { recursive: true, force: true });
@@ -1647,6 +1674,54 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(envelope.payload.results[0].transcription).toBe(page);
   });
 
+  it("puts the held record's indexed names beside the reading, with the note (#4578)", async () => {
+    const ARK = "ark:/61903/3:1:S3HT-DTXQ-WTP";
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      sources: [{ id: "src_001", image_ark: `${ARK}?cc=1325221` }, { id: "src_002" }],
+      assertions: [
+        { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:MMF1-WWF",
+          record_role: "head_of_household", fact_type: "name", value: "Tyler" },
+        { id: "a_002", source_id: "src_001", fact_type: "sex", value: "Female" },
+        { id: "a_003", source_id: "src_002", fact_type: "name", value: "Ann Tone Lightfoot" },
+      ],
+    }));
+    mockOpenRouterOk("23 | Tyler Anthony | Head");
+    const r = await imageTranscribeMcpTool({ ark: ARK, projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.indexReadings).toEqual([
+      { sourceId: "src_001", recordId: "ark:/61903/1:1:MMF1-WWF", role: "head_of_household", name: "Tyler" },
+    ]);
+    expect(r.readingNote).toMatch(/one machine reading/);
+  });
+
+  it("joins on the imageArk alias when ark is blank, as the read folds it", async () => {
+    const ARK = "ark:/61903/3:1:S3HT-DTXQ-WTP";
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      sources: [{ id: "src_001", image_ark: ARK }],
+      assertions: [{ id: "a_001", source_id: "src_001", record_id: "r", record_role: "head", fact_type: "name", value: "Tyler" }],
+    }));
+    mockOpenRouterOk("23 | Tyler Anthony");
+    const r = await imageTranscribeMcpTool({ ark: " ", imageArk: ARK, projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.indexReadings?.map((x) => x.name)).toEqual(["Tyler"]);
+  });
+
+  it("gives a page no held source names the note alone", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.readingNote).toMatch(/one machine reading/);
+    expect(r).not.toHaveProperty("indexReadings");
+  });
+
+  it("adds no note with no project", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r).not.toHaveProperty("readingNote");
+    expect(r).not.toHaveProperty("indexReadings");
+  });
+
   it("keeps the text inline when staging failed, since it is then the only copy", async () => {
     await writeFile(join(dir, "results"), "not a directory");
     mockOpenRouterOk("still read");
@@ -1657,11 +1732,10 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r.transcription).toBe("still read");
   });
 
-  it("still answers a `file` on a folder that is not a project with the no-project result", async () => {
+  it("refuses a `file` on a folder that is not a project", async () => {
     const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-file-"));
     try {
-      const r = await imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL);
-      expect(r).toMatchObject({ ok: false, reason: "no_project" });
+      await expect(imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL)).rejects.toThrow(/^No project:/);
       expect(mockFetch).not.toHaveBeenCalled();
     } finally {
       await rm(empty, { recursive: true, force: true });
@@ -1704,7 +1778,7 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
       LOCAL,
     );
     if ("ok" in staged || "ok" in inline) throw new Error("unexpected no-project answer");
-    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "readingNote", "staged", "viewerUrl"]);
     expect(Object.keys(inline).sort()).toEqual(["found", "transcription", "viewerUrl"]);
   });
 

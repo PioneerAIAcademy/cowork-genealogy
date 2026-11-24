@@ -184,6 +184,175 @@ describe("project_context", () => {
     expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
   });
 
+  it("lets a record's own spelling of the given name carry it, and still flags Anthony (#4578)", async () => {
+    // [tree given, linked name value, flagged?]
+    const rows: [string, string, boolean][] = [
+      ["Geronimo", "Jerónimo Beisaga", false], // one letter and an accent from eight
+      ["Carmen", "Cármen Alfaro", false], // an accent
+      ["Kristian Fredrik", "Christian Frederik Birkeland", false], // two letters from seven
+      ["Honor Elizabeth", "Elizabeth Prizer", false], // a middle name
+      ["George", "Georg Smith", false], // the record's shorter form
+      ["John", "Jno Smith", false], // the given-name table
+      ["Mary", "Polly Smith", false],
+      ["William", "Bill Smith", false],
+      ["Mary", "Maria 'Mary' Smith", false], // a quoted word
+      ["Saml", "Samuel Tarrant", false], // the tree's contraction
+      ["Christina", "Christena Clark", false], // one letter
+      ["Anthony", "Anton Tyler", true],
+      ["Anthony", "Antone Tyler", true],
+      ["Anthony", "Antoine Tyler", true],
+      ["Anthony", "Antonia Tyler", true],
+      ["Anthony", "Atonne Tyler", true],
+      ["Anthony", "Anntogne Tyler", true],
+      ["Anthony", "Armtogne Tyler", true],
+      ["Anthony", "Ann Tone Lightfoot", true],
+      ["Anthony", "Tyler", true],
+    ];
+    const assertions: any[] = rows.map(([, value], i) => ({
+      id: `a_${100 + i}`, source_id: "src_001", record_id: `r${i}`, fact_type: "name", value,
+    }));
+    const person_evidence: any[] = rows.map((_, i) => ({
+      id: `pe_${100 + i}`, person_id: `P${i}`, assertion_id: `a_${100 + i}`, confidence: "probable",
+    }));
+    // A machine reading of the page, linked: evidence, never support. A researcher's reading supports.
+    assertions.push(
+      { id: "a_200", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Tyler" },
+      { id: "a_201", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Anthony Tyler [?]", disputes_assertion_id: "a_200", log_entry_id: "log_001" },
+      { id: "a_202", source_id: "src_001", record_id: "r0", fact_type: "name", value: "Anthony Tyler", disputes_assertion_id: "a_200", log_entry_id: "log_002" },
+    );
+    person_evidence.push(
+      { id: "pe_200", person_id: "M1", assertion_id: "a_201", confidence: "probable" },
+      { id: "pe_201", person_id: "M2", assertion_id: "a_202", confidence: "probable" },
+    );
+    const persons = [
+      ...rows.map(([given], i) => ({ id: `P${i}`, gender: "Female", names: [{ id: `N${i}`, given, surname: "X", preferred: true }] })),
+      { id: "M1", gender: "Female", names: [{ id: "NM1", given: "Anthony", surname: "Tyler", preferred: true }] },
+      { id: "M2", gender: "Female", names: [{ id: "NM2", given: "Anthony", surname: "Tyler", preferred: true }] },
+    ];
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        log: [
+          { id: "log_001", tool: "image_transcribe" },
+          { id: "log_002", tool: "user_provided" },
+        ],
+        assertions,
+        person_evidence,
+      },
+      { persons, relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const flagged = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.unsupportedGivenName !== undefined]));
+    expect(flagged).toEqual({
+      ...Object.fromEntries(rows.map(([, , f], i) => [`P${i}`, f])),
+      M1: true, // only a machine reading of the page
+      M2: false, // the researcher's own reading
+    });
+  });
+
+  it("flags a given name none of the person's linked records gives, searched by its first letter (#4578)", async () => {
+    const person = (id: string, given: string, surname = "Tyler") => ({
+      id, gender: "Female", names: [{ id: `N${id}`, given, surname, preferred: true }],
+    });
+    const name = (id: string, value: string) => ({ id, source_id: "src_001", record_id: "r", fact_type: "name", value });
+    const link = (n: number, personId: string, assertionId: string) => ({
+      id: `pe_00${n}`, person_id: personId, assertion_id: assertionId, confidence: "confident",
+    });
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        assertions: [
+          name("a_001", "Tyler"), // the 1900 index: no given name
+          name("a_002", "Dora Lightfoot"),
+          name("a_003", "anthony TYLER"),
+          { ...name("a_004", "Anthony Tyler"), superseded_by: "a_001" },
+          { id: "a_005", source_id: "src_001", record_id: "r", fact_type: "sex", value: "Female" },
+          name("a_006", "Wm. Tyler"),
+          name("a_007", "Anthony Tyler"), // a namesake's record, linked to I1 once and revised away
+          name("a_008", "Saml Tarrant"),
+          name("a_009", "Herm Gaetjen"),
+          name("a_010", "Ann Tone Lightfoot"),
+        ],
+        person_evidence: [
+          link(1, "I1", "a_001"), link(2, "I1", "a_004"), link(3, "I1", "a_005"),
+          { ...link(8, "I1", "a_007"), superseded_by: "pe_009" }, link(9, "I8", "a_007"),
+          link(4, "I2", "a_002"),
+          link(5, "I3", "a_003"),
+          link(6, "I5", "a_005"),
+          link(7, "I7", "a_006"),
+          { ...link(0, "I9", "a_008"), id: "pe_010" },
+          { ...link(0, "I10", "a_009"), id: "pe_011" },
+          { ...link(0, "I11", "a_010"), id: "pe_012" },
+        ],
+      },
+      {
+        persons: [
+          person("I1", "Anthony"), // only a superseded name and an index blank: flagged
+          person("I2", "Dora"), // carried
+          person("I3", "Anthony"), // carried, whatever the case
+          person("I4", "Anthony"), // no linked name at all: not judged
+          person("I5", "Anthony"), // a linked sex, no linked name: not judged
+          person("I6", ""), // no given name to judge
+          person("I7", "Wm."), // an abbreviation, carried as written
+          person("I8", "Anthony"), // carried by the namesake's live link
+          person("I9", "Samuel", "Tarrant"), // "Saml": a contraction carries it
+          person("I10", "Hermann", "Gaetjen"), // "Herm": a prefix carries it
+          person("I11", "Anthony"), // "Ann Tone": letters in order, but not a contraction
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const flags = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.unsupportedGivenName ?? null]));
+    expect(flags).toEqual({
+      I1: { given: "Anthony", searchAs: "A*" },
+      I2: null, I3: null, I4: null, I5: null, I6: null, I7: null, I8: null,
+      I9: null, I10: null, I11: { given: "Anthony", searchAs: "A*" },
+    });
+    // A flagged given name is a reading in doubt, so the name is the surname alone.
+    const names = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.name ?? null]));
+    const surnameOf = (id: string) => (r.persons ?? []).find((p) => p.id === id)!.name;
+    expect(names.I1).not.toMatch(/Anthony/);
+    expect(names.I11).not.toMatch(/Anthony/);
+    expect(surnameOf("I3")).toMatch(/^Anthony /);
+  });
+
+  it("gives a person its FamilySearch ID from a 4:1: ark, and none from a record ark or no ark (#4669)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          { id: "I1", gender: "Female", ark: "ark:/61903/4:1:K835-34K" },
+          { id: "I2", gender: "Female", ark: "https://familysearch.org/ark:/61903/4:1:GJ8G-B7K" },
+          // a record persona id is not a tree person: showing it as a PID points at the wrong person
+          { id: "I3", gender: "Male", ark: "ark:/61903/1:1:AAAA-111" },
+          { id: "I4", gender: "Male" },
+          { id: "I5", gender: "Male", ark: "ark:/61903/3:1:3Q9M-CSLK-9QXV" },
+          // the same PID the other tools compare uppercased
+          { id: "I6", gender: "Male", ark: "ark:/61903/4:1:khwq-t7c" },
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.persons).toEqual([
+      { id: "I1", pid: "K835-34K", gender: "Female" },
+      { id: "I2", pid: "GJ8G-B7K", gender: "Female" },
+      { id: "I3", gender: "Male" },
+      { id: "I4", gender: "Male" },
+      { id: "I5", gender: "Male" },
+      { id: "I6", pid: "KHWQ-T7C", gender: "Male" },
+    ]);
+  });
+
   it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
     const objective =
       "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +
@@ -369,7 +538,7 @@ describe("project_context", () => {
       // waitingPages and uploadUrl need a staged page and a hosted store; their own tests show them.
       expect(keys(r)).toEqual(
         [
-          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
+          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",
@@ -378,7 +547,7 @@ describe("project_context", () => {
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
       expect(keys(r.owedFindings?.[0])).toEqual(["blocksCompletion", "kind", "nextStep", "personIds", "ref"]);
       expect(keys(r.questionStatuses?.[0])).toEqual(
-        ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets"].sort(),
+        ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets", "spawn"].sort(),
       );
       expect(r.persons?.find((p) => p.id === "I1")).toEqual({
         id: "I1",
@@ -708,6 +877,15 @@ describe("project_context", () => {
               { id: "2", title: "Bad count", person_count: "5", record_count: 1.5 },
             ],
             quirks: ["Indexed only at county level."],
+            record_types: [
+              { type: "church", years: "1814-1900", level: "parish", held_at: "Statsarkivet", access: "browse",
+                collection_ids: ["4237104"], summary: "Church books by parish.", source_url: "https://x/church" },
+              { type: "tax", years: null, level: null, held_at: null, access: "unknown", collection_ids: [],
+                summary: "Not confirmed.", source_url: null },
+            ],
+            repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", access: null, url: "https://x/hamar" }],
+            losses: [{ record_set: "Ringebu church book", years: "1740-1760", source_url: "https://x/loss" }],
+            catalog: [{ id: "koha:1", title: "Kirkebøker catalog row", place: "Ringebu", repository_calls: [], film_count: 3 }],
             guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
             pages_read: [
               { section: "home", url: "u1", found: true },
@@ -736,9 +914,17 @@ describe("project_context", () => {
           { id: "2", title: "Bad count" },
         ],
         quirks: ["Indexed only at county level."],
+        recordTypes: [
+          { type: "church", years: "1814-1900", level: "parish", heldAt: "Statsarkivet", access: "browse",
+            collectionIds: ["4237104"], summary: "Church books by parish." },
+          { type: "tax", access: "unknown", summary: "Not confirmed." },
+        ],
+        repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", url: "https://x/hamar" }],
+        losses: [{ recordSet: "Ringebu church book", years: "1740-1760" }],
       },
     ]);
     expect(JSON.stringify(r.localities)).not.toContain("long prose");
+    expect(JSON.stringify(r.localities)).not.toContain("catalog row");
   });
 
   describe("nationalCollections: country-wide rows once per country (spec)", () => {
@@ -1187,6 +1373,51 @@ describe("project_context owed findings and status (issue #3032 Stage 1b)", () =
     ]);
   });
 
+  it("include: ['historicalContext'] writes the historical-context spawn from the subject's family facts", async () => {
+    const r0 = research();
+    await writeProject(
+      { ...r0, project: { ...r0.project, objective: "Why did John move to Ohio in 1870?", subject_person_ids: ["I1"] } },
+      {
+        ...tree,
+        persons: [
+          ...tree.persons,
+          { id: "I3", names: [{ id: "N3", given: "Ann", surname: "Lee" }], facts: [{ id: "F3", type: "Death", date: "1901", place: "Ohio" }] },
+          { id: "I4", names: [{ id: "N4", given: "Tom", surname: "Smith" }], facts: [{ id: "F4", type: "Birth", date: "1880", place: "Ohio" }] },
+          { id: "I5", names: [{ id: "N5", given: "Unrelated", surname: "Person" }], facts: [{ id: "F5", type: "Birth", date: "1700" }] },
+        ],
+        relationships: [
+          ...tree.relationships,
+          { id: "R2", type: "http://gedcomx.org/Couple", person1: "I3", person2: "I1" },
+          { id: "R3", type: "ParentChild", parent: "I1", child: "I4" },
+        ],
+      },
+    );
+    const without = await projectContext({ projectPath: dir }, LOCAL);
+    if (!without.ok) throw new Error(without.errors.join("; "));
+    expect("historicalContext" in without).toBe(false);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.historicalContext).toEqual({
+      agent: "historical-context",
+      prompt: [
+        `projectPath: ${dir}`,
+        "Project objective (the researcher's, not a tree fact): Why did John move to Ohio in 1870?",
+        "Tree facts (the only places and years the tree holds for these people):",
+        "- John Smith (I1, subject): Birth 1850",
+        "- Thomas Smith (I2, parent): no dated or placed facts",
+        "- Ann Lee (I3, spouse): Death 1901, Ohio",
+        "- Tom Smith (I4, child): Birth 1880, Ohio",
+      ].join("\n"),
+    });
+  });
+
+  it("include: ['historicalContext'] gives nothing when the project names no subject in the tree", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect("historicalContext" in r).toBe(false);
+  });
+
   it("an include value outside the closed list is refused", async () => {
     await writeProject(research(), tree);
     const r = await projectContext({ projectPath: dir, include: ["view" as any] }, LOCAL);
@@ -1314,5 +1545,70 @@ describe("project_context include parameter (#4422 stage 1)", () => {
     const bad = await callTool("project_context", { projectPath: dir, include: ["view"] });
     expect(bad.isError).toBe(true);
     expect(bad.text).toContain("persons, sources");
+  });
+});
+
+describe("project_context — searches on a search step (spec §2.2.1)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-searches-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const tree = {
+    persons: [{ id: "I1", names: [{ id: "N1", given: "Ann", surname: "Lee", preferred: true }] }],
+    relationships: [],
+  };
+  const planItem = {
+    id: "pli_001",
+    sequence: 1,
+    record_type: "census",
+    jurisdiction: "Ohio",
+    date_range: "1850",
+    repository: "FamilySearch",
+    rationale: "The 1850 census.",
+    fallback_for: null,
+    status: "planned",
+  };
+
+  async function contextFor(plans: any[]) {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        project: {
+          id: "rp_001",
+          objective: "x",
+          status: "active",
+          created: "2026-01-01",
+          updated: "2026-01-01",
+          subject_person_ids: ["I1"],
+        },
+        questions: [{ id: "q_001", question: "Where was Ann in 1850?", status: "in_progress" }],
+        plans,
+      }),
+    );
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    return r.questionStatuses![0];
+  }
+
+  it("writes the search step out when nextStep is a search", async () => {
+    const row = await contextFor([{ id: "pl_001", question_id: "q_001", status: "active", items: [planItem] }]);
+    expect(row.nextStep).toBe("search-records");
+    expect(row.searches).toHaveLength(1);
+    expect(row.searches![0]).toMatchObject({ planItemId: "pli_001", agent: "search-records" });
+    expect(row.searches![0].prompt).toContain(`projectPath: ${dir}`);
+    // Compared as an object: the Postgres store's jsonb reorders an object's keys.
+    const line = row.searches![0].prompt.split("\n").find((l) => l.startsWith("plan_item: "));
+    expect(JSON.parse(line!.slice("plan_item: ".length))).toEqual(planItem);
+  });
+
+  it("carries no searches when the next step is not a search", async () => {
+    const row = await contextFor([]);
+    expect(row.nextStep).toBe("research-plan");
+    expect(row.searches).toBeUndefined();
   });
 });

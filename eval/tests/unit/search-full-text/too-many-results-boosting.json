@@ -12,6 +12,8 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
+    "fulltext-search-flynn-collection-scoped-page-two",
+    "fulltext-search-flynn-collection-scoped-page-three",
     "fulltext-search-flynn-collection-scoped",
     "fulltext-search-flynn-probate-scoped",
     "fulltext-search-flynn-broad-with-facets",

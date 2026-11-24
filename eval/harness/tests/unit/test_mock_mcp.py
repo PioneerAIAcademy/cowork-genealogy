@@ -639,6 +639,66 @@ def test_a_nil_record_search_no_longer_asks_the_agent_to_log_it(tmp_path):
     assert "nilSearchNeedsLog" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_fulltext_keywords_nil_carries_the_name_field_note(tmp_path):
+    """The mock runs production's `fulltextAdvice`: a filter-free keywords nil
+    carries `nameFieldRetry` before `results`; the same nil with a place does not."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-probate-empty"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn +probate"})
+    )
+    assert body["nameFieldRetry"].startswith("This keywords search found nothing.")
+    keys = list(body)
+    assert keys.index("nameFieldRetry") < keys.index("results")
+    assert "tooManyResults" not in body
+
+    filtered = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "fulltext_search",
+            {"keywords": "+Flynn +probate", "place": "Schuylkill, Pennsylvania"},
+        )
+    )
+    assert "nameFieldRetry" not in filtered
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_over_500_results_carries_the_too_many_note(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-broad-with-facets"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"}))
+    assert body["totalResults"] == 847
+    assert body["tooManyResults"].startswith("More than 500 results.")
+    keys = list(body)
+    assert keys.index("tooManyResults") < keys.index("results")
+    assert "nameFieldRetry" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_accented_query_carries_the_word_list_note(tmp_path):
+    """One hit, so neither total-keyed note applies: the spelling alone reaches
+    the compiled function. The same search in plain ASCII carries no note."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": '+"José María García"'})
+    )
+    assert body["totalResults"] == 1
+    assert body["wordListRead"].startswith("This query has a letter English does not use")
+    keys = list(body)
+    assert keys.index("wordListRead") < keys.index("results")
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial-by-name"], FIXTURES_DIR, workspace=tmp_path
+    )
+    plain = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"name": "Jose Garcia"}))
+    assert "wordListRead" not in plain
+
+
 def test_no_log_note_without_a_project_path(tmp_path):
     """Neither note fires when the caller passed no projectPath — nothing is owed."""
     server, call_log, tools_by_name = create_mock_server(
@@ -1571,10 +1631,24 @@ def test_research_append_keeps_a_locality_count_unstamped_in_the_harness(tmp_pat
     entry = {
         "place": "Illinois, United States",
         "collections": [{"id": "1803969", "title": "Illinois, State Census, 1855", "person_count": 0, "record_count": 5}],
-        "pages_read": [{"section": "home", "url": "u1", "found": True}],
         "source": "locality-guide",
     }
-    result = _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "localities", "op": "append", "entry": entry})
+    survey = json.loads(
+        _invoke(tools_by_name, "locality_survey", {"standardPlace": "Illinois, United States", "projectPath": str(tmp_path)})[
+            "content"
+        ][0]["text"]
+    )
+    result = _invoke(
+        tools_by_name,
+        "research_append",
+        {
+            "projectPath": str(tmp_path),
+            "section": "localities",
+            "op": "append",
+            "entry": entry,
+            "surveyRef": survey["staged"]["resultsRef"],
+        },
+    )
     reply = json.loads(result["content"][0]["text"])
     assert reply["ok"] is True, reply
     assert not any("catalog" in w for w in reply["validation"]["warnings"]), reply
@@ -3251,14 +3325,14 @@ def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_pa
     assert "In the name of God, Amen" in json.dumps(read)
 
 
-def _messy_page_server(tmp_path, transcription):
+def _messy_page_server(tmp_path, transcription, match=None):
     """A mock server over one canned page carrying production's in-process
     extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
     (fixtures / "page.json").write_text(json.dumps({
         "tool": "image_transcribe",
-        "args": {"imageId": "~"},
+        "args": match or {"imageId": "~"},
         "response": {
             "transcription": transcription,
             "found": "FOUND",
@@ -3285,7 +3359,7 @@ def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_
     envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["payload"]["results"][0]["transcription"] == cleaned
     assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
-    assert sorted(body) == ["digest", "found", "staged"]
+    assert sorted(body) == ["digest", "found", "readingNote", "staged"]
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
@@ -3612,7 +3686,7 @@ def test_project_gate_refuses_a_non_exempt_tool_with_no_project_in_the_words_of_
     assert _extract_response_dict(named) == {"error": mock_mcp.NO_PROJECT_REFUSAL}
 
 
-def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_six(tmp_path):
+def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_listed_tools(tmp_path):
     _seed_project(tmp_path)
     _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
     ran = _invoke(
@@ -3622,7 +3696,7 @@ def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_six(tmp_p
     )
     assert "error" not in _extract_response_dict(ran)
     assert mock_mcp.PROJECT_EXEMPT_TOOLS == {
-        "project_create", "project_list", "project_context", "login", "logout", "auth_status",
+        "project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps",
     }
 
 
@@ -3630,3 +3704,23 @@ def test_project_gate_words_match_the_typescript_source():
     source = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
     flat = re.sub(r'"\s*\+\s*"', "", source)
     assert mock_mcp.START_PROJECT_RULE in flat
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_puts_the_held_records_index_beside_the_reading(tmp_path):
+    """Issue #4578: the mock adds the index beside a page read through the same
+    compiled `attachIndexReadings` production calls, joined on the source's
+    `image_ark`, and a `file` read gets the note alone."""
+    ark = "ark:/61903/3:1:S3HT-DTXQ-WTP"
+    _copy_scenario(tmp_path)
+    research = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    research["sources"] = [{**s, "image_ark": ark} if i == 0 else s for i, s in enumerate(research.get("sources") or [{"id": "src_001"}])]
+    sid = research["sources"][0]["id"]
+    research["assertions"] = [{"id": "a_901", "source_id": sid, "record_id": "r", "record_role": "head",
+                               "fact_type": "name", "value": "Tyler"}]
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    tools_by_name = _messy_page_server(tmp_path, "23 Tyler Anthony", match={"ark": "~S3HT-DTXQ-WTP"})
+    body = _extract_response_dict(_invoke(tools_by_name, "image_transcribe", {"ark": ark, "projectPath": str(tmp_path)}))
+    assert body.get("staged"), body.get("stagingError")
+    assert body["indexReadings"] == [{"sourceId": sid, "recordId": "r", "role": "head", "name": "Tyler"}]
+    assert "one machine reading" in body["readingNote"]

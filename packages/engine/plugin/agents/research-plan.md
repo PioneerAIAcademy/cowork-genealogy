@@ -335,8 +335,12 @@ records actually exist** there.
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` first, so the `localities` section should already hold an
-entry for the target place (`jurisdictions`,
-`quirks`, `guide_markdown`). **Read it** with `research_query`. If it is **missing** for a place you
+entry for the target place (`jurisdictions`, `quirks`, `record_types`,
+`repositories`, `losses`, `catalog`, `guide_markdown`). **Read it** with `research_query`.
+Each `record_types` row gives a record type's holder, level and summary, and its
+`collection_ids`: judge whether the subject's event and year are name-searchable from each listed
+collection's own `dateRange` and `availability`, never from the type as a whole. An entry with no
+`record_types` carries these in `guide_markdown`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
@@ -695,7 +699,7 @@ research_append({
         record_type: "probate",
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
-        repository: "FamilySearch",
+        repository: "FamilySearch (images)",
         rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
@@ -715,7 +719,8 @@ research_append({
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
   NARA, state_archives, county_courthouse, other. These are examples,
   not a closed list — name the actual repository rather than forcing it
-  to `other`.
+  to `other`. A FamilySearch item that browses browse-only images is
+  `FamilySearch (images)`, and a full-text search is `FamilySearch (full-text)`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
@@ -1245,8 +1250,8 @@ Before finalizing record selection, verify these factors:
   creating jurisdiction.
 - [ ] **Record availability dates:** When did civil registration begin
   in this jurisdiction? Earlier events require church or other records.
-- [ ] **Record destruction:** Does the `localities` entry record a
-  courthouse fire, flood, or wartime loss? Plan the substitute sources
+- [ ] **Record destruction:** Does the `localities` entry's `losses` (or,
+  with none, its `guide_markdown`) record a courthouse fire, flood, or wartime loss? Plan the substitute sources
   it names for the lost series.
 - [ ] **Wars and military service:** Was the subject of service age
   during a conflict? Check military service, pension, and draft records.
