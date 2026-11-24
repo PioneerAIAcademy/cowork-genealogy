@@ -507,7 +507,7 @@ describe("project_context", () => {
       // waitingPages and uploadUrl need a staged page and a hosted store; their own tests show them.
       expect(keys(r)).toEqual(
         [
-          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "narrationGuidance", "subscriptions",
+          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads",

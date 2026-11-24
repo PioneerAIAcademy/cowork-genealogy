@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { searchDelegations, subjectBlock, MAX_SEARCH_SPAWNS } from "../../src/utils/search-delegations.js";
+import { attachedSources, searchDelegations, subjectBlock, MAX_SEARCH_SPAWNS } from "../../src/utils/search-delegations.js";
 
 const TREE = {
   persons: [
@@ -162,6 +162,31 @@ describe("searchDelegations", () => {
     const [d] = searchDelegations("/p", r, TREE, r.questions[0], new Set(), { given: "Patrick", searchAs: "P*" });
     expect(JSON.parse(parse(d.prompt, "subject")!).names[0].given).toBe("P*");
     expect(d.prompt).toContain('"Patrick" is a reading in doubt');
+  });
+
+  it("lists the subject's attached sources, not the Family Tree read or a relative's", () => {
+    const tree = {
+      persons: [
+        {
+          id: "I1",
+          sources: [{ ref: "S2" }],
+          names: [{ given: "A", sources: [{ ref: "S1" }] }],
+          facts: [{ type: "Death", sources: [{ ref: "S3" }, { ref: "S1" }] }],
+        },
+        { id: "I2", sources: [{ ref: "S4" }] },
+      ],
+      sources: [
+        { id: "S1", title: "FamilySearch Family Tree (read from Ann Lee, AAAA-111)" },
+        { id: "S2", title: 'Ann Lee, "Ohio, Births, 1840"' },
+        { id: "S3", title: 'Ann Lee, "Ohio, Deaths, 1900"' },
+        { id: "S4", title: "A relative's census" },
+      ],
+    };
+    expect(attachedSources(tree, "I1")).toEqual([
+      { id: "S2", title: 'Ann Lee, "Ohio, Births, 1840"' },
+      { id: "S3", title: 'Ann Lee, "Ohio, Deaths, 1900"' },
+    ]);
+    expect(attachedSources(tree, "I9")).toEqual([]);
   });
 
   it("returns nothing for a question with no active plan", () => {

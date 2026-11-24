@@ -427,17 +427,14 @@ def test_reads_attachments_before_searching(
 ):
     """Tag-gated (``attached-first``). Issue #2813 item 4.
 
-    "Before any search, read the person's attached sources and relatives. Never
-    search for a record that is already attached."
+    "Never search for a record that is already attached."
 
-    Graded on the MCP call log and the hand-off list rather than on the reply,
-    for the reason the routing validator gives: a turn that only NARRATES having
-    checked ("I'll first look at what's already attached") cannot satisfy it.
-
-    This is the assertion the unit suite could not previously make. Neither
-    ``person_read`` nor ``source_attachments`` is in ``mock_mcp.LIVE_TOOLS``, so
-    the mock registers them only for a test that declares fixtures; a body that
-    skipped the rule entirely passed every unit test in the suite.
+    Graded on the MCP call log and the hand-off list: no search call and no
+    hand-off to a search step. The router may learn what is attached from
+    ``project_context``'s ``attachedSources`` (the sources ``project_create``
+    stored) or from a ``person_read`` / ``source_attachments`` read (lead,
+    2026-11-24); which one is not graded. That the reply names the attached record
+    is the judge's to grade.
     """
     from harness.skill_runner import handoffs
 
@@ -451,12 +448,6 @@ def test_reads_attachments_before_searching(
     # `attempted_mcp_calls` instead -- and reading only the first list would let
     # the exact behaviour this test forbids pass silently.
     attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
-    read_first = {"person_read", "source_attachments"} & set(called)
-    assert read_first, (
-        "The router must read what is already attached before routing a request "
-        "anywhere. Neither person_read nor source_attachments was called. "
-        f"MCP calls={called}"
-    )
 
     searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
     assert not searched, (

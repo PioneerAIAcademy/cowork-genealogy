@@ -114,6 +114,31 @@ export function subjectBlock(
   return block;
 }
 
+/** The tree source project_create writes first, for the Family Tree read itself. */
+const TREE_READ_SOURCE = /^FamilySearch Family Tree \(read from /;
+
+/**
+ * The sources attached to the subject on FamilySearch when the project was made:
+ * project_create keeps the read's own sources as tree `S2…` and points the
+ * person's, names' and facts' refs at them. The Family Tree source itself is
+ * left out. A source attached on FamilySearch later is not in the tree.
+ */
+export function attachedSources(tree: any, subjectId: string): { id: string; title: string }[] {
+  const person = arr(tree?.persons).find((p) => p && typeof p === "object" && p.id === subjectId);
+  if (!person) return [];
+  const refs = new Set<string>();
+  const collect = (list: unknown) => {
+    for (const s of arr(list)) if (typeof s?.ref === "string") refs.add(s.ref);
+  };
+  collect(person.sources);
+  for (const n of arr(person.names)) collect(n?.sources);
+  for (const f of arr(person.facts)) collect(f?.sources);
+  return arr(tree?.sources)
+    .filter((s) => s && typeof s.id === "string" && refs.has(s.id) && typeof s.title === "string")
+    .filter((s) => !TREE_READ_SOURCE.test(s.title))
+    .map((s) => ({ id: s.id as string, title: s.title as string }));
+}
+
 /** A fallback item runs only after its primary has run and found nothing. */
 function fallbackDue(item: any, items: any[], log: any[]): boolean {
   const primaryId = str(item?.fallback_for);

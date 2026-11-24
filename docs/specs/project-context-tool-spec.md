@@ -643,6 +643,14 @@ The top-level `subject` is the same block for `subject_person_ids[0]`, parents
 included, for a brief the router writes itself (a bounded record ask has no
 plan item); the router leaves `parents` out on a parentage ask.
 
+`attachedSources [{id, title}]` lists that subject's sources attached on
+FamilySearch when the project was made: `project_create` keeps the read's own
+sources as tree `S2…` and points the person's, names' and facts' refs at them
+(`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
+(`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
+attached on FamilySearch afterwards is not in the tree. A record asked for that
+is already listed is not searched for (ut_research_021).
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,

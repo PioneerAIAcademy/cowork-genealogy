@@ -12,7 +12,7 @@
   },
   "input": {
     "user_message": "/research Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.",
-    "scenario": "driscoll-source-audit"
+    "scenario": "driscoll-death-attached"
   },
   "mcp_fixtures": [
     "person-read-driscoll-attached-sources",
@@ -76,7 +76,8 @@
   "judge_context": [
     "This is a BOUNDED-REQUEST test about not re-finding what is already attached.",
     "Cornelius Driscoll already has a Quebec civil death registration attached (SD-DRIS-D). The reply should say the death record is already attached and identify it. The hand-off and search behaviour is asserted deterministically, so do NOT grade routing; grade only whether the reply tells the researcher what is already there rather than announcing a search.",
-    "Do not grade citation formatting or source quality. This turn is a lookup, not an evaluation."
+    "Do not grade citation formatting or source quality. This turn is a lookup, not an evaluation.",
+    "The death record is in project_context's attachedSources (the Quebec civil death registration), so the router can answer from it without a FamilySearch read; reading person_read as well is also correct. Either way the reply must say the death record is already attached and name it."
   ],
   "judge_reads_files": true
 }

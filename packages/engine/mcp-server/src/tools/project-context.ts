@@ -41,7 +41,7 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
-import { searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
+import { attachedSources, searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
 import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
 
 const QUESTION_TRUNCATE_AT = 140;
@@ -355,6 +355,9 @@ export type ProjectContextResult =
       /** The first subject as a search agent's `subject:` block: names (a doubted
        *  given name as its searchAs), birth, death and up to two parents. */
       subject?: Record<string, unknown>;
+      /** The first subject's sources attached on FamilySearch when the project was
+       *  made, as project_create stored them in the tree. */
+      attachedSources?: { id: string; title: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
@@ -702,6 +705,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       (id: unknown): id is string => typeof id === "string",
     ),
     ...(subject ? { subject } : {}),
+    attachedSources: typeof subjectId === "string" ? attachedSources(tree, subjectId) : [],
     narrationGuidance:
       typeof research?.researcher_profile?.narration_guidance === "string"
         ? research.researcher_profile.narration_guidance
@@ -847,7 +851,8 @@ export const projectContextSchema = {
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +
-    "searched as its searchAs. subjectPersonIds are the project's subject " +
+    "searched as its searchAs; attachedSources [{id, title}] are that subject's sources attached on " +
+    "FamilySearch when the project was made. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +

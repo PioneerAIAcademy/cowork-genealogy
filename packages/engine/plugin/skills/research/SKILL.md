@@ -181,7 +181,7 @@ can be both. "Create a research plan for Mary Hales, but leave it at that" names
 a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a plan to `@plugin:research-plan`, a record to
-`@plugin:search-records` after `person_read` shows it is not already attached, a review of the sources attached to a person to
+`@plugin:search-records` when `attachedSources` does not hold it, a review of the sources attached to a person to
 `@plugin:source-evaluation`, whether two people are the same or should be merged
 to `@plugin:person-evidence` (a researcher who doubts or denies that a record is this
 person goes there with their message copied verbatim, even when an open hypothesis
@@ -242,11 +242,12 @@ spawns `@plugin:init-project` and nothing else: relay its report, then end on
 routing table from "Objective but no questions".
 
 **Start from what is already attached.** Before routing to any search —
-on a bounded request or a job alike — when the project holds a FamilySearch
-link for the person, read what they already have: `person_read` for the
-attached sources and relatives, `source_attachments` for where a source
-is already attached. Never search for a record that is already attached,
-and never offer to add a person who is already in the tree.
+on a bounded request or a job alike — check `project_context`'s
+`attachedSources`, the subject's records attached on FamilySearch; for a person
+it does not cover, read `person_read` for the attached sources and relatives,
+and `source_attachments` for where a source is already attached. Never search
+for a record that is already attached: name it instead. Never offer to add a
+person who is already in the tree.
 
 When this turn's deliverable is produced — the only one asked for, or the first
 of several — **no further step runs this turn: no spawn and no `Skill` call,
@@ -757,7 +758,8 @@ you check the 1850 census?" is a plan item: spawn `@plugin:research-plan` in
 its edit or add-new mode, at any boundary. The same holds for work that used
 to open a helper question — a conflict that needs new evidence, a FAN pivot,
 an objective-level sub-question. All three are plan items on the current
-question.
+question. A direct request for a record ("Find her in the 1910 census") is not
+a steer: it is a bounded ask, and `@plugin:search-records` runs it now.
 
 **A genuinely different question.** Check `project_context` first:
 
