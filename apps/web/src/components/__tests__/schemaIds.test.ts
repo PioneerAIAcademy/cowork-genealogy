@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { findSchemaIds, sectionForId, SCHEMA_ID_PREFIXES } from '../schemaIds'
+import { resolveFamilySearchTarget, imageIdToViewerUrl } from '@genealogy/viewer-ui'
+import {
+  findSchemaIds,
+  sectionForId,
+  SCHEMA_ID_PREFIXES,
+  findFamilySearchTargets
+} from '../schemaIds'
+
+/** The two resolvers SchemaIdText passes in, so the scanner is exercised as it runs. */
+const find = (text: string): ReturnType<typeof findFamilySearchTargets> =>
+  findFamilySearchTargets(text, resolveFamilySearchTarget, imageIdToViewerUrl)
+const FS = 'https://www.familysearch.org/'
 
 // Phase 2 item 1. Measured on the first captured hosted session
 // (docs/captures/2026-09-29-mcandrew-children/): 193 schema-id occurrences, 94
@@ -85,5 +96,60 @@ describe('shapes taken from the captured corpus, not invented', () => {
   it('handles an id adjacent to a URL without swallowing either', () => {
     const hits = findSchemaIds('a_007 at https://x.test/a_009 and pe_003')
     expect(hits.map((h) => h.id)).toEqual(['a_007', 'pe_003'])
+  })
+})
+
+describe('findFamilySearchTargets (#4582)', () => {
+  it('resolves a bare ARK to its FamilySearch URL', () => {
+    const [hit] = find('Sources consulted: ark:/61903/3:1:3Q9M-CS56-DQGC-1')
+    expect(hit.raw).toBe('ark:/61903/3:1:3Q9M-CS56-DQGC-1')
+    expect(hit.href).toBe(`${FS}ark:/61903/3:1:3Q9M-CS56-DQGC-1`)
+  })
+
+  it('trims a sentence-final period off an ARK instead of folding it into the link', () => {
+    // `.` is legal in the ARK id charset, so the greedy match grabs it; the link must
+    // stop at the id and leave the period as prose.
+    const hits = find('See ark:/61903/3:1:3Q9M-CS56-DQGC-1.')
+    expect(hits).toHaveLength(1)
+    expect(hits[0].raw).toBe('ark:/61903/3:1:3Q9M-CS56-DQGC-1')
+    expect(hits[0].href).toBe(`${FS}ark:/61903/3:1:3Q9M-CS56-DQGC-1`)
+    expect(hits[0].end).toBe('See ark:/61903/3:1:3Q9M-CS56-DQGC-1'.length) // period excluded
+  })
+
+  it('resolves an image id to the film viewer with i one less than the page number', () => {
+    const [hit] = find('image 004567123_00058 of the film')
+    expect(hit.raw).toBe('004567123_00058')
+    expect(hit.href).toBe(`${FS}search/film/004567123?i=57`)
+  })
+
+  it('links a scheme-less familysearch.org address', () => {
+    const [hit] = find('open familysearch.org/search/film/004567123?i=57 to see it')
+    expect(hit.href).toBe(`${FS.replace('www.', '')}search/film/004567123?i=57`)
+  })
+
+  it('leaves a bare image-GROUP number (no underscore) alone', () => {
+    expect(find('image group 113551215 in the catalog')).toEqual([])
+  })
+
+  it('leaves a bare person id alone — it is never scanned as a target', () => {
+    // A record id shares this shape; linking a bare one could open the wrong page.
+    expect(find('person KW7C-X9P in the tree')).toEqual([])
+  })
+
+  it('does not double-link an ARK that already sits inside a full URL', () => {
+    expect(find('See https://www.familysearch.org/ark:/61903/3:1:ABCD-1 now')).toEqual([])
+  })
+
+  it('claims a scheme-less FS URL once, not also the ARK nested inside it', () => {
+    const hits = find('at www.familysearch.org/ark:/61903/3:1:ABCD-1 today')
+    expect(hits).toHaveLength(1)
+    expect(hits[0].href).toBe(`${FS}ark:/61903/3:1:ABCD-1`)
+  })
+
+  it('reports every target in order with its span, so prose can be split around it', () => {
+    const hits = find('ark:/61903/3:1:ABCD-1 and 004567123_00058')
+    expect(hits.map((h) => h.raw)).toEqual(['ark:/61903/3:1:ABCD-1', '004567123_00058'])
+    expect(hits[0].start).toBe(0)
+    expect(hits[1].start).toBe('ark:/61903/3:1:ABCD-1 and '.length)
   })
 })

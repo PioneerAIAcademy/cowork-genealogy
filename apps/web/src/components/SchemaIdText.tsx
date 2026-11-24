@@ -1,5 +1,6 @@
 import React from 'react'
-import { findSchemaIds, sectionForId } from './schemaIds'
+import { resolveFamilySearchTarget, imageIdToViewerUrl } from '@genealogy/viewer-ui'
+import { findSchemaIds, sectionForId, findFamilySearchTargets } from './schemaIds'
 
 export interface SchemaIdTextProps {
   /** One run of prose from a chat paragraph. */
@@ -26,33 +27,68 @@ export interface SchemaIdTextProps {
  * session and none of them goes anywhere
  * (`docs/captures/2026-09-29-mcandrew-children/`).
  */
-export function SchemaIdText({ text, onOpen, hasId }: SchemaIdTextProps): React.JSX.Element {
-  if (!onOpen) return <>{text}</>
+/** One linkable span in a run of prose: a FamilySearch URL, or a research-schema id. */
+type Mark =
+  | { start: number; end: number; kind: 'fs'; href: string; label: string }
+  | { start: number; end: number; kind: 'schema'; id: string; section: string }
 
-  const hits = findSchemaIds(text)
-  if (hits.length === 0) return <>{text}</>
+export function SchemaIdText({ text, onOpen, hasId }: SchemaIdTextProps): React.JSX.Element {
+  // FamilySearch links need no project: the href is rebuilt from a FamilySearch
+  // constant, so a reader with no project open still gets a clickable source (#4582).
+  const fsHits = findFamilySearchTargets(text, resolveFamilySearchTarget, imageIdToViewerUrl)
+  // Schema-id buttons DO need a project -- they open a card in the open project -- so
+  // they are only scanned for when a handler is present. With none, every id stays
+  // plain text, exactly as before.
+  const schemaHits = onOpen ? findSchemaIds(text) : []
+
+  const marks: Mark[] = []
+  for (const f of fsHits) {
+    marks.push({ start: f.start, end: f.end, kind: 'fs', href: f.href, label: f.raw })
+  }
+  for (const h of schemaHits) {
+    const section = sectionForId(h.id)
+    // Unplaceable, or an id the project does not hold: leave it untouched rather than
+    // emit a button that goes nowhere.
+    if (!section) continue
+    if (hasId && !hasId(h.id)) continue
+    marks.push({ start: h.start, end: h.end, kind: 'schema', id: h.id, section })
+  }
+  if (marks.length === 0) return <>{text}</>
+  marks.sort((a, b) => a.start - b.start)
 
   const parts: React.ReactNode[] = []
   let cursor = 0
-  hits.forEach((hit, i) => {
-    const section = sectionForId(hit.id)
-    // Unplaceable: leave it in the prose untouched rather than emit a button that
-    // goes nowhere.
-    if (!section) return
-    if (hasId && !hasId(hit.id)) return
-    if (hit.start > cursor) parts.push(text.slice(cursor, hit.start))
-    parts.push(
-      <button
-        key={`${hit.id}-${i}`}
-        type="button"
-        className="schemaIdLink"
-        title={`Open ${hit.id} in ${section.replace(/_/g, ' ')}`}
-        onClick={() => onOpen(hit.id, section)}
-      >
-        {hit.id}
-      </button>
-    )
-    cursor = hit.end
+  marks.forEach((mk, i) => {
+    // A FamilySearch URL and a schema id never share a span in practice; if two marks
+    // ever overlap, the earlier one wins and the later is left as the prose it sits in.
+    if (mk.start < cursor) return
+    if (mk.start > cursor) parts.push(text.slice(cursor, mk.start))
+    if (mk.kind === 'fs') {
+      parts.push(
+        <a
+          key={`fs-${i}`}
+          className="schemaIdLink"
+          href={mk.href}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {mk.label}
+        </a>
+      )
+    } else {
+      parts.push(
+        <button
+          key={`${mk.id}-${i}`}
+          type="button"
+          className="schemaIdLink"
+          title={`Open ${mk.id} in ${mk.section.replace(/_/g, ' ')}`}
+          onClick={() => onOpen?.(mk.id, mk.section)}
+        >
+          {mk.id}
+        </button>
+      )
+    }
+    cursor = mk.end
   })
   if (cursor < text.length) parts.push(text.slice(cursor))
   return <>{parts}</>
