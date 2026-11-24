@@ -911,12 +911,16 @@ Applying this:
   paragraph that explains how a law, legal status or custom of the period
   worked — such as what a married woman, a minor or a guardian could do at law
   — is such a claim: open it with "(general knowledge)" unless a tool result
-  stated that rule. A statement about which records survive, were lost, or
-  cover a period is a claim like any other: write it only from a tool result
-  that says so, or open its paragraph with "(general knowledge)". Credit a
-  statement to a page only when that page's text, as a tool returned it,
-  contains the statement. In a
-  Search implications bullet, put it right after the label. Do not present an
+  stated that rule. Keep the two apart: a paragraph built on a tool result
+  holds only what the tool results say. When you want to add a point no tool
+  result states — a legal rule, who held authority, or how things were usually
+  done — end that paragraph and put the point in a new paragraph that opens
+  with "(general knowledge)". A statement about which records survive, were
+  lost, or cover a period is a claim like any other: write it only from a tool
+  result that says so, or open its paragraph with "(general knowledge)". Credit
+  a statement to a page only when that page's text, as a tool returned it,
+  contains the statement. In a Search implications bullet, put it right after
+  the label. Do not present an
   unverified historical pattern as the reason this family emigrated or as
   evidence of where they came from.
 - **Never fabricate a tool or system error.** Do not claim a tool call failed, a
