@@ -20,16 +20,14 @@ Three tables over ``turns``, which carries ``step`` and ``mode`` from
            summed over ``session_entries`` by ``TURN_USAGE_SQL`` at close and do
            include them.
 
-  replies  what the researcher (or the host under "Keep going") sent next, per
-           step. This is the one that says whether the step boundary is costing
+  replies  what the researcher sent next, per step. This is the one that says whether the step boundary is costing
            or saving: a step whose next message is almost always "Continue."
            is a pause nobody needed, and the share that stops at the "not
            exhaustive" choice is the whole offset in the plan's Costs section.
 
 **Wrap-up turns are left out of the per-step figures** and reported on their own
 line: ``mode = 'wrapup'`` runs several steps in one turn, so attributing its wait
-or spend to the one step it opened with would overstate that step. A host reply
-under "Keep going" is an ordinary one-step turn and counts. A turn init-project
+or spend to the one step it opened with would overstate that step. A turn init-project
 opens is filed under the step after it when one ran (a bounded first message,
 spec section H), so that step's figures include project creation.
 
@@ -65,17 +63,16 @@ SELECT t.step,
        t.mode,
        EXTRACT(EPOCH FROM (t.completed_at - t.enqueued_at)) AS wait_s,
        t.input_tokens, t.cache_creation_tokens, t.cache_read_tokens, t.output_tokens,
-       nxt.message ->> 'text'   AS next_text,
-       (nxt.message ->> 'auto') AS next_auto
+       nxt.message ->> 'text'   AS next_text
   FROM turns t
   LEFT JOIN LATERAL (
        SELECT n.message
          FROM turns n
         WHERE n.session_id = t.session_id
           AND n.enqueued_at > t.enqueued_at
-          -- A held `auto` reply the researcher's own message displaced closes
-          -- `superseded`. It was never sent, so crediting it would report a
-          -- boundary as answered by a reply nobody saw.
+          -- A turn closed `superseded` never ran: a host reply the retired
+          -- automatic chain queued and the researcher displaced, or one closed by
+          -- 020_close_held_auto_replies.sql. Nobody saw it, so it answered no boundary.
           AND n.outcome IS DISTINCT FROM 'superseded'
         ORDER BY n.enqueued_at
         LIMIT 1
@@ -104,16 +101,13 @@ def classify(text: str | None, boundary) -> str:
     """Which reply phrase a message is, or `typed`/`none`.
 
     Exact-phrase, through the boundary's own constants and its own normalizer,
-    because that is what `step_mode` reads on the way in: a message that merely
-    CONTAINS "keep going" started no job turn, and counting it as one would
-    overstate how often the host's own replies carried a run.
+    because that is what `step_mode` reads on the way in.
     """
     if text is None:
         return "none (run ended)"
     said = boundary.normalize_reply(text)
     for phrase in (
         boundary.REPLY_CONTINUE,
-        boundary.REPLY_KEEP_GOING,
         boundary.REPLY_WRAP_UP,
         boundary.REPLY_SEARCH_MORE,
     ):
@@ -140,7 +134,7 @@ def main() -> int:
     replies: dict[str, Counter] = defaultdict(Counter)
     wrapup = {"turns": 0, "waits": [], "spends": []}
 
-    for step, mode, wait_s, inp, cw, cr, out, next_text, next_auto in rows:
+    for step, mode, wait_s, inp, cw, cr, out, next_text in rows:
         usd = price_usd((inp, cw, cr, out))
         if mode == "wrapup":
             # Several steps in one turn: counted, never attributed to `step`.
@@ -152,12 +146,7 @@ def main() -> int:
         if wait_s is not None:
             waits[step].append(float(wait_s))
         spends[step].append(usd)
-        label = classify(next_text, boundary)
-        # Any reply the host sent, not only "Keep going.": it also sends "Wrap it up."
-        # at a second planning round, and that is not the researcher's choice.
-        if next_auto == "true":
-            label += " (host)"
-        replies[step][label] += 1
+        replies[step][classify(next_text, boundary)] += 1
 
     report = {
         "turns": len(rows),

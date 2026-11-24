@@ -880,6 +880,17 @@ def test_019_adds_an_idempotent_index_for_the_signin_state_cleanup():
     ]
 
 
+def test_020_closes_only_held_host_replies():
+    """#4791: the claim no longer tells a host reply from a typed message, so a held one must
+    be closed before this build releases it. Only a held, open row whose message the host
+    sent: a typed held message, or any row already running or closed, is left alone."""
+    assert _statements(SQL_DIR / "020_close_held_auto_replies.sql") == [
+        "UPDATE turns SET outcome = 'superseded', completed_at = now() "
+        "WHERE outcome = 'queued' AND completed_at IS NULL "
+        "AND COALESCE((message ->> 'auto') = 'true', false)",
+    ]
+
+
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
 # comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
 _CONTRACTING = (

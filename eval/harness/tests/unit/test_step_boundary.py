@@ -196,9 +196,9 @@ def test_names_are_compared_after_the_last_colon():
 @pytest.mark.parametrize(
     "text,expected",
     [
-        ("keep going.", "job"),
-        ("Keep going!", "job"),
-        ("  KEEP GOING  ", "job"),
+        ("keep going.", "step"),
+        ("Keep going!", "step"),
+        ("  KEEP GOING  ", "step"),
         ("wrap it up.", "wrapup"),
         ("Wrap it up", "wrapup"),
         ("continue.", "step"),
@@ -211,8 +211,12 @@ def test_step_mode_is_exact_phrase_only(text, expected):
     assert sb.step_mode(text) == expected
 
 
-def test_job_mode_allows_every_step():
-    assert sb.step_allowed(["search-records"], "proof-conclusion", mode="job") is True
+def test_keep_going_is_an_ordinary_step_turn():
+    """"Keep going." is retired: it runs one step, the same as "Continue."."""
+    mode = sb.step_mode("Keep going.")
+    assert sb.step_allowed(["search-records"], "proof-conclusion", mode=mode) is False
+    assert not hasattr(sb, "next_auto_reply")
+    assert not hasattr(sb, "REPLY_KEEP_GOING")
 
 
 def test_wrapup_allows_its_members_in_order():
@@ -407,15 +411,15 @@ def test_no_offer_means_no_buttons():
     assert sb.reply_options("", _with_question()) == []
 
 
-def test_an_ordinary_offer_gets_continue_keep_going_and_wrap_it_up():
+def test_an_ordinary_offer_gets_continue_and_wrap_it_up():
     options = sb.reply_options("search-records", _with_question())
-    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP]
+    assert options == [sb.REPLY_CONTINUE, sb.REPLY_WRAP_UP]
 
 
 def test_no_wrap_it_up_when_no_question_is_unresolved():
     """init-project's offer: there is nothing yet to wrap up."""
     options = sb.reply_options("question-selection", {"questions": []})
-    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING]
+    assert options == [sb.REPLY_CONTINUE]
 
 
 def test_no_wrap_it_up_beside_a_proof_conclusion_offer():
@@ -435,7 +439,7 @@ def test_only_wrap_it_up_for_a_wrap_up_offer():
 def test_a_wrap_up_turn_offering_the_next_question_still_gets_buttons():
     """Keyed on the offer line, never on the step the turn ran."""
     options = sb.reply_options("question-selection", _with_question())
-    assert sb.REPLY_CONTINUE in options and sb.REPLY_KEEP_GOING in options
+    assert sb.REPLY_CONTINUE in options
 
 
 _LOW = {"stopped_because": "resources_spent", "justification": "Overturn risk: low. Two sources agree."}
@@ -464,209 +468,6 @@ def test_search_more_goes_once_the_question_is_concluded():
     research = _with_question(search_stop=_LOW)
     research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
     assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", research)
-
-
-# ---------------------------------------------------------------------------
-# next_auto_reply (section A2)
-# ---------------------------------------------------------------------------
-
-
-def _reply(state=None, mode="job", prev="search-records", step="person-evidence",
-           offer="research-exhaustiveness", outcome="ok", research=None):
-    return sb.next_auto_reply(state, mode, prev, step, offer, outcome, research=research)
-
-
-def _research_with_plan_items(statuses, question_status="open"):
-    """A research fixture with one active plan under the current question, whose
-    items carry the given statuses in order."""
-    research = _with_question(status=question_status)
-    research["plans"] = [
-        {
-            "id": "pl_001",
-            "question_id": "q_001",
-            "status": "active",
-            "items": [
-                {"id": f"pli_{i:03d}", "status": status}
-                for i, status in enumerate(statuses, start=1)
-            ],
-        }
-    ]
-    return research
-
-
-def test_an_ordinary_offer_is_answered_with_keep_going():
-    out = _reply()
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    assert out["state"]["replies"] == 1
-
-
-def test_only_a_job_turn_gets_a_reply():
-    """A "Continue." or "Wrap it up." turn ends the run."""
-    assert _reply(mode="step")["reply"] is None
-    assert _reply(mode="wrapup")["reply"] is None
-
-
-def test_a_turn_that_did_not_finish_cleanly_ends_the_run():
-    assert _reply(outcome="stopped")["reply"] is None
-    assert _reply(outcome="error")["reply"] is None
-    assert _reply(outcome="completed")["reply"] == sb.REPLY_KEEP_GOING
-
-
-def test_no_offer_ends_the_run():
-    """Including a step that ended on a question for the researcher."""
-    assert _reply(offer=None)["reply"] is None
-
-
-def test_a_wrap_up_offer_ends_the_run_because_only_the_researcher_answers_it():
-    assert _reply(offer=sb.WRAP_UP)["reply"] is None
-
-
-def test_a_proof_conclusion_turn_ends_the_run():
-    """No `research` passed: unreadable-store behavior, unchanged from before this
-    parameter existed."""
-    assert _reply(step="proof-conclusion", offer="question-selection")["reply"] is None
-
-
-def test_a_blocked_proof_conclusion_with_no_proof_summary_gets_a_reply():
-    """Proof-conclusion was refused (wrote no summary) and offered a real next
-    step -- falls through to the ordinary rules instead of ending the run."""
-    research = _with_question()
-    out = _reply(step="proof-conclusion", offer="conflict", research=research)
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-
-
-def test_a_proof_conclusion_turn_with_a_proof_summary_still_ends_the_run():
-    """A conflict's reopened question: still `current_question` (not resolved),
-    and already has a summary from before the reopening."""
-    research = _with_question()
-    research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
-    out = _reply(step="proof-conclusion", offer="question-selection", research=research)
-    assert out["reply"] is None
-
-
-def test_a_proof_conclusion_that_resolves_the_last_question_still_ends_the_run():
-    """The ordinary case, and the one the bug hid behind: `proof-conclusion`
-    resolves the question it concludes in the SAME batch as the summary, so
-    `current_question` has already moved past it (here, to nothing) by the
-    time this reads research.json back. The gate must find it by creation
-    order, not by asking which question is still open."""
-    research = _with_question(status="resolved")
-    research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
-    assert sb.current_question(research) is None, "the fixture must exercise the no-current-question case"
-    out = _reply(step="proof-conclusion", offer="question-selection", research=research)
-    assert out["reply"] is None
-
-
-def test_the_run_stops_at_max_auto_replies():
-    at_cap = {"replies": sb.MAX_AUTO_REPLIES, "planning_rounds": 0, "answered": []}
-    assert _reply(state=at_cap)["reply"] is None
-    under = {"replies": sb.MAX_AUTO_REPLIES - 1, "planning_rounds": 0, "answered": []}
-    assert _reply(state=under)["reply"] == sb.REPLY_KEEP_GOING
-
-
-def test_a_repeated_step_and_offer_pair_ends_the_run():
-    """A link-and-assess cycle that never plans."""
-    first = _reply()
-    second = sb.next_auto_reply(
-        first["state"], "job", "search-records", "person-evidence",
-        "research-exhaustiveness", "ok",
-    )
-    assert second["reply"] is None
-
-
-def test_a_repeated_step_and_offer_pair_with_research_but_no_item_growth_still_ends_the_run():
-    """The regression check: with `research` present but item statuses
-    unchanged, the repeated-pair guard still ends the run exactly as it does
-    when `research` is None (the existing test above never reaches the new
-    growth-check code path at all)."""
-    research = _research_with_plan_items(["planned", "planned"])
-    first = _reply(research=research)
-    second = sb.next_auto_reply(
-        first["state"], "job", "search-records", "person-evidence",
-        "research-exhaustiveness", "ok", research=research,
-    )
-    assert second["reply"] is None
-
-
-def test_a_second_plan_item_s_search_and_link_cycle_gets_a_reply():
-    """Replays the `hannah-earnest-children` shape: a second plan item getting
-    linked reads as real progress, not a repeated loop, even though the
-    (step, offer) pair repeats."""
-    research = _research_with_plan_items(["completed", "planned"])
-    first = sb.next_auto_reply(
-        None, "job", "research-plan", "search-records", "link", "ok", research=research,
-    )
-    assert first["reply"] == sb.REPLY_KEEP_GOING
-    assert first["state"]["touched_items"] == 1
-
-    second = sb.next_auto_reply(
-        first["state"], "job", "search-records", "person-evidence",
-        "research-exhaustiveness", "ok", research=research,
-    )
-    assert second["reply"] == sb.REPLY_KEEP_GOING
-
-    research["plans"][0]["items"][1]["status"] = "completed"
-    third = sb.next_auto_reply(
-        second["state"], "job", "person-evidence", "search-records", "link", "ok",
-        research=research,
-    )
-    assert third["reply"] == sb.REPLY_KEEP_GOING
-    assert third["state"]["touched_items"] == 2
-
-
-def test_the_first_planning_round_is_allowed():
-    out = _reply(prev="research-exhaustiveness", step="research-plan", offer="search-records")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    assert out["state"]["planning_rounds"] == 1
-
-
-def test_a_research_plan_offer_after_a_planning_round_gets_wrap_it_up():
-    used = {"replies": 1, "planning_rounds": 1, "answered": []}
-    out = _reply(state=used, prev="person-evidence", step="research-exhaustiveness",
-                 offer="research-plan")
-    assert out["reply"] == sb.REPLY_WRAP_UP
-
-
-def test_a_second_planning_round_ends_the_run():
-    used = {"replies": 2, "planning_rounds": 1, "answered": []}
-    out = _reply(state=used, prev="research-exhaustiveness", step="research-plan",
-                 offer="search-records")
-    assert out["reply"] is None
-
-
-def test_the_ordinary_first_plan_does_not_spend_the_planning_round():
-    """research-plan after setup or after itself is the first plan, not a re-plan."""
-    for prev in ("question-selection", "locality-guide", "init-project", "research-plan"):
-        out = _reply(prev=prev, step="research-plan", offer="search-records")
-        assert out["reply"] == sb.REPLY_KEEP_GOING, prev
-        assert out["state"]["planning_rounds"] == 0, prev
-
-
-def test_a_planning_round_clears_the_answered_pairs():
-    """Pairs are tracked since the run's LAST planning round."""
-    state = {"replies": 1, "planning_rounds": 0,
-             "answered": [["research-plan", "search"]]}
-    out = _reply(state=state, prev="research-exhaustiveness", step="research-plan",
-                 offer="search-records")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    # Cleared, then this turn's own pair appended -- so the one pair that stands is
-    # this one, recorded under the OFFER KEY the line parser yields.
-    assert out["state"]["answered"] == [["research-plan", "search"]]
-
-
-def test_next_auto_reply_does_not_mutate_the_state_it_was_given():
-    state = {"replies": 0, "planning_rounds": 0, "answered": []}
-    _reply(state=state)
-    assert state == {"replies": 0, "planning_rounds": 0, "answered": []}
-
-
-def test_next_auto_reply_survives_a_missing_or_junk_state():
-    assert _reply(state=None)["reply"] == sb.REPLY_KEEP_GOING
-    assert _reply(state={})["reply"] == sb.REPLY_KEEP_GOING
-    assert _reply(state={"replies": "x", "answered": "x"})["reply"] == sb.REPLY_KEEP_GOING
-    # A state written before `touched_items` existed -- accepted with no KeyError.
-    no_touched = {"replies": 1, "planning_rounds": 0, "answered": []}
-    assert _reply(state=no_touched)["reply"] == sb.REPLY_KEEP_GOING
 
 
 # ---------------------------------------------------------------------------
@@ -748,7 +549,6 @@ def test_the_reply_functions_read_an_agent_name_and_its_key_the_same_way():
     for agent, key in (("proof-conclusion", "conclude"), ("research-plan", "plan"),
                        ("question-selection", "setup"), ("search-records", "search")):
         assert sb.reply_options(agent, research) == sb.reply_options(key, research), agent
-        assert _reply(offer=agent)["reply"] == _reply(offer=key)["reply"], agent
 
 
 def test_a_spawn_naming_no_agent_is_still_a_step():
@@ -813,10 +613,8 @@ def test_a_record_structurer_stopped_in_a_review_turn_offers_the_extraction():
 def test_the_extraction_offer_gets_the_default_replies():
     research = _with_question()
     assert sb.reply_options("extract-matches", research) == [
-        sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP,
+        sb.REPLY_CONTINUE, sb.REPLY_WRAP_UP,
     ]
-    out = _reply(prev="search-full-text", step="evaluate-search-results", offer="extract-matches")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
 
 
 import pytest as _pytest

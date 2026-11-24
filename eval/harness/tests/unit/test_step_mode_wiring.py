@@ -68,7 +68,6 @@ class _Spec:
         ({}, None),
         ({"stop_at_stub": True}, None),
         ({"step_mode": "step"}, "step"),
-        ({"step_mode": "job"}, "job"),
         ({"step_mode": "wrapup"}, "wrapup"),
         ({"step_mode": ""}, None),
         ({"step_mode": "   "}, None),
@@ -106,15 +105,15 @@ def test_only_the_listed_tests_declare_a_mode():
     )
 
 
-# ── the schema admits it, and only the three modes ──────────────────────────────
+# ── the schema admits it, and only the two modes ────────────────────────────────
 
 
-def test_the_schema_admits_the_three_modes_and_nothing_else():
+def test_the_schema_admits_the_two_modes_and_nothing_else():
     schema = json.loads(
         (REPO / "docs" / "specs" / "schemas" / "unit-test.schema.json").read_text(encoding="utf-8")
     )
     field = schema["properties"]["execution"]["properties"]["step_mode"]
-    assert field["enum"] == ["step", "job", "wrapup"]
+    assert field["enum"] == ["step", "wrapup"]
     assert "step_mode" not in (schema["properties"]["execution"].get("required") or [])
 
 
@@ -138,7 +137,9 @@ def test_all_three_planes_load_the_same_boundary_file():
     assert skill_runner._STEP_BOUNDARY == expected
     assert orchestrator.load_step_boundary is skill_runner.load_step_boundary
     # The worker resolves its path through ENGINE_PLUGIN_DIR, so compare what it loads.
-    assert options._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
+    from app.agent import step_boundary_loader
+
+    assert step_boundary_loader._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
 
 
 def test_each_plane_gets_a_module_carrying_the_gate():
@@ -190,29 +191,31 @@ def test_the_cli_flag_reaches_run_e2e_test():
     assert '"--step-mode"' in source and '"step_mode": args.step_mode' in source
 
 
-def test_an_e2e_run_is_a_job_run_unless_told_otherwise(tmp_path, monkeypatch):
-    """Step mode phase 2 made `job` the e2e default and deleted the Stop veto, so a run
-    with no `--step-mode` can no longer fall back to the one long, vetoed turn."""
+def test_an_e2e_run_is_unattended_unless_told_otherwise(tmp_path, monkeypatch):
+    """`unattended` is the e2e default, so a run with no `--step-mode` cannot fall
+    back to the one long turn, and `job` is no longer a mode."""
     from tests.unit.test_e2e_tool_search_switch import _argv, _record_run
 
     calls = _record_run(monkeypatch)
     from e2e import run_e2e
 
     assert run_e2e.main(_argv(tmp_path)) == 0
-    assert calls[0]["step_mode"] == "job"
+    assert calls[0]["step_mode"] == "unattended"
     assert "resume_on_stall" not in calls[0]
     assert run_e2e.main(_argv(tmp_path, "--step-mode", "step")) == 0
     assert calls[1]["step_mode"] == "step"
+    with pytest.raises(SystemExit):
+        run_e2e.main(_argv(tmp_path, "--step-mode", "job"))
 
 
-def test_run_e2e_test_defaults_to_a_job_run_too():
+def test_run_e2e_test_defaults_to_an_unattended_run_too():
     """A caller that skips the CLI gets the same default as `run_e2e`."""
     import inspect
 
     from e2e.orchestrator import run_e2e_test
 
     params = inspect.signature(run_e2e_test).parameters
-    assert params["step_mode"].default == "job"
+    assert params["step_mode"].default == "unattended"
     assert "resume_on_stall" not in params
 
 
@@ -231,29 +234,29 @@ def test_the_resume_flag_is_gone(tmp_path, monkeypatch, flag):
 
 def test_each_turn_runs_under_the_mode_of_the_message_that_started_it():
     boundary = orchestrator_boundary()
-    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=0, sent="Find her parents.")) == "job"
-    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=1, sent="Keep going.")) == "job"
-    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=2, sent="Wrap it up.")) == "wrapup"
+    assert _e2e.step_turn_mode(boundary, _Turn(index=0, sent="Find her parents.")) == "step"
+    assert _e2e.step_turn_mode(boundary, _Turn(index=1, sent="Continue.")) == "step"
+    assert _e2e.step_turn_mode(boundary, _Turn(index=2, sent="Keep going.")) == "step"
+    assert _e2e.step_turn_mode(boundary, _Turn(index=3, sent="Wrap it up.")) == "wrapup"
 
 
 def test_the_host_does_not_answer_a_wrap_up_turn():
-    """The parity the fixed mode broke: on the worker a "Wrap it up." turn is a wrapup
-    turn and the run ends after it. Read with the opening `job` mode, e2e replied again."""
+    """A "Wrap it up." turn is a wrapup turn and the run ends after it."""
+    from e2e.turn_loop import next_reply
+
     boundary = orchestrator_boundary()
-    mode = _e2e.step_turn_mode(boundary, "job", _Turn(index=3, sent=boundary.REPLY_WRAP_UP))
-    decision = boundary.next_auto_reply({}, mode, "research-plan", "research-plan",
-                                        "Continue with planning the searches?", "ok")
+    mode = _e2e.step_turn_mode(boundary, _Turn(index=3, sent=boundary.REPLY_WRAP_UP))
+    decision = next_reply(boundary, {}, mode, "research-plan", "research-plan",
+                          "Continue with planning the searches?", "ok")
     assert decision["reply"] is None
 
 
-def test_a_keep_going_turn_is_still_one_step_per_turn():
-    """`gate_mode`: a job turn on a hosted plane is a STEP turn the host answers."""
+def test_a_keep_going_turn_is_one_step_per_turn():
+    """"Keep going." is retired: a step turn, the same as "Continue."."""
     boundary = orchestrator_boundary()
-    gate = boundary.StepGate(boundary=boundary, mode=boundary.gate_mode("job"))
+    gate = boundary.StepGate(boundary=boundary, mode=boundary.step_mode("Keep going."))
     assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
     assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
-    assert boundary.gate_mode("wrapup") == "wrapup"
-    assert boundary.gate_mode("step") == "step"
 
 
 def orchestrator_boundary():

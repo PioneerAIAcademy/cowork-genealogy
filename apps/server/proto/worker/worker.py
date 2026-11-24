@@ -189,7 +189,6 @@ import tempfile
 import threading
 import time
 import uuid
-from datetime import datetime, timezone
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -629,12 +628,6 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
             cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
                                          turn["session_id"], turn["project_id"]))
             row = cur.fetchone()
-            if row and not turn_message.is_auto(row[0]):
-                # Section A2: a message the researcher sent starts a new run, so a
-                # "Keep going" state left by an earlier one (a close by the sweep, a lost
-                # reply) must not carry its spent budget into it. Only on an OPEN row:
-                # a duplicate delivery of a closed turn leaves the state alone.
-                cur.execute(RESET_AUTO_REPLY_ON_CLAIM_SQL, (turn["session_id"], turn["turn_id"]))
         conn.commit()
         return Claim(row[0], int(row[1])) if row else None
     with conn.cursor() as cur:
@@ -852,64 +845,6 @@ def add_spend_correction(conn: psycopg.Connection, turn_id: str, epoch: int, cor
         return cur.rowcount != 0
 
 
-# 1b's held-message shape, asked under the queue lock: a reply is queued only when
-# nothing is already waiting. A held row means the researcher typed while the turn
-# ran, and their words are the next turn -- the run is over.
-HAS_QUEUED_SQL = (
-    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND outcome = %s "
-    "AND completed_at IS NULL) AS queued"
-)
-STOP_SET_SQL = "SELECT stop_requested_at IS NOT NULL AS stopped FROM sessions WHERE session_id = %s"
-
-
-def queue_auto_reply(cur, turn: dict, reply: str, state: dict) -> str | None:
-    """Queue the host's reply as a held turn row, inside ``complete()``'s transaction
-    and under its queue lock. Returns the new turn id, or None when the run is over.
-
-    Held (``outcome = 'queued'``) rather than sent: ``release_next_held`` already runs
-    after every close, takes the same lock, and is the one path that enqueues. Writing
-    a held row reuses the web tier's guard against a message posted at this instant,
-    the recovery of a row stranded by a crash, and the put-back after a failed send.
-
-    Refuses in two cases the lock makes safe to read here:
-      - a held row already exists -- the researcher typed, so their message is next;
-      - Stop is set -- they ended the run, and a reply would restart it.
-
-    It does NOT clear the Stop flag. Claiming is what clears it (``take_queued_turn``),
-    and this row may never be claimed.
-    """
-    session_id = turn["session_id"]
-    cur.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
-    row = cur.fetchone()
-    if row and row[0]:
-        return None
-    cur.execute(STOP_SET_SQL, (session_id,))
-    row = cur.fetchone()
-    if row and row[0]:
-        return None
-
-    turn_id = str(uuid.uuid4())
-    enqueued_at = datetime.now(tz=timezone.utc).isoformat()
-    body = turn_message.queue_body(
-        turn_id, session_id, turn["project_id"], reply, enqueued_at, auto=True,
-    )
-    cur.execute(
-        "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
-        "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
-        (turn_id, session_id, turn["project_id"], Jsonb(body), enqueued_at, QUEUED_OUTCOME),
-    )
-    # The researcher sees the reply as a message in the transcript, exactly as the web
-    # tier writes their own: a run under "Keep going" is legible only if every turn it
-    # starts has a visible cause.
-    cur.execute("SELECT next_session_seq(%s)", (session_id,))
-    cur.execute(
-        "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
-        (session_id, cur.fetchone()[0], Jsonb({"text": reply, "turn_id": turn_id, "auto": True})),
-    )
-    cur.execute(AUTO_REPLY_WRITE_SQL, (Jsonb(state), session_id))
-    return turn_id
-
-
 def complete(
     conn: psycopg.Connection,
     turn: dict,
@@ -923,8 +858,6 @@ def complete(
     detail: dict[str, Any] | None = None,
     only_if_open: bool = False,
     claim_epoch: int | None,
-    auto_reply: dict[str, Any] | None = None,
-    lock_timeout: float = grants.QUEUE_LOCK_TIMEOUT_S,
 ) -> int | None:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
@@ -946,73 +879,9 @@ def complete(
     that attempt, and a newer claim raises ``Superseded`` -- raised, not None, because
     ``close_on_last_receive`` reads None as "already closed" and releases a held message.
     ``None`` means "not an attempt": the close fences every attempt out by bumping the
-    epoch (the sweep, the dev seeder).
-
-    ``auto_reply`` (section A2) is ``{"reply": str | None, "state": dict}`` from
-    ``next_auto_reply``, or None where no run can be in flight. A non-None reply is
-    queued in THIS transaction, so a turn never closes having promised a reply it did
-    not write. The state is persisted with it, and cleared when the reply is None --
-    which is what makes the researcher's next "Keep going." start from a fresh budget.
-
-    **Lock order.** When a reply may be due the transaction takes the session's queue
-    lock as its FIRST statements, before the row's ``FOR UPDATE``, because
-    ``admit_message`` takes the queue lock before ``session_seq`` and ``sessions`` and
-    the reverse order deadlocks the two tiers. Past ``lock_timeout`` the close is
-    retried with no reply rather than failed: a turn that finished must close, and a
-    lost reply only ends the run early."""
-    if auto_reply is not None:
-        try:
-            return _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                             duration_ms=duration_ms, sdk_session_id=sdk_session_id,
-                             outcome=outcome, detail=detail, only_if_open=only_if_open,
-                             claim_epoch=claim_epoch, auto_reply=auto_reply,
-                             lock_timeout=lock_timeout)
-        except psycopg.errors.LockNotAvailable:
-            # The web tier holds the lock: the researcher is posting right now, so their
-            # message is the next turn and the run is over anyway.
-            conn.rollback()
-            log(ev="auto_reply_lock_timeout", turn_id=turn["turn_id"], session_id=turn["session_id"])
-            seq = _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                            duration_ms=duration_ms, sdk_session_id=sdk_session_id,
-                            outcome=outcome, detail=detail, only_if_open=only_if_open,
-                            claim_epoch=claim_epoch, auto_reply=None,
-                            lock_timeout=lock_timeout)
-            # The run ended with its reply lost, so its state goes too: the next "Keep
-            # going." must start a fresh budget. One row, no queue lock needed.
-            with conn.cursor() as cur:
-                cur.execute(AUTO_REPLY_WRITE_SQL, (None, turn["session_id"]))
-            conn.commit()
-            return seq
-    return _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                     duration_ms=duration_ms, sdk_session_id=sdk_session_id,
-                     outcome=outcome, detail=detail, only_if_open=only_if_open,
-                     claim_epoch=claim_epoch, auto_reply=None,
-                     lock_timeout=lock_timeout)
-
-
-def _complete(
-    conn: psycopg.Connection,
-    turn: dict,
-    receive_count: int,
-    *,
-    cost_usd: float | None,
-    num_turns: int | None,
-    duration_ms: int | None,
-    sdk_session_id: str | None,
-    outcome: str,
-    detail: dict[str, Any] | None,
-    only_if_open: bool,
-    claim_epoch: int | None,
-    auto_reply: dict[str, Any] | None,
-    lock_timeout: float,
-) -> int | None:
-    """``complete()``'s one transaction. Separate so the lock-timeout path can run it
-    again with no reply, on a transaction that rolled back having written nothing."""
+    epoch (the sweep, the dev seeder)."""
     with conn.transaction():
         with conn.cursor() as cur:
-            if auto_reply is not None:
-                cur.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(lock_timeout),))
-                cur.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, turn["session_id"]))
             if only_if_open or claim_epoch is not None:
                 cur.execute("SELECT completed_at, claim_epoch FROM turns WHERE turn_id = %s FOR UPDATE",
                             (turn["turn_id"],))
@@ -1025,24 +894,6 @@ def _complete(
                     return None
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
             seq = cur.fetchone()[0]
-            queued = None
-            if auto_reply is not None:
-                reply = auto_reply.get("reply")
-                queued = (queue_auto_reply(cur, turn, reply, auto_reply.get("state") or {})
-                          if reply else None)
-                if queued is None:
-                    # The run ended -- no offer, a cap, Stop, or the researcher's own
-                    # message already waiting. Clear the state so their next "Keep
-                    # going." is a new run rather than one resuming a spent budget.
-                    cur.execute(AUTO_REPLY_WRITE_SQL, (None, turn["session_id"]))
-                log(ev="auto_reply", turn_id=turn["turn_id"], session_id=turn["session_id"],
-                    reply=reply, queued_turn=queued)
-            # Written AFTER the reply is queued, so `reply_follows` reports what
-            # actually happened rather than what was planned. `seq` was taken
-            # before, so this frame keeps its place in the stream ahead of the
-            # reply's own event. The caller cannot set the field: `queue_auto_reply`
-            # refuses when a held row exists or Stop is set, and `complete()`'s
-            # lock-timeout path retries with the SAME `detail` and no reply at all.
             cur.execute(
                 "INSERT INTO session_events (session_id, seq, kind, payload, ts) "
                 "VALUES (%s, %s, 'turn_done', %s, now())",
@@ -1054,8 +905,7 @@ def _complete(
                     # ended -- every ending used to look like success, and a half-finished
                     # run then reads to a genealogist as "nothing more was found".
                     Jsonb({"turn_id": turn["turn_id"], "receive_count": receive_count,
-                           "outcome": outcome, **(detail or {}),
-                           **({"reply_follows": True} if queued else {})}),
+                           "outcome": outcome, **(detail or {})}),
                 ),
             )
             tokens: tuple = (None, None, None, None)
@@ -1162,51 +1012,16 @@ def record_turn_step(
     conn.commit()
 
 
-# The session's last closed turn that ran a step -- `next_auto_reply`'s `prev_step`
-# (section A2). A turn that ran no step is skipped rather than resetting the chain
-# (section J), which is what the partial index on `step IS NOT NULL` serves.
-PREV_STEP_SQL = (
-    "SELECT step FROM turns WHERE session_id = %s AND turn_id <> %s "
-    "AND completed_at IS NOT NULL AND step IS NOT NULL "
-    "ORDER BY completed_at DESC LIMIT 1"
-)
-AUTO_REPLY_READ_SQL = "SELECT auto_reply FROM sessions WHERE session_id = %s"
-RESET_AUTO_REPLY_ON_CLAIM_SQL = (
-    "UPDATE sessions SET auto_reply = NULL WHERE session_id = %s AND auto_reply IS NOT NULL "
-    "AND EXISTS (SELECT 1 FROM turns WHERE turn_id = %s AND completed_at IS NULL)"
-)
-AUTO_REPLY_WRITE_SQL = "UPDATE sessions SET auto_reply = %s WHERE session_id = %s"
-
-
-def read_prev_step(conn: psycopg.Connection, session_id: str, turn_id: str) -> str | None:
-    """The step that fixed the group of the session's PREVIOUS step-running turn."""
-    with conn.cursor() as cur:
-        cur.execute(PREV_STEP_SQL, (session_id, turn_id))
-        row = cur.fetchone()
-    return row[0] if row and isinstance(row[0], str) else None
-
-
-def read_auto_reply_state(conn: psycopg.Connection, session_id: str) -> dict[str, Any] | None:
-    """The "Keep going" run state, or None when no run is in flight."""
-    with conn.cursor() as cur:
-        cur.execute(AUTO_REPLY_READ_SQL, (session_id,))
-        row = cur.fetchone()
-    state = row[0] if row else None
-    return state if isinstance(state, dict) else None
-
-
 def close_context(
     conn: psycopg.Connection, boundary: Any, project_id: str, result_text: str | None, log: Any,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """The two things the close reads off the project and the turn's last line:
     ``research.json`` and the step the turn OFFERS.
 
-    One read, serving three callers -- the `completed` outcome, `turn_done.options`
-    and the reply decision -- because the close is the first place the worker reads
-    research.json at all and three reads of a jsonb document would be three.
+    One read, serving both callers -- the `completed` outcome and `turn_done.options`
+    -- because the close is the first place the worker reads research.json at all.
 
-    Both are None-safe: a store that has gone down ends the run and renders no
-    buttons, which is strictly better than failing a turn that already finished.
+    Both are None-safe: a store that has gone down renders no buttons, which is strictly better than failing a turn that already finished.
     """
     if boundary is None:
         return (None, None)
@@ -1252,48 +1067,6 @@ def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_i
     except Exception as exc:  # noqa: BLE001 - a label never fails a finished turn
         log(ev="completed_label_check_failed", project_id=project_id, error=f"{type(exc).__name__}: {exc}")
         return True
-
-
-def plan_auto_reply(
-    conn: psycopg.Connection,
-    boundary: Any,
-    turn: dict,
-    *,
-    turn_mode: str,
-    outcome: str,
-    offered: str | None,
-    research: dict[str, Any] | None,
-    log: Any,
-) -> dict[str, Any] | None:
-    """Section A2's decision for this turn: ``{"reply", "state"}``, or None.
-
-    None and ``{"reply": None}`` are different answers and `complete()` treats them
-    so. None means "nothing was decided" -- the boundary is unavailable or a read
-    raised -- and leaves the stored state alone, because a run that cannot be
-    reasoned about must not be silently cleared. ``{"reply": None}`` is a decision:
-    the run ends and the state is cleared.
-
-    Every input is read here rather than carried through the turn, so one failed
-    read ends the run instead of failing a turn that has already finished and been
-    paid for.
-    """
-    if boundary is None:
-        return None
-    session_id, turn_id = turn["session_id"], turn["turn_id"]
-    try:
-        return boundary.next_auto_reply(
-            read_auto_reply_state(conn, session_id),
-            turn_mode,
-            read_prev_step(conn, session_id, turn_id),
-            read_turn_step(conn, turn_id)[0],
-            offered,
-            outcome,
-            research=research,
-        )
-    except Exception as exc:  # noqa: BLE001 - never fail a finished turn over its reply
-        log(ev="auto_reply_unavailable", turn_id=turn_id, session_id=session_id,
-            error=f"{type(exc).__name__}: {exc}")
-        return None
 
 
 def read_research(conn: psycopg.Connection, project_id: str) -> dict[str, Any] | None:
@@ -1449,14 +1222,10 @@ def take_queued_turn(
         active = cur.fetchone()
         if active and active[0]:
             return None
-        cur.execute(turn_message.CLAIM_HELD_SQL, (session_id, QUEUED_OUTCOME, session_id))
+        cur.execute(turn_message.CLAIM_HELD_SQL, (session_id, QUEUED_OUTCOME))
         row = cur.fetchone()
         body = row[0] if row else None
-        # A host reply never clears Stop (section A2). The claim above skips one while
-        # Stop is set; this covers a Stop pressed between that claim and this clear,
-        # since `request_stop` does not take the queue lock. No test can time that
-        # window, so it is the one A2 rule nothing here fails without.
-        if body is not None and not turn_message.is_auto(body):
+        if body is not None:
             cur.execute(CLEAR_STOP_SQL, (session_id,))
     return (body, row[1]) if isinstance(body, dict) else None
 
@@ -2851,15 +2620,14 @@ async def _run_turn(
         def on_halt_failed() -> None:
             store_unavailable()
 
-        # The step boundary (decision 25). This worker is the only plane that enforces
-        # it. A gate that cannot be built leaves `step_gate` None and the turn runs
+        # The step boundary (decision 25), enforced in process here and on the web app;
+        # the plugin's step_gate_hook.py enforces it on the connector and in Cowork. A gate that cannot be built leaves `step_gate` None and the turn runs
         # unbounded -- logged loudly, because a worker enforcing nothing looks exactly
         # like the feature working, and this line is the only way to tell them apart.
         step_gate = None
         boundary = None
-        # The mode the turn RAN under, which is also what decides whether a reply is
-        # due (section A2). A redelivery keeps the first attempt's; "step" is the
-        # default a turn with no boundary falls back to, and no reply follows it.
+        # The mode the turn RAN under. A redelivery keeps the first attempt's; "step" is
+        # the default a turn with no boundary falls back to.
         turn_mode = "step"
         try:
             boundary = load_step_boundary()
@@ -2868,9 +2636,8 @@ async def _run_turn(
             step_gate = boundary.StepGate(
                 boundary=boundary,
                 # A redelivery keeps the mode the first attempt ran under; the
-                # researcher's message is the source only on the first. A `job`
-                # turn is still bounded here: the host answers each boundary.
-                mode=boundary.gate_mode(turn_mode),
+                # researcher's message is the source only on the first.
+                mode=turn_mode,
                 # No research.json yet means no ctx, and the one gated follower is
                 # denied: a needless pause, never an unasked plan.
                 # Lazy: only a research-plan candidate consults it, so most turns
@@ -2881,8 +2648,6 @@ async def _run_turn(
                 ),
                 steps=[seeded_step] if seeded_step else None,
                 log=log, turn_id=turn_id,
-                # The TURN's mode, not the gate's: a redelivered `job` turn must still
-                # read back as `job`, or the host's reply would be lost.
                 on_first_step=lambda step, _gate: record_turn_step(
                     conn, turn_id, step, turn_mode, boundary.UNGROUPED_OPENER),
             )
@@ -3139,9 +2904,8 @@ async def _run_turn(
             # 1b/1c: what the browser renders for this ending. A turn halted by the
             # PreToolUse hook names its reason; the flag is re-read here rather than
             # assumed.
-            # Section A/A2: research.json and the turn's offer line, read once and used
-            # three times below -- the `completed` outcome, `turn_done.options`, and the
-            # host's reply.
+            # Section A: research.json and the turn's offer line, read once and used
+            # twice below -- the `completed` outcome and `turn_done.options`.
             research, offered = close_context(conn, boundary, project_id,
                                               getattr(result, "result", None), log)
             # A step halt ends the turn before the model writes its offer -- two spawns
@@ -3200,20 +2964,10 @@ async def _run_turn(
             # ResultMessage's own cost_usd on every turn, which is what calibrates the
             # price vector on the first real runs.
             detail = {k: terminal[k] for k in ("limit", "spent_usd") if k in terminal}
-            # Section A2: decided before the options, because a turn the host answers
-            # for the researcher offers them nothing.
-            auto_reply = plan_auto_reply(conn, boundary, turn, turn_mode=turn_mode,
-                                         outcome=outcome, offered=offered,
-                                         research=research, log=log)
-            answered_by_host = bool((auto_reply or {}).get("reply"))
             # The replies this turn admits, as exact phrases: the browser shows a button
-            # for each and nothing else. Left OUT when empty, as `reply_follows` is, so a
-            # turn making no offer renders no buttons rather than an empty row -- and a
-            # turn under "Keep going" is exactly that case, because the choice has
-            # already been made. Buttons there would flicker on screen for the moment
-            # between this frame and the host's reply landing, and a researcher quick
-            # enough to click one would send a SECOND message into a run already moving.
-            options = ([] if answered_by_host or not (boundary and offered)
+            # for each and nothing else. Left OUT when empty, so a turn making no offer
+            # renders no buttons rather than an empty row.
+            options = ([] if not (boundary and offered)
                        else boundary.reply_options(offered, research))
             if options:
                 detail["options"] = options
@@ -3223,11 +2977,6 @@ async def _run_turn(
                 log(ev="spend_estimate_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
             seq = complete(
                 conn, turn, receive_count, outcome=outcome, detail=detail,
-                # Section A2: the host's reply for the researcher, queued in the same
-                # transaction as the close so a turn never ends promising one it did
-                # not write. `result.result` is the turn's last text, whose final line
-                # carries the offer.
-                auto_reply=auto_reply,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
                 sdk_session_id=sdk_session_id,
                 # U5 D3: SIGTERM's last-receive close may have closed the row first; then
