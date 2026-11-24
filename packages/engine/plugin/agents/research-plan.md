@@ -729,7 +729,7 @@ research_append({
 **Plan item fields:**
 
 - `record_type`: census, vital_record, probate, land, church,
-  military, newspaper, cemetery, tax, immigration, court, other
+  military, newspaper, cemetery, tax, immigration, court, fs_hints, other
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
