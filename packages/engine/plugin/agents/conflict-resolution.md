@@ -260,7 +260,9 @@ evaluating whether two events could belong to the same person, use
 `place_search` to resolve each event's location to a standard place name
 (the `standardPlace` field), then call
 `place_distance({ standardPlace1, standardPlace2 })` with those two names
-to get the actual distance in kilometers. Compare the result against era travel norms
+to get the actual distance in kilometers. Measure it even when the conflict
+or a note already states a distance: call `place_search` for each place,
+then `place_distance` between them, before judging the conflict. Compare the result against era travel norms
 (pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
 extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
