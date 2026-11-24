@@ -88,9 +88,10 @@ SOURCES_GUIDANCE = (
 ROUTING_GUIDANCE = (
     "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
     "what it returns. Researching, investigating or finding a person, a relative or a record, "
-    "or carrying the research on, goes to the research skill, with or without a project; any "
-    "other request, such as one about a place's history or a person's data problems, goes to "
-    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "verifying whether a person's facts or relationships are correct, or carrying the "
+    "research on, goes to the research skill, with or without a project; any other request, "
+    "such as one about a place's history or a person's data problems, goes to the agent whose "
+    "description covers it. Do not answer it yourself from your own knowledge "
     "or from the project's state. A question about where the project stands you answer from "
     "project_context."
 )

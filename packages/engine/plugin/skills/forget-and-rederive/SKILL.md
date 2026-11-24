@@ -66,7 +66,10 @@ this mode.
 1. Map the reply to selectors on the subject (`project_context`'s
    `subjectPersonIds`): parents → `parents-of`; spouse → `spouses-of`; birth →
    `birth-of`; death → `death-of`; another named fact → `facts-of` with its
-   `factType`; a named source → `source` with its S id. To match a source the
+   `factType`; a named source → `source` with its S id. A kind named in general
+   maps to all of its kind: relationships → `parents-of` and `spouses-of`; facts
+   → `birth-of` and `death-of`; sources in general name no source and add no
+   selector. To match a source the
    reply names by title, call `tree_query({ projectPath, personIds: [<subject>],
    includeSources: true })`. Step 1's bans on `tree_query` and on looking a
    source id up are the practice run's only.

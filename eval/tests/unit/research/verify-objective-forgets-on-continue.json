@@ -1,0 +1,65 @@
+{
+  "test": {
+    "id": "ut_research_vo1",
+    "skill": "research",
+    "name": "\"Continue.\" on a project whose objective disputes the parents runs the verify path",
+    "type": "positive",
+    "description": "Issue #4791: a first message that asks to verify a person's relationships becomes the project's objective, and the researcher may answer the setup stop with a bare \"Continue.\". The objective then stands in for the reply: forget-and-rederive runs in verify mode on the disputed parents with cleanSlate, then the baseline, then question-selection with a `statedQuestion:` line about the parents. disputed-parents-unsourced's objective says the attached parents are believed to be incorrect.",
+    "tags": [
+      "routing",
+      "routes-to:forget-and-rederive",
+      "verify-forget-then-select"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered `choosing the question`. Continue.",
+    "scenario": "disputed-parents-unsourced"
+  },
+  "mcp_fixtures": [
+    "tree-forget-vogt-parents-clean-slate",
+    "person-read-empty-any"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_skills": [
+      "forget-and-rederive"
+    ],
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The order forget-and-rederive (verify mode) -> extraction_append -> question-selection, the tree_forget arguments and the statedQuestion line are checked by test_verify_reply_forgets_then_selects. Do not re-grade them.",
+    "tree_forget is served from a fixture; the scenario files do not change, so Johann and Maria Vogt still show in the tree afterwards. question-selection is stubbed and writes nothing. Neither is a failure.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

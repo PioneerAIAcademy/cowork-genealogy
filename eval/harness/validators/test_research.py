@@ -1751,6 +1751,39 @@ def test_plan_turn_relays_both_summaries(test, text_response):
     assert offered == "search", f"the reply must end on \"Continue with `running the searches`?\"; it offers {offered!r}"
 
 
+_RELAYS_ONLY_PREFIX = "relays-only:"
+_RESEARCH_ID_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+\b"
+)
+
+
+def test_reply_adds_nothing_after_the_relay(test, text_response):
+    """Tag-gated (``relays-only:<callee>``). The reply relays the stubbed callee's
+    summary verbatim and adds nothing after it but the turn's closing "Continue
+    with …?" line, and names no research.json id (#4791, feedback #4761: a summary
+    of the router's own after proof-conclusion's, leaking "(ps_001)")."""
+    from harness.skill_runner import load_step_boundary
+
+    callee = _one_tag_value(test, _RELAYS_ONLY_PREFIX)
+    if not callee:
+        pytest.skip("not a relays-only test")
+    summary = _stub_summary(test, callee)
+    assert summary, f"the test stubs no {callee} summary after a final ---"
+    norm = lambda t: re.sub(r"\s+", " ", (t or "").replace("*", "").replace("`", "")).strip()
+    reply = norm(text_response)
+    at = reply.casefold().find(norm(summary).casefold())
+    assert at >= 0, f"the reply does not relay {callee}'s summary verbatim"
+    boundary = load_step_boundary()
+    last = norm([line for line in summary.splitlines() if line.strip()][-1]).casefold()
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    ends = [i for i, line in enumerate(lines) if last in norm(line).casefold()]
+    after = lines[ends[-1] + 1:] if ends else []
+    extra = [line for line in after if boundary.offered_step(line) is None and not re.match(r"^<?https?://\S+>?$", line)]
+    assert not extra, f"the reply adds its own text after {callee}'s summary: {extra}"
+    ids = sorted(set(_RESEARCH_ID_RE.findall(text_response or "")))
+    assert not ids, f"the reply names research.json ids: {ids}"
+
+
 _NO_NAME_SEARCH_TAG = "no-name-search"
 
 

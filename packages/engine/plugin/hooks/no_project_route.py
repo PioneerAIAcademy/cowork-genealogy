@@ -43,8 +43,8 @@ import sys
 HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 
 CONTEXT = (
-    "If project_context reports no project in this folder, a request to research a person "
-    "is a research job: hand it to the research skill, which starts the project, rather "
+    "If project_context reports no project in this folder, a request to research a person, "
+    "or to verify whether a person's facts or relationships are correct, is a research job: hand it to the research skill, which starts the project, rather "
     "than answering it from a single lookup. In that case, if the message names more than "
     "one goal, you may summarise what the tree says and ask which to pursue first. "
     "With no project and no FamilySearch person ID, a request for the names and details "
@@ -77,9 +77,10 @@ SOURCES_NOTE = (
 ROUTING_NOTE = (
     "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
     "what it returns. Researching, investigating or finding a person, a relative or a record, "
-    "or carrying the research on, goes to the research skill, with or without a project; any "
-    "other request, such as one about a place's history or a person's data problems, goes to "
-    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "verifying whether a person's facts or relationships are correct, or carrying the "
+    "research on, goes to the research skill, with or without a project; any other request, "
+    "such as one about a place's history or a person's data problems, goes to the agent whose "
+    "description covers it. Do not answer it yourself from your own knowledge "
     "or from the project's state. A question about where the project stands you answer from "
     "project_context."
 )

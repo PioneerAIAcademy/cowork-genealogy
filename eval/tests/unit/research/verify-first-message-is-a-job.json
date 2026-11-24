@@ -1,0 +1,72 @@
+{
+  "test": {
+    "id": "ut_research_vf1",
+    "skill": "research",
+    "name": "A first message asking to verify a person's facts and relationships is a research job",
+    "type": "positive",
+    "description": "Issue #4791 (lead, 2026-11-24, from feedback #4761): a first message asking whether a person's facts, relationships and sources are correct went straight to source-evaluation, which audits attached sources and never tests a relationship. It is a research job: the research skill runs init-project alone and stops at setup, asking what to verify. init-project runs live on the Moreau fixture; source-evaluation is stubbed, so a spawn of it fails the hand-off check.",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "setup-stop"
+    ]
+  },
+  "input": {
+    "user_message": "Verify whether the facts, relationships, and sources attached to Jean Baptiste Moreau (MRQ1-JBM) are correct.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-moreau-person-level-sources"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "check-warnings",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "forget-and-rederive",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "A request to verify a person's facts and relationships is a research job, not an audit of the attached sources (lead, 2026-11-24). The hand-off to init-project alone, the source lines, the verify-or-research question and the closing \"Continue with `choosing the question`?\" line are checked by test_job_setup_stops_after_init_project. Do not re-grade them.",
+    "Grade the reply on what it tells the researcher: Jean Baptiste Moreau's birth and death as the tree gives them, his relatives by name, and his attached sources by title. Nothing is verified in this turn; that is correct.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

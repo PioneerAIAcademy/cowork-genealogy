@@ -22,6 +22,7 @@ from test_research import (  # noqa: E402
     test_plan_turn_relays_both_summaries as relays_both,
     test_plan_turn_runs_locality_guide_then_research_plan as plan_turn,
     test_question_selection_carries_the_researcher_reply as reply_carries,
+    test_reply_adds_nothing_after_the_relay as relays_only,
     test_verify_reply_forgets_then_selects as verify,
 )
 
@@ -221,3 +222,28 @@ def test_no_name_search_passes_and_fails():
         _name(after={"research_json": {"project": {}}})
     with pytest.raises(AssertionError, match="init-project alone"):
         _name(names=("tree-survey",))
+
+
+# ── relays-only ─────────────────────────────────────────────────────────────
+
+ONLY = {
+    "skill": "research",
+    "tags": ["relays-only:proof-conclusion"],
+    "execution": {"stub_skills": [
+        {"skill": "proof-conclusion", "response": "ps_001 written.\n---\nThe parentage is not proved.\n\nA baptism would advance it."},
+    ]},
+}
+
+
+def test_relays_only_passes_on_the_relay_and_a_closing_line():
+    relays_only(test=ONLY, text_response="Writing the conclusion.\n\nThe parentage is not proved.\n\nA baptism would advance it.")
+    relays_only(test=ONLY, text_response="The parentage is **not proved**.\n\nA baptism would advance it.\n\nContinue with `planning the searches`? https://example.test/p")
+
+
+def test_relays_only_fails_on_a_summary_of_its_own_or_a_leaked_id():
+    with pytest.raises(AssertionError, match="adds its own text"):
+        relays_only(test=ONLY, text_response="The parentage is not proved.\n\nA baptism would advance it.\n\nIn short: no parents yet.")
+    with pytest.raises(AssertionError, match="ps_001"):
+        relays_only(test=ONLY, text_response="The parentage is not proved.\n\nA baptism would advance it.\n\nContinue with `planning the searches`? (ps_001)")
+    with pytest.raises(AssertionError, match="verbatim"):
+        relays_only(test=ONLY, text_response="Not proved; try a baptism.")
