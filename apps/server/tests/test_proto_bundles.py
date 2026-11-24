@@ -39,6 +39,9 @@ LAYOUT_PY = REPO / "scripts" / "eb_bundles" / "layout.py"
 WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 TOOLS_NGINX = PROTO / "eb-tools" / ".platform" / "nginx" / "conf.d" / "01-tools-timeouts.conf"
 WEB_NGINX = PROTO / "eb-web" / ".platform" / "nginx" / "conf.d"
+WEB_PROXY_HOOK = PROTO / "eb-web" / ".platform" / "hooks" / "prebuild" / "110_tools-proxy.sh"
+WEB_PROXY_OUT = Path(".platform") / "nginx" / "conf.d" / "elasticbeanstalk" / "10-tools-proxy.conf"
+MALACHI_NGINX = PROTO / "malachi" / "nginx.conf"
 
 
 def _load_layout():
@@ -327,6 +330,15 @@ def test_tools_classic_elb_idle_timeout_is_alone_in_its_file():
     assert list(data["option_settings"]) == ["aws:elb:policies"]
 
 
+def test_web_classic_elb_idle_timeout_is_alone_in_its_file():
+    # Blueprint's Classic load balancer (F12) carries the web tier's proxied /mcp (110_tools-proxy.sh).
+    entries = _options("web")[("aws:elb:policies", "ConnectionSettingIdleTimeout")]
+    assert [f for _, f in entries] == ["02-web-classic-elb.config"]
+    assert int(entries[0][0]) >= TOOLS_MIN_TIMEOUT_S
+    data = _load_config(_template("web") / ".ebextensions" / "02-web-classic-elb.config")
+    assert list(data["option_settings"]) == ["aws:elb:policies"]
+
+
 @pytest.mark.parametrize("tier", ["worker", "tools"])
 def test_one_instance_until_u18(tier):
     """Handoff step 13: U6's claim fencing is built, so the gate on a second instance
@@ -371,16 +383,17 @@ def test_root_drop_in_lives_where_a_deploy_does_not_delete_it():
         "a drop-in under /etc is deleted by every deploy"
 
 
-def test_worker_hook_is_executable_in_git_and_strict():
-    rel = WORKER_HOOK.relative_to(REPO).as_posix()
+@pytest.mark.parametrize("hook", [WORKER_HOOK, WEB_PROXY_HOOK], ids=["worker", "web-proxy"])
+def test_hook_is_executable_in_git_and_strict(hook):
+    rel = hook.relative_to(REPO).as_posix()
     staged = subprocess.run(["git", "ls-files", "-s", "--", rel], cwd=REPO, capture_output=True,
                             text=True, encoding="utf-8", check=True).stdout.split()
     if staged:
         assert staged[0] == "100755", f"{rel} is {staged[0]} in git; git update-index --chmod=+x"
     else:
         # Untracked: `git add` records the working-tree mode.
-        assert WORKER_HOOK.stat().st_mode & stat.S_IXUSR, f"{rel} is not executable"
-    lines = WORKER_HOOK.read_text(encoding="utf-8").splitlines()
+        assert hook.stat().st_mode & stat.S_IXUSR, f"{rel} is not executable"
+    lines = hook.read_text(encoding="utf-8").splitlines()
     assert lines[0] in ("#!/bin/bash", "#!/usr/bin/env bash"), lines[0]
     assert "set -euo pipefail" in [line.strip() for line in lines], "the hook must run under set -euo pipefail"
 
@@ -393,6 +406,7 @@ HOOK_NAME = re.compile(r"^1\d\d_[^/]+$")
 def test_every_platform_hook_uses_the_provisioners_1xx_prefix():
     hooks = [p for p in PROTO.glob("eb-*/.platform/*hooks/*/*") if p.is_file()]
     assert WORKER_HOOK in hooks, "the glob no longer reaches the worker hook"
+    assert WEB_PROXY_HOOK in hooks, "the glob no longer reaches the web tier's proxy hook"
     bad = [p.relative_to(PROTO).as_posix() for p in hooks if not HOOK_NAME.match(p.name)]
     assert not bad, f"rename to 1XX_<name> (the provisioner owns 000-099): {bad}"
 
@@ -448,3 +462,93 @@ def test_the_hook_users_are_a_superset_prefix_of_the_slot_users():
     assert reload_lines, "the drop-in is never loaded"
     assert re.search(r"if \[ -d /run/systemd/system \]; then\n\s+systemctl daemon-reload", text), \
         "the reload runs only where systemd does"
+
+
+# --- The web tier's tools proxy (TOOLS_UPSTREAM_URL; a connector deployment's one origin) ---
+
+
+def _web_staging(tmp_path: Path) -> Path:
+    staging = tmp_path / "staging"
+    (staging / "web").mkdir(parents=True)
+    (staging / "web" / "app.py").write_text("", encoding="utf-8")
+    return staging
+
+
+def _run_proxy_hook(staging: Path, url: str | None) -> subprocess.CompletedProcess:
+    import os
+
+    env = {k: v for k, v in os.environ.items() if k != "TOOLS_UPSTREAM_URL"}
+    if url is not None:
+        env["TOOLS_UPSTREAM_URL"] = url
+    return subprocess.run(["bash", str(WEB_PROXY_HOOK)], cwd=staging, env=env, capture_output=True,
+                          text=True, encoding="utf-8", check=False)
+
+
+def _locations(text: str) -> dict[str, str]:
+    """Each exact-match location's path and body, in an nginx file."""
+    return {m.group(1): m.group(2) for m in re.finditer(r"location\s*=\s*(\S+)\s*\{([^}]*)\}", text)}
+
+
+def _malachi_tools_paths() -> set[str]:
+    return {path for path, body in _locations(MALACHI_NGINX.read_text(encoding="utf-8")).items()
+            if re.search(r"proxy_pass\s+\$tools_upstream\s*;", body)}
+
+
+@pytest.mark.parametrize("url", [None, ""], ids=["unset", "empty"])
+def test_web_proxy_hook_writes_nothing_unset(tmp_path, url):
+    """The handoff's chat-on web tier sets no TOOLS_UPSTREAM_URL: nginx stays as before."""
+    staging = _web_staging(tmp_path)
+    proc = _run_proxy_hook(staging, url)
+    assert proc.returncode == 0, proc.stderr
+    assert not (staging / WEB_PROXY_OUT).exists()
+
+
+def test_web_proxy_hook_removes_an_earlier_file_when_unset(tmp_path):
+    staging = _web_staging(tmp_path)
+    out = staging / WEB_PROXY_OUT
+    out.parent.mkdir(parents=True)
+    out.write_text("location = /mcp { }\n", encoding="utf-8")
+    proc = _run_proxy_hook(staging, None)
+    assert proc.returncode == 0, proc.stderr
+    assert not out.exists()
+
+
+@pytest.mark.parametrize("url", ["http://tools.internal",
+                                 "https://tools.example:8443", "http://10.0.1.5:8787"])
+def test_web_proxy_hook_routes_malachis_tools_paths(tmp_path, url):
+    staging = _web_staging(tmp_path)
+    proc = _run_proxy_hook(staging, url)
+    assert proc.returncode == 0, proc.stderr
+    text = (staging / WEB_PROXY_OUT).read_text(encoding="utf-8")
+    assert f"set $genealogy_tools_upstream {url};" in text.splitlines()
+    assert re.search(r"^resolver \S+ valid=\d+s ipv6=off;$", text, re.M), text
+    locations = _locations(text)
+    malachi = _malachi_tools_paths()
+    assert malachi == {"/mcp", "/.well-known/oauth-protected-resource/mcp", "/img"}, malachi
+    assert set(locations) == malachi, "the Beanstalk proxy and malachi's edge route different paths"
+    for path, body in locations.items():
+        assert re.search(r"proxy_pass\s+\$genealogy_tools_upstream\s*;", body), path
+    mcp = locations["/mcp"]
+    for directive in ("proxy_read_timeout", "proxy_send_timeout"):
+        m = re.search(rf"{directive}\s+(\d+)s\s*;", mcp)
+        assert m and int(m.group(1)) >= TOOLS_MIN_TIMEOUT_S, (directive, mcp)
+    for directive in ("proxy_buffering off", "proxy_request_buffering off"):
+        assert re.search(rf"{directive}\s*;", mcp), directive
+
+
+@pytest.mark.parametrize("url", ["http://tools.example/mcp", "http://tools.example/", "http://tools.example?x=1",
+                                 "http://user:pw@tools.example", "ftp://tools.example", "http://",
+                                 "http://tools example", "tools.example", "http://tools.example:8787 ; return 200",
+                                 "http://tools.example\n", " http://tools.example",
+                                 "x http://tools.example", "\nhttp://tools.example"])
+def test_web_proxy_hook_refuses_a_url_with_anything_after_the_host(tmp_path, url):
+    staging = _web_staging(tmp_path)
+    proc = _run_proxy_hook(staging, url)
+    assert proc.returncode != 0
+    assert "TOOLS_UPSTREAM_URL" in proc.stderr
+    assert not (staging / WEB_PROXY_OUT).exists()
+
+
+def test_web_proxy_hook_refuses_a_staging_dir_that_is_not_the_web_bundle(tmp_path):
+    proc = _run_proxy_hook(tmp_path, "http://tools.example")
+    assert proc.returncode != 0 and "not the web bundle" in proc.stderr
