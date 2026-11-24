@@ -5,19 +5,38 @@
     "name": "Planning which volumes to browse should not trigger search-images",
     "type": "negative",
     "description": "User asks which unindexed volumes to browse next and to help plan — that's research-plan. search-images executes a browse of a specific volume; it does not decide research strategy. The volume-search-any / image-search-any mcp_fixtures are declared deliberately and must NOT be removed as unused (#1788).",
-    "tags": ["near-miss", "browse-vs-plan", "boundary", "no-browse-no-write"]
+    "tags": [
+      "near-miss",
+      "browse-vs-plan",
+      "boundary",
+      "no-browse-no-write"
+    ]
   },
   "input": {
     "user_message": "Which unindexed record sets should I browse next for the Flynn research? Help me plan the strategy.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["catalog-search-empty", "catalog-search-empty-keywords", "catalog-search-empty-title", "volume-search-any", "image-search-any", "volume-bisect-any", "image-index-any", "image-transcribe-any"],
+  "mcp_fixtures": [
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title",
+    "volume-search-any",
+    "image-search-any",
+    "volume-bisect-any",
+    "image-index-any",
+    "image-transcribe-any",
+    "person-read-empty-any"
+  ],
   "execution": {
-    "run_agents": ["search-images"],
+    "run_agents": [
+      "search-images"
+    ],
     "max_wall_clock_seconds": 600
   },
   "negative": {
-    "correct_skill": ["research-plan"],
+    "correct_skill": [
+      "research-plan"
+    ],
     "explanation": "Deciding which record sets to browse and in what order is planning work — research-plan's job. search-images executes a browse of an already-chosen volume; it does not author or prioritize plan items.",
     "grade_on_invariant": true
   },

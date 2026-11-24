@@ -54,16 +54,18 @@ from harness.context_policy import (
     OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    builtin_spawn_denial,  # the SHIPPED hook's predicate, not a copy
     is_subagent_call,
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
     route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
+    relay_note_hook,  # the SHIPPED relay note, as a hosted plane adds it
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
-from harness.delegation import foreground_rewrite
+from harness.delegation import foreground_rewrite, keeping_the_rewrite, without_plugin_prefix
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
 from harness.sdk_query import close_query, open_query
@@ -2045,6 +2047,14 @@ async def _run_agent(
         return _step_gate
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
+        # A `plugin:` on a spawn is dropped first, as the hosted planes'
+        # `foreground_rewrite` drops it, so every check below sees that agent.
+        fixed = without_plugin_prefix(input_data)
+        if fixed is None:
+            return await _pretool(input_data, _tool_use_id, _ctx)
+        return keeping_the_rewrite(await _pretool(fixed, _tool_use_id, _ctx), fixed["tool_input"])
+
+    async def _pretool(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
         # spec §11 Step 0 — record caller identity for EVERY call, including ones
         # about to be denied below (an unnamed subagent attempting a raw
@@ -2080,6 +2090,11 @@ async def _run_agent(
             # another tool call among dozens.
             if _step_turns and _gate.first_step and _step_turns[-1].step != _gate.first_step:
                 _step_turns[-1].step = _gate.first_step
+
+        # The shipped hook's deny of a built-in agent type on the main thread.
+        if (builtin_denial := builtin_spawn_denial(input_data)) is not None:
+            _emit(f"[blocked built-in spawn] {tool_name}")
+            return builtin_denial
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
@@ -2471,6 +2486,7 @@ async def _run_agent(
         max_buffer_size=96 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[relay_note_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
             # A single ask gets all of what Cowork sends, the routing sentence too (spec §16.3).
             "UserPromptSubmit": [

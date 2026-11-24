@@ -19,7 +19,8 @@
     "scenario": "tyler-fluvanna-census"
   },
   "mcp_fixtures": [
-    "image-transcribe-tyler-1880-census"
+    "image-transcribe-tyler-1880-census",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_turns": 20,

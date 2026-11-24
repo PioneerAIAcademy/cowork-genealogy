@@ -486,6 +486,10 @@ def _is_low_risk_choice(question, research: dict) -> bool:
 # `offer_key` puts a caller's agent name into the same space -- so
 # `offered_step(deny_reason(x))` and `offer_key(x)` agree for every step.
 _OFFER_RE = re.compile(r"continue\s+with\s+(?P<label>.+?)\s*\?", re.IGNORECASE)
+# A line that is only a link, bare, in angle brackets or as a markdown link. A Haiku
+# 5.5 router put one after the offer line (ut_research_hv3, hva), which hid the
+# offer and so the researcher's buttons; such lines are read past.
+_LINK_ONLY_RE = re.compile(r"^(?:<?https?://\S+>?|\[[^\]]*\]\(https?://\S+\))$")
 _LABEL_TO_KEY = {label.casefold(): key for key, label in STEP_LABELS.items()}
 # Retired labels, read back but never written: a resumed session's history and
 # committed run logs still end on them (issue #4688).
@@ -512,9 +516,12 @@ def offered_step(text: str | None) -> str | None:
 
     Only the last line, because that is where the router is told to put it; a
     line naming no entry is no offer, which is how a step that ended on a
-    question for the researcher ends a "Keep going" run.
+    question for the researcher ends a "Keep going" run. Trailing lines that are
+    only a link are read past (`_LINK_ONLY_RE`).
     """
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+    while lines and _LINK_ONLY_RE.match(lines[-1]):
+        lines.pop()
     if not lines:
         return None
     match = _OFFER_RE.search(lines[-1])
