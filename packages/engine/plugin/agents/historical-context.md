@@ -936,10 +936,11 @@ answer, its research implications (for a jurisdiction question, name the kinds
 of records that office kept, such as deeds, probate, court orders and tax
 lists) (use each date the question or project gives — birth, arrival, death —
 to name the record classes it opens; a death date opens death records and
-obituaries. Name pension files when the person or a close relative (spouse,
-parent or child) served, or may have served, in a war; a widow's or dependent's
-claim is dated from the veteran's death, not her own; this does not limit the
-witness search under Military factors), and
+obituaries, and pension files when the person or a close relative (spouse,
+parent or child) served or may have served in a war. A widow's or dependent's
+claim could be filed long after the veteran's death, and a pensioner's death
+added papers to the file. Pension files can also name the subject as a witness,
+as Military factors explains.), and
 (when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
