@@ -66,7 +66,7 @@ one in prose you then act on.
 | init-project, question-selection, locality-guide | setting up the project |
 | research-plan | planning the searches |
 | search-records, search-images, search-external-sites, record-structurer | running the searches |
-| person-evidence | linking the records |
+| person-evidence | linking the records to people in this project |
 | conflict-resolution | resolving the conflict |
 | hypothesis-tracking | sorting out the competing identities |
 | research-exhaustiveness | checking the search is exhaustive |
@@ -422,7 +422,7 @@ message.
      other source.
    - The step's report gives the FamilySearch findings, then each external
      search: the link, what to look for, and to save the results page as a PDF
-     and upload it. It still ends "Continue with `linking the records`?" — an
+     and upload it. It still ends "Continue with `linking the records to people in this project`?" — an
      external errand does not hold the step open.
    - **Dispatching a `search-records` or `search-images` plan item that targets
      a survey of every occurrence/mention of a surname, and relaying its
@@ -773,6 +773,11 @@ its edit or add-new mode, at any boundary. The same holds for work that used
 to open a helper question — a conflict that needs new evidence, a FAN pivot,
 an objective-level sub-question. All three are plan items on the current
 question.
+
+When a steer opens this turn's search step and the previous turn offered
+`linking the records to people in this project`, the sentence before this
+step's "Continue with …?" line says linking can wait and the researcher can
+name another search instead.
 
 **A genuinely different question.** Check `project_context` first:
 
