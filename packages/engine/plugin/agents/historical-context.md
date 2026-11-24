@@ -5,7 +5,8 @@ description: >-
   conventions, migration patterns, record availability by era, cultural
   practices, and historical events that affect records. Outputs narrative
   context to the user, and logs it to the research log inside a project. Use when the user says
-  "what was happening in [place] in [year]?", "boundary changes", "naming
+  "what was happening in [place] in [year]?", "which town was settled
+  first?", "boundary changes", "naming
   conventions", "why would [thing] appear in a record?", "migration patterns",
   "explain this record's context", "what does [historical term] mean?", or when
   understanding historical context is needed to interpret a record correctly. Do
