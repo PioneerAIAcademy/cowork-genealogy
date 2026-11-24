@@ -15,7 +15,8 @@
     "scenario": "villa-hidalgo-birth-no-questions"
   },
   "mcp_fixtures": [
-    "image-transcribe-jalisco-baptism-paso-de-sotos"
+    "image-transcribe-jalisco-baptism-paso-de-sotos",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_turns": 20,
