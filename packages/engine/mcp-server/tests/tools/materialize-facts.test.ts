@@ -5,6 +5,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { givenAbbreviates, nameAnswers } from "../../src/utils/persona-copy.js";
 import { writeProjectFile } from "../helpers/project-files.js";
 
 // ─── fixture builders (valid research.json + tree.gedcomx.json) ───────────────
@@ -914,6 +915,291 @@ describe("materialize_facts", () => {
       const out = single(await materializeFacts({ projectPath: dir, personId: "I5", recordId: "REC-X2", recordRole: "child" }));
       expect(out.ok).toBe(false);
       if (!out.ok) expect(out.errors[0]).toContain("research_append");
+    });
+
+    // #4722: a record that names someone by given name only ("daughter of
+    // Benjamin F. & Mary L.") cites the person's matching full name instead of
+    // minting a blank-surname name. Ruling (lead, 2026-11-23) on the issue.
+    describe("a given-only name (#4722)", () => {
+      const person = (id: string, given: string, surname: string) => ({
+        id, gender: "Unknown", names: [{ id: `N${id}`, given, surname }],
+      });
+      const givenOnly = (given: string, surname = "") => [
+        assertion("a_201", {
+          record_id: "REC-D", record_role: "mother", fact_type: "name", value: `${given} ${surname}`.trim(),
+          structured_value: { given, surname },
+        }),
+      ];
+      async function linkPersona(target: any, assertions: any[]) {
+        const r = research({ sources: [S1], assertions });
+        r.person_evidence = [pe("probable", { assertion_id: "a_201", person_id: target.id })];
+        await writeProject(tree({ persons: [target] }), r, { link: false });
+        return single(await materializeFacts({ projectPath: dir, personId: target.id, recordId: "REC-D", recordRole: "mother" }));
+      }
+
+      it("cites the matching full name and mints nothing", async () => {
+        const out = await linkPersona(person("I2", "Benjamin Fairbanks", "Phipps"), givenOnly("Benjamin F."));
+        expect(out.ok).toBe(true);
+        if (!out.ok) return;
+        expect(out.namesAdded).toBe(0);
+        expect(out.refsAttached).toBe(1);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(1);
+        expect(names[0]).toMatchObject({ given: "Benjamin Fairbanks", surname: "Phipps", sources: [{ ref: "S1" }] });
+      });
+
+      it("prefers an equal blank-surname name already on the person", async () => {
+        const legacy = { id: "I2", gender: "Unknown", names: [
+          { id: "N2", given: "Mary L", surname: "Childs" },
+          { id: "N3", given: "Mary L.", surname: "" },
+        ] };
+        const out = await linkPersona(legacy, givenOnly("Mary L."));
+        expect(out.ok).toBe(true);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(2);
+        expect(names[0].sources ?? []).toHaveLength(0);
+        expect(names[1].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+      });
+
+      it("is a no-op on a re-run", async () => {
+        await linkPersona(person("I2", "Benjamin Fairbanks", "Phipps"), givenOnly("Benjamin F."));
+        const before = await readTree();
+        const again = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-D", recordRole: "mother" }));
+        expect(again.ok).toBe(true);
+        if (!again.ok) return;
+        expect(again.namesAdded).toBe(0);
+        expect(again.refsAttached).toBe(0);
+        expect(await readTree()).toEqual(before);
+      });
+
+      it("matches a single-token value with no structured_value", async () => {
+        const out = await linkPersona(person("I2", "Mary L", "Childs"), [
+          assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary" }),
+        ]);
+        expect(out.ok).toBe(true);
+        if (!out.ok) return;
+        expect(out.namesAdded).toBe(0);
+        expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+      });
+
+      // Each of these is a different name, which a genealogist keeps.
+      for (const [label, full, given, surname] of [
+        ["a spelling variant", "Unna", "Una", ""],
+        ["a different surname", "Benjamin", "Benjamin", "Smith"],
+        ["more tokens than the full given", "Mary L", "Mary L. Ann", ""],
+        ["a different initial", "Mary L", "Mary K.", ""],
+        ["a whole word against an initial", "Mary L", "Mary Lou", ""],
+      ] as const) {
+        it(`still mints ${label}`, async () => {
+          const out = await linkPersona(person("I2", full, full === "Unna" ? "Halsteinsdatter" : "Childs"), givenOnly(given, surname));
+          expect(out.ok).toBe(true);
+          if (!out.ok) return;
+          expect(out.namesAdded).toBe(1);
+          const names = findPerson(await readTree(), "I2").names;
+          expect(names).toHaveLength(2);
+          expect(names[1]).toMatchObject({ given, surname, sources: [{ ref: "S1" }] });
+          expect(names[0].sources ?? []).toHaveLength(0);
+        });
+      }
+
+      it("named-party arm: cites the matching full name and mints nothing", async () => {
+        const r = research({ sources: [S1], assertions: namedBride() });
+        r.person_evidence = [pe("probable", { assertion_id: "a_021" })];
+        await writeProject(tree({ persons: [person("I2", "Mary L", "Childs")] }), r, { link: false });
+        const op = { projectPath: dir, personId: "I2", assertionId: "a_021", relatedRole: "bride", name: { given: "Mary L.", surname: "" } };
+        const out = single(await materializeFacts(op));
+        expect(out.ok).toBe(true);
+        if (!out.ok) return;
+        expect(out.namesAdded).toBe(0);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(1);
+        expect(names[0].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+        const again = single(await materializeFacts(op));
+        expect(again.ok).toBe(true);
+        if (again.ok) expect(again.namesAdded).toBe(0);
+      });
+
+      it("named-party arm: a person minted from a given-only name gets that name", async () => {
+        const r = research({ sources: [S1], assertions: namedBride() });
+        await writeProject(tree(), r, { link: false });
+        const out = single(
+          await materializeFacts({ projectPath: dir, personId: "I9", assertionId: "a_021", relatedRole: "bride", name: { given: "Mary L.", surname: "" } }),
+        );
+        expect(out.ok).toBe(true);
+        expect(findPerson(await readTree(), "I9").names).toEqual([
+          expect.objectContaining({ given: "Mary L.", surname: "", sources: [expect.objectContaining({ ref: "S1" })] }),
+        ]);
+      });
+
+      // A person this research added carries no ref, so a speculative link lets
+      // the first copy through. The re-run reads her as minted from this record,
+      // and a name that only abbreviates hers is no party trace, so the gate
+      // asks for the link to be raised rather than guess.
+      it("re-runs onto a research-added person only once the link is raised", async () => {
+        const added = person("I3", "Mary L", "Childs");
+        const r = research({ sources: [S1], assertions: givenOnly("Mary L.") });
+        r.person_evidence = [pe("speculative", { assertion_id: "a_201", person_id: "I3" })];
+        await writeProject(tree({ persons: [added] }), r, { link: false });
+        await seedStart([]);
+        const op = { projectPath: dir, personId: "I3", recordId: "REC-D", recordRole: "mother" };
+        const first = single(await materializeFacts(op));
+        expect(first.ok).toBe(true);
+        expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+        const refused = single(await materializeFacts(op));
+        expect(refused.ok).toBe(false);
+        if (!refused.ok) expect(refused.errors[0]).toContain("research_append");
+        const raised = research({ sources: [S1], assertions: givenOnly("Mary L.") });
+        raised.person_evidence = [pe("probable", { assertion_id: "a_201", person_id: "I3" })];
+        await writeFile(join(dir, "research.json"), JSON.stringify(raised, null, 2), "utf-8");
+        const again = single(await materializeFacts(op));
+        expect(again.ok).toBe(true);
+        if (again.ok) expect(again.namesAdded).toBe(0);
+        expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+      });
+
+      // Two people on one record can share a given name: the mother "Mary" is
+      // not the "Mary Phipps" stub minted for her daughter, and with no link
+      // from the mother nothing ties them.
+      it("refuses a given-only party onto another party's stub it abbreviates, with no link", async () => {
+        const daughter = { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "Phipps", sources: [{ ref: "S1" }] }] };
+        const r = research({
+          sources: [S1],
+          assertions: [
+            ...givenOnly("Mary"),
+            assertion("a_301", { record_id: "REC-D", record_role: "child", fact_type: "name", value: "Mary Phipps" }),
+          ],
+        });
+        await writeProject(tree({ persons: [daughter] }), r, { link: false });
+        await seedStart([]);
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(false);
+        expect(findPerson(await readTree(), "I4").names).toHaveLength(1);
+      });
+
+      it("refuses it too when the mother's link to the stub is only speculative", async () => {
+        const daughter = { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "Phipps", sources: [{ ref: "S1" }] }] };
+        const r = research({
+          sources: [S1],
+          assertions: [
+            ...givenOnly("Mary"),
+            assertion("a_301", { record_id: "REC-D", record_role: "child", fact_type: "name", value: "Mary Phipps" }),
+          ],
+        });
+        r.person_evidence = [pe("speculative", { assertion_id: "a_201", person_id: "I4" })];
+        await writeProject(tree({ persons: [daughter] }), r, { link: false });
+        await seedStart([]);
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(false);
+      });
+
+      // Trees written before this rule hold a value-only "Mary L" split as
+      // "Mary" / "L"; the new split reads it as "Mary L" with no surname.
+      it("re-runs onto a name stored with its initial split off as a surname", async () => {
+        const old = { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "L", sources: [{ ref: "S1" }] }] };
+        const out = await linkPersona(old, [
+          assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary L" }),
+        ]);
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(0);
+        expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+      });
+
+      it("keeps the party trace of a stub stored with its initial split off as a surname", async () => {
+        const stub = { id: "I4", gender: "Female", names: [{ id: "N4", given: "Mary", surname: "L", sources: [{ ref: "S1" }] }] };
+        const r = research({
+          sources: [S1],
+          assertions: [assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary L" })],
+        });
+        await writeProject(tree({ persons: [stub] }), r, { link: false });
+        await seedStart([]);
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(0);
+      });
+
+      it("cites a name of the record's own type first", async () => {
+        const two = { id: "I2", gender: "Female", names: [
+          { id: "N2", given: "Mary", surname: "Smith", type: "BirthName" },
+          { id: "N3", given: "Mary", surname: "Phipps", type: "MarriedName" },
+        ] };
+        const out = await linkPersona(two, [
+          assertion("a_201", {
+            record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary",
+            structured_value: { given: "Mary", surname: "", type: "married" },
+          }),
+        ]);
+        expect(out.ok).toBe(true);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(2);
+        expect(names[0].sources ?? []).toHaveLength(0);
+        expect(names[1].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+      });
+
+      it("does not depend on the order of a persona's name assertions", async () => {
+        const r = research({
+          sources: [S1],
+          assertions: [
+            ...givenOnly("Mary"),
+            assertion("a_202", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Mary Phipps" }),
+          ],
+        });
+        await writeProject(tree(), r, { link: false });
+        const out = single(await materializeFacts({ projectPath: dir, personId: "I9", recordId: "REC-D", recordRole: "mother" }));
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(1);
+        expect(findPerson(await readTree(), "I9").names).toEqual([
+          expect.objectContaining({ given: "Mary", surname: "Phipps" }),
+        ]);
+      });
+
+      it("matches an initial-final value with no structured_value", async () => {
+        const out = await linkPersona(person("I2", "Benjamin Fairbanks", "Phipps"), [
+          assertion("a_201", { record_id: "REC-D", record_role: "mother", fact_type: "name", value: "Benjamin F." }),
+        ]);
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(0);
+        expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+      });
+
+      for (const [label, full, given] of [
+        ["ignoring case", "Mary Louise", "MARY L."],
+        ["an initial without its period", "Benjamin Fairbanks", "Benjamin F"],
+      ] as const) {
+        it(`matches ${label}`, async () => {
+          const out = await linkPersona(person("I2", full, "Phipps"), givenOnly(given));
+          expect(out.ok).toBe(true);
+          if (out.ok) expect(out.namesAdded).toBe(0);
+          expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+        });
+      }
+
+      it("cites the first of two full names the given abbreviates", async () => {
+        const two = { id: "I2", gender: "Male", names: [
+          { id: "N2", given: "Benjamin Fairbanks", surname: "Phipps" },
+          { id: "N3", given: "Benjamin Franklin", surname: "Phipps" },
+        ] };
+        const out = await linkPersona(two, givenOnly("Benjamin F."));
+        expect(out.ok).toBe(true);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names).toHaveLength(2);
+        expect(names[0].sources).toEqual([expect.objectContaining({ ref: "S1" })]);
+        expect(names[1].sources ?? []).toHaveLength(0);
+      });
+
+      it("an empty record name answers no name", () => {
+        expect(givenAbbreviates("", "Mary")).toBe(false);
+        expect(givenAbbreviates("  ", "Mary")).toBe(false);
+        expect(nameAnswers({ given: "Mary", surname: "Childs" }, "", "")).toBe(false);
+        expect(nameAnswers({ given: "Mary", surname: "Childs" }, undefined, undefined)).toBe(false);
+      });
+
+      it("does not cite a full given that has no surname", async () => {
+        const out = await linkPersona(person("I2", "Mary Louise", ""), givenOnly("Mary L."));
+        expect(out.ok).toBe(true);
+        if (out.ok) expect(out.namesAdded).toBe(1);
+        const names = findPerson(await readTree(), "I2").names;
+        expect(names[0].sources ?? []).toHaveLength(0);
+      });
     });
 
     it("refuses the persona arm onto a starting-tree person whose refs reach only this record", async () => {

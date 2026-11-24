@@ -50,6 +50,8 @@ import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { arkToBareId } from "../utils/ark.js";
+import { collectSourceRefs } from "../utils/tree-person.js";
+import { yearOf } from "../utils/tree-gap-detect.js";
 import { opensHandOff } from "../utils/awaiting-hand-offs.js";
 import {
   collectionKey,
@@ -1612,6 +1614,157 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
   requirePre1880CensusHedge(op.notes, years, columnFrom);
 }
 
+/** A finite whole-number year bound from a staged query, or undefined. */
+function yearBound(value: unknown): number | undefined {
+  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * The residence or any-event year windows a staged `record_search` query sent.
+ * A window with one bound is open on the other side. Birth, death and marriage
+ * windows are never returned: a death search that brings back the subject's
+ * cited census was not looking for it (issue #4667).
+ */
+function residenceOrAnyWindows(query: Record<string, unknown>): Array<[number, number]> {
+  const windows: Array<[number, number]> = [];
+  for (const prefix of ["residenceYear", "anyYear"]) {
+    const from = yearBound(query[`${prefix}From`]);
+    const to = yearBound(query[`${prefix}To`]);
+    if (from === undefined && to === undefined) continue;
+    windows.push([from ?? -Infinity, to ?? Infinity]);
+  }
+  return windows;
+}
+
+/**
+ * Whether a staged query sent a birth, death or marriage year window. Such a
+ * search is for that vital event, so a cited row sharing its collection is not
+ * what it was for: one collection holds many record types and roles, and the
+ * committed e2e runs showed death and marriage searches pinned to a collection
+ * returning the subject's cited records in other roles (as Father, as Other,
+ * a death record on a marriage search), each rightly logged negative.
+ */
+function sentVitalEventWindow(query: Record<string, unknown>): boolean {
+  return ["birthYear", "deathYear", "marriageYear"].some(
+    (p) => yearBound(query[`${p}From`]) !== undefined || yearBound(query[`${p}To`]) !== undefined,
+  );
+}
+
+/**
+ * Whether a cited row sharing the query's collection is what the search was
+ * for. Not under a vital-event window, and not when the query named a
+ * `recordType` other than census: a death or marriage search pinned to a mixed
+ * collection is for that event, whatever years it sent.
+ */
+function collectionArmApplies(query: Record<string, unknown>): boolean {
+  if (sentVitalEventWindow(query)) return false;
+  const recordType = query.recordType;
+  if (recordType === undefined || recordType === null || recordType === "") return true;
+  return String(recordType).trim().toLowerCase() === "census";
+}
+
+/** One staged row that is a record the tree cites on the search's subject. */
+export interface CitedSubjectRow {
+  recordId: string;
+  subjectId: string;
+  sourceIds: string[];
+  /** The row is what the search was for: its collection, or a residence/any window holds one of its event years. */
+  forTheSearch: boolean;
+}
+
+/**
+ * The staged rows of a `record_search` that are records the project tree cites
+ * on the query's raw `subjectId` (person, fact or name level), each marked with
+ * whether it is what the search was for. Empty when the query names no
+ * subject, the subject is not a tree person, or none of its sources has an ARK
+ * url. Exported for `dev/measure-cited-record-negatives.ts`.
+ */
+export function citedSubjectRows(query: unknown, rows: unknown, tree: any): CitedSubjectRow[] {
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const q = query as Record<string, unknown>;
+  const subjectId = q.subjectId;
+  if (typeof subjectId !== "string" || subjectId === "") return [];
+  const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
+  const subject = persons.find((p) => p?.id === subjectId);
+  if (!subject) return [];
+
+  const sourceById = new Map<string, any>();
+  for (const s of Array.isArray(tree?.sources) ? tree.sources : []) {
+    if (typeof s?.id === "string") sourceById.set(s.id, s);
+  }
+  const citedByBareId = new Map<string, string[]>();
+  for (const ref of collectSourceRefs(subject)) {
+    const url = sourceById.get(ref)?.url;
+    if (typeof url !== "string" || url === "") continue;
+    const bare = arkToBareId(url);
+    if (bare === url.trim()) continue; // not an ARK: nothing a record id can equal
+    citedByBareId.set(bare, [...(citedByBareId.get(bare) ?? []), ref]);
+  }
+  if (citedByBareId.size === 0) return [];
+
+  const collectionId = collectionArmApplies(q) ? q.collectionId : undefined;
+  const windows = residenceOrAnyWindows(q);
+  const found: CitedSubjectRow[] = [];
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const r = row as { recordId?: unknown; collectionId?: unknown; events?: unknown } | null;
+    if (typeof r?.recordId !== "string") continue;
+    const sourceIds = citedByBareId.get(arkToBareId(r.recordId));
+    if (!sourceIds) continue;
+    const sameCollection =
+      collectionId !== undefined &&
+      collectionId !== null &&
+      collectionId !== "" &&
+      r.collectionId !== undefined &&
+      r.collectionId !== null &&
+      String(collectionId) === String(r.collectionId);
+    const inWindow =
+      windows.length > 0 &&
+      Array.isArray(r.events) &&
+      r.events.some((e: any) => {
+        const year = yearOf(typeof e?.date === "string" ? e.date : undefined);
+        return year !== null && windows.some(([from, to]) => year >= from && year <= to);
+      });
+    found.push({ recordId: r.recordId, subjectId, sourceIds, forTheSearch: sameCollection || inWindow });
+  }
+  return found;
+}
+
+/**
+ * The refusal for a `record_search` logged `negative` whose staged rows include
+ * a record the project tree already cites on the search's own subject, when
+ * that record is what the search was for (research-log-editor-spec.md, "a
+ * negative search whose rows include a record the tree cites on its subject").
+ * Returns null, allowing the op, unless every condition holds.
+ *
+ * Pure: it reads the envelope `preflightStagedRef` already read and path-checked.
+ * The subject is the staged query's raw `subjectId`, which `stripQueryPlumbing`
+ * deletes. It reads the project tree, never FamilySearch's `attachedToSubject`,
+ * which the staged sidecar does not carry (#1212). Every staged row is judged,
+ * not only the page the caller was shown: the record came back from the search
+ * either way, and the shown page cannot be rebuilt here (#4067).
+ */
+export function citedRecordNegativeError(
+  op: Pick<ResearchLogAppendOp, "tool" | "outcome">,
+  staged: { envelope: { payload?: unknown } } | undefined,
+  tree: any,
+): string | null {
+  // `error` is judged too: a search that staged rows ran, so `error` would carry the same false nil.
+  if (op.tool !== "record_search" || (op.outcome !== "negative" && op.outcome !== "error") || !staged) return null;
+  const payload = staged.envelope?.payload as { query?: unknown; results?: unknown } | undefined;
+  const hit = citedSubjectRows(payload?.query, payload?.results, tree).find((row) => row.forTheSearch);
+  if (!hit) return null;
+  const sources = hit.sourceIds.map((id) => `\`${id}\``).join(", ");
+  return (
+    `this search is logged \`${op.outcome}\`, but it returned \`${hit.recordId}\`, a record the ` +
+    `project tree already cites for its subject \`${hit.subjectId}\` (source ${sources}). It may ` +
+    `not be on the page you were shown: if you have not read it, read it with record_read on ` +
+    `\`${hit.recordId}\`. Log this search \`positive\` or \`partial\`, and report \`${hit.recordId}\` ` +
+    `in your answer as the record the project tree already cites for the subject. A surname or ` +
+    `given name indexed differently does not leave the record unfound.`
+  );
+}
+
 /**
  * The staging producers that echo their own inputs into the staged payload's
  * `query` (`query: echoQuery(input)`), keyed to the input properties of their
@@ -2934,6 +3087,8 @@ export async function researchLogAppend(
           if (staged) stagedChecks.set(i, staged);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
+          const cited = citedRecordNegativeError(input.ops[i], staged, tree);
+          if (cited) throw new LogAppendError(cited);
           await checkCollection(input.ops[i]);
         } catch (e) {
           if (e instanceof LogAppendError) {
@@ -3031,6 +3186,8 @@ export async function researchLogAppend(
     const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
+    const singleCited = citedRecordNegativeError(singleOp, singleStaged, tree);
+    if (singleCited) throw new LogAppendError(singleCited);
     const singleNilRetry = await preflightFilteredNilRetry(
       [singleOp],
       research,

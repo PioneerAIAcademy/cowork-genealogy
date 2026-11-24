@@ -2295,7 +2295,12 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `{ id, title, date_range, person_count, record_count, availability }`, after the rows it sent.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
-  else from the first `jurisdictions[].name` whose scope matches a title. At most
+  else from the first `jurisdictions[].name` whose scope matches a title. A scope
+  with leading terms (`collectionScopeTerms`; `England`, `United Kingdom`, `Great
+  Britain` for England, and the other places the collections_search spec lists) is
+  a set: a title is in scope when it starts with one, and a title or place part
+  that starts with one counts as the scope itself, so `England and Wales, Census,
+  1901` names no other part. At most
   `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all, core national rows below included;
   the largest place list in 18 surveyed places was 65. A scope that is the United
   States, Canada or Mexico itself (an entry whose place is the bare country) is skipped:
@@ -2314,8 +2319,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `collections_search` returned for 18 real places, 16 name the place, 165 name no
   part of the scope, and 150 name another part. The rule reads titles only, so a
   collection for one county whose title runs the place and the type together
-  (`Pennsylvania, Philadelphia City Death Certificates`) counts as naming no part
-  and is added. A collection the entry itself sent is always kept.
+  (`Pennsylvania, Philadelphia City Death Certificates`; for a Yorkshire entry,
+  `England, Cumberland Parish Registers, 1538-1990`) counts as naming no part
+  and is added, and a national one whose first part holds no record-type word
+  (`England, Royal Naval Volunteer Reserve Ratings, Medal Roll, 1914-1920`) is
+  left out. A collection the entry itself sent is always kept.
 
   Nothing is added, and nothing is said, on an update, when the catalog cannot be
   read, when no title holds the scope, or when the entry already holds them all.
