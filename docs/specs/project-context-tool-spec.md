@@ -564,8 +564,9 @@ Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `proof-conclusion` resolves the question it concludes, in the same batch as the
 summary (its step 7), and leaves the question open only when its preconditions gate
 blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
-resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
-naming its latest summary. That arm sits below the conflict arms, so while the
+resolved reports `proof-conclusion — concluded while blocked: re-conclude this
+question's proof summary`. It names no summary id, as `owedFindings` names none (§2.9).
+That arm sits below the conflict arms, so while the
 blocking conflict is still open the question routes to `conflict-resolution` instead,
 and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
@@ -894,7 +895,14 @@ advisory `raise`, `claims` and `frame`. `blocksCompletion` is true for `conclude
 and `hypothesis`; completing a project with one, or with an `encode` item, warns
 (research-append-tool-spec §5.2) and never refuses until Stage 1c. `nextStep`
 keeps the `unit — detail` shape of `questionStatuses`; an `encode` item routes to
-proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
+proof-conclusion. An owed item's `nextStep` names no id: `ref` carries it, and the detail says what
+is owed in words (`proof-conclusion — this question has 2 tied assertion(s) and no
+proof summary`, `proof-conclusion — encode father`). An `encode` or `raise` detail
+still prints the claim's own `claim` text, or `claims[<i>]` when it has none.
+**Decided (lead, 2026-11-19):** the status answer repeats `nextStep` to the
+researcher and must name no id, so an owed item's id lives only in `ref`; no
+separate plain-words field is added. The ruling covers `owedFindings` and the
+concluded-while-blocked arm only; the other `questionStatuses` arms still name ids. It sits before `questionStatuses` in the answer, so a reader
 scoping to that array by its key does not take an owed item's step for a
 question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
 

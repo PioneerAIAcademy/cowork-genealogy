@@ -318,7 +318,7 @@ describe("questionStatus — the state ladder", () => {
     const d = doc({ proof_summaries: [{ id: "ps_001", question_id: Q }] });
     const s = questionStatus(d, question());
     expect(s.state).toBe("concluded");
-    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude this question's proof summary");
     expect(s.nextStep).not.toMatch(/gps-mentor/);
   });
 
@@ -341,7 +341,7 @@ describe("questionStatus — the state ladder", () => {
     expect(s.state).toBe("critiqued");
     // An on-demand critique does not change what is outstanding: concluding
     // again, which proof-conclusion owns.
-    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude this question's proof summary");
   });
 
   it("critiqued AND resolved has nothing outstanding", () => {
@@ -385,7 +385,7 @@ describe("questionStatus — conflicts outrank everything", () => {
     expect(s.nextStep).not.toMatch(/proof-conclusion/);
   });
 
-  it("the latest summary is the one named when a question was concluded twice while blocked", () => {
+  it("a question concluded twice while blocked names no summary id (#4661)", () => {
     const d = doc({
       proof_summaries: [
         { id: "ps_001", question_id: Q, tier: "not_proved" },
@@ -393,7 +393,7 @@ describe("questionStatus — conflicts outrank everything", () => {
       ],
     });
     expect(questionStatus(d, question()).nextStep).toBe(
-      "proof-conclusion — concluded while blocked: re-conclude ps_004",
+      "proof-conclusion — concluded while blocked: re-conclude this question's proof summary",
     );
   });
 
@@ -1450,7 +1450,7 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
 
   it("an unencoded claim reports the encode step", () => {
     const s = questionStatus(concluded([father]), question({ status: "resolved" }), tree);
-    expect(s.nextStep).toBe("proof-conclusion — encode father from ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — encode father");
   });
 
   it("an encoded claim reports nothing, and with no tree the arm is skipped", () => {
@@ -1466,7 +1466,7 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
       person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
     });
     expect(questionStatus(d, question(), tree).nextStep).toBe(
-      "proof-conclusion — hypothesis h_001 is supported and no related question has a proof summary",
+      "proof-conclusion — a supported hypothesis has no proof summary on a related question",
     );
   });
 
