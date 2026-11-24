@@ -520,8 +520,9 @@ _PROJECT_ID_PREFIXES = (
     "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
     "h_", "t_", "ps_", "ev_", "loc_", "ns_", "hv_",
 )
+_TREE_ID_PATTERN = r"[FINRS]\d+"
 _PROJECT_ID_RE = re.compile(
-    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
+    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|" + _TREE_ID_PATTERN + r")\b"
 )
 _PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 _SHAPED_LINE_RE = re.compile(r"^\s*(?:#|\||[-*+]\s|\d+[.)]\s)", re.MULTILINE)
@@ -617,6 +618,37 @@ def test_status_question_answered_from_project_context_only(
     assert not hits, (
         "status answer must contain no project identifiers; found: "
         f"{sorted(set(hits))}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tree ids in any reply (issue #4669)
+# ---------------------------------------------------------------------------
+
+# A FamilySearch ID (PID) is the one identifier narration may show. Its halves
+# can look like a tree id (`K835-R12`, `F123-ABC`), so PID-shaped tokens are
+# removed before the tree-id search. A range such as `I1-I5` is not PID-shaped
+# and is still caught.
+_PID_TOKEN_RE = re.compile(r"\b[A-Za-z0-9]{4}-[A-Za-z0-9]{3,4}\b")
+_TREE_ID_RE = re.compile(r"\b" + _TREE_ID_PATTERN + r"\b")
+
+
+def tree_ids_named(text: str | None) -> list[str]:
+    """The tree ids (`I13`, `S2`, `F4`...) a reply names, distinct and sorted."""
+    return sorted(set(_TREE_ID_RE.findall(_PID_TOKEN_RE.sub(" ", text or ""))))
+
+
+def test_reply_names_no_tree_id(text_response):
+    """Every research test: the main thread never names a tree id.
+
+    A tester read "she is in the tree as I13" as meaningless. The lead ruled
+    (2026-11-19) that a person's FamilySearch ID may be shown instead; tree ids,
+    source ids and ARKs stay banned. No exemption for a tree id the user typed.
+    """
+    hits = tree_ids_named(text_response)
+    assert not hits, (
+        "the reply names tree ids, which mean nothing to the user; name the "
+        f"person, adding the FamilySearch ID when needed. Found: {hits}"
     )
 
 

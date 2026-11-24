@@ -108,7 +108,10 @@ export const HOUSE_RESEARCHER_PROFILE = {
   experience_level: "novice",
   narration_guidance:
     "Plain language for someone who has never done genealogy. No identifiers, file names, " +
-    "tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy " +
+    "tool names or field names, and never a tree or source id. Name people by name; the one " +
+    "identifier you may add is the FamilySearch ID of a person, copied from the data, and only " +
+    "when two people could be confused, when the person is not yet in the project tree, or when " +
+    "the user asks. Never write GPS, proof, proved or exhaustive: say genealogy " +
     "standards; call an answer a conclusion when it is well established and a finding " +
     "otherwise; say what we searched and what we could not reach. Never sound surer than the " +
     "evidence was rated: say the records show it for a well established fact or relationship, " +

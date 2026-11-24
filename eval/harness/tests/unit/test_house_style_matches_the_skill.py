@@ -132,6 +132,27 @@ def test_the_hedging_and_plain_word_clauses_survive(phrase):
     assert phrase in _HOUSE_STYLE
 
 
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "never a tree or source id",
+        "the one identifier you may add is the FamilySearch ID of a person",
+        "copied from the data",
+        "when the person is not yet in the project tree",
+    ],
+)
+def test_the_familysearch_id_exception_survives(phrase):
+    """A tester read "she is in the tree as I13" as meaningless (issue #4669). The
+    lead ruled a person's FamilySearch ID is the one identifier narration may show,
+    because it is the user's own name for a person, while tree ids, source ids and
+    ARKs stay banned. "copied from the data" is there because a PID typed from
+    memory or read out of an ARK can point at a different, real person.
+
+    Pinned per-phrase so the failure names which clause went.
+    """
+    assert phrase in _HOUSE_STYLE
+
+
 def _template_guidance() -> str:
     path = REPO / "eval" / "harness" / "e2e" / "templates" / "starting-research.json"
     return json.loads(path.read_text(encoding="utf-8"))["researcher_profile"]["narration_guidance"]
