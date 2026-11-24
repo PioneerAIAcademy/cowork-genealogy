@@ -62,18 +62,19 @@ PRICED_FIELDS = tuple(_PER_MTOK)
 
 # USD per 1M tokens, each model's own standard rate, cache write at the 1-hour
 # rate (2x input on every tier). Source: Anthropic's published price list
-# (claude-api skill, cached 2026-09-25); Sonnet 4.6 and Haiku 4.5 also agree with
-# the bundled CLI catalogs and reproduce 2,358 / 724 unit `costUSD` entries.
+# (platform.claude.com/docs/en/about-claude/pricing, read 2026-11-23); Sonnet 4.6
+# and Haiku 4.5 also agree with the bundled CLI catalogs and reproduce 2,358 / 724
+# unit `costUSD` entries. A cache read is 0.1x input except on Sonnet 5.5 (0.05x).
 MODEL_RATES = {
     "claude-sonnet-4-6": {"input_tokens": 3.00, "output_tokens": 15.00,
                           "cache_read_input_tokens": 0.30, "cache_creation_input_tokens": 6.00},
     "claude-sonnet-5": {"input_tokens": 2.00, "output_tokens": 10.00,
                         "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
     "claude-sonnet-5-5": {"input_tokens": 2.00, "output_tokens": 10.00,
-                          "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
+                          "cache_read_input_tokens": 0.10, "cache_creation_input_tokens": 4.00},
     "claude-haiku-4-5": {"input_tokens": 1.00, "output_tokens": 5.00,
                          "cache_read_input_tokens": 0.10, "cache_creation_input_tokens": 2.00},
-    # Prompts over 100K bill 5x; the CLI's small-model calls send none.
+    # Up to a 100K-token prompt; a longer request bills every class at `LONG_PROMPT`.
     "claude-haiku-5-5": {"input_tokens": 0.10, "output_tokens": 0.50,
                          "cache_read_input_tokens": 0.01, "cache_creation_input_tokens": 0.20},
     "claude-opus-4-8": {"input_tokens": 5.00, "output_tokens": 25.00,
@@ -85,6 +86,22 @@ _DATE_SUFFIX = re.compile(r"-\d{8}$")
 # A 5-minute cache write bills at 1.25x the model's input rate; `MODEL_RATES`
 # carries the 1-hour write. The hosted path writes 5-minute entries (`cache_window`).
 CACHE_WRITE_5M_INPUT_MULTIPLE = 1.25
+
+# model -> (prompt tokens, multiple): one request whose prompt (input + cache read +
+# cache write) is over the threshold bills every token class at the multiple. Only a
+# single request can be priced this way, so `estimate_message_cost` applies it and
+# `estimate_cost_for_model`, which prices a sum of requests, cannot; a subagent's
+# sum adds it from `long_prompt_usage` (`agent_spend_report.price_helper`).
+LONG_PROMPT = {"claude-haiku-5-5": (100_000, 5.0)}
+
+
+def long_prompt_multiple(model: str | None, prompt_tokens: int) -> float:
+    """The multiple one request of `prompt_tokens` bills at on `model`: 1.0 below its
+    threshold or on a model with none."""
+    if not isinstance(model, str):
+        return 1.0
+    threshold, multiple = LONG_PROMPT.get(canonical_model(model), (None, 1.0))
+    return multiple if threshold is not None and prompt_tokens > threshold else 1.0
 
 
 def canonical_model(model: str) -> str:
@@ -135,7 +152,8 @@ def estimate_message_cost(usage: dict | None, model: str | None) -> float | None
     raw_1h = split.get("ephemeral_1h_input_tokens") if isinstance(split, dict) else None
     writes = tokens("cache_creation_input_tokens")
     one_hour = min(writes, raw_1h) if isinstance(raw_1h, int) and raw_1h > 0 else 0
-    return (
+    prompt = tokens("input_tokens") + tokens("cache_read_input_tokens") + writes
+    return long_prompt_multiple(model, prompt) * (
         tokens("input_tokens") * rates["input_tokens"]
         + tokens("output_tokens") * rates["output_tokens"]
         + tokens("cache_read_input_tokens") * rates["cache_read_input_tokens"]
