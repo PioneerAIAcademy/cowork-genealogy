@@ -49,6 +49,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from e2e import pricing
+
 
 #: The four token fields rolled up per subagent. Deliberately the same set
 #: `pricing._PER_MTOK` prices and `orchestrator._USAGE_FIELDS` accumulates, so a
@@ -387,14 +389,16 @@ def subagent_usage(records: list[dict[str, Any]]) -> dict[str, int]:
     return totals
 
 
-def _per_message_usage(records: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
-    """Each assistant message's four token fields, keyed once per message id.
+def _per_message_usage(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Each assistant message's four token fields and its `model`, keyed once per
+    message id.
 
     The keying rules are `subagent_usage`'s — see its docstring for why each one
-    exists. Shared so the sum (`subagent_usage`) and the max
-    (`subagent_peak_window`) can never disagree about what a message is.
+    exists. Shared so the sum (`subagent_usage`), the max
+    (`subagent_peak_window`) and the long-prompt sum
+    (`subagent_long_prompt_usage`) can never disagree about what a message is.
     """
-    per_message: dict[str, dict[str, int]] = {}
+    per_message: dict[str, dict[str, Any]] = {}
     anon = 0
     for rec in records:
         if not isinstance(rec, dict):
@@ -410,7 +414,26 @@ def _per_message_usage(records: list[dict[str, Any]]) -> dict[str, dict[str, int
             key = f"__anon_{anon}"
             anon += 1
         per_message[key] = {field: _as_int(usage.get(field)) for field in USAGE_FIELDS}
+        per_message[key]["model"] = message.get("model")
     return per_message
+
+
+def subagent_long_prompt_usage(records: list[dict[str, Any]]) -> dict[str, int]:
+    """The four token totals of this subagent's messages that bill at a long-prompt
+    multiple (`pricing.LONG_PROMPT`): a Haiku 5.5 request whose window is over
+    100,000 tokens bills every class at 5x.
+
+    That price is per request, so `usage`, a sum of requests, cannot carry it.
+    `agent_spend_report.price_helper` adds these tokens' premium to `usage`'s
+    flat price. All zeros when no message passed its model's threshold.
+    """
+    totals = dict.fromkeys(USAGE_FIELDS, 0)
+    for counted in _per_message_usage(records).values():
+        window = sum(counted[f] for f in WINDOW_FIELDS)
+        if pricing.long_prompt_multiple(counted["model"], window) > 1:
+            for field in USAGE_FIELDS:
+                totals[field] += counted[field]
+    return totals
 
 
 def subagent_tool_messages(records: list[dict[str, Any]]) -> list[list[str]]:
@@ -578,6 +601,7 @@ def summarize_transcript(
         # The tallest single read (a max), how many times the context was
         # compacted, and which models ran — see each function's docstring.
         "peak_window_tokens": subagent_peak_window(records),
+        "long_prompt_usage": subagent_long_prompt_usage(records),
         "compactions": subagent_compactions(records),
         "models": subagent_models(records),
         "duration_seconds": subagent_duration_seconds(records),

@@ -958,6 +958,23 @@ def test_peak_window_excludes_output_tokens():
     assert summary["peak_window_tokens"] == 40_000  # not 40,050
 
 
+def test_long_prompt_usage_sums_only_the_messages_billed_at_a_multiple():
+    """A Haiku 5.5 message over 100,000 prompt tokens bills 5x. One at the line, and a
+    Sonnet message over it, do not. Each message's repeated block records count once."""
+    records = []
+    for mid, window, model in (("m1", 100_000, "claude-haiku-5-5"),
+                               ("m2", 100_001, "claude-haiku-5-5-20260101"),
+                               ("m3", 150_000, "claude-sonnet-5")):
+        for block in ("thinking", "tool_use"):
+            records.append(_window_record(mid, window=window, model=model, block=block))
+    assert summarize_transcript(records)["long_prompt_usage"] == {
+        "input_tokens": 3, "output_tokens": 50,
+        "cache_read_input_tokens": 100_001 - 103, "cache_creation_input_tokens": 100,
+    }
+    assert summarize_transcript(records[:2])["long_prompt_usage"] == dict.fromkeys(
+        ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"), 0)
+
+
 def test_peak_window_is_zero_when_no_message_carries_usage():
     summary = summarize_transcript([{"message": {"role": "assistant", "content": []}}])
     assert summary["peak_window_tokens"] == 0
