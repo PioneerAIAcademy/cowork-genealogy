@@ -125,6 +125,7 @@ from harness.outcomes import (  # noqa: E402
 )
 from harness.judge_render import JudgeRenderGraphError, judge_render_hash  # noqa: E402
 from harness.gate_tags import validator_gate_tags  # noqa: E402
+from harness.main_thread import load_main_thread  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
     harness_import_closure,
@@ -1014,7 +1015,8 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
     r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
-    r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
+    r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json)"
+    r"|packages/engine/plugin/main-thread\.json)$"
 )
 # A per-skill validator file moves its own suite's fingerprint, and every
 # suite's when its harness imports change.
@@ -1208,6 +1210,17 @@ def rule2c_instrument(
     live_moved = sorted(t for t, h in stored_live.items() if current["live_modules"].get(t) != h)
     if live_moved:
         warning.append(f"live_modules ({', '.join(live_moved)})")
+    # Every suite's dispatcher, and the research router, run main-thread.json's
+    # model; the envelope's `model` is the one the run used. Not in the snapshot,
+    # so without this a model change would leave every log graded on another
+    # main thread with nothing said.
+    ran_on = log.get("model")
+    main_model = load_main_thread().model
+    if isinstance(ran_on, str) and ran_on and ran_on != main_model:
+        warning.append(
+            f"the main thread (this log ran it on `{ran_on}`; "
+            f"`packages/engine/plugin/main-thread.json` now names `{main_model}`)"
+        )
 
     if warning:
         gh_warning(

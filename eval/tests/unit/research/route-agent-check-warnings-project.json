@@ -26,5 +26,8 @@
       "check-warnings"
     ],
     "explanation": "Ruling 2026-10-27: for this message the main thread's correct first hop is the check-warnings agent itself, not research. A data-problem check is not on research's closed bounded list (research/SKILL.md, \"Bounded request or job\"), so research capturing this message would run it as a job. Ruling 2026-11-01: the message names a person, because check-warnings hands back with no tool call when given none and the routing stub hides that hand-back; a message naming no person is answered with a clarifying question, not a hand-off. A miss is recorded, never made green by adding grade_on_invariant or widening correct_skill."
-  }
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }
