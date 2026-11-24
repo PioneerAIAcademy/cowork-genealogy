@@ -308,11 +308,7 @@ Two `research_log_append` calls, in order, each with `projectPath`.
 
 A hand-back from the scope section logs nothing.
 
-Make these calls before you write your return. Then, before you write your
-return, reread each sentence you plan to put above the General knowledge
-section, the plain-language summary included: if no tool result states it, move
-it into the General knowledge section as a bullet that opens with
-"(general knowledge)". Never end on a note about logging.
+Make these calls before you write your return. Never end on a note about logging.
 
 ## Broad context factors
 
