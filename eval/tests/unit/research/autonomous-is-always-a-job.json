@@ -76,5 +76,8 @@
     "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not.",
     "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

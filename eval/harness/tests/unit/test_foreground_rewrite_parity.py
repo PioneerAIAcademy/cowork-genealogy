@@ -34,12 +34,16 @@ VECTORS = [
     ("Skill", {"skill": "record-extraction"}),
     ("mcp__genealogy__record_read", {"recordId": "x"}),
     ("Bash", {"command": "ls", "run_in_background": True}),
+    ("Agent", {"subagent_type": "plugin:question-selection", "prompt": "x"}),
+    ("Agent", {"subagent_type": "plugin:question-selection", "run_in_background": False}),
+    ("Agent", {"subagent_type": "plugin:", "run_in_background": False}),
+    ("Agent", {"subagent_type": ["plugin:x"], "run_in_background": False}),
 ]
 
 
 def _lift(path: Path):
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    wanted = {"DELEGATION_TOOLS", "foreground_rewrite"}
+    wanted = {"DELEGATION_TOOLS", "PLUGIN_PREFIX", "foreground_rewrite"}
     nodes = [
         n for n in tree.body
         if (isinstance(n, ast.FunctionDef) and n.name in wanted)
@@ -63,3 +67,12 @@ def test_a_delegation_is_rewritten_to_the_foreground():
     out = rewrite("Agent", {"subagent_type": "a"})
     assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False
     assert rewrite("Agent", {"subagent_type": "a", "run_in_background": False}) is None
+
+
+def test_a_plugin_prefix_is_dropped_even_in_the_foreground():
+    """The router copies `plugin:` from research/SKILL.md's `@plugin:<name>`; no agent
+    is registered under that name (ut_research_b4p, cq7)."""
+    rewrite = _lift(COPIES["hosted"])
+    out = rewrite("Agent", {"subagent_type": "plugin:question-selection", "run_in_background": False})
+    assert out["hookSpecificOutput"]["updatedInput"]["subagent_type"] == "question-selection"
+    assert rewrite("Agent", {"subagent_type": "question-selection", "run_in_background": False}) is None

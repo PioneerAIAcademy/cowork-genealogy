@@ -15,9 +15,14 @@
     "user_message": "What should I research next?",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["wiki-read-any"],
+  "mcp_fixtures": [
+    "wiki-read-any",
+    "person-read-empty-any"
+  ],
   "execution": {
-    "run_agents": ["research-exhaustiveness"],
+    "run_agents": [
+      "research-exhaustiveness"
+    ],
     "max_wall_clock_seconds": 600
   },
   "negative": {

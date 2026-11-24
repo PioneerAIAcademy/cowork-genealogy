@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Audit the sources attached to Cornelius Driscoll (GJ72-9WD), an Irish emigrant from Co. Cork who settled at Sherbrooke, Canada East",
+    "subject_person_ids": ["GJ72-9WD"],
+    "status": "active",
+    "created": "2026-08-14",
+    "updated": "2026-08-14"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

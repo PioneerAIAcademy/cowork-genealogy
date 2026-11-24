@@ -78,5 +78,8 @@
     "Fail the router's own work if it decides identity itself: says which record is the subject's, which candidate is a different person, or which baptism the evidence favours. Deciding whether a record is about a tree person is person-evidence's analysis, and weighing competing records is conflict-resolution's.",
     "Every callee is stubbed and returns a denial telling the router to stop. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of an identity or baptism verdict."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

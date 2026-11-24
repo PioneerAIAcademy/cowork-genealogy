@@ -110,7 +110,7 @@ function denialAnchors(claim: any): string[] {
 }
 
 /** What every rule reads from the pre-call research, computed once per call. */
-class Evidence {
+export class Evidence {
   readonly assertions = new Map<string, any>();
   private readonly links = new Map<string, Set<string>>();
   private readonly confidentLinks = new Map<string, Set<string>>();
@@ -242,6 +242,37 @@ function provedWeakPersons(claim: any, ev: Evidence, allClaims: readonly any[]):
     if (cited.some((id) => persona.has(ev.persona(id)))) coveredByIdentity.add(idn.person);
   }
   return namedPersons(claim).filter((p) => !confident.has(p) && !coveredByIdentity.has(p));
+}
+
+/** Decision 13: whether an identity claim records that `survivor` and `collapsed`
+ *  are one person. Affirmed at probable or better, and either a `same_as` naming
+ *  the pair with one live cited assertion linked to both (a record that ties the
+ *  two, not two records each tied to one), or a record identity naming one of
+ *  them whose persona is tied to the other. Pass `ev` to share one index across
+ *  claims and merge pairs. */
+export function identityCoversMerge(
+  claim: any,
+  research: any,
+  summaries: readonly any[],
+  survivor: string,
+  collapsed: string,
+  ev: Evidence = new Evidence(research, summaries),
+): boolean {
+  const idn = claim?.identity;
+  if (!idn || isDenied(claim) || claim?.proof_tier === "disproved" || !atLeast(claim?.proof_tier, "probable")) return false;
+  const pair = new Set([survivor, collapsed]);
+  if (typeof idn.same_as === "string") {
+    if (!pair.has(idn.person) || !pair.has(idn.same_as) || idn.person === idn.same_as) return false;
+    return citedIds(claim).some((id) => {
+      if (!ev.assertions.has(id)) return false;
+      const linked = ev.linkedFrom([id]);
+      return linked.has(survivor) && linked.has(collapsed);
+    });
+  }
+  if (typeof idn.record_id !== "string" || !pair.has(idn.person)) return false;
+  const other = idn.person === survivor ? collapsed : survivor;
+  const persona = `${idn.record_id}\u0000${idn.party ?? ""}`;
+  return citedIds(claim).some((id) => ev.persona(id) === persona && ev.tiedTo(id).has(other));
 }
 
 /** Rule 12 for the status lookup: a `proved` claim that would stand at probable. */
