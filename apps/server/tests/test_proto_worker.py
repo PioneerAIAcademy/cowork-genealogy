@@ -6474,9 +6474,9 @@ def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
     """A model that wrote its own offer before the halted spawn has asked its question;
     a second one from the halt would ask two, which may disagree."""
     turn_env["conn"].research = _RESEARCH
-    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records to people in this project?"))
     texts = _text_events(turn_env["conn"])
-    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records to people in this project?"
     assert "Continue with running the searches?" not in texts
 
 

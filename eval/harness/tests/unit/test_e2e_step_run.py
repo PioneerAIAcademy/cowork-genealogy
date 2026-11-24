@@ -112,7 +112,7 @@ def _drive(tmp_path, monkeypatch, turns, completes=False, init=None, **kwargs):
     return made["client"]
 
 
-OFFER = "The report.\n\nContinue with linking the records?"
+OFFER = "The report.\n\nContinue with linking the records to people in this project?"
 
 
 def test_a_step_run_binds_no_stop_hook_and_records_no_nudge_counters(tmp_path, monkeypatch):

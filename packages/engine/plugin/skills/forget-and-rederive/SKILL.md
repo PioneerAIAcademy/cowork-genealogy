@@ -113,7 +113,7 @@ prohibition is on reading the FamilySearch **tree** for the forgotten facts.
 Ask the researcher what they want you to re-derive, in their words — "his
 parents", "her death date", "who she married".
 
-Map that to the tree's own ids with `project_context({ projectPath })`, which
+Map that to the tree's own ids with `project_context({ projectPath, include: ["persons"] })`, which
 returns each tree person's `id` and preferred name. That is all you need: the
 selectors below take ids, and `tree_forget` walks the relationships itself to
 resolve parents, children and spouses.

@@ -167,6 +167,15 @@ entry says so.
 
 ## Evidence
 
+Alpha feedback, November 2026. A tester read "linking the records" as attaching records
+to the FamilySearch Family Tree, so the label now names the project. In another session
+the main thread ended 8 turns with the link offer, and each time the tester answered with another search request ("I was asked
+whether the records found should be linked, when the research was still quite
+incomplete"). The tester was passing over the offer, not refusing the step, so a search
+step opened by a steer keeps the same offer. The sentence before it says linking can wait
+and another search can be named. Keeping the offer leaves the last-line format that
+`offered_step` parses unchanged.
+
 Alpha feedback, October 2026: after question selection, one run cost $49.84 over about 361 live
 minutes. Each "not exhaustive" verdict auto-produced a new plan, in three passes
 ($22.65, $5.73, $20.15). No one was asked, and the second verdict named the best
@@ -195,7 +204,7 @@ stops (decision 29) and the main thread's `person_search` deny
 | Setup: init-project alone | a new project, on a job | the subject's birth and death as the tree gives them, the relatives, the attached sources as `S<n>: <title>`, "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?", then "Continue with choosing the question?" |
 | Question: forget-and-rederive's verify mode when the reply disputes a conclusion or source, the attached-records baseline (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `research-append-tool-spec.md` §11.8), then question-selection | always | what was removed (counts), the timeline, the question in full with its place and period, then "Continue with planning the searches?" |
 | Plan: locality-guide if the place is unsurveyed, then research-plan | always | locality-guide's findings and the plan, each in full, then "Continue with running the searches?" |
-| Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records?" |
+| Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records to people in this project?"; when a steer opened the step and the previous turn offered linking, the sentence before that line says linking can wait and another search can be named |
 | Link: person-evidence | always | what attaches to whom |
 | Conflict resolution | only on a conflict | its own step; when the evidence in hand cannot settle it, the record that could, then "Continue with planning the searches?" (section E) |
 | Hypothesis tracking | only on competing identities | its own step |

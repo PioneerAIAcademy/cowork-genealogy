@@ -126,7 +126,7 @@ STEP_LABELS: dict[str, str] = {
     "question": "choosing the question",
     "plan": "planning the searches",
     "search": "running the searches",
-    "link": "linking the records",
+    "link": "linking the records to people in this project",
     "conflict": "resolving the conflict",
     "hypothesis": "sorting out the competing identities",
     "assess": "checking the search is exhaustive",
@@ -451,6 +451,9 @@ _OFFER_RE = re.compile(r"continue\s+with\s+(?P<label>.+?)\s*\?", re.IGNORECASE)
 # offer and so the researcher's buttons; such lines are read past.
 _LINK_ONLY_RE = re.compile(r"^(?:<?https?://\S+>?|\[[^\]]*\]\(https?://\S+\))$")
 _LABEL_TO_KEY = {label.casefold(): key for key, label in STEP_LABELS.items()}
+# Retired labels, read back but never written: a resumed session's history and
+# committed run logs still end on them (issue #4688).
+_LABEL_TO_KEY.update({"linking the records": "link"})
 # The one label that carries a count: "extracting the 3 Matches", "the Match".
 # A count of 0 is not an offer. No other label drops a count.
 _EXTRACT_RE = re.compile(

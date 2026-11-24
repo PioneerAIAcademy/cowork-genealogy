@@ -14,6 +14,7 @@ agent being broken rather than as a missing decision.
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 
 import pytest
@@ -428,7 +429,66 @@ def test_step_ctx_on_an_empty_project_is_closed_not_crashing():
 def test_the_deny_reason_names_the_step_it_stopped():
     assert "running the searches" in sb.deny_reason("search-records")
     assert "planning the searches" in sb.deny_reason("research-plan")
-    assert "linking the records" in sb.deny_reason("person-evidence")
+    assert "linking the records to people in this project" in sb.deny_reason("person-evidence")
+
+
+_RESEARCH_SKILL = _PLUGIN / "skills" / "research" / "SKILL.md"
+
+
+def _router_table_labels() -> list[str]:
+    """The `<label>` column of research SKILL.md's `| Next step | <label> |` table."""
+    lines = _RESEARCH_SKILL.read_text(encoding="utf-8").splitlines()
+    starts = [i for i, line in enumerate(lines) if re.match(r"\|\s*Next step\s*\|\s*`<label>`\s*\|", line)]
+    assert len(starts) == 1, "research SKILL.md must hold exactly one `| Next step | <label> |` table"
+    labels = []
+    for line in lines[starts[0] + 2 :]:
+        if not line.startswith("|"):
+            break
+        labels.append(line.strip().strip("|").split("|")[-1].strip())
+    return labels
+
+
+def _plugin_prose_offers() -> list[str]:
+    """Every "Continue with <label>?" a plugin skill or agent body spells out.
+
+    Line wraps are joined; a backticked label is kept verbatim, inner spaces included.
+    """
+    offers = []
+    for path in sorted(_PLUGIN.glob("**/*.md")):
+        text = re.sub(r"\s*\n\s*", " ", path.read_text(encoding="utf-8"))
+        for ticked, bare in re.findall(r"Continue with (?:`([^`]*)`|([^?\"`]{1,80}?))\?", text):
+            label = ticked or bare
+            if label not in ("<label>", "…"):
+                offers.append(label)
+    return offers
+
+
+def _assert_the_host_reads_it_back(label: str) -> None:
+    written = label.replace(" N ", " 3 ")
+    if written != label:
+        assert sb.offered_step(f"Continue with `{written}`?") == "extract-matches", repr(label)
+    else:
+        assert sb.offered_step(f"Continue with `{label}`?") is not None, repr(label)
+        assert label in sb.STEP_LABELS.values(), repr(label)
+
+
+def test_every_router_offer_label_is_one_the_host_reads_back():
+    """The router writes SKILL.md's label; `offered_step` looks it up in `STEP_LABELS`.
+
+    A label that differs by a word or a trailing space reads back as no offer, and
+    the reply buttons disappear with every other test still green (issue #4688).
+    """
+    table = _router_table_labels()
+    prose = _plugin_prose_offers()
+    assert len(table) >= 10, table
+    assert len(prose) >= 15, prose
+    for label in table + prose:
+        _assert_the_host_reads_it_back(label)
+
+
+def test_the_retired_link_label_still_reads_back_but_is_never_written():
+    assert sb.offered_step("Continue with `linking the records`?") == "link"
+    assert sb.offer_line("link") == "Continue with linking the records to people in this project?"
 
 
 def test_the_deny_reason_tells_the_model_to_report_and_stop():

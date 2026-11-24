@@ -336,8 +336,8 @@ RELAY_NOTE = _relay.RELAY_NOTE
 
 
 def relay_note_context(input_data: dict[str, Any]) -> str | None:
-    """`RELAY_NOTE` for a main-thread agent return, else None."""
-    return RELAY_NOTE if _relay.applies(input_data or {}) else None
+    """The hook's note for a main-thread agent return, else None."""
+    return _relay.note_for(input_data) if _relay.applies(input_data or {}) else None
 
 
 async def relay_note_hook(input_data, tool_use_id, context):

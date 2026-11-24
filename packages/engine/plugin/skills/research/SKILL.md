@@ -70,7 +70,7 @@ one in prose you then act on.
 | question-selection | choosing the question |
 | research-plan, with locality-guide before it | planning the searches |
 | search-records, search-images, search-external-sites, record-structurer | running the searches |
-| person-evidence | linking the records |
+| person-evidence | linking the records to people in this project |
 | conflict-resolution | resolving the conflict |
 | hypothesis-tracking | sorting out the competing identities |
 | research-exhaustiveness | checking the search is exhaustive |
@@ -201,10 +201,9 @@ children-born and children-living counts — "are any missing?" with no counts i
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
-`tree_query` for the people the message names; the agent gets `projectPath`, the
-message copied verbatim, and the places and years that call returned, or a line saying
-it returned none, with any the project objective states named as the objective's;
-never another place or year. In the sentence before its "Continue with …?" line, offer to check the facts
+`project_context({ projectPath, include: ["historicalContext"] })`, again when
+init-project made the project this turn; spawn the agent with `historicalContext.prompt`
+as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
@@ -430,7 +429,7 @@ message.
      other source.
    - The step's report gives the FamilySearch findings, then each external
      search: the link, what to look for, and to save the results page as a PDF
-     and upload it. It still ends "Continue with `linking the records`?" — an
+     and upload it. It still ends "Continue with `linking the records to people in this project`?" — an
      external errand does not hold the step open.
    - **A plan item that surveys a surname across a record set:** announce it
      as a search for the surname, and say the search ran; call neither the
@@ -544,7 +543,7 @@ message.
    and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and
    `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing. For
    `@plugin:evaluate-search-results`, read also the `#hits` list its refs come from. For
-   `@plugin:historical-context`, read also `tree_query` for the people the message names. Do not
+   `@plugin:historical-context`, read also `project_context`'s `historicalContext`. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay everything after the
@@ -775,6 +774,11 @@ to open a helper question — a conflict that needs new evidence, a FAN pivot,
 an objective-level sub-question. All three are plan items on the current
 question. A direct request for a record ("Find her in the 1910 census") is not
 a steer: it is a bounded ask, and `@plugin:search-records` runs it now.
+
+When a steer opens this turn's search step and the previous turn offered
+`linking the records to people in this project`, the sentence before this
+step's "Continue with …?" line says linking can wait and the researcher can
+name another search instead.
 
 **A genuinely different question.** Check `project_context` first:
 
