@@ -75,8 +75,8 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`, plus `relatedPersonId` when a warning has one.
-2. **No project here.** If `person_warnings` returns `reason: "no_project"`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
+1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`, plus `relatedPersonId` when a warning has one.
+2. **No project here.** If a call is refused with `No project:`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
 3. **Census counts.** If the request gives a mother's 1900 or 1910 US census counts of children born and children living, call `census_children_gap({ censuses: [{ year, childrenBorn, childrenLiving }], projectPath, motherId })` once for that mother, with `motherId` her person id. Never pass `knownChildren`, and never work out the missing children yourself, even when the tool errors.
 
 ### 3. Report warnings
@@ -181,7 +181,6 @@ The full escalation table is in Appendix B.
 
 Before you write your reply, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary, and never a sentence or figure the reply does not contain. **You must actually call it — do not just describe it in your response.**
 
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
 
 Then return that same report, in full, above the `---` line — never only a note that it was logged.

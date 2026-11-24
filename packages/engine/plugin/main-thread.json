@@ -1,4 +1,4 @@
 {
-  "model": "claude-sonnet-4-6",
-  "effort": "medium"
+  "model": "claude-haiku-5-5",
+  "effort": "low"
 }

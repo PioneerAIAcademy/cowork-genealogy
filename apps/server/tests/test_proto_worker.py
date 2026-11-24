@@ -1220,7 +1220,6 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.include_partial_messages is True
     assert opts.max_buffer_size == options.MAX_BUFFER_BYTES > 1024 * 1024
     assert opts.resume is None and opts.session_id is None
-    assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
     assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
@@ -4692,6 +4691,7 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     tool result, the same text the alpha and the Cowork hook carry."""
     opts = _options(config_dir=str(tmp_path))
     assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
+    assert options.ROUTING_GUIDANCE in opts.system_prompt["append"]
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
@@ -6546,9 +6546,9 @@ def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
     """A model that wrote its own offer before the halted spawn has asked its question;
     a second one from the halt would ask two, which may disagree."""
     turn_env["conn"].research = _RESEARCH
-    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records to people in this project?"))
     texts = _text_events(turn_env["conn"])
-    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records to people in this project?"
     assert "Continue with running the searches?" not in texts
 
 

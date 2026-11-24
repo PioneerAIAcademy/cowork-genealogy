@@ -15,7 +15,7 @@
   },
   "input": {
     "user_message": "/research You offered to extract the Match from the review of log_017 (hit 9, results/log_017.json#3Q9M-CSK3-ZSLR). Continue.",
-    "scenario": "g9gj-fulltext-hits-unextracted"
+    "scenario": "g9gj-hit9-reviewed"
   },
   "execution": {
     "max_turns": 20,
@@ -44,5 +44,8 @@
     "The hand-off and its source are asserted deterministically from the hook records (test_routes_to_expected_skill, test_search_hit_review_yes_extracts_the_matches). You cannot see the spawn. Do not grade it.",
     "record-structurer is STUBBED, so nothing is written to the project. The run ends at that hand-off by design (execution.stop_at_stub), with no closing summary: do not mark a summary as missing.",
     "Judging the hit again, re-running the review, or offering the step again without running it is the failure. Grade only the router's own narration up to the hand-off: honest, and free of internal ids shown to the user."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }

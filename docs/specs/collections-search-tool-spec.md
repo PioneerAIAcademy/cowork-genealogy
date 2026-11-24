@@ -39,15 +39,54 @@ and filters by collection title. `place_search` IDs are never passed to
 ### Place → collection scope
 
 FamilySearch organizes record collections at the **state/province level**
-for the United States, Canada, and Mexico, and at the **country level**
-everywhere else. The tool derives the title-match term from the
-`standardPlace` accordingly (`standardPlaceToCollectionsQuery`):
+for the United States, Canada, and Mexico, at the **constituent-country
+level** in the United Kingdom, and at the **country level** everywhere else.
+The tool derives the title-match term from the `standardPlace` accordingly
+(`standardPlaceToCollectionsQuery`):
 
 | Country (last component) | Term used | Example input → term |
 |--------------------------|-----------|----------------------|
 | United States | the state (second-to-last component) | `"Schuylkill, Pennsylvania, United States"` → `"Pennsylvania"` |
 | Canada / Mexico | `"Country, State"` | `"Toronto, Ontario, Canada"` → `"Canada, Ontario"` |
+| United Kingdom, with England, Wales, Scotland or Northern Ireland second-to-last | that constituent country | `"Sheffield, Yorkshire, England, United Kingdom"` → `"England"` |
+| United Kingdom, otherwise | `"United Kingdom"` | `"United Kingdom"` → `"United Kingdom"` |
+| France, with Guadeloupe or Martinique second-to-last | that overseas department | `"Pointe-à-Pitre, Guadeloupe, France"` → `"Guadeloupe"` |
 | any other country | the country (last component) | `"Paris, France"` → `"France"` |
+
+**A place whose titles lead with another name is matched by leading terms, not
+by a substring.** The catalog leads a UK title with the constituent country or
+the whole kingdom (`England and Wales, Census, 1901`, `England Marriages,
+1538–1973` with no comma, `Scotland, …`, `United Kingdom, …`), and a few
+countries' titles with a name other than the one their standard place ends with
+(a Czech place ends `Czechia`, its titles start `Czech Republic`). For these, a
+title is in scope when it **starts** with one of the place's terms followed by a
+non-letter (`collectionScopeTerms`, `collectionScopeMatcher`, in
+`src/utils/collection-scope.ts`). A substring would not do: `England` also
+matches `United States, New England Passenger and Crew Lists`, `Wales` every
+`Australia, New South Wales, …` title and `Jersey` every `New Jersey, …` one.
+
+| Place ends | Leading terms |
+|------------|---------------|
+| `England, United Kingdom` | England (which covers `England and Wales`), United Kingdom, Great Britain |
+| `Wales, United Kingdom` | Wales, England and Wales, United Kingdom, Great Britain |
+| `Scotland, United Kingdom` | Scotland, United Kingdom, Great Britain |
+| `Northern Ireland, United Kingdom` | Northern Ireland, Ireland (the pre-1922 all-Ireland collections), United Kingdom, Great Britain |
+| any other `United Kingdom` place | United Kingdom, Great Britain |
+| `Guadeloupe, France` / `Martinique, France` | the department, France |
+| `Czechia` | Czechia, Czech Republic |
+| `Federated States of Micronesia` | Federated States of Micronesia, Micronesia |
+| `United States Virgin Islands` | United States Virgin Islands, Virgin Islands (U.S.) |
+| `Saint Lucia` | Saint Lucia, St. Lucia |
+| `Cabo Verde` | Cabo Verde, Cape Verde |
+| `Jersey` / `Guernsey` | the island, Channel Islands |
+
+The rows come from the live catalog, not from a list of countries: for each
+title's leading part, `dev/probe-collection-scope-nesting.ts` resolves the part
+to its standard place and checks that place's scope keeps the titles the part
+leads. A part it cannot resolve (an ambiguous bare name such as `Texas`) is
+looked up by hand. Rerun it when the catalog gains a country. `scope` stays the
+single term from the first table. Every other place, and free text (`"England"`
+alone), keeps the substring match.
 
 A free-text query that isn't a standardPlace (no recognized country tail,
 e.g. `"Census"`) passes through unchanged, so an arbitrary place query
@@ -98,7 +137,7 @@ input is not echoed back.
 | Field | Type | Description |
 |-------|------|-------------|
 | `collectionUrl` | string | `"https://www.familysearch.org/search/collection/{id}"`: a collection's FamilySearch page is this with `{id}` replaced by the row's `id`. Given once, not on every row. |
-| `scope` | string | The derived FamilySearch collection scope/jurisdiction the titles were matched at (the US/Canada/Mexico state, or the country elsewhere). This is the "level served" signal — a county input is matched at the state level. |
+| `scope` | string | The derived FamilySearch collection scope/jurisdiction the titles were matched at (the US/Canada/Mexico state, a United Kingdom country, Guadeloupe or Martinique, or the country elsewhere). This is the "level served" signal — a county input is matched at the state level. A place with leading terms is matched by all of them (§"Place → collection scope"), so `scope` names the first. |
 | `totalForPlace` | number | Count of collections matching the scope **before** the optional date filter is applied. Always present. Equals `results.length` when no years are passed and the answer is not truncated. `results: [], totalForPlace: 8` reads as "8 collections cover this place, none in your window." |
 | `results` | Collection[] | The matching collection objects (after the optional date filter). |
 | `truncated` | `true` | Present only when the answer was over its budget and rows were left out. |
@@ -197,7 +236,9 @@ likeliest first answer to be truncated.
     "— preferably the standardized place name from place_search (e.g. " +
     "\"Schuylkill, Pennsylvania, United States\"); a plain place name also works. " +
     "FamilySearch organizes collections at the state/province level for the " +
-    "United States, Canada, and Mexico, and at the country level everywhere else, " +
+    "United States, Canada, and Mexico, at England, Wales, Scotland or Northern " +
+    "Ireland (with the kingdom-wide collections) in the United Kingdom, and at the " +
+    "country level everywhere else, " +
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Each row is {id, title, dateRange, " +
@@ -213,7 +254,7 @@ likeliest first answer to be truncated.
     properties: {
       standardPlace: {
         type: "string",
-        description: "The place to list collections for — preferably the `standardPlace` from place_search (e.g. \"Schuylkill, Pennsylvania, United States\"). The tool derives the right collection scope (the US state, \"Country, State\" for Canada/Mexico, or the country) and matches it against collection titles. A plain place name works too."
+        description: "The place to list collections for — preferably the `standardPlace` from place_search (e.g. \"Schuylkill, Pennsylvania, United States\"). The tool derives the right collection scope (the US state, \"Country, State\" for Canada/Mexico, the constituent country in the United Kingdom, or the country) and matches it against collection titles. A plain place name works too."
       },
       startYear: {
         type: "integer",
@@ -299,8 +340,10 @@ Each collection object contains:
 **Scope match:** Case-insensitive substring match against collection
 titles. The derived scope term (`"Alabama"`) matches any collection
 whose title contains it (e.g., `"Alabama, County Marriages,
-1711-1992"`). The number of collections matching the scope is reported
-as `totalForPlace`.
+1711-1992"`). A place with leading terms (a United Kingdom place, and the
+others §"Place → collection scope" lists) instead matches titles that start
+with one of them. The number of collections matching the scope is reported as
+`totalForPlace`.
 
 **Date filter (optional):** When `startYear`/`endYear` are supplied, the
 scope-matched collections are further filtered to those whose year span
@@ -378,13 +421,13 @@ and output types (`Collection`, `CollectionsSearchResult`).
 
 - `collectionsSearchToolSchema` — MCP tool schema
 - `collectionsSearchTool(input)` — main function
-- `standardPlaceToCollectionsQuery(value)` — derive the title-match term from a `standardPlace` (US → state, Canada/Mexico → `"Country, State"`, else → country; free text passes through)
+- `standardPlaceToCollectionsQuery(value)` — derive the title-match term from a `standardPlace` (US → state, Canada/Mexico → `"Country, State"`, United Kingdom → its constituent country, Guadeloupe/Martinique → the department, else → country; free text passes through). It lives in `src/utils/collection-scope.ts` beside `collectionScopeTerms` and `collectionScopeMatcher`, the title test every caller of the scope uses (`collections_search`, `collectionCoverage`, `research_append`'s locality fill).
 - `fetchAllCollections(token)` — cached API call
 - `configureCollectionsCache({ shared })` — the cache's mode, set once by the
   hosted entrypoint (`src/http.ts`); per token when never called
 - `collectionsCacheMode()` — the mode in force, read back for `src/http.ts`'s
   start-up line
-- `filterByQuery(entries, query)` — case-insensitive title matching
+- `filterByQuery(entries, query)` — title matching: a string by case-insensitive substring, a function (a `collectionScopeMatcher`) by its answer
 - `fitToBudget(result, standardPlace, budget?)` — the answer budget above
 - `subPlaceTerms(standardPlace)` — the parts of `standardPlace` below its scope
 - `collectionCountsById(data)` — every collection's `personCount`, `/Record`
@@ -438,8 +481,26 @@ handed to the next call, two cold calls each fetch (no in-flight sharing), the
 hour still expires, and turning sharing off keys on the token again.
 
 **`standardPlaceToCollectionsQuery` unit tests:** US → state (any nesting
-depth); Canada/Mexico → `"Country, State"`; other countries → country;
-free-text passes through; country-only US/Canada falls back to the country.
+depth); Canada/Mexico → `"Country, State"`; a United Kingdom place → its
+constituent country, the bare kingdom → `"United Kingdom"`; other countries →
+country; free-text passes through; country-only US/Canada falls back to the
+country.
+
+**United Kingdom tests:** on a hand-built catalog, an English place's 1901
+search holds `England and Wales, Census, 1901` at `scope` `"England"`; an
+English place takes the titles led by England, the United Kingdom or Great
+Britain (`England Marriages`, with no comma, among them) and neither `United
+States, New England …` nor `Jamaica, Church of England …`; a Welsh place takes
+`England and Wales` and no `Australia, New South Wales, …` title; Northern
+Ireland takes the all-Ireland titles and Scotland none of them; the bare kingdom
+takes only the kingdom-wide ones; free-text `England` still matches by
+substring; `collectionCoverage` counts the English census year; `subPlaceTerms`
+drops both the constituent country and the kingdom.
+
+**Other leading-term places:** Guadeloupe and Martinique are their own scope and
+keep France's titles while metropolitan France keeps its substring match; each
+renamed country gets the titles the catalog names it by; Jersey and Guernsey get
+the Channel Islands title and Jersey no `New Jersey, …` one.
 
 ### Smoke
 
@@ -447,6 +508,7 @@ free-text passes through; country-only US/Canada falls back to the country.
 cd packages/engine/mcp-server
 npx tsx dev/try-collections-search.ts Alabama
 npx tsx dev/try-collections-search.ts England
+npx tsx dev/try-collections-search.ts "Sheffield, Yorkshire, England, United Kingdom" 1901 1901
 ```
 
 ---
@@ -465,7 +527,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 - `collections_search({ standardPlace: "Birmingham, Jefferson, Alabama, United States" })` — `scope` is `"Alabama"`, `totalForPlace` is 29, `results` has the 29 Alabama collections
 - `collections_search({ standardPlace: "Birmingham, Jefferson, Alabama, United States", startYear: 1850, endYear: 1900 })` — `totalForPlace` still 29, `results` only those overlapping 1850–1900
-- `collections_search({ standardPlace: "London, England, United Kingdom" })` — `scope` is `"United Kingdom"`, returns UK collections
+- `collections_search({ standardPlace: "London, England, United Kingdom" })` — `scope` is `"England"`, returns the England, England and Wales, United Kingdom and Great Britain collections
 - `collections_search({ standardPlace: "Nowhere" })` — `totalForPlace: 0`, empty `results`
 - `collections_search` without logging in — returns auth error message
 

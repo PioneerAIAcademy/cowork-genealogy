@@ -19,7 +19,7 @@ import type {
   UnresolvedChildGroup,
 } from "../types/census-children-gap.js";
 import type { SimplifiedFact, SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
-import { NoProjectError, noProjectResult, readProjectJson } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestIsUnbounded, getDayRange, latestIsUnbounded } from "../utils/date-helpers.js";
 import { BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES } from "../utils/mob.js";
@@ -560,7 +560,6 @@ export async function censusChildrenGapTool(input: CensusChildrenGapInput): Prom
   try {
     tree = (await readProjectJson(input.projectPath as string, TREE_FILE)) as SimplifiedGedcomX;
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
   let mother: SimplifiedPerson;

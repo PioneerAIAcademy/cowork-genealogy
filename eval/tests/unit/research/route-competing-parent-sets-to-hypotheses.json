@@ -77,5 +77,8 @@
     "The patron's message says the parent sets are from Virginia and New York; the tree places them in Virginia, Kentucky, South Carolina and Alabama. Do not penalize the router for noting that mismatch, but do penalize it for treating the patron's framing as evidence for either set.",
     "Every callee is stubbed and returns a denial telling the router to stop. The spawn is invisible to you, and test_routes_to_expected_skill already asserts it happened, so a reply saying the work was handed off is true even though no hypothesis was written. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of a parentage judgement."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }
