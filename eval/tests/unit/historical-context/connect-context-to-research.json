@@ -37,7 +37,8 @@
     "wikipedia-search-molly-maguires",
     "wikipedia-search-philadelphia-immigration",
     "wikipedia-search-naturalization-act-1906",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-schuylkill-county-pennsylvania"
   ],
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
