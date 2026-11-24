@@ -26,6 +26,7 @@ OVERCLAIMS = [
     "Reuben is almost certainly Asa's brother, and his choice to name his own son Asa is consistent with that.",
     "Reuben is Asa's contemporary, most likely a brother, consistent with naming his son Asa after the sibling.",
     "Reuben Whitcomb is Asa's brother, not his son.",
+    "The 1773 birth places Reuben's birth no later than ~1757, making him Asa Whitcomb of Westmoreland's contemporary or older brother, not his son.",
     "Reuben Whitcomb, Asa's older brother, heads the 1790 household in Westmoreland.",
     "Reuben is probably a relative of Asa.",
     "Reuben is almost certainly Asa's older brother, though no record yet links them.",
