@@ -1988,6 +1988,12 @@ _MOCK_ENRICHED_KEYS = (
     # and search-records makes `subjectId` mandatory — taking with it the only
     # evidence the paid suite run exists to produce.
     "nilSearchNeedsLog",
+    # `fulltext_search`'s advice, computed by the mock from the call's own
+    # arguments. A run log without them cannot tell a note the agent ignored
+    # from one that never reached it.
+    "nameFieldRetry",
+    "tooManyResults",
+    "wordListRead",
     "logId",
     "nilLogRefused",
     "planRationale",

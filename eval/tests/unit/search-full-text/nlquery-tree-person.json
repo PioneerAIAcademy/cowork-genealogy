@@ -25,7 +25,6 @@
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should call fulltext_search with the nlQuery parameter containing the tree person ID 'KWCJ-RN4' — NOT a keyword query like `+Patrick +Flynn`",
-    "Should explain briefly why nlQuery is the right field here (per SKILL.md and references/query-syntax.md, the upstream resolves the tree ID against the person's facts and aliases — a keyword query would not get that expansion)",
     "Should report the two records the fixture returns (1869 deed transferring land to Patrick Flynn, and the 1885 Cornelius Sheridan estate appraisement on which Patrick Flynn served as appraiser) as new evidence — both link to Patrick Flynn in non-principal roles and would not have been obvious from a name-only keyword query"
   ]
 }
