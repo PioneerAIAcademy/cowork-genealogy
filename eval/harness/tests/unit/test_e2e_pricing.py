@@ -31,8 +31,34 @@ def test_cheaper_models_price_at_their_own_fraction_of_sonnet_4_6(block):
     sonnet = pricing.estimate_cost_usd(block)
     assert pricing.estimate_cost_for_model(block, "claude-haiku-4-5") == pytest.approx(sonnet / 3)
     assert pricing.estimate_cost_for_model(block, "claude-sonnet-5") == pytest.approx(sonnet * 2 / 3)
-    assert pricing.estimate_cost_for_model(block, "claude-sonnet-5-5") == pytest.approx(sonnet * 2 / 3)
     assert pricing.estimate_cost_for_model(block, "claude-opus-4-8") == pytest.approx(sonnet * 5 / 3)
+
+
+def test_sonnet_5_5_reads_cache_at_half_the_usual_multiple():
+    """Sonnet 5.5's cache hit is 0.05x input ($0.10), not the 0.1x every other model pays."""
+    one_m = 1_000_000
+    assert pricing.estimate_cost_for_model({"cache_read_input_tokens": one_m}, "claude-sonnet-5-5") == \
+        pytest.approx(0.10)
+    assert pricing.estimate_cost_for_model({"cache_read_input_tokens": one_m}, "claude-sonnet-5") == \
+        pytest.approx(0.20)
+    block = {"input_tokens": one_m, "output_tokens": one_m, "cache_creation_input_tokens": one_m}
+    assert pricing.estimate_cost_for_model(block, "claude-sonnet-5-5") == pytest.approx(2 + 10 + 4)
+
+
+def test_a_haiku_5_5_message_over_100k_prompt_tokens_bills_five_times():
+    """The prompt is input + cache read + cache write; over 100,000 every class bills 5x."""
+    at = {"input_tokens": 1_000, "cache_read_input_tokens": 90_000,
+          "cache_creation_input_tokens": 9_000, "output_tokens": 2_000}
+    base = (1_000 * 0.10 + 90_000 * 0.01 + 9_000 * 0.125 + 2_000 * 0.50) / 1_000_000
+    assert pricing.estimate_message_cost(at, "claude-haiku-5-5") == pytest.approx(base)
+    over = {**at, "input_tokens": 1_001}
+    assert pricing.estimate_message_cost(over, "claude-haiku-5-5") == \
+        pytest.approx(5 * (base + 0.10 / 1_000_000))
+    assert pricing.estimate_message_cost(over, "claude-sonnet-5") == \
+        pytest.approx((1_001 * 2 + 90_000 * 0.20 + 9_000 * 2.5 + 2_000 * 10) / 1_000_000)
+    assert pricing.long_prompt_multiple("claude-haiku-5-5", 100_000) == 1.0
+    assert pricing.long_prompt_multiple("claude-haiku-5-5", 100_001) == 5.0
+    assert pricing.long_prompt_multiple(None, 10**6) == 1.0
 
 
 def test_a_dated_model_id_prices_as_its_undated_name():

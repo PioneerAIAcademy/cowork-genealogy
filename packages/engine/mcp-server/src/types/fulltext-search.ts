@@ -111,6 +111,14 @@ export interface FulltextSearchResponse {
   // reports as not full-text searchable. OPTIONAL, which is what keeps every
   // committed eval fixture valid under mcp-fixture-shape.test.ts.
   notFulltextSearchable?: string;
+  // Set on a keywords search with no filters whose total is 0, and on a
+  // first-page keywords search whose total is above 500 (`fulltextAdvice`).
+  // `wordListRead` is set on a first-page search whose `keywords` or `name`
+  // carries a letter outside ASCII. All are serialized before `results` and
+  // withheld from the staged payload.
+  nameFieldRetry?: string;
+  tooManyResults?: string;
+  wordListRead?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.

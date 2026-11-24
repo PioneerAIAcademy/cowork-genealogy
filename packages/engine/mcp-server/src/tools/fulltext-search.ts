@@ -21,6 +21,7 @@ import {
   NOT_FULLTEXT_SEARCHABLE_NOTE,
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
+import { fulltextAdvice } from "../utils/fulltext-advice.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
@@ -334,6 +335,7 @@ export async function fulltextSearchTool(
       : {}),
     // Precedes `results` with the other notes, for the same size-bound reason.
     ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
+    ...fulltextAdvice({ ...input }, data.results ?? 0),
     results,
   };
 
@@ -345,13 +347,16 @@ export async function fulltextSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
-      // Both notes are withheld from what gets staged, as record_search withholds
+      // The notes are withheld from what gets staged, as record_search withholds
       // `rankingSkipped`: the sidecar records what the search RETURNED, and these
       // are instructions to the model. Destructuring a copy leaves `out` — and so
       // its key order — untouched.
       const {
         unloggedSearches: _backlog,
         nilSearchNeedsLog: _nilNote,
+        nameFieldRetry: _nameNote,
+        tooManyResults: _manyNote,
+        wordListRead: _wordListNote,
         ...persistable
       } = out;
       out.staged = await stageSearchResults({
