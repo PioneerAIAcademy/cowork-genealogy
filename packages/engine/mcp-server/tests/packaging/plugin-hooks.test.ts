@@ -1744,11 +1744,9 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
   });
 
-  it("adds the routing sentence, with or without a project", () => {
+  it("does not add the hosted planes' routing sentence in Cowork and Desktop", () => {
     const out = runNoProjectRoute(JSON.stringify({ prompt: "Investigate Patrick Flynn." }));
-    expect(out.hookSpecificOutput.additionalContext).toMatch(
-      /goes to the research skill, with or without a project/,
-    );
+    expect(out.hookSpecificOutput.additionalContext).not.toMatch(/Hand each genealogy request/);
   });
 
   it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {

@@ -68,10 +68,12 @@ SOURCES_NOTE = (
 )
 
 
-# Unconditional too: with a project, a Haiku main thread answered research requests from
-# project state or its own knowledge, without the research skill or the agent whose work
-# it was (ut_research_001, 004, 026, 027). The hosted planes append the same text as
-# `continue_policy.ROUTING_GUIDANCE`; change both together.
+# Not added by this hook. With a project, a Haiku main thread answered research requests
+# from project state or its own knowledge, without the research skill or the agent whose
+# work it was (ut_research_001, 004, 026, 027). Only the hosted planes run Haiku, and they
+# append the same text as `continue_policy.ROUTING_GUIDANCE`; Cowork and Desktop run their
+# own model and do not get it (lead, 2026-11-24). Both harnesses add it from here, as they
+# measure the hosted main thread. Change both copies together.
 ROUTING_NOTE = (
     "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
     "what it returns. Researching, investigating or finding a person, a relative or a record, "
@@ -96,7 +98,7 @@ def decision(payload: dict, env: dict) -> dict:
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": f"{CONTEXT}\n\n{SOURCES_NOTE}\n\n{ROUTING_NOTE}",
+            "additionalContext": f"{CONTEXT}\n\n{SOURCES_NOTE}",
         }
     }
 
