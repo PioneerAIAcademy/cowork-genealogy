@@ -509,7 +509,7 @@ to research-plan or search-records.
 
 - **ut_research_wtc** (`write-this-up-craft-read-only.json`): scenario `flynn-prior-craft-verdict`, whose only evaluation is a craft read. The report reads its body with `sidecar_read`, does not give "consider addressing" as the reviewer's verdict, and says no review was requested. Tag `write-this-up-craft-only`.
 
-The tier check accepts "probable", "probably" or "likely" (the proof's narrative and the viewer's label); the no-proof check fails only a tier given as a rating ("rated probable"), because a person-evidence link carries `confidence: probable` and "not yet proved" is ordinary prose. The reply must also not end on a "Continue with" line.
+The tier check accepts "probable", "probably" or "likely" (the proof's narrative and the viewer's label); the no-proof check fails only a tier given as a rating ("rated probable"), because a person-evidence link carries `confidence: probable` and "not yet proved" is ordinary prose. The report runs no step, so it ends on the "Continue with" line the last turn left open (SKILL.md, "A question between steps"); nothing checks that line.
 
 The report text is the reply joined with every `Write` content and `Bash` command, because the harness cannot produce a .docx. Validator proofs: `eval/harness/tests/unit/test_write_this_up_validator.py`.
 

@@ -142,15 +142,9 @@ def test_the_conflict_may_be_named_either_way(phrase):
     _run(text=REPORT.replace("birthplace", phrase))
 
 
-@pytest.mark.parametrize("last", ["Continue with a probate search?", "  continue with the 1870 census?"])
-@pytest.mark.parametrize("test,text", [(PROOF, REPORT), (NO_PROOF, OPEN)], ids=["proof", "no-proof"])
-def test_a_continue_line_ending_the_reply_fails(test, text, last):
-    with pytest.raises(AssertionError, match="Continue with"):
-        _run(test=test, text=f"{text}\n\n{last}", tool_calls=READS)
-
-
-def test_continue_mid_reply_is_not_a_continue_line():
-    _run(text=f"{REPORT} You can continue with probate later.\nThat is all.")
+def test_a_report_may_end_on_the_open_continue_offer():
+    """The report runs no step, so the offer left open by the last turn stays (#4576)."""
+    _run(text=f"{REPORT}\n\nContinue with `setting up the project`?")
 
 
 # --- the craft-only scenario: the only evaluation is a craft read -----------------

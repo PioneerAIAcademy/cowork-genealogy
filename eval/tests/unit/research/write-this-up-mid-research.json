@@ -21,8 +21,7 @@
   "judge_context": [
     "The report must come from project state and add no claim; the deterministic validator cannot check that, the judge does.",
     "Facts of this scenario: the questions are who the parents of Patrick Flynn (b. about 1845, PA, d. 1908) were, and where Patrick was in the 1850 census. Neither has a proof summary and there is no reviewer's verdict. One conflict, Patrick's birthplace, is resolved. The report should say what is established, what is open, and that no conclusion has been written and no review requested.",
-    "A report that rates the parentage (probable, proved or any tier), or says a reviewer approved it, fails.",
-    "The reply must not end on a 'Continue with ...?' line."
+    "A report that rates the parentage (probable, proved or any tier), or says a reviewer approved it, fails."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

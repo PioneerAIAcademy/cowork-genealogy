@@ -645,8 +645,6 @@ _NO_REVIEW_RE = re.compile(
     r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been",
     re.IGNORECASE,
 )
-_CONTINUE_LINE_RE = re.compile(r"^\W*continue with\b", re.IGNORECASE)
-
 
 def _report_text(text_response, builtin_tool_calls) -> str:
     parts = [text_response or ""]
@@ -691,11 +689,6 @@ def test_write_this_up_built_from_project_state(
             "the only evaluation may be a craft read, which only its body shows: the report must "
             "read the body with sidecar_read before naming a reviewer's verdict"
         )
-
-    reply_lines = [ln for ln in (text_response or "").splitlines() if ln.strip()]
-    assert not (reply_lines and _CONTINUE_LINE_RE.match(reply_lines[-1])), (
-        f"a report that is the only deliverable ends on no 'Continue with' line; got {reply_lines[-1]!r}"
-    )
 
     spawns = [
         (c.get("args") or {}).get("subagent_type") or "general-purpose"

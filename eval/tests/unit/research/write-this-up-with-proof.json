@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "'Write this up' on a project with a proof summary produces a report from project state alone",
     "type": "negative",
-    "description": "The researcher asks for a written report. The main thread builds it from tool reads (project_context, research_query on proof_summaries, conflicts, evaluations and plans, tree_query), spawns no agent, never calls research_append, never reads research.json or tree.gedcomx.json directly, and ends on no 'Continue with' line. The report carries the tier in words, the reviewer's verdict, the resolved conflict and what was not yet searched. Issue #4576.",
+    "description": "The researcher asks for a written report. The main thread builds it from tool reads (project_context, research_query on proof_summaries, conflicts, evaluations and plans, tree_query), spawns no agent, never calls research_append, never reads research.json or tree.gedcomx.json directly. The report carries the tier in words, the reviewer's verdict, the resolved conflict and what was not yet searched. Issue #4576.",
     "tags": [
       "write-this-up-proof"
     ]
@@ -22,8 +22,7 @@
     "The report must come from project state and add no claim: every fact in it must be in this scenario. The deterministic validator cannot check that; the judge does.",
     "Facts of this scenario: the question is who the parents of Patrick Flynn (b. about 1845, PA, d. 1908) were. The proof summary rates it probable: Patrick is probably the son of Thomas Flynn of Schuylkill County, Pennsylvania, from the 1850 and 1860 censuses and the 1908 death certificate. One conflict, Patrick's birthplace (Ireland in the 1850 and 1860 censuses, Pennsylvania on the 1908 death certificate), is resolved in favour of Ireland because the censuses are contemporary and the death certificate's informant, a son-in-law, is secondary. The search summary lists the 1850 census on FamilySearch, Ancestry and MyHeritage, the 1860 census and the death certificate; probate is in progress; the 1870, 1880 and 1900 censuses are not yet searched.",
     "The reviewer's verdict is 'looks solid', from an on-demand review of the parentage question. A report that calls it anything stronger, or presents any other read as the reviewer's verdict, fails.",
-    "A report that states a fact not above (a birth date for Thomas, a spouse, a record not named) fails the no-new-claims dimension.",
-    "The reply must not end on a 'Continue with ...?' line."
+    "A report that states a fact not above (a birth date for Thomas, a spouse, a record not named) fails the no-new-claims dimension."
   ],
   "execution": {
     "max_wall_clock_seconds": 600
