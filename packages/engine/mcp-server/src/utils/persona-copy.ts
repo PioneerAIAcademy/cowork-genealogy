@@ -524,6 +524,8 @@ export interface LinkWarning {
   /** True when `materialize_facts` would refuse the copy for it until justified. */
   refusedAtSave: boolean;
   sentence: string;
+  /** The types of the record's facts on the person the warning rests on. */
+  recordFactTypes: string[];
 }
 
 /**
@@ -603,7 +605,8 @@ export function introducedByLink(
         dependsOn(research, behind, w, startingTree);
       if (seen.has(sentence)) continue;
       seen.add(sentence);
-      out.push({ issueType: w.issueType, personId: w.personId, impossible, refusedAtSave, sentence });
+      const recordFactTypes = [...new Set(behind.filter((x) => x.fromRecord && x.personId === target).map((x) => String(x.fact.type)))];
+      out.push({ issueType: w.issueType, personId: w.personId, impossible, refusedAtSave, sentence, recordFactTypes });
     }
     // A relatives form restates a self form from a neighbour's side ("a female
     // relative of this person had a child after 45"): listed only when no self

@@ -145,7 +145,7 @@ function openItems(plans: any[]): any[] {
 /** Fact types that name one event per person, so two values are a disagreement
  *  rather than two events. `birthplace` is folded into `birth`'s place, since
  *  extractions record a birth's place under either. */
-const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
+export const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
   birth: "birth",
   birthplace: "birth",
   death: "death",
@@ -154,12 +154,12 @@ const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
 
 /** Years further apart than this disagree. Census ages drift a year or two
  *  between enumerations; that is ordinary, not a conflict. */
-const YEAR_TOLERANCE = 2;
+export const YEAR_TOLERANCE = 2;
 
 /** Both spellings of an assertion's place, each split into components. The raw
  *  and standardized forms are compared separately because standardization
  *  renames ("Forfarshire" → "Angus") and adds a country the raw form omits. */
-const placeForms = (a: any): string[][] =>
+export const placeForms = (a: any): string[][] =>
   [a?.place, a?.standard_place]
     .filter((p): p is string => typeof p === "string" && p.trim() !== "")
     .map((p) => p.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
@@ -169,7 +169,7 @@ const partsMatch = (p: string, q: string): boolean => p.startsWith(q) || q.start
 /** Places agree when every component of the less specific one matches one in
  *  the other — "England" agrees with "Rochdale, Lancashire, England", and
  *  "Russia" with "Russian Empire". Any pair of spellings agreeing is enough. */
-const placesAgree = (xs: string[][], ys: string[][]): boolean =>
+export const placesAgree = (xs: string[][], ys: string[][]): boolean =>
   xs.some((x) =>
     ys.some((y) => {
       const [short, long] = x.length <= y.length ? [x, y] : [y, x];
@@ -184,7 +184,7 @@ const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
  *  disagrees on its open side. A bounded date the standard-date parser cannot
  *  read ("after 1870, before 1880") is left out; any other unreadable date
  *  falls back to its first four-digit year as a one-year span. */
-const yearsOf = (a: any): [number, number] | null => {
+export const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
     if (typeof raw !== "string") continue;
     const lo = earliestYear(raw), hi = latestYear(raw);

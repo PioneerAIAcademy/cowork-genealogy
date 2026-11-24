@@ -1,0 +1,13 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen with KD96-TV2 in empty-project-just-created, whose tree holds only Patrick Flynn (I1): the real tool answers ok:false, person not found. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario; no matcher call was made.",
+  "args": {
+    "personId": "KD96-TV2"
+  },
+  "response": {
+    "ok": false,
+    "errors": [
+      "Person 'KD96-TV2' not found in tree.gedcomx.json."
+    ]
+  }
+}

@@ -182,10 +182,20 @@ function assertOneImageForm(input: ImageTranscribeInput): void {
  * conflicting identifiers should be told which ones conflict, not that the
  * server is busy — otherwise it retries the same malformed call forever.
  */
+/** Internal only, never on the MCP schema. `budgetMs` is a whole-call budget
+ *  from entry, as the connector's: the fetch makes one attempt clamped to what
+ *  is left, and the OCR gets the rest, so both stop at the caller's deadline
+ *  (source_screen's image reads). */
+export interface TranscribeOptions {
+  ocrTimeoutMs?: number;
+  imageKey?: string;
+  budgetMs?: number;
+}
+
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
+  opts: TranscribeOptions = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
@@ -207,7 +217,7 @@ async function imageTranscribeToolInner(
    * it, burning an OpenRouter call nothing will read. Capping the underlying
    * fetch aborts it for real rather than abandoning the promise.
    */
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
+  opts: TranscribeOptions = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
@@ -216,7 +226,9 @@ async function imageTranscribeToolInner(
   // call MORE time than the budget actually allows.
   const enteredAt = monotonicNow();
   const isConnector = connectorUserId(principal) !== undefined;
-  const remainingBudgetMs = (): number => CONNECTOR_TRANSCRIBE_BUDGET_MS - (monotonicNow() - enteredAt);
+  const budgetMs = Math.min(isConnector ? CONNECTOR_TRANSCRIBE_BUDGET_MS : Infinity, opts.budgetMs ?? Infinity);
+  const budgeted = Number.isFinite(budgetMs);
+  const remainingBudgetMs = (): number => budgetMs - (monotonicNow() - enteredAt);
 
   input = foldImageArkInput(input, "image_transcribe");
   assertOneImageForm(input);
@@ -328,10 +340,12 @@ async function imageTranscribeToolInner(
     // cleanly, if the Memories lookup above already spent the whole budget.
     const fetched = await fetchFsImageBytes(
       resolved.url,
-      isConnector ? undefined : resolved.fallbackUrl,
+      budgeted ? undefined : resolved.fallbackUrl,
       principal,
       resolved.memoryShape,
-      isConnector ? { timeoutMs: clampToBudget(remainingBudgetMs(), CONNECTOR_FETCH_TIMEOUT_MS) } : {},
+      budgeted
+        ? { timeoutMs: clampToBudget(remainingBudgetMs(), isConnector ? CONNECTOR_FETCH_TIMEOUT_MS : Infinity) }
+        : {},
     );
     await recordImageBrowse(browse);
     bytes = fetched.bytes;
@@ -361,8 +375,8 @@ async function imageTranscribeToolInner(
   // memories-phase budget (`opts.ocrTimeoutMs`) still applies even here.
   // runOcr/runFoundCheck stay principal-free (#3996); this is computed here,
   // not passed down.
-  const ocrBudgetMs = isConnector
-    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, CONNECTOR_STAGING_MARGIN_MS)
+  const ocrBudgetMs = budgeted
+    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, isConnector ? CONNECTOR_STAGING_MARGIN_MS : 0)
     : nominalOcrBudgetMs;
   const ocrStartedAt = Date.now();
 

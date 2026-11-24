@@ -2096,4 +2096,22 @@ describe("imageTranscribeTool — connector time budget (self-hosted beta E5, #3
     const req = runOcrSpy.mock.calls[0][0];
     expect(req.timeoutMs).toBe(5_000);
   });
+
+  it("a caller's budgetMs bounds a LOCAL call's fetch and OCR together, one fetch attempt", async () => {
+    vi.useFakeTimers({ toFake: ["performance"] });
+    fetchFsImageBytesMock.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(4_000);
+      return { bytes: new Uint8Array([1, 2, 3]), contentType: "image/jpeg", sizeBytes: 3 };
+    });
+    mockOpenRouterOk("page");
+    await imageTranscribeTool({ ark: ARK }, LOCAL, { budgetMs: 10_000 });
+
+    const [, fallbackUrl, , , opts] = fetchFsImageBytesMock.mock.calls[0];
+    expect(fallbackUrl).toBeUndefined();
+    expect(opts.timeoutMs).toBeGreaterThan(0);
+    expect(opts.timeoutMs).toBeLessThanOrEqual(10_000);
+    const req = runOcrSpy.mock.calls[0][0];
+    expect(req.timeoutMs).toBeGreaterThan(0);
+    expect(req.timeoutMs).toBeLessThanOrEqual(6_000);
+  });
 });
