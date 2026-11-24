@@ -421,7 +421,7 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* a `PreToolUse` hook (it probes no other event), and since the script must never raise, a hook that
+proves a runtime *binds* a hook (`PreToolUse`, and the relay note's `PostToolUse`), and since the script must never raise, a hook that
 stopped binding looks exactly like one with no opinion. It is live, billed, and
 run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
 `nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
