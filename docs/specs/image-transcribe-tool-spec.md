@@ -524,6 +524,14 @@ periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
+A name is matched with the punctuation beside it stripped: leading `(`, `[`
+and quotes (straight or curly), and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]`
+and quotes. A
+trailing period is kept when the form with it is in the table (`Jas.`) and
+dropped otherwise (`daughter of James.`). So `"Lee, Eliza, father James Lee"`
+expands both Eliza and James, and a page holding Elizabeth, daughter of James
+Lee, is credited.
+
 When expansion fires, `imageTranscribeTool`'s in-process result carries a
 `nameExpansion` field:
 
@@ -533,9 +541,19 @@ When expansion fires, `imageTranscribeTool`'s in-process result carries a
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-The MCP answer drops it (see "Output"). It was added so a genealogist could see which
-name forms the found check credited, but no caller relays it, and the
-search-images agent reads every `FOUND` page in full before it reports one.
+The MCP answer drops it (see "Output").
+
+What the MCP answer carries instead is `matchedForms`, present only with
+`found: "FOUND"`: for each given name in `lookingFor`, the other forms of it
+that appear on the page, keyed by the name as the caller wrote it —
+`{ "Eliza": ["Elizabeth"] }` for `"Lee, Eliza, father James Lee"` on a page
+holding ELIZABETH, daughter of JAMES LEE. A form counts when it appears as a
+whole word, ignoring case (`formsOnPage`, `src/utils/name-variants.ts`); a name
+whose only form on the page is itself is left out, a form that is also an
+ordinary word (`May`, `Will`, `Ed`) is never counted, and the field is absent
+when none qualifies. A caller told only `FOUND` reads the Elizabeth entry, sees a
+name that differs from the one sought, and reports it as a different person;
+`matchedForms` states, from the table, that it is the same name.
 
 This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
@@ -660,6 +678,7 @@ Text only, no image block:
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
                              // AND the text-only found check (§6.1) replied with a parseable marker —
                              // omitted when that second call fails (it is best-effort)
+  matchedForms?: Record<string, string[]>  // only with found: "FOUND" — other forms of each sought given name on the page (§5.3.1)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
