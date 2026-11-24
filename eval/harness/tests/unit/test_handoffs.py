@@ -18,7 +18,8 @@ import pytest
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import _stub_agents
-from harness.skill_runner import default_spawn_denial, handoffs, spawn_stub_denial
+from harness.skill_stubs import BARE_STUB_RETURN
+from harness.skill_runner import default_spawn_stub_text, handoffs, spawn_stub_text
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO_ROOT / "eval" / "harness" / "validators"))
@@ -661,10 +662,9 @@ def _stub_spec(entries):
 # --- a stubbed callee converted to an agent is stubbed at its spawn ------------
 
 
-def test_spawn_of_a_stubbed_agent_is_denied_and_continued():
-    out = spawn_stub_denial("Agent", {"tool_input": {"subagent_type": "locality-guide"}}, {"locality-guide": None})
-    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
-    assert "continue_" not in out
+def test_spawn_of_a_stubbed_agent_hands_back_the_bare_return():
+    out = spawn_stub_text("Agent", {"tool_input": {"subagent_type": "locality-guide"}}, {"locality-guide": None})
+    assert out == BARE_STUB_RETURN
 
 
 @pytest.mark.parametrize(
@@ -678,7 +678,7 @@ def test_spawn_of_a_stubbed_agent_is_denied_and_continued():
     ids=["other_agent", "nested_spawn", "skill_call", "general_purpose"],
 )
 def test_spawn_stub_leaves_everything_else_alone(tool, data):
-    assert spawn_stub_denial(tool, data, {"locality-guide": None}) is None
+    assert spawn_stub_text(tool, data, {"locality-guide": None}) is None
 
 
 def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
@@ -690,7 +690,7 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
 def test_a_stub_that_is_still_a_skill_is_denied_at_its_spawn_by_the_default(tmp_path):
     """A paired name that ships as both a skill and an agent is not in
     `_stub_agents` — the skill directory makes it return None — but its spawn
-    is still denied, by `default_spawn_denial` (#3568), and with the entry's
+    is still stubbed, by `default_spawn_stub_text` (#3568), and with the entry's
     canned text. It cannot be opted in either: runnability refuses a name in
     both `run_agents` and `stub_skills`.
 
@@ -704,10 +704,8 @@ def test_a_stub_that_is_still_a_skill_is_denied_at_its_spawn_by_the_default(tmp_
     spec = _stub_spec([{"skill": "fake-paired-skill", "response": "canned"}])
     assert _stub_agents(spec, tmp_path) is None
     spawn = {"tool_input": {"subagent_type": "fake-paired-skill"}}
-    assert spawn_stub_denial("Agent", spawn, {}) is None
-    denial = default_spawn_denial("Agent", spawn, {"research"}, {"fake-paired-skill": "canned"})
-    assert denial is not None
-    assert "canned" in json.dumps(denial)
+    assert spawn_stub_text("Agent", spawn, {}) is None
+    assert default_spawn_stub_text("Agent", spawn, {"research"}, {"fake-paired-skill": "canned"}) == "canned"
 
 
 def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():

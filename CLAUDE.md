@@ -373,27 +373,36 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
-A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two passages
 to each Cowork researcher message: a conditional one (no project → a research request goes
 to the research skill; a no-PID ask for the names in a record set goes to
 search-images) and one naming a source, collection, book or citation only from a
-tool result, and that nothing here changes FamilySearch's Family Tree. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+tool result, and that nothing here changes FamilySearch's Family Tree. It holds a third,
+`ROUTING_NOTE` (every genealogy request goes to the research skill or the agent whose work
+it is), which it does not add: only the hosted planes, which run the Haiku main thread,
+carry it. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
-`continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
+`continue_policy.SOURCES_GUIDANCE`, `continue_policy.ROUTING_GUIDANCE` and
+`continue_policy.NO_PROJECT_NOTE` appended beside it).
 The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
-sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
-`no_project_route.SOURCES_NOTE`), pinned by
-`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add it the
-same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not the
-routing sentence.
+and routing sentences are too (`continue_policy.SOURCES_GUIDANCE` and `ROUTING_GUIDANCE`,
+which both hosted planes append, and `no_project_route.SOURCES_NOTE` and `ROUTING_NOTE`),
+pinned by `test_the_sources_sentence_is_the_one_the_plugin_hook_adds` and
+`test_the_routing_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add those two
+as `UserPromptSubmit` context (`context_policy.sources_note_hook`), since they measure the
+hosted main thread, and not the conditional no-project sentence.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
 the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
-ours, so the hook denies the call there. Change one, change both.
+ours, so the hook denies the call there. Change one, change both. On the hosted planes
+(`GENEALOGY_HOSTED_PLANE` set) the hook also denies the main thread a built-in agent type
+(`claude`, `general-purpose`, `Explore`, `Plan`, `web-fetch`; `BUILTIN_SUBAGENT_TYPES`),
+which runs a step the same way; Cowork and Desktop may spawn them. Both harnesses mirror the
+hosted deny.
 
 **Auto-memory is off on the three paths whose environment we set.** The same
 three builders set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
@@ -426,7 +435,7 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* a `PreToolUse` hook (it probes no other event), and since the script must never raise, a hook that
+proves a runtime *binds* a hook (`PreToolUse`, and the relay note's `PostToolUse`), and since the script must never raise, a hook that
 stopped binding looks exactly like one with no opinion. It is live, billed, and
 run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
 `nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
