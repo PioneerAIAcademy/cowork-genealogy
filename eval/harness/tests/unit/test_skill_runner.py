@@ -788,13 +788,31 @@ def test_a_default_stubbed_spawn_hands_back_the_bare_return(tmp_path, monkeypatc
     ]
 
 
-def test_post_tool_use_leaves_an_unstubbed_return_alone(tmp_path, monkeypatch):
+def test_post_tool_use_leaves_an_unstubbed_return_alone_but_adds_the_relay_note(tmp_path, monkeypatch):
     """Only a spawn the pre hook stubbed has its return replaced: a live agent's
-    report, or any other tool's output, passes through."""
+    report passes through, with the relay note a hosted plane adds to every
+    main-thread agent return; any other tool's output gets nothing."""
+    from harness.context_policy import RELAY_NOTE
+
     _, returns = _drive_hook(
         tmp_path, monkeypatch, [_post_input(), _post_input("Read", {"file": "x"})],
     )
-    assert returns == [{}, {}]
+    assert returns == [
+        {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": RELAY_NOTE}},
+        {},
+    ]
+
+
+def test_a_stubbed_return_carries_the_relay_note_too(tmp_path, monkeypatch):
+    from harness.context_policy import RELAY_NOTE
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
+        stub_agents={"locality-guide": "CANNED"},
+    )
+    post = returns[1]["hookSpecificOutput"]
+    assert post["updatedToolOutput"]["content"] == [{"type": "text", "text": "CANNED"}]
+    assert post["additionalContext"] == RELAY_NOTE
 
 
 def test_the_hook_returns_the_skill_stub_denial_unchanged(tmp_path, monkeypatch):

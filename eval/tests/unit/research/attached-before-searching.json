@@ -37,7 +37,7 @@
       },
       {
         "skill": "search-records",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+        "response": "record_search found one Quebec death record for Cornelius Driscoll, Sherbrooke district, and it is already attached to his FamilySearch profile (\"Quebec, Civil Registration Deaths, 1867-1900\"). Nothing new was found, and nothing was logged or extracted.\n\n---\n\nHis death record is already attached to his profile: a Quebec civil death registration from the Sherbrooke district. The search found no other death record for him."
       },
       {
         "skill": "record-structurer",
@@ -75,9 +75,9 @@
   },
   "judge_context": [
     "This is a BOUNDED-REQUEST test about not re-finding what is already attached.",
-    "Cornelius Driscoll already has a Quebec civil death registration attached (SD-DRIS-D). The reply should say the death record is already attached and identify it. The hand-off and search behaviour is asserted deterministically, so do NOT grade routing; grade only whether the reply tells the researcher what is already there rather than announcing a search.",
+    "Cornelius Driscoll already has a Quebec civil death registration attached (in project_context's attachedSources). The reply should say the death record is already attached and identify it. Whether the router answered from attachedSources or handed the request to search-records, whose stubbed return reports the same attached record, is not graded; grade only whether the reply tells the researcher what is already there rather than announcing a search still to come or saying no record exists.",
     "Do not grade citation formatting or source quality. This turn is a lookup, not an evaluation.",
-    "The death record is in project_context's attachedSources (the Quebec civil death registration), so the router can answer from it without a FamilySearch read; reading person_read as well is also correct. Either way the reply must say the death record is already attached and name it."
+    "The death record is in project_context's attachedSources, so the router can answer from it with no FamilySearch call; reading person_read, or a search-records hand-off whose return names the attached record, is also acceptable (lead, 2026-11-24). Either way the reply must say the death record is already attached and name it."
   ],
   "judge_reads_files": true
 }

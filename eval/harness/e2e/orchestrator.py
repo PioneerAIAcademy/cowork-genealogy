@@ -61,6 +61,7 @@ from harness.context_policy import (
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
     route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
+    relay_note_hook,  # the SHIPPED relay note, as a hosted plane adds it
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
@@ -2477,6 +2478,7 @@ async def _run_agent(
         max_buffer_size=96 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[relay_note_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
             # A single ask gets all of what Cowork sends, the routing sentence too (spec §16.3).
             "UserPromptSubmit": [

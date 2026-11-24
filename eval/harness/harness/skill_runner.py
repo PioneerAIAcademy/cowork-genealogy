@@ -54,6 +54,7 @@ from claude_agent_sdk import (
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
     builtin_spawn_denial,
+    relay_note_context,
     sources_note_hook,
     owned_section_denial,
     owner_denied,
@@ -1194,9 +1195,11 @@ async def run_skill(
 
     async def posttool_hook(input_data, tool_use_id, ctx):
         text = _stub_returns.pop(tool_use_id, None)
-        if text is None:
-            return {}
-        return stub_return_output(input_data.get("tool_response"), text)
+        out = stub_return_output(input_data.get("tool_response"), text) if text is not None else {}
+        # The relay note a hosted plane adds to every main-thread agent return.
+        if (note := relay_note_context(input_data)) is not None:
+            out.setdefault("hookSpecificOutput", {"hookEventName": "PostToolUse"})["additionalContext"] = note
+        return out
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")

@@ -318,6 +318,34 @@ def _load_route_hook():
 #: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
 _route = _load_route_hook()
 SOURCES_NOTE = _route.SOURCES_NOTE
+
+
+def _load_relay_hook():
+    """Import the shipped `agent_relay_note.py` by file path, as `_load_route_hook` does."""
+    path = _GUARD_HOOK_PATH.parent / "agent_relay_note.py"
+    spec = importlib.util.spec_from_file_location("_genealogy_agent_relay_note", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+#: The note a hosted plane's main thread gets on each agent return; both harnesses
+#: add it, as they measure that main thread. The hook's text, not a copy.
+_relay = _load_relay_hook()
+RELAY_NOTE = _relay.RELAY_NOTE
+
+
+def relay_note_context(input_data: dict[str, Any]) -> str | None:
+    """`RELAY_NOTE` for a main-thread agent return, else None."""
+    return RELAY_NOTE if _relay.applies(input_data or {}) else None
+
+
+async def relay_note_hook(input_data, tool_use_id, context):
+    """PostToolUse: the shipped relay note on a main-thread agent return."""
+    note = relay_note_context(input_data)
+    if note is None:
+        return {}
+    return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": note}}
 ROUTING_NOTE = _route.ROUTING_NOTE
 
 

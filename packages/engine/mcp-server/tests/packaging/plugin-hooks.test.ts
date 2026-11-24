@@ -1866,3 +1866,41 @@ describe("the main thread is denied the tools only agents hold", () => {
     expect(runGuard({ tool_name: "mcp__genealogy__image_read", tool_input: {} })).toEqual({});
   });
 });
+
+const AGENT_RELAY_NOTE = join(PLUGIN_DIR, "hooks", "agent_relay_note.py");
+
+function runRelayNote(input: string, hosted: boolean): any {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const env = { ...process.env };
+  delete env.GENEALOGY_HOSTED_PLANE;
+  if (hosted) env.GENEALOGY_HOSTED_PLANE = "1";
+  return JSON.parse(execFileSync(cmd, [...pre, AGENT_RELAY_NOTE], { input, encoding: "utf-8", env }));
+}
+
+describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
+  it("is bound on Agent|Task returns", () => {
+    const hooks = JSON.parse(readFileSync(HOOKS_JSON, "utf-8")).hooks;
+    const [entry] = hooks.PostToolUse;
+    expect(entry.matcher).toBe("Agent|Task");
+    expect(entry.hooks[0].command).toContain("agent_relay_note.py");
+  });
+
+  it.each(["Agent", "Task"])("tells a hosted main thread to relay a %s return word for word", (tool_name) => {
+    const out = runRelayNote(JSON.stringify({ tool_name, tool_input: {}, tool_response: {} }), true);
+    expect(out.hookSpecificOutput.hookEventName).toBe("PostToolUse");
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/after the final `---` word for word/);
+  });
+
+  it.each([
+    ["Cowork and Desktop", { tool_name: "Agent" }, false],
+    ["a subagent's call", { tool_name: "Agent", agent_id: "a1" }, true],
+    ["another tool", { tool_name: "Read" }, true],
+  ])("says nothing for %s", (_label, payload, hosted) => {
+    expect(runRelayNote(JSON.stringify(payload), hosted as boolean)).toEqual({});
+  });
+
+  it("says nothing on bad input rather than raising", () => {
+    expect(runRelayNote("not json", true)).toEqual({});
+  });
+});
