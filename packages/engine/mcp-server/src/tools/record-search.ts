@@ -49,6 +49,7 @@ import {
   annotateResultsWithRanking,
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
+import { candidateExclusionRefusal } from "../utils/candidate-exclusion.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import {
@@ -1204,6 +1205,11 @@ export async function recordSearchTool(
   opts: RecordSearchOptions = {},
 ): Promise<RecordSearchToolResponse> {
   validateInput(input);
+
+  // Issue #4580: a birth range may not exclude a candidate an earlier search
+  // for this subject returned. Before any request, so a refusal costs nothing.
+  const candidateRefusal = await candidateExclusionRefusal(input);
+  if (candidateRefusal !== null) throw new Error(candidateRefusal);
 
   const normalizedInput: RecordSearchInput = { ...input };
   if (normalizedInput.sex) {

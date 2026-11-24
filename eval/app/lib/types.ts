@@ -462,7 +462,8 @@ export interface RunLogToolCall {
       | 'none'
       | 'live'
       | 'staged_ref_refused'
-      | 'unknown_args_refused';
+      | 'unknown_args_refused'
+      | 'candidate_excluded_refused';
     index: number | null;
   };
   response_fixture: string | null;

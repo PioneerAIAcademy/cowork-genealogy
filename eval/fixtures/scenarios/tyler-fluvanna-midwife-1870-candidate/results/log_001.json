@@ -1,0 +1,45 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-11-12T15:39:58.000Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Tyler",
+      "givenName": "An*",
+      "collectionId": "1438024",
+      "residencePlace": "Fluvanna, Virginia, United States",
+      "subjectId": "I1",
+      "projectPath": "<workspace>"
+    },
+    "totalMatches": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MFLB-F5N",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1870",
+            "place": "Cunningham, Fluvanna, Virginia, United States"
+          },
+          {
+            "type": "Race",
+            "value": "Mulatto"
+          }
+        ],
+        "personName": "Antoine Tyler",
+        "sex": "Female",
+        "birthDate": "1833",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1438024",
+        "recordTitle": "Household of Antoine Tyler",
+        "recordArk": "ark:/61903/1:2:MCQS-QCC",
+        "batchNumber": "N01493-2",
+        "role": "Principal"
+      }
+    ]
+  }
+}

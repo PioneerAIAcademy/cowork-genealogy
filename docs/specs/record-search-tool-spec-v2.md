@@ -528,6 +528,42 @@ through the survey, with the error telling it to narrow the query. The US
 places counted had 1 to 3 names (Shelby 1, Denver 2, Boston 3); with 3 the
 refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 
+### A birth range may not exclude a candidate already found
+
+A call with `projectPath`, `subjectId` and a birth range (`birthYearFrom`,
+`birthYearTo` or both) is refused, before any request, when the range excludes
+the birth year of a **candidate** an earlier search for the same subject
+returned. A candidate is a row of a logged `record_search` sidecar
+(`results/<log_id>.json`, reached through a `log` entry's `results_ref`) where:
+
+- the sidecar's echoed `payload.query.subjectId` is this call's `subjectId`;
+- the page holds 1 to `CANDIDATE_PAGE_MAX` (5) rows. A short page is a candidate
+  list; a longer one is a pool, and narrowing a pool with a birth range stays
+  allowed;
+- the row's first given name matches that search's `givenName` or
+  `givenNameAlt` (a wildcard pattern by wildcard, otherwise by prefix or a
+  Dice coefficient of at least 0.66). A search with no given name matches every
+  row. This keeps out the relatives a search for someone else (a wife, a child)
+  returns under the subject's id;
+- the row has a birth year (the first year in its `birthDate`);
+- the record is neither rejected for the subject (`rejected_links`, through the
+  rejected assertion's `record_id`) nor listed in one of the subject's
+  `namesakes[].record_ids`.
+
+The error names each excluded candidate, its record, birth year and log entry,
+and says to search again with no birth range or one that includes those years.
+Either is always accepted, so the rule never blocks a search, only the range.
+Any failure to read `research.json` or a sidecar allows the call.
+
+In a reported research session `log_099` returned an 1870 household
+headed by Antoine Tyler, born 1833; the next search for the subject, born about
+1853, kept birth 1848–1858, came back nil, and the nil was reported as a
+finding. The search-records agent body forbade it and the agent still did it in
+4 of 5 runs of `ut_search_records_035` (2026-11-23); the rule is decidable from the project's
+own files, so the tool enforces it (ADR-0011). The eval mock runs the same
+compiled `candidateExclusionRefusal` and logs a refused call as
+`matched.kind: "candidate_excluded_refused"`.
+
 ### Rows at or below the matcher floor are slimmed (experiment)
 
 A ranked row whose unrounded `matchScore` is at or below
@@ -2130,6 +2166,7 @@ For each `entry` in `response.entries`:
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
 | `recordType` not in the eight allowed values or the six plan-item values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other (a plan item's vital_record, church, cemetery, land, court or tax is also accepted)."` |
+| A birth range that excludes a candidate an earlier search for the same `subjectId` returned (see "A birth range may not exclude a candidate already found") | Throw, before any request: `"Refused: the birth range <from>–<to> excludes a candidate an earlier search for <subjectId> already returned: <name> (<recordId>), born <year>, from <log_id>. …Search again with no birth range, or with one that includes <years>."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |
@@ -2220,6 +2257,14 @@ either and importing from the other would make the two mutually importing.
 - `searchFoundNobody(out)` — the did-not-identify-the-subject test, shared with
   `jurisdictionHints` in `record-search.ts`.
 - `SURNAME_FIELDS`, `PATRONYMIC_ABBREVIATIONS`, `SURNAME_VARIANT_HINTS_NOTE`.
+
+### `packages/engine/mcp-server/src/utils/candidate-exclusion.ts`
+
+- `candidateExclusionRefusal(input)` — the refusal message, or null. Called by
+  `recordSearchTool` before any request, and by the eval mock out of the
+  compiled build.
+- `excludedCandidates(input)`, `candidateExclusionMessage(input, excluded)`,
+  `CANDIDATE_PAGE_MAX`. Tests: `tests/utils/candidate-exclusion.test.ts`.
 
 ### `packages/engine/mcp-server/src/utils/search-advice.ts`
 
