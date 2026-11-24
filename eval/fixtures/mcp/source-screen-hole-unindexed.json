@@ -1,0 +1,36 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen on Christian P. Hole (KD96-TV2) in christian-hole-quality. The project tree cites S1 and S2 on his facts, but neither tree source carries a url, so the real tool returns ok:true with both rows not_scored as unindexed; person mode never ran in this scenario. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario; no matcher call was made.",
+  "args": {
+    "personId": "KD96-TV2"
+  },
+  "response": {
+    "ok": true,
+    "personId": "KD96-TV2",
+    "attachments": [
+      {
+        "sourceId": "S1",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      },
+      {
+        "sourceId": "S2",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      }
+    ],
+    "counts": {
+      "not_scored": 2
+    }
+  }
+}

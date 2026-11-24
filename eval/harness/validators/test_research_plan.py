@@ -1367,8 +1367,12 @@ def test_research_plan_availability_claim_matches_counts(
 
 def _collections_scope(place: str) -> str:
     """Python port of `standardPlaceToCollectionsQuery`
-    (packages/engine/mcp-server/src/tools/collections-search.ts): the scope a
-    `collections_search` call on `place` is answered at."""
+    (packages/engine/mcp-server/src/utils/collection-scope.ts): the scope a
+    `collections_search` call on `place` is answered at. It follows the TS for
+    the United States, Canada and Mexico. It does not model the places the TS
+    matches by leading terms (`collectionScopeTerms`: the United Kingdom's
+    countries, Guadeloupe, Martinique and the others it lists): here a UK place
+    stays at "United Kingdom" and a Guadeloupe place at "France"."""
     parts = [p.strip() for p in place.split(",") if p.strip()]
     if not parts:
         return place.strip()

@@ -44,6 +44,7 @@ import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { imageIndexSchema } from "./tools/image-index.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { sourceScreenToolSchema } from "./tools/source-screen.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
@@ -120,6 +121,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "research_query",
   "sidecar_read",
   "source_attachments",
+  "source_screen",
   "tree_gaps",
   "tree_query",
   "validate_research_schema",
@@ -167,6 +169,7 @@ export const allToolSchemas = [
   imageSearchSchema,
   imageIndexSchema,
   personWarningsToolSchema,
+  sourceScreenToolSchema,
   personQualityToolSchema,
   mergeWarningsSchema,
   volumeSearchSchema,
@@ -232,6 +235,7 @@ export const AGENT_ONLY: ReadonlySet<string> = new Set([
   "project_create",
   "record_search",
   "same_person",
+  "source_screen",
   "tree_correct",
   "tree_edit",
   "tree_gaps",

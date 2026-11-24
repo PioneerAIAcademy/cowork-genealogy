@@ -211,6 +211,7 @@ AGENT_ONLY_TOOLS = {
     "project_create": ("init-project",),
     "record_search": ("search-records", "survey-surname"),
     "same_person": ("person-evidence",),
+    "source_screen": ("person-evidence", "source-evaluation"),
     "tree_correct": ("proof-conclusion", "tree-edit"),
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),

@@ -32,6 +32,17 @@ def test_it_is_added_to_a_main_thread_agent_return_only():
     assert asyncio.run(relay_note_hook({"tool_name": "Read"}, None, None)) == {}
 
 
+def test_historical_context_gets_the_note_for_its_own_relay_rule():
+    for agent in ("historical-context", "plugin:historical-context", "genealogy-research:historical-context"):
+        note = relay_note_context({"tool_name": "Agent", "tool_input": {"subagent_type": agent}})
+        assert note != RELAY_NOTE
+        assert "above its `### Search implications` heading" in note
+        assert "after the final `---`" not in note
+    other = {"tool_name": "Agent", "tool_input": {"subagent_type": "search-records"}}
+    assert relay_note_context(other) == RELAY_NOTE
+    assert relay_note_context({"tool_name": "Agent", "tool_input": "not a dict"}) == RELAY_NOTE
+
+
 def _names(rel: str) -> set[str]:
     tree = ast.parse((_HARNESS / rel).read_text(encoding="utf-8"))
     return {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
