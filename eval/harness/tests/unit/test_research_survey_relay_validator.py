@@ -85,6 +85,32 @@ def test_a_completeness_claim_fails(claim):
         check(f"{RELAY}\n\n{claim}", TAGGED)
 
 
+OPEN_QUESTIONS = [
+    "Next I would check whether this survey is exhaustive, or first read a sample of the hits in full.",
+    "I can see if the survey was complete for all three parishes.",
+    "The next step checks whether it is an exhaustive survey.",
+]
+
+STILL_CLAIMS = [
+    "If you want more, note that the survey is complete.",
+    "Whether or not you read them, the survey is complete.",
+    "The survey is exhaustive, so check whether to extract the hits.",
+]
+
+
+@pytest.mark.parametrize("question", OPEN_QUESTIONS)
+def test_asking_whether_the_survey_is_exhaustive_passes(question):
+    """Pre-flight run 0 of ut_research_030, 2026-11-24: the router offered the
+    exhaustiveness check and the survey pattern read the offer as a claim."""
+    check(f"{RELAY}\n\n{question}", TAGGED)
+
+
+@pytest.mark.parametrize("claim", STILL_CLAIMS)
+def test_a_claim_beside_a_whether_or_if_still_fails(claim):
+    with pytest.raises(AssertionError, match="complete or claims every"):
+        check(f"{RELAY}\n\n{claim}", TAGGED)
+
+
 def test_the_committed_v55_run_3_reply_passes():
     check(
         "Dispatching the indexed surname search across the Poland, Church Books collection "

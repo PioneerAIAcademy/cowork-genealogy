@@ -843,6 +843,21 @@ def test_a_stubbed_return_carries_the_relay_note_too(tmp_path, monkeypatch):
     assert post["additionalContext"] == RELAY_NOTE
 
 
+@pytest.mark.parametrize("agent", ["historical-context", "init-project"])
+def test_a_stubbed_return_gets_the_relay_note_of_the_agent_the_model_named(tmp_path, monkeypatch, agent):
+    """The stub runs as STUB_RUNNER_AGENT, so the post hook sees that name; the note
+    must be the one production gives the agent the model spawned."""
+    from harness.context_policy import RELAY_NOTE, _relay
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input(agent), _post_input()],
+        stub_agents={agent: "CANNED"},
+    )
+    note = returns[1]["hookSpecificOutput"]["additionalContext"]
+    assert note == _relay.AGENT_NOTES[agent]
+    assert note != RELAY_NOTE
+
+
 def test_the_hook_returns_the_skill_stub_denial_unchanged(tmp_path, monkeypatch):
     """The text the model reads on a `Skill`-call stub is built by `stub_denial`;
     the hook must pass it through whole. Dropping `additionalContext` or

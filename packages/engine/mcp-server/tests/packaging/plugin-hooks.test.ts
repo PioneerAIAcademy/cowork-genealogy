@@ -1892,6 +1892,16 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(/after the final `---` word for word/);
   });
 
+  it.each(["historical-context", "plugin:historical-context", "genealogy-research:historical-context"])(
+    "tells a hosted main thread to relay %s's overview above its Search implications, not the text after ---",
+    (subagent_type) => {
+      const out = runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type }, tool_response: {} }), true);
+      const note = out.hookSpecificOutput.additionalContext;
+      expect(note).toMatch(/everything above its `### Search implications` heading word for word/);
+      expect(note).not.toMatch(/after the final `---`/);
+    },
+  );
+
   it.each([
     ["Cowork and Desktop", { tool_name: "Agent" }, false],
     ["a subagent's call", { tool_name: "Agent", agent_id: "a1" }, true],

@@ -46,10 +46,6 @@ DORMANT: dict[str, str] = {
         "searches with a birth range excluding the found candidate; issue #4580 "
         "restores it once a tool rule enforces it"
     ),
-    "negative-status-question": (
-        "its only test, ut_research_025, was deleted by PR #4613 (the status "
-        "answer copies project_context's ps_001); issue #4661 restores it"
-    ),
     "not-reached-wiki": (
         "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
         "it fails 2 of 4 on main because the agent skips the localities read; "
