@@ -16,7 +16,8 @@
     "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
-    "project-list-hosted-flynn"
+    "project-list-hosted-flynn",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_turns": 30,

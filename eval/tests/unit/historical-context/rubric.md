@@ -17,10 +17,10 @@ Did the skill provide historical context directly relevant to the genealogical r
 Did the skill draw from reliable historical sources? Context should be
 factual, not speculative or fabricated.
 
-Grade the disclosure at **block** granularity, not per claim. One flag
-covering a contiguous passage of unverified material — the form the agent body
-prescribes, "the following comes from general knowledge and should be
-verified" — satisfies this dimension for every claim inside that passage.
+Grade the disclosure at **paragraph** granularity, not per claim. One flag
+opening a paragraph or bullet of unverified material — the form the agent body
+prescribes, "(general knowledge)" — satisfies this dimension for every claim
+inside that passage.
 Tagging each individual claim is a bonus, not what this dimension requires:
 do not mark down a flagged passage because a sentence within it reads as
 confident. What falls short is unverified material with no flag covering

@@ -754,6 +754,10 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
+#: `FULLTEXT_ADVICE_KEYS` in `utils/fulltext-advice.ts`, in serialization order.
+FULLTEXT_ADVICE_KEYS: tuple[str, ...] = ("nameFieldRetry", "tooManyResults", "wordListRead")
+
+
 def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
     """Production's own `researchLogAppend` for a nil `record_search` (#4527).
 
@@ -2328,6 +2332,29 @@ def create_mock_server(
             if _name == "record_search" and isinstance(response, dict) and "error" not in response:
                 for _advice_key, _advice in _search_advice(dict(args), response):
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
+            # `fulltext_search`'s advice, from the same compiled function the tool
+            # runs. Gated here on the totals and the spelling it can fire on, so
+            # most calls spawn no node process.
+            if _name == "fulltext_search" and isinstance(response, dict) and "error" not in response:
+                _total = response.get("totalResults", 0)
+                _spelled = any(
+                    isinstance(args.get(_k), str) and not args[_k].isascii()
+                    for _k in ("keywords", "name")
+                )
+                if _spelled or (isinstance(_total, (int, float)) and (_total == 0 or _total > 500)):
+                    _ft_advice = _call_compiled_pure(
+                        "utils/fulltext-advice.js",
+                        "fulltextAdvice",
+                        [dict(args), _total],
+                        consequence="fulltext_search responses will carry no search advice",
+                        fallback={},
+                    )
+                    for _advice_key in FULLTEXT_ADVICE_KEYS:
+                        if _ft_advice.get(_advice_key):
+                            response = _place_before_results(
+                                {**response, _advice_key: _ft_advice[_advice_key]}, _advice_key
+                            )
 
             # Production answers a projectless `planItemId` with a note rather
             # than dropping it (issue #4527), and that is the one branch the

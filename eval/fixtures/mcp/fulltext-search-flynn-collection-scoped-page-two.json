@@ -1,0 +1,212 @@
+{
+  "tool": "fulltext_search",
+  "description": "The collection-scoped Flynn search, offset 5: results 6 to 10 of 12. None names Thomas Flynn, so paging adds no candidate. Declared so an agent that pages past the first five gets the next rows, not the first five again. List it before fulltext-search-flynn-collection-scoped.",
+  "args": {
+    "collectionId": "~2220359",
+    "offset": 5
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR — always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "query": {
+      "keywords": "+Flynn",
+      "collectionId": "2220359"
+    },
+    "totalResults": 12,
+    "returned": 5,
+    "offset": 5,
+    "hasMore": true,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX91",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Michael Flynn to Owen Brady",
+        "recordDate": "1871",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Michael Flynn of the Borough of Minersville doth grant bargain and sell unto Owen Brady all that certain lot ...",
+        "names": [
+          "Michael Flynn",
+          "Owen Brady"
+        ],
+        "places": [
+          "Minersville",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1871"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX92",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Mortgage — John Flynn to Miners Trust Company",
+        "recordDate": "1883",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "John Flynn of Cass Township is held and firmly bound unto the Miners Trust Company in the sum of four hundred dollars ...",
+        "names": [
+          "John Flynn"
+        ],
+        "places": [
+          "Cass Township",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1883"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX93",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Edward Kelly to Bridget Flynn",
+        "recordDate": "1877",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Edward Kelly and Ann his wife do grant unto Bridget Flynn widow all that messuage and lot ...",
+        "names": [
+          "Edward Kelly",
+          "Ann Kelly",
+          "Bridget Flynn"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1877"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX94",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Release — Heirs of Martin Flynn",
+        "recordDate": "1886",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "We the heirs at law of Martin Flynn late of Branch Township deceased do release and quit claim ...",
+        "names": [
+          "Martin Flynn"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1886"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX95",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — James Flynn to William Reilly",
+        "recordDate": "1869",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "James Flynn of Pottsville yeoman doth grant unto William Reilly a certain tract of land ...",
+        "names": [
+          "James Flynn",
+          "William Reilly"
+        ],
+        "places": [
+          "Pottsville",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1869"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      }
+    ]
+  }
+}

@@ -639,6 +639,66 @@ def test_a_nil_record_search_no_longer_asks_the_agent_to_log_it(tmp_path):
     assert "nilSearchNeedsLog" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_fulltext_keywords_nil_carries_the_name_field_note(tmp_path):
+    """The mock runs production's `fulltextAdvice`: a filter-free keywords nil
+    carries `nameFieldRetry` before `results`; the same nil with a place does not."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-probate-empty"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn +probate"})
+    )
+    assert body["nameFieldRetry"].startswith("This keywords search found nothing.")
+    keys = list(body)
+    assert keys.index("nameFieldRetry") < keys.index("results")
+    assert "tooManyResults" not in body
+
+    filtered = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "fulltext_search",
+            {"keywords": "+Flynn +probate", "place": "Schuylkill, Pennsylvania"},
+        )
+    )
+    assert "nameFieldRetry" not in filtered
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_over_500_results_carries_the_too_many_note(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-broad-with-facets"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"}))
+    assert body["totalResults"] == 847
+    assert body["tooManyResults"].startswith("More than 500 results.")
+    keys = list(body)
+    assert keys.index("tooManyResults") < keys.index("results")
+    assert "nameFieldRetry" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_accented_query_carries_the_word_list_note(tmp_path):
+    """One hit, so neither total-keyed note applies: the spelling alone reaches
+    the compiled function. The same search in plain ASCII carries no note."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": '+"José María García"'})
+    )
+    assert body["totalResults"] == 1
+    assert body["wordListRead"].startswith("This query has a letter English does not use")
+    keys = list(body)
+    assert keys.index("wordListRead") < keys.index("results")
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial-by-name"], FIXTURES_DIR, workspace=tmp_path
+    )
+    plain = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"name": "Jose Garcia"}))
+    assert "wordListRead" not in plain
+
+
 def test_no_log_note_without_a_project_path(tmp_path):
     """Neither note fires when the caller passed no projectPath — nothing is owed."""
     server, call_log, tools_by_name = create_mock_server(
