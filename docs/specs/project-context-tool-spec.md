@@ -117,6 +117,7 @@ can drop:
     name?: string,                       // preferred names entry, "Given Surname";
                                          //   the surname alone when
                                          //   unsupportedGivenName flags the given name
+    pid?: string,                        // FamilySearch ID, from a tree-person ark or URL only
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -214,7 +215,10 @@ Projection rules:
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; absent when the
-  person has no names). The `S` ids a person cites are not here: `tree_query`
+  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`),
+  uppercased: the FamilySearch ID of a tree-person (`4:1:`) ark or a tree person
+  URL. A record or image ark, or no ark, leaves it out, so a record persona id is
+  never shown as a PID. The `S` ids a person cites are not here: `tree_query`
   returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's
@@ -287,7 +291,9 @@ Projection rules:
   only). Every skill's Narration line and `search-external-sites` read these;
   no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
   facts are not here: `tree_query` serves them, so this projection does not grow for callers
-  that never need them.
+  that never need them. Lead ruling 2026-11-23: the PID exception to
+  "No identifiers" belongs in the main thread's house text (`HOUSE_RESEARCHER_PROFILE`)
+  only; the plugin agents' "No identifiers" return-contract lines stay unchanged.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
