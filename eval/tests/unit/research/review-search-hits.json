@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A search-hit review spawns one evaluate-search-results per named hit and offers the Matches",
     "type": "positive",
-    "description": "Issue #3522, research/SKILL.md \"Search-hit review\". The user names three hits of the full-text search log_008. The router reads results/log_008.json#hits, spawns one @plugin:evaluate-search-results per named hit with projectPath, the row's ref as hitRef and a target, relays each verdict, and ends \"Continue with extracting the 3 Matches?\". evaluate-search-results is stubbed with one canned return for every spawn: verdict match, alreadyExtracted false, and no hitRef line, because one text answers every spawn and a hitRef line would name the wrong hit; the router pairs each return with its spawn. So the offer's count is the spawn count. Hits 2, 4 and 7, not hit 1: hit 1 (3QSQ-G9WC-F61H) is already extracted as src_005, so a canned alreadyExtracted false would contradict project_context. Asserted from the hook records by test_search_hit_review_spawns_one_agent_per_hit (reviews-search-hits, reviews-hits:log_008:2,4,7), which the judge cannot see.",
+    "description": "Issue #3522, research/SKILL.md \"Search-hit review\". The user names three hits of the full-text search log_008. The router reads results/log_008.json#hits, spawns one @plugin:evaluate-search-results per named hit with projectPath, the row's ref as hitRef and a target, relays each verdict, and ends \"Continue with extracting the 3 Matches?\". evaluate-search-results is stubbed with one canned return for every spawn: verdict match and alreadyExtracted false, with a hitRef line the harness fills from each spawn's own delegation ({hitRef}), so each return names its hit as the real one does. So the offer's count is the spawn count. Hits 2, 4 and 7, not hit 1: hit 1 (3QSQ-G9WC-F61H) is already extracted as src_005, so a canned alreadyExtracted false would contradict project_context. Asserted from the hook records by test_search_hit_review_spawns_one_agent_per_hit (reviews-search-hits, reviews-hits:log_008:2,4,7), which the judge cannot see.",
     "tags": [
       "routing",
       "bounded-request",
@@ -24,7 +24,7 @@
     "stub_skills": [
       {
         "skill": "evaluate-search-results",
-        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
+        "response": "hitRef: {hitRef}\nverdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
       },
       "record-structurer",
       "search-full-text",

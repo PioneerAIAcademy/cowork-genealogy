@@ -135,6 +135,9 @@ DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
 
+PLUGIN_PREFIX = "plugin:"
+
+
 def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """An allow-with-rewrite forcing a delegation to the foreground, or None.
 
@@ -145,13 +148,25 @@ def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> 
     in the background by default", its own tool text from 2.1.215 through 2.1.308) and
     both measured incidents carried no key at all.
 
+    It also drops a `plugin:` the router copied onto `subagent_type` from
+    research/SKILL.md's `@plugin:<name>` notation: no agent is registered under that
+    name, and a Haiku 5.5 router wrote it in spite of the skill saying not to
+    (ut_research_b4p, cq7). A call carrying one is rewritten even when it is already
+    in the foreground.
+
     It outlives the Stop veto, which never covered this: see `DELEGATION_TOOLS`. Without
     it a turn ends while its delegations still run. The prototype worker then kills the
     CLI (`_run_turn`), so the delegation dies mid-run; on the alpha its report arrives
     after the turn, where `_drain_background` discards it.
     """
     data = dict(tool_input or {})
-    if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:
+    if tool_name not in DELEGATION_TOOLS:
+        return None
+    name = data.get("subagent_type")
+    prefixed = isinstance(name, str) and name.startswith(PLUGIN_PREFIX) and len(name) > len(PLUGIN_PREFIX)
+    if prefixed:
+        data["subagent_type"] = name[len(PLUGIN_PREFIX):]
+    elif data.get("run_in_background") is False:
         return None
     return {
         "hookSpecificOutput": {

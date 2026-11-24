@@ -73,7 +73,7 @@
           "record_type": "court",
           "jurisdiction": "Barren County, Kentucky",
           "date_range": "1870-1885",
-          "repository": "FamilySearch",
+          "repository": "FamilySearch (images)",
           "rationale": "Administrator appointments and bonds are entered in the county court order books. On FamilySearch the Barren County order books for 1870-1885 are digitized as browse-only image groups (volume_search shows 0% record-searchable), so the remaining path is reading the order-book pages directly, starting from each volume's index.",
           "fallback_for": "pli_002",
           "status": "planned"

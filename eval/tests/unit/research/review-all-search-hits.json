@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A review of all hits of a search spawns evaluate-search-results for each of its eleven hits",
     "type": "positive",
-    "description": "Issue #3522, research/SKILL.md \"Search-hit review\", the all-hits form. log_017 holds eleven hits, every one with a transcript, and none is extracted in this scenario (g9gj without src_006). The router reads results/log_017.json#hits and spawns one @plugin:evaluate-search-results per hit, all in one message, so eleven spawns in the same turn, with no report between them. evaluate-search-results is stubbed with one canned Match, not yet extracted, and no hitRef line (see ut_research_hv3), so the offer reads \"Continue with extracting the 11 Matches?\". test_search_hit_review_spawns_one_agent_per_hit asserts the eleven distinct hitRefs, projectPath, target and the offer's count from the hook records.",
+    "description": "Issue #3522, research/SKILL.md \"Search-hit review\", the all-hits form. log_017 holds eleven hits, every one with a transcript, and none is extracted in this scenario (g9gj without src_006). The router reads results/log_017.json#hits and spawns one @plugin:evaluate-search-results per hit, all in one message, so eleven spawns in the same turn, with no report between them. evaluate-search-results is stubbed with one canned Match, not yet extracted, whose hitRef line names each spawn's own hit (see ut_research_hv3), so the offer reads \"Continue with extracting the 11 Matches?\". test_search_hit_review_spawns_one_agent_per_hit asserts the eleven distinct hitRefs, projectPath, target and the offer's count from the hook records.",
     "tags": [
       "routing",
       "bounded-request",
@@ -24,7 +24,7 @@
     "stub_skills": [
       {
         "skill": "evaluate-search-results",
-        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
+        "response": "hitRef: {hitRef}\nverdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
       },
       "record-structurer",
       "search-full-text",

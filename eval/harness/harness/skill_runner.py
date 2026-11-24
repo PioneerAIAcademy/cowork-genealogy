@@ -62,11 +62,12 @@ from harness.context_policy import (
     subagent_only_denial,
     subagent_only_violation,
 )
-from harness.delegation import foreground_rewrite
+from harness.delegation import foreground_rewrite, keeping_the_rewrite, without_plugin_prefix
 from harness.main_thread import MAIN_THREAD
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import (
+    fill_stub_fields,
     stub_denial,
     stub_return_output,
     stub_return_text,
@@ -1195,13 +1196,25 @@ async def run_skill(
 
     async def posttool_hook(input_data, tool_use_id, ctx):
         text = _stub_returns.pop(tool_use_id, None)
-        out = stub_return_output(input_data.get("tool_response"), text) if text is not None else {}
+        out = (
+            stub_return_output(input_data.get("tool_response"), text, str(tool_use_id))
+            if text is not None
+            else {}
+        )
         # The relay note a hosted plane adds to every main-thread agent return.
         if (note := relay_note_context(input_data)) is not None:
             out.setdefault("hookSpecificOutput", {"hookEventName": "PostToolUse"})["additionalContext"] = note
         return out
 
     async def pretool_hook(input_data, tool_use_id, ctx):
+        # A `plugin:` on a spawn is dropped first, as the hosted planes'
+        # `foreground_rewrite` drops it, so every check below sees that agent.
+        fixed = without_plugin_prefix(input_data)
+        if fixed is None:
+            return await _pretool(input_data, tool_use_id, ctx)
+        return keeping_the_rewrite(await _pretool(fixed, tool_use_id, ctx), fixed["tool_input"])
+
+    async def _pretool(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
         # Telemetry only — never gates, denies, or counts toward any limit.
         if (builtin_record := builtin_call_record(tool_name, input_data)):
@@ -1339,7 +1352,7 @@ async def run_skill(
         ):
             # The callee never runs: a no-op agent does, and `posttool_hook`
             # hands its caller `stub_text` as that agent's return (skill_stubs.py).
-            _stub_returns[tool_use_id] = stub_text
+            _stub_returns[tool_use_id] = fill_stub_fields(stub_text, input_data.get("tool_input"))
             return stub_spawn_rewrite(input_data.get("tool_input"))
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read and the shipped hook's

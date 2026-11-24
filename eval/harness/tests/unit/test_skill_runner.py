@@ -757,7 +757,7 @@ def test_a_stubbed_spawn_runs_a_no_op_agent_and_hands_back_the_stub(tmp_path, mo
     to its real hook closure (issue #2825), rewrite the spawn so the callee never
     runs, and replace the no-op agent's return with the stub text, so the caller
     reads an ordinary hand-back rather than an error."""
-    from harness.skill_stubs import STUB_REPORTED_USAGE, STUB_RUNNER_AGENT, STUB_RUNNER_PROMPT
+    from harness.skill_stubs import STUB_RUNNER_AGENT, STUB_RUNNER_PROMPT, stub_reported_usage
 
     _, returns = _drive_hook(
         tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
@@ -772,7 +772,7 @@ def test_a_stubbed_spawn_runs_a_no_op_agent_and_hands_back_the_stub(tmp_path, mo
     post = returns[1]["hookSpecificOutput"]
     assert post["hookEventName"] == "PostToolUse"
     assert post["updatedToolOutput"] == {
-        **_AGENT_OUTPUT, **STUB_REPORTED_USAGE, "content": [{"type": "text", "text": expected}],
+        **_AGENT_OUTPUT, **stub_reported_usage("tool-use-id"), "content": [{"type": "text", "text": expected}],
     }
 
 
@@ -801,6 +801,34 @@ def test_post_tool_use_leaves_an_unstubbed_return_alone_but_adds_the_relay_note(
         {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": RELAY_NOTE}},
         {},
     ]
+
+
+def test_a_plugin_prefixed_spawn_is_stubbed_and_recorded_as_its_agent(tmp_path, monkeypatch):
+    """As the hosted planes' foreground_rewrite drops the `plugin:`, the harness hook
+    checks, stubs and records the spawn under the agent's own name."""
+    from harness.skill_stubs import STUB_RUNNER_AGENT
+
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_spawn_input("plugin:locality-guide"), _post_input()],
+        stub_agents={"locality-guide": "CANNED"},
+    )
+    assert returns[0]["hookSpecificOutput"]["updatedInput"]["subagent_type"] == STUB_RUNNER_AGENT
+    assert returns[1]["hookSpecificOutput"]["updatedToolOutput"]["content"] == [{"type": "text", "text": "CANNED"}]
+    recorded = [r for r in result.builtin_tool_calls if r.get("tool") in ("Agent", "Task")]
+    import json
+
+    assert recorded and all("plugin:" not in json.dumps(r) for r in recorded), recorded
+
+
+def test_a_plugin_prefixed_live_spawn_runs_the_agent(tmp_path, monkeypatch):
+    spawn = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "plugin:research-plan", "prompt": "p", "run_in_background": False},
+    }
+    _, returns = _drive_hook(tmp_path, monkeypatch, [spawn])
+    hso = returns[0]["hookSpecificOutput"]
+    assert hso["permissionDecision"] == "allow"
+    assert hso["updatedInput"]["subagent_type"] == "research-plan"
 
 
 def test_a_stubbed_return_carries_the_relay_note_too(tmp_path, monkeypatch):
@@ -3223,3 +3251,19 @@ def test_no_live_agents_means_todays_behaviour(tmp_path, monkeypatch):
     [out] = _hook_returns(monkeypatch, tmp_path, [_spawn("init-project")])
 
     assert not _denied(out)
+
+
+def test_a_stub_names_the_hit_its_spawn_was_given_and_reports_its_own_figures():
+    """One canned evaluator text answers every hit, so `{hitRef}` takes each spawn's
+    own; identical returns read to a router as one report copied (ut_research_hv3)."""
+    from harness.skill_stubs import fill_stub_fields, stub_reported_usage
+
+    text = "hitRef: {hitRef}\nverdict: match"
+    a = fill_stub_fields(text, {"prompt": "projectPath: /p\nhitRef: results/log_008.json#AAA\ntarget: I1"})
+    b = fill_stub_fields(text, {"prompt": "hitRef: results/log_008.json#BBB"})
+    assert a.startswith("hitRef: results/log_008.json#AAA\n")
+    assert b.startswith("hitRef: results/log_008.json#BBB\n")
+    assert fill_stub_fields("no placeholder", {"prompt": "hitRef: x"}) == "no placeholder"
+    assert stub_reported_usage("t1") != stub_reported_usage("t2")
+    assert stub_reported_usage("t1") == stub_reported_usage("t1")
+    assert all(v > 0 for v in stub_reported_usage("t1").values())

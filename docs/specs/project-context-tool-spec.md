@@ -610,14 +610,12 @@ subject: {"subjectId","names","birth","death","parents"}
 
 - **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
   for one whose repository is not FamilySearch (`routesToFamilySearch`);
-  `search-full-text` for one whose repository says full-text ("FamilySearch
-  (full-text)", as research-plan writes it); `search-images` for one whose
-  rationale calls its records browse-only, unindexed or 0% record-searchable and
-  does not deny it ("not a browse-only volume" stays search-records); else
-  `search-records`. The browse test reads prose, so it was checked against every
-  open FamilySearch item in the eval scenarios (2026-11-24: four items, four
-  right) before it shipped; the router's own reading of the same rationale sent
-  ut_research_si3 to search-records in 2 of 3 runs.
+  `search-full-text` for "FamilySearch (full-text)" and `search-images` for
+  "FamilySearch (images)", the lanes research-plan writes into `repository`;
+  else `search-records`. The lane is read from the field, never guessed from the
+  rationale's words: "her baptism is unindexed, so search the death index" is a
+  name search. A plan written before the markers has none, and the router reads
+  a browse-only item's rationale itself (research/SKILL.md, the browse row).
 - **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
   item in `exhaustedImageGroups`, and a fallback whose primary is still open or
   found something. A fallback runs once every entry its primary logged is

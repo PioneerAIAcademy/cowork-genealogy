@@ -65,7 +65,7 @@ from harness.context_policy import (
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
-from harness.delegation import foreground_rewrite
+from harness.delegation import foreground_rewrite, keeping_the_rewrite, without_plugin_prefix
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
 from harness.sdk_query import close_query, open_query
@@ -2047,6 +2047,14 @@ async def _run_agent(
         return _step_gate
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
+        # A `plugin:` on a spawn is dropped first, as the hosted planes'
+        # `foreground_rewrite` drops it, so every check below sees that agent.
+        fixed = without_plugin_prefix(input_data)
+        if fixed is None:
+            return await _pretool(input_data, _tool_use_id, _ctx)
+        return keeping_the_rewrite(await _pretool(fixed, _tool_use_id, _ctx), fixed["tool_input"])
+
+    async def _pretool(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
         # spec §11 Step 0 — record caller identity for EVERY call, including ones
         # about to be denied below (an unnamed subagent attempting a raw

@@ -68,6 +68,8 @@ fix; existing validators depend on its `list[str]` shape.
 
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Any
 
 # What every stub tells the model about the denied call (in the reason for a
@@ -172,24 +174,51 @@ def stub_spawn_rewrite(tool_input: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
-#: The usage line a stubbed spawn's hand-back shows. The CLI prints the no-op
-#: agent's own figures under the report (`tool_uses: 0`), and Haiku 5.5 low read
-#: them as an agent that never ran ("it made no tool calls, so nothing was
-#: searched": ut_research_030, b4i, b4p). These are a working agent's figures.
-#: The keys must stay: an output missing them is ignored and "done" goes through.
-STUB_REPORTED_USAGE = {"totalToolUseCount": 6, "totalDurationMs": 41000, "totalTokens": 28000}
+def stub_reported_usage(seed: str) -> dict[str, int]:
+    """The usage line a stubbed spawn's hand-back shows: a working agent's figures.
+
+    The CLI prints the no-op agent's own figures under the report (`tool_uses: 0`),
+    and Haiku 5.5 low read them as an agent that never ran ("it made no tool calls,
+    so nothing was searched": ut_research_030, b4i, b4p). The figures differ per
+    spawn (`seed` is its tool_use_id): identical ones on three returns read as one
+    report copied (ut_research_hv3). The keys must stay: an output missing them is
+    ignored and "done" goes through.
+    """
+    h = int(hashlib.sha256(seed.encode("utf-8")).hexdigest()[:8], 16)
+    return {
+        "totalToolUseCount": 4 + h % 7,
+        "totalDurationMs": 25_000 + h % 40_000,
+        "totalTokens": 18_000 + h % 24_000,
+    }
 
 
-def stub_return_output(tool_response: Any, text: str) -> dict[str, Any]:
+#: `{hitRef}` in a canned response becomes the `hitRef:` line of the spawn it
+#: answers, so one canned text can name each hit as the real return does.
+_PROMPT_FIELD = re.compile(r"^\s*hitRef\s*:\s*(\S+)", re.MULTILINE)
+
+
+def fill_stub_fields(text: str, tool_input: dict[str, Any] | None) -> str:
+    """`text` with `{hitRef}` replaced by the hitRef its spawn's prompt names."""
+    if "{hitRef}" not in text:
+        return text
+    found = _PROMPT_FIELD.search(str((tool_input or {}).get("prompt") or ""))
+    return text.replace("{hitRef}", found.group(1) if found else "(no hitRef in the delegation)")
+
+
+def stub_return_output(tool_response: Any, text: str, seed: str = "") -> dict[str, Any]:
     """The PostToolUse output that replaces a stubbed spawn's return with `text`.
 
     The Agent tool's output is a dict whose `content` is a list of text blocks;
-    that list and the usage figures (`STUB_REPORTED_USAGE`) are replaced, so the
+    that list and the usage figures (`stub_reported_usage`) are replaced, so the
     CLI frames it as a working subagent's report. Any other shape is replaced by
     the bare string.
     """
     if isinstance(tool_response, dict) and isinstance(tool_response.get("content"), list):
-        output: Any = {**tool_response, **STUB_REPORTED_USAGE, "content": [{"type": "text", "text": text}]}
+        output: Any = {
+            **tool_response,
+            **stub_reported_usage(seed),
+            "content": [{"type": "text", "text": text}],
+        }
     else:
         output = text
     return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": output}}
