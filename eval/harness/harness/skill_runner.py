@@ -1193,6 +1193,8 @@ async def run_skill(
 
     # tool_use_id -> the text a stubbed spawn hands back (`posttool_hook`).
     _stub_returns: dict[str, str] = {}
+    # A stubbed spawn runs as STUB_RUNNER_AGENT; the relay note reads the agent the model named.
+    _stub_inputs: dict[str, dict] = {}
 
     async def posttool_hook(input_data, tool_use_id, ctx):
         text = _stub_returns.pop(tool_use_id, None)
@@ -1201,8 +1203,10 @@ async def run_skill(
             if text is not None
             else {}
         )
+        named = _stub_inputs.pop(tool_use_id, None)
+        relay_input = {**input_data, "tool_input": named} if named is not None else input_data
         # The relay note a hosted plane adds to every main-thread agent return.
-        if (note := relay_note_context(input_data)) is not None:
+        if (note := relay_note_context(relay_input)) is not None:
             out.setdefault("hookSpecificOutput", {"hookEventName": "PostToolUse"})["additionalContext"] = note
         return out
 
@@ -1353,6 +1357,7 @@ async def run_skill(
             # The callee never runs: a no-op agent does, and `posttool_hook`
             # hands its caller `stub_text` as that agent's return (skill_stubs.py).
             _stub_returns[tool_use_id] = fill_stub_fields(stub_text, input_data.get("tool_input"))
+            _stub_inputs[tool_use_id] = dict(input_data.get("tool_input") or {})
             return stub_spawn_rewrite(input_data.get("tool_input"))
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read and the shipped hook's

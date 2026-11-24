@@ -1,7 +1,7 @@
 """Direct tests for `test_research.test_deliverable_spawn_carries_the_tree_facts` (#4381).
 
 The validator runs only on a test tagged `delegates-tree-facts`. The session must hold a
-`tree_query` call, and it reads the callee's spawn prompts against the project subject's
+`tree_query` call or a `project_context` call that returned `historicalContext`, and it reads the callee's spawn prompts against the project subject's
 tree facts in the after state: every fact year and leading place word must appear, and no
 year may appear that is in none of those facts, the session's `tree_query` responses, the
 user's message and the objective.
@@ -219,7 +219,7 @@ def test_an_objective_year_is_not_allowed_when_the_objective_lacks_it():
 def test_no_tree_query_call_fails(calls):
     """Main's router on ia1: it read project_context, never tree_query, and handed over the
     objective's years, which the other halves of this check allow."""
-    with pytest.raises(AssertionError, match="no tree_query call"):
+    with pytest.raises(AssertionError, match="no tree_query call and no project_context call returning historicalContext"):
         check(EMPTY_TEST, [_spawn("historical-context",
                                   "projectPath: /p\nborn ca. 1845 in Pennsylvania, died 1908 (objective)")], EMPTY, calls)
 
@@ -229,6 +229,30 @@ def test_no_tree_query_call_fails(calls):
 def test_tree_query_under_any_server_spelling_passes(tool):
     check(EMPTY_TEST, [_spawn("historical-context", "projectPath: /p\nThe tree holds nothing for them.")], EMPTY,
           [{"tool": tool, "args": {"projectPath": "/p"}, "response": {}}])
+
+
+_HC_PROMPT = ("projectPath: /p\nTree facts (the only places and years the tree holds for these people):\n"
+              "- Patrick Flynn (I1, subject): Birth ~1845, Ireland; Death 1908, Schuylkill County, Pennsylvania\n"
+              "- John Flynn (I2, child): Birth 1871, Boston, Massachusetts")
+_HC = {"ok": True, "historicalContext": {"agent": "historical-context", "prompt": _HC_PROMPT}}
+
+
+@pytest.mark.parametrize("response", [_HC, json.dumps(_HC), [{"type": "text", "text": json.dumps(_HC)}]],
+                         ids=["dict", "json-string", "content-list"])
+def test_the_historical_context_prompt_is_a_source(response):
+    """research/SKILL.md hands over project_context's historicalContext.prompt; the
+    years it holds, a relative's included, are the tree's."""
+    calls = [{"tool": "mcp__genealogy__project_context",
+              "args": {"projectPath": "/p", "include": ["historicalContext"]}, "response": response}]
+    check(TEST, [_spawn("historical-context", f"{_HC_PROMPT}\nmessage: {ASK}")], FLYNN, calls)
+
+
+def test_a_year_beyond_the_historical_context_prompt_still_fails():
+    calls = [{"tool": "mcp__genealogy__project_context",
+              "args": {"projectPath": "/p", "include": ["historicalContext"]}, "response": _HC}]
+    with pytest.raises(AssertionError, match="1860"):
+        check(TEST, [_spawn("historical-context", f"{_HC_PROMPT}\nmessage: {ASK}\nTask: coal mining in the 1860s")],
+              FLYNN, calls)
 
 
 def test_no_spawn_of_the_callee_fails():
