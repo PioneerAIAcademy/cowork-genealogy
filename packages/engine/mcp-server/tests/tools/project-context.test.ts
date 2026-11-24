@@ -326,6 +326,9 @@ describe("project_context", () => {
           // a record persona id is not a tree person: showing it as a PID points at the wrong person
           { id: "I3", gender: "Male", ark: "ark:/61903/1:1:AAAA-111" },
           { id: "I4", gender: "Male" },
+          { id: "I5", gender: "Male", ark: "ark:/61903/3:1:3Q9M-CSLK-9QXV" },
+          // the same PID the other tools compare uppercased
+          { id: "I6", gender: "Male", ark: "ark:/61903/4:1:khwq-t7c" },
         ],
         relationships: [],
         sources: [],
@@ -339,6 +342,8 @@ describe("project_context", () => {
       { id: "I2", pid: "GJ8G-B7K", gender: "Female" },
       { id: "I3", gender: "Male" },
       { id: "I4", gender: "Male" },
+      { id: "I5", gender: "Male" },
+      { id: "I6", pid: "KHWQ-T7C", gender: "Male" },
     ]);
   });
 

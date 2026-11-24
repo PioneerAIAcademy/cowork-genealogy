@@ -103,7 +103,7 @@ can drop:
   persons?: [{
     id: string,                          // I id (or FS id)
     name?: string,                       // preferred names entry, "Given Surname"
-    pid?: string,                        // FamilySearch ID, from a tree-person (4:1:) ark only
+    pid?: string,                        // FamilySearch ID, from a tree-person ark or URL only
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -201,10 +201,10 @@ Projection rules:
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; absent when the
-  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`): the
-  FamilySearch ID of a tree-person (`4:1:`) ark. A record or image ark, or no
-  ark, leaves it out, so a record persona id is never shown as a PID. The caller
-  copies it from here rather than reading one out of an ark. The `S` ids a person cites are not here: `tree_query`
+  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`),
+  uppercased: the FamilySearch ID of a tree-person (`4:1:`) ark or a tree person
+  URL. A record or image ark, or no ark, leaves it out, so a record persona id is
+  never shown as a PID. The `S` ids a person cites are not here: `tree_query`
   returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's

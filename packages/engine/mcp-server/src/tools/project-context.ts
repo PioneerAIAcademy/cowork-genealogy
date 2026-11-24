@@ -76,7 +76,7 @@ export interface ProjectContextQuestion {
 export interface ProjectContextPerson {
   id: string;
   name?: string;
-  /** The FamilySearch ID from a tree-person (4:1:) `ark`; absent otherwise. */
+  /** The FamilySearch ID from a tree-person `ark` (4:1: or tree URL); absent otherwise. */
   pid?: string;
   gender?: string;
   spouseIds?: string[];
@@ -471,7 +471,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       omitEmpty({
         id: p.id,
         name: preferredDisplayName(p),
-        pid: treePidOfArk(p.ark) ?? null,
+        pid: treePidOfArk(p.ark)?.toUpperCase() ?? null,
         gender: typeof p.gender === "string" ? p.gender : null,
         spouseIds: f ? [...f.spouseIds] : [],
         parentIds: f ? [...f.parentIds] : [],
@@ -773,8 +773,8 @@ export const projectContextSchema = {
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
     "[{id, name, pid, gender, spouseIds, parentIds, childIds, diedByYear, " +
     "unsupportedGivenName}] — every " +
-    "tree person, its FamilySearch ID (pid, from a tree-person ark only; copy it, never " +
-    "read one out of an ark yourself), and its one-hop family from " +
+    "tree person, its FamilySearch ID (pid, from a tree-person ark or URL only), " +
+    "and its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
     "by from its dated Death or Burial facts; unsupportedGivenName {given, searchAs} " +
     "marks a given name none of the person's linked records gives: brief it as a " +
