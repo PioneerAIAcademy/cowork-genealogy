@@ -65,6 +65,10 @@ export interface ImageTranscribeToolResponse {
    *  surface a clean NOT FOUND — and omitted when the second call fails or its
    *  reply carries no parseable marker. */
   found?: "FOUND" | "NOT FOUND";
+  /** Present only with `found: "FOUND"`: for each given name in `lookingFor`,
+   *  its other forms (diminutives, short and formal forms) that appear on the
+   *  page, keyed by the name as written — `{ Eliza: ["Elizabeth"] }`. */
+  matchedForms?: Record<string, string[]>;
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
@@ -95,6 +99,24 @@ export interface ImageTranscribeToolResponse {
   metadata?: {
     memoryArtifactUrl?: string;
   };
+  /** In a project, the indexed names of every held record whose source's
+   *  `image_ark` is the page read (`attachIndexReadings`, issue #4578); a reading
+   *  of the page (`disputes_assertion_id`) is left out. Absent when no held source
+   *  names that page, and for a `file`. */
+  indexReadings?: IndexReading[];
+  /** In a project, always: the transcription is one machine reading, to be
+   *  shown beside the index, never over it (issue #4578). */
+  readingNote?: string;
+}
+
+/** One indexed name of a held record on the page read. */
+export interface IndexReading {
+  sourceId: string;
+  recordId: string;
+  role: string;
+  /** The name as the index gives it; a given name the index left blank is
+   *  simply absent from it. */
+  name: string;
 }
 
 /** `imageTranscribeTool`'s own return, which always carries the text. */

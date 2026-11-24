@@ -48,6 +48,17 @@ research suite showing no regression. The run log does not record
 `additionalContext`, so its delivery on a deny was inferred from behaviour (no
 retries, no disclosure), not observed.
 
+An AGENT spawn is stubbed differently (`stub_spawn_rewrite`, `stub_return_output`).
+The error-framed deny above read as a failed hand-off to a cheaper main thread:
+on Haiku 5.5 low the router told the researcher the agent "did not run" or "hit
+a hook error" in 9 of 82 research tests, where production has no such error.
+So a stubbed spawn is allowed, rewritten to a built-in `general-purpose` agent
+told only to reply `done`, and its `PostToolUse` output is replaced with the
+canned text (`updatedToolOutput`, claude-agent-sdk 0.2.172). The main thread
+reads an ordinary subagent hand-back, as in production. A bare stub returns
+`BARE_STUB_RETURN`. The `Skill`-call stub and a `stop_at_stub` hand-off keep the
+deny: one has no agent return to replace, the other ends the run.
+
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
 WHAT was passed across the seam — a stub sharpens that, since a denied callee
@@ -57,6 +68,8 @@ fix; existing validators depend on its `list[str]` shape.
 
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Any
 
 # What every stub tells the model about the denied call (in the reason for a
@@ -124,6 +137,91 @@ def parse_stub_skills(execution: dict[str, Any] | None) -> dict[str, str | None]
                 # payload — the model must not be told to present nothing.
                 stubs[name] = entry.get("response") or None
     return stubs
+
+
+#: What a stubbed spawn with no canned response returns to the main thread.
+BARE_STUB_RETURN = "Step complete."
+
+#: The built-in agent a stubbed spawn runs as, and all it is asked to do.
+STUB_RUNNER_AGENT = "general-purpose"
+STUB_RUNNER_PROMPT = "Reply with the single word: done. Call no tool."
+
+
+def stub_return_text(response: str | None) -> str:
+    """The text a stubbed spawn hands back: its canned response, else the bare one."""
+    return response or BARE_STUB_RETURN
+
+
+def stub_spawn_rewrite(tool_input: dict[str, Any] | None) -> dict[str, Any]:
+    """The PreToolUse output that lets a stubbed spawn run as a no-op agent.
+
+    The callee never runs: the spawn goes to `STUB_RUNNER_AGENT` with
+    `STUB_RUNNER_PROMPT`, in the foreground, and `stub_return_output` replaces
+    what it returns. The model's own call, which the stream records and the
+    validators read, is unchanged.
+    """
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {
+                **dict(tool_input or {}),
+                "subagent_type": STUB_RUNNER_AGENT,
+                "prompt": STUB_RUNNER_PROMPT,
+                "run_in_background": False,
+            },
+        }
+    }
+
+
+def stub_reported_usage(seed: str) -> dict[str, int]:
+    """The usage line a stubbed spawn's hand-back shows: a working agent's figures.
+
+    The CLI prints the no-op agent's own figures under the report (`tool_uses: 0`),
+    and Haiku 5.5 low read them as an agent that never ran ("it made no tool calls,
+    so nothing was searched": ut_research_030, b4i, b4p). The figures differ per
+    spawn (`seed` is its tool_use_id): identical ones on three returns read as one
+    report copied (ut_research_hv3). The keys must stay: an output missing them is
+    ignored and "done" goes through.
+    """
+    h = int(hashlib.sha256(seed.encode("utf-8")).hexdigest()[:8], 16)
+    return {
+        "totalToolUseCount": 4 + h % 7,
+        "totalDurationMs": 25_000 + h % 40_000,
+        "totalTokens": 18_000 + h % 24_000,
+    }
+
+
+#: `{hitRef}` in a canned response becomes the `hitRef:` line of the spawn it
+#: answers, so one canned text can name each hit as the real return does.
+_PROMPT_FIELD = re.compile(r"^\s*hitRef\s*:\s*(\S+)", re.MULTILINE)
+
+
+def fill_stub_fields(text: str, tool_input: dict[str, Any] | None) -> str:
+    """`text` with `{hitRef}` replaced by the hitRef its spawn's prompt names."""
+    if "{hitRef}" not in text:
+        return text
+    found = _PROMPT_FIELD.search(str((tool_input or {}).get("prompt") or ""))
+    return text.replace("{hitRef}", found.group(1) if found else "(no hitRef in the delegation)")
+
+
+def stub_return_output(tool_response: Any, text: str, seed: str = "") -> dict[str, Any]:
+    """The PostToolUse output that replaces a stubbed spawn's return with `text`.
+
+    The Agent tool's output is a dict whose `content` is a list of text blocks;
+    that list and the usage figures (`stub_reported_usage`) are replaced, so the
+    CLI frames it as a working subagent's report. Any other shape is replaced by
+    the bare string.
+    """
+    if isinstance(tool_response, dict) and isinstance(tool_response.get("content"), list):
+        output: Any = {
+            **tool_response,
+            **stub_reported_usage(seed),
+            "content": [{"type": "text", "text": text}],
+        }
+    else:
+        output = text
+    return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": output}}
 
 
 def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:

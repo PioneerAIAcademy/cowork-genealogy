@@ -20,6 +20,7 @@ import { wikiSearchSchema } from "./tools/wiki-search.js";
 import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
+import { localitySurveySchema } from "./tools/locality-survey.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
 import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
@@ -96,6 +97,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "image_read",
   "image_search",
   "image_transcribe",
+  "locality_survey",
   "merge_warnings",
   "person_ancestors",
   "person_person_matches",
@@ -143,6 +145,7 @@ export const allToolSchemas = [
   placeDistanceToolSchema,
   populationToolSchema,
   externalLinksSearchToolSchema,
+  localitySurveySchema,
   imageReadToolSchema,
   imageTranscribeToolSchema,
   recordSearchToolSchema,
@@ -198,5 +201,59 @@ function mark(set: ReadonlySet<string>, setName: string, fields: object): void {
     Object.assign(schema, fields);
   }
 }
+/** The tools the plugin hook refuses the main conversation (`AGENT_ONLY_TOOLS` in
+ *  plugin/hooks/guard_project_files.py; tests/packaging/plugin-hooks.test.ts keeps
+ *  the two equal). Each description opens with `AGENT_ONLY_NOTE`, so a main thread
+ *  that loads the schema reads the rule before it calls. */
+export const AGENT_ONLY: ReadonlySet<string> = new Set([
+  "build_external_search_url",
+  "catalog_search",
+  "census_children_gap",
+  "collections_search",
+  "convert_calendar",
+  "evaluation_append",
+  "external_links_search",
+  "fulltext_search",
+  "get_name_variants",
+  "image_index",
+  "image_search",
+  "locality_survey",
+  "materialize_facts",
+  "merge_tree_persons",
+  "merge_warnings",
+  "person_person_matches",
+  "person_quality",
+  "person_record_matches",
+  "person_warnings",
+  "place_distance",
+  "place_population",
+  "place_search",
+  "place_search_all",
+  "project_create",
+  "record_search",
+  "same_person",
+  "tree_correct",
+  "tree_edit",
+  "tree_gaps",
+  "volume_bisect",
+  "volume_search",
+  "wiki_place_page",
+  "wiki_read",
+  "wiki_search",
+  "wikipedia_search",
+]);
+
+export const AGENT_ONLY_NOTE =
+  "Agents only: the main conversation is refused this tool, so hand the request to the plugin agent whose work it is. ";
+
+for (const name of AGENT_ONLY) {
+  const schema = allToolSchemas.find((s) => s.name === name);
+  if (!schema) throw new Error(`AGENT_ONLY names unknown tool "${name}"`);
+  // Set in place, as `mark` does: ownership-manifest.test.ts matches schemas by object identity.
+  if (!schema.description.startsWith(AGENT_ONLY_NOTE)) {
+    Object.assign(schema, { description: AGENT_ONLY_NOTE + schema.description });
+  }
+}
+
 mark(ALWAYS_LOAD, "ALWAYS_LOAD", { _meta: { "anthropic/alwaysLoad": true } });
 mark(READ_ONLY, "READ_ONLY", { annotations: { readOnlyHint: true } });

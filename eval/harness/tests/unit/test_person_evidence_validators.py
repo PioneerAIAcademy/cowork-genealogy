@@ -51,6 +51,7 @@ from test_person_evidence import (  # noqa: E402
     test_identity_links_follow_their_persona as check_identity,
     test_naturalization_shortfall_stated as check_shortfall,
     test_naturalization_exception_not_flagged as check_exception,
+    test_review_names_gaps as check_review_gaps,
 )
 
 
@@ -2392,3 +2393,212 @@ def test_exception_fails_a_stub_taken_on_the_residence(assertion_id, rationale, 
         check_exception(_interval_state(
             _interval_pe(assertion_id, rationale, person_id=person_id),
         ), _EXCEPTION_TAGS)
+
+
+
+# --- test_review_names_gaps (#4548) -----------------------------------------
+
+_GAPS_TEST = {"tags": ["review-names-gaps"], "delegation": "Review pe_005"}
+_GOOD_REVIEW = (
+    "pe_005 is well supported. a_013 names Thomas Flynn as father, but there is no pe_ "
+    "entry linking a_013 to I2. The match_score is null and the rationale never says why."
+)
+
+
+_I2_OK_LEAD = "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "
+
+
+def _gaps(text):
+    returns = [{"subagent_type": "person-evidence", "text": text}]
+    check_review_gaps(test=_GAPS_TEST, agent_returns=returns, text_response=None)
+
+
+def test_review_gaps_skips_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_review_gaps(test={"tags": []}, agent_returns=None, text_response="")
+
+
+def test_review_gaps_passes_a_review_naming_both():
+    _gaps(_GOOD_REVIEW)
+
+
+@pytest.mark.parametrize("text", [
+    # Reflowed and reworded, still both points.
+    "Missing link: a_013 (father Thomas Flynn) is not linked to I2 by any pe_ entry.\n"
+    "Score: no `match_score` is recorded, and nothing explains it.",
+    "I2 (Thomas) lacks a pe_ link for a_013. pe_005's match score is not disclosed.",
+    # The I2 point split across two sentences.
+    "a_013 names Thomas Flynn as father, so it bears on I2. There is no pe_ entry "
+    "for that link yet. The match_score is null and the rationale never says why.",
+    # Plain wordings of the link gap with no "no ... entry".
+    "a_013 is not linked to Thomas (I2). No same_person comparison was run, so "
+    "match_score is null with no stated reason.",
+    "Gap: a_013 → I2 (Thomas Flynn) is unlinked. The score is not recorded.",
+    "a_013 names Thomas Flynn (I2) as father, yet nothing links a_013 to I2. "
+    "pe_005's match score is not disclosed.",
+    "A second link, a_013 to I2 (Thomas Flynn), has not been created. "
+    "pe_005's match score is not disclosed.",
+    "Thomas Flynn is named in a_013, but I2 is not yet connected to a_013 by any "
+    "pe_ entry. pe_005's match score is not disclosed.",
+    # Contractions, and other ways to say the null is unexplained.
+    "a_013 names Thomas Flynn (I2) as father, but it isn't linked to I2. "
+    "pe_005 has a null match_score and the rationale does not mention why.",
+    "A link from a_013 to Thomas (I2) hasn't been created. "
+    "The match_score field is empty, with no rationale for it.",
+    # "neither ... nor says why", and a "No score disclosed." heading (#4548 suite run).
+    "a_013 has no pe_ link to I2. `match_score` is null and the rationale neither "
+    "gives a `same_person` score nor says why none was obtained.",
+    "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "
+    "**No score disclosed.** The rest of the rationale reads well.",
+    # The agent now computes the score with same_person during a review and reports it.
+    "a_013 names Thomas Flynn as the father, so it bears on I2 as well as I1. There is "
+    "no pe_ entry for a_013 to I2. Score: `same_person` returned 0.86 for a_013 against "
+    "I1, which is strong.",
+    _I2_OK_LEAD + "same_person score 0.86 (strong); pe_005 itself still shows a null match_score.",
+    # The call and its number in adjacent sentences.
+    _I2_OK_LEAD + "I also ran `same_person` for a_013 against I1. That call returned a score "
+    "of 0.86 and recorded it in the project, but it did not change the entry.",
+    # a_013 is named early, but the I2 gap is raised several sentences later
+    # without repeating "a_013" — the review still refers to "the record".
+    "`same_person` returned 0.86 for a_013 against I1, a strong band. "
+    "The residence check and date check lines are both present and correct. "
+    "The record names Thomas Flynn as father, from a non-present son-in-law "
+    "informant. Thomas Flynn (I2) has no persona on this record and is not "
+    "linked here. pe_005's match score is not disclosed.",
+])
+def test_review_gaps_accepts_other_wordings(text):
+    _gaps(text)
+
+
+def test_review_gaps_still_fails_when_a_013_is_never_named():
+    """The I2-gap sentence alone, with no a_013 mention anywhere, must still
+    fail: the widened match only drops the same-pair requirement, not the
+    requirement that a_013 appear in the reply at all."""
+    with pytest.raises(AssertionError, match="a_013"):
+        _gaps(
+            "Thomas Flynn (I2) has no persona on this record and is not "
+            "linked here. " + _SCORE_OK
+        )
+
+
+_I2_OK = "a_013 names Thomas Flynn as father, but no pe_ entry links it to I2. "
+_SCORE_OK = "The match_score is null and the rationale never says why."
+
+
+@pytest.mark.parametrize("text, missing", [
+    ("", "I2"),
+    ("The match_score is null and the rationale never says why.", "I2"),
+    ("a_013 names Thomas Flynn as father, but there is no pe_ entry linking a_013 to I2.",
+     "match_score"),
+    # A bare field listing of the null score is a restatement, not a finding.
+    ("a_013 has no pe_ link to I2. pe_005: confidence `confident`, match_score null. "
+     "No change needed.", "match_score"),
+    # "No edits" in a sentence that names I2 is not a missing-link finding.
+    ("I made no edits to pe_005 or to Thomas Flynn's record (I2). "
+     "The match_score is null and the rationale never says why.", "I2"),
+    # Bare "I2" and "null" in unrelated sentences.
+    ("pe_003 links a_004 to I2. The birth date on a_012 is null.", "I2"),
+    # A negation tied to something other than the a_013 -> I2 link.
+    ("I made no edits to pe_005, a_013, or Thomas Flynn's record (I2). " + _SCORE_OK, "I2"),
+    ("No pe_ write was made; a_013's father, Thomas Flynn (I2), is consistent with "
+     "the tree. " + _SCORE_OK, "I2"),
+    ("No other entry contradicts a_013's naming of Thomas Flynn (I2). " + _SCORE_OK, "I2"),
+    ("a_013 names Thomas Flynn (I2) as father, with no conflict against the tree's "
+     "links. " + _SCORE_OK, "I2"),
+    ("No problems: a_013 has a link to Thomas (I2). " + _SCORE_OK, "I2"),
+    # The second sentence's "no ... link" is about someone else.
+    ("a_013 names Thomas Flynn (I2). The tree has no links for I7. " + _SCORE_OK, "I2"),
+    ("a_013 names Thomas Flynn (I2) as his father. Note: pe_009 for Mary has no entry "
+     "date. " + _SCORE_OK, "I2"),
+    # "No further link" says the opposite of a missing link.
+    ("a_013 names Thomas Flynn (I2) and pe_007 links it; no further link is needed. "
+     "The match_score is null and the rationale never says why.", "I2"),
+    # A score sentence that names no gap: a number, or a generic phrase.
+    (_I2_OK + "pe_003 for Thomas carries a score of 0.82, and the tier fits without any change.",
+     "match_score"),
+    (_I2_OK + "The match score was never a concern here.", "match_score"),
+    (_I2_OK + "The match_score is 0.91 and was never questioned.", "match_score"),
+    (_I2_OK + "pe_005 has match_score 0.88; the rationale is silent on c_001.", "match_score"),
+    (_I2_OK + "The confidence score is fine.", "match_score"),
+    # A same_person score for another assertion is not pe_005's.
+    (_I2_OK + "`same_person` returned 0.84 for a_010 against I2.", "match_score"),
+    # A same_person the review did not run, beside an unrelated number.
+    (_I2_OK + "I did not run same_person. The match_score is 0.91 and was never questioned.",
+     "match_score"),
+    (_I2_OK + "The score was never in doubt.", "match_score"),
+    # A score that exists, with a number, is not the null-score gap.
+    (_I2_OK + "pe_005's match_score of 0.88 is not explained in the rationale.",
+     "match_score"),
+    (_I2_OK + "The rationale is silent on competing candidates; the score is 0.91.",
+     "match_score"),
+    # "nor says why" about something other than the score, or beside a real number.
+    (_I2_OK + "The census entry is undated, and the rationale neither cites it nor says why.",
+     "match_score"),
+    (_I2_OK + "The score is 0.88, and the rationale neither cites it nor says why.",
+     "match_score"),
+])
+def test_review_gaps_fails_a_review_missing_a_point(text, missing):
+    with pytest.raises(AssertionError, match=missing):
+        _gaps(text)
+
+
+def test_review_gaps_grades_the_agent_not_the_dispatcher():
+    """On a direct test a silent agent grades as silent, whatever the relay says."""
+    with pytest.raises(AssertionError):
+        check_review_gaps(test=_GAPS_TEST, agent_returns=[], text_response=_GOOD_REVIEW)
+
+
+
+
+# Every committed 001 reply (v2-v11), frozen so candidate rotation
+# (DEFAULT_KEEP_CANDIDATES) cannot delete a run log out from under the test.
+# Each was read by hand for whether it names the a_013 -> I2 gap.
+_PE_001_REPLIES = json.loads(
+    (Path(__file__).parent / "person_evidence_001_replies.json").read_text(encoding="utf-8")
+)
+_NAMES_I2_GAP = {
+    "v7_run0", "v8_run0", "v10_run0",
+    # Annotation raised Multi-person awareness (and on 18-53-38 Score discipline) to 3.
+    "v11_2026-11-12_18-53-38_run0",
+    "v11_2026-11-15_18-11-50_run0",
+    # Human-held 3 on both dimensions.
+    "v11_2026-11-15_18-32-11_run0", "v11_2026-11-16_06-41-17_run0",
+    "v11_2026-11-15_21-52-22_run1", "v11_2026-11-15_21-52-22_run2",
+    # From the first post-change suite run, replaced by a re-run after r0's score
+    # wording ("neither gives ... nor says why") was found missed.
+    "v11_2026-11-16_22-27-12_run0", "v11_2026-11-16_22-27-12_run1",
+    # A scratch run of 001 on the branch: r0 opens on "Counterpart link missing."
+    # and r2 says "no statement of why match_score is null", both once missed.
+    "scratch_2026-11-19_11-12-40_run0", "scratch_2026-11-19_11-12-40_run1",
+    "scratch_2026-11-19_11-12-40_run2",
+    # #4613's suite run, after the agent began computing the score with same_person.
+    "v11_2026-11-18_16-04-39_run0",
+    # A scratch run of 001 after #4613 merged: r0 runs same_person in one sentence and
+    # gives 0.86 in the next.
+    "scratch_2026-11-19_16-58-04_run0",
+    "scratch_2026-11-19_16-58-04_run1",
+    "scratch_2026-11-19_16-58-04_run2",
+}
+# v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
+# under the rubric of the day, and neither reply names the gap.
+_OMITS_I2_GAP = {
+    "v2_run0", "v3_run0", "v5_run0", "v6_run0", "v9_run0",
+    "v11_2026-11-15_21-52-22_run0", "v11_2026-11-15_21-52-22_run3",
+    "v11_2026-11-16_22-27-12_run2",
+}
+
+
+def test_review_gaps_frozen_replies_are_all_labelled():
+    assert set(_PE_001_REPLIES) == _NAMES_I2_GAP | _OMITS_I2_GAP
+    assert all(_PE_001_REPLIES.values())
+
+
+@pytest.mark.parametrize("key", sorted(_NAMES_I2_GAP))
+def test_review_gaps_passes_committed_reviews_that_name_both(key):
+    check_review_gaps(test=_GAPS_TEST, agent_returns=_PE_001_REPLIES[key], text_response=None)
+
+
+@pytest.mark.parametrize("key", sorted(_OMITS_I2_GAP))
+def test_review_gaps_fails_committed_reviews_that_omit_the_i2_gap(key):
+    with pytest.raises(AssertionError, match="I2"):
+        check_review_gaps(test=_GAPS_TEST, agent_returns=_PE_001_REPLIES[key], text_response=None)

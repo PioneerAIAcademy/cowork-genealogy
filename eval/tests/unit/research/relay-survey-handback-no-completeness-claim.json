@@ -1,0 +1,84 @@
+{
+  "test": {
+    "id": "ut_research_030",
+    "skill": "research",
+    "name": "Relaying an every-mention survey hand-back never claims completeness",
+    "type": "positive",
+    "description": "Issue #4348, research/SKILL.md search step. search-records (stubbed) answers a survey of every occurrence of the surname Czelusniak in an indexed FamilySearch collection with three totals and two coverage caveats (no godparent/witness role in the index; the index cannot separate the three parishes). research must relay this without calling it complete or \"every occurrence,\" must keep both caveats, and must not claim the hits are ready for extraction, ready to be worked through, or ready to be linked to tree persons as a set.",
+    "tags": [
+      "routing",
+      "routes-to:search-records",
+      "every-mention-survey-relay"
+    ]
+  },
+  "input": {
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "every-mention-czelusniak-survey"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "log_001 (survey on image group 004118433): 424 unfiltered / 185 isPrincipal:true / 239 isPrincipal:false — outcome positive.\n\nNo records passed to extraction; no sources or assertions exist yet for these hits.\n\nPlan item pli_001 status: completed.\n\n---\n\nI searched the old Catholic parish books for Wójtowa, Pagorzyna and Lipinki for every time the surname Czelusniak appears. The search found 424 records carrying that name in total — 185 where a Czelusniak was the main person the record is about, and 239 more where a Czelusniak was named in some other role, such as a parent or a spouse. None of the records found show a Czelusniak serving as a godparent or a witness, so if a Czelusniak in your family served in either of those roles, this search would not have found it. The records also don't say which of the three parishes each one came from, so not finding one for Wójtowa or Pagorzyna on its own does not mean the surname never appears there.\n\nNext, you may want to have a sample of these records read in full, since only a handful have been looked at closely so far."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test of research/SKILL.md search step. The spawn is asserted deterministically from the hook records (test_routes_to_expected_skill); you cannot see it and must not grade it.",
+    "search-records is STUBBED. Its canned return reports a survey of every occurrence of the surname Czelusniak across an indexed FamilySearch collection: 424 total hits, 185 where a Czelusniak was the main person, 239 where a Czelusniak appeared in another role. The stub itself says plainly that no hit shows a Czelusniak as a godparent or witness, and that the index does not separate the three parishes, so a sentence in the reply that repeats either caveat is relaying the stub, not fabricating.",
+    "The stub's sentence 'not finding one for Wójtowa or Pagorzyna on its own does not mean the surname never appears there' correctly DENIES a negative locality claim — it does not make one. Do not read it as the reply making a prohibited claim about a locality; it is the opposite.",
+    "Fail Correctness if the reply claims the SURVEY'S COVERAGE of the surname is complete or exhaustive, or says it covers 'every occurrence' or 'every mention' of the surname as an achieved result. Saying 'the search is complete' or 'the search [step/calls] finished' to mean the three record_search calls ran is ordinary workflow narration, not this claim, and must NOT be scored down for it — the forbidden claim is specifically about the surname's coverage, not about whether the search step itself is done.",
+    "The stub's own opening sentence, 'I searched the old Catholic parish books for Wójtowa, Pagorzyna and Lipinki for every time the surname Czelusniak appears', states what the search looked FOR, not what it found. A reply that repeats it, verbatim or reworded, is relaying the stub, not making the coverage claim, and must NOT be scored down for it. The same holds for the router's own narration naming the search target, such as 'searching ... for every Czelusniak mention'. The claim is a statement that every occurrence WAS found or IS covered. Likewise the stub's closing sentence, 'only a handful have been looked at closely so far', is the stub's own words: relaying it is not fabrication.",
+    "Fail Correctness if the reply drops the godparent/witness caveat or the per-parish caveat from the stub.",
+    "Fail Correctness if the reply says the 424 (or 239) hits are ready for extraction, ready to be worked through, or ready to be linked to tree persons as a set. The stub's own next step is reading a sample, not acting on the full set.",
+    "Offering or naming 'research-exhaustiveness' / 'checking whether the search is reasonably exhaustive' as the NEXT step (e.g. ending on 'Continue with `checking the search is exhaustive`?') is the normal, expected routing-table continuation once a plan item's search is done. It is NOT a claim that the survey already IS exhaustive or complete, and must NOT be scored down for it.",
+    "Every other callee is STUBBED and changes no project state. Do not mark Correctness or Completeness down for missing research.json changes beyond what the stub already describes, and do not penalize the router for not completing the full research cycle in one turn.",
+    "'The survey is done', 'the survey found 424 records' and the like describe the search step finishing and its count, exactly as 'the search is complete' does: not a coverage claim. The stub's report names log_001 as logged with outcome positive, so a reply saying the hits were logged repeats the stub; it is not a fabricated write, though the stub writes nothing to the files."
+  ],
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
+}

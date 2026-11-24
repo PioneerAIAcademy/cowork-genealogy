@@ -94,7 +94,9 @@ than an error.
 1. **`recordReadTool({ recordId, resultsRef?, projectPath }, principal)`** — one
    call, not two hand-rolled routes. It *is* sidecar-read-or-live-fetch already,
    it normalises the id on both sides (`extractEntityId` / `arkToBareId`), and it
-   refuses `1:2:`/`3:1:` ARKs on both paths. Normalisation is not optional here:
+   refuses `1:2:`/`3:1:` ARKs on both paths. A scheme-prefixed `record_id`
+   (`legacy-nfs:…`, `capture:…`) is refused the same way, with no fetch, so
+   the record side comes from the projection. Normalisation is not optional here:
    `record_id` is stored as a resolver **URL** on 561 of the corpus's 10,554
    assertions and as a bare `ark:` on 9,993, so a raw string compare misses.
    `resultsRef` is passed **only** when the log entry's tool is in

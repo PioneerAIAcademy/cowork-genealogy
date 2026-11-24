@@ -244,6 +244,21 @@ export const PLAN_RATIONALE_NOTE =
   "the other retries: this note does not end the search.";
 
 /**
+ * The note a tool returns when `planItemId` arrives with no `projectPath`.
+ * There is no project to write to, so nothing is logged and the plan item
+ * reaches no entry — a silent drop otherwise, since both tools answer normally.
+ *
+ * One wording for one mistake: `build_external_search_url` and `record_search`
+ * both make their write through this module, so the note they give for failing
+ * to reach it is the same string, not two that drift (issue #4527).
+ *
+ * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
+ * PLAN_ITEM_WITHOUT_PROJECT_NOTE to find both copies when editing either.
+ */
+export const PLAN_ITEM_WITHOUT_PROJECT_NOTE =
+  "'planItemId' has no effect without projectPath — nothing was logged";
+
+/**
  * The `planRationale` note for the plan items whose first nil this call logged,
  * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
  * plan item that already had a nil, has found something, or has no rationale.
@@ -288,6 +303,18 @@ export interface ResearchLogAppendOp {
   notes?: string | null;
   externalSite?: ResearchLogAppendExternalSite | null;
   stagedResultsRef?: string | null;
+  /** INTERNAL. A tool that writes its own entry stamps its name here
+   *  (`record_search` on a nil search, issue #4527). It is what lets the dedupe
+   *  below tell a tool-written entry from an agent's hand-logged repeat of the
+   *  same query, so the repeat is logged as the fresh search it is rather than
+   *  swallowed.
+   *
+   *  It is off the MCP input schema, which keeps it off a top-level agent call:
+   *  `rejectUnknownArgs` refuses an argument the schema does not declare. That
+   *  is NOT true of a batch op — it checks top-level keys only and the `ops`
+   *  item schema admits extra keys — so the batch path strips it explicitly.
+   *  Do not restore the claim that no agent can set it without re-reading both. */
+  writtenBy?: string;
 }
 
 export interface ResearchLogAppendInput extends Partial<ResearchLogAppendOp> {
@@ -1591,10 +1618,23 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
  * own schema. Only these have host-side ground truth for which filters a call
  * sent; the other producers stage no echoed inputs, so they are never judged.
  */
-const ECHOING_PRODUCER_INPUTS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
-  ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
-]);
+// Built on FIRST USE, not at module load. `record_search` imports
+// `researchLogAppend` to write its own nil entry (issue #4527), and this module
+// imports `record_search`'s schema — a cycle. Read at module scope, the schema
+// is still `undefined` while the cycle resolves and every importer of the tool
+// list dies with "Cannot read properties of undefined (reading 'inputSchema')".
+// Deferring the read to call time breaks the init-order dependency without a
+// dynamic import. Keep it lazy.
+let _echoingProducerInputs: ReadonlyMap<string, ReadonlySet<string>> | null = null;
+function echoingProducerInputs(): ReadonlyMap<string, ReadonlySet<string>> {
+  if (_echoingProducerInputs === null) {
+    _echoingProducerInputs = new Map([
+      ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
+      ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
+    ]);
+  }
+  return _echoingProducerInputs;
+}
 
 /**
  * What a producer actually sent, from its staged echo. `record_search` echoes
@@ -1612,7 +1652,7 @@ const SENT_FROM_ECHO: ReadonlyMap<string, (echo: Record<string, unknown>) => Rec
  * filter (`offset: 0` logged for a call that sent none is the default, not a
  * misstatement), so none is ever refused.
  */
-const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets"]);
+const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets", "planItemId", "note"]);
 
 /**
  * The filter keys an explicit log `query` claims that the staged search never
@@ -1628,7 +1668,7 @@ export function neverSentFilterClaims(
   query: unknown,
   stagedQuery: Record<string, unknown> | undefined,
 ): { key: string; value: unknown }[] {
-  const inputs = ECHOING_PRODUCER_INPUTS.get(producer);
+  const inputs = echoingProducerInputs().get(producer);
   if (!inputs || !stagedQuery) return [];
   if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
   const sent = SENT_FROM_ECHO.get(producer)?.(stagedQuery) ?? stagedQuery;
@@ -1807,6 +1847,9 @@ const sameNameFields = (a: Map<string, string>, b: Map<string, string>): boolean
   a.size === b.size && [...a].every(([k, v]) => b.get(k) === v);
 
 /** Keys the suggested unpinned retry leaves out: the pin itself, and paging. */
+// `planItemId` and `note` are NOT listed: `stripQueryPlumbing` already removes
+// both before the filter that reads this set, so listing them here would be
+// dead and would read as though this set were what covers them.
 const RETRY_DROPPED_KEYS: ReadonlySet<string> = new Set(["collectionId", "offset", "count"]);
 
 /**
@@ -1858,7 +1901,7 @@ export function pinnedNilRetryInvariants(
   // invented (`note`, `variants_also_tried`), which the retry must not repeat.
   // Paging is dropped too: a retry at the pinned search's `offset` would skip the
   // first unpinned results.
-  const inputs = ECHOING_PRODUCER_INPUTS.get("record_search")!;
+  const inputs = echoingProducerInputs().get("record_search")!;
   const retry = Object.fromEntries(
     Object.entries(stripQueryPlumbing(q) ?? {}).filter(
       ([k]) => !RETRY_DROPPED_KEYS.has(k) && inputs.has(k),
@@ -2533,6 +2576,7 @@ async function applyLogAppendOp(
         }
       : null,
     results_ref: null,
+    ...(typeof op.writtenBy === "string" && op.writtenBy !== "" ? { written_by: op.writtenBy } : {}),
   };
   const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
   if (resultsAvailable !== undefined && resultsAvailable !== null) {
@@ -2762,13 +2806,81 @@ export async function researchLogAppend(
       }
       return found;
     };
+    // Issue #4527. `record_search` writes a nil search's entry itself, and Haiku
+    // may re-log it out of habit. `alreadyLogged` above cannot see that: it keys
+    // on `stagedResultsRef`, and a nil stages nothing.
+    //
+    // KEY: full query equality, plus the plan item. Deliberately NOT a looser key
+    // like plan-item-plus-nil-ness. A looser key swallows a genuinely different
+    // nil search on the same plan item, and a swallowed negative is the
+    // asymmetric error — the log is append-only and later reasoning leans hardest
+    // on negatives, while a duplicate entry is merely visible. The documented
+    // cost: when the agent's hand-typed query differs from the tool's by even one
+    // key, this misses and a second entry lands. That is the safe direction.
+    //
+    // Never applies to record_search's OWN write, which carries `writtenBy`; an
+    // agent's op never does. Without that guard the tool's second genuine nil on
+    // an identical query would be deduped against its own first one and lost.
+    // Either dedupe's hit. `viaNil` distinguishes the query/plan-item match
+    // below from `alreadyLogged`'s staged-ref match, so the warning can name
+    // the right one.
+    type DedupeHit = { logId: string; resultsRef: string | null; viaNil?: boolean };
+    const canonicalQuery = (q: unknown): string =>
+      JSON.stringify(Object.entries(stripQueryPlumbing(q) ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+    const alreadyWrittenNil = (op: ResearchLogAppendOp) => {
+      if (op.writtenBy !== undefined) return undefined;
+      if (op.tool !== "record_search") return undefined;
+      // A staged ref means `alreadyLogged` above owns this op. `asNull` maps
+      // only the literal string "null", so an ABSENT ref is `undefined` here,
+      // not null — test for a ref that was actually supplied.
+      const ref = asNull(op.stagedResultsRef);
+      if (typeof ref === "string" && ref !== "") return undefined;
+      if (!Array.isArray(research.log)) return undefined;
+      // Only a re-log of the SAME nil is a duplicate. An op claiming any other
+      // outcome, or examined rows, is a DIFFERENT search event on the same query
+      // — the retry that finally hit, which this log exists to record — so it
+      // falls through and is written. `alreadyLogged` refuses that divergence
+      // because a staged ref names one specific search; a query plus a plan item
+      // names a shape that is run repeatedly on purpose, so here the answer is
+      // to write, not to refuse. Swallowing it would file a positive under the
+      // earlier negative and leave research-exhaustiveness reading absence.
+      if (op.outcome !== undefined && op.outcome !== "negative") return undefined;
+      if (typeof op.resultsExamined === "number" && op.resultsExamined > 0) return undefined;
+      const wanted = canonicalQuery(op.query);
+      const pid = op.planItemId ?? null;
+      const prior = research.log.find(
+        (e: any) =>
+          e &&
+          e.written_by === "record_search" &&
+          e.tool === "record_search" &&
+          (e.plan_item_id ?? null) === pid &&
+          canonicalQuery(e.query) === wanted,
+      );
+      if (!prior || typeof prior.id !== "string") return undefined;
+      // The agent's `notes` are the post-search conclusion the tool's own entry
+      // cannot hold — the tool writes at the moment of the nil, before the agent
+      // knows the variants are exhausted. Dropping the op would discard that
+      // silently behind an `ok: true`, so a note the prior entry does not already
+      // carry falls through and lands as its own entry. A visible duplicate is
+      // the cheap error here; a lost exhaustion note is the expensive one.
+      const note = typeof op.notes === "string" ? op.notes.trim() : "";
+      if (note !== "" && !String(prior.notes ?? "").includes(note)) return undefined;
+      return { logId: prior.id, resultsRef: (prior.results_ref ?? null) as string | null, viaNil: true };
+    };
+
     const alreadyLoggedResult = (
-      found: { logId: string; resultsRef: string | null },
+      found: DedupeHit,
       field: string,
     ): ResearchLogAppendOpResult => {
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId);
       opWarnings.push(
-        `${field} was already logged as ${found.logId}; returned that entry and wrote nothing new for it.`,
+        // `field` names the parameter that matched. The nil dedupe matches on the
+        // query and plan item of an op that sent NO `stagedResultsRef` (a ref is
+        // a precondition of missing it), so naming that parameter there points
+        // the agent at a field it did not send and hides which dedupe fired.
+        found.viaNil
+          ? `record_search already logged this nil search as ${found.logId}; returned that entry and wrote nothing new for it.`
+          : `${field} was already logged as ${found.logId}; returned that entry and wrote nothing new for it.`,
       );
       return {
         logId: found.logId,
@@ -2790,16 +2902,28 @@ export async function researchLogAppend(
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      // `writtenBy` is internal provenance, and an agent must not be able to
+      // claim it. `rejectUnknownArgs` would refuse it at dispatch, but it reads
+      // TOP-LEVEL keys only and the `ops` item schema admits extra keys, so a
+      // batch op reaches here carrying whatever it likes. Strip it: a forged
+      // stamp both writes a false `written_by` into the audit trail and makes
+      // that entry a dedupe target, so the agent's own next genuine nil on the
+      // query is answered with it and never written — the swallowed negative
+      // the dedupe below is built to avoid. Every in-process writer uses the
+      // single form, so nothing legitimate sets it on an op.
+      for (const op of input.ops) {
+        if (op && typeof op === "object") delete (op as { writtenBy?: string }).writtenBy;
+      }
       const duplicate = duplicateStagedRefError(input.ops, projectPath);
       if (duplicate) return { ok: false, errors: [duplicate] };
       // Every op is checked before any refusal, so one retry can fix them all;
       // the batch still writes all or nothing.
-      const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
+      const logged = new Map<number, DedupeHit>();
       const stagedChecks = new Map<number, StagedCheck>();
       const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
-          const found = await alreadyLogged(input.ops[i]);
+          const found = (await alreadyLogged(input.ops[i])) ?? alreadyWrittenNil(input.ops[i]);
           if (found) {
             logged.set(i, found);
             continue;
@@ -2893,8 +3017,11 @@ export async function researchLogAppend(
       notes: input.notes,
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
+      // Internal, never on the MCP schema: carried through so a tool writing its
+      // own entry is distinguishable from an agent's hand-log (issue #4527).
+      writtenBy: input.writtenBy,
     };
-    const found = await alreadyLogged(singleOp);
+    const found = (await alreadyLogged(singleOp)) ?? alreadyWrittenNil(singleOp);
     if (found) {
       const prior = alreadyLoggedResult(found, "stagedResultsRef");
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
@@ -2918,6 +3045,39 @@ export async function researchLogAppend(
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
+    }
+
+    // Issue #4527, the lead's follow-on ruling: the TOOL writes a nil's
+    // after-the-result interpretation, so the agent writes none. Only
+    // `escalationDue` — no coverage or browse-only line (amended ruling).
+    //
+    // It has to happen HERE, and the ordering is the whole difficulty.
+    // `nilEscalationNote` reads `research.log.slice(priorLogLength)` — the entry
+    // being logged is part of its own trigger — so it cannot be computed before
+    // the append, and it is module-private, so record_search cannot pre-compute
+    // it either. After the append and before validate is the only window: the
+    // entry's `notes` must be final when the schema is checked and when the file
+    // is written. The agent's pre-search note comes first, the escalation after.
+    // Only for a tool's own write; a hand-logged entry keeps the agent's note.
+    if (typeof singleOp.writtenBy === "string" && singleOp.writtenBy !== "") {
+      // Advisory, exactly as `escalation()` above is, and wrapped for the same
+      // reason it is: the note is a nicety and the write is not, so a failure
+      // computing it must drop the note rather than fail a search that already
+      // succeeded. Without this the throw escapes the outer catch (which
+      // converts only NoProjectError and LogAppendError) and record_search
+      // reports a completed search as a failed tool call.
+      try {
+        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
+        if (note) {
+          const entry = research.log[research.log.length - 1];
+          if (entry && typeof entry === "object") {
+            const existing = typeof entry.notes === "string" && entry.notes.trim() !== "" ? entry.notes.trim() : "";
+            entry.notes = existing ? `${existing} ${note}` : note;
+          }
+        }
+      } catch {
+        // no note
+      }
     }
 
     const validation = await validateIntroduced({ research: beforeResearch, tree }, { research, tree }, { projectPath });

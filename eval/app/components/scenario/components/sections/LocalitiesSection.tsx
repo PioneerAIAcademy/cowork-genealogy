@@ -128,6 +128,45 @@ export default function LocalitiesSection(): React.JSX.Element {
               </div>
             )}
 
+            {(loc.record_types ?? []).length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Record types</div>
+                <ul className={styles.quirkList}>
+                  {(loc.record_types ?? []).map((r, i) => (
+                    <li key={i} className={styles.quirk}>
+                      {[r.type, r.years, r.access, r.held_at].filter(Boolean).join(', ')}: {r.summary}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {(loc.repositories ?? []).length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Repositories</div>
+                <ul className={styles.quirkList}>
+                  {(loc.repositories ?? []).map((r, i) => (
+                    <li key={i} className={styles.quirk}>
+                      {[r.name, r.holds, r.url].filter(Boolean).join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {(loc.losses ?? []).length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Record losses</div>
+                <ul className={styles.quirkList}>
+                  {(loc.losses ?? []).map((l, i) => (
+                    <li key={i} className={styles.quirk}>
+                      {[l.record_set, l.years, l.source_url].filter(Boolean).join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {loc.guide_markdown && (
               <div className={styles.block}>
                 <div className={styles.blockLabel}>Guide</div>

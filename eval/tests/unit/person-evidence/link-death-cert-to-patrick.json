@@ -9,7 +9,8 @@
       "person-evidence",
       "death-cert",
       "confidence-calibration",
-      "pe_005"
+      "pe_005",
+      "review-names-gaps"
     ]
   },
   "input": {
@@ -21,7 +22,13 @@
     "Should evaluate whether the existing `rationale` cites multiple matching attributes (name, place, date) and addresses why competing candidates were ruled out — not just 'names match'. Grade whether the REVIEW identifies those gaps; the stored rationale was written by the fixture, not by the agent, so its own quality is never scored against the agent.",
     "This is a review. Not persisting a change is correct in a review and is not penalized, including proposing an edit to pe_005 and asking for authorization (test_pe005_unchanged_when_review_confirms requires pe_005 unchanged). Grade the content of any proposed change against item 0 as usual.",
     "The death certificate's Pennsylvania birthplace (a_012) against the censuses' Ireland is conflict c_001, and c_001 is RESOLVED: Ireland accepted, the certificate's entry rejected as the son-in-law informant's likely error. A resolved conflict is not an open contradiction, so it does not cap this link. A review that downgrades pe_005 on that ground is a calibration error, not a correct downgrade (genealogist ruling, 2026-09-29). Naming c_001 and explaining why it does not reduce the tier is good work.",
-    "Every dimension grades the REVIEW, including Multi-person awareness, Score discipline and Rationale quality. Naming the missing I2 link for a_013 and the stored rationale's gaps is the full answer for each: creating the link or rewriting pe_005 is linking work a review does not owe, and its absence lowers no score. The review calls same_person for pe_005's null match_score, as the agent body requires; its 0.86 supports the `confident` tier."
+    "Every dimension grades the REVIEW, including Multi-person awareness, Score discipline and Rationale quality. Naming the missing I2 link for a_013 and the stored rationale's gaps is the full answer for each: creating the link or rewriting pe_005 is linking work a review does not owe, and its absence lowers no score. The review calls same_person for pe_005's null match_score, as the agent body requires; its 0.86 supports the `confident` tier.",
+    "pe_001 (a_001, the 1850 census) and pe_004 (a_010, the 1860 census) are both already `confident` links for I1 in Schuylkill County, both predating the death certificate. They are independent residence corroboration for Patrick's identity — a review claiming 'no independent residence evidence' or that the death certificate's own date/place is uncorroborated has missed existing project state (a Correctness gap, not a calibration judgment call). The death certificate's own stated date/place establishing its OWN death fact is not circular: identity here rests on the name plus the pre-existing census residence trail, not on the death record validating itself. A review that surveys pe_001/pe_004 and still downgrades pe_005 on 'self-sourcing' grounds is a calibration error exactly like the c_001 case above."
+  ],
+  "na_dimensions": [
+    "Multi-person awareness",
+    "Score discipline",
+    "Rationale quality"
   ],
   "execution": {
     "sdk_message_silence_seconds": 300

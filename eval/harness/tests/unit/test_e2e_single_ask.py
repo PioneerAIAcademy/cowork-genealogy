@@ -41,7 +41,7 @@ def agent(name, thread="main"):
 def final(**extra):
     out = json.loads(json.dumps(START))
     for k, v in extra.items():
-        out[k] = out[k] + v
+        out[k] = out.get(k, []) + v
     return out
 
 
@@ -357,6 +357,59 @@ def test_sources_save_missing_fails_and_present_passes():
         [agent("source-evaluation")], final_research=final(sources=[{"id": "src_1"}]), spec=SOURCES_SPEC
     )
     assert g.passed
+
+
+LOCALITY_SPEC = SingleAskSpec(**{**SPEC.__dict__, "expected_save": {"section": "localities"}})
+
+
+def test_localities_save_passes_only_on_a_complete_guide():
+    from e2e.single_ask_grade import GUIDE_HEADINGS
+
+    from e2e.single_ask_grade import LOCALITY_RECORD_TYPES as _LOCALITY_RECORD_TYPES
+
+    whole = "\n\n".join(f"{h}\n- x" for h in GUIDE_HEADINGS)
+    rows = [{"type": t, "access": "unknown", "summary": "x"} for t in _LOCALITY_RECORD_TYPES]
+    loc = {"id": "loc_1", "guide_markdown": whole, "record_types": rows}
+    g, _ = run([agent("source-evaluation")], final_research=final(localities=[loc]), spec=LOCALITY_SPEC)
+    assert g.passed
+    short = whole.replace("## Boundary changes\n- x", "")
+    g, line = run([agent("source-evaluation")], final_research=final(localities=[{**loc, "guide_markdown": short}]), spec=LOCALITY_SPEC)
+    assert not g.passed and "## Boundary changes" in line
+    g, line = run([agent("source-evaluation")], final_research=final(localities=[{**loc, "record_types": rows[1:]}]), spec=LOCALITY_SPEC)
+    assert not g.passed and "record_types: census" in line
+    g, line = run([agent("source-evaluation")], final_research=final(), spec=LOCALITY_SPEC)
+    assert "missing new localities" in line
+
+
+def test_the_graders_heading_list_is_the_validators():
+    validator = (REPO_ROOT / "eval" / "harness" / "validators" / "test_locality_guide.py").read_text(encoding="utf-8")
+    tree = ast.parse(validator)
+    lines = next(
+        ast.literal_eval(n.value) for n in tree.body
+        if isinstance(n, ast.Assign) and any(getattr(t, "id", None) == "_GUIDE_HEADING_LINES" for t in n.targets)
+    )
+    from e2e.single_ask_grade import GUIDE_HEADINGS
+
+    assert GUIDE_HEADINGS == lines
+
+
+PLAN_SPEC = SingleAskSpec(
+    **{**SPEC.__dict__, "expected_owner": "research-plan", "expected_save": {"section": "plans"}, "is_plan_ask": True}
+)
+
+
+def test_plans_save_missing_fails_and_present_passes():
+    _, line = run([agent("research-plan")], final_research=final(), spec=PLAN_SPEC)
+    assert "failed=[save]" in line and "missing new plans" in line
+    g, _ = run([agent("research-plan")], final_research=final(plans=[{"id": "pl_001"}]), spec=PLAN_SPEC)
+    assert g.passed
+
+
+def test_plans_save_needs_a_plan_ask(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, expected_save={"section": "plans"}, is_plan_ask=True))
+    assert spec.expected_save == {"section": "plans"}
+    with pytest.raises(FixtureError, match="is_plan_ask"):
+        load_single_ask_fixture(_write(tmp_path, id="no-plan-ask", expected_save={"section": "plans"}))
 
 
 def test_missing_research_json_names_itself_in_the_save_detail():

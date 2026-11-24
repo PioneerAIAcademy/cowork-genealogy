@@ -12,7 +12,9 @@ Cowork, which is unmeasured.
 
 It carries a second sentence, unconditional: name a source, collection, book or citation
 only if a tool result returned it (issue #4011, widened by the lead from issue #4125). The
-hosted planes append the same text; both harnesses add it from here.
+hosted planes append the same text; both harnesses add it from here. Issue #4676 added to it
+that nothing here changes FamilySearch's Family Tree, so a change that belongs there gets
+FamilySearch.org steps, not an offer.
 
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
@@ -46,7 +48,8 @@ CONTEXT = (
     "than answering it from a single lookup. In that case, if the message names more than "
     "one goal, you may summarise what the tree says and ask which to pursue first. "
     "With no project and no FamilySearch person ID, a request for the names and details "
-    "recorded in a record set (a roll, register, muster list or volume) goes to the "
+    "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+    "one page or compare it with its FamilySearch index, goes to the "
     "search-images agent with no projectPath, even when it names no images; relay "
     "everything after its final --- verbatim."
 )
@@ -56,8 +59,29 @@ CONTEXT = (
 SOURCES_NOTE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
-    "collections_search, which locality-guide and research-plan run. This rule is about "
-    "what you name, not about which agent a question goes to."
+    "a collections search, which the locality-guide and research-plan agents run. This rule is about "
+    "what you name, not about which agent a question goes to. "
+    "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
+    "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
+    "such as a merge or a wrong parent link, give the researcher the steps to make it on "
+    "FamilySearch.org, and never offer to make it yourself."
+)
+
+
+# Not added by this hook. With a project, a Haiku main thread answered research requests
+# from project state or its own knowledge, without the research skill or the agent whose
+# work it was (ut_research_001, 004, 026, 027). Only the hosted planes run Haiku, and they
+# append the same text as `continue_policy.ROUTING_GUIDANCE`; Cowork and Desktop run their
+# own model and do not get it (lead, 2026-11-24). Both harnesses add it from here, as they
+# measure the hosted main thread. Change both copies together.
+ROUTING_NOTE = (
+    "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
+    "what it returns. Researching, investigating or finding a person, a relative or a record, "
+    "or carrying the research on, goes to the research skill, with or without a project; any "
+    "other request, such as one about a place's history or a person's data problems, goes to "
+    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "or from the project's state. A question about where the project stands you answer from "
+    "project_context."
 )
 
 

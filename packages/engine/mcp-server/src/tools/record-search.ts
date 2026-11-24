@@ -42,8 +42,9 @@ import {
   unloggedStagedSearches,
   formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
-  NIL_SEARCH_NEEDS_LOG_NOTE,
+  stripQueryPlumbing,
 } from "../utils/results-staging.js";
+import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import {
   compactStagedRecordSearch,
   annotateResultsWithRanking,
@@ -1356,6 +1357,14 @@ export async function recordSearchTool(
       ? await unloggedStagedSearches(input.projectPath, "record_search")
       : [];
 
+  // Issue #4527: nil-ness is captured HERE, where the removed
+  // `nilSearchNeedsLog` computed it, because `out.results` is sliced for a place
+  // expansion further down — re-deriving it at the end of the function would not
+  // mean the same thing. Gate on the upstream total: an empty `results` is the
+  // post-`mapEntry` set and a page whose entries all fail mapping empties it
+  // while matches exist.
+  const isNilSearch = input.projectPath !== undefined && results.length === 0 && totalMatches === 0;
+
   const out: RecordSearchToolResponse = {
     query: echoQuery(input),
     totalMatches,
@@ -1414,9 +1423,7 @@ export async function recordSearchTool(
     // total, which is what "the search found nothing" actually means. Ordering a
     // `negative` log entry for a query that has matches is the asymmetric error:
     // the log is append-only, and later reasoning leans hardest on negatives.
-    ...(input.projectPath !== undefined && results.length === 0 && totalMatches === 0
-      ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
-      : {}),
+
     ...(placeExpansion !== undefined ? { placeExpansion } : {}),
     results,
   };
@@ -1441,7 +1448,6 @@ export async function recordSearchTool(
       const {
         rankingSkipped: _advisory,
         unloggedSearches: _backlog,
-        nilSearchNeedsLog: _nilNote,
         ...persistable
       } = out;
       // Under a place expansion the sidecar holds what the ranker must score: the
@@ -1644,6 +1650,69 @@ export async function recordSearchTool(
   }
   if (surnameHints) answer = withKeyBeforeResults(answer, "surnameVariantHints", surnameHints);
 
+  // Issue #4527. A search that found nothing stages nothing, so before this the
+  // agent typed the query into `research_log_append` by hand and nothing could
+  // check it at the write — `ut_search_records_018` logged a `collectionId` its
+  // search never sent. The tool writes that entry itself now, through the log
+  // tool's OWN write path (same refusals, same lock), so the logged query IS the
+  // call's arguments.
+  //
+  // The nil test is the one the removed `nilSearchNeedsLog` used, captured where
+  // it was computed: `out.results` is sliced for a place expansion further up, so
+  // re-deriving nil-ness here would not mean the same thing.
+  //
+  // This call sits OUTSIDE any held lock. `withProjectLock` is non-reentrant and
+  // throws on a same-project re-acquire; staging takes no lock and a nil stages
+  // nothing, so there is no nesting — do not move this inside the staging block.
+  if (isNilSearch) {
+    const logged = await researchLogAppend({
+      projectPath: input.projectPath as string,
+      tool: "record_search",
+      query: stripQueryPlumbing(input) ?? {},
+      outcome: "negative",
+      resultsExamined: 0,
+      planItemId: input.planItemId ?? null,
+      notes: typeof input.note === "string" && input.note.trim() !== "" ? input.note.trim() : null,
+      writtenBy: "record_search",
+    });
+    if (logged.ok && "logId" in logged) {
+      // Key order (spec § Key order): everything the agent needs at the moment
+      // of a nil arrives ahead of `results`, which a size bound drops first.
+      answer = withKeyBeforeResults(answer, "logId", logged.logId);
+      if (logged.planRationale) answer = withKeyBeforeResults(answer, "planRationale", logged.planRationale);
+      if (logged.escalationDue) answer = withKeyBeforeResults(answer, "escalationDue", logged.escalationDue);
+      if (logged.validation.warnings.length > 0) {
+        answer = withKeyBeforeResults(answer, "validationWarnings", logged.validation.warnings);
+      }
+    } else if (!logged.ok) {
+      // Deliberately NOT build-external-search-url's `log_write_failed` return:
+      // the search succeeded and its result is the answer. A refusal — in
+      // practice §8.5's pinned-nil rule — is reported so the agent logs it by
+      // hand batched with the retry the message names.
+      answer = withKeyBeforeResults(answer, "nilLogRefused", logged.errors);
+    }
+  }
+
+  // `planItemId` reaches a log entry and nothing else, so with no project to
+  // write to it is dropped — and the search answers normally, which is what
+  // makes the drop silent. `build_external_search_url` already names this
+  // mistake; this is that same note, from the same constant, since both tools
+  // write through `researchLogAppend` and the agent's error is identical.
+  //
+  // Not an `else` on the block above: that one is `isNilSearch`, which is false
+  // for a search WITH results. Excluded from it, though, so a nil whose write
+  // was attempted and refused reports the refusal alone rather than this too.
+  if (
+    !isNilSearch &&
+    (input.projectPath === undefined ||
+      input.projectPath === null ||
+      (typeof input.projectPath === "string" && input.projectPath.trim() === "")) &&
+    input.planItemId !== undefined &&
+    input.planItemId !== null
+  ) {
+    answer = withKeyBeforeResults(answer, "planItemIdIgnored", PLAN_ITEM_WITHOUT_PROJECT_NOTE);
+  }
+
   return answer;
 }
 
@@ -1802,6 +1871,8 @@ export const recordSearchToolSchema = {
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
       isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false`. Each result now carries a `role` field (\"Principal\", \"Father\", \"Mother\", \"Spouse\", \"Other\") naming the matched person's relationship to the record — read it before inferring the role from the relationship graph. `record_read` carries `principal` (boolean) but not the role string; for the string, use the search result's `role`. Omit to return both." },
 
+      planItemId: { type: ["string", "null"], description: "The `pli_` plan item this search serves, or null for an ad-hoc search. When the search finds NOTHING this tool writes its own research-log entry and this becomes the entry's `plan_item_id`, so you do not call `research_log_append` for a nil — the logged query is then exactly what was sent. It is not a search filter and never reaches the query. Without `projectPath` it has no effect." },
+      note: { type: "string", description: "Why you are running this search, known before it runs. When the search finds nothing it becomes the `notes` of the log entry this tool writes. Not a search filter." },
       subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },

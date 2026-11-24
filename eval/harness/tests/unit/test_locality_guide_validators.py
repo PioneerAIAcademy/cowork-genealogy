@@ -23,6 +23,7 @@ non-gating), so VR2 is deferred pending the skill->agent conversion, not rejecte
 """
 
 import json
+import re
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -42,7 +43,8 @@ from test_locality_guide import (  # noqa: E402
     test_catalog_search_called_and_broadened as check_catalog_broadening,
     test_persisted_guide_is_the_guide as check_guide,
     test_in_project_return_follows_the_contract as check_return_contract,
-    test_no_project_return_carries_guide as check_no_project_guide,
+    _GUIDE_HEADING_LINES,
+    _LOCALITY_RECORD_TYPES,
     _heading,
 )
 
@@ -53,34 +55,6 @@ _EVAL_DIR = Path(__file__).resolve().parents[3]
 _FIXTURES_DIR = _EVAL_DIR / "fixtures" / "mcp"
 _LOCALITY_TESTS = _EVAL_DIR / "tests" / "unit" / "locality-guide"
 
-# The survey tests this PR rewired to exercise VR4: each MUST register both
-# Step-3 searches through its own `mcp_fixtures`, or VR4's assertion silently
-# disarms (an unregistered tool is never called, so VR4 sees neither and skips).
-# Hardcoded by id — NOT discovered by "declares a volume-search fixture" —
-# because the fixture reference is the very thing that can go missing; a
-# discovery scan would shrink its own population and miss the regression.
-_VR4_SURVEY_TEST_IDS = [
-    "ut_locality_guide_004",
-    "ut_locality_guide_009",
-    "ut_locality_guide_014",
-    "ut_locality_guide_015",
-    "ut_locality_guide_017",
-    "ut_locality_guide_019",
-    "ut_locality_guide_020",
-]
-
-
-def _declared_fixtures(test_id):
-    """Resolve a test by its `test.id`, not by assuming the filename matches it:
-    6 of the locality tests are stored under prose filenames (e.g.
-    different-jurisdiction-ireland.json), so `f"{test_id}.json"` would
-    FileNotFoundError instead of failing with this pin's message if one of those
-    ids were ever added to the list below."""
-    for path in sorted(_LOCALITY_TESTS.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if (data.get("test") or {}).get("id") == test_id:
-            return data.get("mcp_fixtures", [])
-    raise AssertionError(f"no locality-guide test file declares id {test_id!r}")
 
 
 # --- helpers ------------------------------------------------------------
@@ -185,87 +159,49 @@ def test_shape_fires_on_an_in_place_update_that_drops_a_section():
 
 
 # --- VR4: test_survey_run_calls_both_collections_and_volume_search ------
+# A run that produced a guide called locality_survey (issue #4602).
 
 
-def test_both_searches_fires_when_only_collections_search_called():
+def _survey(place="Javorje, Škofja Loka, Slovenia", catalog_places=(), prefix="mcp__genealogy__"):
+    return {
+        "tool": f"{prefix}locality_survey",
+        "args": {"standardPlace": place},
+        "response": {"catalog": {"levels": [{"place": c, "totalHits": 0, "hits": []} for c in catalog_places]}},
+    }
+
+
+_A_RETURNED_GUIDE = [{"subagent_type": "locality-guide", "text": "# Locality Guide: X\n\n## Jurisdiction overview\n- x"}]
+
+
+def test_survey_fires_when_a_written_guide_had_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_both_searches([_call("collections_search"), _call("wiki_place_page")])
-    assert "volume_search" in str(exc.value)
+        check_both_searches(_state([]), _state([_guide_entry()]), [_call("wiki_read")])
+    assert "locality_survey" in str(exc.value)
 
 
-def test_both_searches_fires_when_only_volume_search_called():
+def test_survey_fires_when_a_returned_guide_had_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_both_searches([_call("volume_search")])
-    assert "collections_search" in str(exc.value)
-
-
-def test_both_searches_passes_when_both_called():
-    check_both_searches([_call("collections_search"), _call("volume_search")])
-
-
-def test_both_searches_skips_when_neither_called():
-    """A run that searched neither is not a records survey (Q&A / wiki-only /
-    decline). VR4 must SKIP — not record a bare-return pass on a run it never
-    checked (review B7)."""
-    with pytest.raises(pytest.skip.Exception):
-        check_both_searches([_call("wiki_place_page"), _call("place_search")])
-
-
-# --- B11: VR4 reachability pins (mirrors search-images #1788) -----------
+        check_both_searches(_state([]), _state([]), [_call("wiki_read")], _A_RETURNED_GUIDE)
+    assert "locality_survey" in str(exc.value)
 
 
 @pytest.mark.parametrize(
-    "prefix",
-    [
-        "mcp__genealogy__",
-        # Cowork's two other server spellings; VR4 normalizes on
-        # bare_tool_name() and CLAUDE.md requires all three to resolve.
-        "mcp__remote-devices__Genealogy_Research__",
-        "mcp__Genealogy_Research__",
-    ],
+    "prefix", ["mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"]
 )
-def test_vr4_recognizes_collections_search_in_every_server_spelling(prefix):
-    """Pins VR4's `bare_tool_name()` normalization. Deleting that call makes VR4
-    compare a qualified name against a bare one, match nothing, and SKIP rather
-    than fire — which pytest reports as *skipped, not failed*, so a plain
-    `pytest.raises` guard would go green-to-skipped and never catch it. So this
-    converts the skip into an explicit failure: with `collections_search` called
-    (in each spelling) and `volume_search` absent, VR4 must FIRE, never skip."""
-    call = {"tool": f"{prefix}collections_search", "args": {}}
-    try:
-        check_both_searches([call])
-    except AssertionError as exc:
-        assert "volume_search" in str(exc)  # recognized cs, fired for missing vs
-    except pytest.skip.Exception:
-        pytest.fail(
-            f"VR4 did not recognize collections_search in spelling {prefix!r} — "
-            "bare_tool_name() normalization dropped, so VR4 is blind to real calls"
-        )
-    else:
-        pytest.fail("VR4 neither fired nor skipped on a one-search survey")
+def test_survey_passes_when_the_survey_ran_in_every_server_spelling(prefix):
+    check_both_searches(_state([]), _state([_guide_entry()]), [_survey(prefix=prefix)])
 
 
-def test_vr4_survey_tests_register_both_step3_searches():
-    """The other half: `mcp_fixtures` is what makes collections_search and
-    volume_search callable (both are fixture-backed, absent from LIVE_TOOLS).
-    Dropping BOTH silently disarms VR4 (it sees neither call and skips); dropping
-    one makes VR4 redden at run time on that test instead — this pin catches
-    either at unit-test time, before a paid run. Reads each survey test's OWN
-    declaration and asserts the mock arms both — removing a fixture reds this.
-    The empty-declaration case documents the both-dropped disarmed state."""
-    for test_id in _VR4_SURVEY_TEST_IDS:
-        declared = _declared_fixtures(test_id)
-        _, _, armed = create_mock_server(declared, _FIXTURES_DIR)
-        assert {"collections_search", "volume_search"} <= set(armed), (
-            f"{test_id}'s mcp_fixtures must register both Step-3 searches or VR4 "
-            f"silently skips it; declared {declared} -> registered {sorted(armed)}"
-        )
+def test_survey_skips_a_run_that_produced_no_guide():
+    with pytest.raises(pytest.skip.Exception):
+        check_both_searches(_state([]), _state([]), [_call("place_search")], [{"subagent_type": "locality-guide", "text": "Which years?"}])
 
-    _, _, unarmed = create_mock_server([], _FIXTURES_DIR)
-    assert not ({"collections_search", "volume_search"} & set(unarmed)), (
-        "with no mcp_fixtures both searches must be absent — if they are now "
-        f"live-registered this pin is obsolete; got {sorted(unarmed)}"
-    )
+
+def test_locality_survey_is_registered_in_every_suite():
+    """The survey is live (no fixture of its own), so VR4 can never be disarmed by a
+    test's fixture list."""
+    _, _, armed = create_mock_server([], _FIXTURES_DIR)
+    assert "locality_survey" in armed
 
 
 # --- VR5: test_catalog_search_called_and_broadened (issue #3107) ----------
@@ -274,70 +210,44 @@ def test_vr4_survey_tests_register_both_step3_searches():
 _UT028_TEST = {"id": "ut_locality_guide_028"}
 
 
-def test_catalog_broadening_fires_when_no_catalog_call():
-    """VR5 must fire when no catalog_search call was made at all."""
+def test_catalog_broadening_fires_when_no_survey():
     with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [_call("collections_search"), _call("volume_search")],
-            _UT028_TEST,
-        )
-    assert "catalog_search" in str(exc.value)
+        check_catalog_broadening([_call("wiki_read")], _UT028_TEST)
+    assert "locality_survey" in str(exc.value)
 
 
-def test_catalog_broadening_fires_when_only_one_call():
-    """VR5 must fire when catalog_search was called once (no broadening)."""
+def test_catalog_broadening_fires_when_only_one_level():
     with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [_call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia")],
-            _UT028_TEST,
-        )
+        check_catalog_broadening([_survey(catalog_places=["Javorje, Škofja Loka, Slovenia"])], _UT028_TEST)
     assert "parent jurisdictions" in str(exc.value)
 
 
 def test_catalog_broadening_fires_on_sibling_villages():
-    """VR5 must fire when two calls target sibling villages (no climb)."""
     with pytest.raises(AssertionError) as exc:
         check_catalog_broadening(
-            [
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-                _call("catalog_search", standardPlace="Javorje, Gorenja Vas-Poljane, Slovenia"),
-            ],
+            [_survey(catalog_places=["Javorje, Škofja Loka, Slovenia", "Javorje, Gorenja Vas-Poljane, Slovenia"])],
             _UT028_TEST,
         )
     assert "parent jurisdictions" in str(exc.value)
 
 
-def test_catalog_broadening_fires_on_same_place_twice():
-    """VR5 must fire when catalog_search is called twice for the same place."""
-    with pytest.raises(AssertionError) as exc:
-        check_catalog_broadening(
-            [
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-            ],
-            _UT028_TEST,
-        )
-    assert "parent jurisdictions" in str(exc.value)
-
-
-def test_catalog_broadening_passes_when_called_twice():
-    """VR5 must accept when catalog_search was called twice (initial + broadened)."""
+def test_catalog_broadening_passes_when_the_survey_climbed():
     check_catalog_broadening(
-        [
-            _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
-            _call("catalog_search", standardPlace="Škofja Loka, Slovenia"),
-        ],
-        _UT028_TEST,
+        [_survey(catalog_places=["Javorje, Škofja Loka, Slovenia", "Škofja Loka, Slovenia"])], _UT028_TEST
     )
 
 
+def test_catalog_broadening_reads_an_mcp_text_response():
+    call = _survey()
+    call["response"] = {"content": [{"type": "text", "text": json.dumps(
+        {"catalog": {"levels": [{"place": "Javorje, Škofja Loka, Slovenia"}, {"place": "Škofja Loka, Slovenia"}]}}
+    )}]}
+    check_catalog_broadening([call], _UT028_TEST)
+
+
 def test_catalog_broadening_skips_for_other_tests():
-    """VR5 must stand down for any test that is not ut_locality_guide_028."""
     with pytest.raises(pytest.skip.Exception):
-        check_catalog_broadening(
-            [_call("catalog_search", standardPlace="Pennsylvania, United States")],
-            {"id": "ut_locality_guide_004"},
-        )
+        check_catalog_broadening([_survey(catalog_places=["Pennsylvania, United States"])], {"id": "ut_locality_guide_004"})
 
 
 # --- The guide is written once: (a) persisted, (b) in-project return, (c) no-project
@@ -345,14 +255,8 @@ def test_catalog_broadening_skips_for_other_tests():
 # variant through `expect_passes`, so a skip gate that over-matches fails here
 # instead of reading green.
 
-_REQUIRED_HEADINGS = ("Jurisdiction overview", "Available record types", "Research tips")
-_ALL_HEADINGS = (
-    "## Jurisdiction overview",
-    "## Boundary changes",
-    "## Available record types",
-    "## Repository guide",
-    "## Research tips",
-)
+_ALL_HEADINGS = _GUIDE_HEADING_LINES
+_REQUIRED_HEADINGS = _ALL_HEADINGS
 
 
 def _guide(*headings, nl="\n"):
@@ -365,9 +269,10 @@ def _guide(*headings, nl="\n"):
 _GUIDE = _guide(*_ALL_HEADINGS)
 
 
-def _guide_entry(guide=_GUIDE, *, lid="loc_001"):
+def _guide_entry(guide=_GUIDE, *, lid="loc_001", types=_LOCALITY_RECORD_TYPES):
     entry = _entry(lid=lid)
     entry["guide_markdown"] = guide
+    entry["record_types"] = [{"type": t, "access": "unknown", "summary": "Not confirmed."} for t in types]
     return entry
 
 
@@ -403,18 +308,41 @@ def _check_guide(*after, before=()):
 
 @pytest.mark.parametrize("dropped", _REQUIRED_HEADINGS)
 def test_guide_fires_when_a_required_heading_is_missing(dropped):
-    headings = [h for h in _ALL_HEADINGS if h != f"## {dropped}"]
+    headings = [h for h in _ALL_HEADINGS if h != dropped]
     expect_fires(
         _check_guide(_guide_entry(_guide(*headings))),
-        rf"localities\[loc_001\].*{dropped}",
+        rf"localities\[loc_001\].*{re.escape(dropped)}",
     )
 
 
-def test_guide_fires_when_the_headings_are_demoted_to_level_three():
+def test_guide_passes_with_every_heading():
+    expect_passes(_check_guide(_guide_entry(_GUIDE)))
+
+
+@pytest.mark.parametrize("dropped", ["vital_record", "tax", "other"])
+def test_guide_fires_when_a_record_type_has_no_row(dropped):
+    expect_fires(
+        _check_guide(_guide_entry(types=[t for t in _LOCALITY_RECORD_TYPES if t != dropped])),
+        rf"loc_001.*record_types has no row for \['{dropped}'\]",
+    )
+
+
+def test_guide_fires_on_an_entry_with_no_rows():
+    entry = _guide_entry()
+    del entry["record_types"]
+    expect_fires(_check_guide(entry), r"record_types has no row for \['census'")
+
+
+def test_record_types_are_the_schema_enum():
+    assert _LOCALITY_RECORD_TYPES[0] == "census" and "vital_record" in _LOCALITY_RECORD_TYPES
+    assert len(_LOCALITY_RECORD_TYPES) == 12
+
+
+def test_guide_fires_when_the_headings_are_demoted_a_level():
     demoted = _guide(*(f"#{h}" for h in _ALL_HEADINGS))
     expect_fires(
         _check_guide(_guide_entry(demoted)),
-        r"loc_001.*Jurisdiction overview.*Available record types.*Research tips",
+        r"loc_001.*Jurisdiction overview.*Boundary changes.*Research tips",
     )
 
 
@@ -473,7 +401,7 @@ def test_guide_fires_when_guide_markdown_is_absent():
 # section 5.14), and its twin of this table is in
 # packages/engine/mcp-server/tests/tools/research-append.test.ts. Change _heading() and
 # both tables, and the engine's missingGuideHeadings, move together.
-_HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
+_HEADING_BEFORE = "\n\n".join(h for h in _ALL_HEADINGS if h != "## Research tips") + "\n\n"
 
 
 @pytest.mark.parametrize(
@@ -505,11 +433,11 @@ _HEADING_BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n"
     ],
 )
 def test_heading_rule_matches_the_engine_twin_table(tail, found):
-    assert bool(_heading("Research tips").search(_HEADING_BEFORE + tail)) is found
+    assert bool(_heading("## Research tips").search(_HEADING_BEFORE + tail)) is found
 
 
 def test_heading_rule_ignores_a_heading_behind_a_byte_order_mark():
-    assert not _heading("Research tips").search("\ufeff## Research tips")
+    assert not _heading("## Research tips").search("\ufeff## Research tips")
 
 
 def test_guide_fires_on_an_in_place_update_that_stubs_the_guide():
@@ -687,7 +615,7 @@ def test_contract_fires_when_a_refused_write_leaves_the_guide_out_of_the_return(
         _check_contract(
             _returns("The write failed.\n\n---\n\nSummary."), calls=[_append(_REFUSED, **_LOC_OP)]
         ),
-        r"Available record types",
+        r"Jurisdiction overview",
     )
 
 
@@ -718,6 +646,26 @@ def test_contract_passes_when_a_refused_localities_write_falls_back_to_the_guide
     expect_passes(_check_contract(_returns(_GUIDE), calls=[call]))
 
 
+_UNRESOLVED = {
+    "ok": False,
+    "errors": [
+        "for_place 'Billy, County Antrim, Ireland': FamilySearch's place standard has no place 'Billy' there. "
+        "Look up 'Billy' with place_search, contextName 'Ireland'."
+    ],
+}
+
+
+def test_contract_passes_when_an_unresolved_place_falls_back_to_the_guide():
+    expect_passes(_check_contract(_returns(_GUIDE), calls=[_append(_UNRESOLVED, **_LOC_OP)]))
+
+
+def test_contract_fires_when_an_unresolved_place_returns_no_guide():
+    expect_fires(
+        _check_contract(_returns("The place did not resolve."), calls=[_append(_UNRESOLVED, **_LOC_OP)]),
+        r"Jurisdiction overview",
+    )
+
+
 def test_contract_stands_down_outside_a_project():
     with pytest.raises(pytest.skip.Exception):
         check_return_contract(_no_project_state(), _no_project_state(), [], _returns(_GUIDE))
@@ -732,122 +680,16 @@ def test_contract_grades_a_project_whose_research_json_is_empty():
     )
 
 
-# --- (c) test_no_project_return_carries_guide ----------------------------
+# --- No test runs locality-guide without a project ---------------------
 
 
-_NO_PROJECT_TEST = {"id": "ut_locality_guide_001", "tags": ["locality", "no-project", "direct-arm"]}
-_NO_GUIDE = r"no `## Available record types` heading in the return"
-
-
-def _check_no_project(returns, test=_NO_PROJECT_TEST):
-    return lambda: check_no_project_guide(test, returns)
-
-
-@pytest.mark.parametrize(
-    "returns",
-    [
-        _returns(_guide("## Jurisdiction overview", "## Research tips")),
-        None,
-        [],
-        _returns(""),
-        _returns(_GUIDE, agent="record-extractor"),
-        _returns(_guide("### Available record types")),
-        _returns("The guide is saved as `loc_001`."),
-        _returns("See the section ## Available record types below."),
-    ],
-    ids=[
-        "heading-missing",
-        "returns-none",
-        "returns-empty",
-        "empty-text",
-        "other-agent-only",
-        "level-three",
-        "loc-line-only",
-        "mid-line",
-    ],
-)
-def test_no_project_fires_when_the_return_carries_no_guide(returns):
-    expect_fires(_check_no_project(returns), _NO_GUIDE)
-
-
-@pytest.mark.parametrize(
-    "text",
-    [
-        _guide("## Available record types (1840-1880)"),
-        _GUIDE,
-        "No research project present.\n\n---\n\n" + _GUIDE + "\n---\n\nSurvey of Schuylkill done.",
-        _guide("## Jurisdiction overview") + "\n---\n\n" + _guide("## Available record types"),
-        _guide(*_ALL_HEADINGS, nl="\r\n"),
-        _guide("## AVAILABLE RECORD TYPES"),
-    ],
-    ids=[
-        "suffixed",
-        "after-other-sections",
-        "preamble-and-separators",
-        "internal-rules",
-        "crlf",
-        "upper-case",
-    ],
-)
-def test_no_project_passes_on_a_return_carrying_the_guide(text):
-    expect_passes(_check_no_project(_returns(text)))
-
-
-def test_no_project_stands_down_on_an_untagged_test():
-    with pytest.raises(pytest.skip.Exception):
-        check_no_project_guide({"id": "ut_locality_guide_004", "tags": ["locality"]}, [])
-
-
-# --- Tag coverage: exactly these no-project tests carry `no-project` ----
-
-_NO_PROJECT_TEST_IDS = {
-    "ut_locality_guide_001",
-    "ut_locality_guide_002",
-    "ut_locality_guide_004",
-    "ut_locality_guide_005",
-    "ut_locality_guide_006",
-    "ut_locality_guide_007",
-    "ut_locality_guide_008",
-    "ut_locality_guide_009",
-    "ut_locality_guide_011",
-    "ut_locality_guide_012",
-    "ut_locality_guide_016",
-    "ut_locality_guide_017",
-    "ut_locality_guide_019",
-    "ut_locality_guide_020",
-    "ut_locality_guide_021",
-    "ut_locality_guide_023",
-    "ut_locality_guide_026",
-    "ut_locality_guide_027",
-    "ut_locality_guide_m4t",
-    "ut_locality_guide_r7k",
-    "ut_locality_guide_v7h",
-}
-
-
-def test_exactly_the_no_project_tests_carry_the_no_project_tag():
-    """`test_tag_gate_coverage.py` fails only when NO test carries a gate tag, so a
-    single test dropping `no-project` would silently stop (c) grading it. This pins
-    the population by id, and that each tagged test really runs with no project."""
-    tagged = {}
+def test_every_locality_guide_test_runs_in_a_project():
+    """locality-guide always saves its guide to a project (lead, 2026-11-19): every test's
+    delegation names the project path, and none carries the retired `no-project` tag."""
     for path in sorted(_LOCALITY_TESTS.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         test = data.get("test") or {}
-        if "no-project" in (test.get("tags") or []):
-            tagged[test.get("id")] = (data.get("input") or {}).get("scenario")
-    assert set(tagged) == _NO_PROJECT_TEST_IDS, (
-        f"`no-project` must be carried by exactly {sorted(_NO_PROJECT_TEST_IDS)}; "
-        f"carried by {sorted(tagged)}"
-    )
-    assert all(scenario is None for scenario in tagged.values()), (
-        f"a `no-project` test must run with no scenario: {tagged}"
-    )
-
-
-def test_no_project_gate_is_recognized_by_the_runnability_scan():
-    """(c) only runs if the harness sees its gate: `tag_gated_validator_tags` reads
-    the literal `"<tag>" not in tags -> pytest.skip` shape, and the tag-coverage
-    lint above it reads the same scan."""
-    from harness.runnability import DEFAULT_VALIDATORS_DIR, tag_gated_validator_tags
-
-    assert "no-project" in tag_gated_validator_tags(DEFAULT_VALIDATORS_DIR, "locality-guide")
+        if test.get("type") == "negative":
+            continue
+        assert "no-project" not in (test.get("tags") or []), test.get("id")
+        assert "projectPath" in ((data.get("input") or {}).get("delegation") or ""), test.get("id")

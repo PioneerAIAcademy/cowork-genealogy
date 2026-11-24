@@ -1,0 +1,407 @@
+{
+  "log_id": "log_001",
+  "tool": "record_read",
+  "retrieved": "2026-11-11T21:03:32.547Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MMF1-WWF"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MMF1-WWF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_12938595",
+              "ark": "ark:/61903/1:1:MMF1-WWF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "47797cb9-14f5-4301-9573-59eaf9f1e738",
+                  "type": "BirthName",
+                  "surname": "Tyler"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Race",
+                  "value": "Black"
+                },
+                {
+                  "id": "4ec03c95-02b2-4e74-b1a8-721d35f8ce91",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+                  "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+                },
+                {
+                  "id": "fafea2be-b690-4ef1-8cea-cd28dc08b053",
+                  "type": "Birth",
+                  "date": "Apr 1853",
+                  "standard_date": "Apr 1853",
+                  "place": "Virginia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_12938596",
+              "ark": "ark:/61903/1:1:MMF1-WWN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "bcb29af8-5535-40a8-9386-cd6096b04964",
+                  "type": "BirthName",
+                  "surname": "Lightfoot",
+                  "given": "Dora"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "Black"
+                },
+                {
+                  "id": "4d23a192-38df-4e75-92e6-a7c1b59cbcbd",
+                  "type": "Birth",
+                  "date": "Jan 1885",
+                  "standard_date": "Jan 1885",
+                  "place": "Virginia"
+                },
+                {
+                  "id": "2bef47cb-6646-4da9-837e-0b903740927c",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+                  "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_12938597",
+              "ark": "ark:/61903/1:1:MMF1-WWJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "029456ad-d67a-49e0-970d-d3af72ecafc5",
+                  "type": "BirthName",
+                  "surname": "Lightfoot",
+                  "given": "William E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "Black"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "751bab95-3a2b-4eb6-a38a-04dbe12e7c8a",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+                  "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+                },
+                {
+                  "id": "d1ea2646-f814-45a4-8dcc-95d127f9ae9a",
+                  "type": "Birth",
+                  "date": "Oct 1872",
+                  "standard_date": "Oct 1872",
+                  "place": "Virginia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_12938598",
+              "ark": "ark:/61903/1:1:MMF1-WWV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "24a17834-c8a0-4c6d-9907-33c3f971af47",
+                  "type": "BirthName",
+                  "surname": "Dillard",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "Black"
+                },
+                {
+                  "id": "473678cb-d0f1-448a-ace6-1ce5490e856a",
+                  "type": "Birth",
+                  "date": "Jan 1895",
+                  "standard_date": "Jan 1895",
+                  "place": "Virginia"
+                },
+                {
+                  "id": "1f30939e-f051-42c0-bee5-0b834582cf44",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+                  "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_12938599",
+              "ark": "ark:/61903/1:1:MMF1-WWK",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "7e2e3b5a-ff9a-4e57-8e3c-cd566b6188c1",
+                  "type": "BirthName",
+                  "surname": "Winston",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "Black"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "1617a71c-eb7f-43e3-b63c-a184311bc60a",
+                  "type": "Birth",
+                  "date": "Feb 1895",
+                  "standard_date": "Feb 1895",
+                  "place": "Virginia"
+                },
+                {
+                  "id": "dc2811a1-8e27-4df9-bd68-4953c3b65a60",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Cunningham District (south part) Scottsville town, ED 73, Fluvanna, Virginia, United States",
+                  "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "a31fc289-a445-4ffe-95ff-214750ab07b6",
+              "type": "ParentChild",
+              "parent": "p_12938595",
+              "child": "p_12938598",
+              "subtype": "Adoptive"
+            },
+            {
+              "id": "03f012ed-8cae-451e-a1d5-25a8c303b6d8",
+              "type": "ParentChild",
+              "parent": "p_12938595",
+              "child": "p_12938597"
+            },
+            {
+              "id": "d10664e8-21a3-4726-a6ad-2f3a5e3ce79c",
+              "type": "ParentChild",
+              "parent": "p_12938595",
+              "child": "p_12938599",
+              "subtype": "Adoptive"
+            },
+            {
+              "id": "fe8dd8a6-5b66-471a-ab37-6d8da317886d",
+              "type": "ParentChild",
+              "parent": "p_12938595",
+              "child": "p_12938596"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21837774706",
+              "resource_type": "Record",
+              "title": "Household of Tyler, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWF : Wed Oct 15 07:47:52 UTC 2025), Entry for Tyler and Dora Lightfoot, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1B2W-X3N",
+              "coverage": {
+                "place_rep_id": "5837666",
+                "date_range": "1900",
+                "record_type": "Census",
+                "standard_place": "Cunningham District, Fluvanna, Virginia, United States"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DTXQ-WTP",
+              "coverage": {
+                "place_rep_id": "5233678",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census",
+                "standard_place": "Columbia, Fluvanna, Virginia, United States"
+              }
+            },
+            {
+              "id": "sd_p_12938598",
+              "resource_type": "Person",
+              "title": "Mary Dillard, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWV : Wed Oct 15 07:47:52 UTC 2025), Mary Dillard in entry for Tyler, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MMF1-WWV"
+            },
+            {
+              "id": "sd_p_12938597",
+              "resource_type": "Person",
+              "title": "William E Lightfoot, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWJ : Wed Oct 15 07:47:52 UTC 2025), William E Lightfoot in entry for Tyler, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MMF1-WWJ"
+            },
+            {
+              "id": "sd_p_12938599",
+              "resource_type": "Person",
+              "title": "Emma Winston, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWK : Wed Oct 15 07:47:52 UTC 2025), Emma Winston in entry for Tyler, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MMF1-WWK"
+            },
+            {
+              "id": "sd_p_12938596",
+              "resource_type": "Person",
+              "title": "Dora Lightfoot, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWN : Wed Oct 15 07:47:52 UTC 2025), Dora Lightfoot in entry for Tyler, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MMF1-WWN"
+            },
+            {
+              "id": "sd_p_12938595",
+              "resource_type": "Person",
+              "title": "Tyler, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMF1-WWF : Wed Oct 15 07:47:52 UTC 2025), Tyler, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MMF1-WWF"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_5837666"
+            }
+          ]
+        },
+        "indexFields": {
+          "p_12938595": {
+            "relationshipToHead": "Head",
+            "sortKey": "0000000004117875_00900_43691_0000021837774706_000",
+            "householdId": "98",
+            "age": "47",
+            "fatherBirthPlace": "Virginia",
+            "motherBirthPlace": "Virginia",
+            "censusPlace": "Cunningham District, Fluvanna, Virginia, United States"
+          },
+          "p_12938596": {
+            "relationshipToHead": "Daughter",
+            "sortKey": "0000000004117875_00900_43691_0000021837774706_001",
+            "householdId": "98",
+            "age": "15",
+            "fatherBirthPlace": "Virginia",
+            "motherBirthPlace": "Virginia",
+            "censusPlace": "Cunningham District, Fluvanna, Virginia, United States"
+          },
+          "p_12938597": {
+            "relationshipToHead": "Son",
+            "sortKey": "0000000004117875_00900_43691_0000021837774706_002",
+            "householdId": "98",
+            "age": "28",
+            "fatherBirthPlace": "Virginia",
+            "motherBirthPlace": "Virginia",
+            "censusPlace": "Cunningham District, Fluvanna, Virginia, United States"
+          },
+          "p_12938598": {
+            "relationshipToHead": "Adopted daughter",
+            "sortKey": "0000000004117875_00900_43691_0000021837774706_003",
+            "householdId": "98",
+            "age": "5",
+            "fatherBirthPlace": "Virginia",
+            "motherBirthPlace": "Virginia",
+            "censusPlace": "Cunningham District, Fluvanna, Virginia, United States"
+          },
+          "p_12938599": {
+            "relationshipToHead": "Adopted daughter",
+            "sortKey": "0000000004117875_00900_43691_0000021837774706_004",
+            "householdId": "98",
+            "age": "5",
+            "fatherBirthPlace": "Virginia",
+            "motherBirthPlace": "Virginia",
+            "censusPlace": "Cunningham District, Fluvanna, Virginia, United States"
+          }
+        }
+      }
+    ]
+  }
+}

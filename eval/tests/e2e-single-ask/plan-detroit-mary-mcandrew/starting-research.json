@@ -1,0 +1,519 @@
+{
+  "project": {
+    "id": "rp_mary_mcandrew_son",
+    "objective": "Did Mary E. McAndrew (G13G-P68) and her husband John Mogan of Detroit have any children besides the five already in the tree?",
+    "subject_person_ids": [
+      "G13G-P68"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were all the children born to Mary E. McAndrew and John Mogan of Detroit?",
+      "rationale": "The objective asks whether the couple had children beyond the five in the tree, which is the complete set of their children; no question covers it yet. The tree's five children were born 1876-1888, and no marriage date is recorded for the couple, so the search window is open at both ends. The tree holds no sourced evidence for any of the five yet.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "enumerative",
+      "priority": "high",
+      "date_window": "1868-1925",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Wayne County, Michigan, United States",
+      "for_place": "Detroit, Wayne County, Michigan",
+      "time_period": "1870-1930",
+      "jurisdictions": [
+        {
+          "name": "Wayne County, Michigan, United States",
+          "date_range": "1815-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1675348",
+          "title": "Michigan, Births and Christenings, 1775-1995",
+          "date_range": "1775-1995",
+          "person_count": 2943996,
+          "record_count": 899505,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1459684",
+          "title": "Michigan, Births, 1867-1902",
+          "date_range": "1867-1902",
+          "person_count": 4215535,
+          "record_count": 1409988,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1923472",
+          "title": "Michigan, County Births, 1867-1917",
+          "date_range": "1867-1917",
+          "person_count": 3830045,
+          "record_count": 724380,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1452402",
+          "title": "Michigan, Deaths, 1867-1897",
+          "date_range": "1867-1897",
+          "person_count": 1238724,
+          "record_count": 507104,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1675357",
+          "title": "Michigan, Deaths and Burials, 1800-1995",
+          "date_range": "1800-1995",
+          "person_count": 3459942,
+          "record_count": 1094840,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1968532",
+          "title": "Michigan, Death Certificates, 1921-1952",
+          "date_range": "1921-1952",
+          "person_count": 4519138,
+          "record_count": 1654686,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2215693",
+          "title": "Michigan, Obituaries, 1820-2006",
+          "date_range": "1820-2006",
+          "person_count": 8932477,
+          "record_count": 8912502,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2787825",
+          "title": "Michigan, Church Records, 1819-1991",
+          "date_range": "1819-1991",
+          "person_count": 103627,
+          "record_count": 47038,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2013878",
+          "title": "Michigan, Probate Records, 1797-1973",
+          "date_range": "1797-1973",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2632078",
+          "title": "Michigan, Mortality Schedules, 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 41597,
+          "record_count": 41597,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1825187",
+          "title": "Michigan, State Census, 1894",
+          "date_range": "1894-1894",
+          "person_count": 381961,
+          "record_count": 381961,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1916040",
+          "title": "Michigan, Wayne, Detroit, Manifests of Arrivals at the Port of Detroit, 1906-1956",
+          "date_range": "1906-1956",
+          "person_count": 1364974,
+          "record_count": 1364860,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3007553",
+          "title": "Michigan, Census of World War I Veterans with Card Index, 1917-1919",
+          "date_range": "1917-1919",
+          "person_count": 568817,
+          "record_count": 227520,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2515887",
+          "title": "Michigan, Church Marriages, 1865-1931",
+          "date_range": "1865-1931",
+          "person_count": 1316,
+          "record_count": 213,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2515912",
+          "title": "Michigan, Civil Marriages, 1834-1974",
+          "date_range": "1834-1974",
+          "person_count": 5286,
+          "record_count": 1098,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3246416",
+          "title": "Michigan, Civil War Centennial Observance Commission, Committee on Civil War Grave Registration, Burial Records",
+          "date_range": "1861-1963",
+          "person_count": 86219,
+          "record_count": 84911,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2473289",
+          "title": "Michigan, County Marriages Index, 1820-1937",
+          "date_range": "1820-1937",
+          "person_count": 49386,
+          "record_count": 14239,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1810350",
+          "title": "Michigan, County Marriages, 1820-1941",
+          "date_range": "1820-1941",
+          "person_count": 2212986,
+          "record_count": 498558,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2426314",
+          "title": "Michigan, Crew Lists for various ports, 1929-1966",
+          "date_range": "1929-1966",
+          "person_count": 140825,
+          "record_count": 140825,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949333",
+          "title": "Michigan, Death Index, 1971-1996",
+          "date_range": "1971-1996",
+          "person_count": 2052472,
+          "record_count": 2052472,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2110745",
+          "title": "Michigan, Eastern District, Naturalization Index, 1907-1995",
+          "date_range": "1907-1995",
+          "person_count": 567578,
+          "record_count": 567574,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2351035",
+          "title": "Michigan, Grand Army of the Republic Membership Records, 1876-1945",
+          "date_range": "1876-1945",
+          "person_count": 205811,
+          "record_count": 61796,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1675359",
+          "title": "Michigan, Marriages, 1822-1995",
+          "date_range": "1822-1995",
+          "person_count": 5126071,
+          "record_count": 1128807,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1452395",
+          "title": "Michigan, Marriages, 1868-1925",
+          "date_range": "1868-1925",
+          "person_count": 8076722,
+          "record_count": 1603279,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4123955",
+          "title": "Michigan, Military Discharge Records, ca.1847 - ca.1965",
+          "date_range": "1846-1966",
+          "person_count": 1032,
+          "record_count": 981,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2546149",
+          "title": "Michigan, Naturalization Records, 1837-1997",
+          "date_range": "1837-1997",
+          "person_count": 2696839,
+          "record_count": 1587084,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3733440",
+          "title": "Michigan, Saginaw County, Biographical Card File, ca. 1830-2000",
+          "date_range": "1829-2001",
+          "person_count": 50464,
+          "record_count": 20432,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2720701",
+          "title": "Michigan, State Archives, Naturalization Records, 1812-1993",
+          "date_range": "1812-1993",
+          "person_count": 1859058,
+          "record_count": 37478,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3158869",
+          "title": "Michigan, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 36559,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1610551",
+          "title": "United States, Census, 1890",
+          "date_range": "1890-1890",
+          "person_count": 7393,
+          "record_count": 6285,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1325221",
+          "title": "United States, Census, 1900",
+          "date_range": "1900-1900",
+          "person_count": 76492831,
+          "record_count": 76492831,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1727033",
+          "title": "United States, Census, 1910",
+          "date_range": "1910-1910",
+          "person_count": 93758702,
+          "record_count": 93758702,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1488411",
+          "title": "United States, Census, 1920",
+          "date_range": "1920-1920",
+          "person_count": 107660184,
+          "record_count": 107660184,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1810731",
+          "title": "United States, Census, 1930",
+          "date_range": "1930-1930",
+          "person_count": 125179955,
+          "record_count": 125179955,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1968530",
+          "title": "United States, World War I Draft Registration Cards, 1917-1918",
+          "date_range": "1917-1918",
+          "person_count": 44906686,
+          "record_count": 32592786,
+          "availability": "name-searchable"
+        }
+      ],
+      "quirks": [
+        "Statewide birth and death registration in Michigan began 1867, general compliance not reached until 1915 (FamilySearch Michigan Vital Records) - Mogan children born before ~1900 may lack filed birth records.",
+        "Detroit birth records since 1893 are obtained from the Wayne County Clerk; FamilySearch's unindexed Wayne County birth/death microfilm (1867-1917) explicitly excludes City of Detroit events, so Detroit births/deaths must be sought separately from county-wide ones.",
+        "Wayne County death index 1934-1953 held at Burton Historical Collection also excludes City of Detroit deaths; a separate Detroit Death Index (microfiche, 1920-current) covers Detroit proper.",
+        "A large number of Roman Catholic church records from the Archdiocese of Detroit (1704-1930, baptisms, marriages, deaths, first communions, confirmations) are on microfilm at the Burton Historical Collection, Detroit Public Library - the specific parish Mary McAndrew and John Mogan attended is not established by any tool result in this survey; search broadly across Detroit's Catholic parish registers.",
+        "Detroit streets were renumbered 1 January 1921 (same house, different numbers) - affects matching addresses across census years.",
+        "volume_search found 644 digitized volumes for Detroit 1870-1930; most Vital/Death group volumes (140 of 154) are browse-only images with no name index, and most Census volumes (55 of 69) are likewise browse-only despite being ~97-100% recordSearchablePercent on some specific rolls - check each volume's own searchability rather than assuming."
+      ],
+      "guide_markdown": "# Locality Guide: Detroit, Wayne County, Michigan (1870-1930)\n\n## Jurisdiction overview\n- Wayne County organized November 21, 1815; county seat Detroit, the oldest county in Michigan.\n- Population (Wayne County): 1870: 119,068; 1880: 168,444; 1890: 257,114; 1900: 348,793; 1910: 531,591; 1920: 1,177,645; 1930: 1,888,946 (FamilySearch Wayne County Genealogy page).\n- Large Irish Catholic immigrant population in Detroit in this era; parish-based Catholic recordkeeping common.\n- No known courthouse record-loss disasters in Wayne County (per the wiki page).\n\n## Boundary changes\nWayne County boundaries were established in 1815 as an original county and were stable through the 1870-1930 period; Detroit itself annexed surrounding land 1806-1926 (especially 1915-1925), which can change which jurisdiction a given Detroit address fell under historically, and streets were renumbered in 1921.\n\n## Available record types\n\n### Vital records (civil registration)\n- Start date: statewide registration of births and deaths began in Michigan in 1867; general compliance by 1915 (FamilySearch Michigan Vital Records, https://www.familysearch.org/en/wiki/Michigan_Vital_Records). Marriage registration with the county clerk dates to 1805/county formation.\n- What exists: FamilySearch \"Michigan, Births, 1867-1902\" and \"Michigan, County Births, 1867-1917\" (index & images); \"Michigan, Deaths, 1867-1897\" and \"Michigan, Deaths and Burials, 1800-1995\"; \"Michigan, Death Certificates, 1921-1952.\"\n- Where held: county level at the Wayne County Clerk for events in Wayne County generally; Detroit-specific births since 1893 come from the Wayne County Clerk, and Detroit deaths since 1897 from the Detroit Health Department. The FamilySearch Library's unindexed Wayne County birth/death microfilm (1867-1917) explicitly excludes City of Detroit events.\n- Gaps: pre-1915 compliance was incomplete; Detroit deaths before 1897 are not separately described by a tool result.\n- Pre-registration alternatives: church (Catholic parish) baptism/death records; obituaries; probate.\n\n### Church records\n- Denominations present: Catholic (large Irish and other immigrant population), Lutheran, LDS branches, others.\n- Record types: Archdiocese of Detroit Catholic church records on microfilm at the Burton Historical Collection, Detroit Public Library, ranging (by parish) 1704-1930 and including baptisms, marriages, deaths, first communions, confirmations.\n- Where held: Burton Historical Collection, Detroit Public Library (physical/microfilm); also FamilySearch \"Michigan, Church Records, 1819-1991\" (index & images, 103,627 persons) and the volume_search results show many browse-only Detroit \"Church records\" volumes dated 1858-1930.\n- Gaps: this survey did not identify the specific parish the Mogan/McAndrew family attended; no tool result names it.\n- Language: Catholic sacramental registers of this era are commonly in Latin; researcher should expect to read Latin entries.\n\n### Census records\n- Federal census: 1870, 1880, 1900, 1910, 1920, 1930 cover this period (no 1890 federal census survives generally); Ancestry links for each year were returned by external_links_search.\n- State census: Michigan State Census 1894 (FamilySearch collection 1825187, 381,961 persons) and 1884 Statistical Returns (Ancestry/Findmypast).\n- Access: volume_search shows several Detroit 1900 federal census enumeration volumes 97-98% name-indexed with images; overall, of 69 Census-group volumes for Detroit 1870-1930, 55 are browse-only and 2 are full-text-only, so specific rolls vary - check each volume.\n\n### Probate and court records\n- Types: wills, administrations, guardianships, inventories, petitions - held by the county probate judge.\n- Testate or intestate: not established; search both wills and administration files until one is found for John Mogan (d. by 1905) and Mary E. McAndrew Mogan (d. by 1925).\n- Date range: Wayne County probate records 1832-1967 (FamilySearch Catalog koha 3292257); FamilySearch \"Michigan, Probate Records, 1797-1973\" collection (images only).\n- Where held: Wayne County Probate Court, Coleman A. Young Municipal Center, Detroit; also microfilmed estate case files 1797-1901 and probate calendar books 1797-1914 at the Archives of Michigan, Lansing.\n\n### Land records\n- Survey system: rectangular (federal) survey for Michigan generally.\n- Land-distribution jurisdiction: after initial transfer from public to private ownership, subsequent transactions recorded at the Wayne County courthouse (Register of Deeds).\n- Types: deeds, mortgages; FamilySearch Full-Text Search - Land Records covers variable dates/places.\n- Where held: Wayne County Register of Deeds (https://www.waynecountylandrecords.com/recorder/web/).\n\n### Military records\n- Relevant conflicts: Civil War (ended 1865, veteran records continue into this period via GAR), WWI (1917-1918).\n- Record types: Michigan GAR Membership Records 1876-1945; Michigan Census of WWI Veterans with Card Index, 1917-1919.\n- Where held: FamilySearch collections 2351035 and 3007553; NARA for federal military/pension files.\n\n### Cemetery records\n- Major cemeteries named in the wiki page: Elmwood Cemetery (Record of Interments 1846-1992), Mt. Elliot Cemetery (1845-1997), Woodmere Cemetery (1868-1888) - held at the Burton Historical Collection, Detroit Public Library.\n- Online coverage: Find a Grave and BillionGraves both have Wayne County search pages.\n- Physical records: sexton/interment records at the cemeteries themselves and the Burton Historical Collection.\n\n### Newspaper records\n- Local papers: Detroit Gazette (1817-1830) digitized at Google News; Digital Michigan Newspapers at Central Michigan University; Chronicling America has Michigan newspapers.\n- Where held: digital archives as above; Ancestry's Michigan Newspapers.com Stories and Events Index, 1800s-current.\n- Content value: obituaries, marriage notices.\n\n### Obituaries\n- FamilySearch \"Michigan, Obituaries, 1820-2006\" collection (index & images, 8,932,479 persons, id 2215693) - this is the primary named obituary index for the state and covers the full 1870-1930 window.\n- Content note: obituaries in this era commonly list surviving children by name and residence, directly useful for enumerating the Mogan children.\n\n### Immigration/emigration records\n- Relevant ports: Port of Detroit (land/water border crossings from Canada).\n- Record types: \"Michigan, Wayne, Detroit, Manifests of Arrivals at the Port of Detroit, 1906-1956\" (FamilySearch collection 1916040, 1,364,974 persons) covers only 1906 onward, so it postdates the Mogan/McAndrew Irish immigration if it occurred earlier; naturalization records (Michigan, Eastern and Western Districts, Naturalization Records, 1837-1993) may show arrival and origin information for John Mogan.\n- Where held: FamilySearch/NARA RG 85 (manifests), Eastern District federal court (naturalizations).\n\n### Tax records\n- Types: county property/personal tax; no specific Wayne County tax collection was returned by these tools.\n- Substitute value: can fill gaps between census years; see Michigan Taxation wiki page (not fetched in this survey).\n\n### Other record types\n- City directories: \"City Directories - Detroit\" 1861-1923 at Fold3; Detroit City Directory 1895 at MyHeritage - useful between censuses to track the family's address and track children aging into adulthood.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Michigan Births 1867-1902 (id 1459684); Michigan County Births 1867-1917 (id 1923472); Michigan Deaths 1867-1897 (id 1452402); Michigan Deaths and Burials 1800-1995 (id 1675357); Michigan Death Certificates 1921-1952 (id 1968532); Michigan Church Records 1819-1991 (id 2787825); Michigan Probate Records 1797-1973 (id 2013878); Michigan Obituaries 1820-2006 (id 2215693); Michigan State Census 1894 (id 1825187); Manifests of Arrivals at Port of Detroit 1906-1956 (id 1916040) | Wayne County birth/death microfilm excludes City of Detroit; Michigan Obituaries fills the gap of listing children by name | Free |\n| Ancestry | Michigan Death Records 1867-1952; Michigan Wills and Probate Records 1784-1980; 1870-1930 US Federal Census years | Images where FamilySearch has index-only | Subscription |\n\n**Coverage of this survey:** volume_search matched 644 digitized volumes for Detroit 1870-1930 across all record types; only the first 10 were detailed above (titles), with the full by-record-type counts given in the summary (e.g., 154 Vital, 69 Census, 53 Religious, 354 Migration volumes). collections_search returned 31 Michigan-level (not Detroit-specific) collections, all listed above or omitted as out-of-scope (military, naturalization).\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Burton Historical Collection, Detroit Public Library | Catholic Archdiocese of Detroit church records on microfilm (1704-1930); Wayne County Marriage Returns 1803-1893; cemetery interment records (Elmwood, Mt. Elliot, Woodmere); Wayne County Death Index 1934-1953 (excludes Detroit) | In-person; some indexes online |\n| Wayne County Probate Court, Coleman A. Young Municipal Center | Probate records for all of Wayne County and Detroit | In-person/mail |\n| Wayne County Register of Deeds | Land records for Wayne County and Detroit | In-person/online (waynecountylandrecords.com) |\n| Archives of Michigan, Lansing | Wayne County estate case files 1797-1901; probate calendar books 1797-1914 (microfilm) | In-person |\n\n## Records NOT online\n- Original Catholic parish sacramental registers (only microfilmed at the Burton Historical Collection, not digitized online per these tool results).\n- Pre-1920s Wayne County tax records.\n- Many probate case files/dockets - full case files largely require in-person access at the courthouse or Archives of Michigan.\n\n## Known record losses\nNo tool result in this survey identifies any lost or destroyed Wayne County vital, probate, or court records; the FamilySearch Wayne County Genealogy page states there is no known history of courthouse disasters in this county.\n\n## Research tips\n- Search both the FamilySearch \"Michigan, Obituaries, 1820-2006\" collection and local Detroit newspapers for obituaries naming all surviving children of John Mogan and Mary E. McAndrew Mogan (https://www.familysearch.org/en/wiki/Michigan_Obituaries).\n- Because Wayne County's unindexed birth/death microfilm (1867-1917) excludes City of Detroit events, search Detroit-specific sources (Detroit Health Department for deaths since 1897, Wayne County Clerk for Detroit births since 1893) separately from county-wide collections (https://www.familysearch.org/en/wiki/Michigan_Vital_Records).\n- Search Wayne County probate records (wills if testate, administration if intestate) for both John Mogan (d. by 1905) and Mary E. McAndrew Mogan (d. by 1925); Michigan probate records in the 20th century often give an exact death date and can name heirs/children.\n- Search all available federal censuses (1870, 1880, 1900, 1910, 1920, 1930) for the Mogan household; the 1880 census added relationship-to-head-of-household, useful for confirming children.\n- Check the Archdiocese of Detroit Catholic parish registers (microfilmed at the Burton Historical Collection) for baptisms of children born to the couple; no tool result names the specific parish, so this will require browsing multiple Detroit Catholic parishes' baptismal registers.\n- Detroit streets were renumbered 1 January 1921 - keep this in mind when tracing addresses across census years (https://www.familysearch.org/en/wiki/Wayne_County,_Michigan_Genealogy).",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Wayne_County,_Michigan_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "county",
+          "year": 1867,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "county",
+          "year": 1867,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "county",
+          "year": 1805,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1870,
+        "end_year": 1930,
+        "total_volumes": 644,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 154,
+            "browse_only": 140,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Death",
+            "volumes": 152,
+            "browse_only": 139,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Marriage",
+            "volumes": 14,
+            "browse_only": 1,
+            "fulltext_only": 9
+          },
+          {
+            "group": "Religious",
+            "volumes": 53,
+            "browse_only": 26,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Baptism",
+            "volumes": 19,
+            "browse_only": 15,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Census",
+            "volumes": 69,
+            "browse_only": 55,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Migration",
+            "volumes": 354,
+            "browse_only": 44,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Naturalization",
+            "volumes": 232,
+            "browse_only": 44,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Legal",
+            "volumes": 9,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Land",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Newspapers",
+            "volumes": 22,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}

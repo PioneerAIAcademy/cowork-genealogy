@@ -40,10 +40,6 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
-    "materialize": (
-        "its only test, ut_person_evidence_027, was deleted by PR #4613 (red "
-        "under the Sonnet 4.6 judge); issue #4681 restores it"
-    ),
     "negative-status-question": (
         "its only test, ut_research_025, was deleted by PR #4613 (the status "
         "answer copies project_context's ps_001); issue #4661 restores it"
@@ -53,14 +49,6 @@ DORMANT: dict[str, str] = {
         "it fails 2 of 4 on main because the agent skips the localities read; "
         "issue #2475 restores it once a writer precondition can join search_stop "
         "to localities"
-    ),
-    "objective-target": (
-        "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
-        "the validator was kept and no test carries the tag yet"
-    ),
-    "single-jurisdiction": (
-        "its only test, ut_locality_guide_029, was deleted by PR #4558: it aborts "
-        "on max_tool_calls on main too; issue #4602 restores it"
     ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "

@@ -246,7 +246,7 @@ instead of it if the user named Newspapers.com. The archives hold *different
 papers*: a title digitised only by a state archive is absent from Newspapers.com
 whatever the subscription, so a paid-only search can return a confident nil on a
 paper that was never there to find. The place's `localities` entry often names
-the right regional archive in `guide_markdown` (`research_query` section
+the right regional archive in `repositories`, else in `guide_markdown` (`research_query` section
 `localities`; `project_context` omits it); read it before guessing.
 
 **Check access.** Use `subscriptions` from `project_context({ projectPath })`.
@@ -420,7 +420,7 @@ build_external_search_url({
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `searchPlace` must name a US state to scope at all (`"Schuylkill, Pennsylvania"`) — the site scopes by state and county, and a place without one is reported unused. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
 | `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus does not reach that period and route to the state/regional archive for the place or a paid site |
-| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (the place's `localities` entry `guide_markdown` often already names the right one, or a curated link) |
+| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (the place's `localities` entry `repositories` or `guide_markdown` often already names the right one, or a curated link) |
 | `archives_gov` | `givenName`/`surname`, `keywords` | National Archives Catalog — `keywords` is free text (a record type), not the name. No place parameter: a place passed here is ignored and reported in `notes` |
 | `archive_org` | `givenName`/`surname`/`keywords` | Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
 | `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Cemetery records, GPS-tagged |

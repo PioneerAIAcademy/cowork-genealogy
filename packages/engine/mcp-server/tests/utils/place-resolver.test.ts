@@ -268,6 +268,16 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
     expect(divisionContradiction("Ky", "Kentucky, United States")).toBe(false);
   });
 
+  // Issue #4689: "Forest, Miss" geocoded to Forest, Wisconsin — the abbreviation
+  // "Miss" was lost because textDivision only read a division's full name or
+  // postal code. It now also falls back to the one-word list, text side only.
+  it.each([
+    ["Forest, Miss, United States", "Forest, Wisconsin, United States"],
+    ["Nashville, Tenn", "Nashville, Davidson, Wisconsin, United States"],
+  ])("reads the text's state abbreviation from the one-word list: %s", (place, standard) => {
+    expect(divisionContradiction(place, standard)).toBe(true);
+  });
+
   it.each([
     ["the same state", "Salem, Essex, Massachusetts", "Salem, Essex, Massachusetts, United States"],
     ["the same province by another name", "Montreal, Canada East", "Montreal, Montreal, Quebec, Canada"],
@@ -276,6 +286,16 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
     ["no state or province in the text", "Kenmore, Killin, Perthshire, Scotland", "Killin, Perthshire, Scotland, United Kingdom"],
     ["a state only in the text's earlier parts", "Texas, Hormigueros", "Puerto Rico, Hidalgo, Texas, United States"],
     ["an empty text", "", "Springfield, Penobscot, Maine, United States"],
+    ["the abbreviation's own state", "Forest, Miss, United States", "Forest, Scott, Mississippi, United States"],
+    ["another abbreviation's own state", "Pittsburgh, Penna", "Pittsburgh, Allegheny, Pennsylvania, United States"],
+    // The one-word list leaves "Ind" out (ambiguous: Indiana or India) —
+    // leave it out here too, per the issue.
+    ["an abbreviation the list leaves out as ambiguous", "Bombay, Ind", "Mumbai, Maharashtra, India"],
+    // Ind/Ala/Mich are left off the list too (per the issue), so even against
+    // a standard place in a real, different US state, nothing is read to contradict.
+    ["Ind, which the list leaves out, against a US state", "Bombay, Ind", "Bombay, Franklin, New York, United States"],
+    ["Ala, which the list leaves out, against a US state", "Florence, Ala", "Florence, Williamson, Texas, United States"],
+    ["Mich, which the list leaves out, against a US state", "Detroit, Mich", "Detroit, Red River, Texas, United States"],
   ])("does not refuse %s", (_label, place, standard) => {
     expect(divisionContradiction(place, standard)).toBe(false);
   });

@@ -974,6 +974,66 @@ def _explained_by_birth_year_fill(before_section, after_section) -> bool:
     return changed
 
 
+def _wrote_project_status(tool_calls) -> bool:
+    """True when any research_append call in this run wrote `project.status`.
+
+    The reopen authorization below matches a DELTA SHAPE, and the shape a
+    non-owner produces by writing `status: "active"` on a completed project is
+    identical to the engine's own reopen. Without this the ownership check
+    launders exactly the write the project row exists to catch — "a non-owner
+    sets status mid-project". The engine draws the same line (it declines to
+    reopen when the call wrote the field itself), so this is that rule read from
+    the call log rather than a second policy.
+
+    Walks `ops` as its siblings do, including the stringified form.
+    """
+    for c in tool_calls or []:
+        if not str(c.get("tool", "")).endswith("research_append"):
+            continue
+        args = c.get("args") or {}
+        candidates = [args]
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (TypeError, ValueError):
+                ops = None
+        if isinstance(ops, list):
+            candidates = ops
+        for op in candidates:
+            if not isinstance(op, dict) or op.get("section") != "project":
+                continue
+            for key in ("fields", "entry"):
+                block = op.get(key)
+                if isinstance(block, dict) and "status" in block:
+                    return True
+    return False
+
+
+def _explained_by_project_reopen(before_section, after_section) -> bool:
+    """True when the only change to `project` is research_append's own reopen.
+
+    Issue #4698: a call that leaves a question it wrote at a status other than
+    `resolved`, on a project that was `completed`, sets the project back to
+    `active` and stamps `updated`. The engine does that itself, so a unit run
+    where (say) question-selection appends to a completed project would
+    otherwise fail ownership — the project row's callers are init-project and
+    proof-conclusion only.
+
+    Deliberately NOT done by adding callers to the project row: that would let
+    those skills write `status` by any path, to any value. This authorizes one
+    exact delta and nothing else — `completed` -> `active`, plus `updated`. A
+    different status pair, any other field, or a non-dict section fails closed.
+    """
+    if not isinstance(before_section, dict) or not isinstance(after_section, dict):
+        return False
+    if before_section.get("status") != "completed" or after_section.get("status") != "active":
+        return False
+    rest_before = {k: v for k, v in before_section.items() if k not in ("status", "updated")}
+    rest_after = {k: v for k, v in after_section.items() if k not in ("status", "updated")}
+    return rest_before == rest_after
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -1145,6 +1205,17 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             # rows that have none (#3363), and changes nothing else there.
             if section == "namesakes" and called & _BIRTH_YEAR_FILL_TOOLS and _explained_by_birth_year_fill(
                 before.get(section), after.get(section)
+            ):
+                continue
+            # research_append's own reopen (#4698): a write that leaves a
+            # question unresolved on a completed project sets the project back
+            # to active. The engine writes it, not the caller, so it is not a
+            # caller write and does not go on the project row's callers.
+            if (
+                section == "project"
+                and "research_append" in called
+                and not _wrote_project_status(tool_calls)
+                and _explained_by_project_reopen(before.get(section), after.get(section))
             ):
                 continue
             # research_append's unanchored-person sweep: the whole delta is the
@@ -1738,15 +1809,45 @@ PROJECT_WRITER_TOOLS = {
 # appends its in-flight hand-off log entry then, and writes nothing otherwise.
 # Counted only when it carried one, so a pure URL build cannot vouch for a
 # hand edit made in the same run.
-CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+#
+# `record_search` joins them at issue #4527: with a projectPath it appends a nil
+# search's own log entry, and writes nothing without one. Conditional rather than
+# unconditional for the same reason — a no-project search cannot vouch for a hand
+# edit. It writes on a narrower condition still (only when the search found
+# nothing), but nil-ness is not visible in the call's args, and the projectPath
+# test is the one this guard can actually make.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"}
+
+#: Of the conditional writers, the ones whose write is decided by the RESPONSE,
+#: not the args, with the response keys that prove the write happened.
+#:
+#: `record_search` writes only on a nil (issue #4527), and nil-ness is not in its
+#: arguments. Keying it on `projectPath` instead would count EVERY search as a
+#: writer call — search-records and survey-surname pass `projectPath` on all of
+#: them — so `test_project_file_changes_route_through_writer_tools` would pass in
+#: any run of those suites, including the zero-writer hand-edit its own docstring
+#: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
+#: catch reads as coverage and is worse than none.
+#:
+#: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
+#: written, so it legitimizes no project-file change. Both keys survive into the
+#: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
+#: post hoc as it does live.
+RESPONSE_KEYED_PROJECT_WRITERS = {"record_search": ("logId",)}
 
 
 def _is_project_writer_call(call: dict) -> bool:
     name = (call.get("tool") or "").rsplit("__", 1)[-1]
     if name in PROJECT_WRITER_TOOLS:
         return True
+    if name not in CONDITIONAL_PROJECT_WRITER_TOOLS:
+        return False
+    keys = RESPONSE_KEYED_PROJECT_WRITERS.get(name)
+    if keys is not None:
+        response = call.get("response")
+        return isinstance(response, dict) and any(k in response for k in keys)
     args = call.get("args")
-    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
+    return isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(

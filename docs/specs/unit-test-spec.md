@@ -372,6 +372,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `variant_names` | optional (see Section 5.13) | omit (a declined skill produces no audit) |
+| `na_dimensions` | optional (see Section 5.14) | omit (refused: a negative test is judged without the suite's rubric) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -557,6 +558,13 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "boolean",
       "default": false,
       "description": "Opt-in. When true, the harness includes the actual (truncated) content of the entries this run wrote to research.json / tree.gedcomx.json in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply. See Section 5.9."
+    },
+    "na_dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1},
+      "description": "Opt-in. Rubric dimension names that are N/A for this test; the harness coerces their scores to null after judging. See Section 5.14."
     },
     "execution": {
       "type": "object",
@@ -1407,6 +1415,56 @@ Like § 5.12's field, this is top-level and reaches the validator only through
 `orchestrator.py`'s whitelist;
 `test_orchestrator_threads_variant_names_into_validators` pins it.
 
+### 5.14 `na_dimensions`
+
+Optional array of rubric dimension names, at least one, no repeats. After the
+judge returns and before the outcome is computed, the harness sets every
+non-null score on those dimensions to `null`
+(`orchestrator.coerce_review_dimensions_to_na`). The judge's original score and
+rationale go into an `output.warnings[]` entry of kind
+`coerced_review_dimension_to_na`, and the rationale is rewritten with a
+`[coerced-to-na]` prefix, as the routing-negative coercion does (§5.10).
+`judge_regrade.py` strips and re-applies it, so a regrade keeps it.
+
+**What it is for.** A review or audit test whose rubric has dimensions that
+grade linking work the test does not ask for. `ut_person_evidence_001` asks for
+a review of `pe_005` without writing. The rubric line and a `judge_context`
+line both said that flagging the missing I2 link is the full answer in a review,
+and the judge still docked Multi-person awareness, Score discipline and
+Rationale quality for not doing the linking. Prose did not hold
+the judge, so the score is dropped in code.
+
+**Rules.**
+
+- **Rubric names only, matched exactly.** A name that is not a `## ` heading in
+  the suite's `rubric.md` makes the test `not_runnable`, so a typo cannot coerce
+  nothing and exit green. A base dimension (Correctness, Completeness, Tool
+  Arguments) is refused by name, even if a rubric reused the heading:
+  Correctness and Completeness are what `_compute_outcome` gates on.
+- **Positive tests only.** A negative test is judged against an empty rubric, so
+  the runnability gate refuses the field there.
+- **Every non-null score is coerced,** a `3` as well as a `2`. N/A is a property
+  of the test, not of the score; coercing only the low scores would make the
+  aggregate depend on which way the judge fell.
+- **Never in what the judge is sent.** The coercion runs after the judge, so it
+  does not move `judge_render_hash` and no suite owes `make judge-regrade`.
+- **A test that uses it carries a tag-gated validator** that checks what the
+  coerced dimensions held; the runnability gate refuses the field when none of
+  the test's tags gates a validator in the skill's file or `test_universal.py`.
+  On 001 that is
+  `test_review_names_gaps` (tag `review-names-gaps`): the reply must say that
+  a_013 has no pe_ link to Thomas Flynn (I2), and must deal with `pe_005`'s
+  null `match_score`: give the `same_person` score it computed, or say the null
+  is unexplained.
+- **Still in the review sample.** The review sample's targeted slot looks for
+  rubric nulls on positive tests, and a coerced null counts there
+  (`review_sample._has_rubric_null_on_positive`); the slot's exhaustion guard
+  keeps such a test from taking it on every run. No mandatory-review trigger
+  keys on the warning: the judge's original score is kept in it.
+
+It is a real (non-cosmetic) field, so it is snapshot-tracked: editing it
+invalidates the content hash and forces a re-run.
+
 ---
 
 ## 6. Negative Tests
@@ -2222,7 +2280,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 - **`harness_version`** — the version of the harness package. Not an invalidation signal: it is a hand-bumped literal that nothing gates on. `instrument` is.
 - **`instrument`** (envelope, optional) — what produced and graded the run: a normalised-AST hash of the suite's validator file and of the shared ones (`test_universal.py`, `validators_lib.py`, and every harness module the validator files import, transitively), the advertised tool schemas split into the suite's fixture-served tools and the LIVE_TOOLS, and the compiled module of each live tool the run called. Computed by `eval/harness/harness/instrument.py`; checked by `check_runlogs.py` rule 2c (see `eval/CLAUDE.md`).
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
-- **`judge_render_hash`** (envelope, optional) — SHA-256 of the normalized AST of the code that *renders* the judge's input, as distinct from the prompt template `judge_prompt_hash` covers. Derived by an AST walk at hash time from five roots — `_run_judge`, `grade`, `_create_message_with_retry`, `render_prompt_parts` and `_grading_tool_for_rubric`, the boundary being everything that decides the bytes sent to the judge — following calls across harness modules, plus every module-level constant those functions read and the whole of `harness/scenario_brief.py`. A hand-written list was rejected: the "Not covered" list beside the instrument fingerprint went stale exactly that way. It exists because a slot is filled as a *value* rather than edited in the template, so changing the code that computes one moved no fingerprint and left every committed log active while the judge saw different text — the case recorded in Section 15 for `{skills_invoked}`. Computed by `eval/harness/harness/instrument.py` and checked by `check_runlogs.py` rule 2b's render half, which **recomputes** rather than blocking on "file touched", so an edit outside the render graph passes. Absent on logs written before the field, which that rule warns on rather than blocking; `make judge-regrade` stamps it. Deliberately a separate field rather than a widening of `judge_prompt_hash`: the eval app recomputes the prompt hash in TypeScript and cannot reproduce a Python AST digest, so widening it would make the app's drift badge report every log as drifted forever.
+- **`judge_render_hash`** (envelope, optional) — SHA-256 of the normalized AST of the code that *renders* the judge's input, as distinct from the prompt template `judge_prompt_hash` covers. Derived by an AST walk at hash time from five roots — `_run_judge`, `grade`, `_create_message_with_retry`, `render_prompt_parts` and `_grading_tool_for_rubric`, the boundary being everything that decides the bytes sent to the judge — following calls across harness modules, plus every module-level constant those functions read and the whole of `harness/scenario_brief.py`. A hand-written list was rejected: the "Not covered" list beside the instrument fingerprint went stale exactly that way. It exists because a slot is filled as a *value* rather than edited in the template, so changing the code that computes one moved no fingerprint and left every committed log active while the judge saw different text — the case recorded in Section 15 for `{skills_invoked}`. Computed by `eval/harness/harness/instrument.py` and checked by `check_runlogs.py` rule 2b's render half, which **recomputes** rather than blocking on "file touched", so an edit outside the render graph passes. On a log the PR did not add it goes further and compares the hash the PR's *base* computes (`base_judge_render_hash`, read from the workflow's `BASE_TREE` checkout): equal means the PR moved nothing, so a mismatch against the log's stamp is debt inherited from whichever PR moved the render code, and it warns rather than blocking. With no base to read, and on a log the PR adds, it blocks as before. Absent on logs written before the field, which that rule warns on rather than blocking; `make judge-regrade` stamps it. Deliberately a separate field rather than a widening of `judge_prompt_hash`: the eval app recomputes the prompt hash in TypeScript and cannot reproduce a Python AST digest, so widening it would make the app's drift badge report every log as drifted forever.
 - **`judge_model`** — identifier of the judge model used for this run log (optional, envelope-level; absent on logs committed before the field was added). Lets a judge-model change be dated and compared rather than silently invalidating historical scores. Reversed the earlier "project-global, not per-run-versioned" rule (`eval/CLAUDE.md` § "Model Pinning"); `make judge-regrade` stamps this field alongside the refreshed `judge_prompt_hash` on each regraded log.
 - **`store`** (envelope) — `"pg"` under `--store pg`; absent on the file store, as on every earlier log. Also picks the directory: `unit-pg/` instead of `unit/`.
 - **`tool_search`** (envelope) — `true`, or `false` under `--no-tool-search`. Written on every log the harness writes, the default included; optional in the schema and absent on logs written before it existed, which all ran with tool search on and are read that way. Recorded so `make unit-compare` names a differing setting ("run settings that differ") instead of reporting a cost move with no changed file as wobble.

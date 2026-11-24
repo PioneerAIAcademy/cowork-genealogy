@@ -21,6 +21,7 @@ from harness.mock_mcp import (
     UNLOGGED_REFS_SHOWN,
     NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
+    PLAN_ITEM_WITHOUT_PROJECT_NOTE,
     RANKING_SKIPPED_NOTE,
     UNLOGGED_SEARCHES_NOTE,
     _fixture_is_nil,
@@ -517,6 +518,28 @@ def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
         assert ts_note.replace('\\"', '"') == expected
 
 
+def test_plan_item_without_project_note_has_not_drifted_from_the_typescript_source():
+    """The projectless-`planItemId` note must stay byte-identical to production's.
+
+    Same silent failure mode as the notes above, and one rung worse to spot: this
+    note fires only on a call with no `projectPath`, so a stale copy would differ
+    from production on exactly the calls nobody looks at twice. It lives in
+    `research-log-append.ts` rather than the staging util because the two tools
+    that emit it (`record_search`, `build_external_search_url`) both write
+    through that module.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/research-log-append.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(
+        r"const PLAN_ITEM_WITHOUT_PROJECT_NOTE =(.*?);\n", src, re.DOTALL
+    )
+    assert decl, "PLAN_ITEM_WITHOUT_PROJECT_NOTE is gone from research-log-append.ts"
+    ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_note, "parsed an empty note — the declaration shape changed"
+    assert ts_note.replace('\\"', '"') == PLAN_ITEM_WITHOUT_PROJECT_NOTE
+
+
 def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
     """The mock's nil gate must match production's, which requires a zero total.
 
@@ -588,8 +611,14 @@ def test_staging_tool_sets_agree_across_the_two_copies():
     assert ts_extra == {"image_transcribe", "record_read", "person_read"}
 
 
-def test_nil_search_carries_the_negative_log_note(tmp_path):
-    """The emission CONDITION, not the text — a text-only test passes on a wrong gate."""
+def test_a_nil_record_search_no_longer_asks_the_agent_to_log_it(tmp_path):
+    """The emission CONDITION, not the text — a text-only test passes on a wrong gate.
+
+    record_search writes a nil's own log entry now (issue #4527), so the note
+    that asked the agent to log it must NOT come back: emitting it would tell the
+    model to make a call the engine removed. `fulltext_search` keeps the note,
+    which the test below pins so this one cannot pass by the gate dying entirely.
+    """
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
     )
@@ -600,10 +629,67 @@ def test_nil_search_carries_the_negative_log_note(tmp_path):
             {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
         )
     )
-    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
-    # Ordered ahead of `results`, like every other model-facing note.
+    assert "nilSearchNeedsLog" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_keywords_nil_carries_the_name_field_note(tmp_path):
+    """The mock runs production's `fulltextAdvice`: a filter-free keywords nil
+    carries `nameFieldRetry` before `results`; the same nil with a place does not."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-probate-empty"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn +probate"})
+    )
+    assert body["nameFieldRetry"].startswith("This keywords search found nothing.")
     keys = list(body)
-    assert keys.index("nilSearchNeedsLog") < keys.index("results")
+    assert keys.index("nameFieldRetry") < keys.index("results")
+    assert "tooManyResults" not in body
+
+    filtered = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "fulltext_search",
+            {"keywords": "+Flynn +probate", "place": "Schuylkill, Pennsylvania"},
+        )
+    )
+    assert "nameFieldRetry" not in filtered
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_over_500_results_carries_the_too_many_note(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-broad-with-facets"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"}))
+    assert body["totalResults"] == 847
+    assert body["tooManyResults"].startswith("More than 500 results.")
+    keys = list(body)
+    assert keys.index("tooManyResults") < keys.index("results")
+    assert "nameFieldRetry" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_accented_query_carries_the_word_list_note(tmp_path):
+    """One hit, so neither total-keyed note applies: the spelling alone reaches
+    the compiled function. The same search in plain ASCII carries no note."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": '+"José María García"'})
+    )
+    assert body["totalResults"] == 1
+    assert body["wordListRead"].startswith("This query has a letter English does not use")
+    keys = list(body)
+    assert keys.index("wordListRead") < keys.index("results")
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-cuban-notarial-by-name"], FIXTURES_DIR, workspace=tmp_path
+    )
+    plain = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"name": "Jose Garcia"}))
+    assert "wordListRead" not in plain
 
 
 def test_no_log_note_without_a_project_path(tmp_path):
@@ -1538,10 +1624,24 @@ def test_research_append_keeps_a_locality_count_unstamped_in_the_harness(tmp_pat
     entry = {
         "place": "Illinois, United States",
         "collections": [{"id": "1803969", "title": "Illinois, State Census, 1855", "person_count": 0, "record_count": 5}],
-        "pages_read": [{"section": "home", "url": "u1", "found": True}],
         "source": "locality-guide",
     }
-    result = _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "localities", "op": "append", "entry": entry})
+    survey = json.loads(
+        _invoke(tools_by_name, "locality_survey", {"standardPlace": "Illinois, United States", "projectPath": str(tmp_path)})[
+            "content"
+        ][0]["text"]
+    )
+    result = _invoke(
+        tools_by_name,
+        "research_append",
+        {
+            "projectPath": str(tmp_path),
+            "section": "localities",
+            "op": "append",
+            "entry": entry,
+            "surveyRef": survey["staged"]["resultsRef"],
+        },
+    )
     reply = json.loads(result["content"][0]["text"])
     assert reply["ok"] is True, reply
     assert not any("catalog" in w for w in reply["validation"]["warnings"]), reply
@@ -2862,6 +2962,182 @@ def test_non_patronymic_nil_carries_no_surname_hint(tmp_path):
         {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
     )
     assert "surnameVariantHints" not in body
+    # The nil is real — record_search just logs it itself now (issue #4527)
+    # rather than asking the agent to.
+    assert "nilSearchNeedsLog" not in body
+
+
+def test_a_nil_record_search_actually_writes_its_log_entry(tmp_path):
+    """The mock performs the real write through compiled code (issue #4527).
+
+    Without this the suite would pass while exercising nothing: the response
+    would carry no logId, the project would gain no entry, and a paid run would
+    grade the agent on a feature that never ran.
+    """
+    import json as _json
+
+    (tmp_path / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(
+        _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert body.get("logId"), f"no logId; response was {sorted(body)}"
+    keys = list(body)
+    assert keys.index("logId") < keys.index("results")
+
+    after = _json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    assert len(after["log"]) == 1
+    entry = after["log"][0]
+    assert entry["id"] == body["logId"]
+    assert entry["tool"] == "record_search"
+    assert entry["outcome"] == "negative"
+    assert entry["written_by"] == "record_search"
+    # The whole point of the card: the logged query is what the call sent, and
+    # carries no plumbing.
+    assert entry["query"] == {"surname": "Flynn", "givenName": "Patrick"}
+
+
+def test_the_nil_log_trims_its_note_exactly_as_production_does(tmp_path):
+    """`record-search.ts` writes `note.trim()`, and a blank note as null.
+
+    Passing it through raw made the harness and the engine write different
+    `notes` for the same call, so a validator or judge graded against a value
+    production never produces.
+    """
+    import json as _json
+
+    def _logged(case, note):
+        # A fresh workspace per call: the mock locks the project files down once
+        # its server is built, so the second case cannot reuse the first's dir.
+        ws = tmp_path / case
+        ws.mkdir()
+        (ws / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+        (ws / "tree.gedcomx.json").write_text(
+            _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+        )
+        _server, _calls, tools_by_name = create_mock_server(
+            ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=ws
+        )
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(ws), "note": note},
+        )
+        after = _json.loads((ws / "research.json").read_text(encoding="utf-8"))
+        # A null note leaves the key off the entry, exactly as production does.
+        return after["log"][0].get("notes")
+
+    assert _logged("padded", " Checking the 1880 census ") == "Checking the 1880 census"
+    assert _logged("blank", "   ") is None
+
+
+def test_a_total_less_nil_fixture_writes_no_log_entry(tmp_path):
+    """`_fixture_is_nil` treats a missing total as 0, which is looser than
+    production, whose `totalMatches` is always a number from upstream.
+
+    Elsewhere that divergence is absorbed downstream (the compiled
+    `surnameVariantHints` re-checks the total itself). The nil-log write has no
+    such re-check and is not inert — it appends a real `written_by` entry — so a
+    fixture that never stated a total must not trigger it, or the suite grades
+    the agent against a log entry production would not have written.
+    """
+    import json as _json
+
+    def _log_after(response):
+        """Run a record_search against a fixture with this response; return log[]."""
+        case = tmp_path / f"case{abs(hash(_json.dumps(response, sort_keys=True))) % 10**8}"
+        fixtures = case / "fixtures"
+        ws = case / "ws"
+        fixtures.mkdir(parents=True)
+        ws.mkdir()
+        (fixtures / "rs-total-less.json").write_text(
+            _json.dumps({
+                "tool": "record_search",
+                "description": "nil search whose fixture states no total",
+                "args": {"surname": "Flynn"},
+                "response": response,
+            }),
+            encoding="utf-8",
+        )
+        (ws / "research.json").write_text(_json.dumps({"log": []}), encoding="utf-8")
+        (ws / "tree.gedcomx.json").write_text(
+            _json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+        )
+        _server, _calls, tools_by_name = create_mock_server(
+            ["rs-total-less"], fixtures, workspace=ws
+        )
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn", "projectPath": str(ws)})
+        return _json.loads((ws / "research.json").read_text(encoding="utf-8"))["log"]
+
+    # Stated zero → production's gate holds → the entry is written.
+    assert len(_log_after({"results": [], "totalMatches": 0})) == 1
+    # No total stated → production's gate cannot be known to hold → no write.
+    assert _log_after({"results": []}) == []
+
+
+def test_a_projectless_plan_item_gets_production_s_note(tmp_path):
+    """The one key production adds on a call with no `projectPath` (issue #4527).
+
+    Every other enrichment sits behind the mock's `projectPath` gate, so this
+    branch is reached only when that gate is false — and a suite running a
+    projectless search would otherwise grade the agent on a response production
+    does not send. Both directions, because a note that fired unconditionally
+    would satisfy the positive half alone.
+    """
+    import json as _json
+
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "rs-projectless.json").write_text(
+        _json.dumps({
+            "tool": "record_search",
+            "description": "a search made with no project",
+            "args": {"surname": "Flynn"},
+            "response": {"results": [], "totalMatches": 0},
+        }),
+        encoding="utf-8",
+    )
+    _server, _calls, tools_by_name = create_mock_server(["rs-projectless"], fixtures)
+
+    def _body(args):
+        return _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+
+    with_plan_item = _body({"surname": "Flynn", "planItemId": "pli_001"})
+    assert with_plan_item["planItemIdIgnored"] == PLAN_ITEM_WITHOUT_PROJECT_NOTE
+    # Production puts it before `results`, where a size bound cannot drop it.
+    keys = list(with_plan_item)
+    assert keys.index("planItemIdIgnored") < keys.index("results")
+
+    # No plan item, and an explicitly ad-hoc one, are not mistakes.
+    assert "planItemIdIgnored" not in _body({"surname": "Flynn"})
+    assert "planItemIdIgnored" not in _body({"surname": "Flynn", "planItemId": None})
+
+
+def test_a_nil_fulltext_search_still_asks_the_agent_to_log_it(tmp_path):
+    """The other direction of issue #4527: only record_search's arm was dropped.
+
+    Without this, a gate that stopped emitting for EVERY tool would pass the two
+    `nilSearchNeedsLog not in body` assertions above and nothing would notice.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flinn-variant-zero"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "fulltext_search",
+            {"keywords": "~Flinn", "projectPath": str(tmp_path)},
+        )
+    )
     assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
 
 
@@ -3057,14 +3333,14 @@ def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path)
         assert key not in body
 
 
-def _messy_page_server(tmp_path, transcription):
+def _messy_page_server(tmp_path, transcription, match=None):
     """A mock server over one canned page carrying production's in-process
     extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
     (fixtures / "page.json").write_text(json.dumps({
         "tool": "image_transcribe",
-        "args": {"imageId": "~"},
+        "args": match or {"imageId": "~"},
         "response": {
             "transcription": transcription,
             "found": "FOUND",
@@ -3091,7 +3367,7 @@ def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_
     envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["payload"]["results"][0]["transcription"] == cleaned
     assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
-    assert sorted(body) == ["digest", "found", "staged"]
+    assert sorted(body) == ["digest", "found", "readingNote", "staged"]
 
 
 @pytest.mark.requires_engine_build
@@ -3454,3 +3730,23 @@ def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_pat
     [element] = envelope["payload"]["results"]
     assert "birthRanges" not in element["gedcomx"]
     assert element["indexFields"] == {"p1": {"age": "11"}}
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_puts_the_held_records_index_beside_the_reading(tmp_path):
+    """Issue #4578: the mock adds the index beside a page read through the same
+    compiled `attachIndexReadings` production calls, joined on the source's
+    `image_ark`, and a `file` read gets the note alone."""
+    ark = "ark:/61903/3:1:S3HT-DTXQ-WTP"
+    _copy_scenario(tmp_path)
+    research = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    research["sources"] = [{**s, "image_ark": ark} if i == 0 else s for i, s in enumerate(research.get("sources") or [{"id": "src_001"}])]
+    sid = research["sources"][0]["id"]
+    research["assertions"] = [{"id": "a_901", "source_id": sid, "record_id": "r", "record_role": "head",
+                               "fact_type": "name", "value": "Tyler"}]
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    tools_by_name = _messy_page_server(tmp_path, "23 Tyler Anthony", match={"ark": "~S3HT-DTXQ-WTP"})
+    body = _extract_response_dict(_invoke(tools_by_name, "image_transcribe", {"ark": ark, "projectPath": str(tmp_path)}))
+    assert body.get("staged"), body.get("stagingError")
+    assert body["indexReadings"] == [{"sourceId": sid, "recordId": "r", "role": "head", "name": "Tyler"}]
+    assert "one machine reading" in body["readingNote"]
