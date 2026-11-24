@@ -1,0 +1,74 @@
+{
+  "tool": "fulltext_search",
+  "description": "The unaccented spelling of the Cuban notarial query. The test's premise is that full-text search does not transliterate, and the record spells the surname \"García\", so a query for \"Garcia\" finds nothing. Declared so an agent that tries the unaccented variant gets an answer production could give, not fixture_not_found.",
+  "args": {
+    "keywords": "~Garcia"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "place": {
+        "type": "string"
+      },
+      "nlQuery": {
+        "type": "string"
+      },
+      "collectionId": {
+        "type": "string"
+      },
+      "imageGroupNumber": {
+        "type": "string"
+      },
+      "recordPlace0": {
+        "type": "string"
+      },
+      "recordPlace1": {
+        "type": "string"
+      },
+      "recordPlace2": {
+        "type": "string"
+      },
+      "recordPlace3": {
+        "type": "string"
+      },
+      "yearFrom": {
+        "type": "integer"
+      },
+      "yearTo": {
+        "type": "integer"
+      },
+      "recordType": {
+        "type": "string"
+      },
+      "count": {
+        "type": "integer"
+      },
+      "offset": {
+        "type": "integer"
+      },
+      "includeFacets": {
+        "type": "boolean"
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "query": {
+      "keywords": "Garcia"
+    },
+    "totalResults": 0,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

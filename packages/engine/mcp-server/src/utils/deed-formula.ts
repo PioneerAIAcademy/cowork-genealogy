@@ -30,7 +30,7 @@
 // indenture that carries one of these phrases is checked by it.
 
 import type { DocumentPerson, StructuredDocument } from "./structured-document.js";
-import { landSides, partyName, probateDecedentOrDefault } from "./structured-document.js";
+import { landSides, partyName, probateDecedentId, probateDecedentOrDefault } from "./structured-document.js";
 import { levenshteinDistance } from "./string-similarity.js";
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -222,7 +222,11 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
     const inf = hs.filter((h) => h.administrator);
     if (decedent !== undefined && inf.length > 0 && inf.every((h) => h.administrator!.id === decedent)) {
       errs.push(
-        `${path}: the transcription says "${inf[0].phrase}", which names ${partyName(doc, decedent)} as the administrator, ` +
+        probateDecedentId(doc) === undefined
+          ? `${path}: the transcription says "${inf[0].phrase}", which names ${partyName(doc, decedent)} as the ` +
+            `administrator, and no party carries a probate, will, death or burial fact, so the document does not ` +
+            `say whose estate this is. Put that fact on the estate's owner and resend.`
+          : `${path}: the transcription says "${inf[0].phrase}", which names ${partyName(doc, decedent)} as the administrator, ` +
           `but the document makes that party the decedent. Put the probate, will or death fact ` +
           `on the estate's owner and resend.`,
       );

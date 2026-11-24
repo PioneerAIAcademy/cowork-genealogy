@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A question about life in a place and era goes straight to the historical-context agent, not research",
     "type": "negative",
-    "description": "This routing negative asks about life in Dillon, Montana, in the 1940s. The correct first hop is historical-context because historical background is not on research's bounded list. Routing mode passes only on a spawn of that agent with research never activating, so it measures the agent's description directly.",
+    "description": "This routing negative asks about life in Dillon, Montana, in the 1940s. The correct first hop is historical-context because historical background not tied to a move or event in a person's family is not on research's bounded list. Routing mode passes only on a spawn of that agent with research never activating, so it measures the agent's description directly.",
     "tags": [
       "routing"
     ]
@@ -25,6 +25,6 @@
     "correct_skill": [
       "historical-context"
     ],
-    "explanation": "Ruling 2026-10-27: for this message the main thread's correct first hop is the historical-context agent itself, not research. Historical background is not on research's closed bounded list (research/SKILL.md, \"Bounded request or job\"), so research capturing this message would run it as a job. A miss is recorded, never made green by adding grade_on_invariant or widening correct_skill."
+    "explanation": "Ruling 2026-10-27: for this message the main thread's correct first hop is the historical-context agent itself, not research. Historical background not tied to a move or event in the person's family is not on research's bounded list (research/SKILL.md, \"Bounded request or job\"), so research capturing this message would run it as a job. A miss is recorded, never made green by adding grade_on_invariant or widening correct_skill."
   }
 }
