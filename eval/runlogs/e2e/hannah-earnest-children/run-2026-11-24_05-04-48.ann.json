@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Child (Lydia Grice, daughter of Hannah Earnest) correctly identified and correctly linked to both parents in the tree, including the subject (R16, Hannah Earnest -> Lydia Grice). Sourced to S5, \"Entry for Lydia Grice, England, Staffordshire, Church Records, 1538-1944\" -- an exact match to the finding's cited source -- with an exact-match Christening fact (8 August 1878, Holy Trinity West Bromwich). Graded partial, not true: the finding's required birth date, 10 July 1878, was never recovered. The tree's birth fact (F33) only brackets it to 'Bet Apr 1878 and 8 Aug 1878,' derived from census ages, and the run's own proof narrative states explicitly that 'the exact day is not recorded in any source seen' -- i.e. not a search the agent skipped, but a limit of what it actually examined. Proof quality graded 2 (thin): the run's own exhaustive_search_summary lists multiple searches left incomplete rather than exhausted -- the civil Birth Registration Index pass covered only 3,847 of 3,897 rows, and the 1901 census, wills/administrations, a Staffordshire BMD fallback, Darlaston Methodist/St George registers by year, adjoining districts, and death/burial indexes were all named but not run -- and the narrative itself concedes 'the completeness of the child set is therefore not established.'"
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "a91eeb5352d6d505a0b49b91d2914ba55173d620f291e638510f967f6d8c4913"
+}
