@@ -395,6 +395,20 @@ plugin agent's instructions or `tools:` list. The hosted path, both harnesses an
 the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
 ours, so the hook denies the call there. Change one, change both.
 
+**Auto-memory is off on the three paths whose environment we set.** The same
+three builders set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
+researcher's remark is saved as a memory file under the session's `~/.claude` —
+outside the project, unreviewed, and loaded into later sessions. **The value is
+`"1"`, and the `CLAUDE_CODE_FORK_SUBAGENT` line directly above it is `"0"`**: on
+this variable a falsy value is not a weaker disable, it is `forced_on`, which
+overrides even a settings-level `autoMemoryEnabled: false`. Copying the
+neighbour's value turns memory on everywhere with every dict assertion still
+green, so `eval/harness/tests/unit/test_auto_memory_off.py` captures the CLI's
+own system prompt keylessly and pins both the binding and the polarity. A new
+SDK entrypoint sets this key too. Cowork is **not** covered — its environment is
+not ours, and the plugin hook denies only the project files, so the CLI's memory
+write lands there.
+
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
 depends on one today; do not put per-session setup — seeding state, injecting

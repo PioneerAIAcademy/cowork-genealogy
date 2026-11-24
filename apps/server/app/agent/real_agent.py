@@ -869,10 +869,16 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
         # stage_plugin_agents just wrote. "user" was also listed, which read a
-        # source no harness run sees: nothing writes ~/.claude in the sandbox
-        # (sandbox/e2b.Dockerfile creates only ~/.familysearch-mcp), so it
-        # contributed nothing here while widening the gap between what CI
-        # exercises and what production loads.
+        # source no harness run sees: the image creates only ~/.familysearch-mcp
+        # (sandbox/e2b.Dockerfile), so it contributed nothing here while widening
+        # the gap between what CI exercises and what production loads.
+        #
+        # "nothing writes ~/.claude in the sandbox" was the original wording and
+        # was false while it stood: auto-memory wrote a memory file there on every
+        # session that produced one (issue #4778), and _pretool_hook does not deny
+        # that Write. What makes the sentence true is `_sdk_env`'s
+        # CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, not the image — so if that key ever
+        # leaves, this rationale goes with it.
         setting_sources=["project"],
         plugins=[{"type": "local", "path": _PLUGIN_DIR}],
         mcp_servers={
