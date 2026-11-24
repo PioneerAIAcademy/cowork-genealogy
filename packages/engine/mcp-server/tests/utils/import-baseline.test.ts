@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { familySearchTreeSourceIds, importBaseline } from "../../src/utils/import-baseline.js";
+import { familyReadPersonIds, familySearchTreeSourceIds, importBaseline } from "../../src/utils/import-baseline.js";
 
 const FS = { id: "S1", title: "FamilySearch Family Tree (read from John Smith, KWZ1-ABC)", url: "https://www.familysearch.org/tree" };
 const REC = { id: "S2", title: "1880 census", url: "https://www.familysearch.org/ark:/61903/1:1:MXYZ-123" };
@@ -94,5 +94,41 @@ describe("import-baseline (Decision 7)", () => {
       sources: [FS],
     };
     expect(importBaseline(edited, start).isImportFact(["A"], edited.persons[0].facts[0])).toBe(false);
+  });
+});
+
+describe("familyReadPersonIds", () => {
+  const src = (title: string) => ({ id: "S1", title, url: "https://www.familysearch.org/tree" });
+
+  it("finds the person read by the PID in the source title, through any ark spelling", () => {
+    const tree = {
+      sources: [src("FamilySearch Family Tree (read from Smith, John, Jr., ab12-c3d)")],
+      persons: [
+        { id: "I1", ark: "https://www.familysearch.org/ark:/61903/4:1:AB12-C3D" },
+        { id: "I2", ark: "ark:/61903/4:1:ZZZZ-999" },
+        { id: "I3" },
+      ],
+    };
+    expect(familyReadPersonIds(tree)).toEqual(["I1"]);
+  });
+
+  it("is empty with no read-from title, or a read-from title on a non-Family-Tree source", () => {
+    const persons = [{ id: "I1", ark: "ark:/61903/4:1:AB12-C3D" }];
+    expect(familyReadPersonIds({ sources: [src("FamilySearch Family Tree")], persons })).toEqual([]);
+    expect(
+      familyReadPersonIds({ sources: [{ id: "S2", title: "Notes (read from John, AB12-C3D)" }], persons }),
+    ).toEqual([]);
+    expect(familyReadPersonIds({})).toEqual([]);
+  });
+
+  it("names every tree person linked to the PID read, once each", () => {
+    const tree = {
+      sources: [src("FamilySearch Family Tree (read from John, AB12-C3D)")],
+      persons: [
+        { id: "I1", ark: "ark:/61903/4:1:AB12-C3D" },
+        { id: "I7", ark: "ark:/61903/4:1:ab12-c3d" },
+      ],
+    };
+    expect(familyReadPersonIds(tree)).toEqual(["I1", "I7"]);
   });
 });
