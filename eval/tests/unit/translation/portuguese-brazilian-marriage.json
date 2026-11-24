@@ -5,10 +5,21 @@
     "name": "Translate a Brazilian Portuguese colonial marriage record",
     "type": "positive",
     "description": "Brazilian colonial Catholic marriage entry. Adds Portuguese — the last supported language not yet in the corpus — and a distinct record type/context from the Spanish colonial baptism (009). Tests the status terms central to Brazilian genealogy: `parda forra` (a freed mixed-race woman — casta + manumission status), `filha natural` (illegitimate daughter), and `escrava de Antônio Gomes` (an enslaved woman, with her enslaver named — a critical research lead for tracing enslaved ancestors). A shallow translation drops the genealogical weight of these terms.",
-    "tags": ["portuguese", "brazilian", "colonial", "marriage", "manumission", "slavery", "casta", "church-record", "direct-arm"]
+    "tags": [
+      "portuguese",
+      "brazilian",
+      "colonial",
+      "marriage",
+      "manumission",
+      "slavery",
+      "casta",
+      "church-record",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you translate this Brazilian Portuguese marriage record? 'Aos vinte dias do mês de junho de mil setecentos e oitenta, na igreja matriz de Nossa Senhora do Rosário, recebi em matrimônio a Manuel Ferreira, natural de Lisboa, com Joana Maria, parda forra, filha natural de Inês, escrava de Antônio Gomes. Testemunhas: João da Costa e Sebastião Dias.'"
+    "delegation": "Can you translate this Brazilian Portuguese marriage record? 'Aos vinte dias do mês de junho de mil setecentos e oitenta, na igreja matriz de Nossa Senhora do Rosário, recebi em matrimônio a Manuel Ferreira, natural de Lisboa, com Joana Maria, parda forra, filha natural de Inês, escrava de Antônio Gomes. Testemunhas: João da Costa e Sebastião Dias.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

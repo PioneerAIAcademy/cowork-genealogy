@@ -68,15 +68,7 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
@@ -190,9 +182,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new MaterializeFactsError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -1449,7 +1438,6 @@ export async function materializeFacts(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }

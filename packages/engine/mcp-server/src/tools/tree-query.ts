@@ -6,7 +6,7 @@
 // author call this instead of opening the file, which Cowork's VM cannot see.
 // Spec: docs/specs/tree-query-tool-spec.md.
 
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { linkedPersons } from "../utils/tree-person.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 
@@ -97,7 +97,7 @@ export type TreeQueryResult =
       /** Requested personIds that match no tree id and no person's FamilySearch link. */
       missingPersonIds: string[];
     }
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 const str = (v: unknown): string | null => (typeof v === "string" ? v : null);
 const lastSegment = (t: unknown): string | null => (typeof t === "string" ? t.split("/").pop() ?? t : null);
@@ -224,7 +224,6 @@ export async function treeQuery(input: TreeQueryInput): Promise<TreeQueryResult>
   try {
     tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
 

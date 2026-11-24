@@ -91,6 +91,11 @@ export const treeGapsToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
+      projectPath: {
+        type: "string",
+        description:
+          "Optional. The survey reads FamilySearch only and writes nothing, so it runs with no project.",
+      },
       personId: {
         type: "string",
         description:

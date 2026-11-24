@@ -1752,7 +1752,7 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
   it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
     const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
     expect(out.hookSpecificOutput.additionalContext).toMatch(
-      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent, even when it names no images: start a project first with\s+project_create/s,
     );
   });
 
@@ -1793,7 +1793,7 @@ describe("the main thread is denied the tools only agents hold", () => {
     const reason = runGuard({ tool_name: "Write", tool_input: { file_path: "/project/research.json" } })
       .hookSpecificOutput.permissionDecisionReason as string;
     const named = Object.keys(agentOnly).filter((t) => new RegExp(`\\b${t}\\b`).test(reason));
-    expect(named).toEqual(expect.arrayContaining(["project_create", "tree_edit", "external_links_search"]));
+    expect(named).toEqual(expect.arrayContaining(["tree_edit", "external_links_search"]));
     for (const tool of named) {
       expect(agentOnly[tool].some((a) => reason.includes(`\`@plugin:${a}\``)), tool).toBe(true);
     }
@@ -1891,6 +1891,16 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     expect(out.hookSpecificOutput.hookEventName).toBe("PostToolUse");
     expect(out.hookSpecificOutput.additionalContext).toMatch(/after the final `---` word for word/);
   });
+
+  it.each(["historical-context", "plugin:historical-context", "genealogy-research:historical-context"])(
+    "tells a hosted main thread to relay %s's overview above its Search implications, not the text after ---",
+    (subagent_type) => {
+      const out = runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type }, tool_response: {} }), true);
+      const note = out.hookSpecificOutput.additionalContext;
+      expect(note).toMatch(/everything above its `### Search implications` heading word for word/);
+      expect(note).not.toMatch(/after the final `---`/);
+    },
+  );
 
   it.each([
     ["Cowork and Desktop", { tool_name: "Agent" }, false],

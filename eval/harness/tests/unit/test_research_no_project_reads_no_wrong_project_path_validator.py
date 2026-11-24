@@ -1,12 +1,13 @@
 """Tests for `test_research.test_no_project_reads_no_wrong_project_path` (tag
 ``no-wrong-project-path``).
 
-Issue #4246. Replays synthetic call logs through the validator: green when the
-router reads project state only at the hosted listing's ``newProjectPath`` or
-reads none at all (an empty hosted listing already says there is no project),
-red when it reads the working folder instead, reads it as well (the shape of
-``ut_research_hsp`` in ``v46.json``), or hands off with ``newProjectPath`` or a
-listed project's path. Committed run logs do not keep a fixture-served
+Issue #4246, narrowed by issue #4686. Replays synthetic call logs through the
+validator: green when the router reads project state only at the hosted listing's
+``newProjectPath`` or reads none at all, creates the project there with no
+``personId`` and hands off naming it; red when it reads the working folder
+instead, reads it as well (the shape of ``ut_research_hsp`` in ``v46.json``),
+creates nothing or creates with a person, or hands off without ``newProjectPath``
+or with a listed project's path. Committed run logs do not keep a fixture-served
 ``project_list`` response, so each log carries the one from
 ``project-list-hosted-empty``. `testpaths` excludes `validators/`, which is why
 this lives here.
@@ -44,13 +45,18 @@ def _new_path() -> str:
     return _listing()["newProjectPath"]
 
 
-def _tool_calls(*read_paths: str, listing: dict | None = None, prefix: str = "mcp__genealogy__") -> list[dict]:
+def _tool_calls(
+    *read_paths: str, listing: dict | None = None, prefix: str = "mcp__genealogy__", create: dict | None = None
+) -> list[dict]:
     calls = [{"tool": f"{prefix}project_list", "args": {}, "response": listing if listing is not None else _listing()}]
     calls += [{"tool": f"{prefix}project_context", "args": {"projectPath": p}} for p in read_paths]
+    args = {"projectPath": _new_path(), "objective": "Start a new research project"} if create is None else create
+    calls.append({"tool": f"{prefix}project_create", "args": args})
     return calls
 
 
-def _handoff(prompt: str = "Survey the researcher's FamilySearch tree.") -> list[dict]:
+def _handoff(prompt: str | None = None) -> list[dict]:
+    prompt = prompt if prompt is not None else f"Survey the researcher's FamilySearch tree. projectPath: {_new_path()}"
     return [{"tool": "Agent", "args": {"subagent_type": "tree-survey", "prompt": prompt}}]
 
 
@@ -90,16 +96,34 @@ def test_fails_when_project_context_sends_no_project_path():
         no_wrong_path(_test(), calls, _handoff())
 
 
-def test_fails_when_the_handoff_names_new_project_path():
-    with pytest.raises(AssertionError, match="hand-off names newProjectPath"):
-        no_wrong_path(_test(), _tool_calls(), _handoff(f"Survey the tree. projectPath: {_new_path()}"))
+def test_fails_when_the_handoff_omits_new_project_path():
+    with pytest.raises(AssertionError, match="hand-off must name the project just created"):
+        no_wrong_path(_test(), _tool_calls(), _handoff("Survey the researcher's FamilySearch tree."))
+
+
+def test_fails_when_no_project_is_created():
+    calls = [c for c in _tool_calls() if not c["tool"].endswith("project_create")]
+    with pytest.raises(AssertionError, match="project_create was never called"):
+        no_wrong_path(_test(), calls, _handoff())
+
+
+def test_fails_when_the_project_is_created_somewhere_else():
+    calls = _tool_calls(create={"projectPath": _WORKING_FOLDER, "objective": "x"})
+    with pytest.raises(AssertionError, match="must create at newProjectPath"):
+        no_wrong_path(_test(), calls, _handoff())
+
+
+def test_fails_when_the_project_is_created_with_a_person():
+    calls = _tool_calls(create={"projectPath": _new_path(), "objective": "x", "personId": "KWCJ-RN4"})
+    with pytest.raises(AssertionError, match="given a personId"):
+        no_wrong_path(_test(), calls, _handoff())
 
 
 def test_fails_when_the_handoff_names_a_listed_project():
     listing = dict(_listing(), projects=[{"projectPath": _LISTED_PATH}])
     calls = _tool_calls(listing=listing)
     with pytest.raises(AssertionError, match="names a listed project's path"):
-        no_wrong_path(_test(), calls, _handoff(f"Survey the tree for {_LISTED_PATH}."))
+        no_wrong_path(_test(), calls, _handoff(f"Survey the tree for {_LISTED_PATH}. projectPath: {_new_path()}"))
 
 
 def test_fails_when_the_listing_is_empty():

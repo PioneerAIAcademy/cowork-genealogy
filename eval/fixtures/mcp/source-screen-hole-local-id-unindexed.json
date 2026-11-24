@@ -1,0 +1,36 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen called with KD96-TV2 in christian-hole-after-death-residence, where the tree keys Christian P. Hole as I1 with ark 4:1:KD96-TV2; the tool resolves him and answers for I1. S1 and S2 carry no url, so both rows are not_scored as unindexed. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario; no matcher call was made.",
+  "args": {
+    "personId": "KD96-TV2"
+  },
+  "response": {
+    "ok": true,
+    "personId": "I1",
+    "attachments": [
+      {
+        "sourceId": "S1",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      },
+      {
+        "sourceId": "S2",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      }
+    ],
+    "counts": {
+      "not_scored": 2
+    }
+  }
+}

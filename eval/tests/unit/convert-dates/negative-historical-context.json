@@ -5,11 +5,17 @@
     "name": "Calendar-history question must not trigger a convert-dates conversion",
     "type": "negative",
     "description": "User asks WHY a calendar convention existed (the history of Quaker numbered months), not for a specific date conversion. convert-dates performs mechanical calendar-system conversions; it must NOT perform one on a why-did-this-exist question. The router often answers such history questions directly, or routes to historical-context; either is acceptable so long as convert-dates does not butt in with a conversion.",
-    "tags": ["near-miss", "convert-dates-vs-historical-context", "boundary", "no-spurious-conversion", "direct-arm"]
+    "tags": [
+      "near-miss",
+      "convert-dates-vs-historical-context",
+      "boundary",
+      "no-spurious-conversion",
+      "direct-arm"
+    ]
   },
   "input": {
     "delegation": "Why did Quakers use numbered months instead of named months? What's the history of that convention?\n\nprojectPath: <workspace>",
-    "scenario": null
+    "scenario": "person-less-project"
   },
   "negative": {
     "correct_skill": [],
