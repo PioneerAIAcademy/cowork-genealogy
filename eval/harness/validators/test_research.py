@@ -414,45 +414,26 @@ def test_hint_review_runs_once(skills_invoked, builtin_tool_calls, tool_calls, t
     )
 
 
-# The search steps a bounded request must not reach when the answer is already
-# attached. MCP side and delegation side are listed separately because the rule
-# is defeated by either: an inline `record_search` and a hand-off to
-# `search-records` both spend a paid call to re-find what the project holds.
+# The search tools a router must not call itself for a record that is already
+# attached: each spends a paid call to re-find what the project holds.
 _SEARCH_MCP_TOOLS = frozenset({
     "record_search", "person_search", "fulltext_search", "collections_search",
     "volume_search", "image_search", "external_links_search", "catalog_search",
 })
-# Derived from the skills tree, not recalled: an omission here is silent, because a
-# hand-off to a step missing from this set passes the assertion below.
-_SEARCH_STEPS = frozenset({
-    "search-records", "search-images", "search-familysearch-wiki",
-    "search-full-text", "search-external-sites", "search-wikipedia",
-    # Not reachable from the router's table today, but it searches: it tabulates
-    # households across a place's censuses. Listed because reachability changes and
-    # the comment above is right that an omission here is silent.
-    "survey-surname",
-})
 
 
-def test_reads_attachments_before_searching(
-    test, tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls
-):
+def test_reads_attachments_before_searching(test, tool_calls, attempted_mcp_calls):
     """Tag-gated (``attached-first``). Issue #2813 item 4.
 
-    "Before any search, read the person's attached sources and relatives. Never
-    search for a record that is already attached."
+    "Never search for a record that is already attached" yourself.
 
-    Graded on the MCP call log and the hand-off list rather than on the reply,
-    for the reason the routing validator gives: a turn that only NARRATES having
-    checked ("I'll first look at what's already attached") cannot satisfy it.
-
-    This is the assertion the unit suite could not previously make. Neither
-    ``person_read`` nor ``source_attachments`` is in ``mock_mcp.LIVE_TOOLS``, so
-    the mock registers them only for a test that declares fixtures; a body that
-    skipped the rule entirely passed every unit test in the suite.
+    Graded on the router's own MCP calls: it runs no search itself. It may learn
+    what is attached from ``project_context``'s ``attachedSources`` (the sources
+    ``project_create`` stored), from a ``person_read`` / ``source_attachments``
+    read, or from a search-records hand-off whose return reports the record as
+    attached (lead, 2026-11-24); which one is not graded. That the reply names the
+    attached record is the judge's to grade.
     """
-    from harness.skill_runner import handoffs
-
     if "attached-first" not in test.get("tags", []):
         pytest.skip("not an attached-first test")
 
@@ -463,24 +444,11 @@ def test_reads_attachments_before_searching(
     # `attempted_mcp_calls` instead -- and reading only the first list would let
     # the exact behaviour this test forbids pass silently.
     attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
-    read_first = {"person_read", "source_attachments"} & set(called)
-    assert read_first, (
-        "The router must read what is already attached before routing a request "
-        "anywhere. Neither person_read nor source_attachments was called. "
-        f"MCP calls={called}"
-    )
 
     searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
     assert not searched, (
         "The requested record is already attached, so searching for it spends a paid "
         f"call to re-find what the project holds. Search tools called: {searched}"
-    )
-
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    search_steps = [s for s in handed if s in _SEARCH_STEPS]
-    assert not search_steps, (
-        "Handing off to a search step re-finds an already-attached record just as an "
-        f"inline search call would. Hand-offs: {handed}"
     )
 
 
@@ -2076,7 +2044,10 @@ def test_search_hit_review_spawns_one_agent_per_hit(test, builtin_tool_calls, be
         problems.append(f"{len(prompts)} spawns for {len(expected)} hits")
 
     boundary = load_step_boundary()
-    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    lines = [
+        line.strip() for line in (text_response or "").splitlines()
+        if line.strip() and not boundary._LINK_ONLY_RE.match(line.strip())
+    ]
     if boundary.offered_step(text_response) != "extract-matches":
         problems.append(f"the last line does not offer extracting the Matches: {lines[-1:]}")
     else:

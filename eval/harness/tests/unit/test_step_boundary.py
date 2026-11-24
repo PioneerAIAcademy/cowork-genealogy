@@ -817,3 +817,30 @@ def test_the_extraction_offer_gets_the_default_replies():
     ]
     out = _reply(prev="search-full-text", step="evaluate-search-results", offer="extract-matches")
     assert out["reply"] == sb.REPLY_KEEP_GOING
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize(
+    "tail",
+    [
+        "https://www.familysearch.org/ark:/61903/1:1:G9GJ-959",
+        "<https://www.familysearch.org/tree/person/details/G9GJ-959>",
+        "[Iram Hyde](https://www.familysearch.org/tree/person/details/G9GJ-959)",
+    ],
+)
+def test_a_trailing_link_line_does_not_hide_the_offer(tail):
+    from harness.skill_runner import load_step_boundary
+
+    b = load_step_boundary()
+    text = "Three Matches came back.\n\nContinue with `extracting the 3 Matches`?\n\n" + tail
+    assert b.offered_step(text) == "extract-matches"
+
+
+def test_a_trailing_line_with_words_still_hides_the_offer():
+    from harness.skill_runner import load_step_boundary
+
+    b = load_step_boundary()
+    text = "Continue with `planning the searches`?\n\nSee https://www.familysearch.org for more."
+    assert b.offered_step(text) is None
