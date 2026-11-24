@@ -36,8 +36,9 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
-import { primaryTarget, unclaimedPrimarySet } from "../utils/primary-claim.js";
-import { disprovedClaimCovering } from "../utils/claim-join.js";
+import { holderKey, primaryTarget, treeFacts, unclaimedPrimarySet } from "../utils/primary-claim.js";
+import { claimCoversEdge, claimCoversFact, disprovedClaimCovering, sameSubtype } from "../utils/claim-join.js";
+import { importBaseline } from "../utils/import-baseline.js";
 import type { SyntheticWarning } from "../validation/merge-claim-warnings.js";
 import { applyRuleMode, ruleMode, treeConcern } from "../validation/rule-modes.js";
 import {
@@ -1271,6 +1272,93 @@ function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): 
   return out;
 }
 
+/** The tree writers' synthetic warnings (#3032 Stage 1b, Decisions 7 and 32),
+ *  justified like the rest: an import removed with no disproof, and a ParentChild
+ *  retyped to a subtype no affirmed claim names. */
+async function treeWriteWarnings(
+  beforeTree: SimplifiedGedcomX,
+  afterTree: SimplifiedGedcomX,
+  research: any,
+  projectPath: string,
+): Promise<SyntheticWarning[]> {
+  const out: SyntheticWarning[] = [];
+  const claims = (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).flatMap((s: any) =>
+    Array.isArray(s?.claims) ? s.claims : [],
+  );
+  const nameOf = (tree: SimplifiedGedcomX, id: unknown) => {
+    const p = (tree.persons ?? []).find((x) => x.id === id);
+    return p ? getPersonName(p) : "";
+  };
+  const warn = (warningId: string, issueType: string, personId: string, message: string) =>
+    out.push({ warningId, issueType, severity: "implausible", personId, personName: nameOf(beforeTree, personId), message });
+
+  const afterEdges = new Map((afterTree.relationships ?? []).map((r) => [r.id, r]));
+  const afterFactKeys = new Set(treeFacts(afterTree).map((x) => `${holderKey(x.holder)}|${x.fact?.id}`));
+  const goneFacts = treeFacts(beforeTree).filter((x) => !afterFactKeys.has(`${holderKey(x.holder)}|${x.fact?.id}`));
+  const goneEdges = (beforeTree.relationships ?? []).filter((r) => r.id !== undefined && !afterEdges.has(r.id));
+
+  if (goneFacts.length > 0 || goneEdges.length > 0) {
+    // Built on the pre-call tree, so a moved import's holder still holds it.
+    const baseline = importBaseline(beforeTree, await readStartingTree(projectPath));
+    const disproved = claims.filter((c: any) => c?.proof_tier === "disproved");
+    // A fact that left with its removed Couple is that removal's, not its own,
+    // when the removal itself answers for it: the edge warns as an import, or a
+    // disproof rules it out. On any other removed edge its facts are judged here.
+    const answeredEdgeIds = new Set(
+      goneEdges.filter((r) => baseline.isImportEdge(r) || disprovedClaimCovering(research, r)).map((r) => r.id),
+    );
+    for (const x of goneFacts) {
+      if ("relationshipId" in x.holder && answeredEdgeIds.has(x.holder.relationshipId)) continue;
+      if (!baseline.isImportFact(x.holderIds, x.fact)) continue;
+      if (disproved.some((c: any) => claimCoversFact(c, x.holderIds, x.fact))) continue;
+      const holder = "personId" in x.holder ? x.holder.personId : x.holder.relationshipId;
+      warn(
+        `removeImport|${holder}|${x.fact?.id}`,
+        "removeImport",
+        x.holderIds[0] ?? holder,
+        `This removes fact ${x.fact?.id} (${x.fact?.type}) from ${holder}, which reads as an import (from the ` +
+          "starting tree, or carrying no record source when there is none), and no " +
+          "disproved claim rules it out. Justify the removal, or have proof-conclusion record the disproof first.",
+      );
+    }
+    for (const r of goneEdges) {
+      if (!baseline.isImportEdge(r) || disprovedClaimCovering(research, r)) continue;
+      const personId = String(r.child ?? r.person1 ?? "");
+      warn(
+        `removeImport|${r.id}`,
+        "removeImport",
+        personId,
+        `This removes relationship ${r.id}, which reads as an import (from the starting tree, or carrying no record ` +
+          "source when there is none), and no disproved claim rules it out. " +
+          "Justify the removal, or have proof-conclusion record the disproof first.",
+      );
+    }
+  }
+
+  for (const before of beforeTree.relationships ?? []) {
+    const after = before.id !== undefined ? afterEdges.get(before.id) : undefined;
+    const raw = (r: any) => (typeof r?.subtype === "string" ? r.subtype.trim().toLowerCase() : "");
+    // Raw strings: an untyped edge retyped to Biological is a change (Decision 11).
+    if (!after || after.type !== "ParentChild" || raw(before) === raw(after)) continue;
+    const named = claims.some(
+      (c: any) =>
+        c?.polarity !== "denied" &&
+        c?.proof_tier !== "disproved" &&
+        claimCoversEdge(c, after) &&
+        sameSubtype(c.relationship, after),
+    );
+    if (named) continue;
+    warn(
+      `retypeUnclaimed|${after.id}|${after.subtype}`,
+      "retypeUnclaimed",
+      String(after.child ?? ""),
+      `This retypes relationship ${after.id} to '${after.subtype}', and no claim names that subtype for this pair. ` +
+        "Justify the retype, or have proof-conclusion record the claim first.",
+    );
+  }
+  return out;
+}
+
 /** The `primary` rule (Decision 34): a fact the call left `primary` that no live
  *  affirmed claim at `probable` or better covers. Warns until Stage 1c. */
 function primaryRuleOutcome(beforeTree: SimplifiedGedcomX, afterTree: SimplifiedGedcomX, research: any): { errors: string[]; warnings: string[] } {
@@ -1387,6 +1475,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         beforeTree, tree, research, projectPath,
         input.warningJustifications, toolName,
         undefined, proposedParentAssertions(input.ops),
+        await treeWriteWarnings(beforeTree, tree, research, projectPath),
       );
       if (warningGateResult && "ok" in warningGateResult) return warningGateResult;
       const justificationsPersisted = warningGateResult?.justificationsPersisted === true;
@@ -1437,6 +1526,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       beforeTree, tree, research, projectPath,
       input.warningJustifications, toolName,
       undefined, proposedParentAssertions([input]),
+      await treeWriteWarnings(beforeTree, tree, research, projectPath),
     );
     if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustificationsPersisted = singleGateResult?.justificationsPersisted === true;
