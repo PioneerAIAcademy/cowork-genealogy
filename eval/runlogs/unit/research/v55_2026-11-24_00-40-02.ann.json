@@ -1,0 +1,270 @@
+{
+  "run_log": "v55_2026-11-24_00-40-02.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against every tool and stub result. The reply names Ancestry, FindMyPast and Newspapers.com (and record types like Catholic parish registers), but no tool or stub returned any of them; the search-records stub only said nothing new was found. The test says to mark down a site no tool returned, so 2 is right. The same slip made b4w partial in 2 of main's last 3 runs, so it isn't from this PR."
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the hand-offs and the ending. It ran init-project, then search-records, in the same turn, said the project was made, relayed that nothing new was found, and ended with a \"Continue with running the searches?\" offer. No question, plan or locality survey was added. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every call. person_read got personId LZNY-BRF, exactly the expected argument. project_create used the run's projectPath and LZNY-BRF, and the project_list and project_context calls had no expected arguments. All matched their fixtures."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against the stub replies and every tool result. The reply suggests \"external sites like Ancestry or newspapers\", but neither the search-records stub nor any tool named them. The test says to mark that down, so 2 is right. b4i was partial for the same kind of reason in all 3 of main's last runs."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the hand-offs and the ending. It ran init-project, then search-records, in the same turn, relayed that nothing new was found, and ended with \"Continue with running the searches?\". No question, plan or locality survey was added, which the test says is correct. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every call. person_read got personId LZNY-BRF as expected; project_create used the run's projectPath and LZNY-BRF; project_list and project_context had no expected arguments. All matched."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked all 12 lines of the reply against the staged page from sidecar_read: names, sex, ages, birthplaces, origins, religions and occupations all match, and the image link is there. Nothing was added that the page doesn't hold. One small slip: the closing line shows the internal id \"(q_001)\" to the researcher. That's a wording issue, not a wrong fact, so I keep 3."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both asks. The transcription is delivered in full this turn, and the research plan is offered as the next step with \"Continue with planning the searches?\". Nothing missing."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every call. image_transcribe got imageId 004022578_00190, exactly as expected, with the projectPath; sidecar_read used the ref image_transcribe returned; project_list was called with no arguments. All matched."
+    },
+    {
+      "test_id": "ut_research_cq7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against project_context. The objective asks two things, Elizabeth's birthplace and whether Robert Turnbow and Sarah Canterberry were her parents, and no open question covers the parentage part. The one-line reply says question-selection will register that question, which is true, and it claims nothing else."
+    },
+    {
+      "test_id": "ut_research_cq7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the hand-off. It read project_context, then handed question-selection the projectPath and the objective. The stubbed reply means no new question appears, which the test says is expected. It didn't repeat the step or try to finish the project. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_cq7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both calls. project_list had no arguments and project_context used the run's projectPath. Neither has expected arguments, and both matched their fixtures."
+    },
+    {
+      "test_id": "ut_research_dq1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against project_context. The parents question has a proof summary that needs re-concluding (the project's own next step for it), and the 1850 census question has its evidence but no proof summary yet. The reply says both correctly and doesn't start the burial question. Small slip: it shows the internal ids q_001 and q_002 to the researcher. That's wording, not a wrong fact, so 3."
+    },
+    {
+      "test_id": "ut_research_dq1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the three things the test asks for. It names the questions still in progress, says the burial question can start once they're wrapped up, and ends with \"Continue with wrapping up?\" as the last line. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_dq1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both calls. project_list had no arguments and project_context used the run's projectPath. Neither has expected arguments, and both matched."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against this test's instructions, which say the narration must be free of internal ids. The one-line reply shows \"log_017\" and names the internal agent (\"spawning record-structurer\"). The routing itself is right, but the test asks for clean narration, so 2. hvy was partial for this in 2 of main's last 3 runs too."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the hand-off. It read project_context, then spawned record-structurer for the one Match hit (hit 9 of log_017), which is what was asked. The stub ends the run, so no summary is expected. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both calls. project_list had no arguments and project_context used the run's projectPath. Neither has expected arguments, and both matched."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Checked the reply against project_context and the scenario's plans. Nothing was written and no plan item was added, as required. But the probate search was a completed plan item of the parents question (q_001), and the reply treats it as part of the 1850 census question (q_002), calling it \"beyond the question's core scope\". It also lists fallback record types (state census, tax lists) the test says not to volunteer. Not a 1: the test's instructions allow answering directly instead of routing, and its advice (no new plan item; write the owed proof conclusion) is right."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One call, project_context with the run's projectPath. It has no expected arguments and it matched."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "It answered both halves: no new plan item is needed, and the next step is the proof conclusion the project still owes (q_002 has 5 tied assertions and no proof summary). The test accepts answering directly instead of routing to research-exhaustiveness. Mixing up which question the probate search served is scored under Correctness, not counted twice."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the reply against the test's pass and fail rules. It does most things right: it reports the machine reading (Armistead) and the index reading (Armtogne) side by side, says they differ, gives line 43, never calls either one the answer, and calls the 1923 certificate \"a separate record entirely\" with the name as written, \"Ann Tone\". But it then wonders whether the census handwriting is \"something closer to Ann Tone\", which edges toward folding the certificate's name into the census reading, the thing this test guards against. Not a fail (it never calls Ann Tone a rendering or variant), but not clean, so 2."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the asks. It transcribed line 43 in full (household, age, occupation, birthplaces) and compared the name across the transcription, the index and the certificate in one table, with a link to the record. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every call. image_transcribe got file uploads/1880-census-cunningham-p36.png as expected (plus a lookingFor hint for line 43); sidecar_read used the ref image_transcribe returned; project_list had no arguments. All matched."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Checked the reply against the stub. Every hit came back from the stub as a Match that \"holds a detail the tree does not have yet\", and the reply relays exactly that for all 11. It judged nothing itself and extracted nothing. The judge's own rationale says the relayed facts are correct; what it marked down is a process point, which belongs under Completeness, not here."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Checked the spawns. There are 11 evaluate-search-results spawns, one per hit of log_017, each with its own hitRef and target I1, all in this one turn, and test_search_hit_review_spawns_one_agent_per_hit passes. Between batches it wrote only one-line progress notes (\"Spawning the next 5\"). It didn't stop, relay verdicts early or offer a next step mid-way, which is the failure the test describes. It ended on \"Continue with extracting the 11 Matches?\"."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list first with no arguments, then project_context with the run's projectPath, then sidecar_read on results/log_017.json#hits. All correct and matched."
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Checked the reply against tree_query and the test's instructions. The facts are right: Thomas Flynn (I2) has no FamilySearch ID, was born about 1818 in Ireland, and has three children in the tree (Patrick, Mary, James). But the test requires narration \"free of internal ids shown to the user\", and the reply shows \"(I2)\" and the tool name person_read. Scored the same way as hvy, which has the same rule."
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the hand-off. It read project_context and tree_query for Thomas, then handed off to search-records with his tree facts and his three known children, without walking the job routing table and without checking completeness itself. The stub ends the run, so no summary is expected. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list first with no arguments, project_context with the run's projectPath, and tree_query with personIds [\"I2\"] for Thomas's facts. None have expected arguments, and all are right for their purpose."
+    },
+    {
+      "test_id": "ut_research_hsp",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the reply against each tool result. extraction_append returned no attached indexed record for I1, and timeline_build returned no linked evidence. The reply's \"no records are yet attached\" and its hand-off to question-selection match what the tools said, and it claims nothing it didn't do. It shows the internal id \"(I1)\", but this test doesn't ban ids, so it's noted, not scored."
+    },
+    {
+      "test_id": "ut_research_hsp",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the routing row the test names (objective but no questions): extraction_append for I1, then timeline_build, then question-selection, all done in order. It ended with \"Continue with setting up the project?\", the routing table's label for question-selection, with the projectUrl on the same line as the skill asks. Nothing missing."
+    },
+    {
+      "test_id": "ut_research_hsp",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, matching its expected {}; project_context, extraction_append and timeline_build all used the listed project's path /proj_3f9a1c2e7b4d6a80, with personId I1 where needed. All matched their fixtures."
+    }
+  ]
+}
