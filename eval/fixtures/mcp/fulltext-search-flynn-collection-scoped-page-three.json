@@ -1,0 +1,140 @@
+{
+  "tool": "fulltext_search",
+  "description": "The collection-scoped Flynn search, offset 10: results 11 to 12 of 12. None names Thomas Flynn, so paging adds no candidate. Declared so an agent that pages past the first five gets the next rows, not the first five again. List it before fulltext-search-flynn-collection-scoped.",
+  "args": {
+    "collectionId": "~2220359",
+    "offset": 10
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR — always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "query": {
+      "keywords": "+Flynn",
+      "collectionId": "2220359"
+    },
+    "totalResults": 12,
+    "returned": 2,
+    "offset": 10,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX96",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Sheriff's Deed — Estate of Daniel Flynn",
+        "recordDate": "1881",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "the Sheriff of Schuylkill County doth sell the real estate late of Daniel Flynn taken in execution ...",
+        "names": [
+          "Daniel Flynn"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1881"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX97",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Ellen Flynn to Hugh Gallagher",
+        "recordDate": "1884",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Ellen Flynn of Reilly Township single woman doth grant unto Hugh Gallagher ...",
+        "names": [
+          "Ellen Flynn",
+          "Hugh Gallagher"
+        ],
+        "places": [
+          "Reilly Township",
+          "Schuylkill County"
+        ],
+        "dates": [
+          "1884"
+        ],
+        "highlightTerms": [
+          "Flynn"
+        ]
+      }
+    ]
+  }
+}

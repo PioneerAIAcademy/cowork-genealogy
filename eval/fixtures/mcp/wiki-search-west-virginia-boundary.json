@@ -1,25 +1,219 @@
 {
   "tool": "wiki_search",
-  "description": "FamilySearch Wiki search about West Virginia statehood and boundary changes",
-  "args": { "query": "~West Virginia" },
+  "description": "Real wiki-query-api /search answer for \"West Virginia boundary change Civil War Virginia\", captured 2026-11-22 with one POST to the hosted wiki server (the request wiki_search sends), stored raw: 20 results, rank and relevance_score as returned. The mock compacts it per the call's includeText, as the tool does. Replaces a hand-written single result whose page, section and URL were not real.",
+  "args": {
+    "query": "~West Virginia"
+  },
   "response": {
     "query": "West Virginia boundary change Civil War Virginia",
-    "total_chunks_searched": 14832,
+    "total_chunks_searched": 1240565,
     "results": [
       {
         "rank": 1,
-        "relevance_score": 0.91,
-        "chunk_text": "West Virginia was admitted to the Union on June 20, 1863, after separating from Virginia during the Civil War. Ancestors living in what is now West Virginia before 1863 would have been recorded as living in Virginia. County boundaries also shifted frequently during this period. Records such as land deeds, tax lists, and probate files remain in the original county courthouse regardless of which state the county later fell into. Researchers should identify the correct county jurisdiction using historical boundary maps before searching state archives.",
-        "page_title": "West Virginia Genealogy",
-        "section_heading": "Historical Background",
-        "source_url": "https://www.familysearch.org/en/wiki/West_Virginia_Genealogy"
+        "relevance_score": 0.775873,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1860--**Webster County was created 10 January 1860 from [Nicholas](https://www.familysearch.org/en/wiki/Nicholas_County,_West_Virginia_Genealogy \"Nicholas County, West Virginia Genealogy\"), [Braxton](https://www.familysearch.org/en/wiki/Braxton_County,_West_Virginia_Genealogy \"Braxton County, West Virginia Genealogy\") and [Randolph](https://www.familysearch.org/en/wiki/Randolph_County,_West_Virginia_Genealogy \"Randolph County, West Virginia Genealogy\") Counties. * **County seat:** Webster Springs[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Webster County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Webster_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.738156,
+        "chunk_text": "## History  \nThe area of West Virginia was a part of Virginia until the Civil War, 1861-1865. Duringthat time there wasa dispute over secession andfifty western counties broke off to form the “restored government of Virginia,” which remained loyal to the Union. The state of West Virginia was admitted to the Union in 1863.\nOnce its own state, West Virginia continued keeping probate records in the county courts.  \n* A brief history of the settlement and boundary changes ofWest Virginiaand the resultant effects on record keeping can be found on [Ancestry](http://www.ancestry.com/wiki/index.php?title=History_of_West_Virginia).\n* A discussion of West Virginia Probate Records written by Johni Cerny in Red book: American State, County, and Town Sources can be found at [Ancestry](http://www.ancestry.com/wiki/index.php?title=West_Virginia_Probate_Records).",
+        "page_title": "West Virginia Probate Records",
+        "section_heading": "History",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/West_Virginia_Probate_Records#History"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.727038,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1835**--Marshall County was created 12 March 1835 from [Ohio](https://www.familysearch.org/en/wiki/Ohio_County,_West_Virginia_Genealogy \"Ohio County, West Virginia Genealogy\") County when it was still part of Virginia. It became part of West Virginia in 1863. * **County seat:** Moundsville[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Marshall County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Marshall_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 4,
+        "relevance_score": 0.717261,
+        "chunk_text": "## Introduction  \nWest Virginia divided from Virginia and became a stateJune 20, 1863because of the Civil War.  \n* [*How West Virginia was made: proceedings of the first convention of the people of northwestern Virginia at Wheeling, May 13, 14 and 15, 1861, and the journal of the second convention of the people of northwestern Virginia at Wheeling, which assembled, June 11th, 1861.* Charleston, West Virginia: News-Mail, 1909](https://www.familysearch.org/en/search/catalog/586528)  \n* [Arlington County, Register of persons who have taken and subscribed to ... by an ordinance for the reorganization of the state government, 1862-1865](https://www.familysearch.org/en/search/catalog/1129583)\n* [Brooke County. Register of persons who have taken the oath of the convention, 1862-1863](https://www.familysearch.org/en/search/catalog/777440)\n* [Tyler County, Register of persons who have taken the oath of the convention, 1862-1863](https://www.familysearch.org/en/search/catalog/274160)  \nFor the Union, West Virginia mustered between 22,000 and 25,000 men[[1]](#cite_note-wvcwsd-1) in 20 infantry units, 7 cavalry units, 1 artillery unit and 3 other types of units.West Virginia did not organize any confederate regiments. Approximately 9,000 West Virginians chose to fight for the Confederate States of America andgenerally joined the confederate regiments of Virginia.",
+        "page_title": "West Virginia in the Civil War",
+        "section_heading": "Introduction",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/West_Virginia_in_the_Civil_War#Introduction"
+      },
+      {
+        "rank": 5,
+        "relevance_score": 0.695554,
+        "chunk_text": "## Timeline of Changing Boundaries  \nThroughout most of its history, parts of the territory that old [Virginia](https://www.familysearch.org/en/wiki/Virginia,_United_States_Genealogy \"Virginia, United States Genealogy\") once claimed were carved off to form parts of other states:  \n* 1779 part of Virginia became part of North Carolina\n* 1786 part of Virginia became part of Pennsylvania\n* 1792 part of Virginia became Kentucky\n* 1792 part of Virginia became part of Maryland\n* 1803 part of Virginia became part of Tennessee\n* 1803 part of Virginia became Ohio and Indiana territory\n* 1816 former part of Virginia became Indiana\n* 1818 former part of Virginia became Illinois\n* 1863 part of Virginia became West Virginia",
+        "page_title": "Virginia History",
+        "section_heading": "Timeline of Changing Boundaries",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Virginia_History#Timeline_of_Changing_Boundaries"
+      },
+      {
+        "rank": 6,
+        "relevance_score": 0.682149,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1843--**Ritchie County was created 18 February 1843 from [Wood](https://www.familysearch.org/en/wiki/Wood_County,_West_Virginia_Genealogy \"Wood County, West Virginia Genealogy\"), [Harrison](https://www.familysearch.org/en/wiki/Harrison_County,_West_Virginia_Genealogy \"Harrison County, West Virginia Genealogy\") and [Lewis](https://www.familysearch.org/en/wiki/Lewis_County,_West_Virginia_Genealogy \"Lewis County, West Virginia Genealogy\") Counties. * **County seat:** Harrisville[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Ritchie County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Ritchie_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 7,
+        "relevance_score": 0.681724,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1845**--Doddridge County was created 4 February 1845 from [Harrison](https://www.familysearch.org/en/wiki/Harrison_County,_West_Virginia_Genealogy \"Harrison County, West Virginia Genealogy\"), [Tyler](https://www.familysearch.org/en/wiki/Tyler_County,_West_Virginia_Genealogy \"Tyler County, West Virginia Genealogy\"), [Ritchie](https://www.familysearch.org/en/wiki/Ritchie_County,_West_Virginia_Genealogy \"Ritchie County, West Virginia Genealogy\") and [Lewis](https://www.familysearch.org/en/wiki/Lewis_County,_West_Virginia_Genealogy \"Lewis County, West Virginia Genealogy\") Counties. * **County seat:** West Union[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Doddridge County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Doddridge_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 8,
+        "relevance_score": 0.676508,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1844**--Taylor County was created 19 January 1844 from [Harrison](https://www.familysearch.org/en/wiki/Harrison_County,_West_Virginia_Genealogy \"Harrison County, West Virginia Genealogy\"), [Barbour](https://www.familysearch.org/en/wiki/Barbour_County,_West_Virginia_Genealogy \"Barbour County, West Virginia Genealogy\") and [Marion](https://www.familysearch.org/en/wiki/Marion_County,_West_Virginia_Genealogy \"Marion County, West Virginia Genealogy\") Counties. * **County seat:** Grafton[[4]](#cite_note-4) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Taylor County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Taylor_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 9,
+        "relevance_score": 0.674516,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| **1861** A fire burned the courthouse in 1861, but many records still exist from 1836 on. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1836--**Braxton County was created 15 January 1836 from [Lewis](https://www.familysearch.org/en/wiki/Lewis_County,_West_Virginia_Genealogy \"Lewis County, West Virginia Genealogy\"), [Kanawha](https://www.familysearch.org/en/wiki/Kanawha_County,_West_Virginia_Genealogy \"Kanawha County, West Virginia Genealogy\") and [Nicholas](https://www.familysearch.org/en/wiki/Nicholas_County,_West_Virginia_Genealogy \"Nicholas County, West Virginia Genealogy\") Counties. * **County seat:** Sutton[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Braxton County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Braxton_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 10,
+        "relevance_score": 0.671345,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1818**--Preston County was created 19 January 1818 from [Monongalia](https://www.familysearch.org/en/wiki/Monongalia_County,_West_Virginia_Genealogy \"Monongalia County, West Virginia Genealogy\") County. * **County seat:** Kingwood[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Preston County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Preston_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 11,
+        "relevance_score": 0.670966,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1848--**Wirt County was created 19 January 1848 from [Wood](https://www.familysearch.org/en/wiki/Wood_County,_West_Virginia_Genealogy \"Wood County, West Virginia Genealogy\") and [Jackson](https://www.familysearch.org/en/wiki/Jackson_County,_West_Virginia_Genealogy \"Jackson County, West Virginia Genealogy\") Counties. * **County seat:** Elizabeth[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Wirt County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Wirt_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 12,
+        "relevance_score": 0.670788,
+        "chunk_text": "* **1843:** Barbour County was created from Harrison, Lewis and Randolph Counties.\n* **1845:** Doddridge County was created from Harrison, Tyler, Ritchie, and Lewis Counties. Gilmer County was created from Lewis and Kanawha Counties.\n* **1861-1865:** In a dispute over secession, fifty western counties broke off to form the “restored government of Virginia,” which remained loyal to the Union. The state of [West Virginia](http://www.wvculture.org/history/archives/statehoo.html) was admitted to the Union in 1863. During the Civil War, about 32,000 West Virginia soldiers enlisted in the Union Army, while 9,000 served the Confederacy. For more information about the Civil War see the [United States Civil War, 1861 to 1865](https://www.familysearch.org/en/wiki/United_States_Civil_War,_1861_to_1865 \"United States Civil War, 1861 to 1865\") page.\n* **1867-69:** Lincoln County was created from Boone, Cabell, Logan, Kanawha, and Wayne Counties.\n* **1870s:**  [Industrial expansion](http://www.encyclopedia.com/doc/1G2-3406400169.html) in West Virginia attracted Black immigrants from southern states and European immigrants from overseas.\n* **1898:** The [Spanish-American War](http://www.loc.gov/rr/hispanic/1898/) which was fought mainly in Cuba and the Philippines. [West Virginia](http://www.spanamwar.com/1stWV.htm) had 3,004 soldiers serve.\n* **1917–1918:** West Virginia men from the United States ages 18 through 45 registered with the Selective Service. [World War I](http://en.wikipedia.org/wiki/World_War_I) had over 58,053 men and women from West Virginia serve during the war.\n* **1930's:**  \n|  |  |\n| --- | --- |\n|  | [Wikipedia](http://en.wikipedia.org/wiki/Wikipedia) has more about this subject: ***[The Great Depression](http://en.wikipedia.org/wiki/Great_Depression)*** |  \nclosed many factories and mills. Many small farms were abandoned, and many families moved to cities.  \n* **1940–1945:** Over 50.6 million men ages 18 to 65 registered with the [Selective Service](http://en.wikipedia.org/wiki/Selective_Training_and_Service_Act_of_1940). Over 16.3 million American men and women served in the armed forces during [World War II](http://www.worldwar-2.net/).",
+        "page_title": "West Virginia History",
+        "section_heading": "Brief History",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/West_Virginia_History#Brief_History"
+      },
+      {
+        "rank": 13,
+        "relevance_score": 0.67077,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1856**--Calhoun County was created 5 March 1856 from [Gilmer](https://www.familysearch.org/en/wiki/Gilmer_County,_West_Virginia_Genealogy \"Gilmer County, West Virginia Genealogy\") County. * **County seat:** Grantsville[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Calhoun County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Calhoun_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 14,
+        "relevance_score": 0.669338,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1842**--Wayne County was created 18 January 1842 from [Cabell](https://www.familysearch.org/en/wiki/Cabell_County,_West_Virginia_Genealogy \"Cabell County, West Virginia Genealogy\") County. * **County seat:** Wayne[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Wayne County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Wayne_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 15,
+        "relevance_score": 0.667911,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1818--**Nicholas County was created 30 January 1818 from [Kanawha](https://www.familysearch.org/en/wiki/Kanawha_County,_West_Virginia_Genealogy \"Kanawha County, West Virginia Genealogy\"), [Greenbrier](https://www.familysearch.org/en/wiki/Greenbrier_County,_West_Virginia_Genealogy \"Greenbrier County, West Virginia Genealogy\") and [Randolph](https://www.familysearch.org/en/wiki/Randolph_County,_West_Virginia_Genealogy \"Randolph County, West Virginia Genealogy\") Counties. * **County seat:** Summersville[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Nicholas County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Nicholas_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 16,
+        "relevance_score": 0.667303,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1821--**Pocahontas County was created 21 December 1821 from [Pendleton](https://www.familysearch.org/en/wiki/Pendleton_County,_West_Virginia_Genealogy \"Pendleton County, West Virginia Genealogy\"), [Greenbrier and](https://www.familysearch.org/en/wiki/Greenbrier_County,_West_Virginia_Genealogy \"Greenbrier County, West Virginia Genealogy\") [Randolph](https://www.familysearch.org/en/wiki/Randolph_County,_West_Virginia_Genealogy \"Randolph County, West Virginia Genealogy\") Counties (now West Virginia) and [Bath](https://www.familysearch.org/en/wiki/Bath_County,_Virginia_Genealogy \"Bath County, Virginia Genealogy\") County (now Virginia). * [Pocahontas County Timeline Formations](http://sites.rootsweb.com/~wvpocaho/pocatoday.htm#timeline) * **County seat:** Marlinton[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Pocahontas County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Pocahontas_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 17,
+        "relevance_score": 0.66615,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1847--**Boone County was created 11 March 1847 from [Kanawha](https://www.familysearch.org/en/wiki/Kanawha_County,_West_Virginia_Genealogy \"Kanawha County, West Virginia Genealogy\"), [Cabell](https://www.familysearch.org/en/wiki/Cabell_County,_West_Virginia_Genealogy \"Cabell County, West Virginia Genealogy\") and [Logan](https://www.familysearch.org/en/wiki/Logan_County,_West_Virginia_Genealogy \"Logan County, West Virginia Genealogy\") Counties. * **County seat:** Madison[[1]](#cite_note-HBG-1) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Boone County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Boone_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 18,
+        "relevance_score": 0.665863,
+        "chunk_text": "### Boundary Changes  \n|  |\n| --- |\n| * **1824**--Logan County was created 12 January 1824 from [Cabell](https://www.familysearch.org/en/wiki/Cabell_County,_West_Virginia_Genealogy \"Cabell County, West Virginia Genealogy\") (now West Virginia), [Kanawha](https://www.familysearch.org/en/wiki/Kanawha_County,_West_Virginia_Genealogy \"Kanawha County, West Virginia Genealogy\") (now West Virginia), [Giles](https://www.familysearch.org/en/wiki/Giles_County,_Virginia_Genealogy \"Giles County, Virginia Genealogy\") and [Tazewell](https://www.familysearch.org/en/wiki/Tazewell_County,_Virginia_Genealogy \"Tazewell County, Virginia Genealogy\") Counties (Virginia). * **County seat:** Logan[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Logan County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Logan_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 19,
+        "relevance_score": 0.66492,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1851--**Pleasants County was created 29 March 1851 from [Wood](https://www.familysearch.org/en/wiki/Wood_County,_West_Virginia_Genealogy \"Wood County, West Virginia Genealogy\"), [Tyler](https://www.familysearch.org/en/wiki/Tyler_County,_West_Virginia_Genealogy \"Tyler County, West Virginia Genealogy\") and [Ritchie](https://www.familysearch.org/en/wiki/Ritchie_County,_West_Virginia_Genealogy \"Ritchie County, West Virginia Genealogy\") Counties. * **County seat:** Saint Mary's[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Pleasants County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Pleasants_County,_West_Virginia_Genealogy#Boundary_Changes"
+      },
+      {
+        "rank": 20,
+        "relevance_score": 0.66218,
+        "chunk_text": "### Record Loss  \n|  |\n| --- |\n| There is no known history of courthouse disasters in this county. |\n\n### Boundary Changes  \n|  |\n| --- |\n| * **1848**--Putnam County was created 11 March 1848 from [Kanawha](https://www.familysearch.org/en/wiki/Kanawha_County,_West_Virginia_Genealogy \"Kanawha County, West Virginia Genealogy\"), [Mason and](https://www.familysearch.org/en/wiki/Mason_County,_West_Virginia_Genealogy \"Mason County, West Virginia Genealogy\") [Cabell](https://www.familysearch.org/en/wiki/Cabell_County,_West_Virginia_Genealogy \"Cabell County, West Virginia Genealogy\") Counties. * **County seat:** Winfield[[5]](#cite_note-5) * [West Virginia Individual County Chronologies](https://digital.newberry.org/ahcb/documents/WV_Individual_County_Chronologies.htm#Individual_County_Chronologies) - Newberry Library list of all boundary changes by county * [West Virginia Historical Borders - Map](https://publications.newberry.org/ahcb/map/map.html#WV) at Newberry Library Atlas of Historical County Boundaries; *Also at:* [mapofus.org](http://www.mapofus.org/westvirginia/) - animated maps illustrating West Virginia county boundary changes |",
+        "page_title": "Putnam County, West Virginia Genealogy",
+        "section_heading": "Boundary Changes",
+        "source": "wiki",
+        "source_subtype": "",
+        "source_url": "https://www.familysearch.org/en/wiki/Putnam_County,_West_Virginia_Genealogy#Boundary_Changes"
       }
     ],
-    "query_time_ms": 298,
+    "query_time_ms": 3955.32,
     "timing": {
-      "embed_ms": 42,
-      "search_ms": 165,
-      "rerank_ms": 91
+      "embed_ms": 1504.47,
+      "search_ms": 2187.89,
+      "rerank_ms": 262.85
     }
   }
 }

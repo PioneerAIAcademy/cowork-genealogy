@@ -65,6 +65,10 @@ export interface ImageTranscribeToolResponse {
    *  surface a clean NOT FOUND — and omitted when the second call fails or its
    *  reply carries no parseable marker. */
   found?: "FOUND" | "NOT FOUND";
+  /** Present only with `found: "FOUND"`: for each given name in `lookingFor`,
+   *  its other forms (diminutives, short and formal forms) that appear on the
+   *  page, keyed by the name as written — `{ Eliza: ["Elizabeth"] }`. */
+  matchedForms?: Record<string, string[]>;
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
