@@ -599,9 +599,15 @@ def test_web_proxy_hook_reads_the_url_from_get_config(tmp_path):
 
 @pytest.mark.parametrize("environment,rc", [("key not found", 0), ("[]", 0), ("", 0), ('{"PORT": "8000"}', 1)],
                          ids=["not-json", "not-an-object", "empty", "get-config-fails"])
-def test_web_proxy_hook_fails_loudly_when_get_config_is_unreadable(tmp_path, environment, rc):
+def test_web_proxy_hook_reads_an_unreadable_get_config_as_unset(tmp_path, environment, rc):
+    """A chat-on deploy never fails here (review on #4800, ruling 2026-11-24): the hook warns,
+    names get-config, writes nothing and passes -- even with a URL in the process environment."""
     staging = _web_staging(tmp_path)
     fake = _fake_get_config(tmp_path, staging, environment, rc=rc)
-    proc = _run_proxy_hook(tmp_path, None, get_config=fake)
-    assert proc.returncode != 0 and "get-config environment" in proc.stderr, proc.stderr
-    assert not (staging / WEB_PROXY_OUT).exists()
+    out = staging / WEB_PROXY_OUT
+    out.parent.mkdir(parents=True)
+    out.write_text("location = /mcp { }\n", encoding="utf-8")
+    proc = _run_proxy_hook(tmp_path, "http://from-the-process-env", get_config=fake)
+    assert proc.returncode == 0, proc.stderr
+    assert "WARNING" in proc.stderr and "get-config environment" in proc.stderr, proc.stderr
+    assert not out.exists()

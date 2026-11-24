@@ -14,7 +14,10 @@
 # inside its default server block. Hooks do not inherit the application's environment,
 # so the value is read from get-config's whole environment object, never `-k`, whose
 # answer for a missing key -- the default, unset case -- is not documented; with no
-# get-config (offline smoke) it is read from this process's environment. GENEALOGY_GET_CONFIG
+# get-config (offline smoke) it is read from this process's environment. A get-config that
+# fails or prints no JSON object is read as unset, with a warning in eb-hooks.log: a chat-on
+# deploy must never fail here, and a connector deploy missing its proxy shows at its first
+# check (/mcp answers the web tier's 404, not the tools tier's 401). GENEALOGY_GET_CONFIG
 # points the tests at a stand-in. A configuration-only deploy does not re-run it:
 # change the value with an application deploy (every Blueprint deploy is one).
 set -euo pipefail
@@ -28,17 +31,25 @@ fail() {
   exit 1
 }
 
+warn_unset() {
+  echo "$NAME: WARNING: $*; treating TOOLS_UPSTREAM_URL as unset, so no tools proxy" >&2
+  url=""
+}
+
 GET_CONFIG="${GENEALOGY_GET_CONFIG:-/opt/elasticbeanstalk/bin/get-config}"
 staging=""
 url=""
 if [ -x "$GET_CONFIG" ]; then
   staging="$("$GET_CONFIG" platformconfig -k AppStagingDir 2>/dev/null || true)"
-  env_json="$("$GET_CONFIG" environment 2>/dev/null)" || fail "get-config environment failed"
-  url="$(printf '%s' "$env_json" | python3 -c '
+  if env_json="$("$GET_CONFIG" environment 2>/dev/null)"; then
+    url="$(printf '%s' "$env_json" | python3 -c '
 import json, sys
 value = json.load(sys.stdin).get("TOOLS_UPSTREAM_URL", "")
 print(value if isinstance(value, str) else "")
-' 2>/dev/null)" || fail "get-config environment did not print a JSON object"
+' 2>/dev/null)" || warn_unset "get-config environment did not print a JSON object"
+  else
+    warn_unset "get-config environment failed"
+  fi
 else
   url="${TOOLS_UPSTREAM_URL:-}"
 fi
