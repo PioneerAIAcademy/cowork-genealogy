@@ -63,8 +63,9 @@ repo's identifier-casing rule).
 **Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
 is left out, at every level of the answer. Two nulls are answers and stay:
 `questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
-(`research_query` would refuse the section). Every `?` below is a key this rule
-can drop:
+(`research_query` would refuse the section). One exception in meaning: a
+person's `spouseIds`, `parentIds` and `childIds` (see `persons`). Every `?` below
+is a key this rule can drop:
 
 ```typescript
 {
@@ -225,7 +226,13 @@ Projection rules:
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  skipped; ids are distinct, in edge order. The tree holds only the relatives
+  copied into it, so an absent one of these three keys means **not copied**,
+  never none: the person's parents, other spouses (a stepparent) and children
+  may exist in the Family Tree. The tool's description tells the model to
+  say "not in the project tree", to claim none only after `person_read` of the
+  person's `pid` shows none and only when the answer depends on it, and that a
+  person with no `pid` cannot be checked. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
   (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.

@@ -826,9 +826,10 @@ export const projectContextSchema = {
     "values are ever null. The one exception is a person's spouseIds, parentIds and childIds: " +
     "the project tree holds only the relatives copied into it, so an absent family key there " +
     "means NOT COPIED, never none. A copied person's parents, other spouses (a stepparent) " +
-    "and children may exist in the Family Tree; to say a person has no parents, spouse or " +
-    "children, check the Family Tree with person_read, and say \"not in the project tree\" " +
-    "until you have. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
+    "and children may exist in the Family Tree. Say \"not in the project tree\" for an absent " +
+    "key; say a person has no parents, spouse or children only after person_read of their pid " +
+    "shows none, and only when your answer depends on it, not to summarize the project; " +
+    "a person with no pid cannot be checked. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
     "the larger lists you read; persons and sources are returned whether or not you pass it, status and " +
     "historicalContext only when named. " +
     "Returns projectStatus; " +
