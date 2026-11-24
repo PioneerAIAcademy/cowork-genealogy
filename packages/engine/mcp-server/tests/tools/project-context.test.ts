@@ -1525,7 +1525,9 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
     expect(row.searches).toHaveLength(1);
     expect(row.searches![0]).toMatchObject({ planItemId: "pli_001", agent: "search-records" });
     expect(row.searches![0].prompt).toContain(`projectPath: ${dir}`);
-    expect(row.searches![0].prompt).toContain(`plan_item: ${JSON.stringify(planItem)}`);
+    // Compared as an object: the Postgres store's jsonb reorders an object's keys.
+    const line = row.searches![0].prompt.split("\n").find((l) => l.startsWith("plan_item: "));
+    expect(JSON.parse(line!.slice("plan_item: ".length))).toEqual(planItem);
   });
 
   it("carries no searches when the next step is not a search", async () => {
