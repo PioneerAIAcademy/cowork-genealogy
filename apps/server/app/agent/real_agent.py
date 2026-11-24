@@ -664,12 +664,19 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     2026-09-11, ``make probe-gateway-path``). ``CLAUDE_CODE_FORK_SUBAGENT=0`` keeps
     the Agent tool from offering ``subagent_type: "fork"`` (on by default in the
     SDK from CLI 2.1.302): a fork inherits the main thread's context and tools, not
-    a plugin agent's ``tools:`` list.
+    a plugin agent's ``tools:`` list. ``CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`` turns
+    Claude Code's auto-memory off, so a researcher's remark is never written to a
+    memory file under the sandbox's ``~/.claude`` — outside the project, unreviewed,
+    and loaded into later sessions. ``"1"`` is OFF; a falsy value means ``forced_on``.
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
     }
     base_url = _current_base_url()

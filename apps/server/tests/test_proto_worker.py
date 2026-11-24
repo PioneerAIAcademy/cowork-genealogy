@@ -1223,6 +1223,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1", "auto-memory off; \"1\" is OFF, \"0\" would force it ON"
     assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
@@ -1317,6 +1318,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
     off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
     assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):

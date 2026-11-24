@@ -400,6 +400,24 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-auto-memory
+probe-auto-memory: $(ENGINE_BUILD) ## Live probe: does CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 actually stop a memory write? (issue #4778; 2 short sessions)
+	# server-test and the harness tests assert the env DICT and cannot tell "1"
+	# from "0" -- flip the value and all six assertions move with it and stay
+	# green. This runs the real agent twice and looks at the filesystem.
+	#
+	# Control arm is "0" (forced_on), not unset: per the bundled CLI's Nm()/Z8(),
+	# a falsy value returns before swt() and the autoMemoryEnabled setting, so it
+	# is the stronger control and it tests the polarity live.
+	#
+	# An EMPTY control arm is reported VOID, not PASS: the model must choose to
+	# persist a memory, so an empty control and a working fix look identical.
+	# Both arms redirect HOME and CLAUDE_CONFIG_DIR into a tempdir, and the probe
+	# fails if the operator's own ~/.claude/projects changed.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_auto_memory.py
+
 .PHONY: probe-agent-nesting
 probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
 	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
