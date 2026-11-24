@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_037: same surname-free search as record-search-buehner-surname-free-iowa-1925.json, keyed on `otherGivenName` instead of `spouseGivenName` in case the agent anchors on Caroline as an unspecified household member rather than naming her as spouse. Issue #4699.",
+  "description": "ut_search_records_038: same surname-free search as record-search-buehner-surname-free-iowa-1925.json, keyed on `otherGivenName` instead of `spouseGivenName` in case the agent anchors on Caroline as an unspecified household member rather than naming her as spouse. Issue #4699.",
   "args": {
     "otherGivenName": "Caroline"
   },

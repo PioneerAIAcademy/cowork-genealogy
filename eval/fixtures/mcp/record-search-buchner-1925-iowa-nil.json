@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_037: 1925 Iowa State Census under the spelling variant Buchner. Also genuinely nil, for the same reason as the Buehner search. Issue #4699.",
+  "description": "ut_search_records_038: 1925 Iowa State Census under the spelling variant Buchner. Also genuinely nil, for the same reason as the Buehner search. Issue #4699.",
   "args": {
     "surname": "Buchner"
   },

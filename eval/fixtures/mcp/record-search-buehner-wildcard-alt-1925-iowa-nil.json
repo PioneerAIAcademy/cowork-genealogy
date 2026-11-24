@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_037: a second plausible wildcard shape (`B*ehner`), stocked narrowly per the rubric's variant-fixture guidance so a legitimate alternate wildcard spelling does not abort the run as unmatched. Also nil. Issue #4699.",
+  "description": "ut_search_records_038: a second plausible wildcard shape (`B*ehner`), stocked narrowly per the rubric's variant-fixture guidance so a legitimate alternate wildcard spelling does not abort the run as unmatched. Also nil. Issue #4699.",
   "args": {
     "surname": "B*ehner"
   },

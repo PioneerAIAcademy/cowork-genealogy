@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_037: wildcard surname search `Bu*ner`, the shape named in Step 8 item 2. Still nil — he is indexed 'Boehner', which this wildcard does not match either ('Bo' is not 'Bu'), so the wildcard alone does not crack it. Issue #4699.",
+  "description": "ut_search_records_038: wildcard surname search `Bu*ner`, the shape named in Step 8 item 2. Still nil — he is indexed 'Boehner', which this wildcard does not match either ('Bo' is not 'Bu'), so the wildcard alone does not crack it. Issue #4699.",
   "args": {
     "surname": "Bu*ner"
   },
