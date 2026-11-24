@@ -47,6 +47,31 @@ export function normNamePart(v: string | undefined): string {
   return (v ?? "").trim().toLowerCase();
 }
 
+/** A record's `given` is a shortened form of `full`: no more tokens, and each
+ *  token equals the full given's token at its position or is a one-letter
+ *  initial of it, with or without the period ("Benjamin F." of "Benjamin
+ *  Fairbanks", "Mary" of "Mary L"; not "Una" of "Unna"). Ruling on #4722. */
+export function givenAbbreviates(given: string, full: string | undefined): boolean {
+  const tokens = (v: string | undefined) => normNamePart(v).split(/\s+/).filter(Boolean);
+  const g = tokens(given);
+  const f = tokens(full);
+  if (g.length === 0 || g.length > f.length) return false;
+  return g.every((t, i) => t === f[i] || (/^\p{L}\.?$/u.test(t) && f[i].startsWith(t[0])));
+}
+
+/** Whether a record's name (`given`, `surname`) is person name `n`: equal
+ *  given + surname (case/space-insensitive), or a blank surname whose given
+ *  abbreviates the given of `n`, which has a surname. `upsertName` and the
+ *  materialize gate's party trace both read a name through this. */
+export function nameAnswers(
+  n: { given?: string; surname?: string },
+  given: string | undefined,
+  surname: string | undefined,
+): boolean {
+  if (normNamePart(n.given) === normNamePart(given) && normNamePart(n.surname) === normNamePart(surname)) return true;
+  return normNamePart(surname) === "" && normNamePart(n.surname) !== "" && givenAbbreviates(given ?? "", n.given);
+}
+
 /** A readable descriptor of a coexisting competing fact (value, or date/place). */
 export function factDescriptor(fact: SimplifiedFact): string {
   const v = str(fact.value);
@@ -102,9 +127,11 @@ const TREE_NAME_TYPE: Readonly<Record<string, string | undefined>> = Object.assi
 });
 
 /** Upsert one SOURCED name onto a person: union the ref onto an equivalent
- *  existing name, else mint a new one carrying it. Name equivalence is
- *  case/space-insensitive on given + surname, which is what makes a re-run a
- *  no-op rather than a duplicate.
+ *  existing name, else mint a new one carrying it. Equivalence is
+ *  `nameAnswers`: an equal name first, else the first surnamed name a
+ *  given-only record name abbreviates. That is what makes a re-run a no-op
+ *  rather than a duplicate, and keeps "Benjamin F." with no surname from
+ *  minting a blank-surname name beside "Benjamin Fairbanks Phipps".
  *
  *  Shared by both arms — the persona arm's `name` assertions and the
  *  named-party arm (§4.6) — because the two had the same block character for
@@ -123,11 +150,9 @@ export function upsertName(
   nameType?: string,
 ): { namesAdded: number; refsAttached: number } {
   person.names ??= [];
-  const match = person.names.find(
-    (n) =>
-      normNamePart(n.given) === normNamePart(given) &&
-      normNamePart(n.surname) === normNamePart(surname),
-  );
+  const exact = (n: SimplifiedName) =>
+    normNamePart(n.given) === normNamePart(given) && normNamePart(n.surname) === normNamePart(surname);
+  const match = person.names.find(exact) ?? person.names.find((n) => nameAnswers(n, given, surname));
   if (match) {
     return { namesAdded: 0, refsAttached: unionRef(match, ref) ? 1 : 0 };
   }
