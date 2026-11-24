@@ -1342,6 +1342,51 @@ describe("project_context owed findings and status (issue #3032 Stage 1b)", () =
     ]);
   });
 
+  it("include: ['historicalContext'] writes the historical-context spawn from the subject's family facts", async () => {
+    const r0 = research();
+    await writeProject(
+      { ...r0, project: { ...r0.project, objective: "Why did John move to Ohio in 1870?", subject_person_ids: ["I1"] } },
+      {
+        ...tree,
+        persons: [
+          ...tree.persons,
+          { id: "I3", names: [{ id: "N3", given: "Ann", surname: "Lee" }], facts: [{ id: "F3", type: "Death", date: "1901", place: "Ohio" }] },
+          { id: "I4", names: [{ id: "N4", given: "Tom", surname: "Smith" }], facts: [{ id: "F4", type: "Birth", date: "1880", place: "Ohio" }] },
+          { id: "I5", names: [{ id: "N5", given: "Unrelated", surname: "Person" }], facts: [{ id: "F5", type: "Birth", date: "1700" }] },
+        ],
+        relationships: [
+          ...tree.relationships,
+          { id: "R2", type: "http://gedcomx.org/Couple", person1: "I3", person2: "I1" },
+          { id: "R3", type: "ParentChild", parent: "I1", child: "I4" },
+        ],
+      },
+    );
+    const without = await projectContext({ projectPath: dir }, LOCAL);
+    if (!without.ok) throw new Error(without.errors.join("; "));
+    expect("historicalContext" in without).toBe(false);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.historicalContext).toEqual({
+      agent: "historical-context",
+      prompt: [
+        `projectPath: ${dir}`,
+        "Project objective (the researcher's, not a tree fact): Why did John move to Ohio in 1870?",
+        "Tree facts (the only places and years the tree holds for these people):",
+        "- John Smith (I1, subject): Birth 1850",
+        "- Thomas Smith (I2, parent): no dated or placed facts",
+        "- Ann Lee (I3, spouse): Death 1901, Ohio",
+        "- Tom Smith (I4, child): Birth 1880, Ohio",
+      ].join("\n"),
+    });
+  });
+
+  it("include: ['historicalContext'] gives nothing when the project names no subject in the tree", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect("historicalContext" in r).toBe(false);
+  });
+
   it("an include value outside the closed list is refused", async () => {
     await writeProject(research(), tree);
     const r = await projectContext({ projectPath: dir, include: ["view" as any] }, LOCAL);

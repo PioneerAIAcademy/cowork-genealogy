@@ -43,14 +43,15 @@ import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js"
 import { readStartingTree } from "../utils/starting-tree.js";
 import { attachedSources, searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
 import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
+import { historicalContextSpawn, type HistoricalContextSpawn } from "../utils/historical-context-spawn.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
  *  "persons" and "sources" are returned regardless of `include` until #4422
- *  stage 3 flips the default; "status" is returned only when named. */
-export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
+ *  stage 3 flips the default; "status" and "historicalContext" are returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status", "historicalContext"] as const;
 export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
 
 export interface ProjectContextInput {
@@ -386,6 +387,9 @@ export type ProjectContextResult =
       claimKinds: string[];
       owedFindings?: OwedFinding[];
       status?: StatusRow[];
+      /** Only under `include: ["historicalContext"]`: the historical-context
+       *  spawn for the first subject, the router appending the researcher's message. */
+      historicalContext?: HistoricalContextSpawn;
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -660,6 +664,15 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // answer, so a reader scoping to that array by its key does not take these
   // items' own `nextStep` for a question's.
   const owed = owedFindings(research, tree);
+  const historicalContext = input.include?.includes("historicalContext")
+    ? historicalContextSpawn(
+        input.projectPath,
+        research,
+        tree,
+        typeof subjectId === "string" ? subjectId : undefined,
+        typeof subjectId === "string" ? family.get(subjectId) : undefined,
+      )
+    : null;
   const status = input.include?.includes("status")
     ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
     : undefined;
@@ -718,6 +731,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     owedFindings: owed,
     questionStatuses,
     ...(status ? { status } : {}),
+    ...(historicalContext ? { historicalContext } : {}),
     persons,
     sources,
     localities,
@@ -802,8 +816,9 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
-    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
+    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
+    "the larger lists you read; persons and sources are returned whether or not you pass it, status and " +
+    "historicalContext only when named. " +
     "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
@@ -872,7 +887,9 @@ export const projectContextSchema = {
     "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
     "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
     "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
-    "and relationship with its status read from claims. " +
+    "and relationship with its status read from claims. With include: [\"historicalContext\"], historicalContext " +
+    "{agent, prompt} is the historical-context step written out for the first subject: spawn the agent with " +
+    "prompt as given, then a line message: and the researcher's message copied verbatim, and nothing else. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -894,10 +911,12 @@ export const projectContextSchema = {
         type: "array",
         items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
         description:
-          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status", ' +
+          '"historicalContext". ' +
           '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
           "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
-          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named. " +
+          '"historicalContext": the historical-context spawn for the first subject, returned only when named.',
       },
     },
     required: ["projectPath"],

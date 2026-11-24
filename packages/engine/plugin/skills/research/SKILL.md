@@ -200,10 +200,9 @@ children-born and children-living counts — "are any missing?" with no counts i
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
-`tree_query` for the people the message names; the agent gets `projectPath`, the
-message copied verbatim, and the places and years that call returned, or a line saying
-it returned none, with any the project objective states named as the objective's;
-never another place or year. In the sentence before its "Continue with …?" line, offer to check the facts
+`project_context({ projectPath, include: ["historicalContext"] })`, again when
+init-project made the project this turn; spawn the agent with `historicalContext.prompt`
+as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
@@ -543,7 +542,7 @@ message.
    and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and
    `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing. For
    `@plugin:evaluate-search-results`, read also the `#hits` list its refs come from. For
-   `@plugin:historical-context`, read also `tree_query` for the people the message names. Do not
+   `@plugin:historical-context`, read also `project_context`'s `historicalContext`. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay everything after the
