@@ -534,11 +534,34 @@ describe("familyReadPersonIds: whose own family was read from Family Tree", () =
     expect(r.familyReadPersonIds).toEqual(["I1"]);
   });
 
-  it("is the same list project_context returns", async () => {
-    await createPhippsProject(dir);
+  it("is the same list project_context returns, for a person read who is not I1", async () => {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({ project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" } }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [
+          { id: "I1", ark: `ark:/61903/4:1:${PIDS.mary}`, names: [{ given: "Mary" }] },
+          { id: "I2", ark: `ark:/61903/4:1:${PIDS.peyton}`, names: [{ given: "Peyton" }] },
+          { id: "I3", ark: `ark:/61903/4:1:${PIDS.benjamin}`, names: [{ given: "Benjamin" }] },
+        ],
+        relationships: [],
+        sources: [
+          {
+            id: "S1",
+            title: `FamilySearch Family Tree (read from Benjamin Phipps, ${PIDS.benjamin})`,
+            url: "https://www.familysearch.org/tree",
+          },
+        ],
+      }),
+    );
+    const tq = await treeQuery({ projectPath: dir });
     const ctx = await projectContext({ projectPath: dir }, LOCAL);
-    if (!ctx.ok) throw new Error("not ok");
-    expect(ctx.familyReadPersonIds).toEqual(["I1"]);
+    if (!tq.ok || !ctx.ok) throw new Error("not ok");
+    expect(tq.familyReadPersonIds).toEqual(["I3"]);
+    expect(ctx.familyReadPersonIds).toEqual(tq.familyReadPersonIds);
   });
 });
 

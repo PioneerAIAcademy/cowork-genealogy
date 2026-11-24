@@ -131,4 +131,30 @@ describe("familyReadPersonIds", () => {
     };
     expect(familyReadPersonIds(tree)).toEqual(["I1", "I7"]);
   });
+
+  it("finds the person read wherever they sit, not the first person with a Family Tree ark", () => {
+    const tree = {
+      sources: [src("FamilySearch Family Tree (read from John, AB12-C3D)")],
+      persons: [
+        { id: "I1", ark: "ark:/61903/4:1:ZZZZ-999" },
+        { id: "I2", ark: "ark:/61903/4:1:YYYY-888" },
+        { id: "I3", ark: "ark:/61903/4:1:AB12-C3D" },
+      ],
+    };
+    expect(familyReadPersonIds(tree)).toEqual(["I3"]);
+  });
+
+  it("counts only the first read source, so a later one with the same title adds no one", () => {
+    const tree = {
+      sources: [
+        src("FamilySearch Family Tree (read from John, AB12-C3D)"),
+        { id: "S9", title: "FamilySearch Family Tree (read from Mary L Childs, MMMM-222)", url: "https://www.familysearch.org/tree" },
+      ],
+      persons: [
+        { id: "I1", ark: "ark:/61903/4:1:AB12-C3D" },
+        { id: "I2", ark: "ark:/61903/4:1:MMMM-222" },
+      ],
+    };
+    expect(familyReadPersonIds(tree)).toEqual(["I1"]);
+  });
 });

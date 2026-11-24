@@ -312,8 +312,10 @@ Projection rules:
   `project_create` read and that person's own family. A relative in the copy
   (a spouse, a parent) had their own family left out, so a missing relative of
   theirs is not copied, not none. The person read is the one whose `ark` carries
-  the PID in a Family Tree source titled `FamilySearch Family Tree (read from
-  <Name>, <PID>)`, which `buildFromStagedRead` writes. It is anchored on that
+  the PID in the first Family Tree source titled `FamilySearch Family Tree (read
+  from <Name>, <PID>)`, which `buildFromStagedRead` writes as `S1`. Only the
+  first counts, so a later source given the same title (any writer can set a
+  title) cannot add a person whose family was never read. It is anchored on that
   read and never on `subjectPersonIds`: `project_create` takes the subjects
   separately, so a caller can make the wife the subject while her family was
   never read, and a two-subject project has two subjects but one read. A tree
