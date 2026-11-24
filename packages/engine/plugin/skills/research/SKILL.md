@@ -61,9 +61,6 @@ first message with no project runs init-project first, then its deliverable
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
 
-In your own sentences, never state or imply a kinship between people no record
-names together; say what they share and that no record links them.
-
 | Next step | `<label>` |
 |---|---|
 | init-project, question-selection, locality-guide | setting up the project |
@@ -84,6 +81,9 @@ names together; say what they share and that no record links them.
 
 **Write the label verbatim.** The host reads that line to offer the
 researcher's buttons; an invented label offers none.
+
+**In your own sentences, never state or imply a kinship between people no
+record names together;** say what they share and that no record links them.
 
 **A step that ends on a question only the researcher can answer writes no
 "Continue with …?" line.** Ask the question and end the turn. The same holds
@@ -332,8 +332,9 @@ message.
    **Unregistered inferred relationships — check before anything else.**
    Before consulting the routing table or acting on `project_context.nextStep`,
    scan every log entry's `notes` field for a note that states or implies a
-   kinship between people that no record in the project names together, hedged
-   or flat. If one exists and `hypotheses`
+   kinship inferred from a shared surname, place, era or given name between
+   people that no record in the project names together, hedged or flat. If one
+   exists and `hypotheses`
    has no entry for that relationship, the one step this turn is
    `@plugin:hypothesis-tracking`, naming the people and the inferred
    relationship. Do not read the table or follow `nextStep` until this check

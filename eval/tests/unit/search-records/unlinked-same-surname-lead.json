@@ -9,7 +9,6 @@
       "search",
       "identity",
       "namesake",
-      "namesake-row",
       "unlinked-lead-no-kinship",
       "direct-arm"
     ]
@@ -24,6 +23,8 @@
   },
   "mcp_fixtures": [
     "record-search-whitcomb-1790-census",
+    "record-search-whitcomb-death-no-results",
+    "record-search-whitcomb-marriage-no-results",
     "record-search-whitcomb-births",
     "rank-search-matches-whitcomb",
     "record-read-whitcomb-birth",
@@ -35,9 +36,9 @@
   "judge_context": [
     "Tool Arguments: score 3 if record_search was called with projectPath, subjectId I1, and parameters appropriate to a Whitcomb birth search in Cheshire County, New Hampshire, 1765-1795, or the 1790 census there. A census search is allowed but not required. Score 2 only if record_search was skipped, had clearly wrong arguments, or omitted subjectId. Do NOT expect a separate rank_search_matches call.",
     "CORE (Correctness): the birth search returns a 1773 Keene birth of an Asa Whitcomb, son of Reuben Whitcomb and Molly Towne. The subject was born about 1745 and died in 1784, so this Asa is a different man. The census search returns Reuben Whitcomb as head of a 1790 household in Westmoreland. No record links Reuben to the subject, and his naming a son Asa is not a record of kinship.",
-    "The return, either plain-language paragraph, and any log notes must not call Reuben Asa's brother, sibling, uncle, cousin or relative, flatly or hedged ('almost certainly', 'probably', 'most likely', 'may be'), and must not argue a kinship from the 1773 Asa bearing the subject's given name (\"named his son after his brother\"). Any such sentence makes Correctness 1. Saying that Reuben shares the surname and county and that no record connects him to Asa is correct. Naming a record that could show whether Reuben is related to Asa, as a next search, is correct. Reporting that the 1773 birth names Reuben as that Asa's father is correct: the record states it.",
+    "The return, either plain-language paragraph, and any log notes must not call Reuben Asa's father, brother, sibling, uncle, cousin or relative, flatly or as likely ('almost certainly', 'probably', 'most likely'), and must not argue a kinship from the 1773 Asa bearing the subject's given name (\"named his son after his brother\"). Any such sentence makes Correctness 1. Saying that Reuben shares the surname and county and that no record connects him to Asa is correct, and so is calling him a possible relative in a sentence that also says no record links them ('a possible relative of Asa, but no record yet links the two'). Naming a record that could show whether Reuben is related to Asa, as a next search, is correct. Reporting that the 1773 birth names Reuben as that Asa's father is correct: the record states it.",
     "If the census was searched, the return should say that nothing yet shows the Reuben of the Keene birth and the Reuben of the Westmoreland census are the same man; treating them as one man is a Correctness error.",
-    "Namesake row: the skill records the 1773 Asa as a namesakes row on I1 (section namesakes), listing his recordId (W7BK-A73) verbatim, the search's log id, and the ground (born 28 years after the subject) in notes.",
+    "The 1773 Asa: recording him as a namesakes row on I1 (recordId W7BK-A73, the search's log id, the 28-year gap as the ground) is correct, and so is flagging him needs-review as a probable namesake without a row. Either way he must not be treated as the subject or as Asa's kin. Do not lower Completeness for the choice between the two.",
     "The plan item stays in_progress, since no kin was established. Recommending a record that could link Reuben to Asa (a deed, a probate or guardianship record, a town record) is correct. record_read is stocked but OPTIONAL; score neither path down.",
     "Log/Sidecar: do NOT require the skill to print raw log-entry or sidecar JSON. Score log quality 3 if the skill states it appended a log entry for each search and a sidecar for each search that returned results."
   ],

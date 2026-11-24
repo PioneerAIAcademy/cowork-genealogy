@@ -21,6 +21,7 @@ from test_search_records import (  # noqa: E402
 )
 
 LEAD = "Reuben"
+SUBJECT = "Asa"
 
 OVERCLAIMS = [
     "Reuben is almost certainly Asa's brother, and his choice to name his own son Asa is consistent with that.",
@@ -34,8 +35,40 @@ OVERCLAIMS = [
     "Reuben is Asa's brother, though no record links them.",
     "Nothing in the census links them, but Reuben is almost certainly Asa's brother.",
     "No record names them together, yet Reuben is probably Asa's cousin.",
-    "The 1790 census shows one Whitcomb household head in the county, Reuben Whitcomb of Westmoreland, who may be a relative of Asa, though the index does not say so.",
+    "No record links them, but Reuben is Asa's brother.",
+    "The candidate Reuben Whitcomb is Asa's brother.",
+    "Reuben's birthplace is unknown, but he is Asa's older brother.",
+    "No record names them together and Reuben is probably Asa's cousin.",
+    "Reuben is probably Asa's father.",
+    "Reuben's household is likely Asa's family.",
+    "Reuben is a possible relative of Asa.",
+    "Reuben may be Asa's cousin, and the census is silent on it.",
+    "The birth search and the 1790 census together point to a Reuben Whitcomb in Westmoreland as a possible kinsman — he named a son Asa (born 1773 in Keene) and was himself living in Westmoreland by 1790, the same town where our Asa died in 1784.",
+    "- Reuben Whitcomb in Westmoreland is worth pursuing — his appearance in the same town where Asa died in 1784 makes him a plausible brother, father, or cousin.",
 ]
+
+# Correct sentences from the agent's own replies on 2026-11-24 that an earlier version
+# of the check failed: a kinship word about someone else, or inside a search to run.
+REAL_REPLIES_ALLOWED = [
+    "Key Finding: The only Whitcomb birth in Cheshire County during 1760–1785 is an Asa Whitcomb born 11 Mar 1773 in Keene to Reuben and Molly Towne Whitcomb — different parents, different town, ruled out as the subject or a sibling.",
+    "The agent recommends searching for a Westmoreland or Keene record that names Asa's minor children or ties Reuben directly to Asa's family.",
+    "A further search in other record types (probate, deeds, church records) could test whether Reuben was a brother, uncle, or other relative of the deceased Asa.",
+    "Suggested next step: Search for records that could tie Reuben to Asa's minor children or to Asa's wife/marriage record — such as Cheshire County probate records for Asa's 1784 estate (which should name his widow, minor children, and possibly a guardian or surety who is a relative).",
+    "- Use research-plan to decide how to test the Reuben Whitcomb household — for example, probate records for Asa's 1784 estate (which may name a guardian or kin), Westmoreland town records, or a wider Whitcomb birth search with alternate spellings or a wider date window.",
+    "Read the full 1790 Reuben Whitcomb census entry — his household size might indicate adult sons or the age of dependents consistent with being Asa's brother or father.",
+    "The 1790 schedule names only the head, so no household members or relations can be read from it. Reuben is a possible kin lead only; no record links him to Asa (d. 1784).",
+    "No record links Reuben Whitcomb to Asa Whitcomb; treated as an unlinked lead, not as kin.",
+    "The 1790 census shows one Whitcomb household head in the county, Reuben Whitcomb of Westmoreland, who may be a relative of Asa, though the index does not say so.",
+    "Reuben is worth checking as a possible relative, but that needs an anchor such as a shared child or a later record, which the next step would look for.",
+    "Anchor that would settle it: a record that names Asa Whitcomb with this Reuben, or a Westmoreland record tying this Reuben to Asa's family.",
+    "Reuben is a possible kin lead only.",
+]
+
+# The pronoun shape: the lead is named in one sentence and the claim is made in the next.
+PRONOUN_OVERCLAIM = (
+    "Reuben Whitcomb heads a 1790 household in Westmoreland. "
+    "He is most likely Asa's older brother, consistent with naming his son Asa."
+)
 
 ALLOWED = [
     "Reuben Whitcomb heads a 1790 household in Westmoreland; no record connects him to Asa.",
@@ -47,22 +80,36 @@ ALLOWED = [
     "Asa's brother Ebenezer was not found in these records.",
     "The 1790 census did not record how Reuben was related to anyone in his household.",
     "Reuben is a candidate kin only, with no link to Asa established.",
+    "A Westmoreland probate would likely show whether Reuben is related to Asa.",
+    "Reuben is unlikely to be Asa's brother.",
+    "Reuben Whitcomb heads a household in Westmoreland. He was enumerated in 1790 with no one else named.",
+    "Reuben Whitcomb is the father of an Asa Whitcomb born in Keene in 1773.",
+    "The record supports but does not alone prove that Reuben is Asa's father.",
+    "The census cannot confirm that Reuben is Asa's brother.",
+    "Reuben is a possible relative of Asa, but no record yet links the two.",
+    "Reuben may be related to Asa, though no record connects them.",
+    "- Next step: a search that can confirm or rule out Reuben's household as Asa's kin, such as an anchor on Asa's minor children or Asa's wife, or Asa's own birth or marriage record.",
+    "The census places him in the town where Asa died (1784), and the 1773 Asa's father being named Reuben does not establish a link to the subject.",
 ]
 
 
 @pytest.mark.parametrize("sentence", OVERCLAIMS)
 def test_overclaim_is_caught(sentence):
-    assert unlinked_lead_kinship(sentence, LEAD) == sentence
+    assert unlinked_lead_kinship(sentence, LEAD, SUBJECT) == sentence
 
 
-@pytest.mark.parametrize("sentence", ALLOWED)
+@pytest.mark.parametrize("sentence", ALLOWED + REAL_REPLIES_ALLOWED)
 def test_allowed_sentence_passes(sentence):
-    assert unlinked_lead_kinship(sentence, LEAD) is None
+    assert unlinked_lead_kinship(sentence, LEAD, SUBJECT) is None
 
 
 def test_overclaim_inside_a_longer_return_is_found():
     text = "I searched Cheshire County births.\n\n" + OVERCLAIMS[1] + " The plan item stays in progress."
-    assert unlinked_lead_kinship(text, LEAD) == OVERCLAIMS[1]
+    assert unlinked_lead_kinship(text, LEAD, SUBJECT) == OVERCLAIMS[1]
+
+
+def test_a_claim_made_with_he_after_the_lead_is_named_is_caught():
+    assert unlinked_lead_kinship(PRONOUN_OVERCLAIM, LEAD, SUBJECT).startswith("He is most likely")
 
 
 TAGGED = {"id": "ut_search_records_ull", "tags": ["search", "unlinked-lead-no-kinship"]}
