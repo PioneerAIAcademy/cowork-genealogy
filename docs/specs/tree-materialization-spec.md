@@ -247,8 +247,8 @@ materialize_facts({ projectPath, ops: [ <either form>, ... ] })
      value is *surfaced* (see §4.4), never overwritten.
    - **`primary` is never set here.** Names get the same treatment
      (equivalence + value); `preferred` is never set here. A record name with
-     a blank surname is also equivalent to the person's first name that has a
-     surname and whose given it abbreviates: no more tokens, and each token,
+     a blank surname is also equivalent to the first of the person's names that
+     has a surname and whose given it abbreviates: no more tokens, and each token,
      by position, equal to that given's (case and spacing aside) or a
      one-letter initial of it, with or without the period. "Benjamin F." with
      no surname cites "Benjamin Fairbanks Phipps" and mints nothing; "Una"
@@ -450,8 +450,10 @@ one persona of a document is not read as minted from another persona's record of
 the same document (pinned by C9r in `materialize-facts.test.ts`). Within one
 record the exemption holds only for the party the person was made from
 (`partyTrace`): a fact backlinked to, or a live `probable` or `confident` link
-from, one of that party's one-party assertions, or a name the §4.2 name
-equivalence reads as one of its names, and no such fact or link from another role's one-party assertion. A
+from, one of that party's one-party assertions, or a name equal to one of its
+names, or a fuller name one of its given-only names abbreviates (§4.2) when a
+live link of any confidence from one of its one-party assertions names the
+person, and no such fact or link from another role's one-party assertion. A
 party is a role on the record in every spelling that normalizes equal, as the
 named-party arm writes them (`personaParty`). Names do not count for another
 role, since two people on one record can share one; a `speculative` link is a

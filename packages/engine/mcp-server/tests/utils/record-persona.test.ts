@@ -373,6 +373,8 @@ describe("nameParts' fallback keeps a surname particle with the surname", () => 
     ["Maria Santa Cruz", "Maria", "Santa Cruz"],
     ["Gwenllian verch Owain", "Gwenllian", "verch Owain"],
     ["Ben Al Smith", "Ben Al", "Smith"],
+    ["Benjamin F.", "Benjamin F.", ""],
+    ["Mary L", "Mary L", ""],
   ])("%s -> %s / %s", (value, given, surname) => {
     expect(parts(value)).toEqual([given, surname]);
   });

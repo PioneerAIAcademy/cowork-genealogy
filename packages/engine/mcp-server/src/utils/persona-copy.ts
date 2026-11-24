@@ -33,6 +33,7 @@ import {
   candAsFact,
   factCandidate,
   factText,
+  isInitialToken,
   nameParts,
   normGender,
 } from "./record-persona.js";
@@ -56,11 +57,11 @@ export function givenAbbreviates(given: string, full: string | undefined): boole
   const g = tokens(given);
   const f = tokens(full);
   if (g.length === 0 || g.length > f.length) return false;
-  return g.every((t, i) => t === f[i] || (/^\p{L}\.?$/u.test(t) && f[i].startsWith(t[0])));
+  return g.every((t, i) => t === f[i] || (isInitialToken(t) && f[i].startsWith([...t][0])));
 }
 
 /** Whether a record's name (`given`, `surname`) is person name `n`: equal
- *  given + surname (case/space-insensitive), or a blank surname whose given
+ *  given + surname (trimmed, case-insensitive), or a blank surname whose given
  *  abbreviates the given of `n`, which has a surname. `upsertName` and the
  *  materialize gate's party trace both read a name through this. */
 export function nameAnswers(

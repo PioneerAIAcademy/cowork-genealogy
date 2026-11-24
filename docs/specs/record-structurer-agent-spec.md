@@ -144,7 +144,9 @@ is §11.7's code.
     `El`, `Don`, `Mack`, `Dell` and `Delos` stay off (`Ben` 1 of 15, `Al` 0 of 9),
     and no single letter is a particle. Where a name assertion has no structured
     value, or one with both parts empty, `nameParts` applies the same rule to
-    its last-token split.
+    its last-token split, and reads a last token that is a single letter, with
+    or without a period, as an initial: the whole value is the given and the
+    surname is blank.
   - A bare `O` before a surname is a middle initial unless written `O'`: 64 of
     book-to-tree's 89 such names read as an initial and 6 as `O'`.
 - **Stated relationships only.** The agent emits a relationship only where the
