@@ -11,7 +11,7 @@ import type {
   TimelineBuildInput,
   TimelineBuildResult,
 } from "../types/timeline-build.js";
-import { NoProjectError, noProjectResult, readProjectJson } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { findAnchor, isAttachmentLink } from "../utils/tree-person.js";
 import { stdDate } from "../utils/date-standardize.js";
 import {
@@ -559,7 +559,6 @@ export async function timelineBuild(
     research = await readProjectJson(input?.projectPath as string, RESEARCH_FILE);
     tree = (await readProjectJson(input.projectPath, TREE_FILE)) as SimplifiedGedcomX;
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("write");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
   const personId = typeof input.personId === "string" ? input.personId.trim() : "";

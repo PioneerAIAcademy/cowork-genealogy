@@ -19,6 +19,14 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 V2_LOG = REPO_ROOT / "eval/runlogs/unit/source-evaluation/v2.json"
 
 
+@pytest.fixture(autouse=True)
+def _project_gate_off(monkeypatch):
+    """These tests exercise one handler's own behaviour; the project gate has its own tests (test_mock_mcp.py)."""
+    import harness.mock_mcp as _mock
+
+    monkeypatch.setattr(_mock, "PROJECT_GATE_ENABLED", False)
+
+
 def _w(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value), encoding="utf-8")

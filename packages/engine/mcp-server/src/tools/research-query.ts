@@ -27,7 +27,7 @@
 // walk of one call per id. Lists of ids, never lists of sections — one section
 // per call is the 2026-10-10 ruling (research-query-tool-spec.md §3).
 
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
@@ -187,10 +187,7 @@ export type ResearchQueryResult =
        *  party, who has no link to it (§2.7). Absent when there is none. */
       unlinkedParties?: UnlinkedPartyRow[];
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 export interface SettledConflictRow {
   /** The `pe_` ids on this page the sentences apply to. */
@@ -270,11 +267,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult(). This tool is one of the two
-    // READS that issue #1695 calls out: a skill that merely looks at project
-    // state before answering must not surface a path error.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -873,7 +865,6 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       try {
         doc = await readExternalCollections(projectPath);
       } catch (e) {
-        if (e instanceof NoProjectError) throw e;
         throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
       }
       // Place-key then row-key order, sorted here rather than read from the file:
@@ -1050,7 +1041,6 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       return page;
     });
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
     throw e;
   }

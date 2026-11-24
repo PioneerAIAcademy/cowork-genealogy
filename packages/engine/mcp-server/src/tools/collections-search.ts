@@ -1,4 +1,4 @@
-import { standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
+import { collectionScopeMatcher, standardPlaceToCollectionsQuery } from "../utils/collection-scope.js";
 import { collectionAvailability } from "../utils/collection-availability.js";
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
@@ -74,19 +74,22 @@ function unwrapEntry(entry: FSCollectionEntry): FSCollectionData | null {
 }
 
 /**
- * Filter entries whose title contains the query string (case-insensitive).
+ * Filter entries by title: a string keeps the titles that contain it
+ * (case-insensitive); a function keeps the titles it accepts, as
+ * `collectionScopeMatcher` builds for a place.
  */
 export function filterByQuery(
   entries: FSCollectionEntry[],
-  query: string
+  query: string | ((title: string) => boolean)
 ): FSCollectionData[] {
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = typeof query === "string" ? query.toLowerCase() : "";
+  const matches = typeof query === "string" ? (title: string) => title.toLowerCase().includes(lowerQuery) : query;
   const results: FSCollectionData[] = [];
 
   for (const entry of entries) {
     const data = unwrapEntry(entry);
     if (!data) continue;
-    if (data.title.toLowerCase().includes(lowerQuery)) {
+    if (matches(data.title)) {
       results.push(data);
     }
   }
@@ -296,12 +299,11 @@ export function collectionCoverage(
   endYear: number,
   typeFacets?: readonly string[],
 ): { collections: number; records: number; recordTypes: string[]; censusYears: number[] } {
-  const scope = standardPlaceToCollectionsQuery(standardPlace);
   const types = new Set<string>();
   const censusYears = new Set<number>();
   let records = 0;
   let collections = 0;
-  for (const c of filterByQuery(entries, scope)) {
+  for (const c of filterByQuery(entries, collectionScopeMatcher(standardPlace))) {
     if (!overlapsYears(c, startYear, endYear)) continue;
     const meta = c.searchMetadata?.[0];
     const facet = meta?.typeFacet;
@@ -345,7 +347,8 @@ export async function collectionsSearchTool(
   }
 
   // Derive the right collection scope (US state, "Country, State" for
-  // Canada/Mexico, country otherwise). Free-text queries pass through.
+  // Canada/Mexico, the constituent country in the United Kingdom, country
+  // otherwise). Free-text queries pass through.
   const scope = standardPlaceToCollectionsQuery(input.standardPlace);
 
   const token = await getValidToken(principal);
@@ -353,7 +356,7 @@ export async function collectionsSearchTool(
   const entries = data.entries ?? [];
 
   // Title match first; totalForPlace is this count, BEFORE any date filter.
-  const matchedByScope = filterByQuery(entries, scope);
+  const matchedByScope = filterByQuery(entries, collectionScopeMatcher(input.standardPlace));
 
   const dateFiltered =
     startYear == null && endYear == null
@@ -387,7 +390,9 @@ export const collectionsSearchToolSchema = {
     "preferably the standardized place name from place_search (e.g. " +
     "\"Schuylkill, Pennsylvania, United States\"); a plain place name also works. " +
     "FamilySearch organizes collections at the state/province level for the " +
-    "United States, Canada, and Mexico, and at the country level everywhere else, " +
+    "United States, Canada, and Mexico, at England, Wales, Scotland or Northern " +
+    "Ireland (with the kingdom-wide collections) in the United Kingdom, and at the " +
+    "country level everywhere else, " +
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Each row is {id, title, dateRange, " +
@@ -408,7 +413,8 @@ export const collectionsSearchToolSchema = {
           "The place to list collections for — preferably the `standardPlace` " +
           "from place_search (e.g. \"Schuylkill, Pennsylvania, United States\"). " +
           "The tool derives the right collection scope (the US state, " +
-          "\"Country, State\" for Canada/Mexico, or the country) and matches it " +
+          "\"Country, State\" for Canada/Mexico, the constituent country in the " +
+          "United Kingdom, or the country) and matches it " +
           "against collection titles. A plain place name works too.",
       },
       startYear: {

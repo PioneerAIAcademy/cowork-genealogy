@@ -441,12 +441,23 @@ UNLOGGED_SEARCHES_NOTE = (
     "search is deleted 24h after it ran."
 )
 
-#: Verbatim copy of NO_PROJECT_MESSAGE_READ in
-#: packages/engine/mcp-server/src/utils/project-io.ts: what image_transcribe answers
-#: a `file` read with no project (#4136).
-NO_PROJECT_MESSAGE_READ = (
-    "This folder is not a research project — there is no research.json here. "
-    "There is no project state to read — anything you are working on is standalone."
+#: Verbatim copy of NO_PROJECT_REFUSAL in packages/engine/mcp-server/src/utils/project-io.ts:
+#: what server.ts's gate answers any tool outside PROJECT_EXEMPT_TOOLS called with no
+#: project (issue #4686). tests/unit/test_mock_mcp.py pins the words.
+START_PROJECT_RULE = (
+    "Every activity needs a project. For an activity with no person in it (a page read, a record "
+    "set's names, a surname survey), call project_create with the researcher's request as "
+    "objective and no personId. For research on a named person, start init-project with the "
+    "FamilySearch person ID; with no ID, ask for it and create nothing."
+)
+NO_PROJECT_REFUSAL = f"No project: {START_PROJECT_RULE} Then pass its projectPath."
+
+#: A harness unit test of one handler's own behaviour turns the gate off; nothing else does.
+PROJECT_GATE_ENABLED = True
+
+#: Mirrors PROJECT_EXEMPT_TOOLS in src/utils/project-gate.ts: the tools that run with no project.
+PROJECT_EXEMPT_TOOLS = frozenset(
+    {"project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps"}
 )
 
 #: What production's no-project image_transcribe omits: it reads with projectPath
@@ -664,7 +675,9 @@ def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
         return None
 
 
-def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]]):
+def _guard_unknown_args(
+    tool_name: str, handler, call_log: list[dict[str, Any]], workspace: Path | None = None
+):
     """Wrap `handler` so a non-parameter argument is refused before it runs.
 
     WHY AT REGISTRATION, NOT INSIDE THE HANDLER. `tools_by_name[name].handler(...)`
@@ -684,6 +697,17 @@ def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]])
 
     async def guarded(args, _name=tool_name, _handler=handler, _log=call_log):
         refusal = _reject_unknown_args(_name, args)
+        # The project gate runs after the argument check, as in server.ts: every tool
+        # outside PROJECT_EXEMPT_TOOLS refuses a call that names no project, or whose
+        # folder holds none. The model's own `projectPath` is what counts.
+        if (
+            refusal is None
+            and PROJECT_GATE_ENABLED
+            and _name not in PROJECT_EXEMPT_TOOLS
+            and workspace is not None
+            and not (isinstance(args, dict) and str(args.get("projectPath") or "").strip() and _is_project(workspace))
+        ):
+            refusal = NO_PROJECT_REFUSAL
         if refusal is None:
             return await _handler(args)
         response = {"error": refusal}
@@ -1551,43 +1575,6 @@ def _stage_image_transcribe(
         return _unstaged(f"{type(exc).__name__}: {exc}")
 
 
-def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
-    """A canned `image_transcribe` page as production answers with no project
-    (#4136): nothing staged or saved, the text cleaned and bounded, and
-    `metadata` and `nameExpansion` dropped, through the compiled
-    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
-    returns the page with only the project keys removed, with a warning.
-    """
-    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
-    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
-
-    def _fallback(why: str) -> dict[str, Any]:
-        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
-        return inline
-
-    if not compactor_js.exists():
-        return _fallback(f"no engine build at {_MCP_BUILD}")
-    script = (
-        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
-        f" from '{_node_module_url(compactor_js)}';"
-        " import { readFileSync } from 'node:fs';"
-        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
-        " if (typeof out.transcription === 'string')"
-        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
-        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
-        " process.stdout.write(JSON.stringify(out));"
-    )
-    try:
-        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
-        out = proc.stdout.strip()
-        if proc.returncode != 0 or not out:
-            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
-        parsed = json.loads(out)
-        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
-    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
-        return _fallback(f"{type(exc).__name__}: {exc}")
-
-
 def _unlogged_staged_handles(
     workspace: Path,
     tool_name: str,
@@ -2293,19 +2280,8 @@ def create_mock_server(
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
-            # With no project (no projectPath, or a folder holding neither project
-            # file) production reads with projectPath removed and returns the
-            # page inline, staging nothing (#4136); a `file` still needs one.
-            _no_project_read = _name == "image_transcribe" and (
-                not args.get("projectPath") or (_workspace is not None and not _is_project(_workspace))
-            )
-            # Production answers a `file` with no project before reading anything,
-            # so no fixture has to match it.
-            if _no_project_read and args.get("file") is not None:
-                response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
-            elif _no_project_read and "error" not in response:
-                response = _inline_image_transcribe(response)
-            elif (
+            # Every read has a project (issue #4686), so there is no unsaved read.
+            if (
                 _name == "image_transcribe"
                 and _workspace is not None
                 and "error" not in response
@@ -2482,7 +2458,7 @@ def create_mock_server(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )
         decorated = tool(tool_name, description, input_schema)(
-            _guard_unknown_args(tool_name, handler, call_log)
+            _guard_unknown_args(tool_name, handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2516,7 +2492,7 @@ def create_mock_server(
             or _PERMISSIVE_SCHEMA
         )
         decorated = tool(live_tool_name, description, input_schema)(
-            _guard_unknown_args(live_tool_name, live_handler, call_log)
+            _guard_unknown_args(live_tool_name, live_handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2533,7 +2509,7 @@ def create_mock_server(
             "person_quality",
             tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
             (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
-        )(_guard_unknown_args("person_quality", pq_handler, call_log))
+        )(_guard_unknown_args("person_quality", pq_handler, call_log, workspace))
     )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)

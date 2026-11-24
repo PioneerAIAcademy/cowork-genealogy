@@ -8,7 +8,7 @@
     "tags": [
       "routing",
       "routes-to:search-images",
-      "no-project"
+      "person-less-project"
     ]
   },
   "input": {
@@ -21,7 +21,7 @@
     "stub_skills": [
       {
         "skill": "search-images",
-        "response": "Catalog item: koha:186990, Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866 (Augustus D. Ayling). No pages read. Nothing logged: no project.\n---\nAyling's Revised Register (koha:186990, War of the Rebellion, 1861-1866) is digitized on three image groups:\n- film 1697872: DGS 7561840\n- film 2317643: DGS 8650414\n- film 2319539: DGS 7499145"
+        "response": "Catalog item: koha:186990, Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866 (Augustus D. Ayling). No pages read. Logged: one entry in the project.\n---\nAyling's Revised Register (koha:186990, War of the Rebellion, 1861-1866) is digitized on three image groups:\n- film 1697872: DGS 7561840\n- film 2317643: DGS 8650414\n- film 2319539: DGS 7499145"
       },
       {
         "skill": "init-project",
@@ -47,7 +47,7 @@
   },
   "judge_context": [
     "This is a ROUTING test. Whether @plugin:search-images is the first hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records — do not grade the routing decision yourself.",
-    "The folder is empty and the message names no FamilySearch person ID. It asks which DGS numbers hold a named title, a catalog lookup, so no project is created: a tree-survey or init-project spawn, or a project_create call, is wrong here.",
+    "The folder is empty and the message names no FamilySearch person ID. It asks which DGS numbers hold a named title, a catalog lookup, so the router calls project_create with the message as objective and no personId, then spawns search-images with that projectPath: a tree-survey or init-project spawn, or a project_create call with a personId, is wrong here.",
     "search-images is stubbed, and the spawn is an Agent call, not an MCP tool call, so it may not appear in the tool-call list you see. Its return ends with a `---` line followed by the title and three DGS numbers: 7561840, 8650414 and 7499145. Those numbers exist only in the stub's return: a reply that carries all three came from the delegation, not from memory. The router must relay that block with all three DGS numbers tied to the Ayling item; dropping a number or rewriting the block into advice is a fault, but laying the same numbers out as a table is not.",
     "Telling the researcher to search the FamilySearch Catalog themselves, or answering from memory instead of delegating, is a fail.",
     "Grade only the router's own work: that it delegated and relayed the block."
