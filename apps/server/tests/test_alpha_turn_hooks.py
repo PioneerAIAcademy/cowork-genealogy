@@ -262,6 +262,15 @@ def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
     assert hook.decision(payload, {real_agent.HOSTED_PLANE_ENV: "1"}) == {}
     assert hook.decision(payload, {}) != {}
 
+    # The guard reads the same flag to deny the hosted main thread a built-in agent.
+    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/guard_project_files.py"
+    spec = importlib.util.spec_from_file_location("_guard_project_files", path)
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    spawn = {"tool_name": "Agent", "tool_input": {"subagent_type": "claude", "prompt": "p"}}
+    assert guard.decision(spawn, {real_agent.HOSTED_PLANE_ENV: "1"}) != {}
+    assert guard.decision(spawn, {}) == {}
+
 
 def test_the_sources_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
     """Issue #4011. The alpha appends `SOURCES_GUIDANCE` and the Cowork hook carries

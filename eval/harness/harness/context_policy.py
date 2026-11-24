@@ -281,11 +281,13 @@ AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
 
 
 def builtin_spawn_denial(input_data: dict[str, Any]) -> dict[str, Any] | None:
-    """The shipped hook's deny of a main-thread spawn of a built-in agent type, else None."""
+    """The shipped hook's deny of a main-thread spawn of a built-in agent type, else None.
+
+    As on a hosted plane: both harnesses measure the main thread those planes run."""
     tool_input = input_data.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(input_data.get("tool_name") or "")
-    name = _guard.builtin_spawn_denied(tool_name, tool_input, input_data)
+    name = _guard.builtin_spawn_denied(tool_name, tool_input, input_data, hosted=True)
     if name is None:
         return None
     return {

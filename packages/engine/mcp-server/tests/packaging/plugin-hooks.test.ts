@@ -206,7 +206,7 @@ const PYTHON: string[] | null = resolvePython();
  * pass here and still break in the VM. Every other third-party import is
  * caught on every machine.
  */
-function execGuard(input: string): string {
+function execGuard(input: string, env?: NodeJS.ProcessEnv): string {
   if (!PYTHON) {
     throw new Error(
       `No Python 3 found (tried: ${describePythonCandidates()}). The plugin's ` +
@@ -214,13 +214,16 @@ function execGuard(input: string): string {
     );
   }
   const [cmd, ...pre] = PYTHON;
-  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8" });
+  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8", ...(env ? { env } : {}) });
 }
 
 /** Run the guard script the way the runtime does: payload on stdin, JSON out. */
-function runGuard(payload: unknown): any {
-  return JSON.parse(execGuard(JSON.stringify(payload)));
+function runGuard(payload: unknown, env?: NodeJS.ProcessEnv): any {
+  return JSON.parse(execGuard(JSON.stringify(payload), env));
 }
+
+/** The environment a hosted plane gives the hook (`GENEALOGY_HOSTED_PLANE`). */
+const HOSTED_ENV = { ...process.env, GENEALOGY_HOSTED_PLANE: "1" };
 
 /**
  * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
@@ -650,8 +653,8 @@ describe("the guard script's decisions", () => {
     ["Agent", { subagent_type: null, prompt: "p" }, "general-purpose"],
     ["Agent", { subagent_type: "claude", prompt: "p" }, "claude"],
     ["Agent", { subagent_type: "Explore", prompt: "p" }, "Explore"],
-  ])("denies the main thread %s %j, a built-in agent, and names the way out", (tool_name, tool_input, name) => {
-    const out = runGuard({ tool_name, tool_input });
+  ])("denies a hosted plane's main thread %s %j, a built-in agent, and names the way out", (tool_name, tool_input, name) => {
+    const out = runGuard({ tool_name, tool_input }, HOSTED_ENV);
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`"${name}"`);
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("Spawn the plugin agent the step calls for");
@@ -659,7 +662,15 @@ describe("the guard script's decisions", () => {
   });
 
   it("leaves a built-in agent type alone inside a subagent", () => {
-    expect(runGuard({ tool_name: "Agent", agent_id: "a1", tool_input: { subagent_type: "claude", prompt: "p" } })).toEqual({});
+    expect(
+      runGuard({ tool_name: "Agent", agent_id: "a1", tool_input: { subagent_type: "claude", prompt: "p" } }, HOSTED_ENV),
+    ).toEqual({});
+  });
+
+  it.each(["claude", "general-purpose"])("leaves Cowork and Desktop free to spawn %s", (subagent_type) => {
+    const env = { ...process.env };
+    delete env.GENEALOGY_HOSTED_PLANE;
+    expect(runGuard({ tool_name: "Agent", tool_input: { subagent_type, prompt: "p" } }, env)).toEqual({});
   });
 
   it.each([
