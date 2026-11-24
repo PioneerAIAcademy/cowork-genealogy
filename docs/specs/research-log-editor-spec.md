@@ -436,6 +436,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | a `fulltext_search` entry returned zero hits with a post-search filter set (`place`, `recordPlace0`–`3`, `recordType`, `yearFrom`/`yearTo`) and no unfiltered retry — a sibling `fulltext_search` with the same `keywords`/`nlQuery` whose filter-key set is a strict subset of this op's, in the same batch or already in `log[]` | input error; write nothing, and in a batch no op's staged file is consumed. The message names the filter keys and the exact unfiltered `fulltext_search` call to make, then says to log both in one batch. Exempt: a `name`-field query and a query with no `keywords`/`nlQuery` term. Keyed on zero hits, not `outcome`. See §8.4 |
 | a `record_search` entry returned zero hits pinned to a `collectionId` and no unpinned retry — a sibling `record_search` with no `collectionId` whose name fields (`givenName`, `surname`, `givenNameAlt`, `surnameAlt`, and any key ending in `GivenName`/`Surname`) equal this op's after Unicode NFC normalization, trimming, ignoring case, and alternate-name auto-pairing, in the same batch or already in `log[]` (a sibling logged `error` does not count) | input error; write nothing, and in a batch no op's staged file is consumed. The message names the pinned `collectionId` and the exact unpinned `record_search` call to make (without paging), then says to log both in one batch. Exempt: a query with no name field. Keyed on zero hits, not `outcome`. See §8.5 |
+| a `record_search` op logged `negative` or `error` whose staged rows include a record the project tree cites on the staged query's `subjectId`, when that record is what the search was for | input error, raised before any op is applied; write nothing, and in a batch no op's staged file is consumed. The message names the record, the tree source ids and the subject, and asks for `positive` or `partial`. See §8.6 |
 | an `external_site` op's `urlGenerated` names a collection whose key is not in `external-collections.json`, and either the url is not in the log or the op opens a new hand-off (`partial`, `captureReceived: false`) | input error, raised in the preflight pass so a batch names every refused op; write nothing. The message names the fix: a site-wide search, a stored url from `research_query`, or — with nothing stored or the file unreadable — `external_links_search` first |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
@@ -1120,12 +1121,14 @@ pool and the caller saw one ranked page; that page cannot be rebuilt at
 log time, and the record came back from the search either way. So the refusal
 names the row's `recordId`, the tree source ids and the subject, says the record
 may not be on the page shown and to read it with `record_read` if it has not,
-says the tree already holds it as the subject's record, and asks for the search
-to be logged `positive` or `partial` and the record reported as the subject's,
-since a surname or given name indexed differently neither makes it someone else
-nor leaves it unfound. Fixing the log entry alone is not enough: in the replayed
-Phipps eval the agent re-logged the search `partial` but still reported the
-household as not found.
+and asks for the search to be logged `positive` or `partial` and the record
+reported as the record the project tree already cites for the subject, since a
+surname or given name indexed differently does not leave the record unfound.
+The message does not call the record the subject's own: a tree citation can
+rest on an unverified attachment, or on another person's entry in the same
+record (a son's death certificate cited on his mother). Fixing the log entry
+alone is not enough: in the replayed Phipps eval the agent re-logged the search
+`partial` but still reported the household as not found.
 
 It runs per op, after the never-sent filter check, before any op is applied, and
 reads the tree already loaded under the project lock. No override (ADR-0011).

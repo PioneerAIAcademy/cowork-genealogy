@@ -3750,8 +3750,10 @@ describe("research_log_append — a negative search whose rows include a record 
     expect(errorsOf(r)).toContain("`I1`");
     expect(errorsOf(r)).toMatch(/Log this search `positive` or `partial`/);
     expect(errorsOf(r)).not.toMatch(/outcome other than/);
-    expect(errorsOf(r)).toMatch(/as the subject's record/);
-    expect(errorsOf(r)).toMatch(/indexed differently does not make it someone else/);
+    expect(errorsOf(r)).toMatch(/as the record the project tree already cites for the subject/);
+    expect(errorsOf(r)).toMatch(/indexed differently does not leave the record unfound/);
+    // A tree citation does not show whose record it is (an unverified attachment, or a relative's entry).
+    expect(errorsOf(r)).not.toMatch(/someone else|as the subject's record|this person's record/);
     expect(errorsOf(r)).toMatch(/record_read/);
     expect(await logOf()).toHaveLength(0);
     expect(await fileExists(dir, ref)).toBe(true);

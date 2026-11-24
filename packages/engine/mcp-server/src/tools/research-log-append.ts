@@ -1757,12 +1757,11 @@ export function citedRecordNegativeError(
   const sources = hit.sourceIds.map((id) => `\`${id}\``).join(", ");
   return (
     `this search is logged \`${op.outcome}\`, but it returned \`${hit.recordId}\`, a record the ` +
-    `project tree already cites for its subject \`${hit.subjectId}\` (source ${sources}): the ` +
-    `tree already holds it as this person's record. It may not be on the page you were shown: ` +
-    `if you have not read it, read it with record_read on \`${hit.recordId}\`. Log this search ` +
-    `\`positive\` or \`partial\`, and report \`${hit.recordId}\` in your answer as the subject's ` +
-    `record. A surname or given name indexed differently does not make it someone else, and ` +
-    `does not leave the record unfound.`
+    `project tree already cites for its subject \`${hit.subjectId}\` (source ${sources}). It may ` +
+    `not be on the page you were shown: if you have not read it, read it with record_read on ` +
+    `\`${hit.recordId}\`. Log this search \`positive\` or \`partial\`, and report \`${hit.recordId}\` ` +
+    `in your answer as the record the project tree already cites for the subject. A surname or ` +
+    `given name indexed differently does not leave the record unfound.`
   );
 }
 
