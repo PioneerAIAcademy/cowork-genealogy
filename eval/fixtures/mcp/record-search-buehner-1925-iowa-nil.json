@@ -1,0 +1,22 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_037: the 1925 Iowa State Census (collection 2224537) searched under the subject's recorded surname Buehner. He is in fact indexed as 'John Boehner' — a transcription no Buehner-family spelling guesses — so this is a genuine 0-hit nil, not a collection mismatch. Issue #4699.",
+  "args": {
+    "surname": "Buehner"
+  },
+  "response": {
+    "query": {
+      "surname": "Buehner",
+      "givenName": "John",
+      "recordCountry": "United States",
+      "recordSubdivision": "Iowa",
+      "residenceYearFrom": 1925,
+      "residenceYearTo": 1925
+    },
+    "totalMatches": 0,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

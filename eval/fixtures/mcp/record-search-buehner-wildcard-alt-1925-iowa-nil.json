@@ -1,0 +1,22 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_037: a second plausible wildcard shape (`B*ehner`), stocked narrowly per the rubric's variant-fixture guidance so a legitimate alternate wildcard spelling does not abort the run as unmatched. Also nil. Issue #4699.",
+  "args": {
+    "surname": "B*ehner"
+  },
+  "response": {
+    "query": {
+      "surname": "B*ehner",
+      "givenName": "John",
+      "recordCountry": "United States",
+      "recordSubdivision": "Iowa",
+      "residenceYearFrom": 1925,
+      "residenceYearTo": 1925
+    },
+    "totalMatches": 0,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

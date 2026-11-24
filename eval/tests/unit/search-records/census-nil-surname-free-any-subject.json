@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_search_records_037",
+    "skill": "search-records",
+    "name": "A census 'not found' after surname-only searches runs a surname-free and a wildcard search first, for a male subject",
+    "type": "positive",
+    "description": "Shaped on alpha feedback #4653/#4656/#4658 (issue #4699): John Buehner (b. about 1858, Iowa) is searched in the 1925 Iowa State Census (collection 2224537) under his recorded surname and spelling variants; all nil. He is in fact indexed as 'John Boehner', a transcription none of the tried variants guesses, reachable only by dropping the surname entirely and anchoring on the place and his wife Caroline's given name. Generalizes PR #4650's woman-only surname-free lever to any subject, and adds the wildcard-surname requirement. Tested by the deterministic validator test_census_nil_runs_surname_free_search (surname-free search) and by judge_context (wildcard search).",
+    "tags": [
+      "search",
+      "census",
+      "negative-result",
+      "census-nil-surname-free",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run plan item pli_001: find John Buehner in the 1925 Iowa State Census. He was last found in the 1915 Iowa State Census, born about 1858 in Iowa. His wife is Caroline Buehner (maiden name Holdiman), born about 1862 in Iowa.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "buehner-1925-iowa-census"
+  },
+  "mcp_fixtures": [
+    "record-search-buehner-1925-iowa-nil",
+    "record-search-buchner-1925-iowa-nil",
+    "record-search-buhner-1925-iowa-nil",
+    "record-search-buehner-wildcard-1925-iowa-nil",
+    "record-search-buehner-wildcard-alt-1925-iowa-nil",
+    "record-search-buehner-surname-free-iowa-1925",
+    "record-search-buehner-surname-free-other-iowa-1925",
+    "record-search-catch-all-empty",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH: John Buehner is indexed in the 1925 Iowa State Census as 'John Boehner' — a transcription that Buehner, Buchner and Buhner (the plausible spelling variants) do not guess, and that a `Bu*ner` wildcard does not match either ('Bo' is not 'Bu'). He is reachable only by dropping `surname` entirely and anchoring on `recordCountry`/place plus his wife Caroline's given name (`spouseGivenName` or `otherGivenName`).",
+    "CORE: whether the surname-free search ran before the subject was reported 'not found' is decided by a deterministic validator (test_census_nil_runs_surname_free_search) — do not re-grade that as part of Nil escalation or Result triage. What the judge grades here is (a) whether a wildcard surname search also ran before 'not found' (no deterministic signal exists for this — the issue names it alongside the surname-free search, and Step 8 item 2 requires both), and (b) whether the surname-free hit is reported as a candidate needing review, not adopted outright on a surname that differs from the subject's recorded one.",
+    "Score Nil escalation 3 when, after the Buehner-family nils, the agent runs both a wildcard surname search and a surname-free search before concluding the subject is not found under those filters, and reports the John Boehner household as a candidate anchored on the place and Caroline, not as proven. Score 2 if it runs the surname-free search but skips the wildcard step, or reports the hit with no acknowledgment that the surname differs from the one on record. Score 1 if it declares the subject not found in the census without running either.",
+    "Do NOT require a maiden-name search here — the subject is male, so no maiden name applies, and the rubric's 'Census nil escalation' note says this explicitly for the female case too.",
+    "Result triage: the John Boehner row is a candidate (place, approximate birth year, and wife's given name all consistent) needing corroboration, not a confirmed identification on a differing surname alone. A reply that calls it proved, or that silently excludes it for not matching the surname 'Buehner', both fail — see the agent body's 'never exclude a candidate this invocation has already found' rule.",
+    "Tool Arguments: a `fixture_not_found` on a wildcard-surname spelling other than `Bu*ner` or `B*ehner` is a fixture gap, not a Tool Arguments defect, under this rubric's own 'Tool Arguments' override — score the dimension on the calls that DID match a fixture.",
+    "Do NOT require extraction or a tree write; the plan item staying `in_progress` with the candidate named for follow-up is complete."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

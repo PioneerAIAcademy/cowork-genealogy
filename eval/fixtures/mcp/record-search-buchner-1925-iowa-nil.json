@@ -1,0 +1,22 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_037: 1925 Iowa State Census under the spelling variant Buchner. Also genuinely nil, for the same reason as the Buehner search. Issue #4699.",
+  "args": {
+    "surname": "Buchner"
+  },
+  "response": {
+    "query": {
+      "surname": "Buchner",
+      "givenName": "John",
+      "recordCountry": "United States",
+      "recordSubdivision": "Iowa",
+      "residenceYearFrom": 1925,
+      "residenceYearTo": 1925
+    },
+    "totalMatches": 0,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
