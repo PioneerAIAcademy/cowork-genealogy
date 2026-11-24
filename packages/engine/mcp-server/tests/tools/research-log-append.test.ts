@@ -3669,3 +3669,247 @@ describe("research_log_append — pinned zero-hit record_search names its unpinn
     });
   }
 });
+
+describe("research_log_append — a negative search whose rows include a record the tree cites on its subject (#4667)", () => {
+  let dir: string;
+  // The Phipps session: I1 cites S4, Benj Phillips in the 1860 census.
+  const CITED = "ark:/61903/1:1:MHR9-JWT";
+  const CENSUS_1860 = {
+    recordId: CITED,
+    collectionId: "1473181",
+    events: [
+      { type: "Race", value: "White" },
+      { type: "Census", date: "1860", place: "Thompson, Windham, Connecticut, United States" },
+    ],
+  };
+  const OTHER_ROW = {
+    recordId: "ark:/61903/1:1:MH51-GM3",
+    collectionId: "1473181",
+    events: [{ type: "Census", date: "1860", place: "Pomfret, Windham, Connecticut, United States" }],
+  };
+  const SENT_1860 = {
+    surname: "Phipps",
+    givenName: "Benjamin",
+    residenceYearFrom: 1860,
+    residenceYearTo: 1860,
+    residencePlace: "Thompson, Windham, Connecticut, United States",
+    recordType: "census",
+    projectPath: "/project",
+    subjectId: "I1",
+  };
+  function treeWith(
+    personSources: any[] = [{ ref: "S4" }],
+    factSources: any[] = [],
+    url = `https://familysearch.org/${CITED}`,
+  ) {
+    return {
+      persons: [
+        {
+          id: "I1",
+          names: [{ given: "Benjamin Fairbanks", surname: "Phipps" }],
+          facts: [{ type: "Residence", date: "1860", place: "Thompson", sources: factSources }],
+          sources: personSources,
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S4", title: "Benj Phillips, United States Census, 1860", url }],
+    };
+  }
+  async function setup(tree: any = treeWith()) {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4667-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function stage(query: Record<string, unknown> = SENT_1860, results: any[] = [CENSUS_1860, OTHER_ROW]) {
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { query, results } });
+    return handle!.resultsRef;
+  }
+  const op = (ref: string | null, outcome = "negative", extra: Record<string, unknown> = {}) => ({
+    tool: "record_search",
+    outcome,
+    resultsExamined: 2,
+    resultsAvailable: 2,
+    planItemId: null,
+    stagedResultsRef: ref,
+    ...extra,
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+  const logOf = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+  const { residenceYearFrom: _f, residenceYearTo: _t, ...NO_WINDOW } = SENT_1860;
+
+  it("refuses the Phipps shape, naming the record and the tree source, and writes nothing", async () => {
+    await setup();
+    const ref = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+    expect(errorsOf(r)).toContain("`S4`");
+    expect(errorsOf(r)).toContain("`I1`");
+    expect(errorsOf(r)).toMatch(/Log this search `positive` or `partial`/);
+    expect(errorsOf(r)).not.toMatch(/outcome other than/);
+    expect(errorsOf(r)).toMatch(/as the record the project tree already cites for the subject/);
+    expect(errorsOf(r)).toMatch(/indexed differently does not leave the record unfound/);
+    // A tree citation does not show whose record it is (an unverified attachment, or a relative's entry).
+    expect(errorsOf(r)).not.toMatch(/someone else|as the subject's record|this person's record/);
+    expect(errorsOf(r)).toMatch(/record_read/);
+    expect(await logOf()).toHaveLength(0);
+    expect(await fileExists(dir, ref)).toBe(true);
+  });
+
+  it("refuses the whole batch when one op is the Phipps shape", async () => {
+    await setup();
+    const good = await stage(SENT_1860, [OTHER_ROW]);
+    const bad = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ops: [op(good), op(bad)] } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/^ops\[1\]: /);
+    expect(errorsOf(r)).not.toMatch(/ops\[0\]/);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("refuses on a matching collectionId when the search sent no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1473181" })) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses when an anyYear window holds the row's event year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, anyYearFrom: 1849, anyYearTo: 1878 })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses when the subject cites the source on a fact rather than at the person level", async () => {
+    await setup(treeWith([], [{ ref: "S4" }]));
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("`S4`");
+  });
+
+  it("accepts a death search that returns the subject's cited census", async () => {
+    await setup();
+    const ref = await stage({
+      surname: "Phipps",
+      givenName: "Benjamin",
+      deathYearFrom: 1893,
+      deathYearTo: 1893,
+      deathPlace: "Thompson, Windham, Connecticut, United States",
+      projectPath: "/project",
+      subjectId: "I1",
+    });
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(true);
+    expect(await logOf()).toHaveLength(1);
+  });
+
+  it("accepts a residence window that misses the cited row's year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...SENT_1860, residenceYearFrom: 1850, residenceYearTo: 1850 })),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  // The committed umbelina-azevedo-death / joao-sousa-death / ciriaco-bardales-spouse
+  // e2e shape: a vital-event search pinned to a collection that returns the
+  // subject's cited record in another role or of another type, rightly negative.
+  for (const window of [
+    { deathYearFrom: 1920, deathYearTo: 1990 },
+    { marriageYearFrom: 1850, marriageYearTo: 1870 },
+    { birthYearFrom: 1814 },
+  ]) {
+    it(`accepts a same-collection cited row when the search sent ${Object.keys(window)[0].replace(/From|To/, "")}`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, ...window, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("refuses the Phipps shape logged error: a search that staged rows did not error", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), "error") } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("logged `error`");
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses a same-collection cited row when the search named recordType census", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, recordType: "Census", collectionId: "1473181" })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // A death or marriage search pinned to a mixed collection, with no year window:
+  // the subject's cited record in that collection is not what it was for.
+  for (const recordType of ["death", "marriage", "cemetery"]) {
+    it(`accepts a same-collection cited row when the search named recordType ${recordType} and no window`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, recordType, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts a different collectionId with no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1438024" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts the Phipps shape when the staged query names no subjectId", async () => {
+    await setup();
+    const { subjectId: _s, ...noSubject } = SENT_1860;
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(noSubject)) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a hand-typed negative with no stagedResultsRef", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(null, "negative", { query: { surname: "Phipps", residenceYearFrom: 1860, residenceYearTo: 1860 } }),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const outcome of ["positive", "partial"]) {
+    it(`accepts the Phipps shape logged ${outcome}`, async () => {
+      await setup();
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), outcome) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts when the subjectId is not a tree person", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...SENT_1860, subjectId: "I99" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const [label, url] of [
+    ["no url", ""],
+    ["a url that is not an ARK", "https://example.com/census/MHR9-JWT"],
+  ]) {
+    it(`accepts when the cited source has ${label}`, async () => {
+      await setup(treeWith([{ ref: "S4" }], [], url));
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+});
