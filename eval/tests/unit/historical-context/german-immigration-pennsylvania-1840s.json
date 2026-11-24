@@ -4,7 +4,7 @@
     "skill": "historical-context",
     "name": "German immigration to Pennsylvania in the 1840s",
     "type": "positive",
-    "description": "Regression test for issue #1315: wiki-derived historical context must cite the source page URL, not just the article title. Uses the skill's own worked SKILL.md example topic (German immigration, Pennsylvania, 1840s).",
+    "description": "Regression test for issue #1315: wiki-derived historical context must cite the source page URL, not just the article title. Topic: an ancestor who emigrated from Germany to Pennsylvania about 1845. It also checks that any stated cause of 1840s emigration carries a general-knowledge flag in its own paragraph, and that the plain-language summary states no such cause.",
     "tags": ["citation", "wiki-sourcing", "german", "pennsylvania", "1840s", "topical-fixture-required", "direct-arm"]
   },
   "input": {
