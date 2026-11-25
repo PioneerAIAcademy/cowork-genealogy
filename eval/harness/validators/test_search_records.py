@@ -1838,3 +1838,62 @@ def test_found_candidate_not_excluded(tool_calls, test):
         "a candidate this invocation was already handed (issue #4580): "
         + repr(excluding)
     )
+
+
+# --- A census nil runs a surname-free search before "not found" (#4699) ----
+
+
+def _census_schedules(call: dict) -> list:
+    response = call.get("response")
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return []
+    census = _as_mapping(response).get("census") if isinstance(response, dict) else None
+    schedules = _as_mapping(census).get("schedules") if census else None
+    return schedules if isinstance(schedules, list) else []
+
+
+def test_census_nil_runs_surname_free_search(tool_calls, test):
+    """Tag-gated (census-nil-surname-free): issue #4699.
+
+    Generalizes #4580's woman-only `nil-drops-surname` check to any subject,
+    and narrows the trigger to a response the tool's own census table (not a
+    guess) confirms covers the collection searched: a `record_search` whose
+    response carries a non-empty `census.schedules` and whose `surname`
+    nils (`totalMatches: 0`). A statewide census search on a surname is not a
+    true negative on its own — Step 8 item 2 requires dropping `surname`
+    entirely (anchored on `recordCountry`, place, and a household member)
+    before reporting the subject "not found." The wildcard-surname half of
+    that same requirement is left to the judge (rubric "Nil escalation" +
+    this test's `judge_context`) — there is no deterministic ground-truth
+    field distinguishing a wildcarded surname search from any other.
+    """
+    if "census-nil-surname-free" not in test.get("tags", []):
+        pytest.skip("not a census-nil scenario")
+
+    calls = _record_search_calls(tool_calls)
+    first_nil = next(
+        (
+            i for i, c in enumerate(calls)
+            if _as_mapping(c.get("args")).get("surname")
+            and _census_schedules(c)
+            and _total_matches(c) == 0
+        ),
+        None,
+    )
+    assert first_nil is not None, (
+        "no record_search under a surname, against a collection the tool's own "
+        "census table covers, came back empty — this test never reached the nil "
+        "it grades; record_search calls: "
+        + repr([_as_mapping(c.get("args")) for c in calls])
+    )
+    later = [_as_mapping(c.get("args")) for c in calls[first_nil + 1:]]
+    dropped = [a for a in later if not a.get("surname")]
+    assert dropped, (
+        "after the empty census surname search, every later record_search kept a "
+        "surname; none dropped it entirely to anchor on the place and a household "
+        "member before reporting the subject not found (issue #4699). Later calls: "
+        + repr(later)
+    )
