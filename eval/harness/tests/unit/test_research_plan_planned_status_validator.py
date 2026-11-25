@@ -152,6 +152,54 @@ def test_counts_an_item_added_to_an_existing_plan():
     expect_passes(lambda: check_planned(before, after, TAGGED))
 
 
+# --- #4696: the subject's own sealed birth or death record on a parentage question
+
+def _parentage_states(question, items):
+    q = [{"id": "q_001", "question": question, "question_kind": "targeted"}]
+    return ({"research_json": {"questions": q, "plans": []}},
+            {"research_json": {"questions": q,
+                               "plans": [{"id": "pl_001", "question_id": "q_001", "items": items}]}})
+
+
+def _vital_skip(category="inaccessible", reason="Alan's 2023 death certificate is closed for 50 years."):
+    return {"id": "pli_002", "record_type": "vital_record", "status": "skipped",
+            "skip_category": category, "skip_reason": reason}
+
+
+@pytest.mark.parametrize("question", [
+    "Who were the parents of Alan Glen Applegarth?",
+    "Who was the father of Mikkel Nielsen Blyeberg?",
+    "Where was Elena born, and who were her parents?",
+    "Which probate record names Caroline Voss's mother?",
+])
+@pytest.mark.parametrize("category", ["inaccessible", "no_coverage"])
+def test_passes_a_sealed_own_vital_on_a_parentage_question(question, category):
+    before, after = _parentage_states(question, [_planned(1), _vital_skip(category)])
+    expect_passes(lambda: check_planned(before, after, TAGGED))
+
+
+def test_passes_a_skipped_birth_named_only_in_its_skip_reason():
+    item = {"id": "pli_002", "record_type": "other", "status": "skipped",
+            "skip_category": "no_coverage",
+            "skip_reason": "Pennsylvania kept no birth registers before 1906."}
+    before, after = _parentage_states("Who were the parents of Patrick Flynn?", [item])
+    expect_passes(lambda: check_planned(before, after, TAGGED))
+
+
+@pytest.mark.parametrize("question,item", [
+    ("Where did Michael Sheahan live in 1880?", _vital_skip()),
+    ("Who were the parents of Alan?", _vital_skip(category="out_of_scope")),
+    ("Who were the parents of Alan?", _vital_skip(reason="  ")),
+    ("Who were the parents of Alan?",
+     {"id": "pli_002", "record_type": "census", "status": "skipped",
+      "skip_category": "inaccessible", "skip_reason": "The 1890 census burned."}),
+    ("Who were the parents of Alan?", {**_vital_skip(), "status": "in_progress"}),
+])
+def test_fails_a_skip_outside_the_parentage_vital_exception(question, item):
+    before, after = _parentage_states(question, [_planned(1), item])
+    expect_fires(lambda: check_planned(before, after, TAGGED), "pli_002 has status=")
+
+
 def test_skips_when_the_tag_is_absent():
     before, after = _states("targeted", [_skipped(2)])
     with pytest.raises(pytest.skip.Exception):

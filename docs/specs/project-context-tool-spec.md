@@ -63,8 +63,9 @@ repo's identifier-casing rule).
 **Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
 is left out, at every level of the answer. Two nulls are answers and stay:
 `questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
-(`research_query` would refuse the section). Every `?` below is a key this rule
-can drop:
+(`research_query` would refuse the section). One exception in meaning: a
+person's `spouseIds`, `parentIds` and `childIds` (see `persons`). Every `?` below
+is a key this rule can drop:
 
 ```typescript
 {
@@ -73,6 +74,7 @@ can drop:
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
   subjectPersonIds?: string[],           // research.project.subject_person_ids
+  familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
   subscriptions?: string[],              // researcher_profile.subscriptions
   openQuestions?: [{
@@ -225,7 +227,13 @@ Projection rules:
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  skipped; ids are distinct, in edge order. For a person not in
+  `familyReadPersonIds`, an absent or short one of these three keys means
+  **not copied** from Family Tree, never none: their parents, other spouses (a
+  stepparent) and children may be there. The description tells the model to say
+  "not in the project tree", to say what Family Tree records only after
+  `person_read` of the person's `pid` and only when the answer depends on it,
+  and that a person with no `pid` cannot be checked. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
   (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.
@@ -297,6 +305,25 @@ Projection rules:
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
+- **`familyReadPersonIds`** — the tree persons whose own spouses, parents and
+  children were read from Family Tree, in tree order; absent when none were
+  (`familyReadPersonIds` in `src/utils/import-baseline.ts`, shared with
+  `tree_query`). The project tree is a copy of part of Family Tree: the person
+  `project_create` read and that person's own family. A relative in the copy
+  (a spouse, a parent) had their own family left out, so a missing relative of
+  theirs is not copied, not none. The person read is the one whose `ark` carries
+  the PID in the first Family Tree source titled `FamilySearch Family Tree (read
+  from <Name>, <PID>)`, which `buildFromStagedRead` writes as `S1`. Only the
+  first counts, so a later source given the same title (any writer can set a
+  title) cannot add a person whose family was never read. It is anchored on that
+  read and never on `subjectPersonIds`: `project_create` takes the subjects
+  separately, so a caller can make the wife the subject while her family was
+  never read, and a two-subject project has two subjects but one read. A tree
+  with no such source (a project made before the title named the read, or most
+  eval fixtures) gives no key: no person's family is known to have been read in
+  full. A person added later by `tree_edit` or a merge is never in it unless
+  its `ark` carries that PID. One top-level key, rather than a flag on every
+  `persons` row, because `persons` is the largest part of the answer.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping

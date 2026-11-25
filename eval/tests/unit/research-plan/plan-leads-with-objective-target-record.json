@@ -28,7 +28,9 @@
     "volume-search-kongsberg",
     "volume-search-trysil",
     "external-links-search-kongsberg",
-    "external-links-search-trysil"
+    "external-links-search-trysil",
+    "wiki-read-norway-military-records",
+    "wiki-read-norway-naming-customs"
   ],
   "judge_context": [
     "THE CENTRAL REQUIREMENT. The objective asks for a birth or baptism record and already supplies the place (Kongsberg), the approximate year (~1780), and the death date and place. The first plan item MUST target the Kongsberg baptism -- record_type 'church' (or equivalent), jurisdiction Kongsberg. Score Sequencing logic as fail (1) if any item whose jurisdiction is Trysil, or whose record_type targets the death or burial, carries a lower sequence number than the first Kongsberg baptism item.",
