@@ -7,7 +7,7 @@ purposes, keyed by its own `id` field when it has one (`project`),
 else by the section name itself (`researcher_profile`, which has no
 `id` per its schema) — the same `entryId` `research_append` echoes for
 a singleton write. A future single-object section only needs adding to
-`_SINGLETON_SECTIONS`; the keying falls back automatically.
+`research_sections.SINGLETON_SECTIONS`; the keying falls back automatically.
 
 Fields added during modification emit {"before": null, "after": value};
 fields removed emit {"before": value, "after": null}. Literal null is
@@ -18,9 +18,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-
-# Sections of research.json that are single objects, not arrays of IDed entries.
-_SINGLETON_SECTIONS = {"project", "researcher_profile"}
+from harness.research_sections import SINGLETON_SECTIONS as _SINGLETON_SECTIONS
 
 
 def diff_research_json(
