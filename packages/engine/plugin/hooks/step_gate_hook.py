@@ -9,8 +9,11 @@ its turn, while a halt ends a Cowork turn with nothing on screen.
 Each hook call is a fresh `python3` process, so the turn lives in a per-session
 state file, `{prompt_id, mode, steps, denials}`, under the temp directory,
 updated under an `O_CREAT|O_EXCL` lockfile because parallel spawns arrive as
-concurrent processes. A hand-back (`<agent-message` prompt, or the stored
-`prompt_id`) changes nothing, so it neither reopens the gate nor ends a wrap-up.
+concurrent processes. Only a researcher's `UserPromptSubmit` starts a turn: a
+hand-back (an `<agent-message` prompt) changes nothing, and neither does a
+`PreToolUse` carrying a `prompt_id` the turn has not seen, which is what the main
+thread's calls after a hand-back carry on the connector (probe, 2026-11-25). The
+researcher's words follow any leading `<system-reminder>` blocks the runtime adds.
 
 Silent under `GENEALOGY_HOSTED_PLANE`: the web app and the prototype gate in
 process. Stdlib only, no network, and it never raises: every failure allows the
@@ -36,6 +39,17 @@ LOCK_WAIT_SECONDS = 2.0
 STALE_LOCK_SECONDS = 20.0
 
 _SAFE = re.compile(r"[^A-Za-z0-9_.-]")
+_REMINDER = re.compile(r"^\s*<system-reminder>.*?</system-reminder>", re.DOTALL)
+
+
+def researcher_text(prompt: str) -> str:
+    """The prompt with the runtime's leading `<system-reminder>` blocks removed."""
+    text = str(prompt or "")
+    while True:
+        m = _REMINDER.match(text)
+        if m is None:
+            return text.strip()
+        text = text[m.end():]
 
 
 def _boundary():
@@ -97,8 +111,8 @@ def _fresh(boundary, prompt_id, text: str) -> dict:
 def on_prompt(payload: dict, boundary) -> dict:
     """`UserPromptSubmit`: a researcher's message starts a turn; a hand-back does not."""
     session = payload.get("session_id")
-    prompt = str(payload.get("prompt") or "")
-    if not isinstance(session, str) or not session or prompt.lstrip().startswith(HAND_BACK_PREFIX):
+    prompt = researcher_text(payload.get("prompt"))
+    if not isinstance(session, str) or not session or prompt.startswith(HAND_BACK_PREFIX):
         return {}
     state_path, lock = _paths(session)
     if not _acquire(lock):
@@ -159,9 +173,8 @@ def on_tool(payload: dict, boundary) -> dict:
         state = _read(state_path)
         if state is None:
             return {}
-        prompt_id = payload.get("prompt_id")
-        if not state or (prompt_id is not None and prompt_id != state.get("prompt_id")):
-            state = _fresh(boundary, prompt_id, "")
+        if not state:
+            state = _fresh(boundary, payload.get("prompt_id"), "")
         mode = state.get("mode") if state.get("mode") in ("step", "wrapup") else "step"
         steps = [s for s in state.get("steps") or [] if isinstance(s, str)]
         gate = boundary.StepGate(

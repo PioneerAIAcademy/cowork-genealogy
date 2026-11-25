@@ -184,6 +184,30 @@ describe("step_gate_hook.py", () => {
     expect(denied(run(spawnPayload("search-records", "p1")))).toBe(true);
   });
 
+  // The shapes the 2026-11-25 connector probe recorded: each researcher prompt opens with
+  // the runtime's <system-reminder> block, and a hand-back has its own prompt_id, which
+  // the main thread's next calls carry.
+  const REMINDER =
+    "<system-reminder>The user's timezone is Europe/Malta (UTC+01:00). Message sent at Wed 2026-11-25 15:22 local time.</system-reminder>\n";
+
+  it("reads the researcher's words after the runtime's system-reminder", () => {
+    prompt(REMINDER + "Wrap it up.", "p1");
+    expect(allowed(run(spawnPayload("research-plan", "p1")))).toBe(true);
+    expect(allowed(run(spawnPayload("person-evidence", "p1")))).toBe(true);
+  });
+
+  it("does not reopen the gate on a hand-back with its own prompt_id, or on the calls that carry it", () => {
+    prompt(REMINDER + "Start a research project for LHG6-L26.", "p1");
+    expect(allowed(run(spawnPayload("init-project", "p1")))).toBe(true);
+    prompt('<agent-message from="acf94bb4101a748f8">\n[Subagent hand-back] The text below is the final report.', "p2");
+    const out = run(spawnPayload("question-selection", "p2"));
+    expect(denied(out)).toBe(true);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("choosing the question");
+    // The researcher's next message is a new turn.
+    prompt(REMINDER + "Continue.", "p3");
+    expect(allowed(run(spawnPayload("question-selection", "p3")))).toBe(true);
+  });
+
   it("does not end a wrap-up turn on a hand-back", () => {
     prompt("Wrap it up.", "p1");
     expect(allowed(run(spawnPayload("research-plan", "p1")))).toBe(true);
