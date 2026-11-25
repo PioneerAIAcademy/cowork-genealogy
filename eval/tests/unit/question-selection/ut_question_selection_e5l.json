@@ -11,7 +11,8 @@
       "online-tree",
       "verify-before-building",
       "compiled-source",
-      "new-question-exhaustive-declaration-unstarted"
+      "new-question-exhaustive-declaration-unstarted",
+      "audits-tree"
     ]
   },
   "input": {

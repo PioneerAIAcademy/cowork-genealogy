@@ -72,6 +72,7 @@ import {
   type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
+import { normalizeString } from "../utils/string-similarity.js";
 import {
   birthPlacesAgree,
   recordIdOf,
@@ -85,6 +86,7 @@ import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import {
   placeSegments,
   canonicalCountry,
+  UK_CONSTITUENTS,
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
@@ -3117,9 +3119,13 @@ function treeSourceIsEntry(
 
 export interface CircularVerdict {
   refused: boolean;
-  kind: "relationship" | "subject";
+  kind: "relationship" | "subject" | "audit";
   /** The linked assertion's record. */
   record: string;
+  /** Audit arm only: the question that marks the record's entry as an audit,
+   *  and whether the record's assertions name it (`named`) or name no question
+   *  while it is open (`open`). */
+  auditQuestion?: { id: string; by: "named" | "open" };
   /** Each role-matched parent or spouse the baseline holds, and whether the
    *  sources on that relationship are all this entry (`circular`) or a new source
    *  or record clears it (`cleared`). Empty for the subject-alone arm. */
@@ -3128,8 +3134,10 @@ export interface CircularVerdict {
 
 /** The verdict on one live probable or confident link, or null when the gate
  *  does not apply: no baseline, a person the baseline does not hold, an
- *  assertion with no record, negative evidence, or a two-party assertion. `tree` is the live tree,
- *  which can only clear a refusal; `baseline` decides circularity. */
+ *  assertion with no record, negative evidence, or a two-party assertion the
+ *  audit arm does not judge. `tree` is the live tree, which can only clear a
+ *  refusal; `baseline` decides circularity. The audit arm runs only where the
+ *  role arms allow. */
 export function circularCorroborationVerdict(entry: any, research: any, tree: any, baseline: any): CircularVerdict | null {
   if (!baseline || !isStrongConfidence(entry?.confidence) || entry.superseded_by) return null;
   const personId = entry.person_id;
@@ -3137,14 +3145,36 @@ export function circularCorroborationVerdict(entry: any, research: any, tree: an
   if (!subject) return null;
   const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
   const linked = assertions.find((a) => a?.id === entry.assertion_id);
-  // A two-party assertion (a relationship or a marriage) names the person it is
-  // linked to, not its own party, so its role says nothing about who that person
-  // is on the record.
-  if (!linked || recordBasisOf(linked) === "absent" || isTwoParty(linked.fact_type)) return null;
+  if (!linked || recordBasisOf(linked) === "absent") return null;
   const here = sameEntryOf(research, linked);
   if (!here) return null;
   const record = arkToBareId(linked.record_id);
+  // A two-party assertion (a relationship or a marriage) names the person it is
+  // linked to, not its own party, so its role says nothing about who that person
+  // is on the record. Only the audit arm, which reads no role, judges it.
+  if (isTwoParty(linked.fact_type)) {
+    const audit = auditVerdict(entry, research, baseline, subject, here, record);
+    return audit?.refused ? audit : null;
+  }
+  const verdict = roleVerdict(entry, research, tree, baseline, subject, assertions, linked, here, record);
+  return verdict.refused ? verdict : (auditVerdict(entry, research, baseline, subject, here, record) ?? verdict);
+}
 
+type EntryIds = { records: Set<string>; sources: Set<string>; descriptions: Set<string> };
+
+/** The relationship and subject-alone arms of `circularCorroborationVerdict`. */
+function roleVerdict(
+  entry: any,
+  research: any,
+  tree: any,
+  baseline: any,
+  subject: any,
+  assertions: any[],
+  linked: any,
+  here: EntryIds,
+  record: string,
+): CircularVerdict {
+  const personId = entry.person_id;
   const partyOf = capPartyKeyer(assertions);
   const own = partyOf(linked);
   const subjectRole = normalizedRole(linked.record_role);
@@ -3205,8 +3235,175 @@ export function circularCorroborationVerdict(entry: any, research: any, tree: an
   return { refused: circular && entry.confidence === "confident", kind: "subject", record, relatives };
 }
 
+/** The question that puts a record entry on an audit of the tree, or null: one
+ *  its live assertions name that carries `audits_tree`, or, when they name none,
+ *  an unresolved question carrying it (only one question is open at a time).
+ *  Read over the whole entry so every link from one record gets one answer. */
+function entryOnAuditQuestion(research: any, here: EntryIds): { id: string; by: "named" | "open" } | null {
+  const questions = (Array.isArray(research?.questions) ? research.questions : []) as any[];
+  const named = new Set<string>();
+  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+    if (!isLiveAssertion(a) || typeof a.record_id !== "string" || !here.records.has(arkToBareId(a.record_id))) continue;
+    for (const q of Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : []) {
+      if (typeof q === "string") named.add(q);
+    }
+  }
+  const hit =
+    named.size > 0
+      ? questions.find((q) => named.has(q?.id) && q.audits_tree === true)
+      : questions.find((q) => q?.audits_tree === true && q.status !== "resolved");
+  return hit && typeof hit.id === "string" ? { id: hit.id, by: named.size > 0 ? "named" : "open" } : null;
+}
+
+const AUDIT_YEAR_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism", "death", "burial", "marriage"]);
+const AUDIT_PLACE_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism", "death", "burial", "residence", "census"]);
+
+/** A place's county and the level above it (a US county and state; an English
+ *  county and England), or null for a place that names no county. A trailing
+ *  country is dropped first, so a place written with or without it keys alike;
+ *  England, Scotland, Wales and Northern Ireland stay, as the level above a
+ *  British county. */
+function auditCountyKey(place: unknown): string | null {
+  const parts = placeSegments(String(place ?? ""));
+  while (parts.length > 0) {
+    const country = canonicalCountry(parts[parts.length - 1]);
+    if (country === null || UK_CONSTITUENTS.has(country)) break;
+    parts.pop();
+  }
+  const levels = parts.map((p) => normalizeString(p)).filter((p) => p !== "");
+  return levels.length < 2 ? null : `${levels[levels.length - 2]}\u0000${levels[levels.length - 1]}`;
+}
+
+/** The years two assertions give for one kind of event, or null when they are
+ *  not the same kind of dated event or either gives no year. */
+function auditEventYears(a: any, b: any): [number, number] | null {
+  const ta = String(a?.fact_type ?? "").toLowerCase();
+  if (ta !== String(b?.fact_type ?? "").toLowerCase() || !AUDIT_YEAR_FACTS.has(ta)) return null;
+  const ya = yearOf(a?.date);
+  const yb = yearOf(b?.date);
+  return ya === null || yb === null ? null : [ya, yb];
+}
+
+/** Whether two assertions give different years for one kind of event, both
+ *  stated: a year inferred from an age is approximate and contradicts nothing. */
+function auditYearsConflict(a: any, b: any): boolean {
+  const years = auditEventYears(a, b);
+  return years !== null && years[0] !== years[1] && recordBasisOf(a) !== "inferred" && recordBasisOf(b) !== "inferred";
+}
+
+/** Whether two assertions state the same year for one kind of event, or the
+ *  same county for life facts (#4430); the caller sets aside a record whose
+ *  stated years conflict (`auditYearsConflict`) before asking. Places agree as
+ *  recorded, or as standardized when both carry one. */
+function auditFactsAgree(a: any, b: any): boolean {
+  const years = auditEventYears(a, b);
+  if (years !== null && years[0] === years[1]) return true;
+  const ta = String(a?.fact_type ?? "").toLowerCase();
+  const tb = String(b?.fact_type ?? "").toLowerCase();
+  if (!AUDIT_PLACE_FACTS.has(ta) || !AUDIT_PLACE_FACTS.has(tb)) return false;
+  const sameCounty = (x: unknown, y: unknown) => {
+    const key = auditCountyKey(x);
+    return key !== null && key === auditCountyKey(y);
+  };
+  const filled = (v: unknown) => typeof v === "string" && v.trim() !== "";
+  return (
+    sameCounty(a?.place, b?.place) ||
+    (filled(a?.standard_place) && filled(b?.standard_place) && sameCounty(a.standard_place, b.standard_place))
+  );
+}
+
+/** The audit arm (#4430), or null when it does not apply: on a question that
+ *  audits the tree, a `confident` link to a starting-tree person who already
+ *  cites this entry (on the person, a name, a fact or a relationship of theirs)
+ *  is refused unless another record, cited by no starting-tree person or
+ *  relationship, has an assertion linked live to the person that agrees with
+ *  this entry's linked party on an event year or a life fact's county. */
+function auditVerdict(
+  entry: any,
+  research: any,
+  baseline: any,
+  subject: any,
+  here: EntryIds,
+  record: string,
+): CircularVerdict | null {
+  if (entry.confidence !== "confident") return null;
+  const auditQuestion = entryOnAuditQuestion(research, here);
+  if (auditQuestion === null) return null;
+  const personId = entry.person_id;
+  const descriptions = new Map<string, any>(
+    ((Array.isArray(baseline.sources) ? baseline.sources : []) as any[]).filter((s) => s && typeof s.id === "string").map((s) => [s.id, s]),
+  );
+  const asRefs = (refs: Iterable<string>): TreeSourceRef[] =>
+    [...refs]
+      .map((ref) => (ref.startsWith("#") ? ref.slice(1) : ref))
+      .map((ref) => ({ ref, description: descriptions.get(ref) }))
+      .filter((s) => s.description === undefined || !isTreeAsSource(s.description));
+  const relationships = (Array.isArray(baseline.relationships) ? baseline.relationships : []) as any[];
+  const ownRefs = [
+    ...asRefs(personSourceRefs(subject)),
+    ...relationships
+      .filter((r) => [r?.parent, r?.child, r?.person1, r?.person2].includes(personId))
+      .flatMap((r) => asRefs(sourceRefsOf(r))),
+  ];
+  if (!ownRefs.some((s) => treeSourceIsEntry(s, here, research))) return null;
+
+  const treeRefs = [
+    ...((Array.isArray(baseline.persons) ? baseline.persons : []) as any[]).flatMap((p) => asRefs(personSourceRefs(p))),
+    ...relationships.flatMap((r) => asRefs(sourceRefsOf(r))),
+  ];
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
+  const byId = new Map<string, any>(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const partyOf = capPartyKeyer(assertions);
+  const inHere = (a: any) => typeof a?.record_id === "string" && here.records.has(arkToBareId(a.record_id));
+  const linkedParties = new Set<string>();
+  const others: any[] = [];
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e) || e.person_id !== personId) continue;
+    const a = byId.get(e.assertion_id);
+    if (!a || typeof a.record_id !== "string" || a.record_id === "" || recordBasisOf(a) === "absent") continue;
+    // A two-party assertion is linked to the person it names, so another
+    // record's marriage linked here is this person's; this record's own linked
+    // party is read from its one-party assertions only.
+    if (!inHere(a)) others.push(a);
+    else if (!isTwoParty(a.fact_type)) linkedParties.add(partyOf(a));
+  }
+  const mine = assertions.filter((a) => inHere(a) && recordBasisOf(a) !== "absent" && linkedParties.has(partyOf(a)));
+  // A record that states another year for an event this one dates disagrees
+  // with it, and clears nothing whatever else of it agrees.
+  const disagreeing = new Set<string>();
+  for (const o of others) {
+    if (mine.some((m) => auditYearsConflict(o, m))) disagreeing.add(arkToBareId(o.record_id));
+  }
+  const citedByTree = new Map<string, boolean>();
+  const cleared = others.some((o) => {
+    const key = arkToBareId(o.record_id);
+    if (disagreeing.has(key) || !mine.some((m) => auditFactsAgree(o, m))) return false;
+    if (!citedByTree.has(key)) {
+      const theirs = sameEntryOf(research, o);
+      citedByTree.set(key, theirs !== null && treeRefs.some((s) => treeSourceIsEntry(s, theirs, research)));
+    }
+    return !citedByTree.get(key);
+  });
+  return { refused: !cleared, kind: "audit", record, relatives: [], auditQuestion };
+}
+
 function circularCorroborationRefusal(entry: any, verdict: CircularVerdict): string {
   const p = entry.person_id;
+  if (verdict.kind === "audit") {
+    const q = verdict.auditQuestion;
+    const why =
+      q?.by === "open"
+        ? `record '${verdict.record}' names no question, and the open question '${q.id}' audits the tree`
+        : `record '${verdict.record}' was extracted for question '${q?.id}', which audits the tree`;
+    return (
+      `confidence 'confident' is not available on link '${entry.id}' to '${p}': ${why}, and '${p}' already ` +
+      `cites the record in the starting tree, so the ` +
+      `tree's facts about '${p}' may have come from it and cannot confirm it. 'probable' is available. ` +
+      `'confident' needs another record, cited by no one in the starting tree and linked to '${p}', that gives the ` +
+      `same year for one of the record's events or the same county for one of its life facts. Otherwise lower ` +
+      `confidence to 'probable' or 'speculative'.`
+    );
+  }
   const settle = `Find a record independent of '${verdict.record}' that corroborates it, or lower confidence to 'speculative'.`;
   if (verdict.kind === "subject") {
     return (
@@ -10178,6 +10375,17 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
+    }
+    // `audits_tree` is set once: a caller whose confident link the audit arm
+    // refused must not unmark the question and send the link again.
+    if (op.op === "update" && Object.prototype.hasOwnProperty.call(fields, "audits_tree")) {
+      const before = ((preCallResearch?.questions ?? []) as any[]).find((q) => q?.id === resultEntry?.id);
+      if (before?.audits_tree === true && resultEntry?.audits_tree !== true) {
+        invariantErrors.push(
+          `question ${resultEntry.id}: audits_tree is true and cannot be changed; a question that audits the ` +
+            `tree stays one. Leave audits_tree out of the update.`,
+        );
+      }
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));

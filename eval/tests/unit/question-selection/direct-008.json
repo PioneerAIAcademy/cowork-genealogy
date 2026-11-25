@@ -12,7 +12,8 @@
       "verify-before-building",
       "compiled-source",
       "new-question-exhaustive-declaration-unstarted",
-      "direct-arm"
+      "direct-arm",
+      "audits-tree"
     ]
   },
   "input": {
