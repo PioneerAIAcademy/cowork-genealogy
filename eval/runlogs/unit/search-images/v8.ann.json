@@ -501,14 +501,6 @@
     {
       "test_id": "ut_search_images_d10",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d10",
-      "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -617,6 +609,14 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The agent correctly selected the three image groups associated with koha:186990, but did not identify the additional four DGS volumes listed under olib:1880942. A broader catalog search using keywords would have revealed those additional parts of the register. The volume selection was therefore only partial."
+    },
+    {
+      "test_id": "ut_search_images_d10",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response answered the research question correctly and included the required evidence from the probate entry. However, it was not fully compliant with the expected output format because it exposed internal project artifacts (log_006 and the staging file path) that should not appear in a user-facing response. While the required summary section was present and largely correct, these avoidable disclosures prevent a perfect completeness score."
     }
   ]
 }
