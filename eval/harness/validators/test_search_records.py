@@ -1880,8 +1880,8 @@ _LIST_ONLY = re.compile(
 )
 # ... and is denied after one of these, unless a hedge follows the denial in the clause.
 _KINSHIP_DENIED = re.compile(
-    r"\b(?:no records?|no link|nothing\b[^.;,]{0,40}?\b(?:shows?|links?|connects?|ties?|proves?)|"
-    r"not (?:shown|established|proven|known)|not\b[^.;,]{0,20}?\bprove[ns]?|"
+    r"\b(?:no records?|no link|nothing\b[^.;,]{0,40}?\b(?:shows?|shown|links?|connects?|ties?|proves?|proven)|"
+    r"(?:not|never) (?:been )?(?:shown|established|proven|known)|(?:not|never)\b[^.;,]{0,20}?\bprove[ns]?|"
     r"(?:does|did)\s+not\s+(?:say|state|show|name)|"
     r"(?:cannot|can['’]t)\s+(?:confirm|show|prove|establish)|unproven|unknown|unlikely|no evidence)\b",
     re.IGNORECASE,

@@ -98,6 +98,11 @@ ALLOWED = [
     "Reuben is not Asa's brother.",
     "Reuben was never Asa's older brother.",
     "Reuben is not a brother of Asa.",
+    "Reuben was never shown to be a relative of Asa.",
+    "Reuben has never been shown to be Asa's brother.",
+    "Reuben has not been established as Asa's cousin.",
+    "Nothing has ever proven Reuben is Asa's brother.",
+    "Reuben was never proven to be Asa's uncle.",
 ]
 
 
