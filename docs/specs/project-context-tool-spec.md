@@ -967,9 +967,12 @@ Only under `include: ["historicalContext"]`, and only when the tree holds
 objective on a line naming it as the researcher's and not a tree fact, then one line
 per person, the subject first and then its parents, spouses and children from the
 tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
-place as `Type date, place`, or "no dated or placed facts". The router spawns the
-agent with that prompt as given, then a `message:` line holding the researcher's
-message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+place as `Type date, place`, or "no dated or placed facts". The prompt's last line
+is a bare `message:`. The router spawns the agent with that prompt as given, the
+researcher's message copied verbatim after that `message:`, and nothing else
+(research/SKILL.md, "Bounded request or job"). The trailing line is there because a
+prompt that ended on the facts left the router to add the `message:` line itself, and
+it sent the prompt alone in 1 of 4 runs of `ut_research_ia2`.
 
 Why a tool writes it: told to call `tree_query` and hand over only the places and
 years it returned, a Haiku 5.5 low router added its own era ranges and a candidate
