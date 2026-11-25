@@ -183,6 +183,7 @@ export const imageTranscribeToolSchema = {
       },
       planItemId: {
         type: ["string", "null"],
+        pattern: "^pli_",
         description:
           "The `pli_` plan item this read serves, or null for an ad-hoc read. In a " +
           "project this tool logs the read itself (`logId` in the answer) under this " +
