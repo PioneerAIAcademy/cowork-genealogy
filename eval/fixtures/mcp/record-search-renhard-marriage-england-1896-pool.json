@@ -1,0 +1,84 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_039: an England marriage search, 1895-1897, under the tree's surname Renhard, with any given name (Charles, or the variant Charls). Captured live 2026-11-25 (Charles + Renhard, recordCountry England, marriage 1895-1897, recordType marriage): FamilySearch's fuzzy match on Renhard reaches Runyard and Render, not Reinhard, so the subject (indexed as Charles Rheinhardt) is not in this pool. Issue #4777.",
+  "args": {
+    "surname": "~renhard"
+  },
+  "response": {
+    "query": {
+      "recordCountry": "England",
+      "marriageYearFrom": 1895,
+      "marriageYearTo": 1897,
+      "recordType": "marriage",
+      "count": 20,
+      "surname": "Renhard",
+      "givenName": "Charles"
+    },
+    "totalMatches": 5,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:2D1X-YVX",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "Wareham, Dorset, England"
+          }
+        ],
+        "personName": "Amos Charles Runyard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-9DRQ",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:26MC-7FD",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1897",
+            "place": "Christchurch, Hampshire, England"
+          }
+        ],
+        "personName": "Charles Edward Runyard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-R2GS",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NJW4-6QN",
+        "personName": "Charles Render",
+        "sex": "Male",
+        "collectionId": "1473015",
+        "recordTitle": "Entry for William Henry Render",
+        "recordArk": "ark:/61903/1:2:9Q18-33W",
+        "batchNumber": "M00702-9",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:8RJH-R9ZM",
+        "personName": "Charles Render",
+        "collectionId": "3734475",
+        "recordTitle": "Entry for William Henry Render",
+        "recordArk": "ark:/61903/1:2:44TR-RDW2",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGZY-87R8",
+        "personName": "Charles Render",
+        "collectionId": "2475028",
+        "recordTitle": "Entry for Reuben Edward Render and Jane Trevallion",
+        "recordArk": "ark:/61903/1:2:Q5LS-B6J9",
+        "role": "Other"
+      }
+    ],
+    "collections": {
+      "1473015": "England Marriages, 1538–1973",
+      "2285732": "England and Wales, Marriage Registration Index, 1837-2005",
+      "2475028": "England, Surrey, Parish Registers, 1536-1992",
+      "3734475": "England, Middlesex, Parish Registers, 1539-1988"
+    }
+  }
+}

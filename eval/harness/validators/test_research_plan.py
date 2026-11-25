@@ -689,6 +689,71 @@ def test_enumerative_plan_accounts_for_five_events(before_state, after_state, te
                 for i in plan.get("items") or []
             )
         )
+
+
+# --- Tag-gated: a pre-1850 parentage plan reaches a child-naming record first -
+
+# Issue #4163. A US federal census before 1850 names only the head of
+# household, so a parentage plan needs a record that can name a child, planned
+# ahead of every census item from those years. Whether a rationale *frames* the
+# census as placement or as proof stays with the judge: a phrase match fails
+# sound rationales ("confirm I1's residence") as often as it catches a bad one.
+_CHILD_NAMING_RECORD_TYPES = re.compile(
+    r"probate|(?<!real[_ ])estate|\bwills?\b|land|deed|church|parish|vital|town",
+    re.IGNORECASE,
+)
+_FIRST_YEAR_RE = re.compile(r"\b(1[6-9]\d\d)\b")
+
+
+def _is_pre1850_census(item: dict) -> bool:
+    if not _CENSUS_RE.search(str(item.get("record_type") or "")):
+        return False
+    first = _FIRST_YEAR_RE.search(str(item.get("date_range") or ""))
+    return bool(first) and int(first.group(1)) < 1850
+
+
+def test_pre1850_parentage_plan_puts_child_naming_record_first(
+    before_state, after_state, test
+):
+    """Tag-gated: every new plan has an item of a record type that can name a
+    child, sequenced ahead of every census item whose date range starts before
+    1850."""
+    if "pre1850-census" not in (test.get("tags") or []):
+        pytest.skip("not a pre1850-census test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+
+    for plan in plans:
+        items = [i for i in plan.get("items") or [] if i.get("status") != "skipped"]
+        naming = [
+            i.get("sequence")
+            for i in items
+            if _CHILD_NAMING_RECORD_TYPES.search(str(i.get("record_type") or ""))
+            and isinstance(i.get("sequence"), int)
+        ]
+        census = [
+            i.get("sequence")
+            for i in items
+            if _is_pre1850_census(i) and isinstance(i.get("sequence"), int)
+        ]
+        listing = "; ".join(
+            f"{i.get('id')} seq {i.get('sequence')} {i.get('record_type')} {i.get('date_range')}"
+            for i in items
+        )
+        assert naming, (
+            f"{plan.get('id')} plans no record type that can name a child "
+            f"(probate, land or deeds, church, vital or town records). Items: {listing}"
+        )
+        if census:
+            assert min(naming) < min(census), (
+                f"{plan.get('id')} plans a pre-1850 census (sequence {min(census)}) "
+                f"ahead of every record that can name a child (first at sequence "
+                f"{min(naming)}). Items: {listing}"
+            )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
@@ -1220,7 +1285,18 @@ _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
     r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
-    r"for\s+(?:this|the)\s+\w+)\b",
+    r"entries|files?|pages?|documents?|for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# The same adjective after its noun ("estate files not yet indexed on
+# FamilySearch") describes those files. Issue #4163: ut_research_plan_csn,
+# v17_2026-11-07_11-50-41, pli_008, "for unindexed entries" charged to 1500692
+# (personCount > 0); ut_research_plan_hoh, 2026-11-10, pli_012, "Berkshire County
+# estate files not yet indexed on FamilySearch" charged to 3155889 (81433).
+# "records" is left out: "its records are not indexed" is a collection claim.
+_NON_COLLECTION_NOUN_THEN_ADJ_RE = re.compile(
+    r"\b(?:entries|files?|pages?|documents?)\s+"
+    r"(?:(?:that\s+)?(?:are|were)\s+)?(?:not\s+(?:yet\s+)?indexed|un-?indexed)\b",
     re.I,
 )
 # An availability adjective describes the nearest identifier before it. When
@@ -1334,9 +1410,11 @@ def test_research_plan_availability_claim_matches_counts(
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
                 claims_indexed = _claim_on_collection(
-                    _INDEXED_RE, claim_text, cid
-                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
-                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                    _INDEXED_RE, _UNINDEXED_RE.sub(" ", claim_text), cid
+                )
+                about_collection = _NON_COLLECTION_NOUN_THEN_ADJ_RE.sub(
+                    " ", _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                )
                 claims_browse = _claim_on_collection(
                     _BROWSE_ONLY_RE, about_collection, cid
                 ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)

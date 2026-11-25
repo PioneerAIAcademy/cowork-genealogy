@@ -46,7 +46,11 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
+    HAND_OFF_LOG_TOOLS,
+    HandOffLinks,
     foreground_rewrite,
+    hand_off_texts,
+    seed_hand_offs,
     NO_PROJECT_NOTE,
     ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
@@ -58,6 +62,7 @@ from .continue_policy import (
 )
 from .errors import UNEXPECTED, classify, log_operator
 from .main_thread import EFFORT_LEVELS, load_main_thread  # noqa: F401 - EFFORT_LEVELS re-exported
+from .plugin_lib import load_step_boundary
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
     classify_server_status,
@@ -278,6 +283,10 @@ _PRETOOL_MATCHER = "|".join(
 # The completion halt's matcher, on both its arms: only the delegation tools, anchored like
 # `_PRETOOL_MATCHER`, so its research.json reads never run on any other call.
 _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
+
+# The hand-off seed's matcher (issue #4660): every call `opens_hand_offs` accepts, so the
+# turn is seeded before such a call runs and its research.json read runs on no other call.
+_HAND_OFF_MATCHER = _DELEGATION_MATCHER + "|" + "|".join(f".*__{t}$" for t in sorted(HAND_OFF_LOG_TOOLS))
 
 # How long the CLI waits for a PreToolUse callback before giving up on it.
 #
@@ -806,6 +815,20 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
+    if agent is not None:
+        async def hand_off_seed(_input_data, _tool_use_id, _ctx):
+            """PreToolUse: seed the turn's hand-off links before the call runs (issue
+            #4660, ``continue_policy.seed_hand_offs``). Never raises, never changes the
+            call."""
+            try:
+                agent._seed_hand_offs(_input_data or {})
+            except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+                _log(f"[agent] hand-off seed failed: {type(exc).__name__}: {exc}")
+            return {}
+
+        # Before `completion_status`, which stays last; the order changes nothing.
+        hooks["PreToolUse"].insert(-1,
+            HookMatcher(matcher=_HAND_OFF_MATCHER, hooks=[hand_off_seed], timeout=_PRETOOL_TIMEOUT_S))
     return hooks
 
 
@@ -1574,6 +1597,44 @@ class RealAgent:
         log_operator("mcp_init", text, detail=f"health={health} entry={entry!r}")
         return [_event("error", text=text)]
 
+    def _open_hand_offs(self) -> list[dict] | None:
+        """The project's open external-site hand-offs (``step_boundary.awaiting_hand_offs``,
+        the Python mirror of ``awaitingUser``), or None when they cannot be read. Never
+        raises: a link the host fails to post is logged, not a failed turn."""
+        try:
+            boundary = getattr(self, "_step_boundary", None)
+            if boundary is None:
+                boundary = load_step_boundary(Path(_PLUGIN_DIR) / "hooks" / "step_boundary.py")
+                self._step_boundary = boundary
+            research = read_research_json(self.dir)
+            if research is None:
+                if (Path(self.dir) / "research.json").exists():
+                    # Unparseable (a hand edit, a BOM): "could not read", not "nothing open",
+                    # so it is logged; the seed then seeds empty (`seed_hand_offs`).
+                    _log("[agent] hand-off read failed, posting no links: research.json is unreadable")
+                    return None
+                research = {}
+            return boundary.awaiting_hand_offs(research)
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off read failed, posting no links: {type(exc).__name__}: {exc}")
+            return None
+
+    def _seed_hand_offs(self, data: dict) -> None:
+        """The PreToolUse half of issue #4660 (``continue_policy.seed_hand_offs``)."""
+        links = getattr(self, "_hand_off_links", None)
+        if links is not None:
+            seed_hand_offs(links, data, self._open_hand_offs)
+
+    def _hand_off_events(self, links: HandOffLinks, message, ev: dict) -> list[dict]:
+        """Issue #4660: the host posts each search link a main-thread call opened
+        (``continue_policy.hand_off_texts``, shared with the worker). Never raises."""
+        try:
+            texts = hand_off_texts(links, message, ev, self._open_hand_offs)
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off post failed: {type(exc).__name__}: {exc}")
+            return []
+        return [_event("text", text=t) for t in texts]
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage, SystemMessage
@@ -1608,9 +1669,15 @@ class RealAgent:
             yield _event("error", text=classification)
             return
         try:
+            # The per-turn hook state, BEFORE the query: the SDK's reader can run this
+            # turn's first PreToolUse while `client.query` is still awaited, and its writes
+            # (`status_before`, the hand-off seed) must land in this turn's state, not be
+            # cleared after or go to the previous turn's tracker.
+            self._begin_turn_hook_state()
+            # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
+            links = self._hand_off_links = HandOffLinks()
             await client.query(text)
             self._stream_dirty = True
-            self._begin_turn_hook_state()
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
@@ -1636,6 +1703,10 @@ class RealAgent:
                         if counter_now and counter_now.get("completion_summary"):
                             counter_now["completion_summary"] = None
                     yield ev
+                    # After the reset above, never through it: a posted link is the host's
+                    # words, not the model going on past a completion halt.
+                    for link_ev in self._hand_off_events(links, message, ev):
+                        yield link_ev
                 if isinstance(message, SystemMessage):
                     # #941 ported from the e2e harness (issue #1126). The CLI's
                     # init message lists every MCP server it tried to connect
@@ -1725,6 +1796,13 @@ class RealAgent:
                                 "continuations": counter.get("continuations") if counter else None,
                             },
                         )
+                    # Issue #4660: a link whose call never returned (the researcher pressed
+                    # Stop mid-search) is posted here, once. Only in a turn that made a call
+                    # able to open one (`opens_hand_offs`), so any other turn reads nothing.
+                    if links.seeded:
+                        rows = self._open_hand_offs()
+                        for link_text in links.new_texts(rows or []):
+                            yield _event("text", text=link_text)
                     # A completion halt ended the turn on the agent's summary, which the
                     # browser never receives as `stopReason`: show it as the turn's text.
                     hook_counter = getattr(self, "_hook_counter", None)

@@ -97,6 +97,21 @@
       "record_basis": "stated",
       "informant_proximity": "household_member",
       "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "bequest",
+      "value": "Main Street"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "bequest",
+      "value": "mining"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "bequest",
+      "value": "fifty"
     }
   ]
 }

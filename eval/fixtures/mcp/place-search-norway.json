@@ -1,0 +1,108 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'Norway', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts.",
+  "args": {
+    "placeName": "~Norway"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Norway",
+        "type": "Country",
+        "dateRange": "+872/",
+        "latitude": 62,
+        "longitude": 10,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=40",
+        "wikipediaUrl": "https://nn.wikipedia.org/wiki/Noreg"
+      },
+      {
+        "standardPlace": "Norway, Dickinson, Michigan, United States",
+        "type": "City",
+        "dateRange": "+1879/",
+        "latitude": 45.7869,
+        "longitude": -87.90374,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5446008",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Michigan"
+      },
+      {
+        "standardPlace": "Norway, Cumberland, Massachusetts, United States",
+        "type": "Town",
+        "dateRange": "+1797/+1805",
+        "latitude": 44.2143,
+        "longitude": -70.5471,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4273203",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Maine"
+      },
+      {
+        "standardPlace": "Norway, Coos, Oregon, United States",
+        "type": "Town",
+        "dateRange": "+1873/",
+        "latitude": 43.1011,
+        "longitude": -124.1556,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4772325",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Oregon"
+      },
+      {
+        "standardPlace": "Norway, Republic, Kansas, United States",
+        "type": "Village",
+        "dateRange": "+1870/",
+        "latitude": 39.6961,
+        "longitude": -97.7736,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4150426",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Kansas"
+      },
+      {
+        "standardPlace": "Norway, Benton, Iowa, United States",
+        "type": "City",
+        "dateRange": "+1860/",
+        "latitude": 41.9025,
+        "longitude": -91.9203,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=5825353",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Iowa"
+      },
+      {
+        "standardPlace": "Norway, Orangeburg, South Carolina, United States",
+        "type": "Town",
+        "dateRange": "+1892/",
+        "latitude": 33.4517,
+        "longitude": -81.1256,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4879481",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_South_Carolina"
+      },
+      {
+        "standardPlace": "Norway, Dickey, North Dakota, United States",
+        "type": "Town",
+        "dateRange": "+1889/",
+        "latitude": 46.1389,
+        "longitude": -98.1453,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4705198"
+      },
+      {
+        "standardPlace": "Norway, LaSalle, Illinois, United States",
+        "type": "Village",
+        "latitude": 41.4656,
+        "longitude": -88.6644,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway&focusedId=4066302",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway,_Illinois#Heritage"
+      },
+      {
+        "standardPlace": "Norway Township, Fillmore, Minnesota, United States",
+        "type": "Township",
+        "dateRange": "+1860/",
+        "latitude": 43.7206,
+        "longitude": -91.7917,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Norway%20Township&focusedId=4346834",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Norway_Township,_Fillmore_County,_Minnesota",
+        "matchedName": {
+          "name": "Norway",
+          "lang": "en"
+        }
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Norway",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}
