@@ -47,11 +47,11 @@ vi.mock("../../src/utils/ocr.js", async (importOriginal) => {
 
 import {
   imageTranscribeTool,
-  imageTranscribeMcpTool,
-  imageTranscribeToolSchema,
   MAX_OCR_INPUT_BYTES,
   sniffContentType,
 } from "../../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool, imageTranscribeToolSchema } from "../../src/tools/image-transcribe-mcp.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
@@ -1280,9 +1280,16 @@ describe("imageTranscribeTool — memory artifacts", () => {
 // ─── issue #2048: uploaded files, the payload cap, and the staging channel ───
 
 /** A directory that classifies as a project (both files), with `uploads/`. */
+// A research.json the tool's own log write (#4721) accepts.
+const EMPTY_RESEARCH = JSON.stringify({
+  project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+  questions: [], plans: [], log: [], sources: [], assertions: [], person_evidence: [], conflicts: [],
+  hypotheses: [], timelines: [], proof_summaries: [], evaluations: [],
+});
+
 async function makeProject(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "imgt-file-"));
-  await writeFile(join(dir, "research.json"), "{}");
+  await writeFile(join(dir, "research.json"), EMPTY_RESEARCH);
   await writeFile(join(dir, "tree.gedcomx.json"), "{}");
   await mkdir(join(dir, "uploads"));
   return dir;
@@ -1670,7 +1677,7 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     expect(r).not.toHaveProperty("transcription");
     expect(r.found).toBe("FOUND");
     expect(r.digest).toMatchObject({ id: "004884748_02613", chars: page.length });
-    const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+    const envelope = JSON.parse(await readFile(join(dir, `results/${r.logId}.json`), "utf8"));
     expect(envelope.payload.results[0].transcription).toBe(page);
   });
 
@@ -1778,7 +1785,7 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
       LOCAL,
     );
     if ("ok" in staged || "ok" in inline) throw new Error("unexpected no-project answer");
-    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "readingNote", "staged", "viewerUrl"]);
+    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "logId", "readingNote", "staged", "viewerUrl"]);
     expect(Object.keys(inline).sort()).toEqual(["found", "transcription", "viewerUrl"]);
   });
 
@@ -1822,7 +1829,7 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     const cleaned = "Name\nAnna Weber\n\n===\nPeter Weber";
     const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
     expect(checkBody.messages[0].content[0].text).toContain(cleaned);
-    const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+    const envelope = JSON.parse(await readFile(join(dir, `results/${r.logId}.json`), "utf8"));
     expect(envelope.payload.results[0].transcription).toBe(cleaned);
     expect(r.digest).toEqual({ id: "004884748_02613", chars: cleaned.length, excerpt: "Name\nAnna Weber\nPeter Weber" });
   });
@@ -2078,5 +2085,112 @@ describe("imageTranscribeTool — connector time budget (self-hosted beta E5, #3
     const req = runOcrSpy.mock.calls[0][0];
     expect(req.timeoutMs).toBeGreaterThan(0);
     expect(req.timeoutMs).toBeLessThanOrEqual(6_000);
+  });
+});
+
+describe("imageTranscribeMcpTool — logs its own read (#4721)", () => {
+  let dir: string;
+  const research = () => ({
+    project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    questions: [], plans: [], log: [], sources: [], assertions: [], person_evidence: [], conflicts: [],
+    hypotheses: [], timelines: [], proof_summaries: [], evaluations: [],
+  });
+  const log = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8")).log as any[];
+  beforeEach(async () => {
+    dir = await makeProject();
+    await writeFile(join(dir, "research.json"), JSON.stringify(research()));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("a read with projectPath and no follow-up call leaves exactly one entry, under its plan item", async () => {
+    mockOpenRouterOk("Mary E. daughter of Benjamin F. & Mary L.");
+    const r = await imageTranscribeMcpTool(
+      { ark: "ark:/61903/3:1:S3HY-6WS9-MSB", projectPath: dir, planItemId: "pli_004" },
+      LOCAL,
+    );
+    const entries = await log();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      id: r.logId,
+      tool: "image_transcribe",
+      written_by: "image_transcribe",
+      plan_item_id: "pli_004",
+      outcome: "positive",
+      results_examined: 1,
+      staged_ref: r.staged!.resultsRef,
+      results_ref: `results/${r.logId}.json`,
+      query: { ark: "ark:/61903/3:1:S3HY-6WS9-MSB" },
+    });
+    expect(r).not.toHaveProperty("logRefused");
+  });
+
+  it("files an ad-hoc read under no plan item", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect((await log())[0].plan_item_id).toBeNull();
+  });
+
+  it.each([
+    ["FOUND", "positive"],
+    ["NOT FOUND", "negative"],
+    ["no marker", "partial"],
+  ])("a found check answering %s logs %s", async (reply, outcome) => {
+    mockOpenRouterOk("Johann Schreck");
+    mockOpenRouterOk(reply);
+    await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir, lookingFor: "Schreck" }, LOCAL);
+    expect((await log())[0].outcome).toBe(outcome);
+  });
+
+  it("logs a truncated read partial", async () => {
+    mockOpenRouterOk("half a page", "length");
+    await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect((await log())[0].outcome).toBe("partial");
+  });
+
+  it("a read with no projectPath writes nothing", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    expect(r).not.toHaveProperty("logId");
+    expect(await log()).toEqual([]);
+  });
+
+  it("the shared function person_read and source_screen call writes nothing", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(await log()).toEqual([]);
+  });
+
+  it("a read whose staging failed writes nothing", async () => {
+    await rm(join(dir, "results"), { recursive: true, force: true });
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOpenRouterOk("still read");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(r.staged).toBeNull();
+    expect(await log()).toEqual([]);
+  });
+
+  it("an agent's hand-log of that page afterwards returns the tool's entry and writes no second one", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: r.staged!.resultsRef,
+      planItemId: "pli_009", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).alreadyLogged).toBe(true);
+    expect((again as any).logId).toBe(r.logId);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("reports a refused write and still answers the read", async () => {
+    await writeFile(join(dir, "research.json"), "{}");
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(r.staged).toBeTruthy();
+    expect(r.logRefused?.length).toBeGreaterThan(0);
+    expect(r).not.toHaveProperty("logId");
   });
 });

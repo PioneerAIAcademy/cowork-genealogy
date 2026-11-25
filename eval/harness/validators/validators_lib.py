@@ -224,8 +224,23 @@ def new_section_entries(
     return out
 
 
-def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
+#: `written_by` of the entry `image_transcribe` writes for its own page read
+#: (issue #4721). The tool's record, not the agent's.
+TOOL_LOGGED_READ = "image_transcribe"
+
+
+def new_log_entries(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    *,
+    include_tool_reads: bool = False,
+) -> list[dict]:
     """Log entries present in `after_state` but not `before_state`, by id.
+
+    Leaves out the entry `image_transcribe` writes for each page it reads
+    (`written_by: "image_transcribe"`): the validators count what the agent
+    logged, and a page read is not an entry the agent chose to write. Pass
+    `include_tool_reads=True` to see them.
 
     Takes the wrapped per-run state dicts ({"research_json": {...}, ...}),
     not the unwrapped research.json dict assert_log_append_only and its
@@ -237,7 +252,10 @@ def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -
     with no logic change, rather than matching the unwrapped convention
     the two helpers above use.
     """
-    return new_section_entries(before_state, after_state, "log")
+    entries = new_section_entries(before_state, after_state, "log")
+    if include_tool_reads:
+        return entries
+    return [e for e in entries if not (isinstance(e, dict) and e.get("written_by") == TOOL_LOGGED_READ)]
 
 
 def assert_log_append_only(

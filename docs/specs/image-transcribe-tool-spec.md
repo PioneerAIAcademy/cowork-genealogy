@@ -370,6 +370,7 @@ consistent across schema, manifest, and skill.)*
   file?: string       // project-relative path to an UPLOADED image/PDF inside the project (needs projectPath)
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
   projectPath?: string // absolute project-folder path; required with `file`; stages the read (§5.5) and saves an FS JPEG (§8.5)
+  planItemId?: string | null // the `pli_` plan item this read serves; the tool's own log entry is filed under it (§5.5.1)
 }
 ```
 
@@ -694,6 +695,8 @@ Text only, no image block:
   readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
   indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
                              // in a project, for an `ark` read whose page a held source's image_ark names
+  logId?: string             // the log entry this tool wrote for the read (§5.5.1)
+  logRefused?: string[]      // why that write was refused; the read still answers
 }
 ```
 
@@ -794,6 +797,43 @@ Why a tool and not prose: the same rules as `research/SKILL.md` lines were follo
 unchanged. Four of those five runs skipped the index lookup the lines asked for
 (scratch 2026-11-18). In the tool result, the index is in front of the model when it
 writes the reply, with no lookup to forget.
+
+### 5.5.1 Logging — the tool logs its own read
+
+Every read made through `imageTranscribeMcpTool` (`src/tools/image-transcribe-mcp.ts`) that stages a page in a project writes
+one `research.json` `log[]` entry itself, through `research_log_append`'s own write path
+(`researchLogAppend`, the same refusals and lock), with `written_by: "image_transcribe"`,
+`tool: "image_transcribe"`, `stagedResultsRef` = the read's `staged.resultsRef`,
+`plan_item_id` = `planItemId` (null when absent), `results_examined: 1`, and `query`
+defaulted from the staged payload's echo (the image named, plus `lookingFor`). The staged
+file becomes `results/<logId>.json`; `sidecar_read`, `extraction_append` and
+`waitingPages` all follow a logged staged ref to it, so the `staged.resultsRef` the
+caller holds keeps working.
+
+`outcome` (`readOutcome`): `negative` on `found: "NOT FOUND"`, `positive` on `FOUND` or
+when no `lookingFor` was sent, and `partial` on a truncated read or when a `lookingFor`
+was sent and no `found` came back (a found check that failed is not a hit).
+
+- **The MCP boundary only.** `person_read` and `source_screen` call
+  `imageTranscribeTool` for reads of their own, which are not research-log events.
+- **No ref, no entry.** A read whose staging failed (`staged: null`), a thrown read, and a
+  read with no project log nothing; an `image_transcribe` entry without its ref is refused.
+- **A refused write never fails the read:** the answer carries `logRefused`, as
+  `record_search` carries `nilLogRefused`.
+- **A later hand-log of the same page** returns this entry (`alreadyLogged`) whatever
+  `outcome` or `planItemId` it names, with a warning naming each difference and any note
+  it could not store (`research-log-editor-spec.md`).
+- **Not an extraction candidate.** `questionStatus`'s pending-extraction count skips a
+  `written_by: "image_transcribe"` entry: it records a read, not a find, and
+  `extraction_append` cites it when the page is extracted.
+
+Why the tool writes it (lead, 2026-11-23): a page the main thread transcribed and never
+logged left the project with no record it was read, so agents reported it missing or read
+it again. The tool's write beat filling a tool-written null
+`plan_item_id` from a later agent call, which would amend the append-only rule
+(`research-schema-spec.md`, "Why `log` is append-only"), and beat a prose line in
+`research/SKILL.md`, because ADR-0011 puts a rule decidable from the call alone at the
+write boundary.
 
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
@@ -1371,7 +1411,8 @@ built now.)
 
 A read of a page an indexed record sits on is not kept until
 `extraction_append({ attachWaitingPages: true })` copies it onto that record's source
-(`research-append-tool-spec.md` §11.9). This tool writes nothing to `research.json`.
+(`research-append-tool-spec.md` §11.9). Apart from its own log entry for the read (§5.5.1), this tool
+writes nothing to `research.json`.
 
 ## 8.5 Image persistence + viewing (retained sources only)
 

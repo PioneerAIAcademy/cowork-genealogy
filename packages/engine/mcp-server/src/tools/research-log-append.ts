@@ -2924,6 +2924,24 @@ export async function researchLogAppend(
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      // Issue #4721. `image_transcribe` logs its own read, so a later hand-log
+      // of that page is the same read, whatever outcome or plan item it names.
+      // Refusing it would send the caller to read the page again — the double
+      // read the tool's write exists to end. Its staged file is consumed, so a
+      // note it adds cannot become an entry of its own; the warning carries it
+      // back rather than dropping it behind `ok: true`.
+      const toolWrote =
+        prior.written_by === "image_transcribe" &&
+        op.writtenBy === undefined &&
+        (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
+      if (toolWrote) {
+        const note = typeof op.notes === "string" ? op.notes.trim() : "";
+        const extra: string[] = [];
+        if (differs.length > 0) extra.push(`it was logged by image_transcribe itself, so this re-send's ${differs.join(", ")} was not applied`);
+        if (note !== "" && !String(prior.notes ?? "").includes(note)) extra.push(`this note was not stored: "${note}"`);
+        if (extra.length > 0) opWarnings.push(`${ref} is ${found.logId}: ${extra.join("; ")}.`);
+        return found;
+      }
       if (differs.length > 0) {
         // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
         // so a correction to a logged page needs a page of its own, not no ref.
