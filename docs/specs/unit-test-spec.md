@@ -2746,7 +2746,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `added`: IDs in `after` but not in `before` — emit the full new object.
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
-3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
+3. **`project` and `researcher_profile` are single objects, not arrays.** Each is treated as a one-entry array for diffing purposes. `project` is keyed by its own `id` field, as any array entry would be. `researcher_profile` has no `id` field (`docs/specs/schemas/research.schema.json`, `$defs/researcher_profile`), so it is keyed on the section name itself, `"researcher_profile"` — the same synthetic `entryId` `research_append` echoes for a singleton-section write. A future single-object section added to the schema only needs adding to `diff.py`'s `_SINGLETON_SECTIONS`; it is keyed by its own `id` field if it has one, else falls back to its section name automatically.
 4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file an agent writes in the working folder) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.

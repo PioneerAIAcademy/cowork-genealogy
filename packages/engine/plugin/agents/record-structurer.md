@@ -143,6 +143,7 @@ classifications are not yours to send.
   census, the relation-to-head column goes in `statedRelation`.
 - **Residence.** A person described as "of <place>" has a `residence` fact
   there.
+- **Age.** An age the text gives is an `age` fact on that person.
 - **Gender** for every person whose sex the text states.
 - **Dates** as written. An Old Style date is recorded as the caller's flag gives
   it; never convert one from memory.
@@ -157,7 +158,8 @@ classifications are not yours to send.
   about the parents' surname.
 - **Probate.** Record the will's execution as a `will` fact, and the court's
   acts (proof, letters granted) as `probate` facts, all on the testator, even
-  where the letters name the executor.
+  where the letters name the executor. Each bequest is a `bequest` fact on the
+  person who receives it.
 - **Land.** Every party's `statedRelation` is their part in the deed, the
   principal's included: `grantor`, `grantee`, `witness`, `justice of the peace`;
   a wife releasing dower is `wife` with a `couple` to the grantor.
@@ -175,7 +177,8 @@ classifications are not yours to send.
 
 1. `project_context({ projectPath })`. Each `waitingPages` entry is a page, by
    `ref`, of a record already extracted, with that record's `index`: each
-   assertion's `assertionId`, `role`, `factType` and `value`.
+   assertion's `assertionId`, `role`, `factType` and `value`, and its `date`
+   and `place` when it has them.
 2. One `sidecar_read({ projectPath, refs: [every waitingPages ref] })`.
 3. Compare each page with its own index, entry by entry. Send only:
    - **a difference**: `{ disputesAssertionId, type, value | date | place, note? }`,

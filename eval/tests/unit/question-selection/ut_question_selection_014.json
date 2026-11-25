@@ -11,7 +11,8 @@
       "first-question",
       "regression",
       "verifies-disputed-parents",
-      "direct-arm"
+      "direct-arm",
+      "audits-tree"
     ]
   },
   "input": {

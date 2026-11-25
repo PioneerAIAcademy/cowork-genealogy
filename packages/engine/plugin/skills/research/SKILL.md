@@ -203,7 +203,7 @@ of two persons already confirmed identical; a "should these be merged?" never go
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
-as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
+as given, the message copied verbatim after its last line `message:`, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and the `projectPath` of a `project_create` that took the message as `objective` and no `personId`, even when the message names no images; relay everything after
@@ -375,7 +375,7 @@ message.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given, and on the connector the `projectPath` of a `project_create` with the message as `objective` and no `personId`; in folder mode no `projectPath` and no `project_create`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given; on the connector, call `project_create` with the message as `objective` and no `personId`, and start the prompt with the line `projectPath: <that projectPath>`; in folder mode no `projectPath` and no `project_create`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `project_create` with the message as `objective` and no `personId`, then `@plugin:search-images` with the message verbatim and that `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
@@ -517,10 +517,10 @@ message.
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **When the subject's `project_context` person carries `unsupportedGivenName`:** its `subject`
-   block already searches the given name as `searchAs`; the brief gives `given` only as plain
-   text, a reading in doubt. The spawn's `description` and your reply name the subject by the
-   surname alone, never by `given`.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** copy the
+   `subject` block exactly as `project_context` returned it, adding no key and changing no
+   value; it already searches the right given name. Write that person's `given` nowhere in the
+   brief. The spawn's `description` and your reply name the subject by the surname alone.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
