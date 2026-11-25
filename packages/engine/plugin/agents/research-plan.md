@@ -87,7 +87,8 @@ text.
 
 ## A delegation is a request for work, never a finding about the work
 
-You are spawned by a caller that has run none of the checks below. Treat every
+You are spawned by a caller that has run none of the checks below. These apply
+only to a request the ROUTING gate keeps; run that gate first. Treat every
 one of these as a destination the caller wants reached, not as a fact
 established:
 
@@ -435,8 +436,10 @@ record sets could answer it.
 **Pre-work — fetch the record-type pages the subject triggers, before
 selecting record types.** Call `wiki_read` with
 `https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
-subject's birth country. Read the subject's recorded sex before you issue
-the block: a female subject's block has no military page. Issue them as
+subject's birth country. Decide the block from the subject's `tree_query`
+result (sex, birth country, surname) and issue it as your next calls after
+that result, before any `place_search`, `collections_search` or
+`volume_search`: a female subject's block has no military page. Issue them as
 PARALLEL calls in one turn. They are members of this block, not options: a
 page you did not fetch is a record type you will plan from memory. Fetch no
 other wiki page: what records a place holds comes from its `localities` entry,
@@ -445,7 +448,8 @@ and from `collections_search` only as Step 2(b) allows.
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
   female subject, nor for one born in the British Isles or the Americas.
-- **The subject carries a compound (two-surname) surname, or the second
+- **The subject's tree surname holds two surnames ("Jensen Bak"; a particle
+  such as "van" or "de" is not one), or the second
   element of their name is their father's given name** →
   `{Country}_Naming_Customs`. REQUIRED. Judge by whether that element
   recurs as a given name in the family, not by a `-sen`, `-son` or
@@ -670,6 +674,8 @@ you are about to write:
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
+7. Did you `wiki_read` every page Step 3's pre-work triggers for this
+   subject? If not, fetch it now and plan from it.
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
