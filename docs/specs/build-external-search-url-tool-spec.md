@@ -174,7 +174,7 @@ build_external_search_url({
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 // MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
-| { ok: true, url, handoffLine, notes, access, logId?: string }   // logId when projectPath was given
+| { ok: true, url, handoffLine, notes, access, logId?: string, captureSteps?: string }   // logId when the hand-off was logged; captureSteps inside a project
 | { ok: false, reason: "log_write_failed", errors: string[] }
 ```
 
@@ -716,6 +716,7 @@ nil.
 | MCP tool, `projectPath` given, folder holds neither project file | refused: `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
+| MCP tool, `projectPath` is a project, the build succeeds | `captureSteps` is the researcher's capture steps (scroll, Cmd+P or Ctrl+P, Save as PDF, upload, log in if asked), naming the project's upload page from `projectLinks` when the web tier serves one and "here" otherwise. A caller pastes it word for word: search-external-sites, composing the steps itself, dropped them or the link line in runs of `ut_search_external_sites_mcc` |
 | MCP tool, `projectPath` is a project, `awaitingCapture: false` | the build and both project checks run as above; on success nothing is logged and no `logId` is returned. The caller logs the search once itself |
 
 ---

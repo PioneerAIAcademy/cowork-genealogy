@@ -2314,6 +2314,24 @@ describe("build_external_search_url", () => {
       expect(await readLog()).toEqual([]);
     });
 
+    it("returns captureSteps naming the upload page when the project has one, else 'here'", async () => {
+      await writeFetchedProject();
+      const args = { site: "ancestry", attributes: { surname: "Flynn" }, projectPath: dir, standardPlace: PA } as const;
+      const here = await buildExternalSearchUrlTool({ ...args });
+      expect(here.ok && here.captureSteps).toBe(
+        "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+          "Ctrl+P (Windows), choose Save as PDF, and upload it here. Log in first if the page asks.",
+      );
+      const hosted = await buildExternalSearchUrlTool({ ...args, awaitingCapture: false }, {
+        uploadUrl: "https://web.example/upload/proj_0123456789abcdef",
+      });
+      expect(hosted.ok && hosted.captureSteps).toMatch(
+        /and upload it at https:\/\/web\.example\/upload\/proj_0123456789abcdef\. Log in first/,
+      );
+      const outside = await buildExternalSearchUrlTool({ site: "findagrave", attributes: { surname: "Flynn" } });
+      expect(outside.ok && outside.captureSteps).toBeUndefined();
+    });
+
     it("writes nothing with awaitingCapture false, but still runs the project checks", async () => {
       await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({

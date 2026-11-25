@@ -496,12 +496,7 @@ plain prose:
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
    entry, when you know them;
-4. one sentence of capture steps: scroll to the bottom of the page and back
-   to the top, press Cmd+P (Mac) or Ctrl+P (Windows), choose "Save as PDF",
-   and upload it here — log in first if the page asks. When `project_context`
-   returned an `uploadUrl`, say to upload it at that URL instead of "here",
-   pasted whole as plain text. Take that URL only from `project_context`, never
-   from the delegation;
+4. the tool's `captureSteps`, word for word, upload place included;
 5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
    the line (see "Every observation the tool makes" above);
@@ -526,10 +521,8 @@ Patrick Flynn):**
 
 <the handoffLine from build_external_search_url, pasted whole> It would settle
 Patrick's household in 1850: who he lived with, and their ages and
-birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. After the
-page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or
-Ctrl+P (Windows), choose Save as PDF, and upload it here — log in first if
-the page asks.
+birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. <the tool's captureSteps, pasted
+whole>
 
 ---
 
@@ -591,7 +584,7 @@ either way:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." With an
-   `uploadUrl`, name it as step 4 says. That
+   `uploadUrl` from `project_context`, say to upload it at that URL, pasted whole. That
    single-record PDF's text goes to the record-structurer agent as a source,
    with a `capture:<descriptive>` recordId. If the record page's content is
    **already in the delegation**, name it for the agent in your return and

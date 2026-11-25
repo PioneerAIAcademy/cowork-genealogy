@@ -10,6 +10,7 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import { classifyProjectPath } from "../utils/project-io.js";
+import type { ProjectLinks } from "../utils/project-links.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -118,7 +119,7 @@ export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlI
 }
 
 export type BuildExternalSearchUrlToolResult =
-  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string })
+  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string; captureSteps?: string })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
   | { ok: false; reason: "place_not_fetched"; errors: string[] }
   | { ok: false; reason: "log_write_failed"; errors: string[] };
@@ -1611,6 +1612,7 @@ async function placeNotFetchedError(projectPath: string, standardPlace: unknown)
 // so `project_context`'s `awaitingUser` sees every URL handed to the user.
 export async function buildExternalSearchUrlTool(
   input: BuildExternalSearchUrlToolInput,
+  links: ProjectLinks = {},
 ): Promise<BuildExternalSearchUrlToolResult> {
   const result = buildExternalSearchUrl(input);
   if (!result.ok) return result;
@@ -1633,7 +1635,7 @@ export async function buildExternalSearchUrlTool(
     if (refusal) return { ok: false, reason: "place_not_fetched", errors: [refusal] };
   }
 
-  if (input.awaitingCapture === false) return result;
+  if (input.awaitingCapture === false) return { ...result, captureSteps: captureSteps(links.uploadUrl) };
 
   const attributes = coerceJsonArg(input.attributes);
   const query =
@@ -1663,7 +1665,18 @@ export async function buildExternalSearchUrlTool(
   }
   const notes = [...result.notes, ...logged.validation.warnings];
   if (logged.escalationDue) notes.push(logged.escalationDue);
-  return { ...result, notes, logId: logged.logId };
+  return { ...result, notes, logId: logged.logId, captureSteps: captureSteps(links.uploadUrl) };
+}
+
+/** The researcher's capture steps for a hand-off awaiting a capture, written here
+ *  so a caller pastes them rather than composing them. The upload place is the
+ *  project's upload page when the web tier serves one, else "here". */
+export function captureSteps(uploadUrl: string | undefined): string {
+  const where = uploadUrl ? `at ${uploadUrl}` : "here";
+  return (
+    "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+    `Ctrl+P (Windows), choose Save as PDF, and upload it ${where}. Log in first if the page asks.`
+  );
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -1691,7 +1704,8 @@ export const buildExternalSearchUrlSchema = {
     "researcher, carrying the same URL: paste it whole and never retype the URL. " +
     "Given `projectPath`, it also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
-    "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "to research.json and returns its `logId` — do not log that hand-off again — and " +
+    "`captureSteps`, the researcher's capture steps, to paste word for word. " +
     "With awaitingCapture false (results already in hand, or no researcher to make the " +
     "capture) it writes no entry: log the search once yourself. " +
     "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +

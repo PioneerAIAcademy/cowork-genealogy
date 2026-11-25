@@ -3113,6 +3113,13 @@ def _make_compiled_tool_handler(
                 call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
+            # Production passes the bound project's links (`projectLinks`) so the
+            # capture steps name the upload page; a hosted test's link is the one
+            # its project_context serves.
+            if tool_name == "build_external_search_url":
+                hosted_links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+                upload_url = (hosted_links or {}).get("uploadUrl")
+                call_args += ", " + json.dumps({"uploadUrl": upload_url} if upload_url else {})
 
             # A tool that resolves places gets the test's own answers and no
             # network: the table is installed in the resolver module the tool
