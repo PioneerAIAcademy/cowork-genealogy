@@ -16691,6 +16691,28 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
   });
 
+  it("still refuses 'completed' when the item's latest entry is a page image_transcribe logged itself (#4721)", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "image_transcribe",
+          written_by: "image_transcribe",
+          query: { file: "uploads/capture.pdf" },
+          notes: "1850 census household page",
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    const errs = failure(await researchAppend(setStatus("completed") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
+  });
+
   it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {
     await writeProject(captureResearch("skipped", false));
     const r: any = await researchAppend(setStatus("skipped") as any);

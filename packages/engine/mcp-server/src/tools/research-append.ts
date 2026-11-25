@@ -7699,6 +7699,7 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
     const tool = e.tool;
     if (
       e.plan_item_id === pid &&
+      !isToolLoggedRead(e) &&
       (tool === "external_site" ||
         (e.outcome === "positive" && tool !== "external_links_search"))
     ) {
