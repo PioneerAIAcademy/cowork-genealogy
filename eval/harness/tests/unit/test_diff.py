@@ -69,12 +69,63 @@ def test_project_section_treated_as_single_object():
     }
 
 
+def test_project_change_is_keyed_by_its_own_id():
+    # Pins that project keys on its own `id` field rather than falling back to
+    # the section name, unlike researcher_profile below which has no `id`.
+    d = diff_research_json(
+        {"project": {"id": "rp_1", "status": "active"}},
+        {"project": {"id": "rp_1", "status": "completed"}},
+    )
+    assert [m["id"] for m in d["diff"]["project"]["modified"]] == ["rp_1"]
+
+
 def test_handles_none_before_state():
     # init-project scenario: research.json didn't exist before
     after = {"project": {"id": "rp_1"}, "assertions": []}
     d = diff_research_json(None, after)
     assert "project" in d["diff"]
     assert d["diff"]["project"]["added"] == [{"id": "rp_1"}]
+
+
+def test_researcher_profile_created_from_nothing_shows_as_added():
+    # project_create seeds the fixed house profile; section is absent before.
+    before = {"project": {"id": "rp_1"}}
+    after = {
+        "project": {"id": "rp_1"},
+        "researcher_profile": {"experience_level": "novice", "narration_guidance": "x"},
+    }
+    d = diff_research_json(before, after)
+    assert "researcher_profile" in d["sections_modified"]
+    assert d["diff"]["researcher_profile"]["added"] == [
+        {"experience_level": "novice", "narration_guidance": "x"}
+    ]
+    assert d["diff"]["researcher_profile"]["modified"] == []
+
+
+def test_researcher_profile_subscriptions_change_shows_as_modified():
+    before = {
+        "researcher_profile": {"experience_level": "novice", "subscriptions": []},
+    }
+    after = {
+        "researcher_profile": {"experience_level": "novice", "subscriptions": ["ancestry"]},
+    }
+    d = diff_research_json(before, after)
+    assert "researcher_profile" in d["sections_modified"]
+    mods = d["diff"]["researcher_profile"]["modified"]
+    assert len(mods) == 1
+    assert mods[0]["id"] == "researcher_profile"
+    assert mods[0]["changed_fields"] == {
+        "subscriptions": {"before": [], "after": ["ancestry"]}
+    }
+
+
+def test_researcher_profile_no_change_omitted_from_sections_modified():
+    profile = {"experience_level": "novice", "narration_guidance": "x"}
+    before = {"researcher_profile": dict(profile)}
+    after = {"researcher_profile": dict(profile)}
+    d = diff_research_json(before, after)
+    assert "researcher_profile" not in d["sections_modified"]
+    assert "researcher_profile" not in d["diff"]
 
 
 def test_handles_none_after_state_returns_no_diff():
