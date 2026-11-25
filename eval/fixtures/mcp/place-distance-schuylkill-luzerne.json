@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Same Luzerne↔Schuylkill distance (55 km / 34 mi) with the arguments in the reverse order, recorded live 2026-11-25 from placeDistanceTool. For the competing-fathers parentage test. Matches the (Schuylkill, Luzerne) argument order.",
+  "args": {
+    "standardPlace1": "~Schuylkill",
+    "standardPlace2": "~Luzerne"
+  },
+  "response": {
+    "standardPlace1": "Schuylkill, Pennsylvania, United States",
+    "standardPlace2": "Luzerne, Pennsylvania, United States",
+    "miles": 34,
+    "kilometers": 55
+  }
+}
