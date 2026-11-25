@@ -77,6 +77,47 @@ def test_handles_none_before_state():
     assert d["diff"]["project"]["added"] == [{"id": "rp_1"}]
 
 
+def test_researcher_profile_created_from_nothing_shows_as_added():
+    # project_create seeds the fixed house profile; section is absent before.
+    before = {"project": {"id": "rp_1"}}
+    after = {
+        "project": {"id": "rp_1"},
+        "researcher_profile": {"experience_level": "novice", "narration_guidance": "x"},
+    }
+    d = diff_research_json(before, after)
+    assert "researcher_profile" in d["sections_modified"]
+    assert d["diff"]["researcher_profile"]["added"] == [
+        {"experience_level": "novice", "narration_guidance": "x"}
+    ]
+    assert d["diff"]["researcher_profile"]["modified"] == []
+
+
+def test_researcher_profile_subscriptions_change_shows_as_modified():
+    before = {
+        "researcher_profile": {"experience_level": "novice", "subscriptions": []},
+    }
+    after = {
+        "researcher_profile": {"experience_level": "novice", "subscriptions": ["ancestry"]},
+    }
+    d = diff_research_json(before, after)
+    assert "researcher_profile" in d["sections_modified"]
+    mods = d["diff"]["researcher_profile"]["modified"]
+    assert len(mods) == 1
+    assert mods[0]["id"] == "researcher_profile"
+    assert mods[0]["changed_fields"] == {
+        "subscriptions": {"before": [], "after": ["ancestry"]}
+    }
+
+
+def test_researcher_profile_no_change_omitted_from_sections_modified():
+    profile = {"experience_level": "novice", "narration_guidance": "x"}
+    before = {"researcher_profile": dict(profile)}
+    after = {"researcher_profile": dict(profile)}
+    d = diff_research_json(before, after)
+    assert "researcher_profile" not in d["sections_modified"]
+    assert "researcher_profile" not in d["diff"]
+
+
 def test_handles_none_after_state_returns_no_diff():
     # Skill ran but didn't write research.json at all
     before = {"assertions": [{"id": "a_1"}]}
