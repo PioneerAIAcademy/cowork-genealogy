@@ -1,0 +1,109 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'Pennsylvania, United States', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts. The state comes first, then same-named places.",
+  "args": {
+    "placeName": "~Pennsylvania, United States"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Pennsylvania, United States",
+        "type": "State",
+        "dateRange": "+1776/",
+        "latitude": 40.75,
+        "longitude": -77.75,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=338",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pennsylvania"
+      },
+      {
+        "standardPlace": "Pennsylvania, Mobile, Alabama, United States",
+        "type": "Neighborhood or suburb",
+        "latitude": 30.8731,
+        "longitude": -88.0475,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=3668419",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pennsylvania,_Alabama"
+      },
+      {
+        "standardPlace": "Pennsylvania Furnace, Franklin Township, Huntingdon, Pennsylvania, United States",
+        "type": "Hamlet",
+        "dateRange": "+1776/",
+        "latitude": 40.7058,
+        "longitude": -78.0039,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania%20Furnace&focusedId=8573622",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pennsylvania_Furnace,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Pennsylvania Township, Mason, Illinois, United States",
+        "type": "Township",
+        "dateRange": "+1861/",
+        "latitude": 40.2725,
+        "longitude": -89.7656,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania%20Township&focusedId=4036147",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pennsylvania_Township,_Mason_County,_Illinois",
+        "matchedName": {
+          "name": "Pennsylvania",
+          "lang": "en"
+        }
+      },
+      {
+        "standardPlace": "Fayette, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1783/",
+        "latitude": 39.919,
+        "longitude": -79.66,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Fayette&focusedId=395671",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Fayette_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1811/",
+        "latitude": 40.707,
+        "longitude": -76.185,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=393167",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Erie, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1800/",
+        "latitude": 41.98,
+        "longitude": -80.08,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Erie&focusedId=395670",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Erie_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Westmoreland, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1776/",
+        "latitude": 40.308,
+        "longitude": -79.47,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Westmoreland&focusedId=393180",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Westmoreland_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "York, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1776/",
+        "latitude": 39.9481,
+        "longitude": -76.7036,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=York&focusedId=393170",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/York_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Washington, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1781/",
+        "latitude": 40.189,
+        "longitude": -80.247,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Washington&focusedId=393177",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Washington_County,_Pennsylvania"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Pennsylvania, United States",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

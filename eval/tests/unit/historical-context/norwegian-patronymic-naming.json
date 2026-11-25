@@ -18,10 +18,13 @@
     "scenario": "person-less-project"
   },
   "mcp_fixtures": [
+    "wiki-read-norway-genealogy",
     "wiki-search-norwegian-patronymic-naming",
     "wikipedia-search-patronymic-norway",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-norway",
+    "place-search-any"
   ],
   "judge_context": [
     "Must explain that Norwegian surnames were patronymic — derived from the father's given name plus -sen (son) or -dóttir (daughter) — and were NOT fixed across generations until the end of the 19th century when fixed surnames began to occur",
