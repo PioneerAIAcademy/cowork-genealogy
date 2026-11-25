@@ -510,7 +510,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "spawn the agent with `historicalContext.prompt`\nas given, then a line `message:` and the message copied verbatim, and nothing else.",
+          "spawn the agent with `historicalContext.prompt`\nas given, the message copied verbatim after its last line `message:`, and nothing else.",
       },
       {
         side: "caller",

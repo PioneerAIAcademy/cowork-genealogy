@@ -5,7 +5,9 @@
 // own era ranges and a candidate answer ("anthracite coal mining in the
 // 1860s–1900s") in 3 of 8 runs of ut_research_ia2. Every fact the delegation holds
 // is in the project documents, so the tool writes it (ADR-0011) and the router
-// appends only the researcher's message.
+// appends only the researcher's message. The prompt ends on a bare `message:` line
+// for that: sent with no `message:` line at all, the delegation dropped the
+// researcher's words in 1 of 4 runs of ut_research_ia2.
 
 export interface HistoricalContextSpawn {
   agent: "historical-context";
@@ -40,7 +42,8 @@ function factText(person: any): string[] {
  * The spawn for a historical-context ask about the project's first subject:
  * `projectPath`, the objective named as the objective's, and every dated or
  * placed tree fact of the subject and its one-hop family (`family`, from the
- * tree's Couple and ParentChild edges). Null when the tree
+ * tree's Couple and ParentChild edges), ending on a bare `message:` line the
+ * router completes with the researcher's message. Null when the tree
  * holds no such subject.
  */
 export function historicalContextSpawn(
@@ -74,5 +77,6 @@ export function historicalContextSpawn(
     const name = displayName(person) ?? id;
     lines.push(`- ${name} (${id}, ${role}): ${facts.length > 0 ? facts.join("; ") : "no dated or placed facts"}`);
   }
+  lines.push("message:");
   return { agent: "historical-context", prompt: lines.join("\n") };
 }
