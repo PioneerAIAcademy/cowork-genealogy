@@ -69,6 +69,16 @@ def test_project_section_treated_as_single_object():
     }
 
 
+def test_project_change_is_keyed_by_its_own_id():
+    # Pins that project keys on its own `id` field rather than falling back to
+    # the section name, unlike researcher_profile below which has no `id`.
+    d = diff_research_json(
+        {"project": {"id": "rp_1", "status": "active"}},
+        {"project": {"id": "rp_1", "status": "completed"}},
+    )
+    assert [m["id"] for m in d["diff"]["project"]["modified"]] == ["rp_1"]
+
+
 def test_handles_none_before_state():
     # init-project scenario: research.json didn't exist before
     after = {"project": {"id": "rp_1"}, "assertions": []}
