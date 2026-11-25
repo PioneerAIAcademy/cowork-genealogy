@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_records_039",
+    "skill": "search-records",
+    "name": "A written-out surname spelling runs before FamilySearch marriages are called exhausted",
+    "type": "positive",
+    "description": "Shaped on alpha feedback #4743 (issue #4777): Charles Renhard's marriage, England 1895-1897, is indexed on FamilySearch as 'Charles Rheinhardt', 22 June 1896, Lancashire. FamilySearch's fuzzy match on 'Renhard' reaches Runyard and Render, not Reinhard, so searches under Renhard and the given-name variant Charls return a pool without him. The agent escalated to external sites after those alone. Tested by the deterministic validator test_surname_spelling_before_escalation: a record_search with a written-out surname spelling other than Renhard must run before any hand-back that calls FamilySearch exhausted or any plan-item close.",
+    "tags": [
+      "search",
+      "marriage",
+      "negative-result",
+      "surname-spelling-before-escalation",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run plan item pli_001: find the marriage of Charles Renhard in England, 1895-1897. He was born about 1866 in Germany and was living in Liverpool, Lancashire, by 1901; his first child was born about 1898 in Liverpool.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "renhard-marriage-england"
+  },
+  "mcp_fixtures": [
+    "record-search-renhard-marriage-england-1896-pool",
+    "record-search-reinhard-marriage-england-1896-page2",
+    "record-search-reinhard-marriage-england-1896",
+    "record-search-catch-all-empty",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GROUND TRUTH: FamilySearch indexes this marriage as 'Charles Rheinhardt', 22 June 1896, Lancashire (England Marriages, 1538-1973, ark:/61903/1:1:NNY1-W4R; also the Liverpool banns and marriages and the West Derby registration index). A search under Renhard, with any given name, returns five men named Runyard or Render and never him. A search under any written-out spelling containing 'einh' (Reinhard, Rheinhardt, Reinhardt) returns him. Both responses are live captures.",
+    "CORE: whether a written-out surname spelling ran before FamilySearch was called exhausted is decided by a deterministic validator (test_surname_spelling_before_escalation). Do not re-grade that under Nil escalation or Search strategy. What the judge grades is (a) the order: a given-name variant may come first, and a surname spelling must come before any hand-back; (b) whether the Rheinhardt rows are reported as a candidate for the subject needing review, on matching birth year, place and given name, not as proved and not excluded for the spelling.",
+    "Score Nil escalation 3 when, after the Renhard pool, the agent varies the surname's spelling and reaches the Rheinhardt marriage, reporting it as a candidate. Score 2 when it reaches the Rheinhardt rows but adopts them as the subject's marriage with no caution about the spelling.Score 1 when it hands back or concludes not found after Renhard and Charls alone.",
+    "Tool Arguments: a wildcard surname (R*nh*rd and the like) or a spelling without 'einh' (Rinehart, Rennard) falls through to an empty catch-all fixture. That is a fixture gap, not a Tool Arguments defect; score the dimension on the calls that matched a fixture.",
+    "Do NOT require extraction, a tree write, or naming the bride: the plan item staying in_progress with the Rheinhardt marriage named for follow-up is complete."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

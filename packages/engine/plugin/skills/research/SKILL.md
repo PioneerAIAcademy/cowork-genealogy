@@ -422,6 +422,11 @@ message.
      `research-exhaustiveness`, `person-evidence`): never spawn it for this line, whatever `<request>` asks; the routing table picks the next step.
      Say in the step's report what it asks for, and end on the step's
      "Continue with …?" line. An owner that is not an agent: ignore the line.
+   - A FamilySearch search is `search-records`' job. Never write a
+     `familysearch.org/search/record` or `/search/catalog/results` URL, and
+     never hand the researcher a FamilySearch search to run. When a step reports that `record_search` failed, say
+     FamilySearch search is not answering right now and offer to run that
+     search again.
    - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
      every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
      other source.
