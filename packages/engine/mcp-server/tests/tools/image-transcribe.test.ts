@@ -2185,6 +2185,36 @@ describe("imageTranscribeMcpTool — logs its own read (#4721)", () => {
     expect(await log()).toHaveLength(1);
   });
 
+  it("a refused plan item still leaves the page logged, under no plan item", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify({
+      ...research(),
+      questions: [{ id: "q_001", status: "open" }],
+      plans: [
+        { id: "pl_001", question_id: "q_001", status: "superseded", items: [{ id: "pli_001", sequence: 1, status: "planned" }] },
+      ],
+    }));
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, planItemId: "pli_001" },
+      LOCAL,
+    );
+    const entries = await log();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ id: r.logId, plan_item_id: null, written_by: "image_transcribe" });
+    expect(r.logRefused?.join(" ")).toMatch(/superseded/);
+  });
+
+  it("a malformed plan item still leaves the page logged", async () => {
+    mockOpenRouterOk("page");
+    const r = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, planItemId: "item-4" },
+      LOCAL,
+    );
+    expect((await log()).map((e) => e.plan_item_id)).toEqual([null]);
+    expect(r.logId).toBeTruthy();
+    expect(r.logRefused?.length).toBeGreaterThan(0);
+  });
+
   it("reports a refused write and still answers the read", async () => {
     await writeFile(join(dir, "research.json"), "{}");
     mockOpenRouterOk("page");

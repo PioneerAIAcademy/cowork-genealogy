@@ -1543,8 +1543,8 @@ _IMAGE_TRANSCRIBE_JS = _MCP_BUILD / "tools" / "image-transcribe-mcp.js"
 
 def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str, Any], ref: str) -> dict[str, Any]:
     """The log entry `image_transcribe` writes for its own staged read (#4721),
-    through the compiled `researchLogAppend` and `readOutcome`, so the entry is
-    production's field for field. `{"logId"}` on success, `{"logRefused"}` when
+    through production's compiled `logOwnRead` (its outcome, its retry without a
+    refused plan item), so the entry is production's field for field. `{"logId"}` on success, `{"logRefused"}` when
     the log tool refused; empty, with a warning, when the build is absent or node
     fails — a harness fault must not read as the tool declining to log."""
     if not (
@@ -1553,14 +1553,12 @@ def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str,
     ):
         return {}
     script = (
-        f"import {{ researchLogAppend }} from '{_node_module_url(_RESEARCH_LOG_APPEND_JS)}';"
-        f" import {{ readOutcome }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
+        f"import {{ logOwnRead }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
         " import { readFileSync } from 'node:fs';"
         " const i = JSON.parse(readFileSync(0, 'utf-8'));"
-        " const r = await researchLogAppend({ projectPath: i.projectPath, tool: 'image_transcribe',"
-        " stagedResultsRef: i.ref, planItemId: i.planItemId ?? null,"
-        " outcome: readOutcome(i.read, i.lookingFor ?? undefined), resultsExamined: 1,"
-        " writtenBy: 'image_transcribe' });"
+        " const r = await logOwnRead({ projectPath: i.projectPath, planItemId: i.planItemId ?? null,"
+        " ...(i.lookingFor ? { lookingFor: i.lookingFor } : {}) },"
+        " { staged: { resultsRef: i.ref, returnedCount: 1 }, ...i.read });"
         " process.stdout.write(JSON.stringify(r));"
     )
     payload = {
@@ -1578,9 +1576,7 @@ def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str,
     except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
         warnings.warn(f"mock image_transcribe could not write its log entry ({exc})", stacklevel=2)
         return {}
-    if not logged.get("ok"):
-        return {"logRefused": logged.get("errors") or []}
-    return {"logId": logged.get("logId")}
+    return {k: logged[k] for k in ("logId", "logRefused") if logged.get(k) is not None}
 
 
 def _unlogged_staged_handles(

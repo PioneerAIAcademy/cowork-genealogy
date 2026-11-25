@@ -819,12 +819,15 @@ was sent and no `found` came back (a found check that failed is not a hit).
 - **No ref, no entry.** A read whose staging failed (`staged: null`), a thrown read, and a
   read with no project log nothing; an `image_transcribe` entry without its ref is refused.
 - **A refused write never fails the read:** the answer carries `logRefused`, as
-  `record_search` carries `nilLogRefused`.
+  `record_search` carries `nilLogRefused`. A write refused with a `planItemId` (malformed,
+  or on a superseded plan) is retried once under no plan item, since a refused write keeps
+  its staged file: the page is still logged, and `logRefused` names why the plan item was
+  dropped.
 - **A later hand-log of the same page** returns this entry (`alreadyLogged`) whatever
   `outcome` or `planItemId` it names, with a warning naming each difference and any note
   it could not store (`research-log-editor-spec.md`).
-- **Not an extraction candidate.** `questionStatus`'s pending-extraction count skips a
-  `written_by: "image_transcribe"` entry: it records a read, not a find, and
+- **Not an extraction candidate.** `questionStatus`'s pending-extraction count and
+  `owedFindings`' `extract` finding both skip a `written_by: "image_transcribe"` entry: it records a read, not a find, and
   `extraction_append` cites it when the page is extracted.
 
 Why the tool writes it (lead, 2026-11-23): a page the main thread transcribed and never

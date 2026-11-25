@@ -83,6 +83,7 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
   for (const q of questions) {
     const tied = questionAssertions(research, q.id);
     // extract: a positive log entry on this question's plan item, with nothing extracted.
+    // A page `image_transcribe` logged itself is a read, not a find (as questionStatus).
     if (tied.length === 0) {
       const itemIds = new Set(
         arr(research?.plans)
@@ -90,7 +91,12 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
           .flatMap((p) => arr(p?.items).map((i) => i?.id)),
       );
       for (const e of arr(research?.log)) {
-        if (e?.outcome === "positive" && itemIds.has(e?.plan_item_id) && typeof e.id === "string") {
+        if (
+          e?.outcome === "positive" &&
+          e?.written_by !== "image_transcribe" &&
+          itemIds.has(e?.plan_item_id) &&
+          typeof e.id === "string"
+        ) {
           add("extract", e.id, [], "extraction — a positive search found a record for this question and nothing is extracted from it yet");
         }
       }

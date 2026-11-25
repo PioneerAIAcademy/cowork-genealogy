@@ -62,23 +62,34 @@ export function readOutcome(
  * read whose staging failed has no ref to log, and an entry without one is
  * refused (`imageToolEntryRefusal`), so it logs nothing.
  */
-async function logOwnRead(
+export async function logOwnRead(
   input: ImageTranscribeInput,
-  out: ImageTranscribeResult,
+  out: Pick<ImageTranscribeResult, "staged" | "found" | "truncated">,
 ): Promise<{ logId?: string; logRefused?: string[] }> {
   if (typeof input.projectPath !== "string" || !out.staged) return {};
-  const logged = await researchLogAppend({
-    projectPath: input.projectPath,
-    tool: "image_transcribe",
-    stagedResultsRef: out.staged.resultsRef,
-    planItemId: input.planItemId ?? null,
-    outcome: readOutcome(out, input.lookingFor),
-    resultsExamined: 1,
-    writtenBy: "image_transcribe",
-  });
+  const write = (planItemId: string | null) =>
+    researchLogAppend({
+      projectPath: input.projectPath as string,
+      tool: "image_transcribe",
+      stagedResultsRef: out.staged!.resultsRef,
+      planItemId,
+      outcome: readOutcome(out, input.lookingFor),
+      resultsExamined: 1,
+      writtenBy: "image_transcribe",
+    });
+  const planItemId = input.planItemId ?? null;
+  const logged = await write(planItemId);
   if (logged.ok && "logId" in logged) return { logId: logged.logId };
-  if (!logged.ok) return { logRefused: logged.errors };
-  return {};
+  if (logged.ok) return {};
+  // A refused plan item (malformed, or on a superseded plan) must not leave the
+  // page unlogged — that is the state this write exists to end. A refused write
+  // keeps its staged file, so the read is logged again under no plan item, and
+  // the refusal still rides back.
+  if (planItemId !== null) {
+    const retry = await write(null);
+    if (retry.ok && "logId" in retry) return { logId: retry.logId, logRefused: logged.errors };
+  }
+  return { logRefused: logged.errors };
 }
 
 /** The project leg's index beside the reading (issue #4578). */
