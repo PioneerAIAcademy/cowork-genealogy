@@ -1317,7 +1317,10 @@ _SURNAME_PREFIX = "surname:"
 # `index-reading:blank` is an index entry with no given name at all.
 _BLANK_INDEX = re.compile(
     r"\b(no|blank|without|empty|missing|omits?|left\s+out)\b[^.\n]{0,60}\bgiven[\s-]?name"
-    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)",
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)"
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\bindex\s+(does\s+not|doesn't)\s+have\b"
+    r"|\bindex\b[^.\n]{0,40}\b(only|just)\s+(the\s+|a\s+)?surname\b"
+    r"|\bindex\b[^.\n]{0,40}\bsurname\s+only\b",
     re.IGNORECASE,
 )
 # A single machine reading overruling the index, or a repeat pass counted as agreement.

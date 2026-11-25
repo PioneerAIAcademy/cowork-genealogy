@@ -510,7 +510,22 @@ table and contextual factors checklist.
   census co-residence) — but it does **not**, by itself, establish that
   the subject is their child — that link needs a record placing the
   child *with* the parents (see `research-exhaustiveness`). See
-  Appendix B ("Identifying parents").
+  Appendix B ("Identifying parents"). The subject's own birth record
+  and, when the subject has died, their death certificate are each an
+  item too. The subject has died when the tree or the log gives a death
+  date, a burial or an obituary for the subject. Each is planned, or `skipped` with `skip_category` `inaccessible`
+  (sealed or destroyed) or `no_coverage` (never kept for that place and
+  period) and a `skip_reason`.
+- **Plan no item whose only purpose is to test a tree claim that dated
+  evidence already in the project rules out** — a candidate couple who
+  married after the subject's own marriage, a candidate parent born too
+  late to be one. That couple is no longer a candidate: plan none of
+  their own records (their marriage, their children's baptisms, their
+  estates) and nothing in a place only that claim points to, and the
+  parents'-marriage item above does not apply to them. A doubt without
+  such a date does not rule a claim out. This rule only removes tree
+  claims; it never holds back a re-plan on new information the user
+  gives you, which you act on as asked.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
@@ -638,7 +653,8 @@ you are about to write:
    span the question's whole window, from the birth estimate to the
    death or last-known date, and is any item whose collection runs past
    that window sized to the collection rather than cut back to it?
-6. If a baptism may not exist (Step 3), is there an item for the
+6. If a baptism may not exist (Step 3), or on a parentage question whose
+   subject has died, is there an item for the
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
@@ -713,7 +729,7 @@ research_append({
 **Plan item fields:**
 
 - `record_type`: census, vital_record, probate, land, church,
-  military, newspaper, cemetery, tax, immigration, court, other
+  military, newspaper, cemetery, tax, immigration, court, fs_hints, other
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
@@ -729,9 +745,12 @@ research_append({
   `in_progress`, `completed`, or `skipped`. New items are `planned`. The
   one exception: on a question whose `question_kind` is `enumerative`, an
   event type the plan does not cover is written `skipped` with its
-  `skip_category` and `skip_reason` (Step 4 self-check 1). On any other
-  question, never write a new item `skipped`: leave out what you would not
-  search. Never use any other value (e.g. not `not_started`, not `pending`).
+  `skip_category` and `skip_reason` (Step 4 self-check 1). On a question
+  asking who the subject's parents are, and on no other question, so is the
+  subject's own birth record or death certificate that cannot be searched
+  (Step 3); a question asking for a date or place of birth or death is not
+  one. Otherwise never write a new item `skipped`:
+  leave out what you would not search. Never use any other value (e.g. not `not_started`, not `pending`).
 - `skip_category`: required whenever `status` is `skipped` — exactly
   one of `answered`, `inaccessible`, `no_coverage`,
   `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`,
@@ -885,13 +904,15 @@ the caller, in this order:
 - the plan's `pl_` id and its items in execution order, one line each: `pli_`
   id, record type, jurisdiction, repository, fallback relationship, and the
   rationale in one clause
-- when a baptism may not exist (Step 3), the `pli_` id of the item for the
-  subject's own death or burial entry; if the plan has none, append it before
-  you return
+- when a baptism may not exist (Step 3), or on a parentage question whose
+  subject has died, the `pli_` id of the item for the subject's own death or
+  burial entry; if the plan has none, append it before you return
 - for a parentage question whose plan you wrote this turn (create or
   supersede), the `pli_` id of the dedicated item for the candidate parents'
-  marriage to each other; if the plan you wrote has none, append it before
-  you return
+  marriage to each other; if the plan you wrote has none and a candidate
+  couple remains, append it before you return
+- each tree claim you planned no item for because dated evidence rules it
+  out (Step 3), one line: the claim and the dated evidence
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
