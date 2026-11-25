@@ -23,81 +23,21 @@ directly above it in all three env builders.
 
 from __future__ import annotations
 
-import asyncio
-import json
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
-from claude_agent_sdk import ClaudeAgentOptions
+from tests.unit.cli_capture import capture_request_bodies
 
 from harness.auth import AuthConfig, env_for_sdk
-from harness.sdk_query import close_query, open_query
 
 _MEMORY_BLOCK = "# Memory"
 VAR = "CLAUDE_CODE_DISABLE_AUTO_MEMORY"
 
 
 def _system_prompt(tmp_path, extra_env: dict[str, str]) -> str:
-    bodies: list[dict] = []
-
-    class Capture(BaseHTTPRequestHandler):
-        def do_POST(self):
-            raw = self.rfile.read(int(self.headers.get("content-length", 0)))
-            if self.path.startswith("/v1/messages") and "count_tokens" not in self.path:
-                bodies.append(json.loads(raw))
-            self.send_response(400)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(
-                b'{"type":"error","error":{"type":"invalid_request_error","message":"capture"}}'
-            )
-
-        def log_message(self, *args):
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), Capture)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    home = tmp_path / "home"
-    home.mkdir(exist_ok=True)
-    options = ClaudeAgentOptions(
-        cwd=str(tmp_path),
-        setting_sources=[],
-        permission_mode="bypassPermissions",
-        # Production's prompt, and the only one that carries the block.
-        system_prompt={"type": "preset", "preset": "claude_code"},
-        env={
-            **extra_env,
-            # The control arm leaves memory ON, so keep any write inside tmp.
-            "HOME": str(home),
-            "CLAUDE_CONFIG_DIR": str(home / ".claude"),
-            "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
-            "ANTHROPIC_API_KEY": "sk-capture",
-            "CLAUDE_CODE_OAUTH_TOKEN": "",
-            "ANTHROPIC_AUTH_TOKEN": "",
-            "ENABLE_TOOL_SEARCH": "false",
-        },
-        max_turns=1,
+    # The PRESET: with no system_prompt the request carries ~136 characters and
+    # no memory block in any arm, which is what made an earlier capture report
+    # that this could not be tested at all.
+    bodies = capture_request_bodies(
+        tmp_path, extra_env, system_prompt={"type": "preset", "preset": "claude_code"}
     )
-
-    async def main() -> None:
-        stream = open_query(prompt="hi", options=options)
-        try:
-            async for _ in stream:
-                if bodies:
-                    break
-        except Exception:
-            pass
-        finally:
-            await close_query(stream)
-
-    try:
-        asyncio.run(main())
-    finally:
-        server.shutdown()
-        # shutdown() stops serve_forever; the listening fd stays open without
-        # this, and the harness runs many CLI-spawning tests in one process.
-        server.server_close()
-
     for body in bodies:
         field = body.get("system")
         if field is None:
