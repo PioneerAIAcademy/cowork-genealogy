@@ -14,7 +14,8 @@
       "new-question-exhaustive-declaration-unstarted",
       "objective-scope-match",
       "single-fact-objective",
-      "direct-arm"
+      "direct-arm",
+      "not-audits-tree"
     ]
   },
   "input": {
