@@ -1,0 +1,110 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_038: any search with no surname, anchored on recordCountry + Caroline as the spouse (spouseGivenName). Reaches the actual 1925 household: 'John Boehner', b. about 1858 Iowa, with wife 'Caroline' — a transcription none of the tried Buehner-family spellings guesses. Issue #4699.",
+  "args": {
+    "spouseGivenName": "Caroline"
+  },
+  "response": {
+    "query": {
+      "givenName": "John",
+      "recordCountry": "United States",
+      "recordSubdivision": "Iowa",
+      "residenceYearFrom": 1925,
+      "residenceYearTo": 1925,
+      "spouseGivenName": "Caroline"
+    },
+    "totalMatches": 3,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:Q5XJ-BOEH",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1925",
+            "place": "Boone County, Iowa, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "John Boehner",
+        "sex": "Male",
+        "birthDate": "1858",
+        "birthPlace": "Iowa, United States",
+        "collectionId": "2224537",
+        "recordTitle": "Household of John Boehner",
+        "recordArk": "ark:/61903/1:2:Q5XJ-BOEH",
+        "role": "Principal",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Caroline Boehner"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q5XJ-JHON",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1925",
+            "place": "Polk County, Iowa, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "John Hansen",
+        "sex": "Male",
+        "birthDate": "1871",
+        "birthPlace": "Iowa, United States",
+        "collectionId": "2224537",
+        "recordTitle": "Household of John Hansen",
+        "recordArk": "ark:/61903/1:2:Q5XJ-JHON",
+        "role": "Principal",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Caroline Hansen"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q5XJ-JSMI",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1925",
+            "place": "Linn County, Iowa, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "personName": "John Smith",
+        "sex": "Male",
+        "birthDate": "1880",
+        "birthPlace": "Iowa, United States",
+        "collectionId": "2224537",
+        "recordTitle": "Household of John Smith",
+        "recordArk": "ark:/61903/1:2:Q5XJ-JSMI",
+        "role": "Principal",
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Caroline Smith"
+          }
+        }
+      }
+    ],
+    "collections": {
+      "2224537": "Iowa, State Census, 1925"
+    }
+  }
+}
