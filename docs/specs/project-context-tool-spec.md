@@ -40,14 +40,15 @@ part 2a branch, `owedFindings` included). This tool computes it host-side.
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string, include?: ("persons" | "sources" | "status")[] })
+project_context({ projectPath: string, include?: ("persons" | "sources" | "status" | "historicalContext")[] })
 ```
 
 `include` is an optional closed list naming the larger lists to return; an
 unknown value is refused with `{ ok: false, errors, buildId }`, the errors
-reading `include must be an array of: persons, sources, status.` `"persons"` and
-`"sources"` are returned whether or not they are passed (§3, "A projection, not
-a query language"); `"status"` is returned only when named (§2.9).
+reading `include must be an array of: persons, sources, status, historicalContext.`
+`"persons"` and `"sources"` are returned whether or not they are passed (§3, "A
+projection, not a query language"); `"status"` (§2.9) and `"historicalContext"`
+(§2.2.3) are returned only when named.
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -62,8 +63,9 @@ repo's identifier-casing rule).
 **Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
 is left out, at every level of the answer. Two nulls are answers and stay:
 `questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
-(`research_query` would refuse the section). Every `?` below is a key this rule
-can drop:
+(`research_query` would refuse the section). One exception in meaning: a
+person's `spouseIds`, `parentIds` and `childIds` (see `persons`). Every `?` below
+is a key this rule can drop:
 
 ```typescript
 {
@@ -72,6 +74,7 @@ can drop:
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
   subjectPersonIds?: string[],           // research.project.subject_person_ids
+  familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
   subscriptions?: string[],              // researcher_profile.subscriptions
   openQuestions?: [{
@@ -116,6 +119,7 @@ can drop:
     name?: string,                       // preferred names entry, "Given Surname";
                                          //   the surname alone when
                                          //   unsupportedGivenName flags the given name
+    pid?: string,                        // FamilySearch ID, from a tree-person ark or URL only
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -213,14 +217,23 @@ Projection rules:
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; absent when the
-  person has no names). The `S` ids a person cites are not here: `tree_query`
+  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`),
+  uppercased: the FamilySearch ID of a tree-person (`4:1:`) ark or a tree person
+  URL. A record or image ark, or no ark, leaves it out, so a record persona id is
+  never shown as a PID. The `S` ids a person cites are not here: `tree_query`
   returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  skipped; ids are distinct, in edge order. For a person not in
+  `familyReadPersonIds`, an absent or short one of these three keys means
+  **not copied** from Family Tree, never none: their parents, other spouses (a
+  stepparent) and children may be there. The description tells the model to say
+  "not in the project tree", to say what Family Tree records only after
+  `person_read` of the person's `pid` and only when the answer depends on it,
+  and that a person with no `pid` cannot be checked. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
   (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.
@@ -286,10 +299,31 @@ Projection rules:
   only). Every skill's Narration line and `search-external-sites` read these;
   no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
   facts are not here: `tree_query` serves them, so this projection does not grow for callers
-  that never need them.
+  that never need them. Lead ruling 2026-11-23: the PID exception to
+  "No identifiers" belongs in the main thread's house text (`HOUSE_RESEARCHER_PROFILE`)
+  only; the plugin agents' "No identifiers" return-contract lines stay unchanged.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
+- **`familyReadPersonIds`** — the tree persons whose own spouses, parents and
+  children were read from Family Tree, in tree order; absent when none were
+  (`familyReadPersonIds` in `src/utils/import-baseline.ts`, shared with
+  `tree_query`). The project tree is a copy of part of Family Tree: the person
+  `project_create` read and that person's own family. A relative in the copy
+  (a spouse, a parent) had their own family left out, so a missing relative of
+  theirs is not copied, not none. The person read is the one whose `ark` carries
+  the PID in the first Family Tree source titled `FamilySearch Family Tree (read
+  from <Name>, <PID>)`, which `buildFromStagedRead` writes as `S1`. Only the
+  first counts, so a later source given the same title (any writer can set a
+  title) cannot add a person whose family was never read. It is anchored on that
+  read and never on `subjectPersonIds`: `project_create` takes the subjects
+  separately, so a caller can make the wife the subject while her family was
+  never read, and a two-subject project has two subjects but one read. A tree
+  with no such source (a project made before the title named the read, or most
+  eval fixtures) gives no key: no person's family is known to have been read in
+  full. A person added later by `tree_edit` or a merge is never in it unless
+  its `ark` carries that PID. One top-level key, rather than a flag on every
+  `persons` row, because `persons` is the largest part of the answer.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
@@ -557,8 +591,9 @@ Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `proof-conclusion` resolves the question it concludes, in the same batch as the
 summary (its step 7), and leaves the question open only when its preconditions gate
 blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
-resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
-naming its latest summary. That arm sits below the conflict arms, so while the
+resolved reports `proof-conclusion — concluded while blocked: re-conclude this
+question's proof summary`. It names no summary id, as `owedFindings` names none (§2.9).
+That arm sits below the conflict arms, so while the
 blocking conflict is still open the question routes to `conflict-resolution` instead,
 and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
@@ -887,9 +922,33 @@ advisory `raise`, `claims` and `frame`. `blocksCompletion` is true for `conclude
 and `hypothesis`; completing a project with one, or with an `encode` item, warns
 (research-append-tool-spec §5.2) and never refuses until Stage 1c. `nextStep`
 keeps the `unit — detail` shape of `questionStatuses`; an `encode` item routes to
-proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
+proof-conclusion. An owed item's `nextStep` names no id: `ref` carries it, and the detail says what
+is owed in words (`proof-conclusion — this question has 2 tied assertion(s) and no
+proof summary`, `proof-conclusion — encode father`). An `encode` or `raise` detail
+still prints the claim's own `claim` text, or `claims[<i>]` when it has none.
+**Decided (lead, 2026-11-19):** the status answer repeats `nextStep` to the
+researcher and must name no id, so an owed item's id lives only in `ref`; no
+separate plain-words field is added. The ruling covers `owedFindings` and the
+concluded-while-blocked arm only; the other `questionStatuses` arms still name ids. It sits before `questionStatuses` in the answer, so a reader
 scoping to that array by its key does not take an owed item's step for a
 question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
+
+### 2.2.3 `historicalContext` — the historical-context step, written out
+
+Only under `include: ["historicalContext"]`, and only when the tree holds
+`subject_person_ids[0]`: `historicalContext: {agent: "historical-context", prompt}`
+(`src/utils/historical-context-spawn.ts`). The prompt is a `projectPath:` line, the
+objective on a line naming it as the researcher's and not a tree fact, then one line
+per person, the subject first and then its parents, spouses and children from the
+tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
+place as `Type date, place`, or "no dated or placed facts". The router spawns the
+agent with that prompt as given, then a `message:` line holding the researcher's
+message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+
+Why a tool writes it: told to call `tree_query` and hand over only the places and
+years it returned, a Haiku 5.5 low router added its own era ranges and a candidate
+answer in 3 of 8 runs of `ut_research_ia2`. Every line is in the project documents
+(ADR-0011's first question).
 
 `status` (only under `include: ["status"]`) lists one row per tree fact and edge
 from `src/utils/conclusion-status.ts` (Decision 6): `{holder, factId?, label,
@@ -908,7 +967,7 @@ the project has one. Pinned by `docs/specs/schemas/conclusion-status-vectors.jso
 - **A projection, not a query language.** The shape is stable so an agent
   prompt can say "check `persons[].parentIds`"; the only selector is `include`,
   a **closed list** of the larger lists to return (values `"persons"`,
-  `"sources"` and `"status"`), not open-ended field selection. A list rather
+  `"sources"`, `"status"` and `"historicalContext"`), not open-ended field selection. A list rather
   than `includeX` booleans because the conclusion-tree work adds `"status"` and
   `"view"` to the same list (lead, 2026-11-09). Several readers consume the tool
   (the research skill, question-selection, hypothesis-tracking,
@@ -1002,7 +1061,7 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
-| `include` is not an array, or names a value other than `"persons"` or `"sources"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
+| `include` is not an array, or names a value outside `"persons"`, `"sources"`, `"status"` and `"historicalContext"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else absent |

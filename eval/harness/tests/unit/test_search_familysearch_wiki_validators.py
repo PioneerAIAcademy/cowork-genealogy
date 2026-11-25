@@ -48,7 +48,6 @@ from test_search_familysearch_wiki import (  # noqa: E402
     report_reply_does_not_restate_the_logged_entry as check_brevity,
     test_census_era_boundaries_preserved as check_census_eras,
     test_empty_results_logs_one_negative as check_empty_logs_negative,
-    test_no_project_returns_template as check_no_project,
     test_one_log_entry_appended as check_one_entry,
     test_sources_section_matches_wiki_results as check_sources,
     test_stated_navigation_preserved as check_nav,
@@ -161,8 +160,8 @@ def test_one_entry_fires_on_a_md_written_alongside():
         )
 
 
-@pytest.mark.parametrize("tag", ["no-results", "no-project"])
-def test_one_entry_skips_the_empty_and_no_project_paths(tag):
+@pytest.mark.parametrize("tag", ["no-results"])
+def test_one_entry_skips_the_empty_path(tag):
     with pytest.raises(pytest.skip.Exception):
         check_one_entry(EMPTY, EMPTY, _tags(tag))
 
@@ -553,53 +552,6 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
-
-
-# --- test_no_project_returns_template -----------------------------------
-
-_TEMPLATE_RETURN = (
-    _good_file(RESULT_A)
-    + "\n---\nYou asked how to find death records. The wiki's guidance is shown "
-    "above with the pages it came from.\n\nNext, pick a record set to search."
-)
-
-
-def _np(after=None, text=_TEMPLATE_RETURN, results=(RESULT_A,)):
-    return dict(
-        before_state=EMPTY,
-        after_state=after if after is not None else EMPTY,
-        tool_calls=_wiki_call(*results),
-        agent_returns=[{"subagent_type": "search-familysearch-wiki", "text": text}],
-        text_response="relay",
-        test=_tags("fs-wiki", "no-project"),
-    )
-
-
-def test_no_project_passes_a_template_return():
-    check_no_project(**_np())
-
-
-def test_no_project_is_inert_without_the_tag():
-    kwargs = _np(after=_logged(_good_file(RESULT_A)))
-    kwargs["test"] = _tags("fs-wiki")
-    with pytest.raises(pytest.skip.Exception):
-        check_no_project(**kwargs)
-
-
-@pytest.mark.parametrize(
-    "kwargs, match",
-    [
-        (_np(after=_logged(_good_file(RESULT_A))), "nothing may be logged"),
-        (_np(after=_state(**{"death-records.md": "x"})), "not a file"),
-        (_np(text="Saved the guidance to the research log.\n---\nDone."), "# FamilySearch Wiki:"),
-        (_np(text="Saved.\n---\n" + _good_file(RESULT_A)), "# FamilySearch Wiki:"),
-        (_np(text=_good_file(RESULT_A).replace(_URL_A, "")), _URL_A),
-    ],
-    ids=["logged-anyway", "wrote-a-file", "claims-a-save", "template-below-separator", "dropped-source"],
-)
-def test_no_project_fires(kwargs, match):
-    with pytest.raises(AssertionError, match=re.escape(match)):
-        check_no_project(**kwargs)
 
 
 # --- report_reply_does_not_restate_the_logged_entry (tier 2) -------------

@@ -1,0 +1,76 @@
+{
+  "tool": "record_read",
+  "description": "The Minnesota county marriage record attached to Christian P. Hole (KD96-TV2) in the christian-hole-screened scenario: Christian P. Hole and Inger, married 1 May 1898 in Polk County, the date and county the profile gives. It indexes no birth year or birthplace for either party, so it neither agrees nor disagrees with the 1885 census on a vital, and it is the attachment source_screen returns `fine` for in source-screen-hole-screened. Synthetic, like the other HOLE-00x records.",
+  "args": {
+    "recordId": "~HOLE-004"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Christian P.",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Marriage",
+            "date": "1 May 1898",
+            "place": "Polk, Minnesota, United States"
+          }
+        ],
+        "ark": "ark:/61903/1:1:HOLE-004",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Minnesota, County Marriages, 1860-1949"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Inger",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F2",
+            "type": "Marriage",
+            "date": "1 May 1898",
+            "place": "Polk, Minnesota, United States"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Minnesota, County Marriages, 1860-1949",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-004"
+      }
+    ]
+  }
+}

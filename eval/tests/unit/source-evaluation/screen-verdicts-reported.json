@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_s3q",
+    "skill": "source-evaluation",
+    "name": "source_screen verdicts are reported as given: the misattributed source is detached, the fine one is no finding",
+    "type": "positive",
+    "description": "Issue #3504. The first test in which source_screen returns verdicts rather than ok:false or not_scored rows. The scenario christian-hole-screened is the Hole subject KD96-TV2 after person mode has run (research.json and results/ are runExtractionAppend's real output), and source-screen-hole-screened is the real tool's answer on it (stub matcher, no image read): S3, the 1885 Minnesota state census of a different Christian Hole, is misattributed; S4, an 1898 Polk County marriage that indexes no birth, is fine; S1 (1900 census) and S2 (death index) are contradicts, naming S3, because their birth years disagree with its 1852. The agent body says a verdict other than not_scored is that source's classification at step 4. What this pins: the misattributed verdict reaches the reply as kind (b) with a detach recommendation, the fine attachment is not turned into a finding, and no attachment the tool classified is re-classified by the agent's own reading.",
+    "tags": [
+      "source-screen",
+      "misattribution",
+      "index-discrepancy",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Are the sources on this profile right? Christian P. Hole, KD96-TV2.\n\nprojectPath: <workspace>",
+    "scenario": "christian-hole-screened"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "mcp_fixtures": [
+    "person-read-hole-screened",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "record-read-hole-1898-marriage",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail",
+    "source-screen-hole-screened"
+  ],
+  "judge_context": [
+    "Should call source_screen once with personId KD96-TV2 and the projectPath. Its answer gives a verdict for each of the project's four attachments: S1 (1900 census, HOLE-001) fine, S2 (Minnesota death index, HOLE-002) weak, S3 (1885 Minnesota state census, HOLE-003) misattributed and naming S1 and S2 as the attachments it contradicts, S4 (1898 Polk County marriage, HOLE-004) fine. FamilySearch's person_read names the same records SD-HOLE-A, -B, -C and -F; the record ARK is what ties the two ids together.",
+    "The 1885 Minnesota State Census (S3 / SD-HOLE-C) must be reported as misattributed, kind (b): the record is about a different Christian Hole, and the remedy is to detach it from this profile. Grade on the classification and the detach recommendation, not on wording. Supporting it with the fields that disagree (born 1852 against 1875, Otter Tail County against Polk, a wife Bergit) or with the tool's own reasons is good; naming KD96-WX7 as the record's true subject is supported only after a person_read of KD96-WX7.",
+    "The 1898 marriage (S4 / SD-HOLE-F) and the 1900 census (S1 / SD-HOLE-A) have the verdict fine and must NOT be reported as findings of any kind. Listing it among the sources checked and found consistent is correct.",
+    "The agent must not re-classify an attachment the tool gave a verdict. Calling the 1885 census an index error or a mere conflict to be resolved, rather than misattributed, is wrong; raising the marriage as a problem is wrong; calling the 1900 census or the death index misattributed, or recommending either be detached, is wrong. S3's row names S1 and S2 as the attachments its birth year contradicts; saying that disagreement goes away once the 1885 record is detached is consistent with the tool.",
+    "The death index is weak: its reasons carry its death date, 10 June 1954, against the profile's 10 June 1945. Reporting that discrepancy and recommending the original be re-read is acceptable; recommending the death index be detached is not. The image check did not run, so a reply must not claim the page image confirmed or refuted the index.",
+    "The 1900 census indexes a birth year of 1877 against the profile's 1875; that is ordinary census variance and must not be reported as an error of its own. Saying nothing about it is also acceptable.",
+    "The uploaded funeral card (SD-HOLE-D) has no record ARK and no source_screen row; it must be reported as unchecked, not as clean and not as misattributed.",
+    "SD-HOLE-E is attached to a CHILD of the subject, not to the subject. It is outside the audit list, so the reply must not report it at all."
+  ],
+  "index_error_source": "Minnesota Death Index"
+}

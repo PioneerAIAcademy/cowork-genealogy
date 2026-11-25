@@ -12,7 +12,6 @@ import {
 } from "../../src/tools/sidecar-read.js";
 import { writerToolResult } from "../../src/tool-result.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
-import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
 import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { escapedBody } from "../helpers/wiki-pages.js";
@@ -428,12 +427,10 @@ describe("sidecar_read", () => {
     expect(two.reason).toBe("not_text");
   });
 
-  it("answers no_project (the read sentence) in a folder holding neither project file", async () => {
+  it("is refused in a folder holding neither project file", async () => {
     const empty = await mkdtemp(join(tmpdir(), "sidecar-read-empty-"));
     try {
-      const r = await sidecarRead({ projectPath: empty, ref: "uploads/a.txt" });
-      expect(r).toEqual({ ok: false, reason: "no_project", errors: [NO_PROJECT_MESSAGE_READ] });
-      expect(writerToolResult(r).isError).toBeUndefined();
+      await expect(sidecarRead({ projectPath: empty, ref: "uploads/a.txt" })).rejects.toThrow(/^No project:/);
     } finally {
       await rm(empty, { recursive: true, force: true });
     }

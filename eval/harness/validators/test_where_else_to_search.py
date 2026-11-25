@@ -115,15 +115,15 @@ def test_every_suggested_link_reaches_the_user(tool_calls, agent_returns, text_r
     assert not above_only, f"built links above the `---` but missing from the user-facing block: {above_only}"
 
 
-def test_no_tool_outside_the_three_and_no_project_path(tool_calls, test):
+def test_no_tool_outside_the_three_and_a_project_path(tool_calls, test):
     tags = test.get("tags", [])
     if "where-else" not in tags and "no-search-no-write" not in tags:
         pytest.skip("not a where-else-to-search test")
     for c in tool_calls or []:
         name = bare_tool_name(c.get("tool", ""))
         assert name in _TOOLS, f"called {name}, which this agent does not hold"
-        assert "projectPath" not in (c.get("args") or {}), (
-            f"{name} was passed a projectPath; this agent has no project and must write nothing"
+        assert (c.get("args") or {}).get("projectPath"), (
+            f"{name} was called without projectPath; the gate refuses it"
         )
 
 

@@ -2,8 +2,8 @@
 name: tree-survey
 description: >-
   Reads a FamilySearch tree up and down, finds the holes FamilySearch likely has
-  records for, and suggests 3-5 people and one research question each, before any
-  project exists. Invoke when no research.json exists and the user asks "what
+  records for, and suggests 3-5 people and one research question each. In folder
+  mode it runs with no project. Invoke when the project has no person and the user asks "what
   should I research in my tree?", "find gaps in my tree", "where should I
   start?", "what's missing in my tree?", or has a FamilySearch tree and no
   question yet. Takes an optional FamilySearch person ID; omit it to survey the
@@ -34,9 +34,10 @@ for, and suggest where to start. You write nothing and create nothing.
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
+| `projectPath` | no | The project the survey runs in, when the delegation has one. |
 | `personId` | no | FamilySearch tree-person ID to survey from. Omit it to survey the logged-in user's own tree. |
 
-A `projectPath` in the delegation is not a reason to refuse.
+A delegation with no `projectPath` is not a reason to refuse.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -61,7 +62,7 @@ Otherwise proceed.
 
 ### 1. Survey
 
-Call `tree_gaps` with `personId` when given, otherwise with no arguments. Use the
+Call `tree_gaps` with `personId` when given, otherwise with no arguments; add `projectPath` when the delegation has one. Use the
 defaults. If it errors, relay the error and stop; if it asks the user to log in,
 say so.
 
