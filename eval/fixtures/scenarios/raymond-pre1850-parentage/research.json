@@ -1,0 +1,223 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Verify the parents shown in the FamilySearch Tree for Paul Raymond",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-05",
+    "updated": "2026-11-05"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Paul Raymond (d. 1828, Berkshire County, Massachusetts) the father of Paul Raymond (b. about 1770; of Bristol, Addison County, Vermont, by 1800)?",
+      "rationale": "Primary research objective. The tree links the two men as father and son with no source, and no records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-05",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "question_kind": "targeted"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "United States",
+      "for_place": "Addison County, Vermont, United States",
+      "time_period": "1770-1850",
+      "jurisdictions": [
+        {
+          "name": "Addison County, Vermont",
+          "date_range": "1785-present"
+        },
+        {
+          "name": "Bristol (town)",
+          "date_range": "1762-present"
+        },
+        {
+          "name": "Addison Probate District",
+          "date_range": "1787-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1803959",
+          "title": "United States Census, 1790",
+          "date_range": "1790"
+        },
+        {
+          "id": "1804228",
+          "title": "United States Census, 1800",
+          "date_range": "1800"
+        },
+        {
+          "id": "1803765",
+          "title": "United States Census, 1810",
+          "date_range": "1810"
+        },
+        {
+          "id": "1803955",
+          "title": "United States Census, 1820",
+          "date_range": "1820"
+        },
+        {
+          "id": "1803958",
+          "title": "United States Census, 1830",
+          "date_range": "1830"
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840"
+        },
+        {
+          "id": "1409123",
+          "title": "Vermont, Land Records, Early to 1900",
+          "date_range": "early-1900"
+        },
+        {
+          "id": "1435692",
+          "title": "Vermont, Probate Files, 1800-1921",
+          "date_range": "1800-1921"
+        },
+        {
+          "id": "1987653",
+          "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+          "date_range": "1732-2005"
+        },
+        {
+          "id": "1784223",
+          "title": "Vermont, Vital Records, 1760-1954",
+          "date_range": "1760-1954"
+        },
+        {
+          "id": "3158875",
+          "title": "Vermont, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700s-2017"
+        }
+      ],
+      "quirks": [
+        "Vermont probate is kept by probate district, not by county; Bristol falls in the Addison Probate District.",
+        "Vermont land records are kept by the town clerk of each town, not at the county."
+      ],
+      "created": "2026-11-05",
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Addison_County,_Vermont_Genealogy",
+          "found": true
+        }
+      ]
+    },
+    {
+      "id": "loc_002",
+      "place": "United States",
+      "for_place": "Berkshire County, Massachusetts, United States",
+      "time_period": "1760-1830",
+      "jurisdictions": [
+        {
+          "name": "Berkshire County, Massachusetts",
+          "date_range": "1761-present"
+        },
+        {
+          "name": "Pittsfield (county seat)",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1803959",
+          "title": "United States Census, 1790",
+          "date_range": "1790"
+        },
+        {
+          "id": "1804228",
+          "title": "United States Census, 1800",
+          "date_range": "1800"
+        },
+        {
+          "id": "1803765",
+          "title": "United States Census, 1810",
+          "date_range": "1810"
+        },
+        {
+          "id": "1803955",
+          "title": "United States Census, 1820",
+          "date_range": "1820"
+        },
+        {
+          "id": "1803958",
+          "title": "United States Census, 1830",
+          "date_range": "1830"
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840"
+        },
+        {
+          "id": "2106411",
+          "title": "Massachusetts, Land Records, 1620-1986",
+          "date_range": "1620-1986"
+        },
+        {
+          "id": "3155889",
+          "title": "Massachusetts, Wills and Deeds, ca. 1700-2017",
+          "date_range": "1700-2017"
+        },
+        {
+          "id": "2285844",
+          "title": "Massachusetts, Town Records, ca. 1638-1961",
+          "date_range": "1638-1961"
+        },
+        {
+          "id": "2787822",
+          "title": "Massachusetts, Church Records, 1630-1943",
+          "date_range": "1630-1943"
+        }
+      ],
+      "quirks": [
+        "The Berkshire County Probate Court sits at Pittsfield.",
+        "Massachusetts deeds are recorded by county registry district; Berkshire County has more than one district."
+      ],
+      "created": "2026-11-05",
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Berkshire_County,_Massachusetts_Genealogy",
+          "found": true
+        }
+      ]
+    }
+  ]
+}
