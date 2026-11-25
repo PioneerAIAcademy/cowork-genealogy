@@ -45,6 +45,11 @@ OVERCLAIMS = [
     "Reuben may be Asa's cousin, and the census is silent on it.",
     "The birth search and the 1790 census together point to a Reuben Whitcomb in Westmoreland as a possible kinsman — he named a son Asa (born 1773 in Keene) and was himself living in Westmoreland by 1790, the same town where our Asa died in 1784.",
     "- Reuben Whitcomb in Westmoreland is worth pursuing — his appearance in the same town where Asa died in 1784 makes him a plausible brother, father, or cousin.",
+    "Reuben is not in the 1800 census and is Asa's brother.",
+    "Reuben never left Westmoreland and was Asa's brother.",
+    "Reuben was not taxed until 1780 and is Asa's older brother.",
+    "Reuben does not appear after 1790 and is almost surely Asa's older brother.",
+    "Reuben is a possible relative of Asa; he was not taxed until 1780.",
 ]
 
 # Correct sentences from the agent's own replies on 2026-11-24 that an earlier version
@@ -90,6 +95,9 @@ ALLOWED = [
     "Reuben may be related to Asa, though no record connects them.",
     "- Next step: a search that can confirm or rule out Reuben's household as Asa's kin, such as an anchor on Asa's minor children or Asa's wife, or Asa's own birth or marriage record.",
     "The census places him in the town where Asa died (1784), and the 1773 Asa's father being named Reuben does not establish a link to the subject.",
+    "Reuben is not Asa's brother.",
+    "Reuben was never Asa's older brother.",
+    "Reuben is not a brother of Asa.",
 ]
 
 

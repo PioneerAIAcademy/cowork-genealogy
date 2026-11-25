@@ -1882,9 +1882,14 @@ _LIST_ONLY = re.compile(
 _KINSHIP_DENIED = re.compile(
     r"\b(?:no records?|no link|nothing\b[^.;,]{0,40}?\b(?:shows?|links?|connects?|ties?|proves?)|"
     r"not (?:shown|established|proven|known)|not\b[^.;,]{0,20}?\bprove[ns]?|"
-    r"(?:cannot|can['’]t)\s+(?:confirm|show|prove|establish)|unproven|unknown|unlikely|no evidence|not|never)\b",
+    r"(?:does|did)\s+not\s+(?:say|state|show|name)|"
+    r"(?:cannot|can['’]t)\s+(?:confirm|show|prove|establish)|unproven|unknown|unlikely|no evidence)\b",
     re.IGNORECASE,
 )
+# A bare "not"/"never" denies the kinship only within a few words of it ("not Asa's
+# brother"), never when it governs another verb ("not in the 1800 census and is ...").
+_BARE_NEGATOR = re.compile(r"\b(?:not|never)\b", re.IGNORECASE)
+_BARE_NEGATOR_REACH = 3
 _CLAUSE_BREAK = re.compile(r",|;|—|–|\b(?:but|however|though|although|while)\b", re.IGNORECASE)
 _PRONOUN_START = re.compile(r"^\W*(?:he|his|him)\b", re.IGNORECASE)
 
@@ -1916,11 +1921,13 @@ def _claims(clause_prefix: str, sentence: str) -> bool:
     clause = _clause(clause_prefix)
     if _KINSHIP_QUESTION.search(clause) or re.search(r"\bcandidate\s+$", clause, re.IGNORECASE):
         return False
-    denial = None
-    for denial in _KINSHIP_DENIED.finditer(clause):
-        pass
-    if denial is not None and not _LIKELIHOOD.search(clause[denial.end():]):
-        return False
+    denials = list(_KINSHIP_DENIED.finditer(clause)) + [
+        m for m in _BARE_NEGATOR.finditer(clause) if len(clause[m.end():].split()) <= _BARE_NEGATOR_REACH
+    ]
+    if denials:
+        last = max(denials, key=lambda m: m.end())
+        if not _LIKELIHOOD.search(clause[last.end():]):
+            return False
     if _LIKELIHOOD.search(clause):
         return True
     return not (_POSSIBLE.search(clause) and (_KINSHIP_DENIED.search(sentence) or _UNPROVEN.search(sentence)))

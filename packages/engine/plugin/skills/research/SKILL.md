@@ -84,7 +84,7 @@ one in prose you then act on.
 researcher's buttons; an invented label offers none.
 
 **In your own sentences, never state or imply a kinship between people no
-record names together;** say what they share and that no record links them.
+record links;** say what they share and that no record links them.
 
 **A step that ends on a question only the researcher can answer writes no
 "Continue with …?" line.** Ask the question and end the turn. The same holds
@@ -334,7 +334,7 @@ message.
    Before consulting the routing table or acting on `project_context.nextStep`,
    scan every log entry's `notes` field for a note that states or implies a
    kinship inferred from a shared surname, place, era or given name between
-   people that no record in the project names together, hedged or flat. If one
+   people that no record in the project links, hedged or flat. If one
    exists and `hypotheses`
    has no entry for that relationship, the one step this turn is
    `@plugin:hypothesis-tracking`, naming the people and the inferred
