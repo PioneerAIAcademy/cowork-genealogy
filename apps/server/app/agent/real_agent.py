@@ -46,7 +46,9 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
+    HandOffLinks,
     foreground_rewrite,
+    hand_off_texts,
     NO_PROJECT_NOTE,
     ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
@@ -58,6 +60,7 @@ from .continue_policy import (
 )
 from .errors import UNEXPECTED, classify, log_operator
 from .main_thread import EFFORT_LEVELS, load_main_thread  # noqa: F401 - EFFORT_LEVELS re-exported
+from .plugin_lib import load_step_boundary
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
     classify_server_status,
@@ -1558,6 +1561,25 @@ class RealAgent:
         log_operator("mcp_init", text, detail=f"health={health} entry={entry!r}")
         return [_event("error", text=text)]
 
+    def _open_hand_offs(self) -> list[dict] | None:
+        """The project's open external-site hand-offs (``step_boundary.awaiting_hand_offs``,
+        the Python mirror of ``awaitingUser``), or None when they cannot be read. Never
+        raises: a link the host fails to post is logged, not a failed turn."""
+        try:
+            boundary = getattr(self, "_step_boundary", None)
+            if boundary is None:
+                boundary = load_step_boundary(Path(_PLUGIN_DIR) / "hooks" / "step_boundary.py")
+                self._step_boundary = boundary
+            return boundary.awaiting_hand_offs(read_research_json(self.dir) or {})
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off read failed, posting no links: {type(exc).__name__}: {exc}")
+            return None
+
+    def _hand_off_events(self, links: HandOffLinks, message, ev: dict) -> list[dict]:
+        """Issue #4660: the host posts each search link a main-thread call opened
+        (``continue_policy.hand_off_texts``, shared with the worker)."""
+        return [_event("text", text=t) for t in hand_off_texts(links, message, ev, self._open_hand_offs)]
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage, SystemMessage
@@ -1599,6 +1621,7 @@ class RealAgent:
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
             error_emitted = False
+            links = HandOffLinks()
             async for message in client.receive_response():
                 for ev in map_message(
                     message, self._tool_names, self._tasks, self._live_tasks,
@@ -1620,6 +1643,10 @@ class RealAgent:
                         if counter_now and counter_now.get("completion_summary"):
                             counter_now["completion_summary"] = None
                     yield ev
+                    # After the reset above, never through it: a posted link is the host's
+                    # words, not the model going on past a completion halt.
+                    for link_ev in self._hand_off_events(links, message, ev):
+                        yield link_ev
                 if isinstance(message, SystemMessage):
                     # #941 ported from the e2e harness (issue #1126). The CLI's
                     # init message lists every MCP server it tried to connect
@@ -1709,6 +1736,13 @@ class RealAgent:
                                 "continuations": counter.get("continuations") if counter else None,
                             },
                         )
+                    # Issue #4660: a link whose call never returned (the researcher pressed
+                    # Stop mid-search) is posted here, once. Only in a turn that made a call
+                    # able to open one (`opens_hand_offs`), so any other turn reads nothing.
+                    if links.seeded:
+                        rows = self._open_hand_offs()
+                        for link_text in links.new_texts(rows or []):
+                            yield _event("text", text=link_text)
                     # A completion halt ended the turn on the agent's summary, which the
                     # browser never receives as `stopReason`: show it as the turn's text.
                     hook_counter = getattr(self, "_hook_counter", None)

@@ -197,7 +197,8 @@ sends its exact phrase. Cowork and the alpha show no buttons; the reply names th
 **The library.** `packages/engine/plugin/hooks/step_boundary.py` is stdlib-only and does
 no I/O. It lives in `plugin/hooks/` but is **not** a registered hook (lead, 2026-10-21):
 there is no `hooks.json` entry, no `plugin-hooks.test.ts` case and no `make hook-smoke`
-arm. The prototype worker (`load_step_boundary` in `apps/server/proto/worker/options.py`)
+arm. Both hosted planes (`load_step_boundary` in `apps/server/app/agent/plugin_lib.py`,
+re-exported by `apps/server/proto/worker/options.py`)
 and both harnesses load it with `importlib.util.spec_from_file_location`, the way
 `eval/harness/harness/context_policy.py` loads `guard_project_files.py`. One copy, so no
 parity test.
@@ -680,7 +681,9 @@ over and returns. The wait is a step boundary.
   later entry for the same URL closes. One helper,
   `packages/engine/mcp-server/src/utils/awaiting-hand-offs.ts` (`awaitingUserHandOffs`,
   `awaitingUploadItemIds`, `closesHandOff`), serves `project_context`, `question-state.ts`
-  and `research-append.ts`. `step_ctx`'s `awaiting_upload_item_ids` mirrors it, and
+  and `research-append.ts`. `step_boundary.py`'s `awaiting_hand_offs` mirrors it row for
+  row (the hosted planes post each new row's link, project-context spec §2.3);
+  `step_ctx`'s `awaiting_upload_item_ids` is read off it; and
   `eval/harness/tests/unit/test_awaiting_hand_offs_parity.py` holds the two to one
   fixture. Such an item is not open for the ladder, E's writer rule, or `open_items`.
 - **Other `in_progress` external items stay open:** a capture that arrived unusable, a nil

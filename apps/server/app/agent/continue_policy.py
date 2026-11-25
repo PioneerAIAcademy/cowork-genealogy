@@ -24,6 +24,7 @@ import re
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 # turns.outcome, and what a reader is told for each (PR #2870 items 1b, 1c, 1e).
 #
@@ -327,6 +328,104 @@ def completion_halt_summary(
     if summary is None or not summary.endswith(PROOF_CONCLUSION_FINISHED):
         return None
     return summary
+
+
+# ── The host posts each new search link (issue #4660, lead 2026-11-23) ───────────────
+#
+# An external-site search is a link the researcher has to open. It reaches the chat only if
+# the main thread relays the agent's report, and `project_context`'s `awaitingUser` then
+# treats it as handed over whether it was or not (spec project-context-tool-spec.md §2.3).
+# In one alpha session 11 links were logged and none reached the chat. So both planes post
+# each hand-off a turn opened, from the `research.json` they can read, as its own paragraph
+# of the reply. The rows come from `step_boundary.awaiting_hand_offs`, the Python mirror of
+# the engine's rule, never a second copy here.
+
+
+def hand_off_link_text(url: str) -> str:
+    """One link's paragraph: plain words, the site's host name, and the URL as a markdown
+    autolink, so `_`, `*` or a trailing `)` in a search URL is not read as markup. An
+    autolink may hold no space, `<` or `>`, and an agent-logged URL is not always encoded,
+    so those three are percent-encoded; the link opens the same page."""
+    host = (urlsplit(url).hostname or "").removeprefix("www.")
+    where = f" on {host}" if host else ""
+    href = url.replace(" ", "%20").replace("<", "%3C").replace(">", "%3E")
+    return f"Search to run{where}: open this link, then send back what you find there.\n<{href}>"
+
+
+class HandOffLinks:
+    """Which hand-offs one turn has posted. Per turn, never persisted (the ruling rejected
+    a stored `shown` flag).
+
+    ``seed`` records the hand-offs already open before the turn's first delegation, which
+    an earlier turn handed out; it reads only the first time, so a turn with no delegation
+    never reads research.json. ``new_texts`` returns a paragraph for each row opened since,
+    once: a parallel second return that re-sees the first's rows posts only its own, and
+    the turn-end sweep posts only what no return did. A link sent again is logged under a
+    new id and so is posted again. Before ``seed`` it posts nothing."""
+
+    def __init__(self) -> None:
+        self.seen: set[str] | None = None
+
+    @property
+    def seeded(self) -> bool:
+        return self.seen is not None
+
+    def seed(self, rows: list[Mapping[str, Any]]) -> None:
+        if self.seen is None:
+            self.seen = {str(r.get("log_id")) for r in rows}
+
+    def new_texts(self, rows: list[Mapping[str, Any]]) -> list[str]:
+        if self.seen is None:
+            return []
+        out: list[str] = []
+        for row in rows:
+            log_id, url = row.get("log_id"), row.get("url_generated")
+            if not isinstance(log_id, str) or not isinstance(url, str) or log_id in self.seen:
+                continue
+            self.seen.add(log_id)
+            out.append(hand_off_link_text(url))
+        return out
+
+
+# The MCP tools that can log a hand-off, by bare name. `research_log_append` is on the
+# plugin hook's MAIN_THREAD_OK, so the main thread can log one without delegating;
+# `build_external_search_url` is denied to it, and listed so a change there is covered.
+HAND_OFF_LOG_TOOLS = frozenset({"research_log_append", "build_external_search_url"})
+
+
+def opens_hand_offs(tool: Any) -> bool:
+    """Whether a main-thread call to ``tool`` can open a hand-off: a delegation, or one of
+    ``HAND_OFF_LOG_TOOLS`` under any server prefix (``mcp__genealogy__…``)."""
+    if not isinstance(tool, str):
+        return False
+    return tool in DELEGATION_TOOLS or tool.rsplit("__", 1)[-1] in HAND_OFF_LOG_TOOLS
+
+
+def hand_off_texts(
+    links: HandOffLinks,
+    message: Any,
+    event: Mapping[str, Any],
+    read_rows: Callable[[], list[Mapping[str, Any]] | None],
+) -> list[str]:
+    """The link paragraphs one ``map_message`` event calls for: the ONE trigger both planes
+    run. A main-thread (no ``parent_tool_use_id``) ``tool_use`` of a call that can open a
+    hand-off (``opens_hand_offs``) seeds the turn, once, before the call runs; such a call's
+    ``tool_result`` posts what it opened. ``read_rows`` is the plane's read of
+    ``step_boundary.awaiting_hand_offs``; None means it could not read, and then nothing is
+    seeded or posted."""
+    tool = event.get("tool")
+    if not opens_hand_offs(tool) or getattr(message, "parent_tool_use_id", None):
+        return []
+    kind = event.get("kind")
+    if kind == "tool_use" and not links.seeded:
+        rows = read_rows()
+        if rows is not None:
+            links.seed(rows)
+        return []
+    if kind == "tool_result" and links.seeded:
+        rows = read_rows()
+        return links.new_texts(rows) if rows is not None else []
+    return []
 
 
 def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0) -> int:

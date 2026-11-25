@@ -752,6 +752,35 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
 
+**Delivery: the host posts the link** (lead, 2026-11-23, issue #4660). A row here
+says the researcher already has the link, and the router never raises it again. That
+held only when the main thread relayed the agent's report, and in the Hagell alpha
+session it rewrote every report and no logged link reached the chat. So on both hosted
+web planes (`real_agent.py`, the alpha, and the prototype worker) the host posts the link
+itself: when a main-thread call that can open a hand-off returns — an `Agent`/`Task`
+delegation, or `research_log_append`, which the main thread may call itself
+(`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
+open when the turn's first such call began is written to the chat as its own paragraph
+of the turn's reply: the site's host name, one sentence, and the URL as a markdown
+autolink (a space, `<` or `>` percent-encoded). A link logged by a call that never
+returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
+a worker attempt that lost its grant lock posts its links before it raises. Each row is
+posted once per turn; a link sent again opens a new row and is posted again. The rule
+is `step_boundary.awaiting_hand_offs`, the Python mirror of `awaitingUserHandOffs`, held
+to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
+`continue_policy.hand_off_texts`, shared by both planes. A turn with no such call reads
+nothing for this.
+
+- **Not covered here:** the connector's chat, where `show_project` lists
+  `awaitingUser` (issue #4297), and Cowork and Desktop, which still rely on the relay.
+- **A turn that never reached its end** posts nothing for a call that had not
+  returned, and those rows read as handed over: a process that died, and a worker
+  attempt ended by the store going down, a newer claim superseding it, or a failed
+  transcript write. Catching those would need a stored "shown" flag, which the ruling
+  rejected: a schema change, set by the same relay that fails.
+- The main thread may repeat a link the host already posted. A duplicate is accepted
+  over a drop.
+
 ### 2.4 `externalCollections` — counts of the stored curated collections
 
 Present only when the project holds `external-collections.json` (written by

@@ -6648,3 +6648,119 @@ def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
     assert "CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END" in sql
     assert "COALESCE(mode, %s)" in sql
     assert params == ("init-project", "search-records", "step", "t1")
+
+
+# ── the host posts each new search link (issue #4660) ─────────────────────────────────
+#
+# The worker's arm of `continue_policy.hand_off_texts`; the alpha's, and the trigger's
+# edges, are in `test_hand_off_links.py`. Real SDK messages run through the worker's own
+# `map_message` loop; a callable in the stream is the subagent's write landing between
+# its Agent call and the call's result.
+
+_LINK_URL = "https://www.findagrave.com/memorial/search?firstname=Thomas&lastname=Hagell_x"
+
+
+def _link_hand_off(log_id: str, url: str = _LINK_URL) -> dict:
+    return {"id": log_id, "tool": "external_site", "outcome": "partial", "plan_item_id": "pli_001",
+            "external_site": {"site": "findagrave", "url_generated": url, "capture_received": False}}
+
+
+class _ScriptedClient(FakeClient):
+    async def receive_response(self):
+        for m in self.messages:
+            if isinstance(m, ToolCall):
+                await self._fire_pretool(m)
+                continue
+            if callable(m):
+                m()
+                continue
+            yield m
+
+
+def _agent_use(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolUseBlock
+    return AssistantMessage(content=[ToolUseBlock(id=use_id, name="Agent",
+                                                  input={"subagent_type": "search-external-sites"})], model="m")
+
+
+def _agent_result(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolResultBlock, UserMessage
+    return UserMessage(content=[ToolResultBlock(tool_use_id=use_id, content="the agent's report")])
+
+
+def _run_links(turn_env, monkeypatch, research: dict, script: list) -> tuple[list[str], list[dict]]:
+    reads: list[dict] = []
+
+    def read(conn, project_id):
+        reads.append(json.loads(json.dumps(research)))
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    turn_env["client"] = _ScriptedClient(script, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    return _text_events(turn_env["conn"]), reads
+
+
+def _links_only(texts: list[str]) -> list[str]:
+    return [t for t in texts if t.startswith("Search to run")]
+
+
+def test_the_worker_posts_a_link_its_delegation_opened(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result(), _text("The probate file turned up."), _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)], texts
+    assert texts.index(hand_off_link_text(_LINK_URL)) < texts.index("The probate file turned up."), (
+        "posted at the agent's result, before the model's own words")
+
+
+def test_the_worker_does_not_post_a_link_open_before_the_turn(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), _agent_use(), _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
+def test_a_worker_turn_with_no_delegation_reads_only_at_the_close(turn_env, monkeypatch):
+    """The worker's rule (COMPLETED_LABELLED_SQL): no turn-start read. The close's one read
+    is the only one."""
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [_init(), _text("Hello."), _result()])
+    assert len(reads) == 1
+    assert _links_only(texts) == []
+
+
+def test_a_delegation_that_never_returned_posts_its_link_at_the_close(turn_env, monkeypatch):
+    """The search agent's result never came back (the patron's Stop is one way), but its
+    link was logged: the close's read posts it, and nothing posts it twice."""
+    research = {"project": {"status": "active"}, "log": []}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert len(reads) == 2, "the seed and the close; the sweep reuses the close's read"
+
+
+def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(turn_env, monkeypatch):
+    """The redelivery seeds afresh and would read this attempt's link as already open, so
+    the attempt posts it before raising GrantLockLost."""
+    research = {"project": {"status": "active"}, "log": []}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    turn_env["lock_held"] = lambda asked: asked < 2
+    turn_env["client"] = _ScriptedClient([
+        _init(), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        ToolCall(), ToolCall(), _result(num_turns=2),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(worker.GrantLockLost):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(_text_events(turn_env["conn"])) == [hand_off_link_text(_LINK_URL)]

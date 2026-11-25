@@ -243,6 +243,7 @@ from proto.worker.options import (  # noqa: E402
     unmapped_gateway_models,
     wants_status_before,
 )
+from app.agent.continue_policy import HandOffLinks, hand_off_texts  # noqa: E402
 from proto import grants  # noqa: E402
 from proto import turn_message  # noqa: E402  (the queue body, shared with the web tier)
 from proto import migrate  # noqa: E402
@@ -2945,6 +2946,25 @@ async def _run_turn(
                     store_unavailable()
             return reply
 
+        # Issue #4660: the host posts each search link a main-thread call opened, as the
+        # alpha does (`continue_policy.hand_off_texts`). Read on the turn's first such call
+        # and at each of its results, never otherwise, and never from a down store; the
+        # turn-end sweep reuses the close's own read. A store error on this read is U23's
+        # like any other: it marks the store down and the attempt is redelivered, since
+        # the turn's next write would meet the same store.
+        links = HandOffLinks()
+
+        def open_hand_offs() -> list[dict[str, Any]] | None:
+            if boundary is None or attempt["store_down"]:
+                return None
+            try:
+                return boundary.awaiting_hand_offs(read_research(conn, project_id) or {})
+            except Exception as exc:  # noqa: BLE001 - only a store fault (U23) ends the attempt
+                log(ev="hand_off_read_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
+                if store_error(exc):
+                    store_unavailable()
+                return None
+
         def research_now() -> dict[str, Any] | None:
             """The project just after the call, for the halt; never from a down store, and a
             read that finds it down records it so nothing asks again (U23)."""
@@ -3049,6 +3069,11 @@ async def _run_turn(
                         if event.get("kind") == "text" and not getattr(msg, "parent_tool_use_id", None):
                             terminal.pop("completion_summary", None)
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
+                        # After the reset above, never through it: the host's words, not
+                        # the model going on past a completion halt.
+                        for link_text in hand_off_texts(links, msg, event, open_hand_offs):
+                            write_event(conn, session_id, {"kind": "text", "text": link_text},
+                                        TRANSIENT_KINDS, counters)
                     for denied_id in hook_denied_tool_use_ids(msg):
                         denied_tool = mark_hook_denied(conn, turn_id, denied_id)
                         if denied_tool is not None:
@@ -3105,7 +3130,29 @@ async def _run_turn(
             # U3: halted because the grant lock was lost. Not a completion -- raise, so the
             # turn stays open and the redelivery bears the current grant under a new lock.
             if terminal["reason"] == GRANT_LOCK_LOST:
+                # Issue #4660: the redelivery seeds afresh and would read this attempt's
+                # links as already open, so they are posted now. A lost grant lock is not
+                # a down store; `open_hand_offs` reads nothing if it is.
+                if links.seeded:
+                    for link_text in links.new_texts(open_hand_offs() or []):
+                        write_event(conn, session_id, {"kind": "text", "text": link_text},
+                                    TRANSIENT_KINDS, counters)
                 raise GrantLockLost(f"the grant lock of {held.user_id} was lost mid-attempt")
+
+            # Section A/A2: research.json and the turn's offer line, read once and used
+            # four times below -- the `completed` outcome, `turn_done.options`, the
+            # host's reply, and the hand-off sweep just after this. Read before the
+            # completion summary is written, so the sweep's links come before it.
+            research, offered = close_context(conn, boundary, project_id,
+                                              getattr(result, "result", None), log)
+
+            # Issue #4660: a link whose delegation never returned (the patron pressed Stop
+            # mid-search) is posted here, once, from the close's own read. Only in a turn
+            # that delegated, and never from a down store (close_context then gives None).
+            if links.seeded and research is not None and boundary is not None:
+                for link_text in links.new_texts(boundary.awaiting_hand_offs(research)):
+                    write_event(conn, session_id, {"kind": "text", "text": link_text},
+                                TRANSIENT_KINDS, counters)
 
             # #3542 lead 1: the turn halted on the agent's summary, which no chip carries
             # after a PostToolUse halt. Shown as the turn's text, as the alpha does.
@@ -3138,12 +3185,7 @@ async def _run_turn(
             # surfaced as an error is redelivered and re-runs the model forever.
             # 1b/1c: what the browser renders for this ending. A turn halted by the
             # PreToolUse hook names its reason; the flag is re-read here rather than
-            # assumed.
-            # Section A/A2: research.json and the turn's offer line, read once and used
-            # three times below -- the `completed` outcome, `turn_done.options`, and the
-            # host's reply.
-            research, offered = close_context(conn, boundary, project_id,
-                                              getattr(result, "result", None), log)
+            # assumed. `research` and `offered` were read above, before the summary.
             # A step halt ends the turn before the model writes its offer -- two spawns
             # in one message are enough -- so when the last line offers nothing, the
             # offer the halt named stands in for it, shown as the turn's last line so the
