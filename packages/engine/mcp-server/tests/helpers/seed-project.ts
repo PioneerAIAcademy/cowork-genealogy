@@ -39,3 +39,20 @@ export function logArgs(projectPath: string, given: string): Record<string, unkn
     resultsAvailable: 0,
   };
 }
+
+/** A real project in a fresh temp folder on the file backend, for a test that calls a
+ *  tool through the server: every tool but six refuses a call with no project. The
+ *  create has no person, so it reads nothing from FamilySearch. */
+export async function makeLocalProject(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = await mkdtemp(join(tmpdir(), "local-project-"));
+  const result = await runProjectCreate(
+    { projectPath: dir, objective: "A test project" },
+    { readPerson: async () => { throw new Error("no person is read"); } },
+    LOCAL,
+  );
+  if (!result.ok) throw new Error(`makeLocalProject: ${result.errors.join("; ")}`);
+  return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) };
+}

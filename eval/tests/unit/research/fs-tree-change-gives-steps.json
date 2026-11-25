@@ -95,5 +95,8 @@
     "EVERY CALLEE IS STUBBED, so nothing is written to the project. An unchanged research.json and tree.gedcomx.json is EXPECTED and is not a fabricated claim.",
     "PROJECT_LIST FIRST IS ALLOWED. When no projectPath is named, the router's first call may be project_list with no arguments; its folder answer is the live tool's real answer, not an error."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

@@ -26,7 +26,8 @@
     "record-read-hole-1885-state-census",
     "source-attachments-hole-1885",
     "person-read-hole-wx7-otter-tail",
-    "person-quality-hole-detail"
+    "person-quality-hole-detail",
+    "source-screen-hole-unindexed"
   ],
   "judge_context": [
     "Should carry out the audit itself on this utterance rather than handing the request back",

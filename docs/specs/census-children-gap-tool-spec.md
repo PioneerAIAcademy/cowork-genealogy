@@ -277,9 +277,8 @@ pattern, listed in `OK_FALSE_IS_FAILURE`) for malformed input only:
   `projectPath`, a folder that does not exist, or a broken project (a missing or
   unparseable tree)
 
-A folder that holds no project at all is not an error: tree mode answers
-`{ ok: false, reason: "no_project" }`, which the dispatch does not mark as an
-error, exactly as `person_warnings` does.
+A folder that holds no project is refused: the gate in `server.ts` answers first, and
+called directly, tree mode returns `{ ok: false, errors }` carrying `NO_PROJECT_REFUSAL`.
 
 ## 7. Not in scope
 

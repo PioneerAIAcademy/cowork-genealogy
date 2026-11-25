@@ -1,0 +1,116 @@
+{
+  "log_id": "log_003",
+  "tool": "record_read",
+  "retrieved": "2026-11-20T20:23:32.987Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:HOLE-003"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:HOLE-003",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Christian",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1852",
+                  "place": "Norway"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1885",
+                  "place": "Aurdal, Otter Tail, Minnesota, United States"
+                }
+              ],
+              "ark": "ark:/61903/1:1:HOLE-003",
+              "sources": [
+                {
+                  "id": "S1",
+                  "title": "Minnesota State Census, 1885"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Bergit",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Birth",
+                  "date": "1856",
+                  "place": "Norway"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Nils",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "1879",
+                  "place": "Minnesota, United States"
+                }
+              ]
+            }
+          ],
+          "places": [],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            }
+          ],
+          "sources": [
+            {
+              "id": "S1",
+              "title": "Minnesota State Census, 1885",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-003"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

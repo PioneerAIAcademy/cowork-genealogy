@@ -19,7 +19,7 @@ import {
   namesakeVerdicts,
 } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
-import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { instructedMerge as mergeTreePersons } from "../helpers/instructed-merge.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { writeProjectFile } from "../helpers/project-files.js";

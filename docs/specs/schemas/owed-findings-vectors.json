@@ -398,7 +398,7 @@
     {
      "kind": "encode",
      "ref": "ps_001/father",
-     "nextStep": "proof-conclusion — encode father from ps_001",
+     "nextStep": "proof-conclusion — encode father",
      "blocksCompletion": false
     }
    ]

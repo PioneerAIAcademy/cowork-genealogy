@@ -5,11 +5,17 @@
     "name": "Schema-validity question must not trigger a calendar conversion",
     "type": "negative",
     "description": "User asks whether a date string is valid for a research.json field value. That is a schema question, not a calendar-conversion question. convert-dates performs mechanical calendar-system conversions; it must NOT perform one on a schema-validity question. The router often answers such questions directly (date fields are freeform strings, no format check); either routing to validate-schema or answering directly is acceptable so long as convert-dates does not perform a calendar shift.",
-    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary", "no-spurious-conversion", "direct-arm"]
+    "tags": [
+      "near-miss",
+      "convert-dates-vs-validate-schema",
+      "boundary",
+      "no-spurious-conversion",
+      "direct-arm"
+    ]
   },
   "input": {
     "delegation": "Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?\n\nprojectPath: <workspace>",
-    "scenario": null
+    "scenario": "person-less-project"
   },
   "negative": {
     "correct_skill": [],

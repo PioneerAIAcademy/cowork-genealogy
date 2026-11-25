@@ -306,12 +306,12 @@ describe("census_children_gap tree mode", () => {
     if (!r.ok) expect(r.errors[0]).toMatch(/not found/);
   });
 
-  it("a folder that is not a project answers no_project, not an error", async () => {
+  it("a folder that is not a project is refused with the project refusal", async () => {
     const empty = await mkdtemp(join(tmpdir(), "ccg-empty-"));
     try {
       const r = await censusChildrenGapTool({ censuses: MERCER_COUNTS, projectPath: empty, motherId: "M" });
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.reason).toBe("no_project");
+      if (!r.ok) expect(r.errors.join(" ")).toContain("No project:");
     } finally {
       await rm(empty, { recursive: true, force: true });
     }

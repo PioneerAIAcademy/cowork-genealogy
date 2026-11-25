@@ -49,7 +49,6 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_search_wikipedia import (  # noqa: E402
     test_log_notes_match_template as check_template,
     test_lookup_failed_logs_nothing as check_lookup_failed,
-    test_no_project_returns_template as check_no_project,
     test_no_wiki_no_write as check_no_wiki_no_write,
     test_not_found_logs_negative as check_not_found,
     test_notes_title_is_returned_title as check_title,
@@ -298,7 +297,7 @@ def test_allowlist_counts_every_spelling(spelling):
     )
 
 
-# --- the scope-decline and no-project skips, both directions ----------------
+# --- the scope-decline skips, both directions ----------------
 
 
 def test_the_log_validators_skip_the_decline_test():
@@ -314,19 +313,6 @@ def test_the_log_validators_skip_the_decline_test():
     )
     assert (
         _run(check_title, before_state=EMPTY, after_state=EMPTY, tool_calls=[], test=t)
-        == "skipped"
-    )
-
-
-def test_the_log_validators_skip_the_no_project_test():
-    t = no_project_test()
-    assert _run(check_one_entry, before_state=EMPTY, after_state=EMPTY, test=t) == "skipped"
-    assert (
-        _run(check_template, before_state=EMPTY, after_state=EMPTY, tool_calls=[WIKI_CALL], test=t)
-        == "skipped"
-    )
-    assert (
-        _run(check_title, before_state=EMPTY, after_state=EMPTY, tool_calls=[WIKI_CALL], test=t)
         == "skipped"
     )
 
@@ -488,51 +474,6 @@ def test_title_tag_pins_the_literal_title():
         after_state=_state([_entry(notes=_notes_for(_WURTT_CALL))]),
         tool_calls=[_WURTT_CALL],
         test=logged_test(["title-obrien-surname"]),
-    )
-
-
-# --- test_no_project_returns_template ---------------------------------------
-
-
-def test_no_project_passes_a_template_reply():
-    assert _run(
-        check_no_project,
-        before_state=EMPTY, after_state=EMPTY,
-        tool_calls=[WIKI_CALL, LOG_CALL],
-        agent_returns=[{"subagent_type": "search-wikipedia", "text": _NOTES}],
-        text_response="relay",
-        test=no_project_test(),
-    ) == "passed"
-
-
-def test_no_project_is_inert_without_the_tag():
-    assert _run(
-        check_no_project,
-        before_state=EMPTY, after_state=GOOD_AFTER,
-        tool_calls=[WIKI_CALL, LOG_CALL],
-        agent_returns=[], text_response="Saved the Wikipedia summary to the research log.",
-        test=logged_test(),
-    ) == "skipped"
-
-
-@pytest.mark.parametrize(
-    "after, reply, match",
-    [
-        (GOOD_AFTER, _NOTES, "nothing may be logged"),
-        (_state(files={"schuylkill-county-pennsylvania.md": _NOTES}), _NOTES, "not a file"),
-        (EMPTY, "Saved the Wikipedia summary to the research log.", "filled template, verbatim"),
-        (EMPTY, _NOTES.replace("is a county", "is a large county"), "filled template, verbatim"),
-    ],
-    ids=["logged-anyway", "wrote-a-file", "claims-a-save", "paraphrased-template"],
-)
-def test_no_project_fails(after, reply, match):
-    _expect_failure(
-        check_no_project, match,
-        before_state=EMPTY, after_state=after,
-        tool_calls=[WIKI_CALL, LOG_CALL],
-        agent_returns=[{"subagent_type": "search-wikipedia", "text": reply}],
-        text_response="relay",
-        test=no_project_test(),
     )
 
 

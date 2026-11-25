@@ -1,0 +1,1323 @@
+{
+  "tool": "record_search",
+  "description": "The 1860 US census search for Benjamin Phipps in Thompson, Windham, Connecticut, from the Phipps feedback session (issue #4667). Row 1 is ark:/61903/1:1:MHR9-JWT, indexed as Benj Phillips: the record the scenario tree already cites on the subject as S4. Rows are the first eight of the session's staged results, trimmed of treeMatches. Matched on a Ph surname and an 1860 residence window so the 1850/1870 searches the agent may also run fall through to the catch-all empty fixture.",
+  "args": {
+    "surname": "~Ph",
+    "residenceYearFrom": "~1860"
+  },
+  "response": {
+    "query": {
+      "surname": "Phipps",
+      "givenName": "Benjamin",
+      "residenceYearFrom": 1860,
+      "residenceYearTo": 1860,
+      "residencePlace": "Thompson, Windham, Connecticut, United States",
+      "recordType": "census"
+    },
+    "totalMatches": 8,
+    "paginationCappedAt": 100,
+    "returned": 8,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MHR9-JWT",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "personName": "Benj Phillips",
+        "score": 4.71288,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1815",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Benj Phillips, \"United States Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-9ZW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214692506",
+              "ark": "ark:/61903/1:1:MHR9-JWT",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benj",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692507",
+              "ark": "ark:/61903/1:1:MHR9-JWY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary S",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692508",
+              "ark": "ark:/61903/1:1:MHR9-JWB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harriet",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169237206",
+              "resource_type": "Record",
+              "title": "Household of Benj Phillips, \"United States Census, 1860\"",
+              "citation": "\"United States Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Entry for Benj Phillips and Mary S Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-9ZW",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9NSP",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214692506",
+              "resource_type": "Person",
+              "url": "#p_214692506"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_214692506",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MH51-GM3",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Pomfret, Windham, Connecticut, United States"
+          }
+        ],
+        "personName": "Benjamin Phillips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1825",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Benjamin Phillips, \"United States Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBT-WWP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214642803",
+              "ark": "ark:/61903/1:1:MH51-GM3",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Pomfret, Windham, Connecticut, United States",
+                  "standard_place": "Pomfret, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214642804",
+              "ark": "ark:/61903/1:1:MH51-GMQ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hannah",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Pomfret, Windham, Connecticut, United States",
+                  "standard_place": "Pomfret, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214642805",
+              "ark": "ark:/61903/1:1:MH51-GM7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ellen",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1851",
+                  "standard_date": "1851",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Pomfret, Windham, Connecticut, United States",
+                  "standard_place": "Pomfret, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169187603",
+              "resource_type": "Record",
+              "title": "Household of Benjamin Phillips, \"United States Census, 1860\"",
+              "citation": "\"United States Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MH51-GM3 : Mon Jul 08 04:26:47 UTC 2024), Entry for Benjamin Phillips and Hannah Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBT-WWP",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBG-LBN",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214642803",
+              "resource_type": "Person",
+              "url": "#p_214642803"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779439",
+              "name": "Pomfret, Windham, Connecticut, United States",
+              "latitude": 41.8633,
+              "longitude": -71.9844
+            }
+          ]
+        },
+        "primaryId": "p_214642803",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRM-HDJ",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Canterbury, Windham, Connecticut, United States"
+          }
+        ],
+        "personName": "Gurdon B Phillips",
+        "score": 2.78126,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1807",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Gurdon B Phillips, \"United States Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBT-GDJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214657577",
+              "ark": "ark:/61903/1:1:MHRM-HDJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Gurdon B",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1807",
+                  "standard_date": "1807",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214657578",
+              "ark": "ark:/61903/1:1:MHRM-HDV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sally",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1804",
+                  "standard_date": "1804",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214657579",
+              "ark": "ark:/61903/1:1:MHRM-HDK",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "A Genett",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214657358",
+              "ark": "ark:/61903/1:1:MHRM-H7H",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sarah M",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_214657359",
+              "ark": "ark:/61903/1:1:MHRM-H7C",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1781",
+                  "standard_date": "1781",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_214657360",
+              "ark": "ark:/61903/1:1:MHRM-H7Z",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Lamphire"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Canterbury, Windham, Connecticut, United States",
+                  "standard_place": "Canterbury, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1834",
+                  "standard_date": "1834",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169202177",
+              "resource_type": "Record",
+              "title": "Household of Gurdon B Phillips, \"United States Census, 1860\"",
+              "citation": "\"United States Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRM-HDJ : Mon Jul 08 04:26:01 UTC 2024), Entry for Gurdon B Phillips and Sally Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBT-GDJ",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBG-2TV",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBG-LQG"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214657577",
+              "resource_type": "Person",
+              "url": "#p_214657577"
+            }
+          ],
+          "places": [
+            {
+              "id": "341",
+              "name": "Rhode Island, United States",
+              "latitude": 41.7,
+              "longitude": -71.5
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779620",
+              "name": "Canterbury, Windham, Connecticut, United States",
+              "latitude": 41.6969,
+              "longitude": -72.0033
+            }
+          ]
+        },
+        "primaryId": "p_214657577",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZKJ-149B",
+        "events": [],
+        "personName": "Estabrook & Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Estabrook & Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BCZ-WM7Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292076259358",
+              "ark": "ark:/61903/1:1:6ZKJ-149B",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Estabrook & Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173728962177",
+              "resource_type": "Record",
+              "title": "Entry for Estabrook & Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZKJ-149B : Thu Sep 17 20:30:16 UTC 2026), Entry for Estabrook & Phelps.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BCZ-WM7Y",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DF-G9WF-T",
+              "coverage": {
+                "place_rep_id": "394870",
+                "date_range": "1860–1861",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q6M",
+              "resource_type": "auto",
+              "title": "United States, Ohio, Residences, from 1600 to 2005",
+              "coverage": {
+                "place_rep_id": "357",
+                "date_range": "+1600-01-01T00:00:00Z/+2005-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_292076259358",
+              "resource_type": "Person",
+              "url": "#p_292076259358"
+            }
+          ]
+        },
+        "primaryId": "p_292076259358",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6BXZ-LMC5",
+        "events": [],
+        "personName": "Cora B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for George F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4XH-9J9L",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305070867294",
+              "ark": "ark:/61903/1:1:6BXZ-LMC5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Cora B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305070867293",
+              "ark": "ark:/61903/1:1:6BXZ-LMCP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George F",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305070867293",
+              "person2": "p_305070867294"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180409722351",
+              "resource_type": "Record",
+              "title": "Entry for George F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BXZ-LMCP : Tue May 13 12:34:25 UTC 2025), Entry for George F Phillips and Cora B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4XH-9J9L",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-RQ9J-1SNL",
+              "coverage": {
+                "place_rep_id": "392828",
+                "date_range": "1912",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305070867294",
+              "resource_type": "Person",
+              "url": "#p_305070867294"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305070867294",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS45-3KC6",
+        "events": [],
+        "personName": "Jennie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH9G-36TZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307827638383",
+              "ark": "ark:/61903/1:1:XS45-3KC6",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Jennie B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307827638382",
+              "ark": "ark:/61903/1:1:XS45-3KCD",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Albert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307827638382",
+              "person2": "p_307827638383"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180834213490",
+              "resource_type": "Record",
+              "title": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS45-3KCD : Sun Apr 13 07:43:08 UTC 2025), Entry for Albert Phillips and Jennie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH9G-36TZ",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-BQ9V-S98L-T",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1920",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307827638383",
+              "resource_type": "Person",
+              "url": "#p_307827638383"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307827638383",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X9Y7-Y5NN",
+        "events": [],
+        "personName": "Pearl B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Chester A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4YB-379X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307569901096",
+              "ark": "ark:/61903/1:1:X9Y7-Y5NN",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Pearl B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307569901095",
+              "ark": "ark:/61903/1:1:X9Y7-Y5NF",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Chester A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307569901095",
+              "person2": "p_307569901096"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180741865544",
+              "resource_type": "Record",
+              "title": "Entry for Chester A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9Y7-Y5NF : Sun Apr 13 02:18:16 UTC 2025), Entry for Chester A Phillips and Pearl B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4YB-379X",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-TQ9V-F7ZR",
+              "coverage": {
+                "place_rep_id": "393093",
+                "date_range": "1931",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "resource_type": "auto",
+              "title": "United States, New York, Residences, from 1600 to 1997",
+              "coverage": {
+                "place_rep_id": "339",
+                "date_range": "+1600-01-01T00:00:00Z/+1997-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_307569901096",
+              "resource_type": "Person",
+              "url": "#p_307569901096"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307569901096",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSZD-7SLC",
+        "events": [],
+        "personName": "Jennie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH3F-9Y1Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307890857439",
+              "ark": "ark:/61903/1:1:XSZD-7SLC",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jennie B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307890857438",
+              "ark": "ark:/61903/1:1:XSZD-7SLH",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Albert",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307890857438",
+              "person2": "p_307890857439"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180877102174",
+              "resource_type": "Record",
+              "title": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZD-7SLH : Sun Apr 13 11:12:09 UTC 2025), Entry for Albert Phillips and Jennie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH3F-9Y1Q",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-YQ9V-S942-2",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1928",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307890857439",
+              "resource_type": "Person",
+              "url": "#p_307890857439"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307890857439",
+        "role": "Spouse"
+      }
+    ]
+  }
+}
