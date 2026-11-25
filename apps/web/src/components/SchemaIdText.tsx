@@ -6,32 +6,35 @@ export interface SchemaIdTextProps {
   /** One run of prose from a chat paragraph. */
   text: string
   /**
-   * Open the card an id names. OMITTED when nothing can resolve it — with no
-   * provider above the chat there is no resolver, and then every id must render as
-   * the plain text it is today.
+   * Open the card a SCHEMA id names. OMITTED when nothing can resolve it — with no
+   * provider above the chat there is no resolver, and then every schema id renders as
+   * the plain text it is today. FamilySearch links do not use this: their href is
+   * rebuilt from a FamilySearch constant, so they render with or without a handler.
    */
   onOpen?: (id: string, section: string) => void
-  /** Whether the project holds the id. An id it does not hold stays plain text. */
+  /** Whether the project holds the id. A schema id it does not hold stays plain text. */
   hasId?: (id: string) => boolean
 }
 
-/**
- * Chat prose with its schema identifiers turned into links.
- *
- * Additive by construction, which is the whole licence for this change: an id that
- * cannot be placed, or that arrives with no handler, renders EXACTLY as it does
- * today. The failure mode is "no link", never "broken text" and never a dead button
- * that looks clickable and does nothing.
- *
- * Measured need: 193 occurrences of 94 distinct ids reach the reader in the captured
- * session and none of them goes anywhere
- * (`docs/captures/2026-09-29-mcandrew-children/`).
- */
 /** One linkable span in a run of prose: a FamilySearch URL, or a research-schema id. */
 type Mark =
   | { start: number; end: number; kind: 'fs'; href: string; label: string }
   | { start: number; end: number; kind: 'schema'; id: string; section: string }
 
+/**
+ * Chat prose with its schema identifiers and FamilySearch references turned into links.
+ *
+ * Additive by construction, which is the whole licence for this change: a span that
+ * cannot be placed renders EXACTLY as it does today. A SCHEMA id with no handler stays
+ * plain text; a FamilySearch reference links regardless, since its href needs no
+ * project. The failure mode is "no link", never "broken text" and never a dead button
+ * that looks clickable and does nothing.
+ *
+ * Measured need: 193 occurrences of 94 distinct ids reach the reader in the captured
+ * session and none of them goes anywhere
+ * (`docs/captures/2026-09-29-mcandrew-children/`); and feedback #4561, where a reply
+ * named four image ARKs no reader could open.
+ */
 export function SchemaIdText({ text, onOpen, hasId }: SchemaIdTextProps): React.JSX.Element {
   // FamilySearch links need no project: the href is rebuilt from a FamilySearch
   // constant, so a reader with no project open still gets a clickable source (#4582).
