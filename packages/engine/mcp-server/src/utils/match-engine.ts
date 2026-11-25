@@ -13,6 +13,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
+import { readForbidden } from "./fs-forbidden.js";
 import { isFsBudgetExhausted } from "./fs-budget.js";
 import { describeFetchError } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
@@ -227,19 +228,7 @@ async function throwForBadStatus(response: Response, principal: Principal): Prom
     );
   }
   if (status === 403) {
-    // Imperva WAF body looks like { errorCode: "15", description: "..." }
-    let body: unknown = null;
-    try {
-      body = await response.json();
-    } catch {
-      body = null;
-    }
-    const isWaf =
-      body !== null &&
-      typeof body === "object" &&
-      "errorCode" in body &&
-      (body as { errorCode?: unknown }).errorCode === "15";
-    if (isWaf) {
+    if ((await readForbidden(response)).firewall) {
       throw new Error(
         "FamilySearch matchTwoExamples blocked by WAF. The User-Agent header " +
         "was rejected — check that the MCP server is running an unmodified build.",

@@ -738,6 +738,21 @@ def _check_fs_search(
             "FamilySearch session was rejected (401). Re-run `make e2e-login` "
             "(or Login.bat) to refresh the token before running.",
         )
+    # A 403 without the firewall's errorCode 15 body is FamilySearch refusing
+    # this one search, not this machine being blocked (#4707): WARN, not FAIL.
+    if "refused this record search" in text:
+        return (
+            "WARN",
+            "FamilySearch refused the test search (403, not a firewall block). "
+            "Re-run preflight; if it keeps refusing, read the body in the "
+            f"error: {text[:200]}",
+        )
+    if "record search timed out" in text:
+        return (
+            "WARN",
+            "FamilySearch did not answer the test search before it timed out "
+            "(transient). Re-run preflight or try again shortly.",
+        )
     if "did not complete after retries" in text:
         return (
             "WARN",

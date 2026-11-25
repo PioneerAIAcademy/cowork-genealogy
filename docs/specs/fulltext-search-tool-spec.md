@@ -395,7 +395,8 @@ sharing the most highlight words was kept.
 | Status | Behavior |
 |--------|----------|
 | 401 | Throw: "FamilySearch session expired; call the login tool to re-authenticate." |
-| 403 | Throw: "FamilySearch blocked the request. Check that the MCP server is running an unmodified build." |
+| 403 with the firewall's body (JSON `errorCode: "15"`, `readForbidden`) | Throw: "FamilySearch blocked the request. Check that the MCP server is running an unmodified build." |
+| Any other 403 | Throw: "FamilySearch refused this full-text search (403). This is NOT an empty result — coverage is unknown. The same search may be answered if tried again later. (status 403; body: ${snippet})" — the body's first 120 characters. No WAF or build wording; the tail is how refusals are diagnosed. |
 | 400 | Parse error body if available, throw with detail. Likely caused by invalid query syntax. |
 | Other | Throw with status code and text. |
 

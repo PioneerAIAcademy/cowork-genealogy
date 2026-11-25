@@ -51,6 +51,8 @@ import {
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { readForbidden } from "../utils/fs-forbidden.js";
+import { DEFAULT_RETRY_BUDGET_MS, isFetchTimeout } from "../utils/http.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import {
   isSubCountryPlace,
@@ -71,8 +73,10 @@ const FS_SEARCH_URL =
 // Per-attempt ceiling for the FamilySearch search fetch. FS search can be slow;
 // without a timeout a stalled connection hangs until the OS/transport kills it,
 // which surfaces upstream as a dead turn mid-search rather than an actionable
-// error (issue #1316). Retried by fetchWithRetry (default 3 attempts within a
-// 10s budget), so worst-case wall time is ~25s + budget.
+// error (issue #1316). A timed-out attempt is NOT retried: it outlasts
+// fetchWithRetry's 10s budget (DEFAULT_RETRY_BUDGET_MS), so the loop stops after
+// it, and worst-case wall time is ~25s. A network error, 429 or 5xx that
+// answers quickly is still retried within that budget.
 const SEARCH_TIMEOUT_MS = 25_000;
 
 const PAGINATION_CAP = 4999;
@@ -1013,10 +1017,20 @@ async function fetchSearchPage(
     // network failure: rethrown marked, so the agent reads "try again in about
     // N seconds" rather than a transient error that was never retried.
     if (isFsBudgetExhausted(err)) throw err;
+    if (isFetchTimeout(err)) {
+      // A timeout at least as long as the retry budget leaves no time for a
+      // second attempt, so saying "after retries" here was false (#4707).
+      const notRetried = timeoutMs >= DEFAULT_RETRY_BUDGET_MS ? " and was not retried" : "";
+      throw new Error(
+        `FamilySearch record search timed out after ${Math.round(timeoutMs / 1000)}s` +
+          `${notRetried}. This is a transient failure, NOT an empty result — ` +
+          `coverage is unknown.`
+      );
+    }
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(
       `FamilySearch record search did not complete after retries ` +
-        `(network timeout or transient error): ${detail}. This is a transient ` +
+        `(network or transient error): ${detail}. This is a transient ` +
         `failure, NOT an empty result — coverage is unknown.`
     );
   }
@@ -1026,8 +1040,19 @@ async function fetchSearchPage(
       throw new SearchSessionRejected(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
+      // Only the firewall's own `errorCode: "15"` body is a User-Agent block.
+      // Any other 403 is FamilySearch refusing this search; the tail is how
+      // those refusals are diagnosed from a feedback bundle (#4707).
+      const forbidden = await readForbidden(response);
+      if (forbidden.firewall) {
+        throw new Error(
+          "FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."
+        );
+      }
       throw new Error(
-        "FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."
+        "FamilySearch refused this record search (403). This is NOT an empty " +
+          "result — coverage is unknown. The same search may be answered if " +
+          `tried again later. (status 403; body: ${forbidden.snippet})`
       );
     }
     if (response.status === 400) {

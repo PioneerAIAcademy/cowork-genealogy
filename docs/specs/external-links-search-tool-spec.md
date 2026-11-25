@@ -419,7 +419,8 @@ project convention:
 | `endYear < startYear` (both provided) | Throw: `"endYear must be greater than or equal to startYear. Re-read the tool's input schema and retry with corrected arguments."` |
 | `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a FamilySearch place. Use place_search to get a standard place name first."` |
 | `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8. The parenthesised `(Type)` suffix is the disambiguation grammar: passing `"Baltimore, Maryland, United States (Independent City)"` resolves to the city's placeId. |
-| HTTP 403 | Throw: `"FamilySearch rejected the request (403 Forbidden). This usually means a User-Agent block — check that the MCP server is running an unmodified build."` |
+| HTTP 403 with the firewall's body (JSON `errorCode: "15"`, `readForbidden`) | Throw: `"FamilySearch rejected the request (403 Forbidden). This usually means a User-Agent block — check that the MCP server is running an unmodified build."` |
+| Any other HTTP 403 | Throw: `"FamilySearch refused this external-links request (403). This is NOT an empty result — which outside sites cover the place is unknown. The same request may be answered if tried again later. (status 403; body: ${snippet})"` — the body's first 120 characters. No User-Agent or build wording. |
 | HTTP 429 | Retried by `fetchWithRetry` (up to 3 attempts, 10s budget). If still 429 after exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
 | Other non-2xx | Throw: `"FamilySearch external-links API error: ${status} ${statusText}."` |
 | Invalid JSON in response | Throw: `"FamilySearch returned a response that was not valid JSON. Retry once; if it persists, surface this to the user."` |
@@ -487,7 +488,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 3 | Fetches the whole list in ONE request (offset=0, count=1000) — never pages | One request; inline cap 200 + `inlineCapped` |
 | 4 | Refuses a response with no totalResults / a partial list / a place over 1,000 | The three completeness errors; no rows stored, and a place over 1,000 stored as `too_large` — kept through another place's fetch, cleared by its own, shown as `tooLarge` by `project_context` (`external-links-search-store.test.ts`) |
 | 5 | Returns empty results cleanly for a place that resolves but has no collections | Empty-data path (`results: []`, `totalForPlace: 0`) |
-| 6 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
+| 6 | Throws the User-Agent guidance only on a 403 carrying `errorCode: "15"`; any other 403 throws the refusal with its body tail | WAF error vs. refusal |
 | 7 | Throws an instructional error on 429 | Rate-limit error wording |
 | 8 | Throws a retry-once error on generic 5xx | Transient-error wording |
 | 9 | Throws an instructional error on malformed JSON | Parse-failure handling |

@@ -601,14 +601,57 @@ describe("recordSearchTool error propagation", () => {
     );
   });
 
-  it("25. throws on 403 with WAF/UA guidance", async () => {
+  it("25. throws the WAF/UA guidance only on the firewall's errorCode 15 body", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 403,
       statusText: "Forbidden",
+      text: async () => JSON.stringify({ errorCode: "15", description: "This request was blocked by our security service" }),
     });
     await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
-      /User-Agent header was rejected by the WAF/
+      /blocked the request\. The User-Agent header was rejected by the WAF/
+    );
+  });
+
+  // #4707: a 403 that is not the firewall's is FamilySearch refusing the search.
+  // Calling it a User-Agent fault sent agents and testers after the wrong cause.
+  it.each([
+    ["an empty body", ""],
+    ["a non-JSON body", "<html><body>Access   denied\n</body></html>"],
+    ["JSON with another errorCode", JSON.stringify({ errorCode: "7" })],
+  ])("25b. a 403 with %s is a refusal, not a WAF block, and carries the body", async (_label, body) => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      text: async () => body,
+    });
+    const err = await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e);
+    expect(err).toBeInstanceOf(Error);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/FamilySearch refused this record search \(403\)/);
+    expect(msg).toMatch(/NOT an empty result — coverage is unknown/);
+    expect(msg).toContain("status 403; body: ");
+    expect(msg).not.toMatch(/WAF|User-Agent|unmodified build/);
+    expect(msg).toContain(`body: ${body.replace(/\s+/g, " ").trim().slice(0, 120)})`);
+  });
+
+  it("25c. a 403 whose body cannot be read is still a refusal", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403, statusText: "Forbidden" });
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      /refused this record search \(403\).*\(status 403; body: \)/s
+    );
+  });
+
+  it("25d. caps the body snippet at 120 characters", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      text: async () => "x".repeat(500),
+    });
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      new RegExp(`body: x{120}\\)$`)
     );
   });
 
@@ -675,17 +718,26 @@ describe("recordSearchTool error propagation", () => {
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316 / #2054: a timeout (AbortSignal firing → fetch rejects) is transient
-  // too. fetchWithRetry re-throws the last error after exhaustion, caught by
-  // the try/catch in recordSearchTool.
-  it("retries a timeout and throws the terminal error when exhausted", async () => {
+  // #4707: a timeout says it timed out and was not retried. A real 25s attempt
+  // outlasts the 10s retry budget, so there is no second attempt; the mock
+  // rejects at once, which is why it is called more than once here.
+  it("a timeout says it timed out and was not retried, not 'after retries'", async () => {
     mockFetch.mockRejectedValue(
       Object.assign(new Error("The operation timed out"), {
         name: "TimeoutError",
       })
     );
+    const err = await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/record search timed out after 25s and was not retried/);
+    expect(msg).toMatch(/NOT an empty result — coverage is unknown/);
+    expect(msg).not.toMatch(/after retries/);
+  });
+
+  it("a network error that exhausts its retries still says 'after retries'", async () => {
+    mockFetch.mockRejectedValue(new Error("fetch failed"));
     await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
-      /did not complete after retries.*network timeout or transient error/s
+      /did not complete after retries \(network or transient error\).*coverage is unknown/s
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });

@@ -1,6 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { readForbidden } from "../utils/fs-forbidden.js";
 import { toArk } from "../utils/ark.js";
 import type {
   FulltextSearchInput,
@@ -244,8 +245,16 @@ export async function fulltextSearchTool(
       throw new Error(await rejectedTokenMessage(principal, "FamilySearch session expired; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
+      const forbidden = await readForbidden(response);
+      if (forbidden.firewall) {
+        throw new Error(
+          "FamilySearch blocked the request. Check that the MCP server is running an unmodified build."
+        );
+      }
       throw new Error(
-        "FamilySearch blocked the request. Check that the MCP server is running an unmodified build."
+        "FamilySearch refused this full-text search (403). This is NOT an empty " +
+          "result — coverage is unknown. The same search may be answered if " +
+          `tried again later. (status 403; body: ${forbidden.snippet})`
       );
     }
     if (response.status === 400) {
