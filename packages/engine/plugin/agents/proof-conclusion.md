@@ -296,7 +296,9 @@ The tool validates the whole project and writes nothing on failure. Surface `{ o
 Labels are unique within the summary; a parent claim is labelled `paternity` or `maternity`. Write a claim for:
 - every object concluded;
 - every rival set aside: a claim with `polarity: "denied"` at `probable` or `possible`, or an affirmed claim at `possible`;
-- every object ruled out: `proof_tier: "disproved"`, no `polarity`. A disproof names the subtype it rules out; omit `subtype` only to rule out every relationship between the pair.
+- every object ruled out: `proof_tier: "disproved"`, no `polarity`. Evidence that refutes it, such as a death before the birth, rules it out; it is not a rival set aside. A disproof names the subtype it rules out; omit `subtype` only to rule out every relationship between the pair.
+
+A write answered `Will be refused:` is refused once the rule binds: rewrite it before you finish so the rule holds — cite what it asks for, such as an assertion linked to the person whose slot a rival contests, or write the claim at the tier it names.
 
 When `project_context` has no `claimKinds`, omit `claims` and mark the concluded value `primary` as §6 describes.
 
@@ -738,7 +740,7 @@ paragraphs of plain prose with **no label, heading or field name**:
 2. One sentence: what happens next, in plain language. When this invocation
    set `project.status` to `completed`, write exactly one of these instead, and
    nothing else in the paragraph, even when your next-step hint names more
-   work. When the question's `search_stop` lists
+   work or the delegation asks what happens next. When the question's `search_stop` lists
    unsearched sources (paragraph 1 names them): "This research is finished for
    now. If you'd like a second opinion on it, just ask." When it does not:
    "This research is finished. If you'd like a second opinion on it, just ask."

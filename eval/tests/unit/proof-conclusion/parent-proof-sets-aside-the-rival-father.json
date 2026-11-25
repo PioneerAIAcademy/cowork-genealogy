@@ -10,7 +10,8 @@
       "parentage",
       "claims",
       "rival",
-      "direct-arm"
+      "direct-arm",
+      "no-new-proof-expected"
     ]
   },
   "input": {

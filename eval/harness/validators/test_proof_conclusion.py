@@ -486,7 +486,8 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
         "no Death fact claim on I1 — the bracket is a claim of its own, tiered on "
         "what CAN be established, not left to the summary's scalar tier."
     )
-    claim = claims[-1]
+    dated = [c for c in claims if str(c["fact"].get("date") or "").strip()]
+    claim = (dated or claims)[-1]
     assert str(claim["fact"].get("date") or "").strip(), (
         "the Death claim on I1 carries no date — the bracket IS the finding, so "
         "it belongs in the claim's date (e.g. 'after 1870, before 1885')."
@@ -1051,8 +1052,11 @@ def test_shortfall_matches_document_state(after_state, test):
 
         if tier not in CONCLUSIVE_TIERS:
             _check_ceiling(shortfall, "")
+        # A `finding` claim reports what one search returned; its `ceiling`
+        # says that record set is spent (a certificate series that began after
+        # the death), not that the question's search is finished.
         for i, claim in enumerate(ps.get("claims") or []):
-            if isinstance(claim, dict) and "shortfall" in claim:
+            if isinstance(claim, dict) and "shortfall" in claim and "finding" not in claim:
                 _check_ceiling(claim["shortfall"], f" claims[{i}]")
 
 

@@ -163,6 +163,15 @@ def test_rejects_a_death_fact_with_no_bracket():
         bounded(_state("probable", {"type": "Death"}), BOUNDED)
 
 
+def test_reads_the_dated_death_claim_when_place_is_a_claim_of_its_own():
+    state = _state("probable", DEATH)
+    state["research_json"]["proof_summaries"][0]["claims"].append(
+        {"claim": "death place", "proof_tier": "possible", "supporting_assertion_ids": [],
+         "fact": {"subject": "I1", "fact_type": "Death", "place": "Muhlenberg County, Kentucky"}}
+    )
+    bounded(state, BOUNDED)
+
+
 def test_bounded_check_skips_when_untagged():
     with pytest.raises(BaseException) as exc:
         bounded(_state("not_proved", None), {"type": "positive", "tags": []})

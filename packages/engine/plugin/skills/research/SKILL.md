@@ -199,7 +199,7 @@ and never answer it inline from the tree; add `@plugin:check-warnings` after it
 only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
-of two persons already confirmed identical; a "should these be merged?" never goes
+of two persons already confirmed identical; the user's word is that confirmation, so an open identity question does not hold it back; a "should these be merged?" never goes
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
@@ -622,7 +622,7 @@ message.
 
 ## Tree-encoding gate
 
-**A conclusion is not done until the tree reflects it.** Read `project_context.owedFindings`:
+**A conclusion is not done until the tree reflects it.** After `proof-conclusion` returns, read `project_context.owedFindings`:
 each `encode` item names a summary and a claim affirmed at `probable` or better that
 no tree object carries.
 
@@ -631,8 +631,7 @@ no tree object carries.
 2. **A hard gate:** never let a question be resolved, and never let `project.status`
    reach `"completed"`, while an `encode` item is owed.
 3. A claim at `possible`, `not_proved` or `disproved` owes no tree write; a `raise`
-   item is advisory. An `identity` claim is never an `encode` item: a merge it
-   concludes is checked by its own warning.
+   item is advisory. An `identity` claim is never an `encode` item.
 
 With no `claimKinds` in `project_context`, check with `tree_query` that each
 summary at `probable` or better has its concluded relationship or fact in the tree.

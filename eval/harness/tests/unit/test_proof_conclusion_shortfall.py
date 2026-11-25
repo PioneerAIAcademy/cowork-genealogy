@@ -202,3 +202,27 @@ def test_per_claim_shortfall_absent_is_fine():
         _after(claims=[{"claim": "paternity", "proof_tier": "probable"}]),
         TEST,
     )
+
+
+_ABSENCE = {"finding_type": "absence", "statement": "No state death certificate exists; registration began after the death.", "log_entry_ids": ["log_001"]}
+
+
+def test_finding_claim_may_carry_ceiling_on_an_undeclared_question():
+    check(
+        _after(claims=[{"claim": "no-certificate", "proof_tier": "probable",
+                        "shortfall": "ceiling", "finding": _ABSENCE}]),
+        TEST,
+    )
+
+
+def test_answer_claim_beside_a_finding_is_still_checked():
+    with pytest.raises(AssertionError, match=r"claims\[0\]"):
+        check(
+            _after(claims=[
+                {"claim": "death-bracket", "proof_tier": "probable", "shortfall": "ceiling",
+                 "fact": {"subject": "I1", "fact_type": "Death", "date": "before 1885"}},
+                {"claim": "no-certificate", "proof_tier": "probable", "shortfall": "ceiling",
+                 "finding": _ABSENCE},
+            ]),
+            TEST,
+        )
