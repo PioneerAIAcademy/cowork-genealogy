@@ -134,7 +134,7 @@ describe("rejectUnknownArgs: a key that belongs to another tool's shape (#4075)"
     expect(r.isError).toBe(true);
     expect(r.text).toContain("research_query has no parameter `filters`: send each filter as its own argument");
     expectSectionKeys(r.text, "plans");
-    expect(listedKeys(r.text, "plans")).toEqual(["questionId", "status"]);
+    expect(listedKeys(r.text, "plans")).toEqual(["questionId", "planItemId", "status"]);
     expect(r.text).not.toContain("the nearest are");
   });
 

@@ -194,7 +194,10 @@ is a key this rule can drop:
     name: string,
     uploaded: string,                    // ISO, from the store's mtime
     hasText: boolean,                    // uploads/<name>.txt exists
+    readWith?: "sidecar_read" | "image_transcribe",  // stored projects only — §2.7
+    ref?: string,                        // with readWith "sidecar_read": the ref to pass
   }],
+  uploadsAre?: "files" | "stored",       // how the uploads are read; absent when none — §2.7
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
   signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
@@ -861,9 +864,23 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 ### 2.7 `uploads`, `uploadUrl` — the self-hosted beta's web tier
 
 ```typescript
-uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean,
+             readWith?: "sidecar_read" | "image_transcribe", ref?: string }]
+uploadsAre?: "files" | "stored"
 uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
+
+`uploadsAre` says how the uploads are read, so no agent works it out from
+`uploadUrl`, `hasText` and the file name. It is present whenever `uploads` is:
+`"stored"` when the answer carries an `uploadUrl`, `"files"` otherwise. On a
+`"stored"` project each row names its reader: `readWith: "sidecar_read"` with
+`ref: "uploads/<name>.txt"` when `hasText` is true, `"sidecar_read"` with
+`ref: "uploads/<name>"` for a lone `.txt` upload, and `"image_transcribe"` for
+anything else. On a `"files"` project the rows carry neither field: the uploads
+are files in the project folder, and its callers do not agree on one reader for
+an image (search-external-sites reads the file, translation transcribes it).
+One function, `uploadReadPlan` (`src/utils/upload-read-plan.ts`), computes all
+of it, and the eval mock runs the same function after it adds `uploadUrl`.
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
 entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it

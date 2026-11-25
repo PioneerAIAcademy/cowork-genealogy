@@ -2056,8 +2056,18 @@ describe("build_external_search_url", () => {
 
     const research = () => ({
       project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
-      questions: [],
-      plans: [],
+      questions: [{ id: "q_001" }],
+      plans: [
+        {
+          id: "pl_001",
+          question_id: "q_001",
+          status: "active",
+          items: [
+            { id: "pli_001", status: "planned" },
+            { id: "pli_003", status: "planned" },
+          ],
+        },
+      ],
       log: [],
       sources: [],
       assertions: [],
@@ -2273,6 +2283,27 @@ describe("build_external_search_url", () => {
       });
     });
 
+    it("refuses a pli_ id no plan holds, and treats the text \"null\" as no plan item", async () => {
+      await writeFetchedProject();
+      const call = (planItemId: string) =>
+        buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { givenName: "Patrick", surname: "Flynn" },
+          projectPath: dir,
+          planItemId,
+          standardPlace: PA,
+        });
+      const invented = await call("pli_none");
+      expect(invented.ok).toBe(false);
+      if (invented.ok) return;
+      expect(invented.reason).toBe("unknown_plan_item");
+      expect(invented.errors.join(" ")).toMatch(/Leave planItemId out/);
+      expect(await readLog()).toEqual([]);
+      const textNull = await call("null");
+      expect(textNull.ok, JSON.stringify(textNull)).toBe(true);
+      expect((await readLog())[0].plan_item_id).toBeNull();
+    });
+
     it("returns a handoffLine carrying exactly the URL it logged", async () => {
       await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
@@ -2288,6 +2319,51 @@ describe("build_external_search_url", () => {
       expect(r.handoffLine.split("\n")[1]).toBe(r.url);
       const plain = buildExternalSearchUrl({ site: "findagrave", attributes: { surname: "Flynn" } });
       expect(plain.ok && plain.handoffLine).toBe(plain.ok && `Open this search:\n${plain.url}`);
+    });
+
+    it("returns summaryStart: the dividing line with the handoffLine under it", async () => {
+      await writeFetchedProject();
+      const logged = await buildExternalSearchUrlTool({
+        site: "myheritage",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+        projectPath: dir,
+        standardPlace: PA,
+      });
+      expect(logged.ok && logged.summaryStart).toBe(logged.ok && `---\n${logged.handoffLine}`);
+      const notAwaited = await buildExternalSearchUrlTool({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+        projectPath: dir,
+        standardPlace: PA,
+        awaitingCapture: false,
+          notAwaitedBecause: "results_in_hand",
+      });
+      expect(notAwaited.ok && notAwaited.summaryStart).toBe(notAwaited.ok && `---\n${notAwaited.handoffLine}`);
+      const root = buildExternalSearchUrl({ site: "matricula", attributes: { surname: "Kuhlmann" } });
+      expect(root.ok && root.summaryStart.split("\n")).toEqual(root.ok && ["---", ...root.handoffLine.split("\n")]);
+      expect(root.ok && root.summaryStart).toMatch(/From there, /);
+      expect(root.ok && root.alsoInSummary).toMatch(/film number.*researcher's part/);
+      const plainSite = buildExternalSearchUrl({ site: "findagrave", attributes: { surname: "Flynn" } });
+      expect(plainSite.ok && "alsoInSummary" in plainSite).toBe(false);
+      const refused = buildExternalSearchUrl({ site: "nope" as any, attributes: { surname: "Flynn" } });
+      expect(refused.ok).toBe(false);
+      expect("summaryStart" in refused).toBe(false);
+    });
+
+    it("a browse site's root carries the route to the parish in handoffLine; a parish page does not", () => {
+      const root = buildExternalSearchUrl({ site: "matricula", attributes: {} });
+      expect(root.ok).toBe(true);
+      if (!root.ok) return;
+      const lines = root.handoffLine.split("\n");
+      expect(lines.slice(0, 2)).toEqual(["Open this search:", root.url]);
+      expect(lines[2]).toMatch(/^From there, open the place search \(Suchen → Ortssuche, https:\/\/data\.matricula-online\.eu\/de\/suchen\/\)/);
+      expect(root.handoffLine).not.toMatch(/baseUrl/);
+      expect(root.notes.join(" ")).toMatch(/pass the parish page .* as baseUrl/);
+      const archionRoot = buildExternalSearchUrl({ site: "archion", attributes: {} });
+      expect(archionRoot.ok && archionRoot.handoffLine).toMatch(/From there, type the town into the place search/);
+      const parish = "https://data.matricula-online.eu/de/deutschland/muenster/ochtrup/";
+      const page = buildExternalSearchUrl({ site: "matricula", baseUrl: parish, attributes: {} });
+      expect(page.ok && page.handoffLine).toBe(`Open this search:\n${parish}`);
     });
 
     it("records a browse site's baseUrl in notes", async () => {
@@ -2312,6 +2388,105 @@ describe("build_external_search_url", () => {
       expect(r.logId).toBeUndefined();
       expect(r.notes.join(" ")).toMatch(/planItemId' has no effect without projectPath/);
       expect(await readLog()).toEqual([]);
+    });
+
+    describe("awaitingCapture: false", () => {
+      it("is refused without a reason, naming the three cases and the hand-off default", async () => {
+        await writeFetchedProject();
+        for (const notAwaitedBecause of [undefined, "browse_site", ""]) {
+          const r = await buildExternalSearchUrlTool({
+            site: "ancestry",
+            attributes: { givenName: "Patrick", surname: "Flynn" },
+            projectPath: dir,
+            standardPlace: PA,
+            awaitingCapture: false,
+            notAwaitedBecause: notAwaitedBecause as any,
+          } as any);
+          expect(r.ok).toBe(false);
+          if (r.ok) return;
+          expect(r.reason).toBe("not_awaited_reason_required");
+          expect(r.errors.join(" ")).toMatch(/results_in_hand.*researcher_reports_result.*no_user_present/);
+          expect(r.errors.join(" ")).toMatch(/leave awaitingCapture out/);
+        }
+        expect(await readLog()).toEqual([]);
+        for (const notAwaitedBecause of ["results_in_hand", "researcher_reports_result", "no_user_present"] as const) {
+          const r = await buildExternalSearchUrlTool({
+            site: "ancestry",
+            attributes: { givenName: "Patrick", surname: "Flynn" },
+            projectPath: dir,
+            standardPlace: PA,
+            awaitingCapture: false,
+            notAwaitedBecause,
+          });
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+        }
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("builds and writes no entry, with no logId and a note saying so", async () => {
+        await writeFetchedProject();
+        const r = await buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { givenName: "Patrick", surname: "Flynn" },
+          projectPath: dir,
+          planItemId: "pli_003",
+          standardPlace: PA,
+          awaitingCapture: false,
+          notAwaitedBecause: "results_in_hand",
+        });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect(r.logId).toBeUndefined();
+        expect(r.notes.join(" ")).toMatch(/No in-flight entry written/);
+        expect(r.notes.join(" ")).toMatch(/planItemId was not recorded/);
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("still refuses a place that was never looked up", async () => {
+        await writeProject();
+        const r = await buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { surname: "Flynn" },
+          projectPath: dir,
+          standardPlace: PA,
+          awaitingCapture: false,
+          notAwaitedBecause: "results_in_hand",
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+      });
+
+      it("true, and absent, write the entry as before", async () => {
+        await writeFetchedProject();
+        for (const awaitingCapture of [true, undefined]) {
+          const r = await buildExternalSearchUrlTool({
+            site: "ancestry",
+            attributes: { surname: "Flynn" },
+            projectPath: dir,
+            standardPlace: PA,
+            awaitingCapture,
+          });
+          expect(r.ok && r.logId, JSON.stringify(r)).toBeTruthy();
+        }
+        expect(await readLog()).toHaveLength(2);
+      });
+
+      it.each(["false", "true", 0, "no"])("refuses the non-boolean %j and writes nothing", async (bad) => {
+        await writeFetchedProject();
+        const r = await buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { surname: "Flynn" },
+          projectPath: dir,
+          standardPlace: PA,
+          awaitingCapture: bad as unknown as boolean,
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("invalid_awaiting_capture");
+        expect(r.errors.join(" ")).toMatch(/awaitingCapture must be true or false/);
+        expect(await readLog()).toEqual([]);
+      });
     });
 
     it("writes nothing when the build fails", async () => {

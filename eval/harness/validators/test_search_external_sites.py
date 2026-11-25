@@ -579,7 +579,7 @@ def test_base_url_is_the_plan_items_collection_url(before_state, tool_calls, tes
 
 def test_archion_browse_handoff(tool_calls, test):
     """Tag-gated (archion-browse): the parish page goes to the builder as
-    `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""
+    `baseUrl`, and the tool returns a `logId`: it logged the hand-off."""
     if "archion-browse" not in test.get("tags", []):
         pytest.skip("not an archion-browse scenario")
     calls = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
@@ -589,7 +589,9 @@ def test_archion_browse_handoff(tool_calls, test):
     assert "archion.de" in str(args.get("baseUrl") or ""), (
         f"the archion call carried no Archion parish page as baseUrl: {args.get('baseUrl')!r}"
     )
-    assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
+    assert any(_as_mapping(c.get("response")).get("logId") for c in archion), (
+        "no archion call returned a logId, so the hand-off was not logged by the tool"
+    )
 
 
 def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_returns=None):
@@ -605,7 +607,7 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
     calls = [c for c in (tool_calls or []) if isinstance(c, dict)]
     catalog = [c for c in calls if _bare_tool_name(c.get("tool")) == "catalog_search"]
     builds = [
-        _as_mapping(c.get("args")) for c in calls
+        c for c in calls
         if _bare_tool_name(c.get("tool")) == "build_external_search_url"
         and _as_mapping(c.get("args")).get("site") in ("matricula", "archion")
     ]
@@ -614,8 +616,8 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
         errors.append("no catalog_search call: FamilySearch's filmed copy of the register was never checked")
     if not builds:
         errors.append("no build_external_search_url call for matricula or archion: the browse-site link was dropped")
-    elif not any(b.get("projectPath") for b in builds):
-        errors.append("the browse-site build omitted projectPath, so the hand-off was not logged by the tool")
+    elif not any(_as_mapping(b.get("response")).get("logId") for b in builds):
+        errors.append("no browse-site build returned a logId, so the hand-off was not logged by the tool")
     films, groups = set(), set()
     for c in catalog:
         for hit in _as_mapping(c.get("response")).get("hits") or []:
@@ -635,7 +637,7 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
         errors.append("the catalog_search responses carry no center-only film, so this test cannot judge the hand-off")
     elif films and not any(re.search(rf"(?<!\d){f}(?!\d)", tail) for f in films):
         errors.append(f"the researcher's text names none of the center-only films {sorted(films)}")
-    if any(b.get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
+    if any(_as_mapping(b.get("args")).get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
         errors.append("the researcher's text never gives Matricula's place search (Suchen → Ortssuche), the route the tool's note carries")
     offered = sorted(g for g in groups if re.search(rf"(?<!\d)0*{g}(?!\d)", tail))
     if offered:

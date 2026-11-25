@@ -559,6 +559,7 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 # `searchAdvice` from the call's own arguments and the answer's counts, so no
 # fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+_UPLOAD_READ_PLAN_JS = _MCP_BUILD / "utils" / "upload-read-plan.js"
 # record_search writes a nil search's own log entry (issue #4527). The mock
 # performs that write through the SAME compiled code, as it already does for
 # staging — a Python restatement would grade the agent against a log entry
@@ -818,6 +819,47 @@ def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
     warn = (logged.get("validation") or {}).get("warnings") or []
     if warn:
         out["validationWarnings"] = warn
+    return out
+
+
+def _hosted_upload_read_plan(response: dict[str, Any]) -> dict[str, Any]:
+    """`response` with production's read plan for a HOSTED project's uploads.
+
+    The compiled `project_context` ran on the file store, where no `uploadUrl` is
+    served, so it answered `uploadsAre: "files"` with no `readWith` on any row.
+    This mock adds the hosted `uploadUrl` afterwards, so the plan is recomputed by
+    the same exported function production runs (`uploadReadPlan`), never a Python
+    copy. Unchanged when there are no uploads, the build predates the function,
+    or node fails (with a warning: a harness fault must not look like the model
+    picking the wrong reader)."""
+    rows = response.get("uploads")
+    if not isinstance(rows, list) or not rows:
+        return response
+    if not _compiled_module_present(_UPLOAD_READ_PLAN_JS, "hosted project_context uploads will say they are files"):
+        return response
+    script = (
+        f"import {{ uploadReadPlan }} from '{_node_module_url(_UPLOAD_READ_PLAN_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const rows = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(uploadReadPlan(rows, true)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(rows), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        plan = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock project_context could not compute the hosted upload read plan ({exc})", stacklevel=2)
+        return response
+    out: dict[str, Any] = {}
+    for key, value in response.items():
+        if key == "uploadsAre":
+            continue
+        if key == "uploads":
+            out["uploads"] = plan["uploads"]
+            out["uploadsAre"] = plan["uploadsAre"]
+        else:
+            out[key] = value
     return out
 
 
@@ -2485,11 +2527,10 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "project_list": ("project-list.js", "projectList"),
 }
 
-#: Compiled tools whose `projectPath` is optional and changes what the call
-#: does: given one, `build_external_search_url` also writes the in-flight
-#: hand-off log entry. Production never supplies it on the model's behalf, so
-#: injecting it here would make every run write an entry the agent never asked
-#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: Compiled tools whose `projectPath` the harness never adds for the model:
+#: given one, `build_external_search_url` also writes the in-flight hand-off
+#: log entry (unless `awaitingCapture: false`), and the project gate refuses a
+#: call without one. Injecting it here would hide that refusal. These get the `person_quality` treatment: a projectPath the agent sent
 #: is rebased onto the workspace, and none is added.
 _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
@@ -3096,7 +3137,7 @@ def _make_compiled_tool_handler(
                 # Production spreads `uploadUrl` onto every answer that read the project,
                 # and returns an `ok: false` one before it.
                 if links["uploadUrl"] and response.get("ok") is True:
-                    response = {**response, "uploadUrl": links["uploadUrl"]}
+                    response = {**_hosted_upload_read_plan(response), "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

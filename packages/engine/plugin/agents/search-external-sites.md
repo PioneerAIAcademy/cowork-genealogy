@@ -15,7 +15,7 @@ description: >-
   (search-records); when they are still choosing what or where to search
   (research-plan); or to analyze a single record already in context
   (the record-structurer agent).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -96,14 +96,14 @@ Each invocation does one of three things, and returns:
       `urlGenerated` the results came from.
    2. **No row matches** → the search was never handed off. Run steps 1–3 in
       full first: steps 1–2, `collections_search`, then
-      `build_external_search_url` without `projectPath`.
+      `build_external_search_url` with `awaitingCapture: false, notAwaitedBecause: "results_in_hand"`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
       logged `outcome: "error"`. An upload that could not be read (step 5)
       logs nothing and leaves the plan item as it is.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
-   without `projectPath`) — never write a URL yourself — then log the result
+   with `awaitingCapture: false, notAwaitedBecause: "researcher_reports_result"`) — never write a URL yourself — then log the result
    now (step 6) with that URL — `captureReceived: false`, `captureFilename:
    null` — and give the capture steps (step 4) so a capture can later confirm it.
 
@@ -220,7 +220,7 @@ Instead, for each capture-required external-site plan item:
    also indexed on FamilySearch. If `search-records` can reach the record,
    hand back to search-records rather than deferring.
 2. Otherwise, still resolve the place and build the search URL (steps 2–3),
-   calling the builder **without** `projectPath` — it is a genuine lead worth
+   calling the builder with `awaitingCapture: false, notAwaitedBecause: "no_user_present"` — it is a genuine lead worth
    recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
@@ -234,8 +234,8 @@ Instead, for each capture-required external-site plan item:
    owns item structure; an executing skill may only update the `status` of an
    item that already exists, and inventing one to close puts a search in the
    plan that was never planned.
-5. **Return to the caller** — do not wait. The built URL goes after the `---`,
-   pasted whole, so the researcher can run it later.
+5. **Return to the caller** — do not wait. The tool's `summaryStart`, pasted
+   whole, starts the researcher's part, so the researcher can run it later.
 
 ## Before you search
 
@@ -281,7 +281,8 @@ either when the researcher wants that domain specifically.
 
 ### 1. Find the plan item
 
-Call `research_query({ projectPath, section: "plans" })` and pick the item(s) targeting an external
+Call `research_query({ projectPath, section: "plans" })` (with a `planItemId` in the delegation,
+`research_query({ projectPath, section: "plans", planItemId })`) and pick the item(s) targeting an external
 repository. Note the record type, the place, the year window, and its
 `collection_url` if it has one.
 
@@ -367,7 +368,7 @@ blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
 build again.
 **One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
-is not awaiting anything — call the tool **without** `projectPath`, so no
+is not awaiting anything — call the tool with `awaitingCapture: false` and its `notAwaitedBecause`, so no
 in-flight entry is written, and log the search once at step 6.
 
 **Case A — a curated URL exists for the target site.**
@@ -491,11 +492,11 @@ captureReceived: false, captureFilename: null }`. `project_context` lists every
 such entry in `awaitingUser` until a later entry for the same URL closes it.
 
 The **hand-off** itself — the researcher has to fetch this themselves — is
-written into `summary_for_user`, after the final `---`, never into the
-caller-facing report above it (see Return contract below). Give them, in
-plain prose:
-1. the tool's `handoffLine`, pasted whole as plain text — never type the URL
-   yourself, and never wrap it in a markdown link;
+written into `summary_for_user`, never into the caller-facing report above it
+(see Return contract below). Give them, in plain prose:
+1. first, the tool's `summaryStart`, pasted whole as plain text: it is the `---`
+   line and the link. Write no other `---`, never type the URL yourself, never
+   wrap it in a markdown link. A second link goes below it as its `handoffLine`;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
@@ -506,36 +507,33 @@ plain prose:
    returned an `uploadUrl`, say to upload it at that URL instead of "here",
    pasted whole as plain text. Take that URL only from `project_context`, never
    from the delegation;
-5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
+5. any `notes` the tool returned alongside the link (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
    the line (see "Every observation the tool makes" above);
 6. when `collections_search` returned the same collection (step 2b), one
    sentence saying FamilySearch holds it too and can be searched there instead
-   — here, after the `---`, Case A or Case B;
+   — here, Case A or Case B;
 7. when `catalog_search` kept a filmed copy of the register (step 2b), its
-   sentence from step 2b, with the film number — here, after the `---`, never
-   only in the caller lines.
+   sentence from step 2b, with the film number — here, never only in the
+   caller lines.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
 The search is not awaiting anything: go to step 5, and log it once at step 6
 as the capture that arrived with no file, with the built URL as
-`urlGenerated`. Paste the tool's `handoffLine` once in `summary_for_user`
-(after the `---`), so the researcher sees the search the results came from.
-
----
+`urlGenerated`. Start `summary_for_user` with the tool's `summaryStart`, pasted
+whole, so the researcher sees the search the results came from.
 
 **`summary_for_user` paragraph 1 for a hand-off (1850 Census on Ancestry for
 Patrick Flynn):**
 
-<the handoffLine from build_external_search_url, pasted whole> It would settle
+<the summaryStart from build_external_search_url, pasted whole>
+It would settle
 Patrick's household in 1850: who he lived with, and their ages and
 birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. After the
 page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or
 Ctrl+P (Windows), choose Save as PDF, and upload it here — log in first if
 the page asks.
-
----
 
 ### 5. Triage the results
 
@@ -544,24 +542,20 @@ the results-page content in the delegation — call `project_context` and find
 the `awaitingUser` row whose `urlGenerated` is the URL the capture came from.
 Read an uploaded file this way:
 
-- **No `uploadUrl` in `project_context`:** `Read` the path, `uploads/<name>`
-  included, even when `project_context` lists it under `uploads`. Use the
-  rules below on it only if that `Read` fails.
-- **An `uploadUrl`, and the path is `uploads/<name>`:** find `<name>` in
-  `project_context`'s `uploads`:
-  - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`.
-    Never `image_transcribe` it.
-  - `hasText: false` and the name ends in `.txt` →
-    `sidecar_read({ projectPath, ref: "uploads/<name>" })`.
-  - `hasText: false`, any other name →
-    `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
+- **`uploadsAre: "files"`:** `Read` the path, `uploads/<name>` included. Use
+  `sidecar_read` on it only if that `Read` fails.
+- **`uploadsAre: "stored"`, and the path is `uploads/<name>`:** find `<name>` in
+  `project_context`'s `uploads` and read it with the tool its `readWith` names,
+  never `Read`:
+  - `sidecar_read` → `sidecar_read({ projectPath, ref })`, with the row's `ref`.
+  - `image_transcribe` → `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
     `sidecar_read` on the `staged.resultsRef` it returns (with `staged: null`,
     the `transcription` it returns). If it refuses, ask the researcher to paste
     the results text instead, say nothing about an API key, and log no closing
     entry: the hand-off stays open.
   - No row names it → `sidecar_read({ projectPath, ref: "uploads/<name>" })`,
     and follow its answer.
-- **An `uploadUrl`, and any other path:** `Read` it.
+- **`uploadsAre: "stored"`, and any other path:** `Read` it.
 
 Page every `sidecar_read` with `offset` until you have the whole text.
 
@@ -631,7 +625,7 @@ which this is not. The outcomes:
   the user says "nothing came up, there's nothing to save." If the user
   *reports* a nil without a capture, still append the `negative` entry
   immediately, and in `notes` mark the absence **unconfirmed pending a
-  capture**; then, in `summary_for_user` (after the `---`), paste the URL you
+  capture**; then start `summary_for_user` with the `summaryStart` of the URL you
   built for the log — the researcher has to open that same search to capture
   it, not a different one — plus the click-capture steps (step 4), so a PDF of
   the empty results page can later upgrade it from "unconfirmed" to
@@ -1087,8 +1081,10 @@ Return **≤12 lines** to the caller, in this order:
 
 ### `summary_for_user`
 
-Every caller line comes before the `---`; none is repeated after it. After the
-lines above, write a line containing only `---`, then exactly two paragraphs of
+Every caller line comes first; none is repeated in the researcher's part. After
+the lines above comes the one dividing line, a line containing only `---`: the
+first line of the pasted `summaryStart`, or, in a reply that built no link, one
+you write. A reply has exactly one. Then exactly two paragraphs of
 plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which website or
@@ -1100,6 +1096,9 @@ plain prose with **no label, heading or field name**:
    found, say so plainly and say what was searched, so the reader knows the
    search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.
+
+The link is never written in a caller line. The film sentence from step 2b and every
+tool `notes` line are written after the `---`, even when a caller line mentions them.
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.
