@@ -674,12 +674,19 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     2026-09-11, ``make probe-gateway-path``). ``CLAUDE_CODE_FORK_SUBAGENT=0`` keeps
     the Agent tool from offering ``subagent_type: "fork"`` (on by default in the
     SDK from CLI 2.1.302): a fork inherits the main thread's context and tools, not
-    a plugin agent's ``tools:`` list.
+    a plugin agent's ``tools:`` list. ``CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`` turns
+    Claude Code's auto-memory off, so a researcher's remark is never written to a
+    memory file under the sandbox's ``~/.claude`` — outside the project, unreviewed,
+    and loaded into later sessions. ``"1"`` is OFF; a falsy value means ``forced_on``.
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
     }
     base_url = _current_base_url()
@@ -886,10 +893,19 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
         # stage_plugin_agents just wrote. "user" was also listed, which read a
-        # source no harness run sees: nothing writes ~/.claude in the sandbox
-        # (sandbox/e2b.Dockerfile creates only ~/.familysearch-mcp), so it
-        # contributed nothing here while widening the gap between what CI
-        # exercises and what production loads.
+        # source no harness run sees: the image creates only ~/.familysearch-mcp
+        # (sandbox/e2b.Dockerfile), so it contributed nothing here while widening
+        # the gap between what CI exercises and what production loads.
+        #
+        # The original wording was "nothing writes ~/.claude in the sandbox",
+        # which was false while it stood: auto-memory wrote a memory file there
+        # on every session that produced one, and _pretool_hook does not deny
+        # that Write. It is narrowed above rather than repaired, because the
+        # memory tree is not a settings source and dropping "user" never
+        # governed it: test_auto_memory_off.py captures the CLI's prompt with
+        # setting_sources=[] and the memory block is still there. What governs
+        # it is _sdk_env's CLAUDE_CODE_DISABLE_AUTO_MEMORY — a separate
+        # mechanism, and not a reason to revisit this option.
         setting_sources=["project"],
         plugins=[{"type": "local", "path": _PLUGIN_DIR}],
         mcp_servers={
