@@ -788,6 +788,56 @@ def test_a_default_stubbed_spawn_hands_back_the_bare_return(tmp_path, monkeypatc
     ]
 
 
+def _message_input(to, message="Please do the weighing now."):
+    return {"tool_name": "SendMessage", "tool_input": {"to": to, "summary": "s", "message": message}}
+
+
+def _message_post(to):
+    return {
+        "tool_name": "SendMessage",
+        "tool_input": {"to": to, "message": "m"},
+        "tool_response": {"success": True},
+    }
+
+
+def test_a_message_to_a_stubbed_spawn_gets_the_stub_again(tmp_path, monkeypatch):
+    """ut_research_h22 (research v57_2026-11-25_16-00-13 run 1): the router sent
+    the stubbed conflict-resolution's agent a SendMessage, which reached the no-op
+    general-purpose agent with every tool, and it did the callee's work. The
+    message must go out as the stub's prompt and come back as the stub text."""
+    from harness.skill_stubs import STUB_RUNNER_PROMPT
+
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [_spawn_input("conflict-resolution"), _post_input(), _message_input("a9"), _message_post("a9")],
+        stub_agents={"conflict-resolution": "CANNED"},
+    )
+    pre = returns[2]["hookSpecificOutput"]
+    assert pre["permissionDecision"] == "allow"
+    assert pre["updatedInput"] == {"to": "a9", "summary": "s", "message": STUB_RUNNER_PROMPT}
+    assert returns[3]["hookSpecificOutput"]["updatedToolOutput"] == "CANNED"
+
+
+def test_a_message_to_a_live_agent_passes_through(tmp_path, monkeypatch):
+    """Only a stubbed spawn's agent is caught: a message to a live agent, or to one
+    no spawn in this run named, is left alone."""
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [_spawn_input("research-plan"), _post_input(), _message_input("a9"), _message_input("zz")],
+    )
+    assert returns[2] == {} and returns[3] == {}
+
+
+def test_a_stubbed_spawn_id_is_read_from_the_trailer_when_the_key_is_absent():
+    from harness.skill_stubs import spawned_agent_id
+
+    trailer = {"content": [{"type": "text", "text": "done\nagentId: a4de2d70be9561d2c (use SendMessage)"}]}
+    assert spawned_agent_id(trailer) == "a4de2d70be9561d2c"
+    assert spawned_agent_id(_AGENT_OUTPUT) == "a9"
+    assert spawned_agent_id({"content": [{"type": "text", "text": "done"}]}) is None
+    assert spawned_agent_id(None) is None
+
+
 def test_post_tool_use_leaves_an_unstubbed_return_alone_but_adds_the_relay_note(tmp_path, monkeypatch):
     """Only a spawn the pre hook stubbed has its return replaced: a live agent's
     report passes through, with the relay note a hosted plane adds to every

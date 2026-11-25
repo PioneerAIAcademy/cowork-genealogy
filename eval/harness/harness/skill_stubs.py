@@ -152,6 +152,42 @@ def stub_return_text(response: str | None) -> str:
     return response or BARE_STUB_RETURN
 
 
+def stub_message_rewrite(tool_input: dict[str, Any] | None) -> dict[str, Any]:
+    """The PreToolUse output for a SendMessage to a stubbed spawn's agent.
+
+    That agent is the no-op `STUB_RUNNER_AGENT`, which holds every tool, so the
+    caller's own message would set it working in the callee's place
+    (ut_research_h22, research v57_2026-11-25_16-00-13 run 1: it wrote
+    `conflicts` and spawned conflict-resolution live). It is sent
+    `STUB_RUNNER_PROMPT` instead, and `stub_return_output` hands back the stub
+    text again.
+    """
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "updatedInput": {**dict(tool_input or {}), "message": STUB_RUNNER_PROMPT},
+        }
+    }
+
+
+_AGENT_ID_TRAILER = re.compile(r"(?m)^\s*agentId:\s*(\S+)")
+
+
+def spawned_agent_id(tool_response: Any) -> str | None:
+    """The agent id an Agent tool's output names: its `agentId` key, else its trailer line."""
+    if isinstance(tool_response, dict):
+        if isinstance(tool_response.get("agentId"), str) and tool_response["agentId"]:
+            return tool_response["agentId"]
+        text = "\n".join(
+            str(b.get("text", "")) for b in tool_response.get("content") or [] if isinstance(b, dict)
+        )
+    else:
+        text = str(tool_response or "")
+    found = _AGENT_ID_TRAILER.search(text)
+    return found.group(1) if found else None
+
+
 def stub_spawn_rewrite(tool_input: dict[str, Any] | None) -> dict[str, Any]:
     """The PreToolUse output that lets a stubbed spawn run as a no-op agent.
 

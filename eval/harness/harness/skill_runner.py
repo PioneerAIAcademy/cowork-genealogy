@@ -68,7 +68,9 @@ from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import (
     fill_stub_fields,
+    spawned_agent_id,
     stub_denial,
+    stub_message_rewrite,
     stub_return_output,
     stub_return_text,
     stub_spawn_rewrite,
@@ -1196,8 +1198,17 @@ async def run_skill(
     # A stubbed spawn runs as STUB_RUNNER_AGENT; the relay note reads the agent the model named.
     _stub_inputs: dict[str, dict] = {}
 
+    # agentId of a stubbed spawn's no-op agent -> its stub text, for a later SendMessage.
+    _stub_agent_ids: dict[str, str] = {}
+
     async def posttool_hook(input_data, tool_use_id, ctx):
         text = _stub_returns.pop(tool_use_id, None)
+        if (
+            text is not None
+            and input_data.get("tool_name") in SPAWN_TOOL_NAMES
+            and (agent_id := spawned_agent_id(input_data.get("tool_response")))
+        ):
+            _stub_agent_ids[agent_id] = text
         out = (
             stub_return_output(input_data.get("tool_response"), text, str(tool_use_id))
             if text is not None
@@ -1299,6 +1310,14 @@ async def run_skill(
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
+        elif (
+            tool_name == "SendMessage"
+            and (_to := (input_data.get("tool_input") or {}).get("to")) in _stub_agent_ids
+        ):
+            # A follow-up to a stubbed spawn reaches its no-op agent, never the
+            # callee: it gets the stub's prompt and hands back the stub text again.
+            _stub_returns[tool_use_id] = _stub_agent_ids[_to]
+            return stub_message_rewrite(input_data.get("tool_input"))
         elif (
             tool_name in SPAWN_TOOL_NAMES
             and not input_data.get("agent_id")
