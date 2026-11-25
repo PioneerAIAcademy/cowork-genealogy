@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_035: the session's log_100 shape -- An* Tyler in the 1870 census with birthYearFrom 1848 (to 1858). Live, pinned to 1438024 + Fluvanna, it returns 0: the range excludes Antoine Tyler (b. 1833). Keyed on the exact tight value and listed BEFORE the broad Tyler fixture, so a search that keeps the range gets the nil. Issue #4580. Captured live 2026-11-16 (fix/4580).",
+  "description": "ut_search_records_035: the session's log_100 shape -- An* Tyler in the 1870 census with birthYearFrom 1848 (to 1858). Live, pinned to 1438024 + Fluvanna, it returns 0: the range excludes Antoine Tyler (b. 1833). Keyed on the exact tight value and listed BEFORE the broad Tyler fixture, so a search without subjectId that keeps the range gets the nil; one for I1 in a project whose log already returned Antoine (tyler-fluvanna-midwife-1870-candidate's log_001) is refused by record_search before any fixture is matched. Issue #4580. Captured live 2026-11-16 (fix/4580).",
   "args": {
     "surname": "~Tyl",
     "birthYearFrom": 1848

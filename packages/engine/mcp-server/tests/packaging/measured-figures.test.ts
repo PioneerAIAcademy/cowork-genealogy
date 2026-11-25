@@ -387,6 +387,13 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
+    1236,
+    {
+      reason: "the logged record_search ops the candidate-exclusion replay could not pair with their search, from dev/measure-candidate-exclusions.ts over the committed run logs — a corpus replay, not a live-API probe section, so no verdict records it; re-run the script to check it",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
+  ],
+  [
     1100,
     {
       reason: "the Brazil/Lapa/1880 pool that made the surname empty-field leg provable, from dev/explore-name-empty-field-leg-records.ts on 2026-08-20 — a session script, not a probe section, so no verdict records it; re-run the script to check it",

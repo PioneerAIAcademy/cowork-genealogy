@@ -3709,3 +3709,72 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     });
   });
 });
+
+describe("a birth range may not exclude a candidate already found (issue #4580)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-candidate-"));
+    const { mkdir } = await import("fs/promises");
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        log: [
+          {
+            id: "log_001",
+            tool: "record_search",
+            outcome: "positive",
+            results_ref: "results/log_001.json",
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({
+        log_id: "log_001",
+        tool: "record_search",
+        payload: {
+          query: { surname: "Tyler", givenName: "An*", collectionId: "1438024", subjectId: "I1" },
+          totalMatches: 1,
+          results: [
+            { recordId: "ark:/61903/1:1:MFLB-F5N", personName: "Antoine Tyler", birthDate: "1833" },
+          ],
+        },
+      }),
+      "utf-8",
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ id: "N1", given: "Ann", surname: "Tyler", type: "BirthName" }], facts: [] }],
+        relationships: [],
+        sources: [],
+      }),
+      "utf-8",
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("refuses a Tyler search for I1 with 1848-1858 before any request", async () => {
+    await expect(
+      recordSearchTool(
+        { surname: "Tyler", givenName: "Ann", subjectId: "I1", birthYearFrom: 1848, birthYearTo: 1858, projectPath: dir },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/excludes a candidate/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("searches when the range includes the candidate's 1833", async () => {
+    mockFetch.mockResolvedValue(makeOkResponse(emptyResponse()));
+    await recordSearchTool(
+      { surname: "Tyler", givenName: "Ann", subjectId: "I1", birthYearFrom: 1833, birthYearTo: 1858, projectPath: dir },
+      LOCAL,
+    );
+    expect(mockFetch).toHaveBeenCalled();
+  });
+});

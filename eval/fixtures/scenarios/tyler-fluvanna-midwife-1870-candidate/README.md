@@ -9,9 +9,15 @@ This is the state the reported session was in at `log_099` (feedback #4513, issu
   b. 1833, household head, Cunningham, Fluvanna (`ark:/61903/1:1:MFLB-F5N`).
 - **Everything else** matches `tyler-fluvanna-midwife`: q_001 `in_progress`, pl_001 with
   pli_001 and pli_002 `planned`, no sources, assertions or person evidence, and one tree
-  person, I1, "Ann Tyler", b. Apr 1853.
+  person, I1, "Ann Tyler", b. Apr 1853. Unlike the base scenario, I1 also carries the other
+  two readings of her given name as `AlsoKnownAs` names, "Antone Lightfoot" (the 1910
+  census) and "Anthony Tyler".
 
-Because that search named the subject and its page is short, `record_search` refuses a
-later search for I1 whose birth range excludes 1833.
+Because that search named the subject, asked for a given name that is hers (`An*`), is
+logged `positive` (not `negative`), and returned one row of one match (its page and its
+`totalMatches` are both at most 5), `record_search` refuses a later search for I1 whose
+birth range excludes 1833, when that search asks for one of her given names (Ann, Antone,
+Anthony) or for none. A search for I1 under another given name is for someone else and is
+not refused.
 
 Used by `ut_search_records_035` (1870 candidate).

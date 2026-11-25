@@ -531,20 +531,32 @@ refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 ### A birth range may not exclude a candidate already found
 
 A call with `projectPath`, `subjectId` and a birth range (`birthYearFrom`,
-`birthYearTo` or both) is refused, before any request, when the range excludes
-the birth year of a **candidate** an earlier search for the same subject
-returned. A candidate is a row of a logged `record_search` sidecar
+`birthYearTo` or both) that is a search **for the subject** is refused, before
+any request, when the range excludes the birth year of a **candidate** an
+earlier search for the same subject returned. A search is for the subject when
+its `givenName` or `givenNameAlt` matches one of the given names the project
+tree holds for `subjectId` (every `names[].given`, alternates included), matched
+as below; a call with no given name is too. A call under the subject's id whose
+given name is not the subject's (a search for a parent or a spouse) is not
+judged. A subject the tree does not hold, or holds with no given name, allows the
+call.
+
+A candidate is a row of a logged `record_search` sidecar
 (`results/<log_id>.json`, reached through a `log` entry's `results_ref`) where:
 
-- the sidecar's echoed `payload.query.subjectId` is this call's `subjectId`;
-- the page holds 1 to `CANDIDATE_PAGE_MAX` (5) rows. A short page is a candidate
-  list; a longer one is a pool, and narrowing a pool with a birth range stays
-  allowed;
+- the sidecar's echoed `payload.query.subjectId` is this call's `subjectId`, and
+  that query was a search for the subject by its `givenName` or `givenNameAlt`.
+  A logged search with no given name (a surname sweep of households) or one for
+  a relative made under the subject's id finds no candidates;
+- the `log` entry's `outcome` is not `negative`. A search logged negative
+  returned rows the researcher already judged were not the subject;
+- the page holds 1 to `CANDIDATE_PAGE_MAX` (5) rows, and the search's
+  `totalMatches` (the page's row count when absent) is also at most 5. A short
+  result is a candidate list; a longer one, or a short page of a longer one, is
+  a pool, and narrowing a pool with a birth range stays allowed;
 - the row's first given name matches that search's `givenName` or
   `givenNameAlt` (a wildcard pattern by wildcard, otherwise by prefix or a
-  Dice coefficient of at least 0.66). A search with no given name matches every
-  row. This keeps out the relatives a search for someone else (a wife, a child)
-  returns under the subject's id;
+  Dice coefficient of at least 0.66);
 - the row has a birth year (the first year in its `birthDate`);
 - the record is neither rejected for the subject (`rejected_links`, through the
   rejected assertion's `record_id`) nor listed in one of the subject's
@@ -553,7 +565,8 @@ returned. A candidate is a row of a logged `record_search` sidecar
 The error names each excluded candidate, its record, birth year and log entry,
 and says to search again with no birth range or one that includes those years.
 Either is always accepted, so the rule never blocks a search, only the range.
-Any failure to read `research.json` or a sidecar allows the call.
+Any failure to read `research.json`, `tree.gedcomx.json` or a sidecar allows the
+call.
 
 In a reported research session `log_099` returned an 1870 household
 headed by Antoine Tyler, born 1833; the next search for the subject, born about
@@ -563,6 +576,42 @@ finding. The search-records agent body forbade it and the agent still did it in
 own files, so the tool enforces it (ADR-0011). The eval mock runs the same
 compiled `candidateExclusionRefusal` and logs a refused call as
 `matched.kind: "candidate_excluded_refused"`.
+
+**Corpus refusal measurement (ADR-0011).** Measured on 2026-11-25 over the run
+logs and scenarios at `499f656be` by `npx tsx dev/measure-candidate-exclusions.ts
+--list` (from `packages/engine/mcp-server`), which runs `excludedCandidates` on a
+temporary project rebuilt for each call: the starting state plus every
+`record_search` the run had logged by then. Of 717 `record_search` calls in the
+committed unit and e2e run logs with a `subjectId`, a `projectPath` and a birth
+range, it refuses **2**, both in `ut_search_records_020`: a search for Job
+Purnell born about 1826 with 1823–1829 and 1824–1828, after the run had logged
+a Job Purnell baptised in 1821. That is the rule's intended shape (the 1821
+record was still a logged candidate, recorded neither as a namesake nor
+rejected), and either way out — widening to 1821 or recording the namesake —
+leaves the search the test needs. Over the same corpus the guard holds 20
+candidates (each scenario, and each e2e run's final reconstructed state); 4
+would refuse a search for the subject under the subject's own birth year ±5:
+Antoine Tyler (the case above), the 1825 Thomas Hanrahan and 1861 Thomas
+Hanshan on one two-row page in `thomas-hanrahan-marriage` (subject b. 1840),
+and "S W Spriggs" b. 1870 in `spriggs-parents-1898`, whose initial matches the
+subject's middle name Spencer on a three-row page the run logged `positive`
+for another row. Those three are accepted: each sits on a short page logged
+`positive` and recorded neither as a namesake nor rejected, so the refusal is
+satisfied by either, or by a range that includes it.
+
+The first version of the rule, without the subject-name condition, refused 13
+calls, 11 of them wrong: in `spriggs-parents-1898`, six searches for the subject
+Reuben and one for a John Spriggs, all blocked by three adult household heads a
+surname-only search under Reuben's id had returned; in `hannah-earnest-children`,
+three searches for the subject Hannah's father Joseph, blocked by Hannah's own
+candidate and by her husband Edwin Grice, whom an Edwin search under her id had
+made a candidate for her. The subject-name condition removes all eleven.
+
+Its limits: 1,236 logged e2e and unit `record_search` ops could not be paired with
+the call that staged them (914 from e2e run logs whose captures are stripped
+after 14 days), so the e2e count is a lower bound; rows are the page the run log
+kept, not the sidecar; and an e2e call is judged against the fixture's starting
+tree. These are eval-corpus counts, not production.
 
 ### Rows at or below the matcher floor are slimmed (experiment)
 

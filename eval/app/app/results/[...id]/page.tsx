@@ -117,12 +117,15 @@ type ScoreOrNull = 1 | 2 | 3 | null;
  *  A map rather than a ternary chain because the chain's fallthrough was wrong:
  *  `staged_ref_refused` landed on 'no fixture', telling an annotator to write a
  *  fixture for a call no fixture governs — the same misdirection
- *  `unknown_args_refused` was added to stop. Both are refusals the mock makes
- *  BEFORE any predicate lookup, so no fixture can cover either. The `??`
- *  default keeps an unknown future kind legible instead of blank. */
+ *  `unknown_args_refused` was added to stop, and `candidate_excluded_refused`
+ *  (a `record_search` birth range excluding a candidate already found, #4580)
+ *  would repeat. All three are refusals the mock makes BEFORE any predicate
+ *  lookup, so no fixture can cover any of them. The `??` default keeps an
+ *  unknown future kind legible instead of blank. */
 const MATCH_LABELS: Record<string, string> = {
   unknown_args_refused: 'unknown args refused',
   staged_ref_refused: 'staged ref refused',
+  candidate_excluded_refused: 'candidate excluded refused',
   none: 'fixture_not_found',
 };
 

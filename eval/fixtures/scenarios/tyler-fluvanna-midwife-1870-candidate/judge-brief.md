@@ -9,7 +9,9 @@ The project is saved after one search: `log_001`, a `record_search` for
 Tyler, female, born 1833 (`ark:/61903/1:1:MFLB-F5N`), and its results are
 kept in `results/log_001.json`. `sources`, `assertions` and
 `person_evidence` are empty, and both of `pl_001`'s items are still
-`planned`. The tree holds one person, `I1`, with no relationships.
+`planned`. The tree holds one person, `I1`, with no relationships, under her
+three given-name readings: Ann (her birth name), Antone and Anthony.
 
-A `record_search` whose birth range excludes 1833 is refused by the tool
-with an error naming Antoine. A refused call ran no search.
+A `record_search` for `I1` whose birth range excludes 1833, under one of those
+given names or none, is refused by the tool with an error naming Antoine. A
+refused call ran no search.

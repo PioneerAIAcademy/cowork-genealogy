@@ -753,7 +753,7 @@ def _candidate_exclusion_refusal(workspace: Path, args: dict[str, Any]) -> str |
     )
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
-        **{k: args[k] for k in ("subjectId", "birthYearFrom", "birthYearTo") if k in args},
+        **{k: args[k] for k in ("subjectId", "givenName", "givenNameAlt", "birthYearFrom", "birthYearTo") if k in args},
     }
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)

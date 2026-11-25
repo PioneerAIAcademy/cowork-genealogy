@@ -13,17 +13,24 @@
  * asking the model to remember.
  *
  * A candidate is a row of a logged `record_search` sidecar whose echoed query
- * named the same `subjectId`, on a page of at most `CANDIDATE_PAGE_MAX` rows. A
- * short page is a candidate list; a long one is a pool the agent is entitled to
- * narrow with a birth range, which is how a broad search is meant to be followed
- * up. The row's first given name must also match what that search asked for
- * (`givenName` or `givenNameAlt`): a search for the subject's wife under the
- * subject's id returns her relatives, who are not candidates for him. A row
- * whose record the researcher rejected for the subject (`rejected_links`) or
- * recorded as a namesake of the subject (`namesakes`) is not a candidate
- * either. A refusal never blocks the search
- * itself: dropping the range, or widening it to the named years, is always
- * accepted.
+ * named the same `subjectId`, on a page of at most `CANDIDATE_PAGE_MAX` rows from
+ * a search whose `totalMatches` is also at most `CANDIDATE_PAGE_MAX`. A short
+ * result is a candidate list; a long one, or a short page of a long one, is a
+ * pool the agent is entitled to narrow with a birth range, which is how a broad
+ * search is meant to be followed up. A search the log records `negative` returned
+ * rows the researcher already judged were not the subject, so none of its rows is
+ * a candidate. That search must also have been for the subject: its `givenName`
+ * or `givenNameAlt` matches one of the subject's given names in the tree, so a
+ * search for a wife or a parent made under the subject's id, or one with no given
+ * name (a surname sweep of households), finds no candidates for the subject. The
+ * row's first given name must match what that search asked for. The call being
+ * judged is checked the same way: one whose given name is not the subject's is a
+ * search for someone else, and the subject's candidates do not bind its range. A
+ * subject the tree does not hold, or holds with no given name, allows the call. A
+ * row whose record the researcher rejected for the subject (`rejected_links`) or
+ * recorded as a namesake of the subject (`namesakes`) is not a candidate either.
+ * A refusal never blocks the search itself: dropping the range, or widening it to
+ * the named years, is always accepted.
  *
  * Reads only; every failure to read project state allows the search, because a
  * refusal built on a document it could not read would be a guess.
@@ -40,6 +47,8 @@ export const CANDIDATE_PAGE_MAX = 5;
 export interface CandidateExclusionInput {
   projectPath?: string;
   subjectId?: string;
+  givenName?: string;
+  givenNameAlt?: string;
   birthYearFrom?: number;
   birthYearTo?: number;
 }
@@ -85,15 +94,34 @@ function givenMatches(given: string, pattern: string): boolean {
   return g.startsWith(p) || p.startsWith(g) || diceCoefficient(g, p) >= GIVEN_NAME_DICE;
 }
 
+/** Every word of a query's `givenName` and `givenNameAlt`. */
+function queryGivenWords(query: any): string[] {
+  return [query?.givenName, query?.givenNameAlt]
+    .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+    .flatMap((v) => v.trim().split(/\s+/));
+}
+
 /** Whether `row` is a hit for the given name `query` searched for. A query with
  *  no given name searched for anyone, so every row is. */
 function rowMatchesQueryGiven(row: any, query: any): boolean {
-  const patterns = [query?.givenName, query?.givenNameAlt].filter(
-    (v): v is string => typeof v === "string" && v.trim() !== "",
-  );
-  if (patterns.length === 0) return true;
+  const words = queryGivenWords(query);
+  if (words.length === 0) return true;
   const given = typeof row?.personName === "string" ? row.personName.trim().split(/\s+/)[0] : "";
-  return patterns.some((p) => p.trim().split(/\s+/).some((word) => givenMatches(given, word)));
+  return words.some((word) => givenMatches(given, word));
+}
+
+/** Every word of every given name the tree holds for `subjectId`, or empty. */
+function subjectGivenWords(tree: any, subjectId: string): string[] {
+  const person = arr(tree?.persons).find((p) => p?.id === subjectId);
+  return arr(person?.names)
+    .map((n) => (typeof n?.given === "string" ? n.given.replace(/["']/g, "") : ""))
+    .flatMap((g) => g.trim().split(/\s+/))
+    .filter((w) => w !== "");
+}
+
+/** Whether a query's given name is one of the subject's given names. */
+function queryIsForSubject(query: any, subjectWords: string[]): boolean {
+  return queryGivenWords(query).some((word) => subjectWords.some((s) => givenMatches(s, word)));
 }
 
 /** Every candidate the call's birth range excludes, oldest log entry first. */
@@ -108,12 +136,23 @@ export async function excludedCandidates(input: CandidateExclusionInput): Promis
   } catch {
     return [];
   }
+  let tree: any;
+  try {
+    tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return [];
+  }
+  const subjectWords = subjectGivenWords(tree, subjectId);
+  if (subjectWords.length === 0) return [];
+  if (queryGivenWords(input).length > 0 && !queryIsForSubject(input, subjectWords)) return [];
+
   const ruledOut = ruledOutRecordIds(research, subjectId);
   const out: ExcludedCandidate[] = [];
   const seen = new Set<string>();
 
   for (const entry of arr(research?.log)) {
     if (entry?.tool !== "record_search" || typeof entry?.results_ref !== "string") continue;
+    if (entry?.outcome === "negative") continue;
     let sidecar: any;
     try {
       sidecar = await readProjectJson(projectPath, entry.results_ref);
@@ -121,9 +160,10 @@ export async function excludedCandidates(input: CandidateExclusionInput): Promis
       continue;
     }
     const payload = sidecar?.payload;
-    if (payload?.query?.subjectId !== subjectId) continue;
+    if (payload?.query?.subjectId !== subjectId || !queryIsForSubject(payload.query, subjectWords)) continue;
     const rows = arr(payload?.results);
-    if (rows.length === 0 || rows.length > CANDIDATE_PAGE_MAX) continue;
+    const total = typeof payload?.totalMatches === "number" ? payload.totalMatches : rows.length;
+    if (rows.length === 0 || rows.length > CANDIDATE_PAGE_MAX || total > CANDIDATE_PAGE_MAX) continue;
 
     for (const row of rows) {
       if (typeof row?.recordId !== "string") continue;

@@ -1408,14 +1408,20 @@ def _build_warnings(
         (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
         for c in attempted
     )
+    # A record_search refused for excluding a candidate already found (#4580) is
+    # refused before any predicate lookup too, so no fixture can cover it either.
+    # It is the tool working, not a defect in the call's shape, so it raises no
+    # warning of its own; it is only kept out of the shortfall below.
     refused = []
+    candidate_refused = []
     for c in tool_calls:
-        if (c.get("matched") or {}).get("kind") != "unknown_args_refused":
+        kind = (c.get("matched") or {}).get("kind")
+        if kind not in ("unknown_args_refused", "candidate_excluded_refused"):
             continue
         key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
         if _attempted_keys.get(key):
             _attempted_keys[key] -= 1
-            refused.append(c)
+            (refused if kind == "unknown_args_refused" else candidate_refused).append(c)
     if refused:
         # Name the key the guard actually refused, not every key on the call.
         # The engine already composed that sentence and it is on the entry;
@@ -1442,7 +1448,7 @@ def _build_warnings(
     # match — the misdirection the warning above exists to replace.
     _refused_keys = Counter(
         (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
-        for c in refused
+        for c in [*refused, *candidate_refused]
     )
     # A call whose input was not valid JSON never left Claude Code, so no
     # fixture can cover it either, and the agent wrote the whole call again

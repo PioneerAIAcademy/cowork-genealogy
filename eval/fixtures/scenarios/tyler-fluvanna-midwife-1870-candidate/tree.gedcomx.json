@@ -10,6 +10,18 @@
           "given": "Ann",
           "surname": "Tyler",
           "type": "BirthName"
+        },
+        {
+          "id": "N2",
+          "given": "Antone",
+          "surname": "Lightfoot",
+          "type": "AlsoKnownAs"
+        },
+        {
+          "id": "N3",
+          "given": "Anthony",
+          "surname": "Tyler",
+          "type": "AlsoKnownAs"
         }
       ],
       "facts": [
