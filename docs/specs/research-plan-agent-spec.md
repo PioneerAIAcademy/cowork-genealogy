@@ -195,6 +195,56 @@ that would replace it (probed 2026-10-02, §5):
   date "not in the project's sources" (0 of 3 on `main`, 0 of 3 after). Short of 3 of 3, so the test was deleted
   (`unit-test-spec.md`, `expected_outcome`); restoring it and making it pass 3
   of 3 is open work.
+- **A fact the records state differently gets a plan for the subject's whole
+  lifetime.** From alpha feedback (a Tyler session): the question asked what
+  given name a 1900 census page gives a widowed head of household whose index
+  entry gives only her surname, and the readings disagreed. The plan searched
+  only records from before 1900, with no 1910 or 1920 census although she was
+  alive in 1900, and keyed its searches on the reading in doubt. The tester
+  found her afterwards in the 1920 census with a wildcard over every reading and
+  a birth range re-derived from all the censuses, and in the 1910 census and on
+  a 1923 death certificate only by searching the people she lived with: both are
+  indexed under her birth surname, not the one the question used. The Step 3 rule fires on
+  something the planner can read in the project (the question text, two or more
+  assertions giving the fact differently, or an index entry that omits it) and
+  requires every census and vital record of the lifetime through a death record,
+  per census an item on identifiers not in dispute and a search through each
+  household member, and a death item with no surname filter. Step 6 adds that a
+  new reading is new information for a supersede. With no death recorded, the
+  censuses run from the record's year to the one at which the subject would be
+  100, skipping 1890 (genealogist ruling, 2026-11-25: elderly census ages are
+  often overstated, so the cut-off stays generous), and a return-contract
+  self-check that lists those years and adds an item for any missing enforces it.
+  That check now sits in Step 4's breadth self-check, which the body runs before
+  writing the plan, because in the Return contract it ran in 1 of 5 runs.
+  - **The rule depends on the model, so research-plan moved from
+    `claude-haiku-5-5` / `low` (#4742) to `claude-sonnet-5-5` / `medium`.**
+    Measured on `ut_research_plan_c7m`, 5 scratch runs each (2026-11-25), runs
+    not failed: unedited body 0/5; the Step 3 bullet 0/5; with the self-check in
+    the Return contract 1/5; with it in the breadth self-check 0/5; that body on
+    `claude-haiku-5-5` / `medium` 2/5; on `claude-sonnet-5-5` / `medium` 5/5, and
+    5/5 again after the fixture's name type was corrected. Every Haiku failure
+    planned the 1910 census and stopped there. On Haiku the breadth-self-check
+    position did no better than the Return contract (0/5 against 1/5); only the
+    breadth-self-check position was measured on Sonnet. Moving research-plan back to Haiku
+    drops this rule to those rates; re-measure before any floor change.
+  - **Decided (review-ready, 2026-11-16): "never keyed on the given name in
+    doubt" means never on ONE reading.** A wildcard over every reading found is
+    allowed, beside at least one item per census that uses no given name. That
+    reconciles the rule with the lead's 2026-11-15 comment, which says the
+    wildcard is what found her in 1920. A literal ban on any given-name search was
+    considered: it contradicts that comment and drops a search that worked. The
+    remarriage/surname rule above is left alone: it governs a surname from a
+    single marriage record, not a reading in dispute.
+  - **Prose, not a writer-tool rule.** Plan items carry no search-key field
+    (`plan_item` holds `record_type`, `jurisdiction`, `date_range`, `repository`
+    and a free-text `rationale`), so whether an item is keyed on one reading
+    cannot be read from the documents. A rationale that names a reading in order
+    to say the search does not depend on it is correct, so matching readings in
+    the rationale would refuse good plans. Which censuses a lifetime spans
+    depends on a death date the project does not have. The census years and the
+    post-record vital item are checked per test by
+    `test_disputed_name_plan_covers_lifetime` (§7); the rest is the judge's.
 - **Not landed: full-text beside indexed search for a pre-1850 New England
   vital, land or court record (item 3).** The 1759 Worcester marriage was found
   by full-text after six empty indexed searches. A Step 3 rule in Appendix B,
@@ -340,3 +390,11 @@ change; keep no local copy.
   `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`. No
   live test carries either tag while `ut_research_plan_99n` is deleted; they are
   kept as the measurement its restore needs.
+- `test_disputed_name_plan_covers_lifetime`: on `disputed-name-lifetime-coverage`
+  tests (`ut_research_plan_c7m`), the new plan holds a census item whose
+  `date_range` covers each census after the question's record (1910 and 1920),
+  and a death or vital item dated after that record (1900). "Covers" means the
+  year is inside the range; a skipped item covers nothing; only `record_type`
+  and `date_range` are read, never the rationale. The years are keyed per test
+  id in `_DISPUTED_NAME_YEARS_BY_TEST_ID`. Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_disputed_name_4579_validator.py`.
