@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { START_PROJECT_RULE } from "../../src/utils/project-io.js";
 import { mkdtemp, mkdir, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -38,7 +39,7 @@ describe("project_list", () => {
         "The task's working folder is the project: pass its absolute path as projectPath. " +
         "This answer does not say whether the folder holds a project yet: call project_context " +
         "with that path before routing, and route on what it returns. " +
-        "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
+        START_PROJECT_RULE,
     });
   });
 
@@ -93,7 +94,7 @@ describe("project_list", () => {
     expect(result.newProjectPath).toBe(SCOPED_ANCHOR);
     expect(result.message).toBe(
       "No project yet: pass newProjectPath as projectPath to start one. " +
-        "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
+        START_PROJECT_RULE,
     );
   });
 

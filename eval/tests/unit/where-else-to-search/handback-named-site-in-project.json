@@ -4,7 +4,7 @@
     "skill": "where-else-to-search",
     "name": "Named Ancestry search inside a project — hand back to search-external-sites",
     "type": "negative",
-    "description": "The delegation names one site and carries a projectPath: a logged GPS search, search-external-sites' job. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_tool_outside_the_three (no-search-no-write).",
+    "description": "The delegation asks to run a search on one named site: a logged GPS search, search-external-sites' job. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_tool_outside_the_three (no-search-no-write).",
     "tags": [
       "hand-back",
       "no-search-no-write",

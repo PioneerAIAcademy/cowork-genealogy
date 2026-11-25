@@ -1,10 +1,12 @@
 import { CLAIM_KINDS } from "../../src/validation/validator.js";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { projectContext } from "../../src/tools/project-context.js";
+import { projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
+import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
   researchQuery,
   RESEARCH_QUERY_SECTIONS,
@@ -320,6 +322,37 @@ describe("project_context", () => {
     expect(names.I1).not.toMatch(/Anthony/);
     expect(names.I11).not.toMatch(/Anthony/);
     expect(surnameOf("I3")).toMatch(/^Anthony /);
+  });
+
+  it("gives a person its FamilySearch ID from a 4:1: ark, and none from a record ark or no ark (#4669)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          { id: "I1", gender: "Female", ark: "ark:/61903/4:1:K835-34K" },
+          { id: "I2", gender: "Female", ark: "https://familysearch.org/ark:/61903/4:1:GJ8G-B7K" },
+          // a record persona id is not a tree person: showing it as a PID points at the wrong person
+          { id: "I3", gender: "Male", ark: "ark:/61903/1:1:AAAA-111" },
+          { id: "I4", gender: "Male" },
+          { id: "I5", gender: "Male", ark: "ark:/61903/3:1:3Q9M-CSLK-9QXV" },
+          // the same PID the other tools compare uppercased
+          { id: "I6", gender: "Male", ark: "ark:/61903/4:1:khwq-t7c" },
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.persons).toEqual([
+      { id: "I1", pid: "K835-34K", gender: "Female" },
+      { id: "I2", pid: "GJ8G-B7K", gender: "Female" },
+      { id: "I3", gender: "Male" },
+      { id: "I4", gender: "Male" },
+      { id: "I5", gender: "Male" },
+      { id: "I6", pid: "KHWQ-T7C", gender: "Male" },
+    ]);
   });
 
   it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
@@ -1342,6 +1375,51 @@ describe("project_context owed findings and status (issue #3032 Stage 1b)", () =
     ]);
   });
 
+  it("include: ['historicalContext'] writes the historical-context spawn from the subject's family facts", async () => {
+    const r0 = research();
+    await writeProject(
+      { ...r0, project: { ...r0.project, objective: "Why did John move to Ohio in 1870?", subject_person_ids: ["I1"] } },
+      {
+        ...tree,
+        persons: [
+          ...tree.persons,
+          { id: "I3", names: [{ id: "N3", given: "Ann", surname: "Lee" }], facts: [{ id: "F3", type: "Death", date: "1901", place: "Ohio" }] },
+          { id: "I4", names: [{ id: "N4", given: "Tom", surname: "Smith" }], facts: [{ id: "F4", type: "Birth", date: "1880", place: "Ohio" }] },
+          { id: "I5", names: [{ id: "N5", given: "Unrelated", surname: "Person" }], facts: [{ id: "F5", type: "Birth", date: "1700" }] },
+        ],
+        relationships: [
+          ...tree.relationships,
+          { id: "R2", type: "http://gedcomx.org/Couple", person1: "I3", person2: "I1" },
+          { id: "R3", type: "ParentChild", parent: "I1", child: "I4" },
+        ],
+      },
+    );
+    const without = await projectContext({ projectPath: dir }, LOCAL);
+    if (!without.ok) throw new Error(without.errors.join("; "));
+    expect("historicalContext" in without).toBe(false);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.historicalContext).toEqual({
+      agent: "historical-context",
+      prompt: [
+        `projectPath: ${dir}`,
+        "Project objective (the researcher's, not a tree fact): Why did John move to Ohio in 1870?",
+        "Tree facts (the only places and years the tree holds for these people):",
+        "- John Smith (I1, subject): Birth 1850",
+        "- Thomas Smith (I2, parent): no dated or placed facts",
+        "- Ann Lee (I3, spouse): Death 1901, Ohio",
+        "- Tom Smith (I4, child): Birth 1880, Ohio",
+      ].join("\n"),
+    });
+  });
+
+  it("include: ['historicalContext'] gives nothing when the project names no subject in the tree", async () => {
+    await writeProject(research(), tree);
+    const r = await projectContext({ projectPath: dir, include: ["historicalContext"] }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect("historicalContext" in r).toBe(false);
+  });
+
   it("an include value outside the closed list is refused", async () => {
     await writeProject(research(), tree);
     const r = await projectContext({ projectPath: dir, include: ["view" as any] }, LOCAL);
@@ -1534,5 +1612,64 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
     const row = await contextFor([]);
     expect(row.nextStep).toBe("research-plan");
     expect(row.searches).toBeUndefined();
+  });
+});
+
+describe("project_context familyReadPersonIds", () => {
+  let dir: string;
+  beforeAll(() => __usePlaceTableForTests({}));
+  afterAll(() => __usePlaceTableForTests(null));
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-family-read-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const byPid = (r: any, pid: string) => r.persons.find((p: any) => p.pid === pid);
+
+  it("names the person read; the wife has no parentIds and is not in it, so her parents read as not copied", async () => {
+    await createPhippsProject(dir);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+    const mary = byPid(r, PIDS.mary);
+    expect(mary).not.toHaveProperty("parentIds");
+    expect(r.familyReadPersonIds).not.toContain(mary.id);
+    const peyton = byPid(r, PIDS.peyton);
+    expect(peyton.spouseIds).toHaveLength(1);
+    expect(r.familyReadPersonIds).not.toContain(peyton.id);
+  });
+
+  it("still names the person read when the wife is made the subject", async () => {
+    await createPhippsProject(dir, [PIDS.mary]);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r.subjectPersonIds).toEqual([byPid(r, PIDS.mary).id]);
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+  });
+
+  it("leaves the key out for a tree with no read-from source", async () => {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({ project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" } }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", ark: "ark:/61903/4:1:BBBB-111", names: [{ given: "Benjamin" }] }],
+        relationships: [],
+        sources: [{ id: "S1", title: "FamilySearch Family Tree", url: "https://www.familysearch.org/tree" }],
+      }),
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r).not.toHaveProperty("familyReadPersonIds");
+  });
+
+  it("describes the key and the not-copied rule", () => {
+    const d = projectContextSchema.description;
+    expect(d).toContain("familyReadPersonIds");
+    expect(d).toMatch(/not in familyReadPersonIds, an absent or short spouseIds\/parentIds\/childIds means not copied from Family Tree, not\s+none/);
   });
 });

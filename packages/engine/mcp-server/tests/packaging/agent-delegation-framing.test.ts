@@ -496,9 +496,10 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  // Issue #4381: an interpretive ask is a bounded deliverable. The caller reads
-  // tree_query for places and years, so the no-invention clause is pinned beside
-  // the shared paragraph, with the relay rule for its overview.
+  // Issue #4381: an interpretive ask is a bounded deliverable. The caller sends
+  // project_context's historicalContext prompt and the message and nothing else,
+  // so that clause is pinned beside the shared paragraph, with the relay rule for
+  // its overview.
   "research -> historical-context": {
     pins: [
       {
@@ -508,7 +509,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
       {
         side: "caller",
-        excerpt: "with any the project objective states named as the objective's; never another place or year.",
+        excerpt:
+          "spawn the agent with `historicalContext.prompt`\nas given, then a line `message:` and the message copied verbatim, and nothing else.",
       },
       {
         side: "caller",

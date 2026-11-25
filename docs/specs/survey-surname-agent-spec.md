@@ -20,28 +20,14 @@ With a project, results are staged: the agent passes `projectPath` to
 plus one entry carrying the table (below). The tree is untouched, and the
 agent writes no file.
 
-## No project
+## A project with no person
 
-Decided (lead, 2026-11-02): a surname survey does not create a project. A
-project always starts from a FamilySearch person ID (`project-create-tool-spec.md`
-§3), and a survey usually has none, so the agent runs with no `projectPath`.
-
-- It runs the same searches, passing `projectPath` to no tool, so nothing is
-  staged and the stubs come back inline.
-- It makes no `research_log_append` call and writes nothing.
-- The tables, ending with the hedge sentence below, go after the `---` line
-  of its return, between paragraph 1 of `summary_for_user` and paragraph 2,
-  so the caller relays them verbatim. The ≤10 lines above `---` keep the
-  per-year counts. Putting the tables above `---` was considered and rejected:
-  the caller prints nothing above it.
-
-Accepted costs: nothing is saved, and a large survey's tables travel through
-the caller's context. With a project, the agent behaves as below.
-
-**Untested:** that a no-project survey is reachable from a fresh Cowork or
-hosted session. `research` routes any request that states an objective to
-`init-project`, which now asks for a person ID. The direct-agent unit test
-(`no-project-reply-tables.json`) reaches the agent without that router.
+Decided (lead, 2026-11-19, replacing the 2026-11-02 ruling that a survey runs with no
+project): every activity starts a project, including a surname survey, which has no
+person. The caller creates it with `project_create` (the request as the objective, no
+`personId`; `project-create-tool-spec.md` §3) and passes its `projectPath`. The agent
+runs as below, always with a project: results are staged and the table is logged. A
+project with no person refuses research questions, which the survey never writes.
 
 ## The table entry
 

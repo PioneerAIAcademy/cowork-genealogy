@@ -165,7 +165,7 @@ export interface PersonQualityResult {
 /**
  * The answer for an id that is not a FamilySearch person id, returned without a
  * network call. Same `{ ok, reason, errors }` shape as the no-project answer
- * (`utils/project-io.ts` `noProjectResult`, `PersonWarningsResult`).
+ * (`PersonWarningsResult`).
  */
 export interface PersonQualityNotFamilySearchId {
   ok: false;
