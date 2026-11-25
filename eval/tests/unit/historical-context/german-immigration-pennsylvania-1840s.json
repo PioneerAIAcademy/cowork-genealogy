@@ -23,6 +23,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "place-population-pennsylvania-1840-1850",
     "wiki-search-german-ancestors",
     "wiki-search-german-church-records",
     "wiki-read-germany-civil-registration",

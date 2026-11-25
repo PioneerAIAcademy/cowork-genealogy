@@ -18,6 +18,7 @@
     "scenario": "person-less-project"
   },
   "mcp_fixtures": [
+    "wiki-read-norway-genealogy",
     "wiki-search-norwegian-patronymic-naming",
     "wikipedia-search-patronymic-norway",
     "wiki-search-any",

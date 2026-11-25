@@ -290,7 +290,8 @@ Two `research_log_append` calls, in order, each with `projectPath`.
 **You must actually call them — do not just describe them in your response.**
 
 1. **The lookups.** One call with an `ops` list, one op per `wiki_search`,
-   `wiki_read` and `wikipedia_search` call you made: `tool` (that tool's name),
+   `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all` and
+   `place_population` call you made: `tool` (that tool's name),
    `query` (the arguments you sent), `planItemId: null`, `outcome` (`positive`
    when it returned content, `negative` when it returned nothing, `error` when
    it errored or 404'd), `resultsExamined` (results returned; 1 for a page read;
