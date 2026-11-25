@@ -6708,7 +6708,7 @@ def _links_only(texts: list[str]) -> list[str]:
 def test_the_worker_posts_a_link_its_delegation_opened(turn_env, monkeypatch):
     research = {"project": {"status": "active"}, "log": []}
     texts, _reads = _run_links(turn_env, monkeypatch, research, [
-        _init(), _agent_use(),
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
         lambda: research["log"].append(_link_hand_off("log_041")),
         _agent_result(), _text("The probate file turned up."), _result(num_turns=2),
     ])
@@ -6721,7 +6721,7 @@ def test_the_worker_posts_a_link_its_delegation_opened(turn_env, monkeypatch):
 def test_the_worker_does_not_post_a_link_open_before_the_turn(turn_env, monkeypatch):
     research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
     texts, _reads = _run_links(turn_env, monkeypatch, research, [
-        _init(), _agent_use(), _agent_result(), _result(num_turns=2),
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(), _agent_result(), _result(num_turns=2),
     ])
     assert _links_only(texts) == []
 
@@ -6740,7 +6740,7 @@ def test_a_delegation_that_never_returned_posts_its_link_at_the_close(turn_env, 
     link was logged: the close's read posts it, and nothing posts it twice."""
     research = {"project": {"status": "active"}, "log": []}
     texts, reads = _run_links(turn_env, monkeypatch, research, [
-        _init(), _agent_use(),
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
         lambda: research["log"].append(_link_hand_off("log_041")),
         _result(num_turns=2),
     ])
@@ -6756,7 +6756,7 @@ def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(tur
     monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
     turn_env["lock_held"] = lambda asked: asked < 2
     turn_env["client"] = _ScriptedClient([
-        _init(), _agent_use(),
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
         lambda: research["log"].append(_link_hand_off("log_041")),
         ToolCall(), ToolCall(), _result(num_turns=2),
     ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
@@ -6764,3 +6764,22 @@ def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(tur
         asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     from app.agent.continue_policy import hand_off_link_text
     assert _links_only(_text_events(turn_env["conn"])) == [hand_off_link_text(_LINK_URL)]
+
+
+def test_a_worker_write_that_lands_before_the_stream_reads_the_call_is_posted(turn_env, monkeypatch):
+    """The seed is in `pretool`, which runs before the tool does: a fast main-thread
+    `research_log_append` whose row is in the store before the worker reads its `tool_use`
+    is still new at its result."""
+    from claude_agent_sdk import ToolResultBlock, ToolUseBlock, UserMessage
+    from app.agent.continue_policy import hand_off_link_text
+    tool = "mcp__genealogy__research_log_append"
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall(tool),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        AssistantMessage(content=[ToolUseBlock(id="toolu_l1", name=tool, input={})], model="m"),
+        UserMessage(content=[ToolResultBlock(tool_use_id="toolu_l1", content="logged")]),
+        _result(num_turns=2),
+    ])
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert texts.count(hand_off_link_text(_LINK_URL)) == 1

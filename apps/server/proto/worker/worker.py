@@ -243,7 +243,8 @@ from proto.worker.options import (  # noqa: E402
     unmapped_gateway_models,
     wants_status_before,
 )
-from app.agent.continue_policy import HandOffLinks, hand_off_texts  # noqa: E402
+from app.agent.continue_policy import (  # noqa: E402
+    HandOffLinks, hand_off_texts, seed_hand_offs, wants_hand_off_seed)
 from proto import grants  # noqa: E402
 from proto import turn_message  # noqa: E402  (the queue body, shared with the web tier)
 from proto import migrate  # noqa: E402
@@ -2937,8 +2938,17 @@ async def _run_turn(
                 answer = reply if isinstance(reply, dict) else {}
                 stopped = answer.get("continue_") is False or (
                     (answer.get("hookSpecificOutput") or {}).get("permissionDecision") == "deny")
-                if use_id and not stopped and not attempt["store_down"] and wants_status_before(data):
-                    status_before[str(use_id)] = status_before_call(read_research(conn, project_id))
+                # Issue #4660: the turn's hand-off seed reads here too, before the call runs,
+                # never at the stream's `tool_use`, which a fast write can already be behind.
+                # One read serves both when a proof-conclusion delegation wants each.
+                want_status = bool(use_id) and wants_status_before(data)
+                want_seed = boundary is not None and wants_hand_off_seed(links, data)
+                if not stopped and not attempt["store_down"] and (want_status or want_seed):
+                    research = read_research(conn, project_id)
+                    if want_status:
+                        status_before[str(use_id)] = status_before_call(research)
+                    if want_seed:
+                        seed_hand_offs(links, data, lambda: boundary.awaiting_hand_offs(research or {}))
             except Exception as exc:  # noqa: BLE001 - the call runs on
                 log(ev="completion_status_failed", turn_id=turn_id,
                     error=f"{type(exc).__name__}: {exc}")
@@ -3071,7 +3081,13 @@ async def _run_turn(
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                         # After the reset above, never through it: the host's words, not
                         # the model going on past a completion halt.
-                        for link_text in hand_off_texts(links, msg, event, open_hand_offs):
+                        try:
+                            link_texts = hand_off_texts(links, msg, event, open_hand_offs)
+                        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+                            log(ev="hand_off_post_failed", turn_id=turn_id,
+                                error=f"{type(exc).__name__}: {exc}")
+                            link_texts = []
+                        for link_text in link_texts:
                             write_event(conn, session_id, {"kind": "text", "text": link_text},
                                         TRANSIENT_KINDS, counters)
                     for denied_id in hook_denied_tool_use_ids(msg):

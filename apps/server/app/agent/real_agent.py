@@ -46,9 +46,11 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
+    HAND_OFF_LOG_TOOLS,
     HandOffLinks,
     foreground_rewrite,
     hand_off_texts,
+    seed_hand_offs,
     NO_PROJECT_NOTE,
     ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
@@ -281,6 +283,10 @@ _PRETOOL_MATCHER = "|".join(
 # The completion halt's matcher, on both its arms: only the delegation tools, anchored like
 # `_PRETOOL_MATCHER`, so its research.json reads never run on any other call.
 _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
+
+# The hand-off seed's matcher (issue #4660): every call `opens_hand_offs` accepts, so the
+# turn is seeded before such a call runs and its research.json read runs on no other call.
+_HAND_OFF_MATCHER = _DELEGATION_MATCHER + "|" + "|".join(f".*__{t}$" for t in sorted(HAND_OFF_LOG_TOOLS))
 
 # How long the CLI waits for a PreToolUse callback before giving up on it.
 #
@@ -802,6 +808,20 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
+    if agent is not None:
+        async def hand_off_seed(_input_data, _tool_use_id, _ctx):
+            """PreToolUse: seed the turn's hand-off links before the call runs (issue
+            #4660, ``continue_policy.seed_hand_offs``). Never raises, never changes the
+            call."""
+            try:
+                agent._seed_hand_offs(_input_data or {})
+            except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+                _log(f"[agent] hand-off seed failed: {type(exc).__name__}: {exc}")
+            return {}
+
+        # Before `completion_status`, which stays last; the order changes nothing.
+        hooks["PreToolUse"].insert(-1,
+            HookMatcher(matcher=_HAND_OFF_MATCHER, hooks=[hand_off_seed], timeout=_PRETOOL_TIMEOUT_S))
     return hooks
 
 
@@ -1570,15 +1590,34 @@ class RealAgent:
             if boundary is None:
                 boundary = load_step_boundary(Path(_PLUGIN_DIR) / "hooks" / "step_boundary.py")
                 self._step_boundary = boundary
-            return boundary.awaiting_hand_offs(read_research_json(self.dir) or {})
+            research = read_research_json(self.dir)
+            if research is None:
+                if (Path(self.dir) / "research.json").exists():
+                    # Unparseable (a hand edit, a BOM): "could not read", never "nothing open",
+                    # or a seed would count every open hand-off as new.
+                    _log("[agent] hand-off read failed, posting no links: research.json is unreadable")
+                    return None
+                research = {}
+            return boundary.awaiting_hand_offs(research)
         except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
             _log(f"[agent] hand-off read failed, posting no links: {type(exc).__name__}: {exc}")
             return None
 
+    def _seed_hand_offs(self, data: dict) -> None:
+        """The PreToolUse half of issue #4660 (``continue_policy.seed_hand_offs``)."""
+        links = getattr(self, "_hand_off_links", None)
+        if links is not None:
+            seed_hand_offs(links, data, self._open_hand_offs)
+
     def _hand_off_events(self, links: HandOffLinks, message, ev: dict) -> list[dict]:
         """Issue #4660: the host posts each search link a main-thread call opened
-        (``continue_policy.hand_off_texts``, shared with the worker)."""
-        return [_event("text", text=t) for t in hand_off_texts(links, message, ev, self._open_hand_offs)]
+        (``continue_policy.hand_off_texts``, shared with the worker). Never raises."""
+        try:
+            texts = hand_off_texts(links, message, ev, self._open_hand_offs)
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off post failed: {type(exc).__name__}: {exc}")
+            return []
+        return [_event("text", text=t) for t in texts]
 
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
@@ -1621,7 +1660,8 @@ class RealAgent:
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
             error_emitted = False
-            links = HandOffLinks()
+            # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
+            links = self._hand_off_links = HandOffLinks()
             async for message in client.receive_response():
                 for ev in map_message(
                     message, self._tool_names, self._tasks, self._live_tasks,

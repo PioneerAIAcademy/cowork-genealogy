@@ -24,7 +24,7 @@ import re
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 # turns.outcome, and what a reader is told for each (PR #2870 items 1b, 1c, 1e).
 #
@@ -341,24 +341,41 @@ def completion_halt_summary(
 # the engine's rule, never a second copy here.
 
 
+# A CommonMark autolink needs a scheme: 2-32 characters, a letter first, then a colon.
+_URL_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]{1,31}:")
+
+
 def hand_off_link_text(url: str) -> str:
     """One link's paragraph: plain words, the site's host name, and the URL as a markdown
-    autolink, so `_`, `*` or a trailing `)` in a search URL is not read as markup. An
-    autolink may hold no space, `<` or `>`, and an agent-logged URL is not always encoded,
-    so those three are percent-encoded; the link opens the same page."""
-    host = (urlsplit(url).hostname or "").removeprefix("www.")
+    autolink, so `_`, `*` or a trailing `)` in a search URL is not read as markup. Never
+    raises: a URL that will not parse loses only its host name.
+
+    An autolink holds no ASCII control character, space, `<` or `>`, and an agent-logged
+    URL is not always encoded, so those are percent-encoded; the link opens the same page.
+    It also needs a scheme: a logged `www.ancestry.com/...` gets `https://`, and text that
+    is no URL at all is shown as code rather than dropped as an HTML tag."""
+    url = url.strip()
+    if not _URL_SCHEME.match(url) and "." in url.lstrip("/").split("/", 1)[0]:
+        url = "https://" + url.lstrip("/")
+    try:
+        host = (urlsplit(url).hostname or "").removeprefix("www.")
+    except ValueError:  # e.g. an unbalanced `[` in the netloc
+        host = ""
     where = f" on {host}" if host else ""
-    href = url.replace(" ", "%20").replace("<", "%3C").replace(">", "%3E")
-    return f"Search to run{where}: open this link, then send back what you find there.\n<{href}>"
+    head = f"Search to run{where}: open this link, then send back what you find there."
+    if not _URL_SCHEME.match(url):
+        return f"{head}\n`{url.replace('`', '')}`"
+    href = "".join(quote(c, safe="") if c <= " " or c in "<>\x7f" else c for c in url)
+    return f"{head}\n<{href}>"
 
 
 class HandOffLinks:
     """Which hand-offs one turn has posted. Per turn, never persisted (the ruling rejected
     a stored `shown` flag).
 
-    ``seed`` records the hand-offs already open before the turn's first delegation, which
-    an earlier turn handed out; it reads only the first time, so a turn with no delegation
-    never reads research.json. ``new_texts`` returns a paragraph for each row opened since,
+    ``seed`` records the hand-offs already open before the turn's first call that can open
+    one (``seed_hand_offs``), which an earlier turn handed out; it reads only the first
+    time, so a turn with no such call never reads research.json. ``new_texts`` returns a paragraph for each row opened since,
     once: a parallel second return that re-sees the first's rows posts only its own, and
     the turn-end sweep posts only what no return did. A link sent again is logged under a
     new id and so is posted again. Before ``seed`` it posts nothing."""
@@ -401,6 +418,31 @@ def opens_hand_offs(tool: Any) -> bool:
     return tool in DELEGATION_TOOLS or tool.rsplit("__", 1)[-1] in HAND_OFF_LOG_TOOLS
 
 
+def wants_hand_off_seed(links: HandOffLinks, data: Mapping[str, Any]) -> bool:
+    """Whether a ``PreToolUse`` input would seed the turn: the turn is unseeded and this is a
+    main-thread (no ``agent_id`` key) call that can open a hand-off. Lets a plane share one
+    read between the seed and another reading before the same call."""
+    return not links.seeded and "agent_id" not in data and opens_hand_offs(data.get("tool_name"))
+
+
+def seed_hand_offs(
+    links: HandOffLinks,
+    data: Mapping[str, Any],
+    read_rows: Callable[[], list[Mapping[str, Any]] | None],
+) -> None:
+    """Seed the turn from a ``PreToolUse`` input, once: the ONE seed both planes run. Only a
+    main-thread (no ``agent_id`` key) call that can open a hand-off (``opens_hand_offs``)
+    seeds. It runs in the hook, before the tool does, and not at the message stream's
+    ``tool_use``, because by the time the host reads that the CLI may already have run the
+    call, and a fast ``research_log_append`` would then be seeded as seen and never posted.
+    ``read_rows`` returning None (unreadable) leaves the turn unseeded."""
+    if not wants_hand_off_seed(links, data):
+        return
+    rows = read_rows()
+    if rows is not None:
+        links.seed(rows)
+
+
 def hand_off_texts(
     links: HandOffLinks,
     message: Any,
@@ -408,21 +450,15 @@ def hand_off_texts(
     read_rows: Callable[[], list[Mapping[str, Any]] | None],
 ) -> list[str]:
     """The link paragraphs one ``map_message`` event calls for: the ONE trigger both planes
-    run. A main-thread (no ``parent_tool_use_id``) ``tool_use`` of a call that can open a
-    hand-off (``opens_hand_offs``) seeds the turn, once, before the call runs; such a call's
-    ``tool_result`` posts what it opened. ``read_rows`` is the plane's read of
-    ``step_boundary.awaiting_hand_offs``; None means it could not read, and then nothing is
-    seeded or posted."""
+    run. The ``tool_result`` of a main-thread (no ``parent_tool_use_id``) call that can open
+    a hand-off (``opens_hand_offs``) posts what it opened, once the turn was seeded
+    (``seed_hand_offs``, from the plane's ``PreToolUse``). ``read_rows`` is the plane's read
+    of ``step_boundary.awaiting_hand_offs``; None means it could not read, and then nothing
+    is posted."""
     tool = event.get("tool")
     if not opens_hand_offs(tool) or getattr(message, "parent_tool_use_id", None):
         return []
-    kind = event.get("kind")
-    if kind == "tool_use" and not links.seeded:
-        rows = read_rows()
-        if rows is not None:
-            links.seed(rows)
-        return []
-    if kind == "tool_result" and links.seeded:
+    if event.get("kind") == "tool_result" and links.seeded:
         rows = read_rows()
         return links.new_texts(rows) if rows is not None else []
     return []

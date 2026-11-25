@@ -762,7 +762,11 @@ delegation, or `research_log_append`, which the main thread may call itself
 (`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
 open when the turn's first such call began is written to the chat as its own paragraph
 of the turn's reply: the site's host name, one sentence, and the URL as a markdown
-autolink (a space, `<` or `>` percent-encoded). A link logged by a call that never
+autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
+to a URL logged with no scheme; text that is no URL is shown as code). "Began" is the
+plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs before the tool
+does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. A link logged by a call that never
 returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
 a worker attempt that lost its grant lock posts its links before it raises. Each row is
 posted once per turn; a link sent again opens a new row and is posted again. The rule
@@ -778,6 +782,10 @@ nothing for this.
   attempt ended by the store going down, a newer claim superseding it, or a failed
   transcript write. Catching those would need a stored "shown" flag, which the ruling
   rejected: a schema change, set by the same relay that fails.
+- **A link logged after its turn ended** is read as open-before by the next turn and
+  never posted. Both planes force every delegation to the foreground
+  (`continue_policy.foreground_rewrite`), so a search agent does not outlive its turn;
+  what is left is an agent the CLI backgrounded in spite of that.
 - The main thread may repeat a link the host already posted. A duplicate is accepted
   over a drop.
 

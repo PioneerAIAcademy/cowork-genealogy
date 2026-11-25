@@ -47,8 +47,29 @@ def test_the_paragraph_names_the_site_and_autolinks_the_url():
 
 
 def test_a_url_with_no_host_still_reads():
+    """No scheme and no host: `<not-a-url>` would parse as an HTML tag and be dropped, so it
+    is shown as code."""
     assert cp.hand_off_link_text("not-a-url") == (
-        "Search to run: open this link, then send back what you find there.\n<not-a-url>")
+        "Search to run: open this link, then send back what you find there.\n`not-a-url`")
+
+
+def test_a_url_with_no_scheme_gets_https():
+    """An autolink needs a scheme; `<www.ancestry.com/...>` renders as literal text."""
+    text = cp.hand_off_link_text("www.ancestry.com/search/?name=Thomas_Hagell")
+    assert text.startswith("Search to run on ancestry.com:")
+    assert text.endswith("<https://www.ancestry.com/search/?name=Thomas_Hagell>")
+
+
+@pytest.mark.parametrize("url", ["https://[findagrave.com/x", "http://[::1/x", "https://a]b.com/"])
+def test_a_url_that_will_not_parse_never_raises(url):
+    """`urlsplit` raises ValueError on an unbalanced bracket in the netloc."""
+    text = cp.hand_off_link_text(url)
+    assert text.startswith("Search to run") and text.endswith(f"<{url}>")
+
+
+def test_a_control_character_is_encoded():
+    text = cp.hand_off_link_text("https://www.ancestry.com/search/?name=Thomas\nHagell\t\x7f")
+    assert text.endswith("<https://www.ancestry.com/search/?name=Thomas%0AHagell%09%7F>")
 
 
 def test_a_url_that_cannot_sit_in_an_autolink_is_encoded():
@@ -105,6 +126,13 @@ def _messages():
     return call, calls, result, said, done
 
 
+class _Pre:
+    """A script item: the CLI's PreToolUse for call ``use_id``, fired at this point."""
+
+    def __init__(self, use_id: str, name: str = "Agent") -> None:
+        self.use_id, self.name = use_id, name
+
+
 def _run(tmp_path: Path, script: list, *, summary: str | None = None) -> list[dict]:
     """One turn. `script` holds SDK messages and zero-argument callables; a callable runs at
     its place in the stream, which is how a subagent's write lands between its Agent call and
@@ -116,12 +144,29 @@ def _run(tmp_path: Path, script: list, *, summary: str | None = None) -> list[di
 
     class Scripted(ReplayFakeClient):
         async def receive_response(self):
+            """Each tool call fires the agent's PreToolUse seed before it is yielded, as the
+            CLI's hook runs before the tool does; a `_Pre` fires it earlier still, so a write
+            can land between the hook and the host reading the `tool_use`."""
+            from claude_agent_sdk import AssistantMessage, ToolUseBlock
+
             if summary is not None:
                 agent._hook_counter["completion_summary"] = summary
+            fired: set[str] = set()
             for item in script:
-                if callable(item):
+                if isinstance(item, _Pre):
+                    fired.add(item.use_id)
+                    agent._seed_hand_offs({"tool_name": item.name})
+                elif callable(item):
                     item()
                 else:
+                    if isinstance(item, AssistantMessage):
+                        for block in item.content:
+                            if isinstance(block, ToolUseBlock) and block.id not in fired:
+                                fired.add(block.id)
+                                data = {"tool_name": block.name}
+                                if item.parent_tool_use_id:
+                                    data["agent_id"] = "sub"
+                                agent._seed_hand_offs(data)
                     yield item
 
     attach(agent, Scripted([]))
@@ -309,3 +354,58 @@ def test_a_completion_halt_still_ends_on_its_summary(tmp_path):
     ], summary="This research is finished.")
     texts = [e["text"] for e in events if e["kind"] == "text"]
     assert texts == [cp.hand_off_link_text(URL_A), "This research is finished."]
+
+
+def test_a_write_that_lands_before_the_host_reads_the_call_is_still_posted(tmp_path):
+    """The race the seed's place closes: the CLI runs a fast `research_log_append` before the
+    host reads its `tool_use`. The seed ran in the PreToolUse hook, before the write, so the
+    row is new at the result."""
+    call, _calls, result, _said, done = _messages()
+    _write_log(tmp_path)
+    events = _run(tmp_path, [
+        _Pre("toolu_1", name="mcp__genealogy__research_log_append"),
+        lambda: _write_log(tmp_path, _hand_off("log_041", URL_A)),
+        call("toolu_1", name="mcp__genealogy__research_log_append"),
+        result("toolu_1"),
+        done(),
+    ])
+    assert _links(events) == [cp.hand_off_link_text(URL_A)]
+
+
+def test_an_unparseable_project_is_not_read_as_empty(tmp_path):
+    """A research.json that will not parse (a BOM, a hand edit) is "could not read": the turn
+    stays unseeded, and the hand-off already open is not posted again once the file reads."""
+    call, _calls, result, _said, done = _messages()
+    (tmp_path / "research.json").write_bytes(b"\xef\xbb\xbf" + json.dumps(
+        {"project": {"status": "active"}, "log": [_hand_off("log_001", URL_A)]}).encode("utf-8"))
+    events = _run(tmp_path, [
+        call("toolu_1"),
+        lambda: _write_log(tmp_path, _hand_off("log_001", URL_A)),
+        result("toolu_1"),
+        done(),
+    ])
+    assert _links(events) == []
+
+
+def test_the_seed_hook_is_wired_for_every_call_that_can_open_a_hand_off(tmp_path):
+    import re
+
+    class Matcher:
+        def __init__(self, matcher=None, hooks=(), timeout=None):
+            self.matcher, self.hooks = matcher, list(hooks)
+
+    agent = real_agent.RealAgent(tmp_path)
+    hooks = real_agent._build_hooks(Matcher, tmp_path, agent)
+    [seed] = [m for m in hooks["PreToolUse"] if any(h.__name__ == "hand_off_seed" for h in m.hooks)]
+    for tool in ("Agent", "Task", "mcp__genealogy__research_log_append",
+                 "mcp__remote-devices__Genealogy_Research__build_external_search_url"):
+        assert re.search(seed.matcher, tool), tool
+    for tool in ("Read", "mcp__genealogy__record_search", "AgentX", "mcp__genealogy__research_log_append_v2"):
+        assert not re.search(seed.matcher, tool), tool
+
+    _write_log(tmp_path, _hand_off("log_001", URL_A))
+    agent._hand_off_links = cp.HandOffLinks()
+    asyncio.run(seed.hooks[0]({"tool_name": "Agent", "agent_id": "sub"}, "t0", None))
+    assert not agent._hand_off_links.seeded, "a subagent's call does not seed"
+    assert asyncio.run(seed.hooks[0]({"tool_name": "Agent"}, "t1", None)) == {}
+    assert agent._hand_off_links.seen == {"log_001"}
