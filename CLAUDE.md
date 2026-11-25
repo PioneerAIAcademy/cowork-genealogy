@@ -424,7 +424,7 @@ own system prompt keylessly and pins both the binding and the polarity. A new
 SDK entrypoint sets this key too. Cowork gets no memory hook arm until a live
 Cowork session shows auto-memory writing a file (Richard, 2026-11-25); the next
 Cowork census records whether "remember to …" produces a Write under
-`.claude/projects/*/memory/`.
+`~/.claude/projects/*/memory/`.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
