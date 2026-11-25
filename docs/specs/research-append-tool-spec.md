@@ -1811,9 +1811,11 @@ is listed, and the name sentence only when a name is. It rides
     a person being its `record_persona_id`, else its `record_role`) counts only
     for a tree person with a live `person_evidence` link to an assertion of that
     record whose `record_persona_id` is the row's own stamped persona
-    (`record_persona_ids`): otherwise the tree may cite it for the other one, and
-    the row is accepted. A source whose `url` is the persona itself always
-    counts. The message names each
+    (`record_persona_ids`), or, when it holds exactly two such people, also when
+    the row's `person_id` shares that given name and cites the record too, since
+    the subject is then the other one. Otherwise the tree may cite it for the
+    other one, and the row is accepted. A source whose `url` is the persona
+    itself always counts. The message names each
     tree person and the source, says to leave the record off the row if it is
     theirs, and to return `Hand-back: tree-edit` if the tree cites it on them by
     mistake. The shape it was built for, from an alpha session of 2026-11-18: 7

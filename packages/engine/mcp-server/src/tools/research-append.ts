@@ -14693,11 +14693,12 @@ function namesakeRowsWritten(
 }
 
 /** Per persona (by ARK core) of a call's written namesake rows, the 1:2 records
- *  its own search hits place it in (`records`, a hit's `recordArk`), and those of
- *  them whose persons include a second person of the row's given name (`shared`). */
+ *  its own search hits place it in (`records`, a hit's `recordArk`), and, for
+ *  those whose persons include a second person of the row's given name, how many
+ *  people of that given name each holds (`shared`). */
 export type NamesakeSidecarRecords = ReadonlyMap<
   string,
-  { records: ReadonlySet<string>; shared: ReadonlySet<string> }
+  { records: ReadonlySet<string>; shared: ReadonlyMap<string, number> }
 >;
 
 /** Reads `NamesakeSidecarRecords` from the rows' own search sidecars. */
@@ -14706,8 +14707,8 @@ export async function namesakeRowRecordArks(
   after: { research: any },
   applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
   readResults: (ref: string) => Promise<any[] | null>,
-): Promise<Map<string, { records: Set<string>; shared: Set<string> }>> {
-  const out = new Map<string, { records: Set<string>; shared: Set<string> }>();
+): Promise<Map<string, { records: Set<string>; shared: Map<string, number> }>> {
+  const out = new Map<string, { records: Set<string>; shared: Map<string, number> }>();
   const logById = logIndex(after.research);
   for (const { row } of namesakeRowsWritten(before, after, applied)) {
     const wanted = new Set((Array.isArray(row.record_ids) ? row.record_ids : []).map(personaArkCore).filter(Boolean));
@@ -14720,13 +14721,12 @@ export async function namesakeRowRecordArks(
         const persona = personaArkCore(hit?.recordId);
         const record = arkCore(hit?.recordArk);
         if (persona === null || record === null || !wanted.has(persona)) continue;
-        if (!out.has(persona)) out.set(persona, { records: new Set(), shared: new Set() });
+        if (!out.has(persona)) out.set(persona, { records: new Set(), shared: new Map() });
         const links = out.get(persona)!;
         links.records.add(record);
         const persons = (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []) as any[];
-        if (given.words.size > 0 && persons.filter((p) => sharesRowGivenName(p, given)).length > 1) {
-          links.shared.add(record);
-        }
+        const named = given.words.size > 0 ? persons.filter((p) => sharesRowGivenName(p, given)).length : 0;
+        if (named > 1) links.shared.set(record, Math.max(named, links.shared.get(record) ?? 0));
       }
     }
   }
@@ -14734,9 +14734,9 @@ export async function namesakeRowRecordArks(
 }
 
 /** The 1:2 records whose live name assertions give two or more people of the
- *  row's given name, a person in a record being its `record_persona_id`, else
- *  its `record_role`. */
-function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): Set<string> {
+ *  row's given name, each with how many, a person in a record being its
+ *  `record_persona_id`, else its `record_role`. */
+function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): Map<string, number> {
   const people = new Map<string, Set<string>>();
   for (const a of assertions) {
     if (a?.fact_type !== "name" || typeof a?.value !== "string") continue;
@@ -14748,7 +14748,7 @@ function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): S
     if (!people.has(record)) people.set(record, new Set());
     people.get(record)!.add(who);
   }
-  return new Set([...people].filter(([, who]) => who.size > 1).map(([record]) => record));
+  return new Map([...people].filter(([, who]) => who.size > 1).map(([record, who]) => [record, who.size]));
 }
 
 /** A namesake row records someone the tree does not hold (issue #2475, the row
@@ -14827,17 +14827,23 @@ export function namesakeKnownRecordCheck(
       const persona = personaArkCore(id);
       if (persona === null) continue;
       const sidecar = recordArks.get(persona);
-      const shared = new Set([...sharedByAssertions, ...(sidecar?.shared ?? [])]);
+      const shared = new Map(sharedByAssertions);
+      for (const [r, n] of sidecar?.shared ?? []) shared.set(r, Math.max(n, shared.get(r) ?? 0));
       const viaRecord = [...(documents.get(persona) ?? []), ...(sidecar?.records ?? [])];
       const records = new Set([persona, ...viaRecord.filter((r) => !shared.has(r))]);
       const stamped = row.record_persona_ids?.[String(id)];
-      // A record holding two people of the row's given name counts only for a
-      // holder linked to the row's own persona in it.
+      const subject = citing.find((c) => c.person.id === row.person_id);
+      const subjectNamed = subject !== undefined && sharesRowGivenName(subject.person, given);
+      // A record holding two or more people of the row's given name counts for a
+      // holder linked to the row's own persona in it; one holding exactly two
+      // also when the row's same-named subject cites it, being the other one.
       const heldIn = (c: { person: any; cites: Map<string, string> }) => [
         ...[...records].filter((r) => c.cites.has(r)),
         ...viaRecord.filter(
-          (r) => shared.has(r) && c.cites.has(r) && typeof stamped === "string" &&
-            (linkedPersonas.get(c.person.id)?.has(`${r}|${stamped}`) ?? false),
+          (r) => shared.has(r) && c.cites.has(r) && (
+            (shared.get(r) === 2 && subjectNamed && subject!.cites.has(r)) ||
+            (typeof stamped === "string" && (linkedPersonas.get(c.person.id)?.has(`${r}|${stamped}`) ?? false))
+          ),
         ),
       ];
       const holders = citing.filter(

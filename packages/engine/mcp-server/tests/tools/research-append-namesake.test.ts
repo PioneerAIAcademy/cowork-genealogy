@@ -1369,6 +1369,39 @@ describe("namesake cap", () => {
         expect(r.ok, errs(r)).toBe(true);
       });
 
+      /** The register cited on both the row's subject P (named `subjectGiven`) and the father F, John. */
+      async function citedOnSubjectToo(persons: Array<Record<string, any>>, subjectGiven = "John") {
+        await setup(research({ namesakes: [], log: [SEARCH] }), (() => {
+          const t = treeCiting(VOTER_DOC);
+          const p = t.persons.find((x: any) => x.id === P);
+          p.names = [{ id: `${P}-n1`, given: subjectGiven, surname: "Smith", sources: [{ ref: "#S9" }] }];
+          return t;
+        })());
+        await mkdir(join(dir, "results"), { recursive: true });
+        const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
+          payload: { query: {}, results: [{ recordId: REC.voter, recordArk: VOTER_DOC, primaryId: "p_555", gedcomx: { persons } }] } };
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+      }
+
+      it("refuses when the record's two Johns are the row's subject and a tree John who both cite it", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }]);
+        const r = await voterRow();
+        expect(errs(r)).toMatch(HELD);
+        expect(errs(r)).toContain(`tree person '${F}' (John Smith, source 'S9')`);
+      });
+
+      it("accepts a record of two Johns when the subject who cites it is not a John, so accounts for neither", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }], "Mary");
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("leaves a record of three Johns cited on the subject and a tree John to the link, and accepts with none", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }, { id: "p_557", names: JOHN_SMITH }]);
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
       it("still refuses when the record's second person has another given name", async () => {
         await setupTwoInRecord("Thomas");
         expect(errs(await voterRow())).toMatch(HELD);
