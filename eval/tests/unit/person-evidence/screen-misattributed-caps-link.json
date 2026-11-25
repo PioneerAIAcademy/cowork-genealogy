@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_person_evidence_smc",
+    "skill": "person-evidence",
+    "name": "An attachment the screen calls misattributed is linked at speculative at most",
+    "type": "positive",
+    "description": "becker-attachment-links-question, with source_screen calling the 1900 census (MM8C-43Q) misattributed. The named assertions still count as unlinked: the agent scores them with same_person and supersedes each attachment link, but the new link is speculative at most because of the screen's verdict.",
+    "tags": [
+      "person-evidence",
+      "attached-records",
+      "supersedes-named-attachment-links",
+      "screen-misattributed-cap"
+    ]
+  },
+  "input": {
+    "delegation": "Link question q_001's assertions to persons: a_001, a_002, a_003, a_004, a_005 and a_006 (the 1900 census, John Becker's entry). This is a linking request.\n\nprojectPath: <workspace>",
+    "scenario": "becker-attachment-links-question"
+  },
+  "mcp_fixtures": [
+    "same-person-becker-strong",
+    "source-screen-becker-misattributed",
+    "source-screen-becker-misattributed-fsid"
+  ],
+  "judge_context": [
+    "source_screen calls the 1900 census (MM8C-43Q, the record of the named assertions a_001 to a_006) misattributed: its leave-one-out score was 0.10. same_person on the same pair scores 0.91. The agent's rule: score it and decide it as usual, but a link to a record the screen calls misattributed is `speculative` at most.",
+    "Expected work: a scored link to I1 per named assertion at `speculative`, and each attachment link's `superseded_by` set to its new `pe_`. The `supersedes-named-attachment-links` and `screen-misattributed-cap` validators own the writes and the tier; do not re-check them. Linking at `probable` or `confident` ignores the screen's verdict and is a FAIL on Confidence calibration.",
+    "The rationale on each new link should name the screen's verdict alongside the same_person score and what matches; a rationale that cites the 0.91 score but not the misattributed verdict is a partial on rationale quality.",
+    "The 1910 record's John Becker assertions (a_035 to a_041) are not named; leaving their attachment links alone is correct."
+  ],
+  "judge_reads_files": true
+}

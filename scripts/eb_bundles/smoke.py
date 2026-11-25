@@ -57,6 +57,8 @@ API_LEVEL_STANDINS = {
                "MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"},
     "tools": {"GENEALOGY_PG_DSN": "postgresql://u:p@127.0.0.1:1/x", "GENEALOGY_S3_BUCKET": "smoke"},
 }
+# The web tier's tools proxy (110_tools-proxy.sh), relative to the app directory.
+WEB_PROXY_CONF = ".platform/nginx/conf.d/elasticbeanstalk/10-tools-proxy.conf"
 AL2023_DOCKERFILE = b"""FROM amazonlinux:2023
 RUN dnf install -y -q python3.12 python3.12-pip unzip util-linux shadow-utils findutils procps-ng \\
     && dnf clean all \\
@@ -236,14 +238,18 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
            "--name", name, image, "sleep", "infinity")
     try:
         docker("cp", str(zip_path), f"{name}:/bundle.zip")
+        # Beanstalk's order: prebuild hooks, then the build, then predeploy hooks.
         deploy = (f"set -euo pipefail; mkdir -p {STAGING}; cd {STAGING}; unzip -q /bundle.zip; "
+                  "if [ -d .platform/hooks/prebuild ]; then "
+                  "for h in $(ls .platform/hooks/prebuild | sort); do ./.platform/hooks/prebuild/$h; done; fi; "
                   f"python3.12 -m venv {VENV}; "
                   f"{VENV}/bin/pip install --disable-pip-version-check -q -r requirements.txt; "
                   "if [ -d .platform/hooks/predeploy ]; then "
                   "for h in $(ls .platform/hooks/predeploy | sort); do ./.platform/hooks/predeploy/$h; done; fi; "
                   f"cd /; mv {STAGING} {layout.APP_DIR}")
         proc = sh(name, deploy)
-        if not c.check(proc.returncode == 0, "offline deploy (unzip, venv, pip install, predeploy hooks)",
+        if not c.check(proc.returncode == 0, "offline deploy (unzip, prebuild hooks, venv, pip install, "
+                       "predeploy hooks)",
                        (proc.stdout + proc.stderr).decode("utf-8", "replace").strip()[-2000:]):
             return c.failed
         migrate_check(c, name, zip_path, extra)
@@ -255,6 +261,16 @@ def python_tier(tier: str, zip_path: Path, platform: str, keep: bool, extra: dic
         port = int(env.get("PORT", "0"))
         py = [f"{VENV}/bin/python", "-c"]
         if tier == "web":
+            proxy_conf = f"{layout.APP_DIR}/{WEB_PROXY_CONF}"
+            c.check(sh(name, f"test ! -e {proxy_conf}").returncode == 0,
+                    "no tools proxy without TOOLS_UPSTREAM_URL", proxy_conf)
+            rendered = sh(name, f"cd {layout.APP_DIR} && TOOLS_UPSTREAM_URL=http://tools.internal:8080 "
+                                f"./.platform/hooks/prebuild/110_tools-proxy.sh >/dev/null && cat {WEB_PROXY_CONF} "
+                                f"&& rm -f {WEB_PROXY_CONF}")
+            text = out(rendered)
+            c.check(rendered.returncode == 0 and "set $genealogy_tools_upstream http://tools.internal:8080;" in text
+                    and "location = /mcp" in text and "resolver " in text,
+                    "TOOLS_UPSTREAM_URL renders the tools proxy on AL2023", text[-500:] or rendered.stderr[-500:])
             asset = out(sh(name, f"cd {layout.APP_DIR}/{layout.WEB_DIST_DIR} && ls assets/*.js | head -1"))
             res = probe(name, py, PY_PROBE, port, ["/", f"/{asset}", "/api/health", "/api/sessions"])
             if not c.check("error" not in res, f"web: command answers on :{port}", res.get("error", "")):

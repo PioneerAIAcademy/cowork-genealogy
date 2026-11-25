@@ -1,0 +1,63 @@
+{
+  "log_id": "log_002",
+  "tool": "record_read",
+  "retrieved": "2026-11-20T20:23:32.986Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:HOLE-002"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:HOLE-002",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Christian P.",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Death",
+                  "date": "10 June 1954",
+                  "place": "Erskine, Polk, Minnesota, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "1875",
+                  "place": "Norway"
+                }
+              ],
+              "ark": "ark:/61903/1:1:HOLE-002",
+              "sources": [
+                {
+                  "id": "S1",
+                  "title": "Minnesota Death Index, 1908-2002"
+                }
+              ]
+            }
+          ],
+          "places": [],
+          "relationships": [],
+          "sources": [
+            {
+              "id": "S1",
+              "title": "Minnesota Death Index, 1908-2002",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-002"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

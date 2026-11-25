@@ -25,7 +25,8 @@
     "record-read-hole-1885-state-census",
     "source-attachments-hole-1885",
     "person-read-hole-wx7-otter-tail",
-    "person-quality-hole-detail"
+    "person-quality-hole-detail",
+    "source-screen-hole-local-id-unindexed"
   ],
   "judge_context": [
     "Should call person_read for KD96-TV2, record_read each source carrying a record ARK, person_quality with detail: true for KD96-TV2, and person_warnings once with the projectPath and personId KD96-TV2 (or I1, the tree's own id for the same person -- the tool resolves either).",

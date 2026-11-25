@@ -98,8 +98,6 @@ def _skip_unless_logging_run(test) -> None:
     tags = test.get("tags") or []
     if "no-results" in tags:
         pytest.skip("empty-results path is covered by test_empty_results_logs_one_negative")
-    if "no-project" in tags:
-        pytest.skip("no-project path is covered by test_no_project_returns_template")
 
 
 # --- The log entry ----------------------------------------------------
@@ -329,43 +327,6 @@ def test_sources_section_matches_wiki_results(before_state, after_state, tool_ca
 
 # The return contract's `summary_for_user` separator: a line of exactly `---`.
 _SEPARATOR_RE = re.compile(r"^[ \t]*---[ \t]*$", re.M)
-
-
-def test_no_project_returns_template(
-    before_state, after_state, tool_calls, agent_returns, text_response, test
-):
-    """Tag-gated (`no-project`): with no project `research_log_append` answers
-    `reason: "no_project"`, so the agent logs nothing and returns the filled
-    template above the `---` line instead (agent body step 6).
-
-    Fails on a new log entry, a new file, or a return whose part above the
-    first `---` lacks the template's heading, its Sources heading, or any
-    returned result's `source_url`.
-    """
-    if "no-project" not in (test.get("tags") or []):
-        pytest.skip("not a no-project scenario")
-    new = new_log_entries(before_state, after_state)
-    assert not new, f"no project, so nothing may be logged; got {len(new)} new entries"
-    files = _new_files(before_state, after_state)
-    assert not files, f"no project: the template is the return, not a file; wrote: {files}"
-    results = _wiki_results(tool_calls)
-    if not results:
-        pytest.skip("no wiki_search results in this run to return")
-    reply = agent_return_text(agent_returns, "search-familysearch-wiki") or (
-        text_response or ""
-    )
-    above = _SEPARATOR_RE.split(reply, maxsplit=1)[0]
-    missing = [
-        part for part in ("# FamilySearch Wiki:", "## Sources")
-        if part not in above
-    ] + [
-        r["source_url"] for r in results
-        if r.get("source_url") and r["source_url"] not in above
-    ]
-    assert not missing, (
-        "no project: the return must carry the filled template above its "
-        f"`---` line; missing {missing}. Return was:\n  {reply!r}"
-    )
 
 
 # --- Tier 2: reporting only (never gates; issue #1749) -----------------

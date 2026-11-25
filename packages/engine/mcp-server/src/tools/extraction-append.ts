@@ -46,7 +46,7 @@ import {
   type ExtractDocument,
   type ExtractResult,
 } from "../utils/record-extract.js";
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import {
   listStagedEnvelopes,
   checkStagedResults,
@@ -64,7 +64,7 @@ import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { recordImageReadCap } from "../utils/image-store.js";
 import { waitingPages, pageKey } from "../utils/waiting-pages.js";
 import { extractImageArk } from "./record-read.js";
-import { arkToBareId } from "../utils/ark.js";
+import { RECORD_TOKEN, arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -158,14 +158,10 @@ export async function runExtractionAppend(
       ],
     };
   }
-  // Both documents, before any read or write: a folder that is not a project is
-  // an answer (`reason: "no_project"`), and half a project stays loud, as on
-  // every other writer.
   try {
     await readProjectJson(input.projectPath, "research.json");
     await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
-    if (e instanceof NoProjectError) return { ...noProjectResult(), records: [] };
     return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
   }
   if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
@@ -273,8 +269,6 @@ export interface ExtractionBatchResult {
   ok: boolean;
   records: RecordOutcome[];
   errors?: string[];
-  /** The one `ok: false` that is an answer: `projectPath` is not a project. */
-  reason?: "no_project";
   /** Plan items this call completed, present only when it touched one. */
   planItems?: PlanItemsOutcome;
   /** `personId` mode only: the counts, and one code-written line for the call. */
@@ -605,7 +599,6 @@ interface RecordIdsOptions {
  *  composed whole in code (ADR-0006, amended 2026-10-20). */
 export const ATTACHMENT_LINK_SECTIONS: ReadonlySet<string> = new Set(["person_evidence"]);
 
-const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
 
 /**
  * `personId`: the baseline step (lead, 2026-10-19 and 2026-10-20). Extract

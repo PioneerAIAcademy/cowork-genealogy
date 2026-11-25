@@ -4,7 +4,7 @@
 import { realpath } from "node:fs/promises";
 import { basename, isAbsolute, join, relative } from "node:path";
 import { getProjectStore } from "../src/store/project-store.js";
-import { classifyProjectPath, isInsideProject, NO_PROJECT_MESSAGE_READ } from "../src/utils/project-io.js";
+import { classifyProjectPath, isInsideProject, NO_PROJECT_MESSAGE_CONTEXT } from "../src/utils/project-io.js";
 
 export interface ProjectRef {
   /** The realpath the store reads. */
@@ -69,7 +69,7 @@ export async function resolveProject(rootReal: string, projectPath: unknown): Pr
     case "project":
       return project;
     case "no_project":
-      throw new Error(NO_PROJECT_MESSAGE_READ);
+      throw new Error(NO_PROJECT_MESSAGE_CONTEXT);
     default:
       throw unreachable(candidate);
   }
