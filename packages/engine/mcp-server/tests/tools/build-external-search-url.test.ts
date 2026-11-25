@@ -2342,9 +2342,10 @@ describe("build_external_search_url", () => {
       const root = buildExternalSearchUrl({ site: "matricula", attributes: { surname: "Kuhlmann" } });
       expect(root.ok && root.summaryStart.split("\n")).toEqual(root.ok && ["---", ...root.handoffLine.split("\n")]);
       expect(root.ok && root.summaryStart).toMatch(/From there, /);
-      expect(root.ok && root.alsoInSummary).toMatch(/film number.*researcher's part/);
+      expect(root.ok && root.alsoInSummary).toMatch(/FamilySearch holds it too.*researcher's part.*film number/);
       const plainSite = buildExternalSearchUrl({ site: "findagrave", attributes: { surname: "Flynn" } });
-      expect(plainSite.ok && "alsoInSummary" in plainSite).toBe(false);
+      expect(plainSite.ok && plainSite.alsoInSummary).toMatch(/FamilySearch holds it too.*researcher's part/);
+      expect(plainSite.ok && plainSite.alsoInSummary).not.toMatch(/film/);
       const refused = buildExternalSearchUrl({ site: "nope" as any, attributes: { surname: "Flynn" } });
       expect(refused.ok).toBe(false);
       expect("summaryStart" in refused).toBe(false);

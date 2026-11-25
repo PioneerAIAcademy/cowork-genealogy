@@ -194,10 +194,12 @@ it whole and draws no dividing line itself, so the link cannot sit above the
 line. `where-else-to-search`, the tool's other caller, writes `url` into its own
 entries and ignores this field.
 
-`alsoInSummary` is returned for `archion` and `matricula` only. It tells the
-agent that the sentence for a film `catalog_search` kept, with its film number,
-belongs in the researcher's part: on Haiku the film was told to the caller and
-left out of what the researcher reads in about 3 of 23 runs.
+`alsoInSummary` tells the agent what else belongs in the researcher's part: the
+sentence saying FamilySearch holds the same collection, when `collections_search`
+returned it, and on `archion` and `matricula` the sentence for a film
+`catalog_search` kept, with its film number. On Haiku both were told to the
+caller and left out of what the researcher reads (the film in about 3 of 23
+runs, the same-collection sentence in 2 of 3 tries of one committed test).
 
 `notes` carries non-fatal observations the caller should narrate:
 

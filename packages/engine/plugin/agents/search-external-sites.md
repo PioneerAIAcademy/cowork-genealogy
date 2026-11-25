@@ -512,7 +512,7 @@ written into `summary_for_user`, never into the caller-facing report above it
    the line (see "Every observation the tool makes" above);
 6. when `collections_search` returned the same collection (step 2b), one
    sentence saying FamilySearch holds it too and can be searched there instead
-   — here, Case A or Case B;
+   — here, after the `---`, Case A or Case B;
 7. when `catalog_search` kept a filmed copy of the register (step 2b), its
    sentence from step 2b, with the film number — here, never only in the
    caller lines.

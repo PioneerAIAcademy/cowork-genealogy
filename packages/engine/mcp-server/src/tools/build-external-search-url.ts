@@ -98,8 +98,8 @@ export type BuildExternalSearchUrlResult =
       url: string;
       handoffLine: string;
       summaryStart: string;
-      /** archion and matricula only: what else the researcher's part must hold. */
-      alsoInSummary?: string;
+      /** What else the researcher's part must hold. */
+      alsoInSummary: string;
       notes: string[];
       access: AccessClassification;
     }
@@ -148,7 +148,7 @@ export type BuildExternalSearchUrlToolResult =
       url: string;
       handoffLine: string;
       summaryStart: string;
-      alsoInSummary?: string;
+      alsoInSummary: string;
       notes: string[];
       access: AccessClassification;
       logId?: string;
@@ -778,11 +778,16 @@ const BROWSE_SITE_ROOT_STEPS: Partial<Record<ExternalSearchSite, string>> = {
     "open the place search (Suchen → Ortssuche, https://data.matricula-online.eu/de/suchen/), type the " +
     "town as Ort, then confirm the diocese in the parish result before opening it",
 };
-// For the agent only, on a browse site: the film catalog_search found was told
-// to the caller and left out of the researcher's part (about 3 in 23 on Haiku).
+// For the agent only: what FamilySearch itself holds was told to the caller and
+// left out of the researcher's part (the same-collection sentence in 2 of 3
+// tries of one committed test, the film in about 3 of 23 runs, on Haiku).
+export const FS_HOLDINGS_REMINDER =
+  "If collections_search returned this same collection, the sentence saying FamilySearch holds it too " +
+  "is written in the researcher's part, below summaryStart. A caller line saying so does not replace it.";
 export const BROWSE_SITE_FILM_REMINDER =
-  "If catalog_search kept a FamilySearch film of this register, its sentence, with the film number, " +
-  "is written in the researcher's part, below summaryStart. A caller line naming the film does not replace it.";
+  FS_HOLDINGS_REMINDER +
+  " The same goes for a FamilySearch film of this register that catalog_search kept: its sentence, " +
+  "with the film number.";
 // For the agent only: how to skip the route next time.
 const BROWSE_SITE_ROOT_AGENT_TAIL =
   " — or pass the parish page from the wiki or locality guide as baseUrl to link straight to it";
@@ -1597,7 +1602,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     url,
     handoffLine,
     summaryStart: summaryStartFor(handoffLine),
-    ...(BROWSE_SITES.has(site) ? { alsoInSummary: BROWSE_SITE_FILM_REMINDER } : {}),
+    alsoInSummary: BROWSE_SITES.has(site) ? BROWSE_SITE_FILM_REMINDER : FS_HOLDINGS_REMINDER,
     notes,
     access: SITE_ACCESS[site],
   };
