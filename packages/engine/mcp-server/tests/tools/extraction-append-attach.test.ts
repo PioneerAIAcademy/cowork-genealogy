@@ -165,6 +165,7 @@ describe("waiting pages", () => {
       a("a_008", { fact_type: "name", value: "Patrick Flynn" }),
       a("a_009", { fact_type: "birth", value: "age 15", place: "Ireland" }),
       a("a_010", { fact_type: "marriage", value: "Mary Burke", date: "1870", place: "" }),
+      a("a_011", { fact_type: "death", value: "3 May 1901", date: "3 May 1901" }),
     ] as any;
     await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
     const ref = await stagePage({ ark: ARK });
@@ -177,6 +178,7 @@ describe("waiting pages", () => {
           { assertionId: "a_008", role: "child_2", factType: "name", value: "Patrick Flynn" },
           { assertionId: "a_009", role: "child_2", factType: "birth", value: "age 15", place: "Ireland" },
           { assertionId: "a_010", role: "child_2", factType: "marriage", value: "Mary Burke", date: "1870" },
+          { assertionId: "a_011", role: "child_2", factType: "death", value: "3 May 1901" },
         ],
       },
     ]);

@@ -166,8 +166,8 @@ is §11.7's code.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
-  City", 1 of 3). `extraction_append` refuses a residence that has a `value`
-  and no `place` (lead, 2026-11-23): on Haiku 5.5 low (v3) all four of
+  City", 1 of 3). `extraction_append` refuses a document residence that has a
+  `value` and no `place` (lead, 2026-11-23; a page-pass reading is not checked): on Haiku 5.5 low (v3) all four of
   ut_record_structurer_001's residences held the place only in `value`, so none
   got a standard place, and a rule the tool checks binds on every model. A
   date-shaped residence goes in `date`. The engine still never reads a place out
