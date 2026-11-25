@@ -32,6 +32,7 @@ tools:
   - mcp__genealogy__research_query
   - mcp__genealogy__tree_edit
   - mcp__genealogy__same_person
+  - mcp__genealogy__source_screen
   - mcp__genealogy__record_read
   - mcp__genealogy__materialize_facts
   - mcp__genealogy__person_warnings
@@ -43,6 +44,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__tree_edit
   - mcp__remote-devices__Genealogy_Research__same_person
+  - mcp__remote-devices__Genealogy_Research__source_screen
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__remote-devices__Genealogy_Research__materialize_facts
   - mcp__remote-devices__Genealogy_Research__person_warnings
@@ -54,6 +56,7 @@ tools:
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__tree_edit
   - mcp__Genealogy_Research__same_person
+  - mcp__Genealogy_Research__source_screen
   - mcp__Genealogy_Research__record_read
   - mcp__Genealogy_Research__materialize_facts
   - mcp__Genealogy_Research__person_warnings
@@ -249,6 +252,9 @@ In this mode:
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- A person the record names besides the one being reviewed (a parent,
+  spouse, child) is only linked when that person has their own `pe_`
+  entry. Note explicitly when a named party has none.
 - When the entry under review has a null `match_score`, call
   `same_person({ projectPath, assertionId, treePersonId })` for it before
   judging the tier, as Step 2 requires when linking. It changes neither
@@ -294,16 +300,17 @@ the user changed assertions/links since you last saw them — use
 **`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
-  of every record you are about to link, in one call; group the items by
-  `record_id` + `record_role`.
+  of every record you are about to link, in one call; each item is one
+  persona; two items with the same `record_id` + `record_role` are one
+  persona split across pages.
 - `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
   of those `a_` are already linked; `countById[id]` of 0 means unlinked.
 - `research_query({ section: "person_evidence", personId: [ … ] })` — the
   existing links for every candidate person, when checking for revisions.
 
 A list takes at most 50 ids, and only one filter per call may be a list. While
-`truncated` is true, call again with `offset: nextOffset` until you hold
-`count` items.
+`truncated` is true, call again with `offset: nextOffset` until `truncated` is
+false. On `assertions`, `count` counts assertions, not items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
@@ -314,16 +321,18 @@ assertions from the same persona should be linked together.
 **An attachment link counts as unlinked for an assertion the delegation
 names.** A live link that is `speculative`, has a null `match_score` and the
 rationale "Linked because FamilySearch has this record attached to this
-person; not verified." is an attachment link: code wrote it, and nobody
-checked it. An assertion the delegation names whose only live link is one is
-unlinked. Score it with `same_person` and decide it like any unlinked
-assertion (Step 3, the no-link rule included). When the decision is
+person; not verified." is an attachment link. An assertion the delegation names whose only live link
+is one is unlinked. For such an assertion only — never for any other — call
+`source_screen({ projectPath, personId })` and note its record's `linkCap`.
+Then score it with `same_person` and decide it like
+any unlinked assertion (Step 3, the no-link rule included). When the decision is
 a link, append it (Step 4), then set the attachment link's `superseded_by` to
 the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
 is and say so in your return. An attachment-linked assertion the delegation
 does not name is left alone. Attachment links are not corroboration: the link
 that replaces one is `probable` at most, unless a checked link from another
-record already ties the same person. Its rationale names what matches, the
+record already ties the same person — and never above the record's `linkCap`,
+whatever the score. Its rationale names what matches, the
 score, and whether any other person in the project could be this record's
 person.
 

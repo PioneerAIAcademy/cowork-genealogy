@@ -239,7 +239,7 @@ function baseResearch(): {
   evaluations: Record<string, unknown>[];
 } {
   return {
-    project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    project: { id: "rp_001", objective: "Test", subject_person_ids: ["I1"], status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
     plans: [],
     log: [],
@@ -8056,7 +8056,9 @@ describe("research_append (project singleton section)", () => {
     });
 
     it("removes nothing when no person is known to be imported", async () => {
-      await writeProject(research([openQuestion()]), tree());
+      const noSubject = research([openQuestion()]);
+      (noSubject.project as any).subject_person_ids = [];
+      await writeProject(noSubject, tree());
       const r = await resolveQ1();
       expect(r.ok, JSON.stringify(r)).toBe(true);
       expect((await readTree()).persons).toHaveLength(5);
@@ -8143,7 +8145,7 @@ describe("research_append (project singleton section)", () => {
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — q_001 has 1 tied assertion\(s\) and no proof summary/);
+    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — this question has 1 tied assertion\(s\) and no proof summary/);
   });
 
   it("completion with an encode item warns", async () => {
@@ -8151,7 +8153,7 @@ describe("research_append (project singleton section)", () => {
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
+    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth/);
   });
 
   it("completion with nothing owed is silent", async () => {

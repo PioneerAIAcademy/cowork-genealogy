@@ -4,13 +4,13 @@
     "skill": "research",
     "name": "Routes an uncovered independent part of the objective to question-selection instead of completing",
     "type": "positive",
-    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. Under step mode the router hands nothing off this turn: it names the unframed part as the next question and offers it with \"Continue with setting up the project?\". It must not head for the completion write. Mined from a Cowork run that concluded the birthplace and left parentage unresearched. The message asks what comes next rather than saying to keep going: \"Keep researching\" would accept the offer in the same message, and then running question-selection is the step.",
+    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. The router names the unframed part and runs question-selection for it in this turn (lead, 2026-11-24: the offer-then-continue pair it replaced was one Haiku 5.5 could not tell apart, ut_research_cq7). It must not head for the completion write. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
     "tags": [
       "from-cowork",
       "compound-objective-part-unframed",
       "re-invoke-safe",
       "routing",
-      "routes-to:stop"
+      "routes-to:question-selection"
     ]
   },
   "input": {
@@ -38,13 +38,15 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill, `routes-to:stop`) asserts the router hands off to nothing this turn. Do not grade the routing decision yourself.",
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill, `routes-to:question-selection`) asserts the hand-off. Do not grade the routing decision yourself.",
     "An objective can hold more than one independent fact. A question being `resolved` closes that question, not the objective: when a part of the objective has no question covering it, the project is not answered, whatever the status of the questions that do exist. Statements in the project such as a proof saying a fact 'needs its own research question', or a question's rationale naming a later fact it unblocks, are evidence that a part is still open.",
     "An unproven relationship already present in the tree (for example imported from an online family tree) does not make that part of the objective answered. Only a resolved question with a proof summary does.",
-    "COMPLIANT: the router reads the objective against `questions[]`, notices that an independent part (the parentage) has no question, names it as the next question to research, and ends with the line \"Continue with setting up the project?\".",
+    "COMPLIANT: the router reads the objective against `questions[]`, notices that an independent part (the parentage) has no question, names it, and hands it to question-selection in this turn.",
     "NON-COMPLIANT: the router treats 'all questions resolved' as 'objective answered' and heads for the completion write (proof-conclusion) or stops, saying the research is done while a part of the objective was never researched.",
-    "The router ends its turn with that offer by design; nothing is handed off, so there is no callee output to grade. Grade the reply.",
-    "Grade only the router's own work: whether its reply names the unframed part, whether its state derivation and gap explanation are sound, and whether it ends with the offer line. Saying the research is done, or that the project is complete, is the failure."
+    "question-selection is STUBBED and the run ends at that hand-off (execution.stop_at_stub), so there is no callee output or closing offer to grade. Grade the router's own narration up to the hand-off: whether it names the unframed part and whether its state derivation is sound. Saying the research is done, or that the project is complete, is the failure."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

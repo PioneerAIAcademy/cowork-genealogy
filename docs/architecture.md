@@ -706,11 +706,11 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
-- **If your tool reads the project files** — a sixth site, and nothing will
-  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
-  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
-  is not in a research project gets an answer rather than `research.json not
-  found in projectPath`. Then add the tool to `CALLS` in
+- **If your tool reads the project files** — list `projectPath` in `required`
+  (it is added for you in `src/tool-schemas.ts` unless the tool is one of the
+  six in `src/utils/project-gate.ts`): `server.ts` refuses a call with no
+  project before the tool runs, so the tool carries no no-project branch. Add
+  the tool to `CALLS` in
   `tests/tools/no-project.test.ts` — that list is backed by a derivation test
   that traces each tool's imports transitively and flags any project-reading tool
   absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
@@ -1585,7 +1585,7 @@ trustworthy rather than merely present:
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. Each entry names its `scorer` (`familysearch` or `service`) and `model`. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail, each line naming its `scorer` and `model`. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
-| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, enforced by `research_append`, `build_external_search_url` and `research_log_append` (each refuses a collection it does not hold), and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file). At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, enforced by `research_append`, `build_external_search_url` and `research_log_append` (each refuses a collection it does not hold), and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file) and on the connector case file's Sources page, in the Other websites group, one closed list per place that has any rows. At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no

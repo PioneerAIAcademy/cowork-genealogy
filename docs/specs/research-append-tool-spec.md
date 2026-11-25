@@ -2257,7 +2257,12 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `{ id, title, date_range, person_count, record_count, availability }`, after the rows it sent.
   The place's collections are the ones `collections_search` lists: titles holding
   the scope `standardPlaceToCollectionsQuery` derives from the entry's `place`,
-  else from the first `jurisdictions[].name` whose scope matches a title. At most
+  else from the first `jurisdictions[].name` whose scope matches a title. A scope
+  with leading terms (`collectionScopeTerms`; `England`, `United Kingdom`, `Great
+  Britain` for England, and the other places the collections_search spec lists) is
+  a set: a title is in scope when it starts with one, and a title or place part
+  that starts with one counts as the scope itself, so `England and Wales, Census,
+  1901` names no other part. At most
   `LOCALITY_COLLECTIONS_FILL_MAX` (150) rows in all, core national rows below included;
   the largest place list in 18 surveyed places was 65. A scope that is the United
   States, Canada or Mexico itself (an entry whose place is the bare country) is skipped:
@@ -2276,8 +2281,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   `collections_search` returned for 18 real places, 16 name the place, 165 name no
   part of the scope, and 150 name another part. The rule reads titles only, so a
   collection for one county whose title runs the place and the type together
-  (`Pennsylvania, Philadelphia City Death Certificates`) counts as naming no part
-  and is added. A collection the entry itself sent is always kept.
+  (`Pennsylvania, Philadelphia City Death Certificates`; for a Yorkshire entry,
+  `England, Cumberland Parish Registers, 1538-1990`) counts as naming no part
+  and is added, and a national one whose first part holds no record-type word
+  (`England, Royal Naval Volunteer Reserve Ratings, Medal Roll, 1914-1920`) is
+  left out. A collection the entry itself sent is always kept.
 
   Nothing is added, and nothing is said, on an update, when the catalog cannot be
   read, when no title holds the scope, or when the entry already holds them all.
@@ -2777,7 +2785,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | A `plans` append whose plan ends the call empty **while the same call carries `plan_items` append ops naming some other plan** (§5) | op-indexed hard error on that `plans` op, opening `plan '<newId>' was created for question '<qid>' and ends this call with no items, which cannot be persisted.` and closing `Do not add "items": [] to the plan shell instead; that is what makes the document schema-invalid.` **Two causes, and the middle clause names whichever applies** — they need opposite fixes. (a) The item ops wrote into a plan the call did **not** create: `this call's plan_items ops wrote into '<other>' (<status> plan for <question>) instead — the items went to a plan this call did not create. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one. Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours.` (b) They named only a **sibling plan this same call created**: `this call's plan_items ops named only '<other>', which this same call also created. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one.` When **more than one** created plan ends the call empty, that single-id prescription is replaced in both branches by `<N> of the plans this call created (<ids>) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.` — because naming one id would empty the others. Prescribing (a)'s fix for (b) would likewise empty the sibling and reproduce the loop with the two plans swapped, which is why the branch exists. A `plan_items` **update** never triggers either: its item already lives in the plan it names. **Branch (a) now reaches only a non-terminal `<other>`** — a `completed` or `superseded` one is refused by the row above before this post-pass runs, so `<status>` renders `active` here. Its same-question form survives only where the created plan is itself terminal, since the one-active-plan rule returns early on a non-active entry; every other same-question input is terminal and refused above. The `plans` worked example is attached, which is the batched call. Write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
-| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. A directory holding exactly one of the two files is a *broken* project and stays loud. |
 | Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---

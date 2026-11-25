@@ -167,7 +167,8 @@ unchanged (a stable sort). A hole with `pendingHints: null` stays in the second 
 
 For a hole with a place and a year range, `coverage` counts catalog collections
 that (a) match the place's collection scope — the same title match
-`collections_search` uses (US state, `Country, State` for Canada/Mexico,
+`collections_search` uses (US state, `Country, State` for Canada/Mexico, the
+leading terms of a United Kingdom country and the other places its spec lists,
 country elsewhere), (b) overlap the year range, and (c) carry a record-type
 facet that could hold the record:
 

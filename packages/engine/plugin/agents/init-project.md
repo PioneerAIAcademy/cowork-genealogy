@@ -1,9 +1,11 @@
 ---
 name: init-project
 description: >-
-  Creates a new genealogy research project from a FamilySearch person ID:
-  research.json (GPS audit trail) and tree.gedcomx.json (simplified GedcomX
-  deliverable). Implements Steps 1-2 of the genealogical research process
+  Creates a new genealogy research project for research on a person, from a
+  FamilySearch person ID: research.json (GPS audit trail) and tree.gedcomx.json
+  (simplified GedcomX deliverable). Only for research on a person; an activity
+  with no person in it starts its project with project_create and no personId,
+  not here. Implements Steps 1-2 of the genealogical research process
   (define the problem and survey known information). The `research` router
   starts this when a message names a person or objective and the folder holds
   no project; it is not a front door of its own, so it does not claim phrases
@@ -53,7 +55,7 @@ Ask one thing in the opening turn, alongside the person ID request: the research
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
-**No ID, no project.** If the message carries no FamilySearch person ID, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
+**No ID, no project.** Research on a person needs a FamilySearch person ID. If the message carries none, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
 
 ## Holdings the researcher mentions
 

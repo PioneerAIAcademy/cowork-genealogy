@@ -1,0 +1,13 @@
+{
+  "tool": "source_screen",
+  "description": "source_screen on Cornelius Driscoll (GJ72-9WD) in driscoll-source-audit. The project tree carries no sources at all, so the real tool returns ok:true with no attachments. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario; no matcher call was made.",
+  "args": {
+    "personId": "GJ72-9WD"
+  },
+  "response": {
+    "ok": true,
+    "personId": "GJ72-9WD",
+    "attachments": [],
+    "counts": {}
+  }
+}

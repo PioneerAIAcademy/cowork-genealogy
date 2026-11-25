@@ -5,11 +5,18 @@
     "name": "Translate a French civil birth record",
     "type": "positive",
     "description": "French civil registration (acte de naissance), post-1792. Tests French legal formulae, that names stay in original French form, and that the named parents are flagged as a parentage source. Different language and record type from the German baptism and Latin marriage tests.",
-    "tags": ["french", "civil-registration", "birth", "names", "parentage", "direct-arm"]
+    "tags": [
+      "french",
+      "civil-registration",
+      "birth",
+      "names",
+      "parentage",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'",
-    "scenario": null
+    "delegation": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

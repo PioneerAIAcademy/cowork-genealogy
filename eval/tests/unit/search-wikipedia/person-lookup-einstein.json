@@ -4,26 +4,26 @@
     "skill": "search-wikipedia",
     "name": "Historical person lookup",
     "type": "positive",
-    "description": "Wikipedia lookup for a person, run with NO project (scenario null, no projectPath). research_log_append answers reason no_project, so the agent logs nothing and returns the filled template as its reply instead. Tests the no-project path on a person-shaped article.",
+    "description": "Wikipedia lookup for a person, run in a project with no person. The agent logs the filled template in one research_log_append entry and replies with the one line. Tests a person-shaped article.",
     "tags": [
       "wikipedia",
       "person",
       "title-simple",
       "title-albert-einstein",
-      "no-project",
+      "person-less-project",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Look up Albert Einstein on Wikipedia\n\ntopic: Albert Einstein",
-    "scenario": null
+    "delegation": "Look up Albert Einstein on Wikipedia\n\ntopic: Albert Einstein\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "wikipedia-search-albert-einstein"
   ],
   "judge_context": [
     "Should call `wikipedia_search` with a query targeting the person Albert Einstein (the exact query form matters less than that it would retrieve the Albert Einstein article)",
-    "There is no research project here. The agent's reply should be the filled template — the article title (Albert Einstein) as the H1, the returned extract, and the source URL (https://en.wikipedia.org/wiki/Albert_Einstein) — with no fabricated content beyond what the tool returned. `(no file changes)` is correct.",
-    "Returning the template as the reply is the correct and complete response on this path; do not penalize it under Reply economy as restating the article. Its byte-for-byte match is checked by test_no_project_returns_template, not by you."
+    "The agent logs its guidance in one research_log_append entry; grade the summary and Sources from that entry.",
+    "The agent logs the filled template as the entry's notes and replies with the one line; the reply need not restate the article."
   ]
 }

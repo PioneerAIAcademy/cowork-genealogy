@@ -22,7 +22,7 @@ import test_where_else_to_search as v  # noqa: E402
 
 check_provenance = v.test_every_link_is_one_a_tool_returned
 check_reaches = v.test_every_suggested_link_reaches_the_user
-check_tools = v.test_no_tool_outside_the_three_and_no_project_path
+check_tools = v.test_no_tool_outside_the_three_and_a_project_path
 check_cap = v.test_at_most_eight_prefilled_links
 check_zero = v.test_zero_results_builds_and_links_nothing
 check_curated = v.test_every_build_starts_from_a_curated_row
@@ -33,7 +33,9 @@ OTHER = "https://www.pa-archives.example/civil-war"
 
 
 def call(tool, response=None, prefix="mcp__genealogy__", **args):
-    return {"tool": f"{prefix}{tool}", "args": args, "response": response}
+    # Every call carries the delegation's projectPath: the gate refuses one without it.
+    args = {"projectPath": "/tmp/p", **args}
+    return {"tool": f"{prefix}{tool}", "args": {k: v for k, v in args.items() if v is not None}, "response": response}
 
 
 def links_call(*urls):
@@ -102,13 +104,13 @@ def test_reaches_passes_when_links_are_below_the_separator_and_fails_otherwise()
         check_reaches(CALLS[:2], reply("x\n---\ny"), None, t)
 
 
-def test_tools_fires_on_a_writer_or_a_project_path_and_accepts_the_three():
+def test_tools_fires_on_a_writer_or_a_missing_project_path_and_accepts_the_three():
     t = where_test()
     check_tools(CALLS, t)
     with pytest.raises(AssertionError):
         check_tools(CALLS + [call("research_log_append", {"ok": True})], t)
     with pytest.raises(AssertionError):
-        check_tools([build_call(projectPath="/tmp/p")], t)
+        check_tools([build_call(projectPath=None)], t)
     with pytest.raises(AssertionError):
         check_tools([call("Read", {})], t)
     # A hand-back test is gated too, and holds with no call.

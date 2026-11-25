@@ -1340,10 +1340,10 @@ describe("samePerson — project-relative arm", () => {
       ).rejects.toThrow(/holds no persona for role 'witness_1'/);
     });
 
-    it("points at the explicit form outside a project", async () => {
+    it("refuses outside a project, with the project refusal", async () => {
       await expect(
         samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
-      ).rejects.toThrow(/gedcomx1\/primaryId1\/gedcomx2\/primaryId2/);
+      ).rejects.toThrow(/No project:/);
     });
 
     it("tells matchRelatives apart from 'paired and found nothing' on a projected record", async () => {
