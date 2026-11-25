@@ -1,0 +1,390 @@
+{
+  "run_log": "v57.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill completed one research step by invoking the proof-conclusion agent for q_001 and appropriately offered to continue with the next step. However, the agent returned only a delegation receipt without substantive findings, and no project file changes were recorded. The proof conclusion therefore remains incomplete. The response correctly acknowledged this limitation."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsr",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsr",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response addressed the limitation of the available tools and appropriately offered to continue the identity investigation. However, it did not fully answer the user's request because it omitted practical instructions for merging the two records on FamilySearch.org. Providing those steps would have made the response more complete and actionable."
+    },
+    {
+      "test_id": "ut_research_fsr",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response addressed the limitation of the available tools and appropriately offered to continue the identity investigation. However, it did not fully answer the user's request because it omitted practical instructions for merging the two records on FamilySearch.org. Providing those steps would have made the response more complete and actionable."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill correctly identified the negative probate search and the existing project status. However, it failed the expected behavior for this negative test. Instead of declining further planning and routing to research-exhaustiveness, it performed additional project queries and offered to write a proof conclusion for q_002. The response was factually accurate but did not follow the required routing behavior."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The required behavior was to decline further planning and route the request to research-exhaustiveness, or provide a brief status answer using project_context alone. The skill did neither. It performed additional research queries and offered another task, so the expected decline or hand-off was missing."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly presented the index reading (Armtogne) and machine transcription (Armistead) side by side, and reported the death certificate name exactly as Ann Tone Lightfoot. However, the statement that Armistead and Armtogne look like different readings of one name introduces an unsupported connection between the readings. The response should keep the three recorded names separate without suggesting they represent the same name. It appropriately avoided declaring either census reading a correction or confirmed spelling."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly identified the outstanding research work in the project and accurately recognized that the new Ireland and immigration question was not the same as the existing parentage question. However, it incorrectly claimed that the proof-conclusion step had run, even though the trace shows only a project_context call. It also incorrectly stated that the new investigation could not begin until the parentage question was wrapped up. The response therefore contains unsupported claims about execution and research workflow."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response did not execute the required first step for the Ireland and immigration investigation. Although it included a continuation offer, that offer concerned repeating the parentage proof-conclusion step rather than continuing the user's requested investigation. The expected GPS routing step was not run, so the user's research request was not advanced."
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The router correctly identified the waiting source and delegated it to record-structurer. However, it incorrectly described src_003 as the 1850 census page when the source is actually the 1860 census. The response otherwise accurately reported that the stubbed agent made no project-state changes. The factual error in identifying the census year supports retaining the score of 2."
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The router completed the required delegation once and included a continuation offer. However, the final response was unnecessarily verbose and confusing because it discussed several possible continuation labels before settling on one. The offer should have been a single clear line that accurately reflected the next workflow step. This supports retaining the score of 2."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response should have declined the request without invoking a skill because FamilySearch has no Kenyan record collections. Instead, it created a research project, attempted a Kenya records survey, and offered further FamilySearch searches. Although it appropriately avoided inventing collection titles, it failed to follow the required negative-test behavior."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The expected behavior was to decline the request without starting any research workflow. Instead, the response initiated project setup and offered additional actions. The project creation and follow-up options were unnecessary because the request was outside the supported scope. The required decline was not provided."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The paragraph accurately identifies the research objective, Thomas Flynn as the recorded father, and the outstanding proof-conclusion work. It also correctly describes the status of both research questions. However, it omits the five additional FamilySearch sources attached to the project that do not yet have assertions. This leaves out relevant evidence about the project's current progress. The statement that the project is blocked until both conclusions are completed also slightly overstates the situation."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The paragraph covers the research objective, established findings, outstanding work, and next step in the required plain-language format. However, it omits the five additional FamilySearch sources that are attached but have not yet been reviewed for assertions. Including these sources would give a more complete picture of the research progress and remaining work."
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly identified the next workflow step, attempted the proof-conclusion sub-skill, and provided the required continuation offer. However, the step returned no findings or summary and made no project-state changes. As a result, the parentage conclusion remains blocked and the user's research has not advanced substantively. The routing was appropriate, but execution was only partially complete."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pq2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pq2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pq2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The router correctly delegated the research and included all three soldiers with their ranks, enlistment dates, and image IDs. It also accurately stated that only two pages were read and that additional soldiers may appear on unread pages. However, the report was not relayed verbatim: the record-set header was moved after the soldier list, and an introductory sentence was added. This is a minor but clear deviation from the required output format."
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The router correctly handed the uploaded capture to the external-sites agent, as confirmed by the deterministic validator. However, the response repeated the same MyHeritage URL already listed under awaitingUser and asked whether the capture should be sent again. This contradicts the correct hand-off and the instruction not to re-raise an existing link."
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response did not provide the required forward-looking continuation offer. Instead, it asked whether the capture should be sent again, even though the hand-off had already occurred. The turn should have ended with exactly one 'Continue with …?' line identifying the next research step."
+    }
+  ]
+}
