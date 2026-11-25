@@ -286,5 +286,100 @@ describe("candidateExclusionRefusal (issue #4580)", () => {
       await seed([ANTOINE]);
       expect(await excludedCandidates(ranged({ givenName: "Joseph", birthYearFrom: 1800, birthYearTo: 1815 }))).toEqual([]);
     });
+
+    it("finds the subject by id, and reads each word of her given name (I1 after I2, 'Ann Tone')", async () => {
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", {
+        persons: [
+          { id: "I2", names: [{ id: "N9", given: "Margaret", surname: "Tyler", type: "BirthName" }], facts: [] },
+          { id: "I1", names: [{ id: "N1", given: "Ann Tone", surname: "Tyler", type: "BirthName" }], facts: [] },
+        ],
+        relationships: [],
+        sources: [],
+      });
+      await seed([ANTOINE]);
+      expect(await excludedCandidates(ranged({ givenName: "Tone" }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ givenName: "Margaret" }))).toEqual([]);
+    });
+  });
+
+  describe("a search for the subject's child, by a parent's name, is not judged", () => {
+    it.each([
+      ["motherGivenName", "Ann"],
+      ["motherSurname", "Tyler"],
+      ["fatherGivenName", "Joseph"],
+      ["fatherSurname", "Tyler"],
+      ["parentGivenName", "Ann"],
+      ["parentSurname", "Tyler"],
+    ])("allows a call with no given name and %s", async (key, value) => {
+      await seed([ANTOINE]);
+      expect(await excludedCandidates(ranged({ [key]: value, birthYearFrom: 1870, birthYearTo: 1890 }))).toEqual([]);
+    });
+
+    it("still refuses a call that also names the subject, a blank parent name, or a spouse or household member", async () => {
+      await seed([ANTOINE]);
+      expect(await excludedCandidates(ranged({ givenName: "Ann", motherGivenName: "Lucy" }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ motherGivenName: "  " }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ spouseGivenName: "Joseph" } as any))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ otherGivenName: "Margaret" } as any))).toHaveLength(1);
+    });
+  });
+
+  describe("a call under the candidate's own spelling is bound by that candidate", () => {
+    beforeEach(async () => {
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", tree(["Ann"]));
+    });
+
+    it("on a tree holding only 'Ann', 'Antoine' and 'Antoinette' are refused and 'Margaret' is allowed", async () => {
+      await seed([ANTOINE]);
+      expect(await excludedCandidates(ranged({ givenName: "Antoine" }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ givenName: "Antoinette" }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ givenName: "Margaret" }))).toEqual([]);
+    });
+  });
+
+  describe("an initial in the subject's tree name matches only an initial", () => {
+    beforeEach(async () => {
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", tree(["Ann E"]));
+    });
+
+    it("on 'Ann E', a search for Edwin is allowed, while 'Ann' and 'E' are refused", async () => {
+      await seed([ANTOINE]);
+      expect(await excludedCandidates(ranged({ givenName: "Edwin" }))).toEqual([]);
+      expect(await excludedCandidates(ranged({ givenName: "Ann" }))).toHaveLength(1);
+      expect(await excludedCandidates(ranged({ givenName: "E" }))).toHaveLength(1);
+    });
+
+    it("a logged search for Edwin under her id finds no candidate for her", async () => {
+      await seed([{ ...ANTOINE, personName: "Edwin Tyler" }], "I1", {}, { givenName: "Edwin" });
+      expect(await excludedCandidates(ranged())).toEqual([]);
+    });
+  });
+
+  it("an unreadable sidecar is skipped and the rest are judged", async () => {
+    await getProjectStore().writeJson(dir, "research.json", research([logEntry("log_001"), logEntry("log_002")]));
+    await getProjectStore().writeJson(dir, "results/log_002.json", sidecar("log_002", "I1", [ANTOINE]));
+    const excluded = await excludedCandidates(ranged());
+    expect(excluded.map((c) => c.logId)).toEqual(["log_002"]);
+  });
+
+  describe("a record linked confident to another person is not a candidate", () => {
+    const linked = (person_id: string, confidence: string, extra: Record<string, unknown> = {}) => ({
+      assertions: [{ id: "a_1", record_id: "https://familysearch.org/ark:/61903/1:1:MFLB-F5N" }],
+      person_evidence: [{ id: "pe_1", assertion_id: "a_1", person_id, confidence, ...extra }],
+    });
+
+    it("a confident link to I2 releases the row", async () => {
+      await seed([ANTOINE], "I1", linked("I2", "confident"));
+      expect(await excludedCandidates(ranged())).toEqual([]);
+    });
+
+    it("a probable link to I2, a superseded confident one, or a confident link to I1 does not", async () => {
+      await seed([ANTOINE], "I1", linked("I2", "probable"));
+      expect(await excludedCandidates(ranged())).toHaveLength(1);
+      await seed([ANTOINE], "I1", linked("I2", "confident", { superseded_by: "pe_2" }));
+      expect(await excludedCandidates(ranged())).toHaveLength(1);
+      await seed([ANTOINE], "I1", linked("I1", "confident"));
+      expect(await excludedCandidates(ranged())).toHaveLength(1);
+    });
   });
 });

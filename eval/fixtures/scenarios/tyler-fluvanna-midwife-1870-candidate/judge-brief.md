@@ -13,5 +13,7 @@ kept in `results/log_001.json`. `sources`, `assertions` and
 three given-name readings: Ann (her birth name), Antone and Anthony.
 
 A `record_search` for `I1` whose birth range excludes 1833, under one of those
-given names or none, is refused by the tool with an error naming Antoine. A
-refused call ran no search.
+given names, under Antoine's, or with none, is refused by the tool with an
+error naming Antoine; a search with no given name that names a parent is a
+search for her child and is not. A refused call ran no search. A `namesakes`
+row for `I1` naming Antoine is refused too, so a refused row recorded nothing.

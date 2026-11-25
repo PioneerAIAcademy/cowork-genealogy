@@ -731,6 +731,23 @@ def _guard_unknown_args(
 
 _CANDIDATE_EXCLUSION_JS = _MCP_BUILD / "utils" / "candidate-exclusion.js"
 
+# Every record_search argument `CandidateExclusionInput` reads. The parent names
+# mark a search for the subject's child, whose range the guard does not judge, so
+# dropping one here makes the mock refuse a call production allows.
+_CANDIDATE_EXCLUSION_KEYS = (
+    "subjectId",
+    "givenName",
+    "givenNameAlt",
+    "birthYearFrom",
+    "birthYearTo",
+    "fatherGivenName",
+    "fatherSurname",
+    "motherGivenName",
+    "motherSurname",
+    "parentGivenName",
+    "parentSurname",
+)
+
 
 def _candidate_exclusion_refusal(workspace: Path, args: dict[str, Any]) -> str | None:
     """Production's refusal of a record_search birth range that excludes a
@@ -753,7 +770,7 @@ def _candidate_exclusion_refusal(workspace: Path, args: dict[str, Any]) -> str |
     )
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
-        **{k: args[k] for k in ("subjectId", "givenName", "givenNameAlt", "birthYearFrom", "birthYearTo") if k in args},
+        **{k: args[k] for k in _CANDIDATE_EXCLUSION_KEYS if k in args},
     }
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)

@@ -1,12 +1,13 @@
 /**
- * Measure: what `record_search`'s candidate-exclusion refusal (issue #4580)
- * refuses over the committed corpus. ADR-0011 owes a gate this replay before
+ * Measure: what the candidate refusals (issue #4580), `record_search`'s birth
+ * range refusal and `research_append`'s namesake row refusal, refuse over the
+ * committed corpus. ADR-0011 owes a gate this replay before
  * merge, with every refusal read; the figures in
  * docs/specs/record-search-tool-spec-v2.md ("A birth range may not exclude a
  * candidate already found") and the guardrail-enforcement-spec.md §4 row come
  * from it. Re-run it rather than quoting them: the corpus moves.
  *
- * Two passes, both through `excludedCandidates` itself, against a temporary
+ * Three passes, each through the engine's own function, against a temporary
  * project written with the default (file) store. The tree is the scenario's, or
  * for e2e the fixture's starting tree for the calls and the run's final tree for
  * the final-state sweep:
@@ -21,6 +22,13 @@
  *   sidecar. The rows are the response's, which is the page shown (an e2e
  *   summary may keep only its first rows); an op that cannot be paired is
  *   counted and skipped, never guessed.
+ *
+ *   NAMESAKES. Every `namesakes` append and update a committed run log's
+ *   `research_append` made, judged by `namesakeCandidateRefusals` against the
+ *   same rebuilt project plus the rows the run had written by then (a refused
+ *   row is not added). Links come from the starting research only, so a row a
+ *   run's own later `person_evidence` would release is counted refused: read
+ *   each one.
  *
  *   CANDIDATES. Every candidate the guard sees in each scenario, and in each e2e
  *   run's final reconstructed state, for each subject: every refusal the rule
@@ -39,14 +47,20 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getProjectStore } from "../src/store/project-store.js";
 import { yearsIn } from "../src/utils/attached-births.js";
-import { excludedCandidates, type ExcludedCandidate } from "../src/utils/candidate-exclusion.js";
+import {
+  excludedCandidates,
+  namesakeCandidateRefusals,
+  type CandidateExclusionInput,
+  type ExcludedCandidate,
+} from "../src/utils/candidate-exclusion.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, runLogFiles, toolCalls } from "./runlog-calls.js";
 
 const list = process.argv.slice(2).includes("--list");
 
 type Sidecar = { ref: string; outcome: string; query: any; total: number | undefined; rows: unknown[] };
-/** `base`: the starting project's own logged sidecars; `sidecars`: those the run logged since. */
-type State = { research: any; sidecars: Sidecar[]; tree: any | null; base?: Sidecar[] };
+/** `base`: the starting project's own logged sidecars; `sidecars`: those the run logged since;
+ *  `namesakes`: the rows the run wrote since, which release their records. */
+type State = { research: any; sidecars: Sidecar[]; tree: any | null; base?: Sidecar[]; namesakes?: any[] };
 
 const readJson = (abs: string): any | null => {
   try {
@@ -77,30 +91,43 @@ function scenarioState(name: string): State | null {
   return { research, sidecars: [], tree: readJson(join(dir, "tree.gedcomx.json")), base: sidecars };
 }
 
-/** Write `state` to a fresh temporary project and run the guard there. */
-async function judge(state: State, input: { subjectId: string; givenName?: string; givenNameAlt?: string; birthYearFrom?: number; birthYearTo?: number }): Promise<ExcludedCandidate[]> {
+/** `state`'s research as the guard reads it, with the replay's sidecars and namesake rows. */
+function researchOf(state: State): any {
+  const all = [...(state.base ?? []), ...state.sidecars];
+  const baseLog = (Array.isArray(state.research?.log) ? state.research.log : []).filter(
+    (e: any) => !(e?.tool === "record_search" && typeof e?.results_ref === "string"),
+  );
+  const log = [
+    ...baseLog,
+    ...all.map((s, i) => ({ id: `log_r${i + 1}`, tool: "record_search", outcome: s.outcome, results_ref: `results/log_r${i + 1}.json` })),
+  ];
+  const namesakes = [...(Array.isArray(state.research?.namesakes) ? state.research.namesakes : []), ...(state.namesakes ?? [])];
+  return { ...state.research, log, namesakes };
+}
+
+/** Write `state` to a fresh temporary project and run `fn` there. */
+async function inProject<T>(state: State, fn: (dir: string, research: any) => Promise<T>): Promise<T> {
   const dir = mkdtempSync(join(tmpdir(), "cand-excl-"));
   try {
     const store = getProjectStore();
     const all = [...(state.base ?? []), ...state.sidecars];
-    const baseLog = (Array.isArray(state.research?.log) ? state.research.log : []).filter(
-      (e: any) => !(e?.tool === "record_search" && typeof e?.results_ref === "string"),
-    );
-    const log = [
-      ...baseLog,
-      ...all.map((s, i) => ({ id: `log_r${i + 1}`, tool: "record_search", outcome: s.outcome, results_ref: `results/log_r${i + 1}.json` })),
-    ];
-    await store.writeJson(dir, "research.json", { ...state.research, log });
+    const research = researchOf(state);
+    await store.writeJson(dir, "research.json", research);
     if (state.tree) await store.writeJson(dir, "tree.gedcomx.json", state.tree);
     for (const [i, s] of all.entries()) {
       await store.writeJson(dir, `results/log_r${i + 1}.json`, {
         payload: { query: s.query, ...(typeof s.total === "number" ? { totalMatches: s.total } : {}), results: s.rows },
       });
     }
-    return await excludedCandidates({ projectPath: dir, ...input });
+    return await fn(dir, research);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+}
+
+/** Write `state` to a fresh temporary project and run the guard there. */
+async function judge(state: State, input: Omit<CandidateExclusionInput, "projectPath">): Promise<ExcludedCandidate[]> {
+  return inProject(state, (dir) => excludedCandidates({ projectPath: dir, ...input }));
 }
 
 function subjectBirth(tree: any, id: string): number | undefined {
@@ -110,6 +137,8 @@ function subjectBirth(tree: any, id: string): number | undefined {
 }
 
 let rangedCalls = 0;
+let namesakeWrites = 0;
+const namesakeRefusals: string[] = [];
 let unpairedOps = 0;
 const refusals: string[] = [];
 const candidateLines: string[] = [];
@@ -118,7 +147,7 @@ let naturalRefused = 0;
 
 /** Replay one test's or run's calls in order from `start`; return the final state. */
 async function replayCalls(label: string, file: string, node: unknown, start: State) {
-  const state = { ...start, sidecars: [...start.sidecars] };
+  const state: State = { ...start, sidecars: [...start.sidecars], namesakes: [] };
   const staged = new Map<string, { query: any; total: number | undefined; rows: unknown[] }>();
   for (const call of toolCalls(node)) {
     const name = bareName(call);
@@ -130,6 +159,9 @@ async function replayCalls(label: string, file: string, node: unknown, start: St
         const hit = await judge(state, {
           subjectId: a.subjectId, givenName: a.givenName, givenNameAlt: a.givenNameAlt,
           birthYearFrom: a.birthYearFrom, birthYearTo: a.birthYearTo,
+          fatherGivenName: a.fatherGivenName, fatherSurname: a.fatherSurname,
+          motherGivenName: a.motherGivenName, motherSurname: a.motherSurname,
+          parentGivenName: a.parentGivenName, parentSurname: a.parentSurname,
         });
         if (hit.length > 0) {
           refusals.push(
@@ -152,9 +184,48 @@ async function replayCalls(label: string, file: string, node: unknown, start: St
         }
         state.sidecars.push({ ref: op.stagedResultsRef, outcome: op.outcome, ...s });
       }
+    } else if (name === "research_append") {
+      for (const op of opsOf(call.args ?? {})) {
+        if (op?.section !== "namesakes") continue;
+        const rows = state.namesakes!;
+        let row: any;
+        if (op.op === "append") {
+          row = { id: `ns_r${rows.length + 1}`, ...decode(op.entry) };
+        } else if (op.op === "update") {
+          const prior = rows.find((r) => r.id === op.entryId) ??
+            (Array.isArray(state.research?.namesakes) ? state.research.namesakes : []).find((r: any) => r?.id === op.entryId);
+          if (!prior) continue;
+          row = { ...prior, ...decode(op.fields) };
+        } else continue;
+        if (typeof row?.person_id !== "string") continue;
+        namesakeWrites++;
+        const hit = await inProject(state, async (dir, research) =>
+          namesakeCandidateRefusals(dir, research, research, state.tree, [{ opIndex: 0, row }]),
+        );
+        if (hit.length > 0) {
+          namesakeRefusals.push(`${label} ${file}\n      row ${JSON.stringify(row)}\n      ${hit[0].message}`);
+          continue;
+        }
+        if (op.op === "append") rows.push(row);
+        else {
+          const at = rows.findIndex((r) => r.id === row.id);
+          if (at >= 0) rows.splice(at, 1, row);
+          else rows.push(row);
+        }
+      }
     }
   }
   return state;
+}
+
+/** An op field the model may have sent as a JSON string. */
+function decode(v: unknown): any {
+  if (typeof v !== "string") return v ?? {};
+  try {
+    return JSON.parse(v);
+  } catch {
+    return {};
+  }
 }
 
 /** Every candidate in `state`, per subject the logged searches named. */
@@ -217,10 +288,13 @@ const head = execFileSync("git", ["rev-parse", "--short=9", "HEAD"], { cwd: repo
 console.log(`HEAD ${head}; ${files.length} run-log files; ${scenarios.length} scenarios`);
 console.log(`CALLS: record_search calls with subjectId, projectPath and a birth range: ${rangedCalls}; refused: ${refusals.length}`);
 console.log(`  logged record_search ops whose staged search could not be paired (skipped): ${unpairedOps}`);
+console.log(`NAMESAKES: namesakes appends and updates replayed: ${namesakeWrites}; refused: ${namesakeRefusals.length}`);
 console.log(`CANDIDATES: ${candidateCount} (scenarios + e2e final states); the subject's own +/-5 range would be refused by ${naturalRefused}`);
 if (list) {
   console.log("\nREFUSED CALLS");
   for (const r of refusals) console.log(`  - ${r}`);
+  console.log("\nREFUSED NAMESAKE ROWS");
+  for (const r of namesakeRefusals) console.log(`  - ${r}`);
   console.log("\nCANDIDATES");
   for (const l of [...new Set(candidateLines)]) console.log(`  - ${l}`);
 }

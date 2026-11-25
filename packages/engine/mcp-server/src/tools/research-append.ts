@@ -196,6 +196,7 @@ import { claimRuleFindings, questionCapFindings } from "../validation/claim-rule
 import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
 import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
+import { namesakeCandidateRefusals } from "../utils/candidate-exclusion.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -4785,6 +4786,29 @@ export async function stampNamesakePersonas(
     stamped.add(row.id);
   }
   return stamped;
+}
+
+/** Issue #4580: the refusals for each `namesakes` row the call appended or
+ *  updated that names a candidate of its own person on nothing but the
+ *  candidate's birth year (`namesakeCandidateRefusals`). A record a row named
+ *  before the call is no candidate, so a standing row is never refused. */
+export async function namesakeCandidateLines(
+  projectPath: string,
+  before: any,
+  after: any,
+  tree: any,
+  applied: ReadonlyArray<AppliedOp>,
+  fmt: (i: number, msg: string) => string,
+): Promise<string[]> {
+  const rows = (Array.isArray(after?.namesakes) ? after.namesakes : []) as any[];
+  const written = applied.flatMap((a) => {
+    if (a.section !== "namesakes" || a.noop) return [];
+    const row = rows.find((r) => r?.id === a.entryId);
+    return row ? [{ opIndex: a.opIndex, row }] : [];
+  });
+  if (written.length === 0) return [];
+  const refusals = await namesakeCandidateRefusals(projectPath, before, after, tree, written);
+  return refusals.map((r) => fmt(r.opIndex, r.message));
 }
 
 /** The persons the call's applied person_evidence ops link, as they stand after it. */
@@ -14181,6 +14205,11 @@ export async function researchAppend(
     const stamped = await stampNamesakePersonas(research, ops, applied, readResults);
     await fillNamesakeBirthYears(research, linkedPersonIds(research, applied), readResults, stamped);
 
+    // Issue #4580: a namesake row may not drop a candidate a search for its
+    // person returned on nothing but the candidate's birth year.
+    const candidateLines = await namesakeCandidateLines(projectPath, beforeResearch, research, beforeTree, applied, fmt);
+    if (candidateLines.length > 0) return fail(candidateLines);
+
     // When this call resolves the project's last open question, the minted
     // persons no edge connects to an imported person go, with the links that
     // name them (lead ruling, 2026-11-04, issue #3032). Before the namesake
@@ -14845,6 +14874,7 @@ async function everyOpFailure(c: {
     }
     const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
     await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
+    lines.push(...(await namesakeCandidateLines(c.projectPath, before.research, doc, before.tree, applied, fmt)));
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },

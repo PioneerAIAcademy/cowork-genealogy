@@ -17,7 +17,11 @@ Because that search named the subject, asked for a given name that is hers (`An*
 logged `positive` (not `negative`), and returned one row of one match (its page and its
 `totalMatches` are both at most 5), `record_search` refuses a later search for I1 whose
 birth range excludes 1833, when that search asks for one of her given names (Ann, Antone,
-Anthony) or for none. A search for I1 under another given name is for someone else and is
-not refused.
+Anthony), for Antoine's, or for none. A search for I1 under another given name is for
+someone else and is not refused, nor is a search with no given name that names a parent
+(`motherGivenName` and the like), which is a search for her child. `research_append`
+refuses a `namesakes` row for I1 that names Antoine: nothing in the project rules her out
+but her birth year (I1 is linked to no other record, and the row's 1833 is an age, not a
+full date).
 
 Used by `ut_search_records_035` (1870 candidate).

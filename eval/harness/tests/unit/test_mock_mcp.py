@@ -3778,3 +3778,31 @@ def test_record_search_including_the_found_candidate_matches_a_fixture(tmp_path)
     })
 
     assert call_log[-1]["matched"]["kind"] == "predicate"
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize(
+    "names",
+    [
+        {"givenName": "Margaret"},
+        {"motherGivenName": "Ann"},
+    ],
+    ids=["another-given-name", "child-by-mother-name"],
+)
+def test_record_search_for_someone_else_under_the_subject_id_matches_a_fixture(tmp_path, names):
+    # The mock forwards the given names and the parent names to the guard, as
+    # production passes its whole input: a Margaret search, or a search for I1's
+    # child by her name, is not judged against Antoine.
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "subjectId": "I1", **names,
+        "birthYearFrom": 1848, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+
+    assert call_log[-1]["matched"]["kind"] == "predicate"
