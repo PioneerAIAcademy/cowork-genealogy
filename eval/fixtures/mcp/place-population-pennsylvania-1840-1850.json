@@ -1,0 +1,122 @@
+{
+  "tool": "place_population",
+  "description": "place_population for Pennsylvania, 1840 to 1850, recorded live 2026-11-25 from populationTool with the arguments ut_historical_context_013's agent sent (standardPlace \"Pennsylvania, United States\", startYear \"1840\", endYear \"1850\").",
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
+  "response": {
+    "place": {
+      "place_id": "23",
+      "name": "Pennsylvania",
+      "level": "province",
+      "parent": {
+        "place_id": "1",
+        "name": "United States Of America"
+      }
+    },
+    "population": {
+      "populstat": {
+        "source_url": "http://populstat.info/Americas/usap.htm",
+        "data": [
+          {
+            "year": 1840,
+            "population": 1724000,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1850,
+            "population": 2311800,
+            "data_type": "estimate"
+          }
+        ]
+      },
+      "gapminder": {
+        "source_url": "https://www.gapminder.org/data/documentation/gd003/",
+        "level": "country",
+        "place": {
+          "place_id": "1",
+          "name": "United States Of America"
+        },
+        "data": [
+          {
+            "year": 1840,
+            "population": 17485246,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1841,
+            "population": 18002579,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1842,
+            "population": 18544472,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1843,
+            "population": 19111919,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1844,
+            "population": 19696730,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1845,
+            "population": 20299435,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1846,
+            "population": 20920583,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1847,
+            "population": 21560737,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1848,
+            "population": 22220480,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1849,
+            "population": 22899875,
+            "data_type": "estimate"
+          },
+          {
+            "year": 1850,
+            "population": 23599506,
+            "data_type": "estimate"
+          }
+        ]
+      }
+    },
+    "indexed_records": {
+      "familysearch_births": {
+        "description": "Indexed birth records",
+        "level": "country",
+        "place": {
+          "place_id": "1",
+          "name": "United States Of America"
+        },
+        "data": [
+          {
+            "period_start": 1800,
+            "period_end": 1850,
+            "records": 23501088
+          },
+          {
+            "period_start": 1850,
+            "period_end": 1900,
+            "records": 74838479
+          }
+        ]
+      }
+    }
+  }
+}

@@ -2796,6 +2796,7 @@ describe("Research closed shapes", () => {
           resolved: null,
           resolution_assertion_ids: [],
           date_window: "1830-1900",
+          audits_tree: true,
           search_stop: {
             stopped_because: "question_answered",
             log_entry_ids: ["log_001"],
@@ -3136,6 +3137,23 @@ describe("Research closed shapes", () => {
     research.questions[0].date_window = "1850-1850";
     expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
     delete research.questions[0].date_window;
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
+  });
+
+  // #4430 — questions[].audits_tree, optional boolean. The maximal document
+  // carries `true` (acceptance).
+  it("refuses a non-boolean questions[].audits_tree", async () => {
+    for (const bad of ["true", 1, null, "yes"]) {
+      const research = maximalResearch();
+      research.questions[0].audits_tree = bad;
+      const result = await validateParsed(research, maximalTree);
+      const messages = result.errors.map((e: any) => e.message);
+      expect(messages.some((m: string) => m.startsWith("audits_tree must be true or false")), String(bad)).toBe(true);
+    }
+    const research = maximalResearch();
+    research.questions[0].audits_tree = false;
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
+    delete research.questions[0].audits_tree;
     expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
   });
 
