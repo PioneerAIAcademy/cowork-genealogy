@@ -57,11 +57,6 @@ DORMANT: dict[str, str] = {
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
         "kept and no test carries the tag yet"
     ),
-    "unproven-surname-search": (
-        "its only test, ut_search_records_d33, was deleted by PR #4613 (the agent "
-        "never searched the recalled married surname, 2 of 2 runs); issue #4699 "
-        "restores it"
-    ),
 }
 
 
