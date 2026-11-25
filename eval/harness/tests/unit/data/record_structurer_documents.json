@@ -590,7 +590,12 @@
               "surname": "Flynn"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "house and lot on Main Street, for her natural life"
+            }
+          ]
         },
         {
           "id": "p3",
@@ -602,7 +607,12 @@
               "surname": "Flynn"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "mining tools and one hundred dollars"
+            }
+          ]
         },
         {
           "id": "p4",
@@ -614,7 +624,12 @@
               "surname": "Doyle"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "fifty dollars"
+            }
+          ]
         },
         {
           "id": "p5",

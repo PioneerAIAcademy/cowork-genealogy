@@ -22,5 +22,21 @@
   "execution": {
     "max_turns": 12,
     "max_wall_clock_seconds": 400
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland"
+    }
+  ]
 }
