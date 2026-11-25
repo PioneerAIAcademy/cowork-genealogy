@@ -316,18 +316,20 @@ def _closes_hand_off(entry: dict, url: str) -> bool:
     return ext is not None and ext.get("url_generated") == url and entry.get("outcome") != "partial"
 
 
-def awaiting_upload_item_ids(research: dict) -> set[str]:
-    """Plan items waiting only on a capture the researcher owes us.
+def awaiting_hand_offs(research: dict) -> list[dict]:
+    """Hand-offs still waiting on the researcher, in log order.
 
     The Python mirror of `awaitingUserHandOffs` (`src/utils/awaiting-hand-offs.ts`): an
     `external_site` entry with `outcome: "partial"` and `capture_received: false`
     that no LATER entry closes. Keyed on `partial`, not on `capture_received`
     alone -- a `positive` entry logged with `capture_received: false` already had
-    its results in hand (alpha feedback #2864) and waits on nobody.
+    its results in hand (alpha feedback #2864) and waits on nobody. Each row carries
+    `log_id`, `site`, `url_generated` and `plan_item_id` (None when absent). The hosted
+    planes post each new row's URL to the chat (issue #4660).
     """
     log = research.get("log") if isinstance(research, dict) else None
     entries = log if isinstance(log, list) else []
-    waiting: set[str] = set()
+    rows: list[dict] = []
     for i, entry in enumerate(entries):
         ext = _external_site_of(entry)
         if ext is None or entry.get("outcome") != "partial" or ext.get("capture_received") is not False:
@@ -339,9 +341,20 @@ def awaiting_upload_item_ids(research: dict) -> set[str]:
         if any(_closes_hand_off(later, url) for later in entries[i + 1:]):
             continue
         item_id = entry.get("plan_item_id")
-        if isinstance(item_id, str):
-            waiting.add(item_id)
-    return waiting
+        site = ext.get("site")
+        rows.append({
+            "log_id": entry["id"],
+            "site": site if isinstance(site, str) else "",
+            "url_generated": url,
+            "plan_item_id": item_id if isinstance(item_id, str) else None,
+        })
+    return rows
+
+
+def awaiting_upload_item_ids(research: dict) -> set[str]:
+    """Plan items waiting only on a capture the researcher owes us: the plan items of
+    `awaiting_hand_offs`."""
+    return {row["plan_item_id"] for row in awaiting_hand_offs(research) if row["plan_item_id"] is not None}
 
 
 def current_question(research: dict) -> dict | None:

@@ -313,6 +313,37 @@ export function competingParentSets(
     .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
 }
 
+/** The person-evidence rung for a partly-linked question: some of its
+ *  assertions are linked and some are not, yet no live link reaches a project
+ *  subject. Null when every assertion is linked or rejected against a subject
+ *  (`rejected_links`; person-evidence has nothing left to do, so the rung
+ *  cannot loop), when a link already names a subject,
+ *  or when no subject is a tree person. `linkedAssertionIds` holds the links
+ *  `countsForLinkedRung` admits. */
+export function subjectUnreached(
+  research: any,
+  tree: any,
+  assertions: readonly any[],
+  linkedAssertionIds: ReadonlySet<unknown>,
+): { unlinked: number; subjects: string[] } | null {
+  if (!tree) return null;
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return null;
+  const rejected = new Set(
+    arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
+  );
+  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id) && !rejected.has(a?.id)).length;
+  if (unlinked === 0 || unlinked === assertions.length) return null;
+  const ids = new Set(assertions.map((a) => a?.id));
+  const reaches = arr(research?.person_evidence).some(
+    (pe) => countsForLinkedRung(pe) && ids.has(pe?.assertion_id) && subjects.includes(pe?.person_id),
+  );
+  return reaches ? null : { unlinked, subjects };
+}
+
 /** Tree persons linked to this question's assertions whom nothing ties to a
  *  subject: no `ParentChild`/`Couple` path of any length or direction, and no
  *  record shared with a person who has one. Kinship like that was inferred, not
@@ -889,6 +920,9 @@ export function questionStatus(
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   const kin = resolved ? [] : unlinkedKin(research, tree, qid, assertionIds);
+  const unreached = resolved || summaries.length > 0 || noneLinked
+    ? null
+    : subjectUnreached(research, tree, assertions, linkedAssertionIds);
   if (attachedBirthPairs.length > 0) {
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
@@ -949,6 +983,12 @@ export function questionStatus(
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (kin.length > 0) {
     nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+  } else if (unreached) {
+    // Below the kin rung, so it changes no step that rung sets. Some links but
+    // none reaching the subject: the record was linked around them, not to them.
+    nextStep =
+      `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
+      `are unlinked and none of its links reaches the project subject (${unreached.subjects.join(", ")})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is

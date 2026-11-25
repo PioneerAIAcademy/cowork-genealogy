@@ -203,7 +203,7 @@ of two persons already confirmed identical; a "should these be merged?" never go
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
-as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
+as given, the message copied verbatim after its last line `message:`, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and the `projectPath` of a `project_create` that took the message as `objective` and no `personId`, even when the message names no images; relay everything after
@@ -422,6 +422,11 @@ message.
      `research-exhaustiveness`, `person-evidence`): never spawn it for this line, whatever `<request>` asks; the routing table picks the next step.
      Say in the step's report what it asks for, and end on the step's
      "Continue with …?" line. An owner that is not an agent: ignore the line.
+   - A FamilySearch search is `search-records`' job. Never write a
+     `familysearch.org/search/record` or `/search/catalog/results` URL, and
+     never hand the researcher a FamilySearch search to run. When a step reports that `record_search` failed, say
+     FamilySearch search is not answering right now and offer to run that
+     search again.
    - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
      every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
      other source.
@@ -517,10 +522,10 @@ message.
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **When the subject's `project_context` person carries `unsupportedGivenName`:** its `subject`
-   block already searches the given name as `searchAs`; the brief gives `given` only as plain
-   text, a reading in doubt. The spawn's `description` and your reply name the subject by the
-   surname alone, never by `given`.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** copy the
+   `subject` block exactly as `project_context` returned it, adding no key and changing no
+   value; it already searches the right given name. Write that person's `given` nowhere in the
+   brief. The spawn's `description` and your reply name the subject by the surname alone.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and

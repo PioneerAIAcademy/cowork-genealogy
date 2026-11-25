@@ -1553,6 +1553,16 @@ def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_respon
     )
 
 
+# init-project's own next-step sentence (agents/init-project.md, "Present to the
+# user"): "The next step is the first research question: the single fact we go
+# after first." Matched on its wording, not on the phrase "first research
+# question", which the router may use in its own sentence explaining the
+# `setting up the project` step it offers.
+_INIT_PROJECT_NEXT_STEP = re.compile(
+    r"next step is the first research question|single fact we go after", re.I
+)
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
@@ -1598,7 +1608,7 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
         if denial in (r.get("text") or "")
     ]
     assert not denied, f"the step boundary denied {denied} in the turn that created the project"
-    assert "first research question" not in (text_response or ""), (
+    assert not _INIT_PROJECT_NEXT_STEP.search(text_response or ""), (
         "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
     )
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
@@ -2521,4 +2531,29 @@ def test_no_inline_transcription_of_a_reindex(tool_calls, test):
     assert not inline, (
         f"the router transcribed the page itself ({len(inline)} image_transcribe call(s)); "
         "a re-index goes to search-images with the message verbatim"
+    )
+
+
+# A FamilySearch search link written by hand: a record or catalog search, with or
+# without a scheme, a "www." or a language segment ("/en/"). A film viewer or
+# collection link under /search/ is one our tools return, and passes.
+_FS_SEARCH_LINK = re.compile(
+    r"familysearch\.org/(?:[a-z]{2}/)?search/(?:record|catalog/results)\b", re.I
+)
+
+
+def test_no_hand_written_familysearch_search_link(test, text_response):
+    """Tag-gated (``no-familysearch-search-link``): issue #4777. A FamilySearch
+    search is search-records' job; the reply never carries a
+    ``familysearch.org/search/record`` or ``/search/catalog/results`` URL for the
+    researcher to run, whether the search was already run or ``record_search``
+    failed. Film viewer and collection links, which tools return, pass."""
+    if "no-familysearch-search-link" not in (test.get("tags") or []):
+        pytest.skip("not a no-familysearch-search-link test")
+    found = _FS_SEARCH_LINK.search(text_response or "")
+    assert found is None, (
+        "the reply hands the researcher a FamilySearch search link "
+        f"({found.group(0) if found else ''}…); a FamilySearch search is "
+        "search-records' job, and a failed one is offered again, not handed over "
+        "(issue #4777)"
     )

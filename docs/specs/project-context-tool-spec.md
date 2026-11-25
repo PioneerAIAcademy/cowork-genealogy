@@ -181,6 +181,7 @@ is a key this rule can drop:
     ref: string,                         // the staged or logged page
     index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
+      date?: string, place?: string,     // present when the assertion has one (a date equal to value is not repeated): a page that agrees on them sends nothing
     }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
@@ -359,6 +360,7 @@ outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank unlinked kin, which outranks
+a partly-linked question that never reaches the subject, which outranks
 **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
@@ -469,6 +471,31 @@ LZJF-J13: 15 assertions, 0 links, and the router went on to exhaustiveness and a
 across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run and 21
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
+
+**Some links, none reaching the subject, also routes to person-evidence.** When a
+question that is not resolved and has no proof summary has some assertions with a
+link (`countsForLinkedRung`) and some without, no such link names a
+`subject_person_ids` entry, and at least one subject is a tree person, its
+`nextStep` reads `person-evidence — N of this question's M assertions are unlinked
+and none of its links reaches the project subject (<ids>)`. This is the household
+record linked around the subject: in `flynn-household-skeleton` the 1850 census
+head is linked and the six children are not, and Patrick is not in that household.
+"Any unlinked assertion" would send the 53 partly-linked concluded households to
+person-evidence; requiring the subject to be unreached is what separates this case.
+It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
+and it stops once every assertion is linked or rejected against a subject
+(`rejected_links`), so it cannot loop. It is silent until a
+subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
+dev/measure-question-state-signals.ts --list`, 568 question entries across 222
+scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e
+question-runs, and is in `nextStep` on 2 of each; the rest are masked by the kin
+rung, `flynn-marriage-only-no-child-link` among them. Spot-checked: pe7 and
+`norwegian-patronymic-nil-recovery` (the subject's own birth unlinked, both parents
+linked) are intended; `maria-vazsan-spouse/run-2026-10-30_13-39-29` is real (the
+links go to four "Maria Vázsan" stubs, none to the subject); `jimmie-jewel-neal/run-2026-07-30_23-05-46`
+q_002 is not (the question is about Martha Wood, who is linked). The false route is
+accepted for the same reason as the kin rung's (lead, 2026-11-19): it is rare and
+costs one hop.
 
 **Before any evidence exists, the next search is named by its repository.** A
 `planned` or `searching` question whose log holds a positive or partial entry no
@@ -752,6 +779,45 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
 
+**Delivery: the host posts the link** (lead, 2026-11-23). A row here
+says the researcher already has the link, and the router never raises it again. That
+held only when the main thread relayed the agent's report, and in the Hagell alpha
+session it rewrote every report and no logged link reached the chat. So on both hosted
+web planes (`real_agent.py`, the alpha, and the prototype worker) the host posts the link
+itself: when a main-thread call that can open a hand-off returns — an `Agent`/`Task`
+delegation, or `research_log_append`, which the main thread may call itself
+(`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
+open when the turn's first such call began is written to the chat as its own paragraph
+of the turn's reply: the site's host name, one sentence, and the URL as a markdown
+autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
+to a bare host name that starts `www.` or ends in a common top-level domain; only an
+http(s) URL is a link, and anything else is shown as code, on one line).
+"Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
+before the tool does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. If that read fails, the turn
+counts nothing as open, so a link may be posted twice but is never skipped. A link logged by a call that never
+returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
+a worker attempt that lost its grant lock posts its links before it raises. Each row is
+posted once per turn; a link sent again opens a new row and is posted again. The rule
+is `step_boundary.awaiting_hand_offs`, the Python mirror of `awaitingUserHandOffs`, held
+to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
+`continue_policy.hand_off_texts`, shared by both planes. A turn with no such call reads
+nothing for this.
+
+- **Not covered here:** the connector's chat, where `show_project` lists
+  `awaitingUser`, and Cowork and Desktop, which still rely on the relay.
+- **A turn that never reached its end** posts nothing for a call that had not
+  returned, and those rows read as handed over: a process that died, and a worker
+  attempt ended by the store going down, a newer claim superseding it, or a failed
+  transcript write. Catching those would need a stored "shown" flag, which the ruling
+  rejected: a schema change, set by the same relay that fails.
+- **A link logged after its turn ended** is read as open-before by the next turn and
+  never posted. Both planes force every delegation to the foreground
+  (`continue_policy.foreground_rewrite`), so a search agent does not outlive its turn;
+  what is left is an agent the CLI backgrounded in spite of that.
+- The main thread may repeat a link the host already posted. A duplicate is accepted
+  over a drop.
+
 ### 2.4 `externalCollections` — counts of the stored curated collections
 
 Present only when the project holds `external-collections.json` (written by
@@ -941,9 +1007,12 @@ Only under `include: ["historicalContext"]`, and only when the tree holds
 objective on a line naming it as the researcher's and not a tree fact, then one line
 per person, the subject first and then its parents, spouses and children from the
 tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
-place as `Type date, place`, or "no dated or placed facts". The router spawns the
-agent with that prompt as given, then a `message:` line holding the researcher's
-message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+place as `Type date, place`, or "no dated or placed facts". The prompt's last line
+is a bare `message:`. The router spawns the agent with that prompt as given, the
+researcher's message copied verbatim after that `message:`, and nothing else
+(research/SKILL.md, "Bounded request or job"). The trailing line is there because a
+prompt that ended on the facts left the router to add the `message:` line itself, and
+it sent the prompt alone in 1 of 4 runs of `ut_research_ia2`.
 
 Why a tool writes it: told to call `tree_query` and hand over only the places and
 years it returned, a Haiku 5.5 low router added its own era ranges and a candidate

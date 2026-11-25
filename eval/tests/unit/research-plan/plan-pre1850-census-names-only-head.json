@@ -1,0 +1,53 @@
+{
+  "test": {
+    "id": "ut_research_plan_hoh",
+    "skill": "research-plan",
+    "type": "positive",
+    "name": "A pre-1850 parentage plan does not treat an early census as naming the son",
+    "description": "Issue #4163. A US federal census from 1790 to 1840 names only the head of household, so it can place Paul Raymond Sr. in a town but cannot name Paul Jr. as his son. q_001 asks whether the Paul Raymond who died in 1828 in Berkshire County, Massachusetts, was the father of the Paul Raymond of Bristol, Vermont, born about 1770. The localities list the 1790-1840 censuses beside probate, land and town records, and no quirk says that an early census names only the head. Synthetic scenario, no PII.",
+    "tags": [
+      "planning",
+      "parentage",
+      "record-type-selection",
+      "reads-localities-entry",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "direct-arm",
+      "pre1850-census"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — was Paul Raymond (d. 1828, Berkshire County, Massachusetts) the father of Paul Raymond of Bristol, Vermont?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "raymond-pre1850-parentage"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 900,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-raymond-vermont",
+    "place-search-berkshire-county",
+    "place-search-massachusetts",
+    "collections-search-raymond-vermont",
+    "collections-search-raymond-berkshire",
+    "collections-search-us-early-census",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "Background: a United States federal census from 1790 through 1840 names only the head of household and counts everyone else in age brackets. The 1850 to 1870 censuses name every household member without stating relationships; from 1880 the census states each member's relationship to the head.",
+    "FAIL Correctness only if a plan item, or the plan's rationale, states that a 1790 to 1840 census names Paul Raymond Jr., or states that it shows he is the son of Paul Raymond Sr.",
+    "Acceptable, and not a reason to reduce any score, wherever the item sits in the plan: a 1790 to 1840 census used to place either man in a town in a given year; a hedged tally reading, such as a male of the right age in Paul Sr.'s household being consistent with Paul Jr. living there, even when called corroborating; a household's size or make-up called consistent with a family; and Paul Jr.'s own age bracket as head of his own household from 1800 on.",
+    "Whether the plan has a record type that can name a child, sequenced ahead of every 1790 to 1840 census item, is checked by the deterministic validator test_pre1850_parentage_plan_puts_child_naming_record_first. If it is not listed among the failed validators, the plan met it; do not grade the plan's order against it.",
+    "Do not reduce any score for an 1850 or later census that is used correctly for what it shows.",
+    "Whether any new item was written with a status other than planned is checked by the deterministic validator test_new_plan_items_planned_status. If it fails, it is listed among the failed validators; if it is not listed, the plan met it.",
+    "The repository is irrelevant, and an item may reach a record without naming a collection id."
+  ]
+}
