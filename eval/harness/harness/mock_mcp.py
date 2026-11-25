@@ -918,6 +918,19 @@ def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[st
     )
 
 
+def _attach_film_for_year(response: dict[str, Any], film_year: Any) -> dict[str, Any]:
+    """Production's `filmForYear` (#4721) on a canned `catalog_search` answer,
+    through the compiled `attachFilmForYear`. Fails OPEN: no build, or a node
+    failure, serves the fixture unchanged with a warning."""
+    return _call_compiled_pure(
+        "tools/catalog-search.js",
+        "attachFilmForYear",
+        [response, film_year],
+        consequence="catalog_search fixtures are served without filmForYear",
+        fallback=response,
+    )
+
+
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     """`response` with `key` moved immediately before `results` — where the real
     record_search serializes `surnameVariantHints`, after the pre-`results` notes."""
@@ -2129,6 +2142,16 @@ def create_mock_server(
                 and "error" not in response
             ):
                 response = _compact_wiki_search(response, args.get("includeText"))
+
+            # Production's catalog_search adds `filmForYear` to each hit when the
+            # call names a `filmYear`; the compiled function adds it here.
+            if (
+                _name == "catalog_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("filmYear") is not None
+            ):
+                response = _attach_film_for_year(response, args.get("filmYear"))
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a

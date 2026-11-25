@@ -983,6 +983,22 @@ def test_wiki_search_fails_open_without_the_build(tmp_path, monkeypatch):
     assert out == response
 
 
+@pytest.mark.requires_engine_build
+def test_catalog_search_film_year_adds_production_line(tmp_path):
+    """With `filmYear`, the canned answer gains production's `filmForYear` (#4721);
+    without it, the fixture is served as recorded."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["catalog-search-ochtrup"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {"standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"}
+    with_year = _extract_response_dict(_invoke(tools_by_name, "catalog_search", {**args, "filmYear": 1836}))
+    kb = next(h for h in with_year["hits"] if h["id"] == "koha:202974")
+    assert kb["filmForYear"]["filmNumber"] == "876540"
+    assert "viewable only at a FamilySearch Center" in kb["filmForYear"]["line"]
+    plain = _extract_response_dict(_invoke(tools_by_name, "catalog_search", dict(args)))
+    assert all("filmForYear" not in h for h in plain["hits"])
+
+
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
     """The mock's gate restates the tool's condition: it selects the response
     rather than transforming a staged one, and the tool exports no function for

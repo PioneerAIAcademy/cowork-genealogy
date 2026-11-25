@@ -96,14 +96,14 @@ Each invocation does one of three things, and returns:
       `urlGenerated` the results came from.
    2. **No row matches** → the search was never handed off. Run steps 1–3 in
       full first: steps 1–2, `collections_search`, then
-      `build_external_search_url` with `awaitingCapture: false`.
+      `build_external_search_url` as step 3's exception says.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
       logged `outcome: "error"`. An upload that could not be read (step 5)
       logs nothing and leaves the plan item as it is.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
-   with `awaitingCapture: false`) — never write a URL yourself — then log the result
+   as its exception says) — never write a URL yourself — then log the result
    now (step 6) with that URL — `captureReceived: false`, `captureFilename:
    null` — and give the capture steps (step 4) so a capture can later confirm it.
 
@@ -220,7 +220,7 @@ Instead, for each capture-required external-site plan item:
    also indexed on FamilySearch. If `search-records` can reach the record,
    hand back to search-records rather than deferring.
 2. Otherwise, still resolve the place and build the search URL (steps 2–3),
-   calling the builder with `awaitingCapture: false` — it is a genuine lead worth
+   as step 3's exception says — it is a genuine lead worth
    recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
@@ -324,19 +324,15 @@ or census years exist in this `collections_search` result, never in memory.
 **For `archion` and `matricula`, also call `catalog_search`** for the parish's place:
 
 ```
-catalog_search({ standardPlace: "<standardPlace>" })
+catalog_search({ standardPlace: "<standardPlace>", filmYear: <the record's year> })
 ```
 
 Keep a hit whose title, creator or `filmNotes` name that parish's church books and
-cover the register type and year. For a kept hit, step 4 gets one sentence, after
-the `---`, starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`,
-with the `filmNumber` of the film note covering the year, then:
-- `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
-  library. Never offer to read it.
-- `availableOnline: true` → offer to read it, and put the film note's
-  `imageGroupNumber` in the caller lines as the handoff to search-images.
-- `availableOnline` absent → name the film and say nothing about where it can be
-  viewed.
+whose `filmForYear` is present. For a kept hit, step 4 gets its `filmForYear.line`,
+after the `---`, word for word, film number included. Then:
+- `availableOnline: false` → never offer to read it.
+- `availableOnline: true` → offer to read it, and put `filmForYear.imageGroupNumber`
+  in the caller lines as the handoff to search-images.
 
 Still build the archion/matricula URL. No kept hit → say nothing about the Catalog.
 
@@ -366,7 +362,7 @@ blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
 `external_links_search` call the error names, read the stored list (step 2), then
 build again.
 **One exception:** when the results for that URL
-are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
+are already in the delegation and no `awaitingUser` row matches it, the researcher reports the result, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool with `awaitingCapture: false`, so no
 in-flight entry is written, and log the search once at step 6.
 
@@ -513,7 +509,7 @@ plain prose:
    sentence saying FamilySearch holds it too and can be searched there instead
    — here, after the `---`, Case A or Case B;
 7. when `catalog_search` kept a filmed copy of the register (step 2b), its
-   sentence from step 2b, with the film number — here, after the `---`, never
+   `filmForYear.line`, word for word — here, after the `---`, never
    only in the caller lines.
 
 **If the results for that URL are already in the delegation,
@@ -1097,7 +1093,7 @@ plain prose with **no label, heading or field name**:
    hand-off carries its content here, in full (Step 4's list), and, when
    `collections_search` found the same collection FamilySearch holds, one
    sentence saying so and that it can be searched instead, and step 2b's
-   `catalog_search` sentence when it kept a filmed copy. If nothing was
+   `filmForYear.line`, word for word, when it kept a filmed copy. If nothing was
    found, say so plainly and say what was searched, so the reader knows the
    search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.
