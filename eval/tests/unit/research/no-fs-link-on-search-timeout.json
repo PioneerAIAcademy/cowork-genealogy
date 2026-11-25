@@ -17,6 +17,7 @@
   "mcp_fixtures": [
     "record-search-timeout-any-surname",
     "record-search-timeout-any-country",
+    "record-read-timeout-any",
     "catalog-search-empty",
     "catalog-search-empty-keywords",
     "person-read-empty-any"
