@@ -218,7 +218,7 @@ that would replace it (probed 2026-10-02, §5):
   That check now sits in Step 4's breadth self-check, which the body runs before
   writing the plan, because in the Return contract it ran in 1 of 5 runs.
   - **The rule depends on the model, so research-plan moved from
-    `claude-haiku-5-5` / `low` (#4742) to `claude-sonnet-5-5` / `medium`.**
+    `claude-haiku-5-5` / `low` to `claude-sonnet-5-5` / `medium`.**
     Measured on `ut_research_plan_c7m`, 5 scratch runs each (2026-11-25), runs
     not failed: unedited body 0/5; the Step 3 bullet 0/5; with the self-check in
     the Return contract 1/5; with it in the breadth self-check 0/5; that body on
