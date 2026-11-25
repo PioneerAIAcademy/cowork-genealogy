@@ -94,6 +94,9 @@ def _system_prompt(tmp_path, extra_env: dict[str, str]) -> str:
         asyncio.run(main())
     finally:
         server.shutdown()
+        # shutdown() stops serve_forever; the listening fd stays open without
+        # this, and the harness runs many CLI-spawning tests in one process.
+        server.server_close()
 
     for body in bodies:
         field = body.get("system")
@@ -110,7 +113,11 @@ def _system_prompt(tmp_path, extra_env: dict[str, str]) -> str:
 
 
 def test_the_cli_carries_a_memory_block_by_default(tmp_path):
-    assert _MEMORY_BLOCK in _system_prompt(tmp_path, {}), (
+    # The SDK merges os.environ first, then options.env, so an operator or CI job
+    # that exports the variable to protect its own home would fail this arm with
+    # a message about the CLI. "" is neither truthy nor falsy to the CLI's
+    # reader, so it lands on `unset` -- the default this arm is about.
+    assert _MEMORY_BLOCK in _system_prompt(tmp_path, {VAR: ""}), (
         "the CLI no longer injects a memory block by default, so the test below "
         "passes vacuously"
     )

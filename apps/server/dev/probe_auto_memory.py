@@ -36,10 +36,10 @@ reported VOID, not PASS.
 SAFETY
 
 The control arm deliberately forces auto-memory ON, so both arms run with HOME
-and CLAUDE_CONFIG_DIR redirected into a temp dir. The developer's own
-`~/.claude/projects/` is listed before and after and the probe fails loudly if
-it changed -- without that, a control arm would write into the operator's real
-memory directory.
+and CLAUDE_CONFIG_DIR redirected into a temp dir. The operator's own config dir
+-- `$CLAUDE_CONFIG_DIR` when set, else `~/.claude` -- is listed before and after
+and the probe fails loudly if it changed. Reading `~/.claude` unconditionally
+made that check unable to fire at all for anyone who relocates it.
 
 Costs two short sessions. Needs a compiled engine (`make engine-build`) and a
 key in $ANTHROPIC_API_KEY or eval/.env. Run it with `make probe-auto-memory`.
@@ -53,13 +53,15 @@ import sys
 import tempfile
 from pathlib import Path
 
-REPO = Path(__file__).resolve()
-for parent in [Path.cwd(), *Path.cwd().parents]:
+# From this file, not the cwd: `python apps/server/dev/probe_auto_memory.py`
+# run from anywhere should work, and __file__ already says where the checkout is.
+_HERE = Path(__file__).resolve()
+for parent in _HERE.parents:
     if (parent / "apps" / "server" / "app" / "agent" / "real_agent.py").exists():
         REPO = parent
         break
 else:
-    sys.exit("run this from inside the cowork-genealogy checkout")
+    sys.exit(f"{_HERE} is not inside a cowork-genealogy checkout")
 
 SERVER_DIR = REPO / "apps" / "server"
 ENGINE_BUILD = REPO / "packages" / "engine" / "mcp-server" / "build" / "index.js"
@@ -88,20 +90,39 @@ def api_key() -> str:
     return ""
 
 
-def memory_files(home: Path) -> list[str]:
-    """Every file under a `memory/` directory anywhere beneath `home`."""
-    if not home.exists():
+def memory_files(config_dir: Path) -> list[str]:
+    """Files the CLI's auto-memory writes: `<config>/projects/<slug>/memory/**`.
+
+    Narrow on purpose. Matching any path containing "memory" also matched a file
+    the MODEL wrote itself -- the treatment arm still asks it to "save this to
+    your memory", and under bypassPermissions it holds Write -- which would read
+    as the variable failing. It can still choose this exact path, so a FAIL is
+    read, not trusted; it is loud (exit 1, naming the files) rather than silent.
+    """
+    root = config_dir / "projects"
+    if not root.exists():
         return []
     return sorted(
-        str(p.relative_to(home))
-        for p in home.rglob("*")
-        if p.is_file() and "memory" in p.parts
+        str(p.relative_to(config_dir))
+        for p in root.rglob("*")
+        if p.is_file() and "memory" in p.relative_to(root).parts
     )
+
+
+def operator_config_dir() -> Path:
+    """The operator's OWN config dir -- `$CLAUDE_CONFIG_DIR`, else `~/.claude`.
+
+    Reading `~/.claude` unconditionally made the safety check below unable to
+    fire for anyone who relocates it: the path does not exist, memory_files()
+    returns [], and before == after on every run whatever the probe wrote.
+    """
+    env = os.environ.get("CLAUDE_CONFIG_DIR", "").strip()
+    return Path(env).expanduser() if env else Path.home() / ".claude"
 
 
 def real_home_fingerprint() -> list[str]:
     """The operator's OWN memory files, so the probe can prove it wrote none."""
-    return memory_files(Path.home() / ".claude" / "projects")
+    return memory_files(operator_config_dir())
 
 
 async def run_arm(value: str, key: str) -> dict:
@@ -146,9 +167,25 @@ async def run_arm(value: str, key: str) -> dict:
         return {
             "value": value,
             "home": str(home),
-            "memory_files": memory_files(home),
+            "memory_files": memory_files(home / ".claude"),
             "reply": " ".join(reply)[:400],
         }
+
+
+# build_options sets no max_turns, so a model that loops on tool calls under
+# bypassPermissions would bill until someone noticed. probe_agent_binding.py
+# bounds its arms the same way.
+ARM_TIMEOUT_S = 300
+
+
+async def bounded_arm(value: str, key: str) -> dict:
+    try:
+        return await asyncio.wait_for(run_arm(value, key), timeout=ARM_TIMEOUT_S)
+    except asyncio.TimeoutError:
+        sys.exit(
+            f"arm {VAR}={value} ran past {ARM_TIMEOUT_S}s and was cut off. "
+            "Nothing is proven; re-run, and if it recurs the session is looping."
+        )
 
 
 async def main() -> None:
@@ -161,13 +198,13 @@ async def main() -> None:
     before = real_home_fingerprint()
 
     print(f"\n=== control arm: {VAR}=0 (forced_on) -- MUST write a memory file ===")
-    control = await run_arm("0", key)
+    control = await bounded_arm("0", key)
     for f in control["memory_files"]:
         print(f"  wrote {f}")
     print(f"  files: {len(control['memory_files'])}  reply: {control['reply'][:120]}")
 
     print(f"\n=== treatment arm: {VAR}=1 (off) -- MUST write nothing ===")
-    treatment = await run_arm("1", key)
+    treatment = await bounded_arm("1", key)
     for f in treatment["memory_files"]:
         print(f"  wrote {f}")
     print(f"  files: {len(treatment['memory_files'])}  reply: {treatment['reply'][:120]}")

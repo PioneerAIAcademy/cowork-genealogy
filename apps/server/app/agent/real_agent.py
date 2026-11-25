@@ -874,12 +874,15 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # (sandbox/e2b.Dockerfile), so it contributed nothing here while widening
         # the gap between what CI exercises and what production loads.
         #
-        # "nothing writes ~/.claude in the sandbox" was the original wording and
-        # was false while it stood: auto-memory wrote a memory file there on every
-        # session that produced one (issue #4778), and _pretool_hook does not deny
-        # that Write. What makes the sentence true is `_sdk_env`'s
-        # CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, not the image — so if that key ever
-        # leaves, this rationale goes with it.
+        # The original wording was "nothing writes ~/.claude in the sandbox",
+        # which was false while it stood: auto-memory wrote a memory file there
+        # on every session that produced one, and _pretool_hook does not deny
+        # that Write. It is narrowed above rather than repaired, because the
+        # memory tree is not a settings source and dropping "user" never
+        # governed it: test_auto_memory_off.py captures the CLI's prompt with
+        # setting_sources=[] and the memory block is still there. What governs
+        # it is _sdk_env's CLAUDE_CODE_DISABLE_AUTO_MEMORY — a separate
+        # mechanism, and not a reason to revisit this option.
         setting_sources=["project"],
         plugins=[{"type": "local", "path": _PLUGIN_DIR}],
         mcp_servers={

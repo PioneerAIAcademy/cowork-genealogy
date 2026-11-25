@@ -410,8 +410,9 @@ ours, so the hook denies the call there. Change one, change both. On the hosted 
 which runs a step the same way; Cowork and Desktop may spawn them. Both harnesses mirror the
 hosted deny.
 
-**Auto-memory is off on the three paths whose environment we set.** The same
-three builders set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
+**Auto-memory is off on every path whose environment we set.** The same three
+builders as above — serving the hosted path, both harnesses and the prototype
+worker — set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
 researcher's remark is saved as a memory file under the session's `~/.claude` —
 outside the project, unreviewed, and loaded into later sessions. **The value is
 `"1"`, and the `CLAUDE_CODE_FORK_SUBAGENT` line directly above it is `"0"`**: on
