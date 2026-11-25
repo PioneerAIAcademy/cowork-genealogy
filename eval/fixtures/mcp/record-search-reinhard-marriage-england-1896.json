@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "ut_search_records_039: an England marriage search, 1895-1897, under a spelled-out variant carrying 'einh' (Reinhard, Rheinhardt, Reinhardt, Rheinhard, Reinhart). Captured live 2026-11-25 under Charles + Reinhard (Rheinhardt returned the same Rheinhardt rows): Charles Rheinhardt, married 22 June 1896, Lancashire (England Marriages, 1538-1973, ark:/61903/1:1:NNY1-W4R), with the same marriage in the Liverpool banns and marriages and the West Derby registration index. Issue #4777.",
+  "description": "ut_search_records_039: an England marriage search, 1895-1897, under a spelled-out variant carrying 'einh' (Reinhard, Rheinhardt, Reinhardt, Rheinhard, Reinhart). Captured live 2026-11-25 under Charles + Reinhard (Rheinhardt returned the same Rheinhardt rows): Charles Rheinhardt, married 22 June 1896, Lancashire (England Marriages, 1538-1973, ark:/61903/1:1:NNY1-W4R), with the same marriage in the Liverpool banns and marriages and the West Derby registration index. This is page 1 (20 of 28 rows, hasMore true); page 2 is record-search-reinhard-marriage-england-1896-page2. Issue #4777.",
   "args": {
     "surname": "~einh"
   },

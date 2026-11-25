@@ -1,0 +1,122 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_039: page 2 (offset 20) of the England marriage search, 1895-1897, under a spelled-out variant carrying 'einh'. Captured live 2026-11-25 under Charles + Reinhard, offset 20: the last 8 of 28 rows (hasMore false), among them another Charles Rheinhardt row (ark:/61903/1:1:6JJN-4FL3) and more Reynard and Reinhardt men. Listed before page 1 in the test so an offset-20 call reaches it. Issue #4777.",
+  "args": {
+    "surname": "~einh",
+    "offset": 20
+  },
+  "response": {
+    "query": {
+      "recordCountry": "England",
+      "marriageYearFrom": 1895,
+      "marriageYearTo": 1897,
+      "recordType": "marriage",
+      "count": 20,
+      "offset": 20,
+      "surname": "Reinhard",
+      "givenName": "Charles"
+    },
+    "totalMatches": 28,
+    "returned": 8,
+    "offset": 20,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6JJN-R6XM",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Tailor"
+          }
+        ],
+        "personName": "Charles Reinhart",
+        "sex": "Male",
+        "collectionId": "4489058",
+        "recordTitle": "Entry for Otto Charles Fitzner",
+        "recordArk": "ark:/61903/1:2:HS3W-V1YQ",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6NXF-MC63",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Wheelwright"
+          }
+        ],
+        "personName": "Charles Reynard",
+        "sex": "Male",
+        "collectionId": "4469394",
+        "recordTitle": "Entry for Frederick George Reynard",
+        "recordArk": "ark:/61903/1:2:H9WR-16FJ",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6NXX-5X93",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Wheelwright"
+          }
+        ],
+        "personName": "Charles Reynard",
+        "sex": "Male",
+        "collectionId": "4469394",
+        "recordTitle": "Entry for Ellen Cheesman",
+        "recordArk": "ark:/61903/1:2:H9WR-16NH",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JJN-4FL3",
+        "personName": "Charles Rheinhardt",
+        "sex": "Male",
+        "collectionId": "4489058",
+        "recordArk": "ark:/61903/1:2:HS3W-NXSC",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FM14-RZQ",
+        "personName": "Charles Reynard",
+        "sex": "Male",
+        "collectionId": "1788853",
+        "recordTitle": "Entry for John William Outhwaite and Maria Reynard",
+        "recordArk": "ark:/61903/1:2:1L5Q-LH6",
+        "batchNumber": "V01561-5",
+        "role": "Father In Law"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2332-QZX",
+        "personName": "Charles Reinhardt",
+        "sex": "Male",
+        "collectionId": "1788853",
+        "recordTitle": "Entry for Charles Thomas Reinhardt and Mary Verity",
+        "recordArk": "ark:/61903/1:2:99SB-TQ1C",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGQG-H6WX",
+        "personName": "Henry Charles Reinhardt",
+        "collectionId": "2556014",
+        "recordTitle": "Entry for Fred Manning and Amalie Marie Reinhardt",
+        "recordArk": "ark:/61903/1:2:Q5N1-7NHM",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:WQWZ-7Y6Z",
+        "personName": "Charles John` Renyard",
+        "sex": "Male",
+        "collectionId": "1465709",
+        "recordTitle": "Entry for Frederick John Renyard",
+        "recordArk": "ark:/61903/1:2:7L3W-QDMM",
+        "role": "Father"
+      }
+    ],
+    "collections": {
+      "1465709": "England, Essex, Parish Registers, 1538-1997",
+      "1788853": "England, Manchester, Parish Registers, 1603-1954",
+      "2556014": "England, Hampshire, Parish Registers, 1538-1980",
+      "4469394": "England, Hampshire, Portsmouth, Marriages, 1537-1930",
+      "4489058": "England, Lancashire, Liverpool, Banns and Marriages, 1557-1960"
+    }
+  }
+}
