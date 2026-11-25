@@ -14198,7 +14198,8 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
+    const recordArks = await namesakeRowRecordArks({ research: beforeResearch }, { research }, applied, readResults);
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree, recordArks);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -14650,6 +14651,181 @@ export function namesakeRowLogCheck(
   return findings;
 }
 
+/** The upper-cased `n:n:ID` core of a FamilySearch ARK in any form, or null. */
+function arkCore(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const m = /^ark:\/61903\/(\d:\d:[A-Za-z0-9.-]+)$/.exec(toArk(v));
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** A record id's core when it is a record persona's (1:1:), else null: an
+ *  image or full-text id names a page, which can hold several people. */
+function personaArkCore(v: unknown): string | null {
+  const core = arkCore(v);
+  return core !== null && core.startsWith("1:1:") ? core : null;
+}
+
+/** The rows a call appended, or whose `record_ids` it changed, each with the
+ *  last op that wrote it. A row the call leaves listing the same records is
+ *  not judged again. */
+function namesakeRowsWritten(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ row: any; index: number }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const cores = (r: any) =>
+    JSON.stringify([...new Set((Array.isArray(r?.record_ids) ? r.record_ids : []).map(personaArkCore).filter(Boolean))].sort());
+  const out: Array<{ row: any; index: number }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (prior && cores(prior) === cores(row)) continue;
+    out.push({ row, index });
+  }
+  return out;
+}
+
+/** The 1:2 record each persona a call's written namesake rows list belongs to,
+ *  read from the rows' own search sidecars (a hit's `recordArk`). Keyed by the
+ *  persona's ARK core. */
+export async function namesakeRowRecordArks(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<Map<string, Set<string>>> {
+  const out = new Map<string, Set<string>>();
+  const logById = logIndex(after.research);
+  for (const { row } of namesakeRowsWritten(before, after, applied)) {
+    const wanted = new Set((Array.isArray(row.record_ids) ? row.record_ids : []).map(personaArkCore).filter(Boolean));
+    if (wanted.size === 0) continue;
+    for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+      const entry = logById.get(logId);
+      if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+      for (const hit of (await readResults(entry.results_ref)) ?? []) {
+        const persona = personaArkCore(hit?.recordId);
+        const record = arkCore(hit?.recordArk);
+        if (persona === null || record === null || !wanted.has(persona)) continue;
+        if (!out.has(persona)) out.set(persona, new Set());
+        out.get(persona)!.add(record);
+      }
+    }
+  }
+  return out;
+}
+
+/** A namesake row records someone the tree does not hold (issue #2475, the row
+ *  from feedback issue #4660). One finding per row the call wrote that lists a
+ *  record persona the tree already cites on another person sharing the row's
+ *  given name, or that another row for the same `person_id` already lists. The
+ *  row's own subject is never the holder: they often appear in the same record
+ *  in another role. A record reaches the tree through the 1:2 records its
+ *  assertions were read from (`record_document_id`), the row's own search hits
+ *  (`recordArks`), or a tree source whose url is the persona itself. */
+export function namesakeKnownRecordCheck(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  recordArks: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
+): Array<{ index: number; message: string }> {
+  const written = namesakeRowsWritten(before, after, applied);
+  if (written.length === 0) return [];
+  const research = after.research;
+  const tree = after.tree;
+  const documents = new Map<string, Set<string>>();
+  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+    const persona = personaArkCore(a?.record_id);
+    const record = arkCore(a?.record_document_id);
+    if (persona === null || record === null) continue;
+    if (!documents.has(persona)) documents.set(persona, new Set());
+    documents.get(persona)!.add(record);
+  }
+  const sourceUrl = new Map<string, string>();
+  for (const s of (Array.isArray(tree?.sources) ? tree.sources : []) as any[]) {
+    const core = arkCore(s?.url);
+    if (typeof s?.id === "string" && core !== null) sourceUrl.set(s.id, core);
+  }
+  const citing = ((Array.isArray(tree?.persons) ? tree.persons : []) as any[])
+    .filter((p) => p && typeof p.id === "string")
+    .map((p) => {
+      const cites = new Map<string, string>();
+      for (const node of [...(Array.isArray(p.facts) ? p.facts : []), ...(Array.isArray(p.names) ? p.names : [])]) {
+        for (const ref of bareRefsOf(node)) {
+          const core = sourceUrl.get(ref);
+          if (core !== undefined && !cites.has(core)) cites.set(core, ref);
+        }
+      }
+      return { person: p, cites };
+    })
+    .filter((c) => c.cites.size > 0);
+  const nameOf = (p: any) => {
+    const n = (Array.isArray(p?.names) ? p.names : [])[0];
+    return [n?.given, n?.surname].filter((x) => typeof x === "string" && x !== "").join(" ");
+  };
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const { row, index } of written) {
+    const given = rowGivenWords(row.name);
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    const label = `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""}`;
+    const listed = (Array.isArray(row.record_ids) ? row.record_ids : []) as unknown[];
+    const held: string[] = [];
+    const repeated: string[] = [];
+    for (const id of listed) {
+      const persona = personaArkCore(id);
+      if (persona === null) continue;
+      const records = new Set([persona, ...(documents.get(persona) ?? []), ...(recordArks.get(persona) ?? [])]);
+      const holders = citing.filter(
+        (c) => c.person.id !== row.person_id && given.words.size > 0 && sharesRowGivenName(c.person, given) &&
+          [...records].some((r) => c.cites.has(r)),
+      );
+      if (holders.length > 0) {
+        held.push(
+          `'${String(id)}' is cited on ` +
+            holders
+              .map((c) => {
+                const ref = [...records].map((r) => c.cites.get(r)).find((x) => x !== undefined);
+                return `tree person '${c.person.id}' (${nameOf(c.person)}, source '${ref}')`;
+              })
+              .join(" and "),
+        );
+      }
+      const other = rows.find(
+        (r) => r && r.id !== row.id && r.person_id === row.person_id &&
+          (Array.isArray(r.record_ids) ? r.record_ids : []).some((x: unknown) => personaArkCore(x) === persona),
+      );
+      if (other) repeated.push(`'${String(id)}' is already on namesakes row '${other.id}'`);
+    }
+    if (held.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} records someone the tree does not hold, yet ${held.join("; ")}. Nothing was written. ` +
+          `If the record is that tree person's, leave it off this row: a person in the tree is not an unknown ` +
+          `namesake of '${row.person_id}'. If the tree cites it on them by mistake, return \`Hand-back: tree-edit\` ` +
+          `so the citation is corrected first.`,
+      });
+    }
+    if (repeated.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} repeats a record another row for '${row.person_id}' lists: ${repeated.join("; ")}. ` +
+          `Nothing was written. A record persona is one person, so update that row instead, adding this ` +
+          `search's log entry to its log_entry_ids.`,
+      });
+    }
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -14659,9 +14835,11 @@ function namesakeMessages(
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
   startingTree: SimplifiedGedcomX | null,
+  recordArks: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): string[] {
   return [
     ...namesakeRowLogCheck(before, after, applied),
+    ...namesakeKnownRecordCheck(before, after, applied, recordArks),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>
@@ -14845,6 +15023,7 @@ async function everyOpFailure(c: {
     }
     const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
     await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
+    const recordArks = await namesakeRowRecordArks({ research: before.research }, { research: doc }, applied, c.readResults);
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },
@@ -14852,7 +15031,7 @@ async function everyOpFailure(c: {
     );
     const found = documentFailure({
       validation,
-      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree),
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree, recordArks),
       doc,
       ops: applied.map((a) => ops[a.opIndex]),
       applied,

@@ -1792,6 +1792,30 @@ is listed, and the name sentence only when a name is. It rides
   its record, and no persona can be stamped. A pool row, which lists no record,
   is not judged. A row written before this rule stays editable in its other
   fields. It binds for every agent that writes the section.
+- **A row records someone the tree does not hold** (`namesakeKnownRecordCheck`).
+  Judged on each row a call
+  appends, or whose record personas an update changes, on the call's end state,
+  for each listed record persona (a `1:1:` ark; an image or full-text id names a
+  page that can hold several people and is not judged):
+  - **Refused when another tree person already cites the record.** The record
+    persona reaches a 1:2 record through the assertions read from it
+    (`record_document_id`) and through the row's own persona-bearing search
+    hits (`recordArk`, read from the sidecars of its `log_entry_ids`), and a
+    tree source whose `url` is that record, or the persona itself, cites it. It
+    trips when the source is cited on a fact or name of a tree person other than
+    the row's `person_id` who shares a given word with the row's `name` (the
+    words `sharesRowGivenName` reads). The row's own subject never trips it: they
+    often appear in the same record in another role. The message names each
+    tree person and the source, says to leave the record off the row if it is
+    theirs, and to return `Hand-back: tree-edit` if the tree cites it on them by
+    mistake. The shape it was built for, from an alpha session of 2026-11-18: 7
+    of 9 rows for a son recorded his same-named father, tree person I2, whose
+    sources they cited.
+  - **Refused when another row for the same `person_id` already lists it.** A
+    record persona is one person; the message names the earlier row and says to
+    update it, adding the search's log entry.
+  A row written before this rule whose record personas the call leaves as they
+  were is not judged.
 - **The fill in** (chesworthrm, 2026-11-06). When a call's applied
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
