@@ -225,7 +225,8 @@ def new_section_entries(
 
 
 #: `written_by` of the entry `image_transcribe` writes for its own page read
-#: (issue #4721). The tool's record, not the agent's.
+#: (issue #4721). The tool's record, not the agent's. Mirrors
+#: `TOOL_LOGGED_READ_WRITER` in `packages/engine/mcp-server/src/utils/tool-logged-read.ts`.
 TOOL_LOGGED_READ = "image_transcribe"
 
 

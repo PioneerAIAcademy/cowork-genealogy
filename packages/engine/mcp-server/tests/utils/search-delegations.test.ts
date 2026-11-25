@@ -157,6 +157,21 @@ describe("searchDelegations", () => {
     expect(searchDelegations("/p", nil, TREE, nil.questions[0], new Set()).map((d) => d.planItemId)).toEqual(["pli_002"]);
   });
 
+  it("runs a fallback when its primary's only positive entries are page reads the tool logged (#4721)", () => {
+    const fallback = item("pli_002", 2, { fallback_for: "pli_001" });
+    const done = item("pli_001", 1, { status: "completed" });
+    const r = research([done, fallback], undefined, [
+      { id: "log_001", plan_item_id: "pli_001", tool: "image_search", outcome: "negative" },
+      { id: "log_002", plan_item_id: "pli_001", tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive" },
+    ]);
+    expect(searchDelegations("/p", r, TREE, r.questions[0], new Set()).map((d) => d.planItemId)).toEqual(["pli_002"]);
+
+    const onlyReads = research([done, fallback], undefined, [
+      { id: "log_001", plan_item_id: "pli_001", tool: "image_transcribe", written_by: "image_transcribe", outcome: "negative" },
+    ]);
+    expect(searchDelegations("/p", onlyReads, TREE, onlyReads.questions[0], new Set())).toEqual([]);
+  });
+
   it("searches a given name no linked record carries by its searchAs form and says so", () => {
     const r = research([item("pli_001", 1)]);
     const [d] = searchDelegations("/p", r, TREE, r.questions[0], new Set(), { given: "Patrick", searchAs: "P*" });

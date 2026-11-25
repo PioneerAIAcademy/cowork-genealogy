@@ -19,6 +19,7 @@
 
 import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -82,7 +83,7 @@ function logWithoutPersistenceWarning(research: any): string | null {
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
   const positives = log.filter(
-    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool) && !isToolLoggedRead(e),
   ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
@@ -200,7 +201,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     .filter((id): id is string => typeof id === "string");
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils < NIL_ESCALATION_THRESHOLD) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
@@ -264,7 +265,7 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
   );
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
@@ -2931,7 +2932,7 @@ export async function researchLogAppend(
       // note it adds cannot become an entry of its own; the warning carries it
       // back rather than dropping it behind `ok: true`.
       const toolWrote =
-        prior.written_by === "image_transcribe" &&
+        isToolLoggedRead(prior) &&
         op.writtenBy === undefined &&
         (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
       if (toolWrote) {

@@ -9258,6 +9258,18 @@ describe("research_append (batch ops)", () => {
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
+  it("(d4-logattr) a page image_transcribe logged itself is not the item's search (#4721)", async () => {
+    const pageRead = { ...logNaming("log_001", "pli_001"), tool: "image_transcribe", written_by: "image_transcribe" };
+    await writeProject(attrResearch("in_progress", [pageRead]));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_001 \(a page image_transcribe logged itself/);
+
+    await writeProject(attrResearch("in_progress", [pageRead, logNaming("log_002", "pli_001")]));
+    expect((await researchAppend(completeIt() as any)).ok).toBe(true);
+  });
+
   it("(d4-logattr) refuses when log[] is empty", async () => {
     await writeProject(attrResearch("in_progress", []));
     const r = await researchAppend(completeIt() as any);

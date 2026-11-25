@@ -40,6 +40,7 @@ import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 
 export type QuestionState =
   | "framed"
@@ -98,7 +99,7 @@ function pendingExtraction(research: any, logs: any[]): any[] {
     (e) =>
       (e?.outcome === "positive" || e?.outcome === "partial") &&
       !cited.has(e?.id) &&
-      e?.written_by !== "image_transcribe" &&
+      !isToolLoggedRead(e) &&
       !(e?.tool === "external_site" && e?.external_site?.capture_received !== true),
   );
 }

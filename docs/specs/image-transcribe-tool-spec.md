@@ -826,9 +826,14 @@ was sent and no `found` came back (a found check that failed is not a hit).
 - **A later hand-log of the same page** returns this entry (`alreadyLogged`) whatever
   `outcome` or `planItemId` it names, with a warning naming each difference and any note
   it could not store (`research-log-editor-spec.md`).
-- **Not an extraction candidate.** `questionStatus`'s pending-extraction count and
-  `owedFindings`' `extract` finding both skip a `written_by: "image_transcribe"` entry: it records a read, not a find, and
-  `extraction_append` cites it when the page is extracted.
+- **A read, never a find or a plan item's search.** A navigation read with no
+  `lookingFor` logs `positive`, so every reader that judges a plan item or a question by
+  its log outcomes skips a `written_by: "image_transcribe"` entry (`isToolLoggedRead`,
+  `src/utils/tool-logged-read.ts`): `questionStatus`'s pending-extraction count,
+  `owedFindings`' `extract` finding, a fallback item's wait on its primary, both halves of
+  the completed-plan-item check (`research_append`), `research_log_append`'s
+  positive-searches-with-nothing-persisted warning, and its nil-escalation and
+  `planRationale` notes. `extraction_append` cites the entry when the page is extracted.
 
 Why the tool writes it (lead, 2026-11-23): a page the main thread transcribed and never
 logged left the project with no record it was read, so agents reported it missing or read

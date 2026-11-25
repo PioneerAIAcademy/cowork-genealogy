@@ -1996,6 +1996,21 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count a page image_transcribe logged itself as a positive search (#4721)", async () => {
+    const read = (n: number) => ({ ...pos(n), tool: "image_transcribe", written_by: "image_transcribe" });
+    await write(baseResearch([read(1), read(2), read(3)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+
   it.each([
     "wiki_search",
     "wiki_read",
@@ -2459,6 +2474,12 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
   });
 
+  it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+    const read = nil(3, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 });
+    await write(project([nil(1), nil(2), read]));
+    expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
+  });
+
   it("does not count a search that had results it left unexamined", async () => {
     await write(project([nil(1), nil(2, { results_available: 450 })]));
     expect(((await logNil()) as any).escalationDue).toBeUndefined();
@@ -2611,6 +2632,11 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     it("stays silent when the plan item has already found something", async () => {
       await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
       expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+      await write(project([nil(1, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
     });
 
     it("stays silent for a search that had results it left unexamined", async () => {

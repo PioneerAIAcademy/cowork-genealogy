@@ -554,7 +554,8 @@ Read an uploaded file this way:
   - `hasText: false` and the name ends in `.txt` →
     `sidecar_read({ projectPath, ref: "uploads/<name>" })`.
   - `hasText: false`, any other name →
-    `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
+    `image_transcribe({ projectPath, file: "uploads/<name>", planItemId })`
+    (`planItemId` null when you hold none; the tool logs the read itself), then
     `sidecar_read` on the `staged.resultsRef` it returns (with `staged: null`,
     the `transcription` it returns). If it refuses, ask the researcher to paste
     the results text instead, say nothing about an API key, and log no closing
