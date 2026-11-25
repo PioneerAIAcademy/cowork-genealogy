@@ -16,7 +16,7 @@ three times.
 
 ## What the skill must do
 
-Asked to check the 1901 census, never write a `familysearch.org/search` link for the
+Asked to check the 1901 census, never write a `familysearch.org/search/record` link for the
 researcher to run: a FamilySearch search is search-records' job, and the log already
 holds three of them.
 

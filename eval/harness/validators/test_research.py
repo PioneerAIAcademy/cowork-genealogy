@@ -2524,16 +2524,20 @@ def test_no_inline_transcription_of_a_reindex(tool_calls, test):
     )
 
 
-# A FamilySearch search link written by hand: the search path, with or without
-# a scheme, a "www." or a language segment ("/en/").
-_FS_SEARCH_LINK = re.compile(r"familysearch\.org/(?:[a-z]{2}/)?search\b", re.I)
+# A FamilySearch search link written by hand: a record or catalog search, with or
+# without a scheme, a "www." or a language segment ("/en/"). A film viewer or
+# collection link under /search/ is one our tools return, and passes.
+_FS_SEARCH_LINK = re.compile(
+    r"familysearch\.org/(?:[a-z]{2}/)?search/(?:record|catalog/results)\b", re.I
+)
 
 
 def test_no_hand_written_familysearch_search_link(test, text_response):
     """Tag-gated (``no-familysearch-search-link``): issue #4777. A FamilySearch
     search is search-records' job; the reply never carries a
-    ``familysearch.org/search`` URL for the researcher to run, whether the search
-    was already run or ``record_search`` failed."""
+    ``familysearch.org/search/record`` or ``/search/catalog/results`` URL for the
+    researcher to run, whether the search was already run or ``record_search``
+    failed. Film viewer and collection links, which tools return, pass."""
     if "no-familysearch-search-link" not in (test.get("tags") or []):
         pytest.skip("not a no-familysearch-search-link test")
     found = _FS_SEARCH_LINK.search(text_response or "")

@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "When record_search times out, the reply offers a retry and hands over no FamilySearch search",
     "type": "positive",
-    "description": "Issue #4777, second case: FamilySearch record search is not answering. search-records runs, and every record_search call returns the timeout error record-search.ts throws. The reply must say FamilySearch search is not answering and offer to run the search again, never write a familysearch.org/search link or ask the researcher to run the search. Tested by the deterministic validator test_no_hand_written_familysearch_search_link; the retry offer is graded by the judge.",
+    "description": "Issue #4777, second case: FamilySearch record search is not answering. search-records runs, and every record_search call returns the timeout error record-search.ts throws. The reply must say FamilySearch search is not answering and offer to run the search again, never write a familysearch.org/search/record link or ask the researcher to run the search. Tested by the deterministic validator test_no_hand_written_familysearch_search_link; the retry offer is graded by the judge.",
     "tags": [
       "search",
       "no-familysearch-search-link"
@@ -65,7 +65,7 @@
   },
   "judge_context": [
     "GROUND TRUTH: every record_search call returns 'FamilySearch record search did not complete after retries (network timeout or transient error) ... This is a transient failure, NOT an empty result'. No FamilySearch search completed.",
-    "Whether the reply carries a familysearch.org/search link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
+    "Whether the reply carries a familysearch.org/search/record or /search/catalog/results link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
     "Score Correctness 3 when the reply says FamilySearch search is not answering right now and offers to run the search again. Score 1 when it asks the researcher to run a FamilySearch search themselves (with or without a link), or reports the marriage as not found: a timeout is not a negative.",
     "Offering other genealogy websites in addition to the retry is acceptable; offering them instead of the retry is a 2.",
     "Do not require any log entry, extraction or tree write."

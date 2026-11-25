@@ -58,7 +58,7 @@
   },
   "judge_context": [
     "GROUND TRUTH: the research log already holds three FamilySearch searches of the 1901 census on pli_001 (Charles Renhard, Charls Renhard, Charles Rennard), all with nothing found. search-records is stubbed and returns a bare denial.",
-    "Whether the reply carries a familysearch.org/search link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
+    "Whether the reply carries a familysearch.org/search/record or /search/catalog/results link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
     "Grade the reply's own work: it should say the 1901 census has already been searched on FamilySearch, under which spellings, with nothing found, or delegate the search to search-records, and never ask the researcher to run a FamilySearch search themselves. Score Correctness 1 if the reply asks the researcher to search FamilySearch themselves, with or without a link.",
     "Do not penalize the router for not completing the research cycle, or for which next step it offers."
   ],

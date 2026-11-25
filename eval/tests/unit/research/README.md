@@ -463,7 +463,9 @@ with `search-records` stubbed; the researcher asks to check the 1901 census.
 `ut_research_fl2` (`no-fs-link-on-search-timeout.json`) runs `search-records` against
 `record_search` fixtures that all return the timeout error. Both carry
 `no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
-fails on any `familysearch.org/search` link in the reply.
+fails on any `familysearch.org/search/record` or `/search/catalog/results` link in the
+reply. A film viewer (`/search/film/`) or collection (`/search/collection/`) link is one
+`image_read`, `image_transcribe` or `collections_search` returns, and passes.
 
 Decided (Richard, 2026-11-25): the main thread never writes that link and never hands
 the researcher a FamilySearch search to run; a failed `record_search` is reported and

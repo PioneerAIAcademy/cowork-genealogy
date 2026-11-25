@@ -67,6 +67,9 @@ def test_a_familysearch_search_link_fails(reply):
         "The search failed: Request to https://www.familysearch.org/service/search/hr/v2/"
         "personas timed out after 25000ms.",
         "His tree profile: https://www.familysearch.org/tree/person/details/GDQB-17Y",
+        # Links image_read/image_transcribe and collections_search return.
+        "https://www.familysearch.org/search/film/004528077?i=697",
+        "https://www.familysearch.org/search/collection/1548076",
         "",
     ],
 )
