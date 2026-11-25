@@ -1409,6 +1409,7 @@ describe("project_context owed findings and status (issue #3032 Stage 1b)", () =
         "- Thomas Smith (I2, parent): no dated or placed facts",
         "- Ann Lee (I3, spouse): Death 1901, Ohio",
         "- Tom Smith (I4, child): Birth 1880, Ohio",
+        "message:",
       ].join("\n"),
     });
   });
