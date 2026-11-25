@@ -457,8 +457,11 @@ ends on "Continue with …?"; the judge reads that part.
 `ut_research_fl1` (`no-fs-link-for-searched-census.json`) runs on
 `renhard-1901-census-searched`, whose log already holds three nil 1901-census searches,
 with `search-records` stubbed; the researcher asks to check the 1901 census.
-`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) runs `search-records` against
-`record_search` fixtures that all return the timeout error. Both carry
+`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) asks research to drive the workflow on
+`renhard-marriage-england`, so it dispatches the planned search to `search-records`, which runs
+against `record_search` fixtures that all return the timeout error. Its message names no
+search: "Search FamilySearch for …" went straight to the `search-records` agent on both
+runs, research never loaded, and the positive test failed on activation. Both carry
 `no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
 fails on any `familysearch.org/search/record` or `/search/catalog/results` link in the
 reply. A film viewer (`/search/film/`) or collection (`/search/collection/`) link is one
