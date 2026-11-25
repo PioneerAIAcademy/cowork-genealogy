@@ -5,10 +5,19 @@
     "name": "Translate a Dutch Reformed baptism with patronymic names",
     "type": "positive",
     "description": "Dutch Reformed baptism entry. Adds Dutch — a supported language not yet in the corpus — and tests the patronymic naming convention: 'Hendricksz' / 'Willems' / 'Jans' are patronymics (son/daughter of Hendrik/Willem/Jan), NOT hereditary surnames. A shallow translation treats them as fixed surnames; the genealogically correct reading flags them as patronymics, which changes how the researcher traces the family.",
-    "tags": ["dutch", "reformed", "baptism", "patronymics", "witnesses", "church-record", "direct-arm"]
+    "tags": [
+      "dutch",
+      "reformed",
+      "baptism",
+      "patronymics",
+      "witnesses",
+      "church-record",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you translate this Dutch Reformed baptism record? 'Den 5 Maart 1698 is gedoopt Pieter, soon van Jan Hendricksz en Maria Willems. Getuigen waren Cornelis de Vries en Aaltje Jans.'"
+    "delegation": "Can you translate this Dutch Reformed baptism record? 'Den 5 Maart 1698 is gedoopt Pieter, soon van Jan Hendricksz en Maria Willems. Getuigen waren Cornelis de Vries en Aaltje Jans.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

@@ -30,8 +30,11 @@ tools:
   - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__person_quality
   - mcp__genealogy__person_warnings
+  - mcp__genealogy__source_screen
   - mcp__remote-devices__Genealogy_Research__person_warnings
+  - mcp__remote-devices__Genealogy_Research__source_screen
   - mcp__Genealogy_Research__person_warnings
+  - mcp__Genealogy_Research__source_screen
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -80,6 +83,8 @@ Audit no other entry. An empty audit list is a finished audit with one finding: 
 When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, each source named by its link, which is the `url` `person_read` returns for it, and which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
 
 For the same FamilySearch ID, also call `person_warnings({ projectPath, personId: <persons[0].id from person_read> })` once — the impossible-date check over the project tree. `projectPath` is the one the delegation gave; with none, skip this call. The tool finds the tree person itself, even when the tree keys them by a local id. If it returns an error (no tree, or the person is not in it), retry nothing and say in one line: "Impossible-date checks run only on a project that holds this person."
+
+With a `projectPath`, also call `source_screen({ projectPath, personId: <persons[0].id> })` once. Each `attachments[]` row with a `verdict` other than `not_scored` is that source's classification at step 4: `misattributed` is kind (b), `indexing_error` is kind (a), `contradicts` names the other source in `contradicts`, `weak` is reported with its `reasons`, and `fine` is no finding. Classify yourself only what has no such verdict: no project, an `ok: false` answer, a `not_scored` row, and `person_quality` conflicts.
 
 ### 2. Read each attached source's indexed record
 
@@ -203,11 +208,8 @@ from you. 1 kind of storage artifact, omitted above.)
 
 ### 6. Log the report
 
-If the delegation gave no `projectPath`, or `project_context` returned `reason: "no_project"`, skip this step.
-
 One `research_log_append` call with `projectPath` (the delegation's) and one op: `tool: "source_evaluation"`, `query: {personId, request}` (the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (audit-list sources examined), `notes` set to the **full** report exactly as you return it, never a summary. **You must actually call it — do not just describe it in your response.**
 
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
 
 A hand-back, a `no person named` return, or a list of candidates logs nothing.
