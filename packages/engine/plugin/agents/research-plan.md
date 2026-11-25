@@ -638,7 +638,10 @@ Order items for efficient discovery (BCG Standard 15):
     an item searches runs past the window, size the item to the collection and
     not to the window: a file assembled decades later — a pension, an estate,
     a delayed registration — testifies to events inside it, and an item capped
-    at the window will never retrieve one
+    at the window will never retrieve one. Such an item's `date_range` ends at
+    the collection's own last year — a pension item for a soldier who served
+    1862-1865 reads `1862-1934` when its collection runs to 1934, never
+    `1862-1865` — and it is never folded into an item dated to the window
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
