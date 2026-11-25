@@ -1,0 +1,93 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "George",
+          "surname": "Ackerman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1818",
+          "place": "Pennsylvania"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Catherine",
+          "surname": "Ackerman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1822",
+          "place": "Pennsylvania"
+        },
+        {
+          "id": "F3",
+          "type": "Death",
+          "date": "3 Mar 1884",
+          "place": "Reading, Berks, Pennsylvania",
+          "sources": [
+            {
+              "ref": "S3",
+              "page": "Death register — Catherine Ackerman, 3 Mar 1884, Reading, Berks County, PA",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S2",
+          "page": "Marriage record — George Ackerman & Catherine Reis, 12 Apr 1845, Berks County, PA",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1860 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S2",
+      "title": "Pennsylvania, County Marriages",
+      "author": "Berks County Clerk of the Orphans' Court"
+    },
+    {
+      "id": "S3",
+      "title": "Pennsylvania, County Death Records",
+      "author": "Berks County Register of Wills"
+    }
+  ]
+}
