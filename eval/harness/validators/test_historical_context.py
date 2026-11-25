@@ -37,7 +37,15 @@ from validators_lib import (
 # --- Writes: reference-lookup log entries only (#3244) ----------------
 
 _LOGGABLE_TOOLS = frozenset(
-    {"wiki_search", "wiki_read", "wikipedia_search", "historical_context"}
+    {
+        "wiki_search",
+        "wiki_read",
+        "wikipedia_search",
+        "place_search",
+        "place_search_all",
+        "place_population",
+        "historical_context",
+    }
 )
 
 #: A floor that a one- or two-sentence summary falls under and an overview with
