@@ -1553,6 +1553,16 @@ def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_respon
     )
 
 
+# init-project's own next-step sentence (agents/init-project.md, "Present to the
+# user"): "The next step is the first research question: the single fact we go
+# after first." Matched on its wording, not on the phrase "first research
+# question", which the router may use in its own sentence explaining the
+# `setting up the project` step it offers.
+_INIT_PROJECT_NEXT_STEP = re.compile(
+    r"next step is the first research question|single fact we go after", re.I
+)
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
@@ -1598,7 +1608,7 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
         if denial in (r.get("text") or "")
     ]
     assert not denied, f"the step boundary denied {denied} in the turn that created the project"
-    assert "first research question" not in (text_response or ""), (
+    assert not _INIT_PROJECT_NEXT_STEP.search(text_response or ""), (
         "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
     )
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
