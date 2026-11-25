@@ -883,7 +883,7 @@ export const projectContextSchema = {
     "capture, or says they cannot access the site, log that as the row's closing " +
     "entry with the same urlGenerated. waitingPages [{sourceId, ref, index}], absent when " +
     "none, lists read pages of held records, each with its record's index " +
-    "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
+    "[{assertionId, role, factType, value, date?, place?}]; hand them to record-structurer in one spawn, " +
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +

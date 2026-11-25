@@ -16,7 +16,7 @@
 
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
-import type { ExtractDocument, RecordType } from "./record-extract.js";
+import { normalizeFactType, type ExtractDocument, type RecordType } from "./record-extract.js";
 
 export const DOCUMENT_RECORD_TYPES: readonly RecordType[] = [
   "census",
@@ -223,6 +223,9 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
           if (!isObj(f)) return errs.push(`${fat}: must be an object`);
           unknownKeys(f, KEYS.fact, fat);
           if (!isStr(f.type)) errs.push(`${fat}.type: required`);
+          else if (normalizeFactType(f.type) === "residence" && isStr(f.value) && !isStr(f.place)) {
+            errs.push(`${fat}.place: required on a residence: put the place the text gives in place (a date goes in date)`);
+          }
           if (f.computed !== undefined) {
             if (!Array.isArray(f.computed)) errs.push(`${fat}.computed: must be a list of attributes`);
             else
