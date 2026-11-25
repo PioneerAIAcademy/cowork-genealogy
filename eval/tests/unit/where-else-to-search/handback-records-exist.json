@@ -13,7 +13,8 @@
     ]
   },
   "input": {
-    "delegation": "What records exist for Schuylkill County, Pennsylvania in the 1860s?"
+    "delegation": "What records exist for Schuylkill County, Pennsylvania in the 1860s?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "negative": {
     "correct_skill": [

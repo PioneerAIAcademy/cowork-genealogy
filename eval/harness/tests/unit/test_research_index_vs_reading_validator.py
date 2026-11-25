@@ -384,3 +384,36 @@ def test_sending_the_researcher_to_check_the_name_as_written_passes(reply):
 def test_a_check_verb_in_another_clause_does_not_excuse_the_claim(reply):
     with pytest.raises(AssertionError, match="verdict"):
         check_reply(T1900, reply)
+
+
+_TAIL = " The machine reading gives Tyler Anthony on line 23; check the image yourself."
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        # v56_2026-11-24_19-21-04, ut_research_iv1 run 0
+        "The page transcription gives a given name on line 23 that the index does not have.",
+        "The index has only the surname \"Tyler\" for the head of household.",
+        "The index has just a surname for her.",
+        "Index for this record: Tyler (surname only).",
+        "The page gives a given name the index doesn't have.",
+    ],
+)
+def test_a_surname_only_index_counts_as_no_given_name(said):
+    check_reply(T1900, said + _TAIL)
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        # v56_2026-11-24_19-21-04, ut_research_iv1 run 2
+        "Line 23 reads Tyler Anthony, and the index also lists this line as \"Tyler.\"",
+        "The surname only appears once on the page, and the index lists Tyler.",
+        "The index has the surname Tyler.",
+        "Only the surname is legible on the image; the index lists Tyler.",
+    ],
+)
+def test_an_index_reading_that_never_says_the_given_name_is_missing_fails(said):
+    with pytest.raises(AssertionError, match="never says the index gives no given name"):
+        check_reply(T1900, said + _TAIL)

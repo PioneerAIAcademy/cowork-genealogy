@@ -1,0 +1,150 @@
+{
+  "persons": [
+    {
+      "id": "KD96-TV2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Christian P.",
+          "surname": "Hole",
+          "type": "BirthName"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1875",
+          "place": "Norway"
+        },
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "1 May 1898",
+          "place": "Polk, Minnesota, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1900",
+          "place": "Fairview, Polk, Minnesota, United States"
+        },
+        {
+          "id": "F4",
+          "type": "Death",
+          "date": "1945-06-10",
+          "place": "Erskine, Polk, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KD96-TV3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Inger",
+          "surname": "Hole",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "primary": true,
+          "date": "1878",
+          "place": "Norway"
+        },
+        {
+          "id": "F6",
+          "type": "Death",
+          "date": "1950-02-14",
+          "place": "Erskine, Polk, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KD96-TV4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Ole C.",
+          "surname": "Hole",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "primary": true,
+          "date": "1899",
+          "place": "Polk, Minnesota, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KD96-TV2",
+      "person2": "KD96-TV3"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KD96-TV2",
+      "child": "KD96-TV4"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KD96-TV3",
+      "child": "KD96-TV4"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "United States Census, 1900",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-001"
+    },
+    {
+      "id": "S2",
+      "title": "Minnesota Death Index, 1908-2002",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-002"
+    },
+    {
+      "id": "S3",
+      "title": "Minnesota State Census, 1885",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-003"
+    },
+    {
+      "id": "S4",
+      "title": "Minnesota, County Marriages, 1860-1949",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-004"
+    }
+  ]
+}

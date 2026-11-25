@@ -46,10 +46,6 @@ DORMANT: dict[str, str] = {
         "searches with a birth range excluding the found candidate; issue #4580 "
         "restores it once a tool rule enforces it"
     ),
-    "negative-status-question": (
-        "its only test, ut_research_025, was deleted by PR #4613 (the status "
-        "answer copies project_context's ps_001); issue #4661 restores it"
-    ),
     "not-reached-wiki": (
         "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
         "it fails 2 of 4 on main because the agent skips the localities read; "
@@ -60,11 +56,6 @@ DORMANT: dict[str, str] = {
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
         "kept and no test carries the tag yet"
-    ),
-    "unproven-surname-search": (
-        "its only test, ut_search_records_d33, was deleted by PR #4613 (the agent "
-        "never searched the recalled married surname, 2 of 2 runs); issue #4699 "
-        "restores it"
     ),
 }
 

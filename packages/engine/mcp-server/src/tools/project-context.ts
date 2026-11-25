@@ -24,6 +24,7 @@ import { collectionAvailability, type CollectionAvailability } from "../utils/co
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
+import { treePidOfArk } from "../utils/ark.js";
 import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import { lookupNameFamily } from "../utils/name-variants.js";
 import { isMachinePageReading, logEntriesById } from "../utils/page-disputes.js";
@@ -41,16 +42,18 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { familyReadPersonIds } from "../utils/import-baseline.js";
 import { attachedSources, searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
 import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
+import { historicalContextSpawn, type HistoricalContextSpawn } from "../utils/historical-context-spawn.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
  *  "persons" and "sources" are returned regardless of `include` until #4422
- *  stage 3 flips the default; "status" is returned only when named. */
-export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status"] as const;
+ *  stage 3 flips the default; "status" and "historicalContext" are returned only when named. */
+export const PROJECT_CONTEXT_INCLUDE = ["persons", "sources", "status", "historicalContext"] as const;
 export type ProjectContextInclude = (typeof PROJECT_CONTEXT_INCLUDE)[number];
 
 export interface ProjectContextInput {
@@ -59,7 +62,10 @@ export interface ProjectContextInput {
 }
 
 /** `row` without the keys whose value is null, "" or []: in this answer an
- *  absent key means null or empty. `keep` names a key that stays even then. */
+ *  absent key means null or empty. `keep` names a key that stays even then.
+ *  A person's spouseIds/parentIds/childIds are the exception in meaning: for a
+ *  person not in `familyReadPersonIds` the tree holds only the relatives copied
+ *  into it, so absent there is "not copied", not "none". */
 function omitEmpty<T extends object>(row: T, keep: readonly string[] = []): T {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
@@ -77,6 +83,8 @@ export interface ProjectContextQuestion {
 export interface ProjectContextPerson {
   id: string;
   name?: string;
+  /** The FamilySearch ID from a tree-person `ark` (4:1: or tree URL); absent otherwise. */
+  pid?: string;
   gender?: string;
   spouseIds?: string[];
   parentIds?: string[];
@@ -352,6 +360,10 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only). The
        *  router has no other way to see who the research is about. */
       subjectPersonIds?: string[];
+      /** Tree persons whose own spouses, parents and children were read from
+       *  Family Tree (`familyReadPersonIds`); for anyone else a missing relative
+       *  means not copied, not none. */
+      familyReadPersonIds?: string[];
       /** The first subject as a search agent's `subject:` block: names (a doubted
        *  given name as its searchAs), birth, death and up to two parents. */
       subject?: Record<string, unknown>;
@@ -386,6 +398,9 @@ export type ProjectContextResult =
       claimKinds: string[];
       owedFindings?: OwedFinding[];
       status?: StatusRow[];
+      /** Only under `include: ["historicalContext"]`: the historical-context
+       *  spawn for the first subject, the router appending the researcher's message. */
+      historicalContext?: HistoricalContextSpawn;
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent also when
@@ -409,7 +424,7 @@ export type ProjectContextResult =
       signInUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // a failure (project_context runs with no project). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 
@@ -490,6 +505,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       omitEmpty({
         id: p.id,
         name: doubted ? (typeof surname === "string" && surname.trim() !== "" ? surname.trim() : null) : preferredDisplayName(p),
+        pid: treePidOfArk(p.ark)?.toUpperCase() ?? null,
         gender: typeof p.gender === "string" ? p.gender : null,
         spouseIds: f ? [...f.spouseIds] : [],
         parentIds: f ? [...f.parentIds] : [],
@@ -660,6 +676,15 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // answer, so a reader scoping to that array by its key does not take these
   // items' own `nextStep` for a question's.
   const owed = owedFindings(research, tree);
+  const historicalContext = input.include?.includes("historicalContext")
+    ? historicalContextSpawn(
+        input.projectPath,
+        research,
+        tree,
+        typeof subjectId === "string" ? subjectId : undefined,
+        typeof subjectId === "string" ? family.get(subjectId) : undefined,
+      )
+    : null;
   const status = input.include?.includes("status")
     ? conclusionStatus(research, tree, await readStartingTree(input.projectPath))
     : undefined;
@@ -704,6 +729,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    familyReadPersonIds: familyReadPersonIds(tree),
     ...(subject ? { subject } : {}),
     attachedSources: typeof subjectId === "string" ? attachedSources(tree, subjectId) : [],
     narrationGuidance:
@@ -718,6 +744,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     owedFindings: owed,
     questionStatuses,
     ...(status ? { status } : {}),
+    ...(historicalContext ? { historicalContext } : {}),
     persons,
     sources,
     localities,
@@ -802,15 +829,24 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\") names the " +
-    "larger lists you read; persons and sources are returned whether or not you pass it, and status only when named. " +
+    "values are ever null. The one exception is a person's spouseIds, parentIds and childIds. " +
+    "familyReadPersonIds names the persons whose own spouses, parents and children were read " +
+    "from Family Tree; it is absent when no one's were. For a person not in familyReadPersonIds, " +
+    "an absent or short spouseIds/parentIds/childIds means not copied from Family Tree, not " +
+    "none: their parents, other spouses (a stepparent) and children may be in Family Tree. Say " +
+    "\"not in the project tree\"; say what Family Tree records only after person_read of their " +
+    "pid, and only when your answer depends on it, not to summarize the project. A person " +
+    "with no pid cannot be checked. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
+    "the larger lists you read; persons and sources are returned whether or not you pass it, status and " +
+    "historicalContext only when named. " +
     "Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, spouseIds, parentIds, childIds, diedByYear, " +
+    "[{id, name, pid, gender, spouseIds, parentIds, childIds, diedByYear, " +
     "unsupportedGivenName}] — every " +
-    "tree person with its one-hop family from " +
+    "tree person, its FamilySearch ID (pid, from a tree-person ark or URL only), " +
+    "and its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
     "by from its dated Death or Burial facts; unsupportedGivenName {given, searchAs} " +
     "marks a given name none of the person's linked records gives: brief it as a " +
@@ -872,7 +908,9 @@ export const projectContextSchema = {
     "order: extract (a positive search with nothing extracted), conclude (a question with tied assertions and no " +
     "proof summary), hypothesis (a supported hypothesis with no summary), encode (a likely claim no tree object " +
     "carries), then the advisory raise, claims and frame. With include: [\"status\"], status lists every tree fact " +
-    "and relationship with its status read from claims. " +
+    "and relationship with its status read from claims. With include: [\"historicalContext\"], historicalContext " +
+    "{agent, prompt} is the historical-context step written out for the first subject: spawn the agent with " +
+    "prompt as given, then a line message: and the researcher's message copied verbatim, and nothing else. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
@@ -894,10 +932,12 @@ export const projectContextSchema = {
         type: "array",
         items: { type: "string", enum: [...PROJECT_CONTEXT_INCLUDE] },
         description:
-          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status". ' +
+          'Optional closed list naming the larger lists to include. Values: "persons", "sources", "status", ' +
+          '"historicalContext". ' +
           '"persons" and "sources" are returned whether or not you pass include. "status": every tree fact and ' +
           "relationship with its status read from proof-summary claims (well established, likely, tentative, " +
-          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named.",
+          "ruled out, set aside, from your starting tree, found in a record, …), returned only when named. " +
+          '"historicalContext": the historical-context spawn for the first subject, returned only when named.',
       },
     },
     required: ["projectPath"],

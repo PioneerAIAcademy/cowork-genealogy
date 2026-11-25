@@ -1,0 +1,2406 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:PD5R-5VD",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Alexander",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Death",
+          "date": "after 21 March 1816",
+          "standard_date": "Aft 21 Mar 1816",
+          "place": "of Shelburne, Chittenden, Vermont, United States",
+          "standard_place": "Shelburne, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:GQVR-LRC",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "given": "Mary",
+          "surname": "Millet",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "about 1740",
+          "standard_date": "Abt 1740",
+          "place": "of Hopkinton, Middlesex, Massachusetts Bay Colony, British Colonial America",
+          "standard_place": "Hopkinton, Middlesex, Massachusetts Bay Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Death",
+          "date": "after 21 March 1816",
+          "standard_date": "Aft 21 Mar 1816",
+          "place": "of Shelburne, Chittenden, Vermont, United States",
+          "standard_place": "Shelburne, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "LifeSketch",
+          "value": "Mary MILLETT was born  1735 in Beverly, Essex county, MA to Nathaniel MILLETT and Elizabeth MORGAN. She had a brother Ebenezer who served in the British militia with his best friend, a Scotsman named Alexander MILLS b ca 1738. Alex saved Eb' s life.  They were in battles in Nova Scotia and after Ev healed they went to  where Ebenezer married. They traveled back to Beverly MA where Eb' introduced Alex to his sister Mary born 1735 in Beverly MA. Alexander and Mary married on 22 March 1759 in Beverly. \n\nMany people get Alexander and mixed up with another couple with the same names. They have intertwined the children. Alex and Mary who married in 1759 NEVER lived in Maryland EVER. They lived in MA and VT and possibly a short stint in NH. They did not have triplets born in 1770.",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:LHTD-VJ9",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "given": "Samuel",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N4",
+          "given": "Samuel",
+          "surname": "MIlls",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "13 September 1762",
+          "standard_date": "13 Sep 1762",
+          "place": "of Cumberland, Nova Scotia, British North America",
+          "standard_place": "Cumberland, Nova Scotia, British North America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "MilitaryService",
+          "date": "04 Mar 1831",
+          "standard_date": "4 Mar 1831",
+          "place": "Burlington, Burlington, Chittenden, Vermont, United States",
+          "standard_place": "Burlington, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Death",
+          "date": "25 MAY 1848",
+          "standard_date": "25 May 1848",
+          "place": "Shelburne, Chittenden, Vermont",
+          "standard_place": "Shelburne, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Burial",
+          "date": "AFT 25 May 1848",
+          "standard_date": "Aft 25 May 1848",
+          "place": "Elmwood Cem., Shelburne, Chittenden, Vermont",
+          "standard_place": "Shelburne, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S5"
+        },
+        {
+          "ref": "S6"
+        },
+        {
+          "ref": "S7"
+        },
+        {
+          "ref": "S8"
+        },
+        {
+          "ref": "S9"
+        },
+        {
+          "ref": "S10"
+        },
+        {
+          "ref": "S11"
+        },
+        {
+          "ref": "S12"
+        },
+        {
+          "ref": "S13"
+        },
+        {
+          "ref": "S14"
+        },
+        {
+          "ref": "S15"
+        },
+        {
+          "ref": "S16"
+        },
+        {
+          "ref": "S17"
+        },
+        {
+          "ref": "S18"
+        },
+        {
+          "ref": "S19"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:GDHH-3HV",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Ebenezer",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F9",
+          "type": "Birth",
+          "date": "about 1774",
+          "standard_date": "Abt 1774",
+          "place": "Hopkinton, Middlesex, Massachusetts, United States",
+          "standard_place": "Hopkinton, Middlesex, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Death",
+          "date": "About 1845",
+          "standard_date": "Abt 1845",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S20"
+        },
+        {
+          "ref": "S21"
+        },
+        {
+          "ref": "S22"
+        },
+        {
+          "ref": "S23"
+        },
+        {
+          "ref": "S24"
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "ark": "ark:/61903/4:1:LXW4-68R",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N6",
+          "given": "George",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName",
+          "suffix": "Sr"
+        },
+        {
+          "id": "N7",
+          "given": "George Alexander",
+          "surname": "Mills",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "1740",
+          "standard_date": "1740",
+          "place": "Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Death",
+          "date": "11 April 1777",
+          "standard_date": "11 Apr 1777",
+          "place": "Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S25"
+        },
+        {
+          "ref": "S26"
+        },
+        {
+          "ref": "S27"
+        },
+        {
+          "ref": "S28"
+        },
+        {
+          "ref": "S29"
+        },
+        {
+          "ref": "S30"
+        },
+        {
+          "ref": "S31"
+        },
+        {
+          "ref": "S32"
+        },
+        {
+          "ref": "S33"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "ark": "ark:/61903/4:1:PD5R-8NW",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Ephraim",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Birth",
+          "date": "about 1776",
+          "standard_date": "Abt 1776",
+          "place": "of Walpole, Cheshire, New Hampshire, United States",
+          "standard_place": "Walpole, Cheshire, New Hampshire, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "ark": "ark:/61903/4:1:KCZM-LPB",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N9",
+          "given": "Abigail",
+          "surname": "Weed",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N10",
+          "given": "Abigail",
+          "surname": "Weed",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Birth",
+          "date": "16 September 1744",
+          "standard_date": "16 Sep 1744",
+          "place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "standard_place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Death",
+          "date": "1794",
+          "standard_date": "1794",
+          "place": "Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S34"
+        },
+        {
+          "ref": "S35"
+        },
+        {
+          "ref": "S36"
+        },
+        {
+          "ref": "S37"
+        },
+        {
+          "ref": "S38"
+        },
+        {
+          "ref": "S39"
+        },
+        {
+          "ref": "S40"
+        },
+        {
+          "ref": "S41"
+        },
+        {
+          "ref": "S42"
+        },
+        {
+          "ref": "S43"
+        },
+        {
+          "ref": "S44"
+        },
+        {
+          "ref": "S45"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "ark": "ark:/61903/4:1:LDHC-VW9",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N11",
+          "given": "Nathaniel",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N12",
+          "given": "Nathaniel",
+          "surname": "mills",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Birth",
+          "date": "1779",
+          "standard_date": "1779",
+          "place": "Massachusetts, United States",
+          "standard_place": "Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Burial",
+          "date": "1836",
+          "standard_date": "1836",
+          "place": "Malletts Bay Cemetery, Colchester, Chittenden, Vermont, United States of America",
+          "standard_place": "Malletts Bay Cemetery, Colchester, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Death",
+          "date": "28 JUL 1836",
+          "standard_date": "28 Jul 1836",
+          "place": "Colchester, Vermont, USA",
+          "standard_place": "Colchester, Chittenden, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S46"
+        },
+        {
+          "ref": "S47"
+        },
+        {
+          "ref": "S48"
+        },
+        {
+          "ref": "S49"
+        },
+        {
+          "ref": "S50"
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "ark": "ark:/61903/4:1:KJZD-C5Y",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N13",
+          "given": "Lydia",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N14",
+          "given": "Lydia",
+          "surname": "Mills",
+          "type": "BirthName"
+        },
+        {
+          "id": "N15",
+          "given": "",
+          "surname": "Nichols",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Birth",
+          "date": "1770",
+          "standard_date": "1770",
+          "place": "Vermont, United States",
+          "standard_place": "Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norfolk, St. Lawrence, New York, United States",
+          "standard_place": "Norfolk, St. Lawrence, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Louisville, St Lawrence, New York, United States",
+          "standard_place": "Louisville, St. Lawrence, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Death",
+          "date": "18 September 1867",
+          "standard_date": "18 Sep 1867",
+          "place": "Raymondville, St. Lawrence, New York, United States",
+          "standard_place": "Raymondville, Norfolk, St. Lawrence, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Burial",
+          "place": "Raymondville Cemetery, Raymondville, St. Lawrence, New York, United States",
+          "standard_place": "Raymondville Cemetery, Raymondville, Norfolk, St. Lawrence, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S51"
+        },
+        {
+          "ref": "S52"
+        },
+        {
+          "ref": "S53"
+        },
+        {
+          "ref": "S54"
+        },
+        {
+          "ref": "S55"
+        },
+        {
+          "ref": "S56"
+        },
+        {
+          "ref": "S57"
+        },
+        {
+          "ref": "S58"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "ark": "ark:/61903/4:1:LJT1-5G5",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N16",
+          "given": "Alexander",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName",
+          "prefix": "Col"
+        },
+        {
+          "id": "N17",
+          "given": "Alexander",
+          "surname": "Mills",
+          "type": "BirthName"
+        },
+        {
+          "id": "N18",
+          "given": "Alexander",
+          "surname": "Mills",
+          "type": "BirthName",
+          "prefix": "Col."
+        },
+        {
+          "id": "N19",
+          "given": "Col. Alexander",
+          "surname": "Mills",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Birth",
+          "date": "17 July 1761",
+          "standard_date": "17 Jul 1761",
+          "place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "standard_place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Burial",
+          "date": "1822",
+          "standard_date": "1822",
+          "place": "West Stamford Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "West Stamford Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F27",
+          "type": "Death",
+          "date": "6 November 1822",
+          "standard_date": "6 Nov 1822",
+          "place": "Connecticut, United States",
+          "standard_place": "Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "LifeSketch",
+          "value": "Linked with family on Find a Grave\n\nGravesite Details Revoluntionary War solider\n\nAlexander Mills\nBIRTH\tunknown\nDEATH\t6 Nov 1822\nBURIAL\t\nWest Stamford Cemetery\nStamford, Fairfield County, Connecticut, USA \nMEMORIAL ID\t21237772 \u00b7 View Source\n\n",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S59"
+        },
+        {
+          "ref": "S60"
+        },
+        {
+          "ref": "S61"
+        },
+        {
+          "ref": "S62"
+        },
+        {
+          "ref": "S63"
+        },
+        {
+          "ref": "S64"
+        },
+        {
+          "ref": "S65"
+        },
+        {
+          "ref": "S66"
+        },
+        {
+          "ref": "S67"
+        },
+        {
+          "ref": "S68"
+        },
+        {
+          "ref": "S69"
+        },
+        {
+          "ref": "S70"
+        },
+        {
+          "ref": "S71"
+        },
+        {
+          "ref": "S72"
+        },
+        {
+          "ref": "S73"
+        },
+        {
+          "ref": "S74"
+        },
+        {
+          "ref": "S75"
+        },
+        {
+          "ref": "S76"
+        },
+        {
+          "ref": "S77"
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "ark": "ark:/61903/4:1:KDB2-PTC",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N20",
+          "given": "George",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F29",
+          "type": "Birth",
+          "date": "3 May 1763",
+          "standard_date": "3 May 1763",
+          "place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "standard_place": "Stamford, Fairfield, Connecticut Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "MilitaryService",
+          "date": "4 March 1836",
+          "standard_date": "4 Mar 1836",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F31",
+          "type": "Death",
+          "date": "1 May 1846",
+          "standard_date": "1 May 1846",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F32",
+          "type": "Burial",
+          "date": "1846",
+          "standard_date": "1846",
+          "place": "Northfield Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Northfield Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S78"
+        },
+        {
+          "ref": "S79"
+        },
+        {
+          "ref": "S80"
+        },
+        {
+          "ref": "S81"
+        },
+        {
+          "ref": "S82"
+        },
+        {
+          "ref": "S83"
+        },
+        {
+          "ref": "S84"
+        },
+        {
+          "ref": "S85"
+        },
+        {
+          "ref": "S86"
+        },
+        {
+          "ref": "S87"
+        },
+        {
+          "ref": "S88"
+        },
+        {
+          "ref": "S89"
+        },
+        {
+          "ref": "S90"
+        },
+        {
+          "ref": "S91"
+        },
+        {
+          "ref": "S92"
+        },
+        {
+          "ref": "S93"
+        },
+        {
+          "ref": "S94"
+        },
+        {
+          "ref": "S95"
+        },
+        {
+          "ref": "S96"
+        },
+        {
+          "ref": "S97"
+        },
+        {
+          "ref": "S98"
+        },
+        {
+          "ref": "S99"
+        },
+        {
+          "ref": "S100"
+        },
+        {
+          "ref": "S101"
+        },
+        {
+          "ref": "S102"
+        },
+        {
+          "ref": "S103"
+        },
+        {
+          "ref": "S104"
+        },
+        {
+          "ref": "S105"
+        },
+        {
+          "ref": "S106"
+        },
+        {
+          "ref": "S107"
+        },
+        {
+          "ref": "S108"
+        },
+        {
+          "ref": "S109"
+        },
+        {
+          "ref": "S110"
+        },
+        {
+          "ref": "S111"
+        },
+        {
+          "ref": "S112"
+        },
+        {
+          "ref": "S113"
+        },
+        {
+          "ref": "S114"
+        },
+        {
+          "ref": "S115"
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "ark": "ark:/61903/4:1:M288-FDQ",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Abigail",
+          "surname": "Mill",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F33",
+          "type": "Birth",
+          "date": "1 March 1765",
+          "standard_date": "1 Mar 1765",
+          "place": "Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F34",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S116"
+        },
+        {
+          "ref": "S117"
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "ark": "ark:/61903/4:1:KZ8P-HP9",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N22",
+          "given": "Rebecca",
+          "surname": "Mills",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N23",
+          "given": "Rebecca",
+          "surname": "Mills",
+          "type": "BirthName"
+        },
+        {
+          "id": "N24",
+          "given": "Rebeckah",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F35",
+          "type": "Birth",
+          "date": "9 December 1766",
+          "standard_date": "9 Dec 1766",
+          "place": "Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F36",
+          "type": "MilitaryService",
+          "date": "04 Mar 1841",
+          "standard_date": "4 Mar 1841",
+          "place": "Connecticut, United States",
+          "standard_place": "Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F37",
+          "type": "Burial",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "West Stamford Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "standard_place": "West Stamford Cemetery, Stamford, Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F38",
+          "type": "Death",
+          "date": "11 September 1844",
+          "standard_date": "11 Sep 1844",
+          "place": "Fairfield, Connecticut, United States",
+          "standard_place": "Fairfield, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S118"
+        },
+        {
+          "ref": "S119"
+        },
+        {
+          "ref": "S120"
+        },
+        {
+          "ref": "S121"
+        },
+        {
+          "ref": "S122"
+        },
+        {
+          "ref": "S123"
+        },
+        {
+          "ref": "S124"
+        },
+        {
+          "ref": "S125"
+        },
+        {
+          "ref": "S126"
+        },
+        {
+          "ref": "S127"
+        },
+        {
+          "ref": "S128"
+        },
+        {
+          "ref": "S129"
+        },
+        {
+          "ref": "S130"
+        },
+        {
+          "ref": "S131"
+        },
+        {
+          "ref": "S132"
+        },
+        {
+          "ref": "S133"
+        },
+        {
+          "ref": "S134"
+        },
+        {
+          "ref": "S135"
+        },
+        {
+          "ref": "S136"
+        },
+        {
+          "ref": "S137"
+        },
+        {
+          "ref": "S138"
+        },
+        {
+          "ref": "S139"
+        },
+        {
+          "ref": "S140"
+        },
+        {
+          "ref": "S141"
+        },
+        {
+          "ref": "S142"
+        },
+        {
+          "ref": "S143"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "facts": [
+        {
+          "id": "F39",
+          "type": "Marriage",
+          "date": "22 March 1759",
+          "standard_date": "22 Mar 1759",
+          "place": "Worcester, Massachusetts Bay Colony, British Colonial America",
+          "standard_place": "Worcester, Massachusetts Bay Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "I5",
+      "person2": "I7",
+      "facts": [
+        {
+          "id": "F40",
+          "type": "Marriage",
+          "date": "12 August 1760",
+          "standard_date": "12 Aug 1760",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from Alexander Mills, PD5R-5VD)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 17 November 2026), read from the page of Alexander Mills (PD5R-5VD).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "Samuel Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BPD : Sat Mar 09 14:57:31 UTC 2024), Samuel Mills in entry for Unice Comstock Mills, 12 Jan 1813.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BPD"
+    },
+    {
+      "id": "S3",
+      "title": "Samuel, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFZL-HPF : Mon Jul 08 22:28:09 UTC 2024), Samuel in entry for Lucia Miller Irish, 06 Dec 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFZL-HPF"
+    },
+    {
+      "id": "S4",
+      "title": "Samuel Mills, \"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\"",
+      "citation": "\"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q24Q-LZMQ : Mon Mar 23 18:05:23 UTC 2026), Samuel Mills, 04 Mar 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q24Q-LZMQ"
+    },
+    {
+      "id": "S5",
+      "title": "Marriage of Samuel and Phebe",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BJJ : Sat Mar 09 12:40:17 UTC 2024), Samuel Mills and Phebe Chappel, 10 Feb 1813.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BJJ"
+    },
+    {
+      "id": "S6",
+      "title": "Death of Phebe in Vermont",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BX2 : Sat Mar 09 15:55:09 UTC 2024), Samuel Mills in entry for Phebe Howard Mills, 07 Feb 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BX2"
+    },
+    {
+      "id": "S7",
+      "title": "Samuel Mills, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28Q-Y612 : Tue Oct 29 20:30:17 UTC 2024), Samuel Mills and Prisilla Peters, 28 Aug 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28Q-Y612"
+    },
+    {
+      "id": "S8",
+      "title": "Saml Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVK-6L6 : Sun Mar 10 02:18:25 UTC 2024), Saml Mills in entry for Lucius B Sawyer and Lucia Irish, 12 Feb 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVK-6L6"
+    },
+    {
+      "id": "S9",
+      "title": "Samuel Mills, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7L2-HVK : Wed May 22 23:02:05 UTC 2024), Samuel Mills in entry for Edward Mills, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7L2-HVK"
+    },
+    {
+      "id": "S10",
+      "title": "Samuel Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVK-6LJ : Sun Mar 10 05:48:19 UTC 2024), Samuel Mills in entry for L B Sawyer and Lucia Irish, 12 Feb 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVK-6LJ"
+    },
+    {
+      "id": "S11",
+      "title": "Samuel Mills, \"Michigan, Deaths, 1867-1897\"",
+      "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N36B-N6F : Thu Nov 05 21:37:19 UTC 2026), Samuel Mills in entry for Thomas Mills, 25 Nov 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N36B-N6F"
+    },
+    {
+      "id": "S12",
+      "title": "Samuel Mils, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BJ8 : Sat Mar 09 14:12:51 UTC 2024), Samuel Mils and Eunice Comstock, 27 Jun 1785.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BJ8"
+    },
+    {
+      "id": "S13",
+      "title": "Samuel, \"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\"",
+      "citation": "\"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q24Q-5H1C : Mon Mar 23 18:16:12 UTC 2026), Samuel in entry for Priscilla Mills, 03 Feb 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q24Q-5H1C"
+    },
+    {
+      "id": "S14",
+      "title": "Samuel Mills, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVP-J2HH : Sun Oct 04 10:58:17 UTC 2026), Samuel Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVP-J2HH"
+    },
+    {
+      "id": "S15",
+      "title": "Samuel Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BJK : Sat Mar 09 02:24:46 UTC 2024), Samuel Mills, 25 May 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BJK"
+    },
+    {
+      "id": "S16",
+      "title": "Samuel Mils, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFJ6-562 : Sun Mar 10 19:56:56 UTC 2024), Samuel Mils and Eunice Comstock, 27 Jun 1785.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFJ6-562"
+    },
+    {
+      "id": "S17",
+      "title": "Marriage of Samuel to Priscilla Peters",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFKD-RP8 : Sun Mar 10 08:36:45 UTC 2024), Samuel Mills and Priscilla Peters, 28 Aug 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFKD-RP8"
+    },
+    {
+      "id": "S18",
+      "title": "Samuel Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-BFQ : Fri Mar 08 01:08:30 UTC 2024), Samuel Mills in entry for Priscilla Mills, 15 Sep 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-BFQ"
+    },
+    {
+      "id": "S19",
+      "title": "Samuel Mills in entry for Thomas Mills, \"Michigan, Deaths and Burials, 1800-1995\"",
+      "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHJR-ZLT : Thu Oct 15 23:04:52 UTC 2026), Samuel Mills in entry for Thomas Mills, 25 Nov 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHJR-ZLT"
+    },
+    {
+      "id": "S20",
+      "title": "Ebenezer Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVS-JLD : Sat Mar 09 16:49:19 UTC 2024), Ebenezer Mills and Polly Drake, 25 Dec 1818.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVS-JLD"
+    },
+    {
+      "id": "S21",
+      "title": "Ebenezer Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-YQG : Sat Mar 09 13:09:12 UTC 2024), Ebenezer Mills and Polly Drake, 25 Dec 1818.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-YQG"
+    },
+    {
+      "id": "S22",
+      "title": "Ebenezer Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF8T-YPV : Mon Jul 15 06:48:43 UTC 2024), Ebenezer Mills in entry for Clarissa White, 23 Oct 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XF8T-YPV"
+    },
+    {
+      "id": "S23",
+      "title": "Ebenezor Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFKC-J3X : Sat Mar 09 13:54:27 UTC 2024), Ebenezor Mills and Olive Payn, 30 Mar 1800.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFKC-J3X"
+    },
+    {
+      "id": "S24",
+      "title": "Ebenezer Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-YQ5 : Sat Mar 09 11:54:13 UTC 2024), Ebenezer Mills and Olive Payn, 30 Mar 1800.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-YQ5"
+    },
+    {
+      "id": "S25",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7T-939M : Fri Aug 07 12:48:19 UTC 2026), George in entry for Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7T-939M"
+    },
+    {
+      "id": "S26",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPST-D7LG : Fri Aug 07 12:47:08 UTC 2026), George in entry for Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPST-D7LG"
+    },
+    {
+      "id": "S27",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-XWC1 : Fri Aug 07 12:50:09 UTC 2026), George in entry for George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-XWC1"
+    },
+    {
+      "id": "S28",
+      "title": "George Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-QXC : Wed Oct 14 21:22:16 UTC 2026), George Mill in entry for Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-QXC"
+    },
+    {
+      "id": "S29",
+      "title": "George Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-7VC : Wed Oct 14 22:14:31 UTC 2026), George Mill in entry for Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-7VC"
+    },
+    {
+      "id": "S30",
+      "title": "George Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-XWCT : Fri Aug 07 12:50:14 UTC 2026), George Mill, 12 August 1760.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-XWCT"
+    },
+    {
+      "id": "S31",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-N43V : Fri Aug 07 12:48:22 UTC 2026), George in entry for Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-N43V"
+    },
+    {
+      "id": "S32",
+      "title": "George Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F745-WL4 : Wed Oct 14 22:39:27 UTC 2026), George Mill in entry for Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F745-WL4"
+    },
+    {
+      "id": "S33",
+      "title": "George Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-ZX5 : Wed Oct 14 22:38:51 UTC 2026), George Mill in entry for George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-ZX5"
+    },
+    {
+      "id": "S34",
+      "title": "         Weed family of Stamford and Greenwich, Connecticut by McSweeney, Henry",
+      "url": "https://archive.org/details/weedfamilyofstam00mcsw/page/n37/mode/2up?q=jabez+"
+    },
+    {
+      "id": "S35",
+      "title": "pg 1 Weed family of Stamford and Greenwich, Connecticut by McSweeney, Henry",
+      "url": "https://www.familysearch.org/photos/artifacts/224175930"
+    },
+    {
+      "id": "S36",
+      "title": "Abigail, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7T-9399 : Fri Aug 07 12:48:19 UTC 2026), Abigail in entry for Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7T-9399"
+    },
+    {
+      "id": "S37",
+      "title": "Abigail, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPST-D7LP : Fri Aug 07 12:47:08 UTC 2026), Abigail in entry for Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPST-D7LP"
+    },
+    {
+      "id": "S38",
+      "title": "Abigail, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-7VZ : Wed Oct 14 22:14:31 UTC 2026), Abigail in entry for Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-7VZ"
+    },
+    {
+      "id": "S39",
+      "title": "Abigail, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-QXZ : Wed Oct 14 21:22:16 UTC 2026), Abigail in entry for Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-QXZ"
+    },
+    {
+      "id": "S40",
+      "title": "Abigail Weed, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-XWCY : Fri Aug 07 12:50:14 UTC 2026), Abigail Weed in entry for George Mill, 12 August 1760.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-XWCY"
+    },
+    {
+      "id": "S41",
+      "title": "Abigail Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-N43K : Fri Aug 07 12:48:22 UTC 2026), Abigail Mill in entry for Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-N43K"
+    },
+    {
+      "id": "S42",
+      "title": "Abigail, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSH-QQMM : Fri Aug 07 12:50:09 UTC 2026), Abigail in entry for George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSH-QQMM"
+    },
+    {
+      "id": "S43",
+      "title": "Abigail Weed, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WS-1J2 : Wed Oct 14 21:27:02 UTC 2026), Abigail Weed, 16 September 1744.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WS-1J2"
+    },
+    {
+      "id": "S44",
+      "title": "Abigail, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F745-WLH : Wed Oct 14 22:39:27 UTC 2026), Abigail in entry for Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F745-WLH"
+    },
+    {
+      "id": "S45",
+      "title": "Abigail, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-ZXR : Wed Oct 14 22:38:51 UTC 2026), Abigail in entry for George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-ZXR"
+    },
+    {
+      "id": "S46",
+      "title": "Nathaniel, \"Minnesota, Deaths and Burials, 1835-1990\"",
+      "citation": "\"Minnesota, Deaths and Burials, 1835-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDZ8-TYH : Fri Oct 16 16:28:46 UTC 2026), Nathaniel in entry for Myron Mills, 4 Mar 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDZ8-TYH"
+    },
+    {
+      "id": "S47",
+      "title": "Nathaniel, \"Minnesota, County Deaths, 1850-2001\"",
+      "citation": "\"Minnesota, County Deaths, 1850-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP8M-42HV : Fri Mar 08 09:24:52 UTC 2024), Nathaniel in entry for Myron Mills, 4 March 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP8M-42HV"
+    },
+    {
+      "id": "S48",
+      "title": "Nathaniel Mills, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVN-3PJX : Sat Oct 03 08:23:24 UTC 2026), Nathaniel Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVN-3PJX"
+    },
+    {
+      "id": "S49",
+      "title": "Nathaniel Mills, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV28-MNWM : Sat Oct 03 08:23:24 UTC 2026), Nathaniel Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV28-MNWM"
+    },
+    {
+      "id": "S50",
+      "title": "Nathaniel Mills, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVR-B6K : Sat Mar 09 04:48:06 UTC 2024), Nathaniel Mills, 28 Jul 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVR-B6K"
+    },
+    {
+      "id": "S51",
+      "title": "Unknown, \"Virginia, Deaths and Burials, 1853-1912\"",
+      "citation": "\"Virginia, Deaths and Burials, 1853-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XRQK-236 : Mon Oct 19 15:07:27 UTC 2026), Unknown in entry for Lydia Watson, 25 Oct 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XRQK-236"
+    },
+    {
+      "id": "S52",
+      "title": "Lydia Nichols, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC4B-13Y : Mon Jul 08 15:32:59 UTC 2024), Lydia Nichols in entry for Ira Nichols, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC4B-13Y"
+    },
+    {
+      "id": "S53",
+      "title": "Lydia Nichols\u00a0in the\u00a01860 United States Federal Census",
+      "citation": "\"Lydia Nichols\u00a0in the\u00a01860 United States Federal Census.\" Search https://search.ancestry.com/cgi-bin/sse.dll?indiv=try&h=48578250&db=1860usfedcenancestry. Accessed 6 Jul. 2020.",
+      "url": "https://search.ancestry.com/cgi-bin/sse.dll?indiv=try&h=48578250&db=1860usfedcenancestry"
+    },
+    {
+      "id": "S54",
+      "title": "Lydia Nichols, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1F-KV4 : Thu Jan 16 23:31:44 UTC 2025), Lydia Nichols in entry for Ira Nichols, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC1F-KV4"
+    },
+    {
+      "id": "S55",
+      "title": "Nichols, \"Michigan, Deaths, 1867-1897\"",
+      "citation": "\"Michigan, Deaths, 1867-1897\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3N8-G93 : Thu Nov 05 21:37:20 UTC 2026), Nichols in entry for Eli Nichols, 15 Sep 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3N8-G93"
+    },
+    {
+      "id": "S56",
+      "title": "Nichols, \"Michigan, Deaths and Burials, 1800-1995\"",
+      "citation": "\"Michigan, Deaths and Burials, 1800-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHG6-PZK : Thu Oct 15 21:07:13 UTC 2026), Nichols in entry for Eli Nichols, 15 Sep 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHG6-PZK"
+    },
+    {
+      "id": "S57",
+      "title": "Lydia Mills Nichols, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2N-686R : Sun Oct 04 07:17:07 UTC 2026), Lydia Mills Nichols, 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2N-686R"
+    },
+    {
+      "id": "S58",
+      "title": "Legacy NFS Source: Lydia Mills - ",
+      "citation": "1850 United States Federal Census, Page number: Roll #M432_591, Page #161, Image #597"
+    },
+    {
+      "id": "S59",
+      "title": "Alexander Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-8Q9 : Wed Oct 14 21:26:50 UTC 2026), Alexander Mills in entry for Charles Mills, 17 April 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-8Q9"
+    },
+    {
+      "id": "S60",
+      "title": "Alexander Mills, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+      "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZP8G-RSPZ : Sat Mar 09 20:57:15 UTC 2024), Alexander Mills, 16 November 1822.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZP8G-RSPZ"
+    },
+    {
+      "id": "S61",
+      "title": "Alexander Mills, \"Connecticut Deaths and Burials, 1772-1934\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7X3-52C"
+    },
+    {
+      "id": "S62",
+      "title": "Alexander Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-8Q9 : Wed Oct 14 21:26:50 UTC 2026), Alexander Mills in entry for Charles Mills, 17 April 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-8Q9"
+    },
+    {
+      "id": "S63",
+      "title": "Alexander Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-8QQ : Wed Oct 14 21:28:00 UTC 2026), Alexander Mills in entry for Charles Mills, 22 June 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-8QQ"
+    },
+    {
+      "id": "S64",
+      "title": "Alexander, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSR-G1XG : Fri Aug 07 12:47:10 UTC 2026), Alexander in entry for Charles Mills, 22 July 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSR-G1XG"
+    },
+    {
+      "id": "S65",
+      "title": "Alexander, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSR-G1XG : Fri Aug 07 12:47:10 UTC 2026), Alexander in entry for Charles Mills, 22 July 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSR-G1XG"
+    },
+    {
+      "id": "S66",
+      "title": "Alexander Mills\u00a0in the\u00a0Connecticut, Church Record Abstracts, 1630",
+      "citation": "\"Alexander Mills\u00a0in the\u00a0Connecticut, Church Record Abstracts, 1630.\" Search https://search.ancestry.com/cgi-bin/sse.dll?indiv=try&h=12171&dbid=3032. Accessed 5 Apr. 2020.",
+      "url": "https://www.familysearch.org/photos/artifacts/112878995"
+    },
+    {
+      "id": "S67",
+      "title": "Alexander, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSR-G1XK : Fri Aug 07 12:47:53 UTC 2026), Alexander in entry for Charles Mills, 10 October 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSR-G1XK"
+    },
+    {
+      "id": "S68",
+      "title": "Alexander Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-N43J : Fri Aug 07 12:48:22 UTC 2026), Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-N43J"
+    },
+    {
+      "id": "S69",
+      "title": "Alexander, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSR-G1XN : Fri Aug 07 12:47:53 UTC 2026), Alexander in entry for Charles Mills, 17 April 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSR-G1XN"
+    },
+    {
+      "id": "S70",
+      "title": "Alexander Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:78XX-ZWW2 : Sun Mar 10 10:34:03 UTC 2024), Alexander Mills in entry for Sarah Knapp, 26 October 1788.",
+      "url": "https://familysearch.org/ark:/61903/1:1:78XX-ZWW2"
+    },
+    {
+      "id": "S71",
+      "title": "Alexander Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-N43L : Fri Aug 07 12:49:34 UTC 2026), Alexander Mills, 26 October 1788.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-N43L"
+    },
+    {
+      "id": "S72",
+      "title": "Alexander in entry for Charles Mills, \"Connecticut Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-1MW : Wed Oct 14 21:42:09 UTC 2026), Alexander in entry for Charles Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-1MW"
+    },
+    {
+      "id": "S73",
+      "title": "Alexander Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-8QQ : Wed Oct 14 21:28:00 UTC 2026), Alexander Mills in entry for Charles Mills, 22 June 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-8QQ"
+    },
+    {
+      "id": "S74",
+      "title": "Alexander Mills, \"Connecticut Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7X3-52W : Sat Oct 17 22:50:47 UTC 2026), Alexander Mills, 6 Nov 1822.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7X3-52W"
+    },
+    {
+      "id": "S75",
+      "title": "Alexander Mills, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVJ-PM7Z : Sun Oct 04 04:29:04 UTC 2026), Alexander Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVJ-PM7Z"
+    },
+    {
+      "id": "S76",
+      "title": "Death of Alexander",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-1MQ : Wed Oct 14 22:33:53 UTC 2026), Alexander Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-1MQ"
+    },
+    {
+      "id": "S77",
+      "title": "Alexander Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F745-WLW : Wed Oct 14 22:39:27 UTC 2026), Alexander Mill, 17 July 1761.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F745-WLW"
+    },
+    {
+      "id": "S78",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-5MN : Wed Oct 14 22:54:30 UTC 2026), George in entry for Julia Ann Mooney.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-5MN"
+    },
+    {
+      "id": "S79",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-5Z5 : Wed Oct 14 22:38:50 UTC 2026), George in entry for Abigail Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-5Z5"
+    },
+    {
+      "id": "S80",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-59X : Wed Oct 14 21:43:34 UTC 2026), George in entry for George Mills Junior.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-59X"
+    },
+    {
+      "id": "S81",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-5ZF : Wed Oct 14 21:41:52 UTC 2026), George in entry for Sarah Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-5ZF"
+    },
+    {
+      "id": "S82",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-59K : Wed Oct 14 22:25:33 UTC 2026), George in entry for Abigail Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-59K"
+    },
+    {
+      "id": "S83",
+      "title": "George Mills, \"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\"",
+      "citation": "\"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q24Q-26Y6 : Mon Mar 23 18:03:09 UTC 2026), George Mills, 04 Mar 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q24Q-26Y6"
+    },
+    {
+      "id": "S84",
+      "title": "George Mills, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7X3-B36 : Sat Oct 17 22:50:49 UTC 2026), George Mills, 1 May 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7X3-B36"
+    },
+    {
+      "id": "S85",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-5HM : Wed Oct 14 21:41:33 UTC 2026), George in entry for Theodosia Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-5HM"
+    },
+    {
+      "id": "S86",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-59W : Wed Oct 14 22:54:32 UTC 2026), George in entry for James A. Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-59W"
+    },
+    {
+      "id": "S87",
+      "title": "Geo. Mills, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F69F-343 : Wed Mar 26 19:32:06 UTC 2025), Geo. Mills, 1 May 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F69F-343"
+    },
+    {
+      "id": "S88",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMH-K6QH : Fri Aug 07 12:49:34 UTC 2026), George in entry for Silas Mills, 20 February 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMH-K6QH"
+    },
+    {
+      "id": "S89",
+      "title": "George Mills, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-GX7 : Wed Oct 14 21:44:20 UTC 2026), George Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-GX7"
+    },
+    {
+      "id": "S90",
+      "title": "George Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-XWCB : Fri Aug 07 12:50:09 UTC 2026), George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-XWCB"
+    },
+    {
+      "id": "S91",
+      "title": "George Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-ZXP : Wed Oct 14 22:38:51 UTC 2026), George Mill, 3 May 1763.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-ZXP"
+    },
+    {
+      "id": "S92",
+      "title": "George Mills, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVZ-5VMM : Sun Oct 04 14:24:12 UTC 2026), George Mills, 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVZ-5VMM"
+    },
+    {
+      "id": "S93",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7L-4VLL : Fri Aug 07 12:48:23 UTC 2026), George in entry for Sarah Mills, 23 December 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7L-4VLL"
+    },
+    {
+      "id": "S94",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7T-939H : Fri Aug 07 12:47:32 UTC 2026), George in entry for Abigail Mills, 10 May 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7T-939H"
+    },
+    {
+      "id": "S95",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSH-QQM7 : Fri Aug 07 12:46:56 UTC 2026), George in entry for George Mills, 20 January 1793.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSH-QQM7"
+    },
+    {
+      "id": "S96",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMH-K6Q7 : Fri Aug 07 12:49:34 UTC 2026), George in entry for Silas Mills, 3 January 1795.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMH-K6Q7"
+    },
+    {
+      "id": "S97",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPST-RNXC : Fri Aug 07 12:49:44 UTC 2026), George in entry for Theodosia Mills, 7 December 1801.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPST-RNXC"
+    },
+    {
+      "id": "S98",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSF-VT2G : Fri Aug 07 12:49:41 UTC 2026), George in entry for John Lorenzo Mills, 22 March 1809.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSF-VT2G"
+    },
+    {
+      "id": "S99",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSX-1BC7 : Fri Aug 07 12:47:29 UTC 2026), George in entry for James Alexander Mills, 10 February 1806.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSX-1BC7"
+    },
+    {
+      "id": "S100",
+      "title": "Geroge, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS2-MB8D : Fri Aug 07 12:51:01 UTC 2026), Geroge in entry for Mary Mills, 24 December 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS2-MB8D"
+    },
+    {
+      "id": "S101",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP3B-GQNX : Fri Aug 07 12:48:07 UTC 2026), George in entry for Juliann Mills, 13 July 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP3B-GQNX"
+    },
+    {
+      "id": "S102",
+      "title": "George, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQC-7VJB : Fri Aug 07 12:48:20 UTC 2026), George in entry for Rebecca Almira Mills, 11 December 1803.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQC-7VJB"
+    },
+    {
+      "id": "S103",
+      "title": "George Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:78X6-Q8T2 : Fri Aug 07 12:56:48 UTC 2026), George Mills in entry for Abigail Hoyt, 8 November 1787.",
+      "url": "https://familysearch.org/ark:/61903/1:1:78X6-Q8T2"
+    },
+    {
+      "id": "S104",
+      "title": "George Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSH-QQMS : Fri Aug 07 12:47:26 UTC 2026), George Mills, 8 November 1787.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSH-QQMS"
+    },
+    {
+      "id": "S105",
+      "title": "George, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-BBS : Wed Oct 14 21:32:54 UTC 2026), George in entry for Silas Mills.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-BBS"
+    },
+    {
+      "id": "S106",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F745-WLQ : Wed Oct 14 22:27:57 UTC 2026), George Mills in entry for Silas Mills, 3 January 1795.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F745-WLQ"
+    },
+    {
+      "id": "S107",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WK-67C : Wed Oct 14 22:39:53 UTC 2026), George Mills in entry for Juliann Mills, 13 July 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WK-67C"
+    },
+    {
+      "id": "S108",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WK-67F : Wed Oct 14 22:01:47 UTC 2026), George Mills in entry for Theodosia Mills, 7 December 1801.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WK-67F"
+    },
+    {
+      "id": "S109",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-Q6Y : Wed Oct 14 21:21:18 UTC 2026), George Mills in entry for Mary Mills, 24 December 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-Q6Y"
+    },
+    {
+      "id": "S110",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-8SH : Wed Oct 14 21:28:24 UTC 2026), George Mills in entry for John Lorenzo Mills, 22 March 1809.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-8SH"
+    },
+    {
+      "id": "S111",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-7VF : Wed Oct 14 21:21:37 UTC 2026), George Mills in entry for Sarah Mills, 23 December 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-7VF"
+    },
+    {
+      "id": "S112",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-7VW : Wed Oct 14 22:28:08 UTC 2026), George Mills in entry for Rebecca Almira Mills, 11 December 1803.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-7VW"
+    },
+    {
+      "id": "S113",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-QXW : Wed Oct 14 21:22:20 UTC 2026), George Mills in entry for Abigail Mills, 10 May 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-QXW"
+    },
+    {
+      "id": "S114",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-ZXL : Wed Oct 14 21:26:47 UTC 2026), George Mills in entry for George Mills, 20 January 1793.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-ZXL"
+    },
+    {
+      "id": "S115",
+      "title": "George Mills, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74C-83R : Wed Oct 14 22:14:46 UTC 2026), George Mills in entry for James Alexander Mills, 10 February 1806.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74C-83R"
+    },
+    {
+      "id": "S116",
+      "title": "Abigail Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7T-93M1 : Fri Aug 07 12:48:19 UTC 2026), Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7T-93M1"
+    },
+    {
+      "id": "S117",
+      "title": "Abigail Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-QXH : Wed Oct 14 21:22:16 UTC 2026), Abigail Mill, 1 March 1765.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-QXH"
+    },
+    {
+      "id": "S118",
+      "title": "Rebeckah, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74T-54X : Wed Oct 14 22:24:01 UTC 2026), Rebeckah in entry for Alexander Smith, 24 July 1808.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74T-54X"
+    },
+    {
+      "id": "S119",
+      "title": "Rebeckah, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-H7KS : Fri Aug 07 12:49:51 UTC 2026), Rebeckah in entry for Alexander Smith, 24 July 1808.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-H7KS"
+    },
+    {
+      "id": "S120",
+      "title": "Rebeckah, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP32-J2NG : Fri Aug 07 12:47:33 UTC 2026), Rebeckah in entry for Joseph Smith, 6 September 1810.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP32-J2NG"
+    },
+    {
+      "id": "S121",
+      "title": "Rebecca Mill, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPST-D7LL : Fri Aug 07 12:47:08 UTC 2026), Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPST-D7LL"
+    },
+    {
+      "id": "S122",
+      "title": "Rebecca Mill, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WM-7VH : Wed Oct 14 22:14:31 UTC 2026), Rebecca Mill, 9 December 1766.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WM-7VH"
+    },
+    {
+      "id": "S123",
+      "title": "Rebecca, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-198 : Wed Oct 14 22:54:00 UTC 2026), Rebecca in entry for Samuel Smith.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-198"
+    },
+    {
+      "id": "S124",
+      "title": "Rebecca Smith, \"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\"",
+      "citation": "\"United States, Revolutionary War Pension Payment Ledgers, 1818-1872\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q24Q-5T6N : Mon Mar 23 18:16:37 UTC 2026), Rebecca Smith, 04 Mar 1841.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q24Q-5T6N"
+    },
+    {
+      "id": "S125",
+      "title": "Rebecca Smith, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F76P-8WB : 16 January 2020), Rebecca Smith, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:F76P-8WB"
+    },
+    {
+      "id": "S126",
+      "title": "Rebeckah, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP72-36XS : Fri Aug 07 12:47:50 UTC 2026), Rebeckah in entry for Rebeckah Smith, 19 January 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP72-36XS"
+    },
+    {
+      "id": "S127",
+      "title": "Rebecca, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS1-D9VS : Fri Aug 07 12:51:36 UTC 2026), Rebecca in entry for Nancy Smith, 4 February 1802.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS1-D9VS"
+    },
+    {
+      "id": "S128",
+      "title": "Rebecca, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS2-8HHL : Fri Aug 07 12:48:29 UTC 2026), Rebecca in entry for Polly Smith, 12 April 1800.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS2-8HHL"
+    },
+    {
+      "id": "S129",
+      "title": "Rebecca, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSR-9B69 : Fri Aug 07 12:47:38 UTC 2026), Rebecca in entry for Samuel Smith, 22 January 1792.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSR-9B69"
+    },
+    {
+      "id": "S130",
+      "title": "Rebecca, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP74-XTD7 : Fri Aug 07 12:48:23 UTC 2026), Rebecca in entry for Abraham Smith, 25 January 1794.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP74-XTD7"
+    },
+    {
+      "id": "S131",
+      "title": "Rebecca Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPST-D7LB : Fri Aug 07 12:49:03 UTC 2026), Rebecca Mills, 2 October 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPST-D7LB"
+    },
+    {
+      "id": "S132",
+      "title": "Rebecca Mills, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQC-X4TG : Fri Aug 07 12:52:07 UTC 2026), Rebecca Mills in entry for Joseph Smith, 2 October 1791.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQC-X4TG"
+    },
+    {
+      "id": "S133",
+      "title": "Rebecca, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7K-Y8FB : Fri Aug 07 12:50:59 UTC 2026), Rebecca in entry for Abigail Smith, 14 March 1798.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7K-Y8FB"
+    },
+    {
+      "id": "S134",
+      "title": "Rebecca Mills Smith, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVJ-PMWZ : Fri Oct 02 13:29:04 UTC 2026), Rebecca Mills Smith.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVJ-PMWZ"
+    },
+    {
+      "id": "S135",
+      "title": "Rebecca Smith, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7VZ-197 : Wed Oct 14 22:45:28 UTC 2026), Rebecca Smith.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7VZ-197"
+    },
+    {
+      "id": "S136",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74Y-QZC : Wed Oct 14 21:36:11 UTC 2026), Rebecca in entry for Samuel Smith, 22 January 1792.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74Y-QZC"
+    },
+    {
+      "id": "S137",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F77P-TW1 : Wed Oct 14 22:38:25 UTC 2026), Rebecca in entry for Nancy Smith, 4 February 1802.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F77P-TW1"
+    },
+    {
+      "id": "S138",
+      "title": "Rebeckah, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F77P-TXK : Wed Oct 14 22:38:37 UTC 2026), Rebeckah in entry for Rebeckah Smith, 19 January 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F77P-TXK"
+    },
+    {
+      "id": "S139",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74Y-Q9P : Wed Oct 14 22:31:57 UTC 2026), Rebecca in entry for Abraham Smith, 25 January 1794.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74Y-Q9P"
+    },
+    {
+      "id": "S140",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74Y-SXG : Wed Oct 14 22:41:55 UTC 2026), Rebecca in entry for George Smith, 21 March 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74Y-SXG"
+    },
+    {
+      "id": "S141",
+      "title": "Rebeckah, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F74Q-NL3 : Wed Oct 14 22:35:29 UTC 2026), Rebeckah in entry for Joseph Smith, 6 September 1810.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F74Q-NL3"
+    },
+    {
+      "id": "S142",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WG-TQ6 : Wed Oct 14 21:27:14 UTC 2026), Rebecca in entry for Abigail Smith, 14 March 1798.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WG-TQ6"
+    },
+    {
+      "id": "S143",
+      "title": "Rebecca, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F77P-T6N : Wed Oct 14 22:14:23 UTC 2026), Rebecca in entry for Polly Smith, 12 April 1800.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F77P-T6N"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_research_plan_zgw",
+    "skill": "research-plan",
+    "name": "A first parentage plan accounts for the subject's own birth record and death certificate, skipped with a reason when sealed",
+    "type": "positive",
+    "description": "Issue #4696 Part B (was #4654). Alan Applegarth was born in Utah in 1936 and died in 2023 (known from his obituary). Utah keeps birth records closed for 100 years and death certificates for 50, so both of his are sealed. research-exhaustiveness judges what a plan holds and misses what it leaves out, so a first parentage plan must carry each as an item: planned, or written skipped with skip_category inaccessible (sealed or destroyed) or no_coverage (never kept) and a skip_reason. Leaving them out is the defect.",
+    "tags": [
+      "planning",
+      "first-plan",
+      "parentage",
+      "subject-birth-death-items",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 - who were Alan Glen Applegarth's parents?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "recent-birth-first-plan"
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records",
+    "place-search-utah",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "wiki-place-page-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE: on a parentage question the plan accounts for the subject's own birth record and, when the subject has died, the subject's own death certificate, each as its own item. Where the record is sealed or destroyed it is written skipped with skip_category inaccessible, or no_coverage where it was never kept for that place and period, with a skip_reason saying why. An item for a parent's death or birth record does not satisfy this.",
+    "Whether the subject's records are open or sealed is for the plan to determine from the place, the period and the wiki or locality guidance it reads; do not require any particular statute or closure period to be cited.",
+    "Grade the reasoning, not a preferred answer: other items, their order, and FAN items are not graded by this rule."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 1800,
+    "sdk_message_silence_seconds": 360
+  }
+}

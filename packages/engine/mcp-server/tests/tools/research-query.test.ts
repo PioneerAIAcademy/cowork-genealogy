@@ -369,7 +369,7 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/missing or not an array/);
   });
 
-  it("answers rather than erroring when the folder is not a project", async () => {
+  it("fails with the project refusal when the folder is not a project", async () => {
     // `dir` is a bare temp directory — neither project file. That is not a read
     // failure, it is a user who is not in a research project (issue #1695), and
     // research_query is one of the two READS the issue calls out. The loud
@@ -378,7 +378,8 @@ describe("research_query", () => {
     const result = await researchQuery({ projectPath: dir, section: "assertions" });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect((result as any).reason).toBe("no_project");
+    expect((result as any).reason).toBeUndefined();
+    expect(result.errors.join(" ")).toContain("No project:");
   });
 
   it("evaluations takes only targetId/focus — another filter is an error naming them", async () => {

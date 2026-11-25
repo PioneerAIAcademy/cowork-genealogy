@@ -1,0 +1,82 @@
+{
+  "tool": "source_screen",
+  "description": "Real source_screen answer for John Becker (I1, called by its FamilySearch id LZBK-7QN) on becker-attachment-links-question, captured 2026-11-20 with checks a,b,c,h (no OCR), and g added 2026-11-23 by re-running the tool with those 2026-11-20 matcher scores replayed (g scores no pair here: no other tree person links to these records): the 1900 census weak at a 0.79 leave-one-out score, the 1910 census fine, one unindexed attachment not scored.",
+  "args": {
+    "personId": "LZBK-7QN"
+  },
+  "response": {
+    "ok": true,
+    "personId": "I1",
+    "attachments": [
+      {
+        "sourceId": "S1",
+        "recordId": "ark:/61903/1:1:MM8C-43Q",
+        "level": "person",
+        "verdict": "weak",
+        "reasons": [
+          "a: leave-one-out score 0.79 is in the grey band."
+        ],
+        "signals": {
+          "a": {
+            "score": 0.788498,
+            "band": "grey"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
+          }
+        },
+        "personaId": "p_1"
+      },
+      {
+        "sourceId": "S2",
+        "recordId": "ark:/61903/1:1:MLFM-GC8",
+        "level": "person",
+        "verdict": "fine",
+        "reasons": [],
+        "signals": {
+          "a": {
+            "score": 0.86390287,
+            "band": "clear"
+          },
+          "b": {
+            "impossible": [],
+            "implausible": []
+          },
+          "c": {
+            "parties": [],
+            "disagreements": []
+          },
+          "g": {
+            "checked": [],
+            "failing": []
+          }
+        },
+        "personaId": "p_1"
+      },
+      {
+        "sourceId": "S3",
+        "recordId": null,
+        "level": "person",
+        "verdict": "not_scored",
+        "reasons": [
+          "unindexed: the attachment is not an indexed record (an image, a document or a link to another site)."
+        ],
+        "signals": {}
+      }
+    ],
+    "counts": {
+      "weak": 1,
+      "fine": 1,
+      "not_scored": 1
+    }
+  }
+}
