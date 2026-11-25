@@ -100,6 +100,25 @@ describe('QuestionsSection', () => {
     expect(screen.queryByText('Question Kind')).toBeNull()
   })
 
+  // audits_tree is optional (issue #4430): a row only when true, so an ordinary
+  // question shows nothing and a false reads as absent.
+  it('shows the audit row only when the question audits the tree', async () => {
+    const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
+    mockResearch({ questions: [{ ...q, audits_tree: true }] })
+    const { unmount } = render(<QuestionsSection />)
+    await userEvent.click(screen.getByText(q.question).parentElement as HTMLElement)
+    expect(screen.getByText('Audits the Tree')).toBeInTheDocument()
+    unmount()
+    for (const audits_tree of [false, undefined]) {
+      mockResearch({ questions: [{ ...q, audits_tree }] })
+      const view = render(<QuestionsSection />)
+      await userEvent.click(screen.getByText(q.question).parentElement as HTMLElement)
+      expect(screen.getByText('Selection Basis')).toBeInTheDocument()
+      expect(screen.queryByText('Audits the Tree')).toBeNull()
+      view.unmount()
+    }
+  })
+
   // A legacy document with exhaustive_declaration.declared=true must still show the badge.
   it('shows the badge for a legacy document with declared=true', () => {
     const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
