@@ -14692,20 +14692,27 @@ function namesakeRowsWritten(
   return out;
 }
 
-/** The 1:2 record each persona a call's written namesake rows list belongs to,
- *  read from the rows' own search sidecars (a hit's `recordArk`). Keyed by the
- *  persona's ARK core. */
+/** Per persona (by ARK core) of a call's written namesake rows, the 1:2 records
+ *  its own search hits place it in (`records`, a hit's `recordArk`), and those of
+ *  them whose persons include a second person of the row's given name (`shared`). */
+export type NamesakeSidecarRecords = ReadonlyMap<
+  string,
+  { records: ReadonlySet<string>; shared: ReadonlySet<string> }
+>;
+
+/** Reads `NamesakeSidecarRecords` from the rows' own search sidecars. */
 export async function namesakeRowRecordArks(
   before: { research: any },
   after: { research: any },
   applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
   readResults: (ref: string) => Promise<any[] | null>,
-): Promise<Map<string, Set<string>>> {
-  const out = new Map<string, Set<string>>();
+): Promise<Map<string, { records: Set<string>; shared: Set<string> }>> {
+  const out = new Map<string, { records: Set<string>; shared: Set<string> }>();
   const logById = logIndex(after.research);
   for (const { row } of namesakeRowsWritten(before, after, applied)) {
     const wanted = new Set((Array.isArray(row.record_ids) ? row.record_ids : []).map(personaArkCore).filter(Boolean));
     if (wanted.size === 0) continue;
+    const given = rowGivenWords(row.name);
     for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
       const entry = logById.get(logId);
       if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
@@ -14713,12 +14720,35 @@ export async function namesakeRowRecordArks(
         const persona = personaArkCore(hit?.recordId);
         const record = arkCore(hit?.recordArk);
         if (persona === null || record === null || !wanted.has(persona)) continue;
-        if (!out.has(persona)) out.set(persona, new Set());
-        out.get(persona)!.add(record);
+        if (!out.has(persona)) out.set(persona, { records: new Set(), shared: new Set() });
+        const links = out.get(persona)!;
+        links.records.add(record);
+        const persons = (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []) as any[];
+        if (given.words.size > 0 && persons.filter((p) => sharesRowGivenName(p, given)).length > 1) {
+          links.shared.add(record);
+        }
       }
     }
   }
   return out;
+}
+
+/** The 1:2 records whose live name assertions give two or more people of the
+ *  row's given name, a person in a record being its `record_persona_id`, else
+ *  its `record_role`. */
+function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): Set<string> {
+  const people = new Map<string, Set<string>>();
+  for (const a of assertions) {
+    if (a?.fact_type !== "name" || typeof a?.value !== "string") continue;
+    const record = arkCore(a?.record_document_id);
+    if (record === null) continue;
+    const words = rowGivenWords(a.value).words;
+    if (![...words].some((w) => given.words.has(w))) continue;
+    const who = `${arkCore(a?.record_id) ?? ""}|${a?.record_persona_id ?? a?.record_role ?? ""}`;
+    if (!people.has(record)) people.set(record, new Set());
+    people.get(record)!.add(who);
+  }
+  return new Set([...people].filter(([, who]) => who.size > 1).map(([record]) => record));
 }
 
 /** A namesake row records someone the tree does not hold (issue #2475, the row
@@ -14728,19 +14758,22 @@ export async function namesakeRowRecordArks(
  *  row's own subject is never the holder: they often appear in the same record
  *  in another role. A record reaches the tree through the 1:2 records its
  *  assertions were read from (`record_document_id`), the row's own search hits
- *  (`recordArks`), or a tree source whose url is the persona itself. */
+ *  (`recordArks`), or a tree source whose url is the persona itself. A 1:2
+ *  record that holds a second person of the row's given name (a father and son
+ *  both John) is not followed: the tree may cite it for that other person. */
 export function namesakeKnownRecordCheck(
   before: { research: any },
   after: { research: any; tree: any },
   applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
-  recordArks: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
+  recordArks: NamesakeSidecarRecords = new Map(),
 ): Array<{ index: number; message: string }> {
   const written = namesakeRowsWritten(before, after, applied);
   if (written.length === 0) return [];
   const research = after.research;
   const tree = after.tree;
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
   const documents = new Map<string, Set<string>>();
-  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+  for (const a of assertions) {
     const persona = personaArkCore(a?.record_id);
     const record = arkCore(a?.record_document_id);
     if (persona === null || record === null) continue;
@@ -14769,6 +14802,17 @@ export function namesakeKnownRecordCheck(
     const n = (Array.isArray(p?.names) ? p.names : [])[0];
     return [n?.given, n?.surname].filter((x) => typeof x === "string" && x !== "").join(" ");
   };
+  // Each tree person's live links, as `<1:2 record>|<record_persona_id>`.
+  const assertionById = new Map(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const linkedPersonas = new Map<string, Set<string>>();
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const a = assertionById.get(e.assertion_id);
+    const record = arkCore(a?.record_document_id);
+    if (record === null || typeof a?.record_persona_id !== "string") continue;
+    if (!linkedPersonas.has(e.person_id)) linkedPersonas.set(e.person_id, new Set());
+    linkedPersonas.get(e.person_id)!.add(`${record}|${a.record_persona_id}`);
+  }
   const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
   const findings: Array<{ index: number; message: string }> = [];
   for (const { row, index } of written) {
@@ -14778,20 +14822,34 @@ export function namesakeKnownRecordCheck(
     const listed = (Array.isArray(row.record_ids) ? row.record_ids : []) as unknown[];
     const held: string[] = [];
     const repeated: string[] = [];
+    const sharedByAssertions = recordsSharingGivenName(assertions, given);
     for (const id of listed) {
       const persona = personaArkCore(id);
       if (persona === null) continue;
-      const records = new Set([persona, ...(documents.get(persona) ?? []), ...(recordArks.get(persona) ?? [])]);
+      const sidecar = recordArks.get(persona);
+      const shared = new Set([...sharedByAssertions, ...(sidecar?.shared ?? [])]);
+      const viaRecord = [...(documents.get(persona) ?? []), ...(sidecar?.records ?? [])];
+      const records = new Set([persona, ...viaRecord.filter((r) => !shared.has(r))]);
+      const stamped = row.record_persona_ids?.[String(id)];
+      // A record holding two people of the row's given name counts only for a
+      // holder linked to the row's own persona in it.
+      const heldIn = (c: { person: any; cites: Map<string, string> }) => [
+        ...[...records].filter((r) => c.cites.has(r)),
+        ...viaRecord.filter(
+          (r) => shared.has(r) && c.cites.has(r) && typeof stamped === "string" &&
+            (linkedPersonas.get(c.person.id)?.has(`${r}|${stamped}`) ?? false),
+        ),
+      ];
       const holders = citing.filter(
         (c) => c.person.id !== row.person_id && given.words.size > 0 && sharesRowGivenName(c.person, given) &&
-          [...records].some((r) => c.cites.has(r)),
+          heldIn(c).length > 0,
       );
       if (holders.length > 0) {
         held.push(
           `'${String(id)}' is cited on ` +
             holders
               .map((c) => {
-                const ref = [...records].map((r) => c.cites.get(r)).find((x) => x !== undefined);
+                const ref = c.cites.get(heldIn(c)[0]);
                 return `tree person '${c.person.id}' (${nameOf(c.person)}, source '${ref}')`;
               })
               .join(" and "),
@@ -14835,7 +14893,7 @@ function namesakeMessages(
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
   startingTree: SimplifiedGedcomX | null,
-  recordArks: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
+  recordArks: NamesakeSidecarRecords = new Map(),
 ): string[] {
   return [
     ...namesakeRowLogCheck(before, after, applied),

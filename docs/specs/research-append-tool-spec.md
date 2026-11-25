@@ -1805,7 +1805,15 @@ is listed, and the name sentence only when a name is. It rides
     trips when the source is cited on a fact or name of a tree person other than
     the row's `person_id` who shares a given word with the row's `name` (the
     words `sharesRowGivenName` reads). The row's own subject never trips it: they
-    often appear in the same record in another role. The message names each
+    often appear in the same record in another role. A 1:2 record that holds a
+    second person of the row's given name (a father and son both John, read from
+    the hit's GedcomX persons or from two people's name assertions in that record,
+    a person being its `record_persona_id`, else its `record_role`) counts only
+    for a tree person with a live `person_evidence` link to an assertion of that
+    record whose `record_persona_id` is the row's own stamped persona
+    (`record_persona_ids`): otherwise the tree may cite it for the other one, and
+    the row is accepted. A source whose `url` is the persona itself always
+    counts. The message names each
     tree person and the source, says to leave the record off the row if it is
     theirs, and to return `Hand-back: tree-edit` if the tree cites it on them by
     mistake. The shape it was built for, from an alpha session of 2026-11-18: 7
