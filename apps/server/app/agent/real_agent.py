@@ -1593,8 +1593,8 @@ class RealAgent:
             research = read_research_json(self.dir)
             if research is None:
                 if (Path(self.dir) / "research.json").exists():
-                    # Unparseable (a hand edit, a BOM): "could not read", never "nothing open",
-                    # or a seed would count every open hand-off as new.
+                    # Unparseable (a hand edit, a BOM): "could not read", not "nothing open",
+                    # so it is logged; the seed then seeds empty (`seed_hand_offs`).
                     _log("[agent] hand-off read failed, posting no links: research.json is unreadable")
                     return None
                 research = {}

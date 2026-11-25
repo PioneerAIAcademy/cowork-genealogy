@@ -6766,6 +6766,36 @@ def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(tur
     assert _links_only(_text_events(turn_env["conn"])) == [hand_off_link_text(_LINK_URL)]
 
 
+def test_a_worker_seed_that_raises_is_not_retried_by_a_later_call(turn_env, monkeypatch):
+    """/code-review round 3: the first delegation's pretool read raises (not a store error),
+    so its seed never runs. Left unseeded, the second delegation's pretool would seed after
+    the first agent logged log_041, and that link would never be posted. It seeds empty."""
+    from app.agent.continue_policy import hand_off_link_text
+    url_b = "https://www.ancestry.com/search/?name=Thomas_Hagell"
+    research = {"project": {"status": "active"}, "log": []}
+    calls = {"n": 0}
+
+    def read(conn, project_id):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ValueError("a malformed document")
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    delegate = {"subagent_type": "search-external-sites"}
+    turn_env["client"] = _ScriptedClient([
+        _init(), ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s1"),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result("toolu_s1"),
+        ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s2"),
+        lambda: research["log"].append(_link_hand_off("log_045", url_b)),
+        _agent_result("toolu_s2"), _result(num_turns=3),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert _links_only(_text_events(turn_env["conn"])) == [
+        hand_off_link_text(_LINK_URL), hand_off_link_text(url_b)]
+
+
 def test_a_worker_write_that_lands_before_the_stream_reads_the_call_is_posted(turn_env, monkeypatch):
     """The seed is in `pretool`, which runs before the tool does: a fast main-thread
     `research_log_append` whose row is in the store before the worker reads its `tool_use`

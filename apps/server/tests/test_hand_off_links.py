@@ -60,6 +60,30 @@ def test_a_url_with_no_scheme_gets_https():
     assert text.endswith("<https://www.ancestry.com/search/?name=Thomas_Hagell>")
 
 
+@pytest.mark.parametrize(
+    ("logged", "link"),
+    [("www.findagrave.com:443/memorial/search?x=1", "https://www.findagrave.com:443/memorial/search?x=1"),
+     ("//billiongraves.com/search", "https://billiongraves.com/search"),
+     ("HTTPS://www.ancestry.com/search", "HTTPS://www.ancestry.com/search"),
+     ("ancestry.com", "https://ancestry.com")],
+)
+def test_a_host_name_is_a_web_link(logged, link):
+    """/code-review round 3: `www.findagrave.com:443/...` used to read as the scheme
+    `www.findagrave.com:` and get no `https://`, a link the browser cannot open."""
+    assert cp.hand_off_link_text(logged).endswith(f"<{link}>")
+
+
+@pytest.mark.parametrize(
+    "logged", ["no results found.", "javascript:alert(1)", "data:text/html,x", "localhost:8080/x",
+               "file:///C:/x.html", "ftp://example.com/x"],
+)
+def test_anything_but_a_web_link_is_code(logged):
+    """/code-review round 3: dotted prose became a garbage link, and another scheme an
+    autolink whose href the chat's markdown blanks."""
+    text = cp.hand_off_link_text(logged)
+    assert text == f"Search to run: open this link, then send back what you find there.\n`{logged}`"
+
+
 @pytest.mark.parametrize("url", ["https://[findagrave.com/x", "http://[::1/x", "https://a]b.com/"])
 def test_a_url_that_will_not_parse_never_raises(url):
     """`urlsplit` raises ValueError on an unbalanced bracket in the netloc."""
@@ -275,6 +299,27 @@ def test_a_hand_off_the_main_thread_logs_itself_is_posted(tmp_path):
     assert events[at + 1]["text"] == cp.hand_off_link_text(URL_A), "at the call's result"
 
 
+def test_a_failed_seed_is_not_retried_by_a_later_call(tmp_path):
+    """/code-review round 3: the first call's seed read fails (a BOM'd research.json), the
+    subagent's write cleans the file, and a second delegation must not seed then: its read
+    would count the first call's link as already handed out, and it would never be posted.
+    A failed seed seeds empty: an open link may be posted again, never lost."""
+    call, _calls, result, _said, done = _messages()
+    (tmp_path / "research.json").write_bytes(
+        b"\xef\xbb\xbf" + json.dumps({"project": {"status": "active"}, "log": []}).encode())
+    events = _run(tmp_path, [
+        call("toolu_1"),
+        lambda: _write_log(tmp_path, _hand_off("log_041", URL_A)),
+        result("toolu_1"),
+        call("toolu_2"),
+        lambda: _write_log(tmp_path, _hand_off("log_041", URL_A), _hand_off("log_045", URL_B, site="ancestry")),
+        result("toolu_2"),
+        done(),
+    ])
+    assert _links(events) == [cp.hand_off_link_text(URL_A), cp.hand_off_link_text(URL_B)], \
+        "the first call's link is posted, not counted as handed out by a later seed"
+
+
 def test_a_subagents_own_calls_neither_seed_nor_post(tmp_path):
     """Only a main-thread delegation counts; a subagent's tool traffic carries a parent."""
     call, _calls, result, _said, done = _messages()
@@ -372,9 +417,10 @@ def test_a_write_that_lands_before_the_host_reads_the_call_is_still_posted(tmp_p
     assert _links(events) == [cp.hand_off_link_text(URL_A)]
 
 
-def test_an_unparseable_project_is_not_read_as_empty(tmp_path):
-    """A research.json that will not parse (a BOM, a hand edit) is "could not read": the turn
-    stays unseeded, and the hand-off already open is not posted again once the file reads."""
+def test_an_unparseable_project_seeds_empty(tmp_path):
+    """A research.json that will not parse (a BOM, a hand edit) seeds the turn empty, so a
+    hand-off already open is posted again once the file reads: shown twice rather than
+    risk one never shown (`test_a_failed_seed_is_not_retried_by_a_later_call`)."""
     call, _calls, result, _said, done = _messages()
     (tmp_path / "research.json").write_bytes(b"\xef\xbb\xbf" + json.dumps(
         {"project": {"status": "active"}, "log": [_hand_off("log_001", URL_A)]}).encode("utf-8"))
@@ -384,7 +430,7 @@ def test_an_unparseable_project_is_not_read_as_empty(tmp_path):
         result("toolu_1"),
         done(),
     ])
-    assert _links(events) == []
+    assert _links(events) == [cp.hand_off_link_text(URL_A)]
 
 
 def test_the_seed_hook_is_wired_for_every_call_that_can_open_a_hand_off(tmp_path):

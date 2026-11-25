@@ -341,8 +341,12 @@ def completion_halt_summary(
 # the engine's rule, never a second copy here.
 
 
-# A CommonMark autolink needs a scheme: 2-32 characters, a letter first, then a colon.
-_URL_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]{1,31}:")
+# Only a web link is autolinked: the chat's markdown blanks any other scheme's href
+# (react-markdown's urlTransform), and `ancestry.com:443/...` would read as scheme
+# `ancestry.com:`. A bare host name, with an optional port, then a path or nothing, gets
+# `https://`; text with a dot that is not one (`no results found.`) does not.
+_WEB_URL = re.compile(r"https?://", re.I)
+_BARE_HOST = re.compile(r"(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#]|$)")
 
 
 def hand_off_link_text(url: str) -> str:
@@ -352,18 +356,20 @@ def hand_off_link_text(url: str) -> str:
 
     An autolink holds no ASCII control character, space, `<` or `>`, and an agent-logged
     URL is not always encoded, so those are percent-encoded; the link opens the same page.
-    It also needs a scheme: a logged `www.ancestry.com/...` gets `https://`, and text that
-    is no URL at all is shown as code rather than dropped as an HTML tag."""
+    Only an http(s) URL is a link: a logged `www.ancestry.com/...` gets `https://`, and
+    anything else (no URL at all, `localhost:8080/x`, `javascript:...`) is shown as code
+    rather than as a link that opens nothing."""
     url = url.strip()
-    if not _URL_SCHEME.match(url) and "." in url.lstrip("/").split("/", 1)[0]:
+    if not _WEB_URL.match(url) and _BARE_HOST.match(url.lstrip("/")):
         url = "https://" + url.lstrip("/")
+    web = bool(_WEB_URL.match(url))
     try:
-        host = (urlsplit(url).hostname or "").removeprefix("www.")
+        host = (urlsplit(url).hostname or "").removeprefix("www.") if web else ""
     except ValueError:  # e.g. an unbalanced `[` in the netloc
         host = ""
     where = f" on {host}" if host else ""
     head = f"Search to run{where}: open this link, then send back what you find there."
-    if not _URL_SCHEME.match(url):
+    if not web:
         return f"{head}\n`{url.replace('`', '')}`"
     href = "".join(quote(c, safe="") if c <= " " or c in "<>\x7f" else c for c in url)
     return f"{head}\n<{href}>"
@@ -378,7 +384,8 @@ class HandOffLinks:
     time, so a turn with no such call never reads research.json. ``new_texts`` returns a paragraph for each row opened since,
     once: a parallel second return that re-sees the first's rows posts only its own, and
     the turn-end sweep posts only what no return did. A link sent again is logged under a
-    new id and so is posted again. Before ``seed`` it posts nothing."""
+    new id and so is posted again. Before ``seed`` it posts nothing; a seed whose read
+    failed seeds empty (``seed_hand_offs``)."""
 
     def __init__(self) -> None:
         self.seen: set[str] | None = None
@@ -435,12 +442,16 @@ def seed_hand_offs(
     seeds. It runs in the hook, before the tool does, and not at the message stream's
     ``tool_use``, because by the time the host reads that the CLI may already have run the
     call, and a fast ``research_log_append`` would then be seeded as seen and never posted.
-    ``read_rows`` returning None (unreadable) leaves the turn unseeded."""
+
+    ``read_rows`` returning None (unreadable) seeds the turn EMPTY, so every open hand-off
+    a later read finds is posted, even one an earlier turn handed out. Left unseeded, the
+    next qualifying call would seed instead, after this call's agent may have logged its
+    links, and they would never be posted (/code-review round 3). A link shown twice can be
+    ignored; a link never shown cannot be run."""
     if not wants_hand_off_seed(links, data):
         return
     rows = read_rows()
-    if rows is not None:
-        links.seed(rows)
+    links.seed(rows if rows is not None else [])
 
 
 def hand_off_texts(

@@ -2932,6 +2932,7 @@ async def _run_turn(
             # never reaches PostToolUse, so its reading would be a wasted document read.
             # All of it inside the try: a raising PreToolUse fails a call the patron was
             # entitled to make, and the halt is only an optimisation.
+            seeding = False
             try:
                 data = input_data if isinstance(input_data, dict) else {}
                 use_id = tool_use_id or data.get("tool_use_id")
@@ -2944,6 +2945,7 @@ async def _run_turn(
                 want_status = bool(use_id) and wants_status_before(data)
                 want_seed = boundary is not None and wants_hand_off_seed(links, data)
                 if not stopped and not attempt["store_down"] and (want_status or want_seed):
+                    seeding = want_seed
                     research = read_research(conn, project_id)
                     if want_status:
                         status_before[str(use_id)] = status_before_call(research)
@@ -2952,6 +2954,10 @@ async def _run_turn(
             except Exception as exc:  # noqa: BLE001 - the call runs on
                 log(ev="completion_status_failed", turn_id=turn_id,
                     error=f"{type(exc).__name__}: {exc}")
+                # A failed seed seeds empty, as `seed_hand_offs` does for an unreadable
+                # document: left unseeded, a later call would seed over this one's links.
+                if seeding:
+                    links.seed([])
                 if store_error(exc):
                     store_unavailable()
             return reply
@@ -3148,7 +3154,10 @@ async def _run_turn(
             if terminal["reason"] == GRANT_LOCK_LOST:
                 # Issue #4660: the redelivery seeds afresh and would read this attempt's
                 # links as already open, so they are posted now. A lost grant lock is not
-                # a down store; `open_hand_offs` reads nothing if it is.
+                # a down store; `open_hand_offs` reads nothing if it is. Nor a lost claim:
+                # this attempt still owns the turn (a newer claim halts as `Superseded`),
+                # and the redelivery starts only after it raises, so the write is unscoped
+                # like every event it streamed.
                 if links.seeded:
                     for link_text in links.new_texts(open_hand_offs() or []):
                         write_event(conn, session_id, {"kind": "text", "text": link_text},

@@ -752,7 +752,7 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
 
-**Delivery: the host posts the link** (lead, 2026-11-23, issue #4660). A row here
+**Delivery: the host posts the link** (lead, 2026-11-23). A row here
 says the researcher already has the link, and the router never raises it again. That
 held only when the main thread relayed the agent's report, and in the Hagell alpha
 session it rewrote every report and no logged link reached the chat. So on both hosted
@@ -763,10 +763,11 @@ delegation, or `research_log_append`, which the main thread may call itself
 open when the turn's first such call began is written to the chat as its own paragraph
 of the turn's reply: the site's host name, one sentence, and the URL as a markdown
 autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
-to a URL logged with no scheme; text that is no URL is shown as code). "Began" is the
-plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs before the tool
-does: by the time the host reads the call off the message stream, a fast
-`research_log_append` may already have written its row. A link logged by a call that never
+to a bare host name; only an http(s) URL is a link, and anything else is shown as code).
+"Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
+before the tool does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. If that read fails, the turn
+counts nothing as open, so a link may be posted twice but is never skipped. A link logged by a call that never
 returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
 a worker attempt that lost its grant lock posts its links before it raises. Each row is
 posted once per turn; a link sent again opens a new row and is posted again. The rule
@@ -776,7 +777,7 @@ to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
 nothing for this.
 
 - **Not covered here:** the connector's chat, where `show_project` lists
-  `awaitingUser` (issue #4297), and Cowork and Desktop, which still rely on the relay.
+  `awaitingUser`, and Cowork and Desktop, which still rely on the relay.
 - **A turn that never reached its end** posts nothing for a call that had not
   returned, and those rows read as handed over: a process that died, and a worker
   attempt ended by the store going down, a newer claim superseding it, or a failed
