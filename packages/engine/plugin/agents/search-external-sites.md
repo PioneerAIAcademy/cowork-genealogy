@@ -645,9 +645,13 @@ in courthouses, parish archives, and historical societies.
 
 ### 7. Update status and suggest the next step
 
-Once the search is logged, set the plan item's status with a one-line
-`research_append` call (`section: "plan_items"`, `op: "update"`, the parent
-`planId` and the `entryId` you searched, `fields: { status: "<below>" }`).
+Once the search is logged, set the plan item's status with this call, in a
+turn of its own after the log call has answered:
+
+```
+research_append({ projectPath, section: "plan_items", op: "update", planId: "<the plan's pl_ id>", entryId: "<the pli_ id>", fields: { status: "<below>" } })
+```
+
 **A capture-required search is not finished until the capture arrives** — do
 not mark it `completed` for handing over a URL.
 

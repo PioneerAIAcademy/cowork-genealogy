@@ -787,7 +787,8 @@ export const FS_HOLDINGS_REMINDER =
 export const BROWSE_SITE_FILM_REMINDER =
   FS_HOLDINGS_REMINDER +
   " The same goes for a FamilySearch film of this register that catalog_search kept: its sentence, " +
-  "with the film number.";
+  'starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`. A film number is ' +
+  "what the researcher asks a FamilySearch Center for, so it is never left out.";
 // For the agent only: how to skip the route next time.
 const BROWSE_SITE_ROOT_AGENT_TAIL =
   " — or pass the parish page from the wiki or locality guide as baseUrl to link straight to it";
