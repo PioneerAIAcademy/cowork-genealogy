@@ -670,8 +670,8 @@ you are about to write:
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
-7. Disputed fact: if two or more assertions give the asked fact
-   differently, write out the census years after the record's year until
+7. Disputed fact: if the Step 3 disputed-fact rule applies, write out
+   the census years after the record's year until
    the subject would be 100 (skip 1890), for example "born 1848, record
    1880 → 1900, 1910, 1920, 1930, 1940", and plan a census item whose
    date_range covers each.
