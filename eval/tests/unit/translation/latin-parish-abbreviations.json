@@ -5,11 +5,20 @@
     "name": "Expand Latin parish-register abbreviations deleted from the vocabulary table",
     "type": "positive",
     "description": "A Latin Catholic baptism entry whose abbreviations (bapt., fil. leg., test., ej., vid.) and the full term patrini are exactly the vocabulary rows #2259 deletes from the agent body. The point is to show the deletion cost nothing: the agent must still expand each abbreviation individually from craft, not from a bundled table. Added by #2259 as the instrument that detects whether a deleted row was load-bearing.",
-    "tags": ["latin", "catholic", "baptism", "church-record", "abbreviations", "residue-deletion-check", "issue-2259", "direct-arm"]
+    "tags": [
+      "latin",
+      "catholic",
+      "baptism",
+      "church-record",
+      "abbreviations",
+      "residue-deletion-check",
+      "issue-2259",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Translate this Latin Catholic baptismal entry: 'Die 14 Aprilis 1798 bapt. est Catharina, fil. leg. Michaelis Hofer et uxoris eius Mariae, nata die 12 ej. mensis. Patrini: Josephus Bauer et Theresia Gruber vid. Test.: Franciscus Lang.'",
-    "scenario": null
+    "delegation": "Translate this Latin Catholic baptismal entry: 'Die 14 Aprilis 1798 bapt. est Catharina, fil. leg. Michaelis Hofer et uxoris eius Mariae, nata die 12 ej. mensis. Patrini: Josephus Bauer et Theresia Gruber vid. Test.: Franciscus Lang.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

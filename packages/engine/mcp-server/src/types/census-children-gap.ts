@@ -83,4 +83,4 @@ export type CensusChildrenGapResult =
       /** Tree mode only. */
       knownChildrenUsed?: TreeChildUsed[];
     }
-  | { ok: false; reason?: "no_project"; errors: string[] };
+  | { ok: false; errors: string[] };

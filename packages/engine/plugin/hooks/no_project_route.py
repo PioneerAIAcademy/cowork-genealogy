@@ -43,14 +43,17 @@ import sys
 HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 
 CONTEXT = (
-    "If project_context reports no project in this folder, a request to research a person "
-    "is a research job: hand it to the research skill, which starts the project, rather "
-    "than answering it from a single lookup. In that case, if the message names more than "
-    "one goal, you may summarise what the tree says and ask which to pursue first. "
+    "If project_context reports no project in this folder, a call to any tool but project_create, "
+    "project_context and project_list is refused until one exists. A request to research a person is a research job: hand it to the research "
+    "skill, which starts the project from the person's FamilySearch ID, rather than answering it "
+    "from a single lookup; with no ID it asks for one and creates nothing. In that case, if the "
+    "message names more than one goal, you may summarise what the tree says and ask which to "
+    "pursue first. "
     "With no project and no FamilySearch person ID, a request for the names and details "
     "recorded in a record set (a roll, register, muster list or volume), or to re-index "
     "one page or compare it with its FamilySearch index, goes to the "
-    "search-images agent with no projectPath, even when it names no images; relay "
+    "search-images agent, even when it names no images: start a project first with "
+    "project_create (the request as objective, no personId) and pass its projectPath; relay "
     "everything after its final --- verbatim."
 )
 

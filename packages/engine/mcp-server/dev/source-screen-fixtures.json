@@ -2,7 +2,8 @@
   "about": "Planted-error fixtures for dev/source-screen.ts (issue #3408). Public, deceased Family Tree persons and public record ARKs only, drawn from the e2e fixtures adelaida-martinez-mother, joao-sousa-death, hole-parents-negative and ogletree-children. Every host and donor was read live on 2026-10-16. Errors are planted in snapshot copies, never on the live tree.",
   "shortfalls": {
     "latin_given_name": "0 of 2: no host in the donor pool carries a source that indexes a Latin given name.",
-    "relative_clash": "2 of 3: only the adelaida-martinez-mother conflation documents records naming a different mother."
+    "relative_clash": "2 of 3: only the adelaida-martinez-mother conflation documents records naming a different mother.",
+    "wrong_family_cluster": "0 of 2: no committed data names a parent persona ARK of a different family. The adelaida-martinez-mother conflation gives the child side (Valentina Adelaida's baptism ark:/61903/1:1:FLSQ-1NP, for host GRS9-MCH, whose tree mother is MVXS-3V2) but not the persona ARK of her mother Dolores Milan in that record. A fixture needs a host whose tree parent can carry a different family's record: the donor persona ARK of that family's child (for the host) and of a parent persona in the same record (for the host's parent, by Family Tree id), all public and deceased."
   },
   "fixtures": [
     { "id": "easy_hole_uruguay_baptism", "type": "easy_wrong_person", "host": "KD96-TV2", "donor_ark": "ark:/61903/1:1:F2BL-3XN", "note": "1872 Uruguayan baptism of Adela Natividad Martinez on a Norwegian-born man of 1876." },

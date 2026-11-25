@@ -11,7 +11,7 @@
 sidecar_read({ projectPath, ref, offset?, maxChars? })
   -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?,
        hitId?, hitIndex?, logId?, title?, recordDate?, recordPlace? }
-   | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
+   | { ok: false, reason: "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
   -> { ok: true, results: [ <one result above per ref> ] }   // the whole answer within 40,000
@@ -312,7 +312,7 @@ the file's length. Two in a short file still do.
 |---|---|
 | `projectPath` absent / not a string | **throws** `projectPath is required` → the dispatch arm's `catch`, `{ error }` with `isError` |
 | `projectPath` is not an existing directory | **throws** `projectPath does not exist: <path>` → same |
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors: [NO_PROJECT_MESSAGE_READ] }` — an answer, not a failure; `writerToolResult` leaves `isError` unset — the no-project contract `noProjectResult` in `utils/project-io.ts` owns, shared with `research_query` |
+| `projectPath` is a real directory holding **neither** project file | **throws** `NO_PROJECT_REFUSAL` (`utils/project-io.ts`); through the server the gate in `server.ts` refuses first |
 | `offset` present and not a non-negative whole number — including a string `"50"` | **throws**, not coerced (mirrors `research_query`) |
 | `maxChars` present and not a positive whole number | **throws**, not coerced |
 | `maxChars` a finite whole number above 40,000 | clamped to 40,000, no error |
@@ -345,7 +345,7 @@ The classification order is: `ref` / `refs` shape, then argument validation
 off, then `classifyProjectPath` exactly as `readProjectJson` does
 (`missing_arg` → throw `MISSING_PROJECT_PATH_MESSAGE`; `missing_dir` → throw
 `missingProjectDirMessage(projectPath)`; `no_project` →
-`noProjectResult("read")`), then the read: an `evaluations/` or `uploads/` ref
+throw `NO_PROJECT_REFUSAL`), then the read: an `evaluations/` or `uploads/` ref
 through `readText`, a `results/` ref through §7's rules. The two message helpers
 are imported from `utils/project-io.ts`, never re-phrased —
 `single-project-read.test.ts` pins the strings to that one file.

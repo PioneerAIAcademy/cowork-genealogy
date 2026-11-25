@@ -5,11 +5,19 @@
     "name": "Expand German register abbreviations: deleted rows plus the kept gest./get. residue",
     "type": "positive",
     "description": "A German family-register entry mixing four abbreviations #2259 deletes (geb., verh., verw., led.) with two it keeps inline (gest., get.). gest. and get. are the confusable pair the residue guards — both are d-words and the model gets gest. (died) wrong cold, offering getauft (baptized) instead. This test exercises both halves of #2259: deletion costs nothing on the carried rows, and the residue is load-bearing on gest./get.",
-    "tags": ["german", "family-register", "church-record", "abbreviations", "residue-necessity", "issue-2259", "direct-arm"]
+    "tags": [
+      "german",
+      "family-register",
+      "church-record",
+      "abbreviations",
+      "residue-necessity",
+      "issue-2259",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Translate this German family-register summary: 'Johann Müller, geb. 3. Mai 1820, get. 5. Mai 1820, verh. 1845 mit Anna Weber. Anna war verw. seit 1850 und gest. 12. Februar 1880. Ihr Sohn Peter blieb led.'",
-    "scenario": null
+    "delegation": "Translate this German family-register summary: 'Johann Müller, geb. 3. Mai 1820, get. 5. Mai 1820, verh. 1845 mit Anna Weber. Anna war verw. seit 1850 und gest. 12. Februar 1880. Ihr Sohn Peter blieb led.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
