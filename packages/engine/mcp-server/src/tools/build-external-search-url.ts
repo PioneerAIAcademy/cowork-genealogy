@@ -105,6 +105,12 @@ export type BuildExternalSearchUrlResult =
 export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlInput {
   projectPath?: string;
   planItemId?: string | null;
+  // false when the search's results are already in hand, or no researcher can
+  // make the capture: the build still runs its project checks but writes no
+  // in-flight entry, and the caller logs the search once itself. Every call
+  // carries a project (server.ts's gate), so this, not an omitted projectPath,
+  // is how a build says nothing is awaiting a capture.
+  awaitingCapture?: boolean;
   // The place the search is about, as external_links_search takes it. Required
   // for a site-wide build (no `baseUrl`) inside a project, which is refused
   // until that place or one containing it is stored (issue #4410).
@@ -1627,6 +1633,8 @@ export async function buildExternalSearchUrlTool(
     if (refusal) return { ok: false, reason: "place_not_fetched", errors: [refusal] };
   }
 
+  if (input.awaitingCapture === false) return result;
+
   const attributes = coerceJsonArg(input.attributes);
   const query =
     attributes !== null && typeof attributes === "object" && !Array.isArray(attributes)
@@ -1684,6 +1692,8 @@ export const buildExternalSearchUrlSchema = {
     "Given `projectPath`, it also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
     "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "With awaitingCapture false (results already in hand, or no researcher to make the " +
+    "capture) it writes no entry: log the search once yourself. " +
     "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +
     "refused (`place_not_fetched`) until external_links_search has looked up that place " +
     "or one containing it. " +
@@ -1716,9 +1726,15 @@ export const buildExternalSearchUrlSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute project-folder path. When given, the tool logs the URL as an in-flight " +
-          "hand-off awaiting the researcher's capture and returns its `logId`. Omit it when " +
-          "the results are already in hand and nothing is awaiting a capture.",
+          "Absolute project-folder path. The tool logs the URL as an in-flight hand-off " +
+          "awaiting the researcher's capture and returns its `logId`, unless awaitingCapture is false.",
+      },
+      awaitingCapture: {
+        type: "boolean",
+        description:
+          "Default true. Pass false when the results are already in hand or no researcher can " +
+          "make the capture: the URL is built and checked, no in-flight entry is written and no " +
+          "`logId` is returned, and you log the search once yourself.",
       },
       planItemId: {
         type: "string",

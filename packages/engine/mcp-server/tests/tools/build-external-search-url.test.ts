@@ -2314,6 +2314,34 @@ describe("build_external_search_url", () => {
       expect(await readLog()).toEqual([]);
     });
 
+    it("writes nothing with awaitingCapture false, but still runs the project checks", async () => {
+      await writeFetchedProject();
+      const r = await buildExternalSearchUrlTool({
+        site: "myheritage",
+        attributes: { givenName: "Josiah", surname: "Barnes", birthYear: 1818 },
+        projectPath: dir,
+        planItemId: "pli_003",
+        standardPlace: PA,
+        awaitingCapture: false,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.logId).toBeUndefined();
+      expect(r.handoffLine).toBe(`Open this search:\n${r.url}`);
+      expect(await readLog()).toEqual([]);
+
+      const unchecked = await buildExternalSearchUrlTool({
+        site: "myheritage",
+        attributes: { surname: "Barnes" },
+        projectPath: dir,
+        standardPlace: "Hampshire, Massachusetts, United States",
+        awaitingCapture: false,
+      });
+      expect(unchecked.ok).toBe(false);
+      if (unchecked.ok) return;
+      expect(unchecked.reason).toBe("place_not_fetched");
+    });
+
     it("writes nothing when the build fails", async () => {
       await writeProject();
       const r = await buildExternalSearchUrlTool({ site: "findagrave", attributes: {}, projectPath: dir });

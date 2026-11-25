@@ -96,14 +96,14 @@ Each invocation does one of three things, and returns:
       `urlGenerated` the results came from.
    2. **No row matches** → the search was never handed off. Run steps 1–3 in
       full first: steps 1–2, `collections_search`, then
-      `build_external_search_url` without `projectPath`.
+      `build_external_search_url` with `awaitingCapture: false`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
       logged `outcome: "error"`. An upload that could not be read (step 5)
       logs nothing and leaves the plan item as it is.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
-   without `projectPath`) — never write a URL yourself — then log the result
+   with `awaitingCapture: false`) — never write a URL yourself — then log the result
    now (step 6) with that URL — `captureReceived: false`, `captureFilename:
    null` — and give the capture steps (step 4) so a capture can later confirm it.
 
@@ -220,7 +220,7 @@ Instead, for each capture-required external-site plan item:
    also indexed on FamilySearch. If `search-records` can reach the record,
    hand back to search-records rather than deferring.
 2. Otherwise, still resolve the place and build the search URL (steps 2–3),
-   calling the builder **without** `projectPath` — it is a genuine lead worth
+   calling the builder with `awaitingCapture: false` — it is a genuine lead worth
    recording.
 3. **Log it as deferred** in one `research_log_append` call: `outcome:
    "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
@@ -367,7 +367,7 @@ blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
 build again.
 **One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
-is not awaiting anything — call the tool **without** `projectPath`, so no
+is not awaiting anything — call the tool with `awaitingCapture: false`, so no
 in-flight entry is written, and log the search once at step 6.
 
 **Case A — a curated URL exists for the target site.**
