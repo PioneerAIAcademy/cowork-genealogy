@@ -6796,6 +6796,22 @@ def test_a_worker_seed_that_raises_is_not_retried_by_a_later_call(turn_env, monk
         hand_off_link_text(_LINK_URL), hand_off_link_text(url_b)]
 
 
+def test_a_status_reading_that_raises_after_a_good_read_keeps_the_seed(turn_env, monkeypatch):
+    """Fresh-session review: a proof-conclusion delegation wants both the seed and the
+    status reading from one read. When the read succeeds and the status reading raises, the
+    turn keeps its real seed, so a link open before the turn is not posted again."""
+    def raises(research):
+        raise AttributeError("'str' object has no attribute 'get'")
+
+    monkeypatch.setattr(worker, "status_before_call", raises)
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "proof-conclusion"}), _agent_use(),
+        _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
 def test_a_worker_write_that_lands_before_the_stream_reads_the_call_is_posted(turn_env, monkeypatch):
     """The seed is in `pretool`, which runs before the tool does: a fast main-thread
     `research_log_append` whose row is in the store before the worker reads its `tool_use`

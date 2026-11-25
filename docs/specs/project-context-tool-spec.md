@@ -763,7 +763,8 @@ delegation, or `research_log_append`, which the main thread may call itself
 open when the turn's first such call began is written to the chat as its own paragraph
 of the turn's reply: the site's host name, one sentence, and the URL as a markdown
 autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
-to a bare host name; only an http(s) URL is a link, and anything else is shown as code).
+to a bare host name that starts `www.` or ends in a common top-level domain; only an
+http(s) URL is a link, and anything else is shown as code, on one line).
 "Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
 before the tool does: by the time the host reads the call off the message stream, a fast
 `research_log_append` may already have written its row. If that read fails, the turn

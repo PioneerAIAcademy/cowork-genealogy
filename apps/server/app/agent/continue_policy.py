@@ -344,9 +344,15 @@ def completion_halt_summary(
 # Only a web link is autolinked: the chat's markdown blanks any other scheme's href
 # (react-markdown's urlTransform), and `ancestry.com:443/...` would read as scheme
 # `ancestry.com:`. A bare host name, with an optional port, then a path or nothing, gets
-# `https://`; text with a dot that is not one (`no results found.`) does not.
+# `https://` when it starts `www.` or ends in a top-level domain below; text with a dot
+# that is not one (`no results found.`, `results.json`, `St.Louis/1880`) does not.
 _WEB_URL = re.compile(r"https?://", re.I)
-_BARE_HOST = re.compile(r"(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#]|$)")
+_BARE_HOST = re.compile(r"((?:[A-Za-z0-9-]+\.)+([A-Za-z]{2,}))(?::\d+)?(?:[/?#]|$)")
+_WEB_TLDS = frozenset(
+    "com org net gov edu info us uk au ca nz ie de at ch fr be nl lu dk se no fi is it es pt "
+    "pl cz sk hu ro bg hr si rs ua ru za mx br ar cl co jp kr cn in il io".split()
+)
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
 
 
 def hand_off_link_text(url: str) -> str:
@@ -360,7 +366,8 @@ def hand_off_link_text(url: str) -> str:
     anything else (no URL at all, `localhost:8080/x`, `javascript:...`) is shown as code
     rather than as a link that opens nothing."""
     url = url.strip()
-    if not _WEB_URL.match(url) and _BARE_HOST.match(url.lstrip("/")):
+    bare = None if _WEB_URL.match(url) else _BARE_HOST.match(url.lstrip("/"))
+    if bare and (bare.group(1).lower().startswith("www.") or bare.group(2).lower() in _WEB_TLDS):
         url = "https://" + url.lstrip("/")
     web = bool(_WEB_URL.match(url))
     try:
@@ -370,7 +377,8 @@ def hand_off_link_text(url: str) -> str:
     where = f" on {host}" if host else ""
     head = f"Search to run{where}: open this link, then send back what you find there."
     if not web:
-        return f"{head}\n`{url.replace('`', '')}`"
+        # One line: a newline would end the code span, and a blank line the paragraph.
+        return f"{head}\n`{_CONTROL.sub(' ', url).replace('`', '')}`"
     href = "".join(quote(c, safe="") if c <= " " or c in "<>\x7f" else c for c in url)
     return f"{head}\n<{href}>"
 
@@ -419,10 +427,15 @@ HAND_OFF_LOG_TOOLS = frozenset({"research_log_append", "build_external_search_ur
 
 def opens_hand_offs(tool: Any) -> bool:
     """Whether a main-thread call to ``tool`` can open a hand-off: a delegation, or one of
-    ``HAND_OFF_LOG_TOOLS`` under any server prefix (``mcp__genealogy__…``)."""
+    ``HAND_OFF_LOG_TOOLS`` under any server prefix (``mcp__genealogy__…``). A bare tool name
+    does not count: the alpha's seed matcher (``.*__<tool>$``) never fires for one, so a
+    trigger it accepted would find the turn unseeded."""
     if not isinstance(tool, str):
         return False
-    return tool in DELEGATION_TOOLS or tool.rsplit("__", 1)[-1] in HAND_OFF_LOG_TOOLS
+    if tool in DELEGATION_TOOLS:
+        return True
+    prefix, sep, bare = tool.rpartition("__")
+    return bool(sep and prefix) and bare in HAND_OFF_LOG_TOOLS
 
 
 def wants_hand_off_seed(links: HandOffLinks, data: Mapping[str, Any]) -> bool:

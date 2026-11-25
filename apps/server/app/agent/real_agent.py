@@ -1653,15 +1653,19 @@ class RealAgent:
             yield _event("error", text=classification)
             return
         try:
+            # The per-turn hook state, BEFORE the query: the SDK's reader can run this
+            # turn's first PreToolUse while `client.query` is still awaited, and its writes
+            # (`status_before`, the hand-off seed) must land in this turn's state, not be
+            # cleared after or go to the previous turn's tracker.
+            self._begin_turn_hook_state()
+            # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
+            links = self._hand_off_links = HandOffLinks()
             await client.query(text)
             self._stream_dirty = True
-            self._begin_turn_hook_state()
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
             error_emitted = False
-            # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
-            links = self._hand_off_links = HandOffLinks()
             async for message in client.receive_response():
                 for ev in map_message(
                     message, self._tool_names, self._tasks, self._live_tasks,

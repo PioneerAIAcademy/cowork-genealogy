@@ -65,7 +65,11 @@ def test_a_url_with_no_scheme_gets_https():
     [("www.findagrave.com:443/memorial/search?x=1", "https://www.findagrave.com:443/memorial/search?x=1"),
      ("//billiongraves.com/search", "https://billiongraves.com/search"),
      ("HTTPS://www.ancestry.com/search", "HTTPS://www.ancestry.com/search"),
-     ("ancestry.com", "https://ancestry.com")],
+     ("ancestry.com", "https://ancestry.com"),
+     ("familysearch.org/search/record/results?q.surname=Hagell",
+      "https://familysearch.org/search/record/results?q.surname=Hagell"),
+     ("www.genealogy.example/search", "https://www.genealogy.example/search"),
+     ("trove.nla.gov.au/search", "https://trove.nla.gov.au/search")],
 )
 def test_a_host_name_is_a_web_link(logged, link):
     """/code-review round 3: `www.findagrave.com:443/...` used to read as the scheme
@@ -75,7 +79,8 @@ def test_a_host_name_is_a_web_link(logged, link):
 
 @pytest.mark.parametrize(
     "logged", ["no results found.", "javascript:alert(1)", "data:text/html,x", "localhost:8080/x",
-               "file:///C:/x.html", "ftp://example.com/x"],
+               "file:///C:/x.html", "ftp://example.com/x",
+               "results.json", "Smith.John", "St.Louis/1880"],
 )
 def test_anything_but_a_web_link_is_code(logged):
     """/code-review round 3: dotted prose became a garbage link, and another scheme an
@@ -89,6 +94,14 @@ def test_a_url_that_will_not_parse_never_raises(url):
     """`urlsplit` raises ValueError on an unbalanced bracket in the netloc."""
     text = cp.hand_off_link_text(url)
     assert text.startswith("Search to run") and text.endswith(f"<{url}>")
+
+
+def test_text_shown_as_code_stays_on_one_line():
+    """Fresh-session review: a newline would end the code span, and a blank line the
+    paragraph, leaving stray backticks."""
+    text = cp.hand_off_link_text("see notes\n\nlocalhost:8080/x\t`x`")
+    assert text == ("Search to run: open this link, then send back what you find there.\n"
+                    "`see notes localhost:8080/x x`")
 
 
 def test_a_control_character_is_encoded():
@@ -107,7 +120,8 @@ def test_a_url_that_cannot_sit_in_an_autolink_is_encoded():
     ("tool", "opens"),
     [("Agent", True), ("Task", True), ("mcp__genealogy__research_log_append", True),
      ("mcp__remote-devices__Genealogy_Research__build_external_search_url", True),
-     ("mcp__genealogy__record_search", False), ("Read", False), (None, False), (["Agent"], False)],
+     ("mcp__genealogy__record_search", False), ("Read", False), (None, False), (["Agent"], False),
+     ("research_log_append", False), ("__research_log_append", False)],
 )
 def test_which_calls_can_open_a_hand_off(tool, opens):
     assert cp.opens_hand_offs(tool) is opens
@@ -318,6 +332,36 @@ def test_a_failed_seed_is_not_retried_by_a_later_call(tmp_path):
     ])
     assert _links(events) == [cp.hand_off_link_text(URL_A), cp.hand_off_link_text(URL_B)], \
         "the first call's link is posted, not counted as handed out by a later seed"
+
+
+def test_a_seed_that_fires_while_the_query_is_sent_seeds_this_turn(tmp_path):
+    """Fresh-session review: the SDK's reader can run a PreToolUse hook while
+    `client.query(text)` is still awaited. The turn's tracker must already exist then, or
+    the seed lands on the previous turn's (already seeded) tracker and this turn posts
+    nothing."""
+    from _fakes import ReplayFakeClient, attach, turn_events
+
+    call, _calls, result, _said, done = _messages()
+    _write_log(tmp_path)
+    agent = real_agent.RealAgent(tmp_path)
+    agent._hook_counter = {"tool_calls": 0}
+    previous = cp.HandOffLinks()
+    previous.seed([])
+    agent._hand_off_links = previous
+
+    class SeedsDuringQuery(ReplayFakeClient):
+        async def query(self, *args, **kwargs):
+            agent._seed_hand_offs({"tool_name": "Agent"})
+
+        async def receive_response(self):
+            yield call("toolu_1")
+            _write_log(tmp_path, _hand_off("log_041", URL_A))
+            yield result("toolu_1")
+            yield done()
+
+    attach(agent, SeedsDuringQuery([]))
+    events = asyncio.run(turn_events(agent, "search them all"))
+    assert _links(events) == [cp.hand_off_link_text(URL_A)]
 
 
 def test_a_subagents_own_calls_neither_seed_nor_post(tmp_path):

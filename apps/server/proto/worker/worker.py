@@ -2947,10 +2947,13 @@ async def _run_turn(
                 if not stopped and not attempt["store_down"] and (want_status or want_seed):
                     seeding = want_seed
                     research = read_research(conn, project_id)
-                    if want_status:
-                        status_before[str(use_id)] = status_before_call(research)
+                    # The seed first, and `seeding` cleared once it ran, so a status reading
+                    # that raises after a good read does not seed the turn empty.
                     if want_seed:
                         seed_hand_offs(links, data, lambda: boundary.awaiting_hand_offs(research or {}))
+                        seeding = False
+                    if want_status:
+                        status_before[str(use_id)] = status_before_call(research)
             except Exception as exc:  # noqa: BLE001 - the call runs on
                 log(ev="completion_status_failed", turn_id=turn_id,
                     error=f"{type(exc).__name__}: {exc}")
