@@ -648,13 +648,28 @@ def tree_ids_named(text: str | None) -> list[str]:
     return sorted(set(_TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, _LINK_RE.sub(" ", text or "")))))
 
 
-def test_reply_names_no_tree_id(text_response):
-    """Every research test: the main thread never names a tree id.
+def _narration_guidance(state: dict | None) -> str:
+    research = (state or {}).get("research_json")
+    profile = research.get("researcher_profile") if isinstance(research, dict) else None
+    guidance = profile.get("narration_guidance") if isinstance(profile, dict) else None
+    return guidance if isinstance(guidance, str) else ""
+
+
+def test_reply_names_no_tree_id(text_response, before_state, after_state):
+    """Every research test whose project says "No identifiers": the main thread
+    never names a tree id.
 
     A tester read "she is in the tree as I13" as meaningless. The lead ruled
     (2026-11-19) that a person's FamilySearch ID may be shown instead; tree ids,
     source ids and ARKs stay banned. No exemption for a tree id the user typed.
+
+    Gated on the project's `narration_guidance` saying "No identifiers" (issue
+    #4669, 2026-11-25): a scenario whose profile never says it never gave the
+    agent the rule. Both states are read, because a project created during the
+    run exists only in `after_state`.
     """
+    if not any("No identifiers" in _narration_guidance(s) for s in (before_state, after_state)):
+        pytest.skip('the project\'s narration_guidance does not say "No identifiers"')
     hits = tree_ids_named(text_response)
     assert not hits, (
         "the reply names tree ids, which mean nothing to the user; name the "

@@ -22,7 +22,28 @@ from test_research import (  # noqa: E402
     _PROJECT_ID_RE,
     tree_ids_named,
 )
-from test_research import test_reply_names_no_tree_id as no_tree_id  # noqa: E402
+from test_research import test_reply_names_no_tree_id as _validator  # noqa: E402
+
+_OLD_HOUSE_TEXT = "Plain language. No identifiers, file names, tool names or field names."
+
+
+def _state(guidance: str | None) -> dict:
+    if guidance is None:
+        return {"research_json": None}
+    return {"research_json": {"researcher_profile": {"narration_guidance": guidance}}}
+
+
+def _checked(reply, before, after):
+    """Run the validator; a skip here is a failure, or pytest reports it green."""
+    try:
+        _validator(reply, before, after)
+    except pytest.skip.Exception as e:
+        pytest.fail(f"the gate skipped a project that says No identifiers: {e}")
+
+
+def no_tree_id(reply):
+    """The validator on a project whose house text says "No identifiers"."""
+    _checked(reply, _state(_OLD_HOUSE_TEXT), _state(_OLD_HOUSE_TEXT))
 
 
 @pytest.mark.parametrize(
@@ -74,6 +95,42 @@ def test_a_reply_naming_a_tree_id_fails(reply, expected):
 def test_a_reply_without_a_tree_id_passes(reply):
     assert tree_ids_named(reply) == []
     no_tree_id(reply)
+
+
+_PLANTED = "Zeruiah Phipps is Benjamin's sister — she is in the tree as I13."
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        (_OLD_HOUSE_TEXT, _OLD_HOUSE_TEXT),
+        (None, _OLD_HOUSE_TEXT),
+        (_OLD_HOUSE_TEXT, None),
+    ],
+    ids=["project-says-it", "project-created-during-the-run", "after-state-missing"],
+)
+def test_the_gate_still_fails_a_planted_tree_id(before, after):
+    with pytest.raises(AssertionError, match="names tree ids"):
+        _checked(_PLANTED, _state(before), _state(after))
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        (None, None),
+        ("One-line preamble per action, in plain language.", None),
+        ("", ""),
+    ],
+    ids=["no-profile", "profile-without-the-rule", "empty-guidance"],
+)
+def test_the_gate_skips_a_project_that_never_said_no_identifiers(before, after):
+    with pytest.raises(pytest.skip.Exception):
+        _validator(_PLANTED, _state(before), _state(after))
+
+
+def test_the_gate_skips_a_research_json_that_is_not_a_dict():
+    with pytest.raises(pytest.skip.Exception):
+        _validator(_PLANTED, {"research_json": ["not", "a", "dict"]}, {})
 
 
 def test_the_status_question_regex_is_unchanged():
