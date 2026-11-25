@@ -105,7 +105,7 @@ project_create({ projectPath, objective, title, personId: "<id>", subjectPersonI
 
 Only for a person the user named or directly implied (a stated maiden name implies one person: that woman's parent, sex unknown — not specifically her father). Decide before adding anyone:
 
-- **A parent — check the slot first.** For the subject: a `father`, `mother` or `parent` in `relatives`. For anyone else: call `project_context({ projectPath })` and read that person's `parentIds` and each parent's `gender`. A parent of the stated sex fills the slot; a parent of unknown sex fills either; two parents fill both. **Filled → no stub, even when the name differs.**
+- **A parent — check the slot first.** For the subject: a `father`, `mother` or `parent` in `relatives`. For anyone else: call `project_context({ projectPath, include: ["persons"] })` and read that person's `parentIds` and each parent's `gender`. A parent of the stated sex fills the slot; a parent of unknown sex fills either; two parents fill both. **Filled → no stub, even when the name differs.**
 - **A spouse, child or sibling — match the name within that relationship only.** Compare against that person's spouses, children or siblings (`relatives` for the subject; `project_context`'s `spouseIds`, `childIds` and shared `parentIds` for anyone else). The same first given name, case-folded, is a match whatever the surname. **Match → no stub.** When `omitted.relatives` is present, read `project_context` before deciding.
 - **No stub:** report "You said X; the tree lists Y — both will need verification." Record nothing.
 - **Otherwise add a stub, in two calls:**
