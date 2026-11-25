@@ -84,6 +84,18 @@ describe("a search's results, by the tool that wrote them", () => {
     }
   })
 
+  it('a transcribed page links to the page it read, from its source (#4582)', () => {
+    const page = (source: unknown) =>
+      resultsView({ tool: 'image_transcribe', payload: { results: [{ transcription: 'The page text.', source }] } }).rows[0]
+    // An imageId has no ARK, so its link is the film viewer (i one less than the page).
+    expect(page({ imageId: '004567123_00058' }).familySearch).toBe('https://www.familysearch.org/search/film/004567123?i=57')
+    // An ARK is passed through for the display rules to linkify.
+    expect(page({ ark: 'ark:/61903/3:1:ABCD-1' }).familySearch).toBe('ark:/61903/3:1:ABCD-1')
+    // An uploaded file or memory artifact has neither — the row stays text-only.
+    expect(page({ file: 'scan.jpg' }).familySearch).toBeUndefined()
+    expect(page(undefined).familySearch).toBeUndefined()
+  })
+
   it('an unknown tool says how many it holds, and shows none', () => {
     expect(resultsView({ tool: 'mystery', payload: { results: [{}, {}] } })).toEqual({ rows: [], notShown: 2 })
   })
