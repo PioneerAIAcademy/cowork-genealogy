@@ -57,6 +57,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from harness.research_sections import SINGLETON_SECTIONS as _SINGLETON_SECTIONS
+
 # The research.json writers. Tree writers are deliberately out of scope for now:
 # `tree_edit` / `tree_correct` / `materialize_facts` / `merge_tree_persons` have
 # op-shaped semantics this module would have to model rather than read back, and
@@ -97,8 +99,8 @@ UNMODELLED_WRITERS = frozenset(
 # Sections that live as top-level arrays on research.json. `plan_items` is NOT
 # one of them — it is a pseudo-section that nests into `plans[].items` — and
 # that asymmetry is exactly what makes the ownership table and the tool
-# disagree (see PLAN.md, probe A1).
-_SINGLETON_SECTIONS = frozenset({"project", "researcher_profile"})
+# disagree (see PLAN.md, probe A1). `_SINGLETON_SECTIONS` itself (the sections
+# that are NOT top-level arrays) is imported above, shared with diff.py.
 
 
 def bare_tool_name(tool_name: str) -> str:
