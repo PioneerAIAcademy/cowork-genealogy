@@ -23,5 +23,35 @@
     "max_turns": 12,
     "max_wall_clock_seconds": 400
   },
-  "expected_classifications": []
+  "expected_classifications": [
+    {
+      "record_role": "principal",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Pittsylvania"
+    },
+    {
+      "record_role": "principal",
+      "fact_type": "marriage",
+      "attribute": "date",
+      "value": "1866"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "death",
+      "attribute": "date",
+      "value": "1870"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "date",
+      "value": "1867"
+    },
+    {
+      "record_role": "grandfather_1",
+      "fact_type": "name",
+      "value": "Jacob"
+    }
+  ]
 }

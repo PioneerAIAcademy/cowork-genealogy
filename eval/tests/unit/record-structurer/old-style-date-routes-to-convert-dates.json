@@ -22,5 +22,43 @@
   "execution": {
     "max_turns": 12,
     "max_wall_clock_seconds": 400
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "child",
+      "fact_type": "birth",
+      "attribute": "date"
+    },
+    {
+      "record_role": "child",
+      "fact_type": "christening",
+      "attribute": "date"
+    },
+    {
+      "record_role": "father",
+      "fact_type": "occupation",
+      "value": "cordwainer"
+    },
+    {
+      "record_role": "father",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Albany"
+    },
+    {
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Elisabeth Witbeck"
+    },
+    {
+      "record_role": "sponsor_1",
+      "fact_type": "name",
+      "value": "Hendrick Witbeck"
+    },
+    {
+      "record_role": "sponsor_2",
+      "fact_type": "name",
+      "value": "Maria Van Deusen"
+    }
+  ]
 }
