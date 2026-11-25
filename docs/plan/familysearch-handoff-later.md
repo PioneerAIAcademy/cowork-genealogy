@@ -32,6 +32,13 @@
   (`https://ident.familysearch.org/.well-known/oauth-authorization-server`; the same on `identbeta`).
 - From a laptop, that URL answers 403 to the user agents `python-httpx`, `node` and `Claude-User`,
   and 200 to a browser user agent or none (Imperva; 2026-10-18, n=1 each).
+- An MCP endpoint behind an `Alias v1_0` binding on `integration.familysearch.org` is reachable from
+  Anthropic's cloud: the Messages API's MCP connector (`mcp-client-2025-11-20`) pointed at the
+  self-hosted beta's tools tier behind its web tier sent two `POST /mcp` with the user agent
+  `Claude-User` from `160.79.106.0/24`, through Imperva and CloudFront, and both reached the origin
+  and got the tools tier's 401 (FS112, fs-eng/search-agent-tools#170, 2026-11-25, n=1). So Imperva
+  admits that user agent on that host, unlike the sign-in server's discovery document above; ask 1
+  narrows to the sign-in server, which only a design where Claude signs in to FamilySearch itself calls.
 - The MCP authorization spec requires a server to accept only tokens issued for itself, and forbids
   it passing the token it received on to an upstream API (modelcontextprotocol.io, specification
   2025-11-25, "Authorization"). Every FamilySearch tool today sends the bearer it was given to
