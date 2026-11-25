@@ -181,6 +181,7 @@ is a key this rule can drop:
     ref: string,                         // the staged or logged page
     index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
+      date?: string, place?: string,     // present when the assertion has one (a date equal to value is not repeated): a page that agrees on them sends nothing
     }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
