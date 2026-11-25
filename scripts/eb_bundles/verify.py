@@ -62,7 +62,10 @@ REQUIRED = {
                               # .familysearch.org cookies can 400 every request, or to a 1 MB body
                               # and every upload over it answers 413 (U28).
                               ".platform/nginx/conf.d/01-web-headers.conf",
-                              ".platform/nginx/conf.d/01-web-uploads.conf"),
+                              ".platform/nginx/conf.d/01-web-uploads.conf",
+                              # Missing, TOOLS_UPSTREAM_URL is silently ignored and a connector
+                              # deployment's /mcp answers from the web tier, not the tools tier.
+                              ".platform/hooks/prebuild/110_tools-proxy.sh"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
                                    "proto/turn_message.py", "proto/migrate.py", "proto/pg_credentials.py",

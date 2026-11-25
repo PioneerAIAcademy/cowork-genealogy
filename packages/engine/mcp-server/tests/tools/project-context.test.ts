@@ -1,10 +1,12 @@
 import { CLAIM_KINDS } from "../../src/validation/validator.js";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { projectContext } from "../../src/tools/project-context.js";
+import { projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
+import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
   researchQuery,
   RESEARCH_QUERY_SECTIONS,
@@ -1610,5 +1612,64 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
     const row = await contextFor([]);
     expect(row.nextStep).toBe("research-plan");
     expect(row.searches).toBeUndefined();
+  });
+});
+
+describe("project_context familyReadPersonIds", () => {
+  let dir: string;
+  beforeAll(() => __usePlaceTableForTests({}));
+  afterAll(() => __usePlaceTableForTests(null));
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-family-read-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const byPid = (r: any, pid: string) => r.persons.find((p: any) => p.pid === pid);
+
+  it("names the person read; the wife has no parentIds and is not in it, so her parents read as not copied", async () => {
+    await createPhippsProject(dir);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+    const mary = byPid(r, PIDS.mary);
+    expect(mary).not.toHaveProperty("parentIds");
+    expect(r.familyReadPersonIds).not.toContain(mary.id);
+    const peyton = byPid(r, PIDS.peyton);
+    expect(peyton.spouseIds).toHaveLength(1);
+    expect(r.familyReadPersonIds).not.toContain(peyton.id);
+  });
+
+  it("still names the person read when the wife is made the subject", async () => {
+    await createPhippsProject(dir, [PIDS.mary]);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r.subjectPersonIds).toEqual([byPid(r, PIDS.mary).id]);
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+  });
+
+  it("leaves the key out for a tree with no read-from source", async () => {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({ project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" } }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", ark: "ark:/61903/4:1:BBBB-111", names: [{ given: "Benjamin" }] }],
+        relationships: [],
+        sources: [{ id: "S1", title: "FamilySearch Family Tree", url: "https://www.familysearch.org/tree" }],
+      }),
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error("not ok");
+    expect(r).not.toHaveProperty("familyReadPersonIds");
+  });
+
+  it("describes the key and the not-copied rule", () => {
+    const d = projectContextSchema.description;
+    expect(d).toContain("familyReadPersonIds");
+    expect(d).toMatch(/not in familyReadPersonIds, an absent or short spouseIds\/parentIds\/childIds means not copied from Family Tree, not\s+none/);
   });
 });

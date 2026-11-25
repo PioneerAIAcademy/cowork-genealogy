@@ -260,7 +260,9 @@ evaluating whether two events could belong to the same person, use
 `place_search` to resolve each event's location to a standard place name
 (the `standardPlace` field), then call
 `place_distance({ standardPlace1, standardPlace2 })` with those two names
-to get the actual distance in kilometers. Compare the result against era travel norms
+to get the actual distance in kilometers. Measure it even when the conflict
+or a note already states a distance: call `place_search` for each place,
+then `place_distance` between them, before judging the conflict. Compare the result against era travel norms
 (pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
 extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
@@ -465,11 +467,18 @@ resolve, preferring the assertion that carries the placement.
   different informant gave it.
 - A candidate who died before the record's event cannot be its subject:
   resolve for the surviving candidate and name the death record.
+  When a candidate father's death falls within about a year before the
+  child's birth or baptism, judge by the child's birth date, not the
+  baptism date: a child can be born up to about nine months after its
+  father's death.
 - When that elimination leaves the one candidate the subject's other
   records already name (the household, the death certificate), resolve
   for him with that candidate's assertion as `preferred_assertion_id`.
-  Not placing him at the event's place is a residual doubt for the
-  rationale, not a reason to defer.
+  Take that `preferred_assertion_id` from another of his records, choosing
+  the assertion that states the relationship being resolved (that he is
+  the subject's father), not one that only records his name and not the
+  contested record's own assertion. Not placing him at the event's place
+  is a residual doubt for the rationale, not a reason to defer.
 
 **An inherited surname is parentage evidence.** Where the naming
 system passes a parent's surname to the child — Spanish and

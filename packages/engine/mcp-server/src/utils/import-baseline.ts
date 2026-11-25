@@ -12,6 +12,7 @@
 
 import type { SimplifiedFact } from "../types/gedcomx.js";
 import { sameFactValue } from "./fact-helpers.js";
+import { treePidOfArk } from "./ark.js";
 
 const FS_TREE_URL = "https://www.familysearch.org/tree";
 const FS_TREE_TITLE = "FamilySearch Family Tree";
@@ -27,6 +28,37 @@ export function familySearchTreeSourceIds(tree: any): Set<string> {
     if (url === FS_TREE_URL || title.startsWith(FS_TREE_TITLE)) ids.add(s.id);
   }
   return ids;
+}
+
+/** The PID in a Family Tree source title `... (read from <Name>, <PID>)`. */
+const READ_FROM_PID = /\(read from .*, ([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})\)\s*$/;
+
+/** The tree persons whose own spouses, parents and children were read from
+ *  Family Tree: the person the first Family Tree source titled `(read from
+ *  <Name>, <PID>)` names, found by the PID their `ark` carries. project_create
+ *  writes that source first, so a later source given the same title cannot add
+ *  a person whose family was never read. Anchored on the person read, never on
+ *  `subject_person_ids`: a caller can make someone else the subject. Empty when
+ *  no source names a read (a project made before the title carried it), and a
+ *  person added later is never in it unless it carries that PID. Tree order. */
+export function familyReadPersonIds(tree: any): string[] {
+  const fsTree = familySearchTreeSourceIds(tree);
+  let readPid: string | undefined;
+  for (const s of Array.isArray(tree?.sources) ? tree.sources : []) {
+    if (!fsTree.has(s?.id) || typeof s?.title !== "string") continue;
+    const m = s.title.match(READ_FROM_PID);
+    if (m) {
+      readPid = m[1].toUpperCase();
+      break;
+    }
+  }
+  if (!readPid) return [];
+  const out: string[] = [];
+  for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
+    if (typeof p?.id !== "string" || out.includes(p.id)) continue;
+    if (treePidOfArk(p.ark)?.toUpperCase() === readPid) out.push(p.id);
+  }
+  return out;
 }
 
 const ends = (r: any): string[] =>
