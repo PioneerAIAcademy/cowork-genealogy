@@ -114,6 +114,22 @@ and reporting it as the total is the defect this rule exists to catch, scored
 under Tool Arguments (the narrowing itself) and Search strategy (parameters
 that would not answer what was actually asked) — not a stylistic preference.
 
+### Census nil escalation — no mandatory maiden-name search (issue #4699)
+
+**Decided (review-ready, 2026-11-19): do not require a maiden-name search for
+a married woman before calling a post-marriage census "not found."** She is
+enumerated under the married surname in a census taken after the marriage,
+and the surname-free household search Step 8 item 2 now requires already
+reaches a misindexed surname (it anchors on the place and a household member,
+not on any particular surname). A rejected alternative was a mandatory
+maiden-name search before every such nil — it doubles the searches on the
+commonest case (an already-married woman, correctly indexed under her married
+name) for a shape (reverted or never-adopted married name) that rarely holds;
+that shape is the widow/reverted-name case PR #4650's sentence already covers.
+Do not score Search strategy or Nil escalation down for the *absence* of a
+maiden-name search on a census nil — for a male subject it never applies, and
+for a female subject it is optional once the surname-free search ran.
+
 ## Search strategy
 
 Did the skill construct appropriate search parameters from the plan item? Name variants, date ranges, and jurisdictions should match the research context, and the broad-to-narrow default should be followed unless the plan item justifies a narrow start.
