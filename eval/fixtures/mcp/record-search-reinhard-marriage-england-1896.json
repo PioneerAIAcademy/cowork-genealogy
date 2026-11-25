@@ -1,0 +1,393 @@
+{
+  "tool": "record_search",
+  "description": "ut_search_records_039: an England marriage search, 1895-1897, under a spelled-out variant carrying 'einh' (Reinhard, Rheinhardt, Reinhardt, Rheinhard, Reinhart). Captured live 2026-11-25 under Charles + Reinhard (Rheinhardt returned the same Rheinhardt rows): Charles Rheinhardt, married 22 June 1896, Lancashire (England Marriages, 1538-1973, ark:/61903/1:1:NNY1-W4R), with the same marriage in the Liverpool banns and marriages and the West Derby registration index. Issue #4777.",
+  "args": {
+    "surname": "~einh"
+  },
+  "response": {
+    "query": {
+      "recordCountry": "England",
+      "marriageYearFrom": 1895,
+      "marriageYearTo": 1897,
+      "recordType": "marriage",
+      "count": 20,
+      "surname": "Reinhard",
+      "givenName": "Charles"
+    },
+    "totalMatches": 28,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6JJJ-MYQ6",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Tailor"
+          }
+        ],
+        "personName": "Charles Reinhard",
+        "sex": "Male",
+        "collectionId": "4489058",
+        "recordTitle": "Entry for Emile Hammer",
+        "recordArk": "ark:/61903/1:2:HS3W-412P",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NNSD-PL1",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Marriage",
+            "date": "24 April 1895",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          }
+        ],
+        "personName": "Carl Reinhard",
+        "sex": "Male",
+        "birthDate": "1831",
+        "collectionId": "1473015",
+        "recordArk": "ark:/61903/1:2:9QTH-M6R",
+        "batchNumber": "M00784-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NNY1-W4R",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "22 June 1896",
+            "place": "Lancashire, England, United Kingdom"
+          }
+        ],
+        "personName": "Charles Rheinhardt",
+        "sex": "Male",
+        "birthDate": "1866",
+        "collectionId": "1473015",
+        "recordArk": "ark:/61903/1:2:9QBK-KVL",
+        "batchNumber": "I00595-5",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NJJG-R3R",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Marriage",
+            "date": "24 April 1895",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          }
+        ],
+        "personName": "Carl Reinhard",
+        "sex": "Male",
+        "birthDate": "1831",
+        "collectionId": "1473015",
+        "recordArk": "ark:/61903/1:2:97MD-5G5",
+        "batchNumber": "M01525-9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JJN-4FLM",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Holy Trinity"
+          },
+          {
+            "type": "Residence",
+            "place": "Nelson St"
+          },
+          {
+            "type": "Religion",
+            "value": "Church of England"
+          },
+          {
+            "type": "Occupation",
+            "value": "Mariner"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Marriage",
+            "date": "22 June 1896",
+            "place": "Wavertree, Lancashire, England, United Kingdom"
+          }
+        ],
+        "personName": "Charles Rheinhardt",
+        "sex": "Male",
+        "birthDate": "1866",
+        "collectionId": "4489058",
+        "recordArk": "ark:/61903/1:2:HS3W-NXSC",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6JJF-VYD6",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Devon St"
+          },
+          {
+            "type": "Unknown",
+            "place": "St Peter"
+          },
+          {
+            "type": "Religion",
+            "value": "Church of England"
+          },
+          {
+            "type": "Occupation",
+            "value": "Tailor"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Marriage",
+            "date": "24 April 1895",
+            "place": "Liverpool, Lancashire, England, United Kingdom"
+          }
+        ],
+        "personName": "Carl Reinhard",
+        "sex": "Male",
+        "birthDate": "1831",
+        "collectionId": "4489058",
+        "recordArk": "ark:/61903/1:2:HS3W-K48Y",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1J-19M",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "Southampton, Hampshire, England"
+          }
+        ],
+        "personName": "Charles Frederick Reynard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-QX42",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1J-BTX",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "West Derby, Lancashire, England"
+          }
+        ],
+        "personName": "Charles Rheinhardt",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-QX3Q",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:26MS-ZQK",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "Thirsk, Yorkshire, England"
+          }
+        ],
+        "personName": "Charles Edward Reynard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-VR8C",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1J-8V4",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "West Derby, Lancashire, England"
+          }
+        ],
+        "personName": "Charles Rheinhardt",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-3T5Y",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1J-B19",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "West Derby, Lancashire, England"
+          }
+        ],
+        "personName": "Charles Rheinhardt",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-QX7L",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:66LW-KQX6",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Christ Church, High Harrogate, Starbeck"
+          },
+          {
+            "type": "MarriageBanns",
+            "date": "1 Nov 1896",
+            "place": "Kirby Wiske, North Yorkshire, England, United Kingdom"
+          },
+          {
+            "type": "Marriage",
+            "date": "1896"
+          }
+        ],
+        "personName": "Charles Edward Reynard",
+        "collectionId": "4439317",
+        "recordArk": "ark:/61903/1:2:4177-XY2S",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:66GL-51CM",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "High Harrogate"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 December 1896",
+            "place": "Kirby Wiske, North Yorkshire, England, United Kingdom"
+          }
+        ],
+        "personName": "Charles Edward Reynard",
+        "sex": "Male",
+        "birthDate": "1876",
+        "collectionId": "4439317",
+        "recordArk": "ark:/61903/1:2:417X-V5J1",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1N-ZJY",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "Southampton, Hampshire, England"
+          }
+        ],
+        "personName": "Charles Frederick Reynard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-SR5J",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D1J-6KT",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1896",
+            "place": "Southampton, Hampshire, England"
+          }
+        ],
+        "personName": "Charles Frederick Reynard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-3BTN",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:66LW-KQFN",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Christ Church, High Harrogate, Starbeck"
+          },
+          {
+            "type": "MarriageBanns",
+            "date": "1 Nov 1896",
+            "place": "Kirby Wiske, North Yorkshire, England, United Kingdom"
+          },
+          {
+            "type": "Marriage",
+            "date": "1896"
+          }
+        ],
+        "personName": "Charles Edward Reynard",
+        "collectionId": "4439317",
+        "recordTitle": "Entry for Hannah Pearson Willey",
+        "recordArk": "ark:/61903/1:2:4177-XY2J",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:66GL-V47D",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "High Harrogate"
+          },
+          {
+            "type": "Marriage",
+            "date": "12 December 1896",
+            "place": "Kirby Wiske, North Yorkshire, England, United Kingdom"
+          }
+        ],
+        "personName": "Charles Edward Reynard",
+        "sex": "Female",
+        "birthDate": "1876",
+        "collectionId": "4439317",
+        "recordTitle": "Entry for Hannah Pearson Willey",
+        "recordArk": "ark:/61903/1:2:417X-V5V1",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:26M6-89J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1897",
+            "place": "Knaresborough, Yorkshire, England"
+          }
+        ],
+        "personName": "Charles Reynard",
+        "collectionId": "2285732",
+        "recordArk": "ark:/61903/1:2:99ZV-1TH4",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NNY1-W4T",
+        "personName": "Charles Rheinhardt",
+        "sex": "Male",
+        "collectionId": "1473015",
+        "recordArk": "ark:/61903/1:2:9QBK-KVL",
+        "batchNumber": "I00595-5",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N6NZ-C44",
+        "personName": "Henry Charles Reinhardt",
+        "sex": "Male",
+        "collectionId": "1473015",
+        "recordTitle": "Entry for Fred Manning",
+        "recordArk": "ark:/61903/1:2:9Q21-7RP",
+        "batchNumber": "I03637-8",
+        "role": "Father In Law"
+      }
+    ],
+    "collections": {
+      "1473015": "England Marriages, 1538–1973",
+      "2285732": "England and Wales, Marriage Registration Index, 1837-2005",
+      "4439317": "England, Yorkshire, Parish Registers, 1538-2016",
+      "4489058": "England, Lancashire, Liverpool, Banns and Marriages, 1557-1960"
+    }
+  }
+}

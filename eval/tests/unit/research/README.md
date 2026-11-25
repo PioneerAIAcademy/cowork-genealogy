@@ -455,6 +455,24 @@ canned text rides in the hook's denial reason), so the router acts on its `Hand-
 line. The validator checks the spawn, not that the report names a cross-group owner or
 ends on "Continue with …?"; the judge reads that part.
 
+## No hand-written FamilySearch links (issue #4777)
+
+`ut_research_fl1` (`no-fs-link-for-searched-census.json`) runs on
+`renhard-1901-census-searched`, whose log already holds three nil 1901-census searches,
+with `search-records` stubbed; the researcher asks to check the 1901 census.
+`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) runs `search-records` against
+`record_search` fixtures that all return the timeout error. Both carry
+`no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
+fails on any `familysearch.org/search` link in the reply.
+
+Decided (Richard, 2026-11-25): the main thread never writes that link and never hands
+the researcher a FamilySearch search to run; a failed `record_search` is reported and
+offered again. The link in feedback #4743 was malformed (`collection_id` is not a
+parameter FamilySearch reads; the filter is `f.collectionId`) and was for a search
+already run three times. A tool-built `webSearchUrl` on `record_search` was considered
+and not chosen, since it adds a response field; it rests on issue #4707 fixing the
+search timeouts themselves, and can be revisited if they persist after that lands.
+
 ## Attached records (issue #3516)
 
 The "Objective but no questions" row runs `extraction_append({ personId })` then

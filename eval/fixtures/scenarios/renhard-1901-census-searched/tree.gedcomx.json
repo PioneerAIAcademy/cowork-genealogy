@@ -1,0 +1,34 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Charles",
+          "surname": "Renhard",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "about 1866",
+          "place": "Germany"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1901",
+          "place": "Liverpool, Lancashire, England"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

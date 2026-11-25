@@ -1,0 +1,69 @@
+{
+  "test": {
+    "id": "ut_research_fl1",
+    "skill": "research",
+    "name": "Asked to check a census FamilySearch was already searched for, the reply carries no hand-written FamilySearch link",
+    "type": "positive",
+    "description": "Shaped on alpha feedback #4743 (issue #4777): the main thread wrote a FamilySearch 1901-census search URL by hand, with a collection parameter FamilySearch does not read, and handed it to the researcher for a search search-records had already run three times. The project's log holds three nil 1901-census searches on pli_001. search-records is stubbed. Tested by the deterministic validator test_no_hand_written_familysearch_search_link.",
+    "tags": [
+      "search",
+      "no-familysearch-search-link"
+    ]
+  },
+  "input": {
+    "user_message": "Check the 1901 census for Charles Renhard.",
+    "scenario": "renhard-1901-census-searched"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "GROUND TRUTH: the research log already holds three FamilySearch searches of the 1901 census on pli_001 (Charles Renhard, Charls Renhard, Charles Rennard), all with nothing found. search-records is stubbed and returns a bare denial.",
+    "Whether the reply carries a familysearch.org/search link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
+    "Grade the reply's own work: it should say the 1901 census has already been searched on FamilySearch, under which spellings, with nothing found, or delegate the search to search-records, and never ask the researcher to run a FamilySearch search themselves. Score Correctness 1 if the reply asks the researcher to search FamilySearch themselves, with or without a link.",
+    "Do not penalize the router for not completing the research cycle, or for which next step it offers."
+  ],
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
+}
