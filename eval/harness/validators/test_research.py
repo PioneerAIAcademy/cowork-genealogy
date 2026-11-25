@@ -1040,15 +1040,39 @@ def _subject_fact_marks(state: dict) -> tuple[set[str], set[str]]:
     return years, places
 
 
+def _historical_context_of(response) -> dict | None:
+    """A ``project_context`` response's ``historicalContext``, whether logged as an
+    object, as JSON text, or as the MCP content list holding that text."""
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return None
+    if isinstance(response, list):
+        for item in response:
+            found = _historical_context_of(item.get("text") if isinstance(item, dict) else item)
+            if found:
+                return found
+        return None
+    if isinstance(response, dict):
+        if isinstance(response.get("historicalContext"), dict):
+            return response["historicalContext"]
+        for key in ("content", "text", "result"):
+            if key in response and (found := _historical_context_of(response[key])):
+                return found
+    return None
+
+
 def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool_calls, after_state):
     """Tag-gated (``delegates-tree-facts``), issue #4381. research/SKILL.md has the
-    router call ``tree_query`` for the people the message names, then hand
-    historical-context the places and years it returned, or say it returned none,
-    and never a place or year it did not return. The session must hold a
-    ``tree_query`` call. Read from the callee's spawn prompts (the ``deliverable:``
-    tag, else ``routes-to:``), against the project subject's tree facts in the after
-    state: every fact year and leading place word appears, and no year appears that
-    is in none of those facts, the session's ``tree_query`` responses, the user's
+    router hand historical-context ``project_context``'s ``historicalContext.prompt``,
+    the tree's places and years written out by the tool, and never a place or year
+    the tree does not hold. The session must hold a ``tree_query`` call or a
+    ``project_context`` call that returned ``historicalContext``. Read from the
+    callee's spawn prompts (the ``deliverable:`` tag, else ``routes-to:``), against
+    the project subject's tree facts in the after state: every fact year and leading
+    place word appears, and no year appears that is in none of those facts, the
+    session's ``tree_query`` responses and ``historicalContext`` prompt, the user's
     message and the project objective. A year only the objective holds must be named
     as the objective's at least once in the prompt that gives it: on a line saying
     "objective", or under a heading line (one ending in a colon) that does. Places are
@@ -1062,9 +1086,15 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     assert prompts, f"no {callee} spawn to carry the tree's places and years"
     queries = [
         c for c in tool_calls or []
-        if isinstance(c, dict) and bare_tool_name(c.get("tool") or "") == "tree_query"
+        if isinstance(c, dict) and bare_tool_name(c.get("tool") or "") in ("tree_query", "project_context")
     ]
-    assert queries, f"the session makes no tree_query call, so what {callee} was handed was not read from the tree"
+    assert any(
+        bare_tool_name(c.get("tool") or "") == "tree_query" or _historical_context_of(c.get("response"))
+        for c in queries
+    ), (
+        f"the session makes no tree_query call and no project_context call returning historicalContext, "
+        f"so what {callee} was handed was not read from the tree"
+    )
     text = " ".join(prompts)
     years, places = _subject_fact_marks(after_state or {})
     missing = sorted(y for y in years if not re.search(rf"\b{y}\b", text))
@@ -1075,7 +1105,14 @@ def test_deliverable_spawn_carries_the_tree_facts(test, builtin_tool_calls, tool
     objective = ((after_state or {}).get("research_json") or {}).get("project") or {}
     objective_years = set(_YEAR.findall(str(objective.get("objective") or "")))
     sourced = years | set(_YEAR.findall(test.get("user_message") or ""))
-    sourced |= {y for c in queries for s in response_strings(c.get("response")) for y in _YEAR.findall(s)}
+    sourced |= {
+        y for c in queries if bare_tool_name(c.get("tool") or "") == "tree_query"
+        for s in response_strings(c.get("response")) for y in _YEAR.findall(s)
+    }
+    sourced |= {
+        y for c in queries if (hc := _historical_context_of(c.get("response")))
+        for y in _YEAR.findall(str(hc.get("prompt") or ""))
+    }
     invented = sorted(set(_YEAR.findall(text)) - sourced - objective_years)
     assert not invented, (
         f"a {callee} spawn names the year(s) {invented}, which none of the subject's "
@@ -1152,9 +1189,10 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
 def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_calls):
     """Tag-gated (``no-wrong-project-path``). The hosted ``project_list`` answer
     gives a ``newProjectPath``, so the router reads project state there or not at
-    all, never at another path, the working folder included. The first hand-off
-    goes to tree-survey, which takes no ``projectPath``, so it names neither
-    ``newProjectPath`` nor a listed project's path."""
+    all, never at another path, the working folder included. A message that names
+    no person gets a project there: ``project_create`` at ``newProjectPath`` with
+    no ``personId``, and the first hand-off, to tree-survey, names that
+    ``projectPath``, and no listed project's."""
     if "no-wrong-project-path" not in (test.get("tags") or []):
         pytest.skip("not a no-wrong-project-path test")
     listing = _hosted_listing(tool_calls)
@@ -1163,10 +1201,21 @@ def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_c
     read_paths = _project_context_paths(tool_calls)
     other = [p for p in read_paths if p != new_path]
     assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    creates = [
+        c for c in tool_calls or []
+        if bare_tool_name(c.get("tool", "")) == "project_create"
+    ]
+    assert creates, "a request with no person in it must start a project: project_create was never called"
+    assert all((c.get("args") or {}).get("projectPath") == new_path for c in creates), (
+        f"project_create must create at newProjectPath {new_path!r}: {[c.get('args') for c in creates]}"
+    )
+    assert not any((c.get("args") or {}).get("personId") for c in creates), (
+        "project_create was given a personId for a request that names no person"
+    )
     callee = _expected_skill(test)
     handoff = _first_handoff_args(callee, builtin_tool_calls)
     assert handoff is not None, f"no hand-off to '{callee}'"
-    assert new_path not in handoff, f"the '{callee}' hand-off names newProjectPath {new_path!r}: {handoff[:300]}"
+    assert new_path in handoff, f"the '{callee}' hand-off must name the project just created, {new_path!r}: {handoff[:300]}"
     named = _listed_paths_named(listing, handoff)
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
@@ -1268,7 +1317,10 @@ _SURNAME_PREFIX = "surname:"
 # `index-reading:blank` is an index entry with no given name at all.
 _BLANK_INDEX = re.compile(
     r"\b(no|blank|without|empty|missing|omits?|left\s+out)\b[^.\n]{0,60}\bgiven[\s-]?name"
-    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)",
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\b(blank|empty|missing|not\s+indexed|left\s+(it\s+)?blank|absent)"
+    r"|\bgiven[\s-]?name\b[^.\n]{0,60}\bindex\s+(does\s+not|doesn't)\s+have\b"
+    r"|\bindex\b[^.\n]{0,40}\b(only|just)\s+(the\s+|a\s+)?surname\b"
+    r"|\bindex\b[^.\n]{0,40}\bsurname\s+only\b",
     re.IGNORECASE,
 )
 # A single machine reading overruling the index, or a repeat pass counted as agreement.
@@ -2348,15 +2400,27 @@ _ACHIEVED_RE = re.compile(
 )
 
 
+_SURVEY_CLAIM_PATTERNS = _FORBIDDEN_COMPLETENESS_PATTERNS[3:]
+
+
 def _completeness_claims(body: str) -> list[str]:
     hits = []
     for i, pattern in enumerate(_FORBIDDEN_COMPLETENESS_PATTERNS):
         for m in pattern.finditer(body):
             if i < len(_SEARCH_TARGET_PATTERNS) and _is_search_target(body, m):
                 continue
+            if pattern in _SURVEY_CLAIM_PATTERNS and _is_open_question(body, m):
+                continue
             hits.append(pattern.pattern)
             break
     return hits
+
+
+def _is_open_question(body: str, m: re.Match) -> bool:
+    """"check whether this survey is exhaustive" asks; it does not claim. A
+    whether/if earlier in the clause, with no comma between, makes it a question."""
+    start = max((b.end() for b in _SENTENCE_BOUNDARY_RE.finditer(body, 0, m.start())), default=0)
+    return re.search(r"\b(?:whether|if)\b[^,]*$", body[start:m.start()], re.IGNORECASE) is not None
 
 
 def _is_search_target(body: str, m: re.Match) -> bool:

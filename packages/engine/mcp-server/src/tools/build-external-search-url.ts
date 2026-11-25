@@ -1648,11 +1648,6 @@ export async function buildExternalSearchUrlTool(
     externalSite: { site: input.site, urlGenerated: result.url, captureReceived: false },
   });
   if (!logged.ok) {
-    // Not a project: the URL still serves a standalone search, so it is an
-    // answer, not a failure — relayed with the log tool's own message.
-    if (logged.reason === "no_project") {
-      return { ...result, notes: [...result.notes, ...logged.errors] };
-    }
     return { ok: false, reason: "log_write_failed", errors: logged.errors };
   }
   if (!("logId" in logged)) {

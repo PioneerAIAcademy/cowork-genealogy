@@ -79,14 +79,20 @@ person through `readPerson` (`person-read-tool-spec.md`), the code behind
 `person_read`, and the read never passes through the model. The build is
 `src/utils/person-read-tree.ts` (§4).
 
-**A project always starts from a FamilySearch person** (lead, 2026-11-02).
-`personId` is required, and the `tree` input that once built a project with no
-person is gone. The rule had lived only in `init-project`'s prose, and two hosted
-sessions on 2026-11-02 created a project with nobody in it: one told
-`init-project` to create a project with no person ID, and one had a
-general-purpose agent call this tool with an empty `tree`. Enforcing it here
-closes every route at once. The only work that wanted a project with no person
-was a surname survey, which now runs with no project (`survey-surname-agent-spec.md`).
+**Every activity starts a project; research on a person starts from a FamilySearch
+person** (lead, 2026-11-19, narrowing the 2026-11-02 rule). `personId` is optional.
+With one, the tool reads the person and builds the starting tree. With none, it
+writes the objective, `subject_person_ids: []` and an empty tree, and reads nothing
+from FamilySearch; `subjectPersonIds` with no `personId` is refused. A blank
+`personId` is still refused. The line between the two is held by
+`research_append`: a project with no person refuses a `questions` append, so research
+on a named person with no ID cannot proceed there and starts a new project from the
+ID. Callers: any session creates a person-less project directly, with no
+`init-project` (research on a person still goes through `init-project`, which adds
+the named people and subscriptions). The earlier rule had lived only in
+`init-project`'s prose, and two hosted sessions on 2026-11-02 created an empty
+project by skipping it; the questions refusal is what now closes that route. The
+surname survey now runs in a person-less project (`survey-surname-agent-spec.md`).
 `tree` is refused by name, like `personReadRef`, so a caller built against the
 old contract is told why.
 
@@ -323,7 +329,7 @@ come from what the researcher actually said, and are written afterwards through
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
 | `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler |
-| `tree` passed, in any form, with or without `personId` | Removed (§3). The same two routes send `PROJECT_TREE_REMOVED`, which says a project starts from a FamilySearch person ID, to ask the researcher for one, and that a surname survey needs no project |
+| `tree` passed, in any form, with or without `personId` | Removed (§3). The same two routes send `PROJECT_TREE_REMOVED`, which says a project starts from a FamilySearch person ID, and to ask the researcher for one |
 | `personId` absent, `null`, empty or whitespace | `PERSON_ID_REQUIRED`: the same three points. Made before the read and before any file is looked at |
 | `personId` neither a string nor `null` | Says what an ID looks like, then the same advice |
 | The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |

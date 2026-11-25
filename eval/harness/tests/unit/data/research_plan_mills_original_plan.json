@@ -1,0 +1,126 @@
+{
+  "_source": "pl_001 as first written by research-plan in alpha feedback #4642 (issue #4696); statuses reset to planned, later skip fields dropped",
+  "items": [
+    {
+      "id": "pli_001",
+      "sequence": 1,
+      "record_type": "fs_hints",
+      "jurisdiction": "FamilySearch Family Tree",
+      "date_range": "n/a",
+      "repository": "FamilySearch",
+      "rationale": "Review pending FamilySearch hints on PD5R-5VD before searching — an attached hint may already answer the question.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_002",
+      "sequence": 2,
+      "record_type": "church",
+      "jurisdiction": "Stamford, Fairfield County, Connecticut (also Darien)",
+      "date_range": "1740-1777",
+      "repository": "FamilySearch",
+      "rationale": "Tests the tree's parentage claim directly rather than assuming it. The tree records George Mill and Abigail Weed marrying 12 Aug 1760 (Connecticut Vital Records Prior to 1850) and a son Alexander Mill born 17 Jul 1761 at Stamford, who the tree shows as Col. Alexander Mills, buried West Stamford 1822. The subject's own marriage to Mary Millet is dated 22 Mar 1759, before that couple married, and his first child Samuel was born 1762 in Nova Scotia, so the 1761 Stamford birth looks like a different man; loc_001 names the Connecticut collections as name-searchable and First Congregational Church of Stamford baptisms/marriages 1747 on plus Spencer Mead's church abstracts. Look for any other Alexander Mills born c1730-1740 in Stamford/Darien, and for who the 1761 Alexander's own life (Connecticut 1788-1791 children, 1822 death) belongs to. Search under both Stamford and Darien labels; treat Barbour index misses as inconclusive.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_003",
+      "sequence": 3,
+      "record_type": "vital_record",
+      "jurisdiction": "Shelburne, Chittenden County, Vermont",
+      "date_range": "1816-1830",
+      "repository": "FamilySearch",
+      "rationale": "Starts from the documented end of the subject's life (tree death: after 21 Mar 1816, Shelburne). Per loc_002 the Shelburne town-clerk register 1775-1883 and the 1775-1869 cemetery records are digitized but 0% name-indexed, so use full-text search or an image browse rather than a name search; the name-searchable Vermont town clerk and vital records collections are checked first. Aim: a death/burial entry stating age, birthplace or parents, and the exact death date that the tree lacks. Shelburne cemeteries named in loc_002 (Village, Spear Street) also matter.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_004",
+      "sequence": 4,
+      "record_type": "probate",
+      "jurisdiction": "Chittenden County, Vermont (Chittenden District Probate, Burlington)",
+      "date_range": "1816-1835",
+      "repository": "FamilySearch",
+      "rationale": "Vermont, Probate Files 1800-1921 is name-searchable per loc_002 and covers a death after 1816. Heirs named in a will or administration (Samuel, Ebenezer, Ephraim, Nathaniel, Lydia Nichols and the widow Mary) establish the family and may mention a brother or other kin from the origin place. Window is set by the subject's death (after 1816), not by birth. Also check the widow Mary's estate.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_005",
+      "sequence": 5,
+      "record_type": "vital_record",
+      "jurisdiction": "Massachusetts (Beverly, Essex County, and Worcester County)",
+      "date_range": "1755-1762",
+      "repository": "FamilySearch",
+      "rationale": "The subject's marriage to Mary Millet, 22 Mar 1759. The tree gives the place as Worcester, while the tree's life sketch for Mary says Beverly, Essex County; plan both jurisdictions as co-equal. Intentions and the marriage entry may state residence of the groom (his home town), the best route to his origin because no baptism may be findable. Also check the Mary Millett birth/baptism (Beverly, c1735) as the life sketch is unsourced and must be verified, not assumed.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_006",
+      "sequence": 6,
+      "record_type": "military",
+      "jurisdiction": "Massachusetts and Nova Scotia (provincial service)",
+      "date_range": "1755-1763",
+      "repository": "FamilySearch",
+      "rationale": "The unsourced life sketch says Alexander served in the British provincial forces in Nova Scotia with Mary's brother Ebenezer Millett, and son Samuel was born 1762 at Cumberland, Nova Scotia. Muster and pay rolls of French and Indian War provincial companies usually give the enlistee's home town, age and sometimes birthplace, an independent clue to origin. Search rolls under Alexander Mills, Mill and Mils spellings.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_007",
+      "sequence": 7,
+      "record_type": "military",
+      "jurisdiction": "United States (Revolutionary War pension and service files, son Samuel Mills, Vermont)",
+      "date_range": "1818-1850",
+      "repository": "NARA",
+      "rationale": "The tree shows Samuel Mills (born 1762, died 25 May 1848 Shelburne) on the Revolutionary War pension ledgers (1831). A pension file typically carries a deposition giving birth, father's name and the family's residences, so it may name Alexander's origin or the family's movements. Also check Alexander's own possible service. This is a record created by a child, so its window runs well past the father's lifetime.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_008",
+      "sequence": 8,
+      "record_type": "land",
+      "jurisdiction": "Hopkinton, Middlesex, Massachusetts; Walpole, Cheshire, New Hampshire; Shelburne, Vermont",
+      "date_range": "1762-1816",
+      "repository": "FamilySearch",
+      "rationale": "Bridges the gap between Massachusetts marriage and Vermont death using the children's tree birth places (Ebenezer c1774 Hopkinton, Ephraim c1776 Walpole NH, Nathaniel 1779 Massachusetts, Lydia 1770 Vermont). Town records, tax lists and deeds in each place show Alexander's residence at each stage; Shelburne land volumes 1787-1821 are full-text only per loc_002. Deeds may name a father or brother as grantor/grantee. Link each step with a record naming him, not name and age alone. Federal censuses 1790-1810 (Shelburne or earlier residences) go here as the household check.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_009",
+      "sequence": 9,
+      "record_type": "church",
+      "jurisdiction": "Massachusetts (full-text of town and church records, unscoped)",
+      "date_range": "1730-1760",
+      "repository": "FamilySearch",
+      "rationale": "Because the subject's birth parish is unknown and may predate any register, search page text for Alexander Mills with possible variant spellings (Mill, Mils) together with likely parent surnames, run unscoped, via the full-text search tool; target his own baptism, a father's will or a sibling's marriage that names him. Do not presuppose that the Stamford family is the right one; test other Mills families in Massachusetts and Connecticut.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_010",
+      "sequence": 10,
+      "record_type": "probate",
+      "jurisdiction": "Stamford/Darien, Fairfield County, Connecticut",
+      "date_range": "1777-1800",
+      "repository": "FamilySearch",
+      "rationale": "FAN and parent-test item: estate of George Mills of Stamford (tree death 11 Apr 1777) and of Abigail (Weed) Mills (d. c1794) in the Stamford probate district. If these name an Alexander of Vermont as an heir, the tree claim is supported; if they name only the Stamford Alexander (and the other children), the claim is refuted. Per loc_001 the volumes are 0% name-indexed but full-text searchable; window runs to the mother's death, not the subject's. Also check the parents' marriage to each other (12 Aug 1760 per tree) in the original Stamford register, noting it post-dates the subject's 1759 marriage and so cannot by itself make him their son.",
+      "fallback_for": null,
+      "status": "planned"
+    },
+    {
+      "id": "pli_011",
+      "sequence": 11,
+      "record_type": "church",
+      "jurisdiction": "Beverly, Essex County, Massachusetts (Millett family)",
+      "date_range": "1735-1800",
+      "repository": "FamilySearch",
+      "rationale": "FAN item: the Millett family (Nathaniel Millett, Elizabeth Morgan, and brother Ebenezer Millett) are the people closest to Alexander at the time of the marriage and the life sketch says he met Mary through Ebenezer. Their wills, probate, deeds and church entries may name Alexander as son-in-law or brother-in-law and state his town. Also use to confirm or reject the sketch's claims.",
+      "fallback_for": null,
+      "status": "planned"
+    }
+  ]
+}
