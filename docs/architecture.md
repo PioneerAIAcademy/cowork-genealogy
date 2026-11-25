@@ -1373,8 +1373,8 @@ on the delegation tools, and one on the tools only agents hold, which the final
    (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
    deny is what reaches Cowork. Those same paths set
    `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` (`"1"` is OFF; a falsy value is
-   `forced_on`), but **no hook arm carries that one to Cowork**, so auto-memory
-   is live there.
+   `forced_on`), but **no hook arm carries that one to Cowork**; whether
+   auto-memory writes a file there has not been observed.
 5. **No agent's step on the main thread.** Denies a call with no `agent_id` to a
    tool on `AGENT_ONLY_TOOLS` — held by agents, declared by no skill — and names
    every agent that holds it. `MAIN_THREAD_OK` lists the few such tools the main

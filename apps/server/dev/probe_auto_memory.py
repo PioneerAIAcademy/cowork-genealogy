@@ -3,13 +3,8 @@ writing a memory file outside the project? (issue #4778)
 
 WHY THIS EXISTS
 
-`make server-test` and the harness tests assert the env DICT. They cannot tell
-`"1"` from `"0"`: flip the value and all six assertions simply move with it and
-stay green. A CLI upgrade that renamed the variable would leave every one of
-them green too. Nothing in CI can see this -- it stays on the `nothing-checks`
-register whatever this reports.
-
-So this probe runs the real thing twice and looks at the filesystem.
+`test_auto_memory_off.py` proves the CLI offers no memory block. This probe
+proves no memory file lands.
 
 WHY `"0"` IS THE CONTROL, NOT "unset"
 

@@ -421,9 +421,10 @@ overrides even a settings-level `autoMemoryEnabled: false`. Copying the
 neighbour's value turns memory on everywhere with every dict assertion still
 green, so `eval/harness/tests/unit/test_auto_memory_off.py` captures the CLI's
 own system prompt keylessly and pins both the binding and the polarity. A new
-SDK entrypoint sets this key too. Cowork is **not** covered — its environment is
-not ours, and the plugin hook denies only the project files, so the CLI's memory
-write lands there.
+SDK entrypoint sets this key too. Cowork gets no memory hook arm until a live
+Cowork session shows auto-memory writing a file (Richard, 2026-11-25); the next
+Cowork census records whether "remember to …" produces a Write under
+`.claude/projects/*/memory/`.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing

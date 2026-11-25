@@ -402,9 +402,8 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 
 .PHONY: probe-auto-memory
 probe-auto-memory: $(ENGINE_BUILD) ## Live probe: does CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 actually stop a memory write? (issue #4778; 2 short sessions)
-	# server-test and the harness tests assert the env DICT and cannot tell "1"
-	# from "0" -- flip the value and all six assertions move with it and stay
-	# green. This runs the real agent twice and looks at the filesystem.
+	# test_auto_memory_off.py proves the CLI offers no memory block; this runs
+	# the real agent twice and proves no memory file lands.
 	#
 	# Control arm is "0" (forced_on), not unset: per the bundled CLI's Nm()/Z8(),
 	# a falsy value returns before swt() and the autoMemoryEnabled setting, so it
