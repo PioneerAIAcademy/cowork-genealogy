@@ -42,6 +42,7 @@ const PINNED = [
   "research_query",
   "sidecar_read",
   "source_attachments",
+  "source_screen",
   "tree_gaps",
   "tree_query",
   "validate_research_schema",

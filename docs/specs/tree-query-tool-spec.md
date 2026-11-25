@@ -72,15 +72,17 @@ CLAUDE.md, "Identifier casing"):
   }],
   sources?: [{ id, title?, citation?, author?, url? }],   // only with includeSources or sourceIds
   missingPersonIds: string[],            // requested ids matching nothing
+  familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
 }
 // on failure: { ok: false, errors: string[] }
-// outside a project: { ok: false, reason: "no_project", ... } — the shared answer, not an error
+// outside a project: refused by the gate in server.ts; called directly, { ok: false, errors } with NO_PROJECT_REFUSAL
 ```
 
 Rules:
 
 - **Omitted keys** — on persons, names, facts and relationships a key whose value
-  would be `null`, `""` or `[]` is left out: absent means null or none. A fact's
+  would be `null`, `""` or `[]` is left out: absent means null or none (a
+  person's missing relatives are the exception, under `familyReadPersonIds`). A fact's
   `place` is left out when it equals `standardPlace`, and its `date` when it
   equals `standardDate`: an absent `place` with a `standardPlace` means the two
   are the same. A name's `preferred` and a fact's `primary` are sent only when
@@ -109,6 +111,17 @@ Rules:
 - **`missingPersonIds`** — the requested ids that match neither a tree id nor
   any person's FamilySearch link, in request order; `[]` when no `personIds` was
   given.
+- **`familyReadPersonIds`** — the same key `project_context` returns, from the
+  same function (`src/utils/import-baseline.ts`): the tree persons whose own
+  spouses, parents and children were read from Family Tree, for the whole tree
+  whatever `personIds` asks for; absent when none were. The tree is a copy of
+  part of Family Tree, so for a person not in it the edges returned are only
+  those copied: a missing spouse, parent or child means not copied, not none.
+  The description says so, and tells the model to read the person with
+  `person_read` before saying what Family Tree records. `missingPersonIds` is
+  unchanged: it is about the ids asked for, not about the copy. Why the key
+  follows the person read and not the subjects: `project-context-tool-spec.md`,
+  `familyReadPersonIds`.
 - **Size** — an answer over `TOOL_RESULT_CHAR_BUDGET` (40,000 characters of
   compact JSON, as `server.ts` sends it) is cut and carries `truncated: true`.
   Persons are cut from the end of the order (the first is never cut), keeping

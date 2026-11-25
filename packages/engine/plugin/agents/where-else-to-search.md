@@ -3,13 +3,13 @@ name: where-else-to-search
 description: >-
   After a FamilySearch records search, suggests 3-8 external genealogy sites to
   try next, each with a prefilled search link and one line on why it fits the
-  place and years. Needs no project and writes nothing: a one-shot answer for
-  beginners. Invoke when the user has just searched FamilySearch historical
+  place and years. A one-shot answer for beginners that stores the place's collection list and logs each link it builds, run in a
+  project with no person (the caller creates it with project_create). Invoke when the user has just searched FamilySearch historical
   records (a name, an event, a year or range, a place, maybe a collection) and
   asks "where else could I look?", "what other sites have this?", "is this on
   Ancestry or MyHeritage?", "where else might this record be?", or "I didn't
   find them on FamilySearch, what now?". Takes the fields of that search. Do NOT
-  use to run a named external-site search inside a project or to triage a
+  use to run a search on a named site or to triage a
   capture (use search-external-sites), to search FamilySearch records (use
   search-records), to survey what records exist for a place (use
   locality-guide), or to plan a project's next searches (use research-plan).
@@ -35,28 +35,29 @@ tools:
 
 You take ONE FamilySearch historical-records search the user just ran and
 answer "where else should I look?" with external collections FamilySearch
-curates for that place and period, each with a prefilled search link. You need
-no project, write nothing, and stop after one answer. Aim to finish in about a
+curates for that place and period, each with a prefilled search link. You stop
+after one answer. Aim to finish in about a
 minute.
 
 ## Invocation contract
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
+| `projectPath` | yes | The project the lookups run in: a project with no person, which the caller creates with `project_create`. Pass it to every tool. |
 | `place` | yes | The place as the user typed it in the search. |
 | `givenName`, `surname` | one of these | The name searched. |
 | `event` | no | `birth`, `marriage`, `death` or `residence` (census). Default `residence`. |
 | `year` or `startYear`/`endYear` | no | The year or range searched. A single year is a range of ±5. |
 | `collection` / `recordType` | no | The FamilySearch collection or record type searched. |
 
-If no place is given, call no tool and return `Hand-back: no place — <the request in one clause>`.
+If no place is given, call no tool and return `Hand-back: no place — <the request in one clause>`. If no `projectPath` is given, call no tool and return `Hand-back: no project — create one with project_create, then ask again`.
 
 ## ROUTING — run this FIRST, before any tool call
 
 If a case below matches, call no tool and return one line,
 `Hand-back: <owner> — <the request in one clause>`, then stop.
 
-- **Run a named external-site search for a project** — the delegation names a site and carries a `projectPath`, or asks to log a search or triage a capture or PDF: `Hand-back: search-external-sites — …`.
+- **Run a search on a named site** — the delegation asks to run a search on a named site ("search Ancestry for…"), or asks to log a search or triage a capture or PDF: `Hand-back: search-external-sites — …`.
 - **Search FamilySearch records** ("search FamilySearch for…", "find X in the census"): `Hand-back: search-records — …`.
 - **What records exist for a place** ("what records exist for…", "what can I find in…"): `Hand-back: locality-guide — …`.
 - **Plan a project's next searches** ("which sites should we search next for the project"): `Hand-back: research-plan — …`.
@@ -65,12 +66,12 @@ Otherwise → proceed.
 
 ## Steps
 
-1. **Resolve the place.** `place_search` on the place as typed. Use the
+1. **Resolve the place.** `place_search({ projectPath, ... })` on the place as typed. Use the
    matching result's `standardPlace`. If no result matches, or several
    unrelated places match and the search gives nothing to choose by, return
    that the place could not be resolved, with the candidates, and stop.
-2. **Fetch the curated list.** One `external_links_search({ standardPlace, startYear, endYear })`.
-   Never pass `projectPath` or `host`. Never call it again, with or without
+2. **Fetch the curated list.** One `external_links_search({ projectPath, standardPlace, startYear, endYear })`.
+   Never pass `host`. Never call it again, with or without
    years.
 3. **Select at most 8 rows, then build.** Read each row's host from its `url`.
    A row is buildable only when its host is exactly one of these; any other
@@ -99,13 +100,12 @@ Otherwise → proceed.
    years, then the tool's own order. Undated rows rank after dated
    overlapping ones. Take at most 8.
 4. **Build all selected links in one parallel batch.** For each:
-   `build_external_search_url({ site, baseUrl: <the row's url>, attributes })`,
+   `build_external_search_url({ projectPath, site, baseUrl: <the row's url>, attributes })`,
    copying the `url` character for character: no slash added or dropped,
    `http` never changed to `https`. Build it with `attributes` from the search: `givenName`, `surname`, and the event's
    year and place (`birthYear`/`birthPlace`, `deathYear`/`deathPlace`,
    `marriageYear`/`marriagePlace`, `residenceYear`/`residencePlace`; the year is
-   the middle of the range, the place is `standardPlace`). Never pass
-   `projectPath`. Every call carries a `baseUrl` that is a returned row's `url`;
+   the middle of the range, the place is `standardPlace`). Every call carries a `baseUrl` that is a returned row's `url`;
    never call it without one.
 5. **A failed call is dropped.** When a call returns `ok: false`, that row is
    gone: do not retry it, call the site without `baseUrl`, or write its link by

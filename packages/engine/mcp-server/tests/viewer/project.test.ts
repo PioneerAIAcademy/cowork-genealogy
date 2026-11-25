@@ -1,7 +1,7 @@
 import { mkdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
+import { NO_PROJECT_MESSAGE_CONTEXT } from "../../src/utils/project-io.js";
 import { realFoldersOnly, refusal, RESEARCH, startViewer, tempFolders, writeProject } from "./harness.js";
 
 realFoldersOnly();
@@ -72,8 +72,8 @@ describe("refused", () => {
 
   it("a folder that holds no project, in the existing wording", async () => {
     mkdirSync(join(root(), "empty"));
-    expect(await refused(document("empty"))).toBe(NO_PROJECT_MESSAGE_READ);
-    expect(await refused(document(join(root(), "empty")))).toBe(NO_PROJECT_MESSAGE_READ);
+    expect(await refused(document("empty"))).toBe(NO_PROJECT_MESSAGE_CONTEXT);
+    expect(await refused(document(join(root(), "empty")))).toBe(NO_PROJECT_MESSAGE_CONTEXT);
   });
 
   it("a folder that holds only a tree, as a broken project rather than as no project", async () => {

@@ -43,7 +43,7 @@ You are reached by a delegation naming what to look up:
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `topic` | yes | The topic, person, place or historical event to look up. |
-| `projectPath` | no | The absolute project-folder path. Absent means the working folder's absolute path. |
+| `projectPath` | yes | The absolute project-folder path. |
 
 Resolve the topic from whatever the delegation gives you — a bare phrase, a
 quoted user turn, or a labelled parameter. Ask nothing back; a delegation that
@@ -124,8 +124,6 @@ anything drawn from your own knowledge rather than the tool response.
    The `{{title}}` is the **article title the tool returned**, never the query
    you sent, with its accents and punctuation unchanged. A redirect to a formal
    title is correct behavior, not a discrepancy: follow it silently.
-5. If step 4's `research_log_append` returns `reason: "no_project"`, return the filled
-   template as your reply instead of the line below, and nothing else.
 
 ## Re-invocation behavior
 

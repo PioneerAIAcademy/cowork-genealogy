@@ -1,0 +1,124 @@
+{
+  "log_id": "log_001",
+  "tool": "record_read",
+  "retrieved": "2026-11-20T20:23:32.986Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:HOLE-001"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:HOLE-001",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Christian P.",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1877",
+                  "place": "Norway"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1900",
+                  "place": "Fairview Township, Polk, Minnesota, United States"
+                }
+              ],
+              "ark": "ark:/61903/1:1:HOLE-001",
+              "sources": [
+                {
+                  "id": "S1",
+                  "title": "United States Census, 1900"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Inger",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1900",
+                  "place": "Fairview Township, Polk, Minnesota, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Ole C.",
+                  "surname": "Hole",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F4",
+                  "type": "Residence",
+                  "date": "1900",
+                  "place": "Fairview Township, Polk, Minnesota, United States"
+                }
+              ]
+            }
+          ],
+          "places": [],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            }
+          ],
+          "sources": [
+            {
+              "id": "S1",
+              "title": "United States Census, 1900",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-001",
+              "coverage": {
+                "standard_place": "Polk, Minnesota, United States",
+                "place_rep_id": "325463",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

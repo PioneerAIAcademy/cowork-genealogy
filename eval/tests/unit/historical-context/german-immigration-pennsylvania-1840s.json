@@ -5,11 +5,19 @@
     "name": "German immigration to Pennsylvania in the 1840s",
     "type": "positive",
     "description": "Regression test for issue #1315: wiki-derived historical context must cite the source page URL, not just the article title. Topic: an ancestor who emigrated from Germany to Pennsylvania about 1845. It also checks that any stated cause of 1840s emigration carries a general-knowledge flag in its own paragraph, and that the plain-language summary states no such cause.",
-    "tags": ["citation", "wiki-sourcing", "german", "pennsylvania", "1840s", "topical-fixture-required", "direct-arm"]
+    "tags": [
+      "citation",
+      "wiki-sourcing",
+      "german",
+      "pennsylvania",
+      "1840s",
+      "topical-fixture-required",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "My ancestor immigrated from Germany to Pennsylvania around 1845. What historical context should I know about German immigration during that period, and how does it affect my research?",
-    "scenario": null
+    "delegation": "My ancestor immigrated from Germany to Pennsylvania around 1845. What historical context should I know about German immigration during that period, and how does it affect my research?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "execution": {
     "max_wall_clock_seconds": 600

@@ -20,6 +20,14 @@ FIXTURE = "record-read-mary-flynn-9xkd-r7m"
 GOOD = "results/.staging/5d2c3a10-7c1e-4d55-a1b2-9824099a7245.json"
 
 
+@pytest.fixture(autouse=True)
+def _project_gate_off(monkeypatch):
+    """These tests exercise one handler's own behaviour; the project gate has its own tests (test_mock_mcp.py)."""
+    import harness.mock_mcp as _mock
+
+    monkeypatch.setattr(_mock, "PROJECT_GATE_ENABLED", False)
+
+
 def _read(tmp_path: Path, args: dict) -> dict:
     _server, _log, tools = create_mock_server([FIXTURE], FIXTURES_DIR, workspace=tmp_path)
     out = asyncio.run(tools["record_read"].handler(args))

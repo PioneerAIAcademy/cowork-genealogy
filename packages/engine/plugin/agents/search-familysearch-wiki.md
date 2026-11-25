@@ -48,8 +48,8 @@ use a repository. You write no other project state.
 
 You are reached by a delegation carrying the research question — a bare phrase,
 a quoted user turn, or a labelled parameter. Resolve the question from whatever
-it gives you and ask nothing back. `projectPath`, when given, is the absolute
-project-folder path; absent, there is no project.
+it gives you and ask nothing back. `projectPath` is the absolute
+project-folder path.
 
 ## Scope — decide it yourself, every time
 
@@ -125,9 +125,6 @@ the tool and synthesize only from what it returns.
    `query: {query}`, `planItemId: null`, `outcome: "positive"`,
    `resultsExamined: <results.length>`, and `notes` set to the filled template.
    **You must actually call it — do not just describe it in your response.**
-6. If `research_log_append` returns `reason: "no_project"`, put the filled
-   template in your return above the `---` line in place of the line naming
-   the log entry.
 
 ## Re-invocation behavior
 
@@ -142,12 +139,7 @@ log with a **Sources** section citing the wiki pages used — nothing more. On
 empty results the line says no wiki guidance was found. On a hand-back the
 return is the two short sentences from the scope section and nothing else.
 
-**No project (`reason: "no_project"`):** nothing was logged, so the return above
-the `---` line is the whole filled template, verbatim — the
-`# FamilySearch Wiki: {{topic}}` heading, the summary and the `## Sources`
-section — in place of the one line. Not only the sources.
-
-**Otherwise, everything you write outside the logged entry is about the search,
+**Everything you write outside the logged entry is about the search,
 never about the topic.** The guidance is already in the entry, so do not
 restate, summarize, list or quote it here.
 

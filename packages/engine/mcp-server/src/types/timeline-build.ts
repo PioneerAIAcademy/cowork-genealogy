@@ -1,7 +1,6 @@
 // timeline_build I/O. Spec: docs/specs/timeline-build-tool-spec.md.
 
 import type { PlaceCoords } from "../utils/place-resolver.js";
-import type { NoProjectResult } from "../utils/project-io.js";
 
 export interface TimelineBuildInput {
   projectPath: string;
@@ -40,5 +39,4 @@ export interface TimelineBuildNothingLinked {
 export type TimelineBuildResult =
   | TimelineBuildWritten
   | TimelineBuildNothingLinked
-  | { ok: false; errors: string[] }
-  | NoProjectResult;
+  | { ok: false; errors: string[] };

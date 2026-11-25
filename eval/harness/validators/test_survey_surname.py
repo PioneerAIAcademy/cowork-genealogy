@@ -15,9 +15,8 @@ read-only ``/project`` refused and no ProjectStore ever saw. The table
 validators below read that entry's ``notes``, never the reply text: on a
 direct test the reply is the dispatcher's relay, not the agent's table.
 
-With no project (lead, 2026-11-02) the agent logs nothing, stages nothing, and
-returns the tables in its own reply; the ``no-project`` validators read that
-reply through ``subject_reply_text``.
+Every survey has a project (lead, 2026-11-19), a person-less one when there is no
+research project; the tables are always the logged entry's ``notes``.
 
 Narrative-quality dimensions (place resolution accuracy, table prose) live
 in the rubric and are graded by the LLM judge. The mechanical checks here
@@ -189,8 +188,6 @@ def test_one_log_entry_appended(before_state, after_state, test):
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests")
-    if "no-project" in test.get("tags", []):
-        pytest.skip("no project: nothing is logged")
     entries = _survey_entries(before_state, after_state)
     assert len(entries) == 1, (
         f"expected exactly one new survey_surname log entry; got {len(entries)}"
@@ -280,18 +277,12 @@ def _is_rule(line):
 def test_table_has_rubric_columns(before_state, after_state, test, agent_returns=None, text_response=None):
     """Positive tests: every household table carries the six columns the agent
     body and the rubric's Table structure bar name. Read from the logged entry's
-    notes, or with no project from the agent's own reply. Non-population
+    notes. Non-population
     schedule tables are exempt."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests")
-    if "no-project" in test.get("tags", []):
-        from harness.skill_runner import subject_reply_text
-
-        text = subject_reply_text(agent_returns, text_response, "survey-surname", test)
-        assert text, "the agent returned nothing"
-    else:
-        text = _survey_table(before_state, after_state)
-        assert text, "no single survey_surname log entry carrying the table"
+    text = _survey_table(before_state, after_state)
+    assert text, "no single survey_surname log entry carrying the table"
     lines = [line.strip().lower() for line in text.splitlines()]
     heading, headers = "", []
     for s, nxt in zip(lines, lines[1:] + [""]):
@@ -307,37 +298,30 @@ def test_table_has_rubric_columns(before_state, after_state, test, agent_returns
         assert not missing, f"table header {h!r} lacks {missing}"
 
 
-# --- d6: no project (issue #4130) -------------------------------------
+# --- d6: the town as indexed, and the household as one row (issue #4130) --
 
 def _cells(line):
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 
-def test_no_project_returns_the_tables_in_its_reply(
-    tool_calls, test, agent_returns=None, text_response=None
+def test_tables_name_the_town_and_group_the_household(
+    tool_calls, before_state, after_state, test
 ):
-    """Tag-gated on ``no-project``. With no project the agent still searches,
-    but writes no log entry, passes ``projectPath`` to no search, and returns
-    the tables in its own reply. The Clinton County 1850 fixture names the town
-    (Au Sable) only in each stub's place, and Joseph Tollman's household is
-    four stubs under one ``recordArk``: one row, Joseph in the head column,
-    Polly, Harvey and Lucinda in that row and in no other."""
-    if "no-project" not in test.get("tags", []):
-        pytest.skip("not a no-project test")
-    from harness.skill_runner import subject_reply_text
-
-    logs = _mcp_calls(tool_calls, "research_log_append")
-    assert not logs, f"no project, yet research_log_append was called {len(logs)} time(s)"
+    """Tag-gated on ``town-household``. The Clinton County 1850 fixture names
+    the town (Au Sable) only in each stub's place, and Joseph Tollman's household
+    is four stubs under one ``recordArk``: in the logged table, one row, Joseph
+    in the head column, Polly, Harvey and Lucinda in that row and in no other."""
+    if "town-household" not in test.get("tags", []):
+        pytest.skip("not a town-household test")
     searches = _mcp_calls(tool_calls, "record_search")
     assert searches, "no record_search call: the survey never ran"
-    staged = [c.get("args") for c in searches if (c.get("args") or {}).get("projectPath")]
-    assert not staged, f"no project, yet a search passed projectPath: {staged}"
 
-    reply = subject_reply_text(agent_returns, text_response, "survey-surname", test).lower()
-    assert "au sable" in reply, "the reply never names Au Sable, the town the index gives"
+    reply = _survey_table(before_state, after_state).lower()
+    assert reply, "no single survey_surname log entry carrying the table"
+    assert "au sable" in reply, "the table never names Au Sable, the town the index gives"
     lines = [line for line in reply.splitlines() if "|" in line and not _is_rule(line)]
     header = next((_cells(line) for line in lines if "head" in line and "ark" in line), None)
-    assert header, "no household table in the reply"
+    assert header, "no household table in the logged entry"
     head_col = next(i for i, c in enumerate(header) if "head" in c)
     joseph = [line for line in lines if "joseph" in line]
     assert len(joseph) == 1, f"Joseph Tollman's household must be one row; got {joseph}"
