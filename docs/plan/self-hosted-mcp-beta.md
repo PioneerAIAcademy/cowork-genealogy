@@ -255,7 +255,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 - **Data:** under `DATA_DIR`, `/home/data/genealogy-beta` on `malachi`.
 - **Roles:** `dml_role.py`, in the `migrate` one-shot, creates the DML-only role.
 - **DNS:** `tools` names public resolvers. The host's resolver gives the tailnet address, whose listener refuses a container, and public DNS gives the Funnel relay.
-- **Off by default:** `OPENROUTER_LINKING_ENABLED` always, and `UPLOADS_ENABLED` until issue #4001 lands.
+- **Off by default:** `OPENROUTER_LINKING_ENABLED` always, `UPLOADS_ENABLED` until issue #4001 lands, and `OPENROUTER_SEED_AT_CONNECT` until the lead turns it on: then a user the connector's consent creates gets the env file's `OPENROUTER_SEED_KEY` on their row, with no `make malachi-openrouter` run.
 - **Settings:** compose sets `WEB_PUBLIC_URL` from `PUBLIC_URL`. W2's redirect and budget settings, `FS_REDIRECT_URI` and `GENEALOGY_SIGNIN_CALLS_PER_MINUTE`, are in compose and the env template, unset by default. Before invited users, set the FamilySearch budget, and the transcription cap at 5 or more.
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`; `beta-block-user ACCOUNT=` and `beta-delete-user ACCOUNT= CODE= [CONFIRM=yes]`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
