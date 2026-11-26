@@ -44,8 +44,7 @@ personal/
 eval/app/lib/schema/
 
 # Scratch run logs — partial/--test/--all/--tag harness invocations.
-# Never released; junior dev's local debugging only. See
-# docs/plan/eval-runlog-versioning.md §A1, §A3.
+# Never committed; local debugging only. See eval/CLAUDE.md, "Run log naming".
 eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
 

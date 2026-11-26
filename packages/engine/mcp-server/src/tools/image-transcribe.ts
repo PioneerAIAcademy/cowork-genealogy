@@ -12,6 +12,7 @@ import { imageViewerUrl } from "../utils/ark.js";
 import { imageGroupPlace } from "../utils/image-group.js";
 import {
   saveSourceImage,
+  refreshSourceImage,
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
@@ -29,24 +30,16 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  noProjectResult,
-  type NoProjectResult,
-} from "../utils/project-io.js";
-import { attachIndexReadings } from "../utils/index-readings.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
+import { priorImageRead, type PriorImageRead } from "../utils/prior-image-read.js";
 import {
-  compactImageTranscribeAnswer,
   normalizeTranscription,
   transcriptionDigest,
 } from "../utils/staged-compaction.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
-  ImageTranscribeToolResponse,
   OpenRouterChatResponse,
   StagedTranscription,
 } from "../types/image-transcribe.js";
@@ -182,11 +175,21 @@ function assertOneImageForm(input: ImageTranscribeInput): void {
  * conflicting identifiers should be told which ones conflict, not that the
  * server is busy — otherwise it retries the same malformed call forever.
  */
+/** Internal only, never on the MCP schema. `budgetMs` is a whole-call budget
+ *  from entry, as the connector's: the fetch makes one attempt clamped to what
+ *  is left, and the OCR gets the rest, so both stop at the caller's deadline
+ *  (source_screen's image reads). */
+export interface TranscribeOptions {
+  ocrTimeoutMs?: number;
+  imageKey?: string;
+  budgetMs?: number;
+}
+
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+  opts: TranscribeOptions = {},
+): Promise<ImageTranscribeResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
   // Folding is idempotent, so the body's own fold is still correct for a
@@ -207,8 +210,8 @@ async function imageTranscribeToolInner(
    * it, burning an OpenRouter call nothing will read. Capping the underlying
    * fetch aborts it for real rather than abandoning the promise.
    */
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+  opts: TranscribeOptions = {},
+): Promise<ImageTranscribeResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
   // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
@@ -216,7 +219,9 @@ async function imageTranscribeToolInner(
   // call MORE time than the budget actually allows.
   const enteredAt = monotonicNow();
   const isConnector = connectorUserId(principal) !== undefined;
-  const remainingBudgetMs = (): number => CONNECTOR_TRANSCRIBE_BUDGET_MS - (monotonicNow() - enteredAt);
+  const budgetMs = Math.min(isConnector ? CONNECTOR_TRANSCRIBE_BUDGET_MS : Infinity, opts.budgetMs ?? Infinity);
+  const budgeted = Number.isFinite(budgetMs);
+  const remainingBudgetMs = (): number => budgetMs - (monotonicNow() - enteredAt);
 
   input = foldImageArkInput(input, "image_transcribe");
   assertOneImageForm(input);
@@ -231,19 +236,23 @@ async function imageTranscribeToolInner(
   let model: string;
   // The staged page's place: its FamilySearch image group's coverage place.
   let groupPlace: Promise<string | null> = Promise.resolve(null);
+  // The project's own earlier complete reading of this page, when it holds one:
+  // returned in place of a second fetch and a second OCR. A second machine
+  // reading of one page confirms nothing (`READING_NOTE`), and two of them differ.
+  let reused: PriorImageRead | null = null;
 
   if (input.file !== undefined) {
     // An uploaded image or PDF already inside the project folder (issue #2048).
     // No FamilySearch token — the bytes are the researcher's own upload, not an
     // FS-hosted scan — and no transport cap: the file goes host→OpenRouter only.
     // The project is classified FIRST so a folder that is not a project gets the
-    // no-project ANSWER (#1695) rather than a key error or a path error.
+    // refusal rather than a key error or a path error.
     const cls = await classifyProjectPath(input.projectPath);
     if (cls === "missing_arg") {
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);
     }
     if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-    if (cls === "no_project") return noProjectResult("read");
+    if (cls === "no_project") throw new Error(NO_PROJECT_REFUSAL);
     const projectPath = input.projectPath as string;
 
     const problem = fileRefProblem(input.file);
@@ -276,6 +285,11 @@ async function imageTranscribeToolInner(
     contentType = sniffed;
     sizeBytes = bytes.length;
     label = input.file;
+    reused = await priorImageRead(projectPath, captureIdFor(input.file), (q) => q.file === input.file);
+    // An upload replaced under the same name is a different document.
+    if (reused && (reused.element.size_bytes !== sizeBytes || reused.element.content_type !== contentType)) {
+      reused = null;
+    }
   } else {
     // A Memories *page* URL carries no path to the bytes, so it is resolved to
     // the direct artifact URL first. resolveFsImageInput stays synchronous, and
@@ -302,41 +316,73 @@ async function imageTranscribeToolInner(
     // `source` below keeps the url the agent actually passed.
     label = resolved.label;
 
-    // The hard image cap (§5.8): refuse before the fetch and the OCR.
-    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe", principal);
-
-    // Resolve credentials/config before FETCHING the image: a missing key should
-    // fail fast and never leave a fetched scan unused. It sits below the input
-    // resolve on purpose — hoisting it above made a malformed ark report a
-    // missing OpenRouter key instead of its own shape error. The Memories lookup
-    // above is the one call a keyless page-URL request can still waste, and it
-    // is small; the image fetch, which is not, is still behind this.
-    apiKey = await getOpenRouterApiKey(principal);
-    model = await getOpenRouterModel(principal);
-
-    // Looked up beside the page fetch and the OCR, for the staged element only.
-    // It never throws: any failure leaves the page without a place.
-    if (input.projectPath && (input.imageId !== undefined || input.ark !== undefined)) {
-      groupPlace = imageGroupPlace({ imageId: input.imageId, ark: input.ark }, principal);
+    // `label` is the identifier as given (the resolved url for a Memories page),
+    // so the same page under another spelling is a fresh read, never a wrong match.
+    if (input.projectPath) {
+      reused = await priorImageRead(
+        input.projectPath,
+        label,
+        (q) =>
+          q.imageId === label ||
+          q.ark === label ||
+          q.memoryArtifactUrl === label ||
+          (input.memoryArtifactUrl !== undefined && q.memoryArtifactUrl === input.memoryArtifactUrl),
+      );
+      // The scan a reused reading names is rewritten, so the image GC's TTL
+      // restarts as it does on a fresh read. A scan that is gone, or cannot be
+      // rewritten, means a fresh read: `imageRef` never names a missing file.
+      if (reused?.element.image_ref && !(await refreshSourceImage(input.projectPath, reused.element.image_ref))) {
+        reused = null;
+      }
     }
 
-    // One download attempt for a connector caller — no fallback-URL retry —
-    // with a per-attempt timeout well under the connector budget (#3996).
-    // clampToBudget floors at 1ms: a memoryArtifactUrl fetch hands this value
-    // straight to AbortSignal.timeout() (fetchFsImageBytes sends no principal
-    // for that shape), which throws on a negative number rather than failing
-    // cleanly, if the Memories lookup above already spent the whole budget.
-    const fetched = await fetchFsImageBytes(
-      resolved.url,
-      isConnector ? undefined : resolved.fallbackUrl,
-      principal,
-      resolved.memoryShape,
-      isConnector ? { timeoutMs: clampToBudget(remainingBudgetMs(), CONNECTOR_FETCH_TIMEOUT_MS) } : {},
-    );
-    await recordImageBrowse(browse);
-    bytes = fetched.bytes;
-    contentType = fetched.contentType;
-    sizeBytes = fetched.sizeBytes;
+    if (reused) {
+      // No fetch, so nothing counts against the image cap, and no OCR: only the
+      // found check below can need the key.
+      apiKey = input.lookingFor?.trim() ? await getOpenRouterApiKey(principal) : "";
+      model = await getOpenRouterModel(principal);
+      bytes = new Uint8Array(0); // never read: the OCR and the scan save are skipped
+      contentType = reused.element.content_type;
+      sizeBytes = reused.element.size_bytes;
+    } else {
+      // The hard image cap (§5.8): refuse before the fetch and the OCR.
+      const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe", principal);
+
+      // Resolve credentials/config before FETCHING the image: a missing key should
+      // fail fast and never leave a fetched scan unused. It sits below the input
+      // resolve on purpose — hoisting it above made a malformed ark report a
+      // missing OpenRouter key instead of its own shape error. The Memories lookup
+      // above is the one call a keyless page-URL request can still waste, and it
+      // is small; the image fetch, which is not, is still behind this.
+      apiKey = await getOpenRouterApiKey(principal);
+      model = await getOpenRouterModel(principal);
+
+      // Looked up beside the page fetch and the OCR, for the staged element only.
+      // It never throws: any failure leaves the page without a place.
+      if (input.projectPath && (input.imageId !== undefined || input.ark !== undefined)) {
+        groupPlace = imageGroupPlace({ imageId: input.imageId, ark: input.ark }, principal);
+      }
+
+      // One download attempt for a connector caller — no fallback-URL retry —
+      // with a per-attempt timeout well under the connector budget (#3996).
+      // clampToBudget floors at 1ms: a memoryArtifactUrl fetch hands this value
+      // straight to AbortSignal.timeout() (fetchFsImageBytes sends no principal
+      // for that shape), which throws on a negative number rather than failing
+      // cleanly, if the Memories lookup above already spent the whole budget.
+      const fetched = await fetchFsImageBytes(
+        resolved.url,
+        budgeted ? undefined : resolved.fallbackUrl,
+        principal,
+        resolved.memoryShape,
+        budgeted
+          ? { timeoutMs: clampToBudget(remainingBudgetMs(), isConnector ? CONNECTOR_FETCH_TIMEOUT_MS : Infinity) }
+          : {},
+      );
+      await recordImageBrowse(browse);
+      bytes = fetched.bytes;
+      contentType = fetched.contentType;
+      sizeBytes = fetched.sizeBytes;
+    }
   }
 
   // Expand recognized given names in lookingFor with historical diminutives
@@ -361,37 +407,50 @@ async function imageTranscribeToolInner(
   // memories-phase budget (`opts.ocrTimeoutMs`) still applies even here.
   // runOcr/runFoundCheck stay principal-free (#3996); this is computed here,
   // not passed down.
-  const ocrBudgetMs = isConnector
-    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, CONNECTOR_STAGING_MARGIN_MS)
+  const ocrBudgetMs = budgeted
+    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, isConnector ? CONNECTOR_STAGING_MARGIN_MS : 0)
     : nominalOcrBudgetMs;
   const ocrStartedAt = Date.now();
 
   // The transport, the size refusal, the single transport retry, the status
   // triage and the truncation detection all live in utils/ocr.ts (issue #2183)
   // so volume_bisect can probe a page without pasting them.
-  const ocr = await runOcr({
-    bytes,
-    contentType,
-    sizeBytes,
-    prompt: buildOcrPrompt(),
-    apiKey,
-    model,
-    timeoutMs: ocrBudgetMs,
-    maxTokens: OCR_MAX_TOKENS,
-  });
-  const transcription = normalizeTranscription(ocr.text);
-  const truncated = ocr.truncated;
-  const truncationNotice = ocr.truncationNotice;
+  let transcription: string;
+  let truncated = false;
+  let truncationNotice: string | undefined;
+  if (reused) {
+    // Only a complete reading is ever reused (`priorImageRead`).
+    transcription = reused.element.transcription;
+  } else {
+    const ocr = await runOcr({
+      bytes,
+      contentType,
+      sizeBytes,
+      prompt: buildOcrPrompt(),
+      apiKey,
+      model,
+      timeoutMs: ocrBudgetMs,
+      maxTokens: OCR_MAX_TOKENS,
+    });
+    transcription = normalizeTranscription(ocr.text);
+    truncated = ocr.truncated;
+    truncationNotice = ocr.truncationNotice;
+  }
+  // The model that READ the page, which on a reused reading is the earlier one.
+  const readModel = reused ? reused.element.model : model;
 
   // Persist the scan for a retained source (§8.5, design B) — best-effort: the
   // transcription is the primary payload, so a save failure (e.g. a bad
   // projectPath) omits imageRef rather than losing the text. A TTL sweep in
   // research_append GCs images no source ends up citing.
   let imageRef: string | undefined;
-  // A `file` input is already retained at its own path inside the project; a
-  // copy under images/ would be a second byte-copy the *.jpg GC and the viewer
-  // do not expect, and citing an upload is record-structurer's business (#2490).
-  if (input.projectPath && input.file === undefined) {
+  if (reused) {
+    // The scan the earlier read retained, rewritten above.
+    imageRef = reused.element.image_ref;
+  } else if (input.projectPath && input.file === undefined) {
+    // A `file` input is already retained at its own path inside the project; a
+    // copy under images/ would be a second byte-copy the *.jpg GC and the viewer
+    // do not expect, and citing an upload is record-structurer's business (#2490).
     // SCANS ONLY, and enforced here rather than only in person_read's caller.
     // `imageFilenameFor` hardcodes `.jpg` and `gcUnreferencedImages` sweeps
     // `images/*.jpg`, so retaining a PDF writes PDF bytes under a .jpg name --
@@ -468,13 +527,13 @@ async function imageTranscribeToolInner(
       ...(input.memoryArtifactUrl !== undefined ? { memoryArtifactUrl: input.memoryArtifactUrl } : {}),
       ...(input.file !== undefined ? { file: input.file } : {}),
     };
-    const place = await groupPlace;
+    const place = reused ? reused.element.source?.place : await groupPlace;
     const element: StagedTranscription = {
       id,
       source: { ...given, ...(place ? { place } : {}) },
       content_type: contentType,
       size_bytes: sizeBytes,
-      model,
+      model: readModel,
       transcription,
       ...(truncated ? { truncated: true as const } : {}),
       ...(found ? { found } : {}),
@@ -511,6 +570,7 @@ async function imageTranscribeToolInner(
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
     ...(digest !== undefined ? { digest } : {}),
+    ...(reused ? { reusedFrom: reused.logId } : {}),
     ...(lookingForExpansion && input.lookingFor
       ? {
           nameExpansion: {
@@ -530,153 +590,8 @@ async function imageTranscribeToolInner(
       // just performed the lookup is the only one that cannot benefit from it.
       ...(pageId !== null ? { memoryArtifactUrl: resolvedMemoryUrl } : {}),
       contentType,
-      model,
+      model: readModel,
       sizeBytes,
     },
   };
 }
-
-/**
- * The MCP entry point. In a project (issue #2490, lead ruling 2026-10-16) the
- * page is staged and the inline `transcription` dropped, so the caller gets
- * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
- * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
- *
- * With no project — no `projectPath`, or a folder holding neither project file —
- * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
- * is saved or staged anywhere and the text comes back inline (issue #4136, lead
- * ruling 2026-11-02). The read counts under the in-memory no-project image cap
- * (spec §5.8). A `file` keeps its project-relative path, so it still needs one.
- *
- * person_read calls `imageTranscribeTool` directly and keeps the text; the
- * strip lives here so it cannot reach that leg.
- */
-export async function imageTranscribeMcpTool(
-  input: ImageTranscribeInput,
-  principal: Principal,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) {
-    return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
-  }
-  const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
-  if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-  if (cls === "missing_arg" || cls === "no_project") {
-    const { projectPath: _dropped, ...unsaved } = input;
-    return compactOrPass(await imageTranscribeTool(unsaved, principal));
-  }
-  return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
-}
-
-/** The project leg's index beside the reading (issue #4578). A refusal passes. */
-async function withIndexReadings(
-  input: ImageTranscribeInput,
-  out: ImageTranscribeToolResponse | NoProjectResult,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if ("ok" in out || typeof input.projectPath !== "string") return out;
-  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
-  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
-  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
-  return attachIndexReadings(input.projectPath, out, ark);
-}
-
-function compactOrPass(
-  out: ImageTranscribeResult | NoProjectResult,
-): ImageTranscribeToolResponse | NoProjectResult {
-  if ("ok" in out) return out;
-  return compactImageTranscribeAnswer(out);
-}
-
-export const imageTranscribeToolSchema = {
-  name: "image_transcribe",
-  description:
-    "OCR a FamilySearch page scan host-side. In a project it STAGES the " +
-    "transcription and returns `staged.resultsRef`, a `digest` (length, a " +
-    "300-character excerpt) and, with lookingFor, `found` — not the page text. " +
-    "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
-    "ref: staged.resultsRef }) only when you need it, and hand " +
-    "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). In a project " +
-    "it also returns `readingNote`, and `indexReadings`, the held records' " +
-    "indexed names for that page: follow the note. With no " +
-    "project (no projectPath, or a folder holding no research.json) the text " +
-    "comes back inline as `transcription` and nothing is saved; those reads " +
-    "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
-    "image_read refuses (over its inline size cap): the image never enters the " +
-    "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
-    "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
-    "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
-    "including a PDF, and an UPLOADED image or PDF already " +
-    "inside a project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
-    "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
-    "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
-    "file need none. Needs an OpenRouter API key (set in " +
-    "~/.familysearch-mcp/config.json if it reports no key). Inputs over 14 MiB " +
-    "are refused with the remedy.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      imageId: {
-        type: "string",
-        description:
-          "FamilySearch Image Group Number NUMBER_NUMBER (e.g. 004884748_02613), " +
-          "as returned by image_search.",
-      },
-      ark: {
-        type: "string",
-        description:
-          "A FamilySearch document-image ARK when no imageId is available — " +
-          "ark:/61903/3:1:... or 3:2:... (e.g. fulltext_search's `id`), a bare " +
-          "3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), " +
-          "a resolver URL for one, or a resolved distribution URL. " +
-          "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
-          "film/register — the bare ARK can silently resolve to the WRONG image " +
-          "within that group. If the record was reached via a FamilySearch page " +
-          "URL carrying i=/cc=/groupId= query parameters (e.g. from the browser or " +
-          "a citation), pass the FULL URL including them, not just the bare ARK — " +
-          "those parameters are preserved and select the correct image.",
-      },
-      memoryArtifactUrl: {
-        type: "string",
-        description:
-          "A FamilySearch memory: a scanned will, certificate, obituary " +
-          "clipping or compiled history uploaded by a relative. Either form " +
-          "works — the direct artifact URL (a person_read source's " +
-          "artifact_url) or the page URL a person sees " +
-          "(familysearch.org/photos/artifacts/<id>, or /memories/<id>, which " +
-          "is that source's url); a page URL is resolved first. PDFs are " +
-          "supported as well as images. Needs no FamilySearch login.",
-      },
-      file: {
-        type: "string",
-        description:
-          "A project-relative POSIX path to an uploaded image or PDF inside the " +
-          "project folder — the hosted upload endpoint writes uploads/<name>. " +
-          "Requires projectPath. JPEG, PNG, GIF, WEBP or PDF, decided by the " +
-          "file's bytes, not its name. No FamilySearch login needed.",
-      },
-      lookingFor: {
-        type: "string",
-        description:
-          "Optional: who or what to locate on the page. A search key only — on a " +
-          "complete read it sets a FOUND/NOT FOUND pointer, but it never shortens " +
-          "or slants the full transcription. The pointer is withheld on a " +
-          "truncated read (`truncated: true`): a half-read page cannot support a " +
-          "clean NOT FOUND, so `found` is absent there — judge from the returned " +
-          "lines and treat the rest of the page as unread. On a FOUND, " +
-          "`matchedForms` lists the other forms of a sought given name that the " +
-          "page carries (`{ Eliza: [\"Elizabeth\"] }`): an entry under one of " +
-          "them carries the name sought, not a different name.",
-      },
-      projectPath: {
-        type: "string",
-        description:
-          "Absolute path to the project folder. In a project the transcription " +
-          "is staged under it (`staged`, `digest`), and a fetched FamilySearch scan " +
-          "is saved under images/ with its project-relative path returned as " +
-          "imageRef, so a retained source can cite it (image_filename) for viewer " +
-          "display. Omit it, or pass a folder that is not a project, to get the " +
-          "text inline with nothing saved. Required with `file`.",
-      },
-    },
-  },
-};

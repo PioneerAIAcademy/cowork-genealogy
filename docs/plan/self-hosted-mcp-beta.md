@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, whose first live sign-in is owed), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; its run with a planted dead token is owed), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, signed in live on `malachi` since 13 November), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; it passed on `malachi` on 26 November with a session that had ended on its own), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, S2's block and delete targets, W4's plain pages (issue #4001), E5's fit for a connector (issue #3996), the MCP App's fold, first cards and case file, and PR #4863's four: ranking for a connector caller, tool calls signed in at the end of `make malachi-check`, a build id that names the commit, and image reading seeded at first connect. `malachi` runs main as of 26 November with the edge on. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -117,12 +117,12 @@ A 401 from the door itself brings up Claude's "Reconnect a connector to keep usi
 | 2. Agents and approvals | Agents work under that name, in claude.ai and Desktop Chat too. In Desktop Chat, "Always allow" chosen at a prompt does not save; set on the connector's page it does, and it reaches agents, new conversations, a Desktop restart and a reconnect. Connecting it again from the plugin's Connectors tab after deleting it resets approvals. Still to measure: whether the hook's `permissionDecision: "allow"` removes the prompt, and an org account. |
 | 3. Hook | The `PreToolUse` hook fires on connector calls. |
 | 4. Limits | Through Funnel, in Desktop Chat: a call times out after 230 s (120 s finished, 240 s did not). A 40,000-character result reaches the model whole; at 100,000 only a 2 KB preview does and the rest goes to a file the model reads with a shell; at 160,000 the model gets an error and the file. |
-| 5. Tool delivery | Every advertised tool arrives on a fresh add. |
+| 5. Tool delivery | Every advertised tool arrives on a fresh add. After a redeploy that changed 48 of 57 tool definitions and added 3 tools, a new chat at claude.ai listed the new tool and the new argument with the connector left in place, and no call prompted (2026-11-26, one account). An open chat was not tried. |
 | 6. Sign-in | Recorded: Claude's client document, the `/authorize` and `/token` parameters, and that it accepts a grant with no refresh token. Not measured: whether a sign-in started in one Claude account can finish in another. If it can, report it to Anthropic, and the launch decision goes to the lead. |
 | 7. Folder access | `Read` cannot see the project folder. `search-images` and `search-hints` reach staged results through `sidecar_read` on the connector (2026-11-08), which asks for approval like any tool. |
-| 8. Updates | Not measured: installing a newer zip over the old one, on a second Claude account. |
+| 8. Updates | Not measured on a second Claude account. On one account, removing the plugin and uploading a newer zip works (2026-11-26); which chats then run the new one was not recorded. |
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
-| 10. Reconnect | With a live connector token and an expired FamilySearch session, the tools stay, the message and its link reach the user unchanged from the main thread, from an agent and in a new conversation, and "continue" works in the same conversation on the same token. The link is not clickable in a Desktop Chat reply, even in plain prose. Once, in Desktop 5.1231, Claude told the user to open it only if the address was their own server, partly because the stub's answers looked like a test connector. |
+| 10. Reconnect | With a live connector token and an expired FamilySearch session, the tools stay, the message and its link reach the user unchanged from the main thread, from an agent and in a new conversation, and "continue" works in the same conversation on the same token. The link is not clickable in a Desktop Chat reply, even in plain prose. Once, in Desktop 5.1231, Claude told the user to open it only if the address was their own server, partly because the stub's answers looked like a test connector. On the real server (2026-11-26, claude.ai): `auth_status` said `loggedIn: false` with the link, the user signed in at it, and the same chat then ran a record search with no new connector sign-in. |
 | 11. Long token | Holds: a token with no refresh token worked about 4 days later, through idle days and a Desktop update, in the open conversation and a new one. Claude sends an expired token, so the door decides expiry. When a token dies, a "Reconnect a connector to keep using it" card appears in the conversation (seen in Desktop Chat, 5.1231); one click and a browser approval sign in again, and the open conversation continues with its approvals kept. With a refresh token, Claude refreshes silently, in the open conversation, in an agent and in a new one. |
 | 12. Surfaces | An ordinary chat at claude.ai or in Desktop is a cloud session from its first call (`CLAUDE_CODE_ENTRYPOINT=remote_cowork`), with the account's plugins synced, so the plugin's agents spawn on the first message (3 of 3 at claude.ai) and the hook binds; no conversation moved. An Incognito chat at claude.ai is a plain chat: no shell, no `Agent` tool and no hook, and the research skill declines. Cards draw on all three and in the iPhone app, which lists the connector but shows no plugin. |
 | 13. Door refusals | Measured; the MCP App record's **Door refusals** block has each cell. A 400 keeps our message. On a 403 the host replaces it everywhere, and it reads as a firewall block. On a 503 the model's path drops it, while the card's call keeps it inside the error string. The connector works afterwards with no new sign-in. So on the connector path a `tools/call` refused for someone else's project, or by a failed lookup, is a tool error carrying our message (lead, 2026-11-12); a request with no tool call keeps its 403 or 503, a 400 is unchanged, and 401 stays HTTP. |
@@ -140,7 +140,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 
 **P0.4 The sign-in redirect.** `FS_REDIRECT_URI` (W2) names it, the public URL plus `/callback` by default. Tracked privately, as P0.1 is.
 
-**Done when:** an account on the allowlist signs in, an email off it is refused, and FamilySearch accepts an authorize request with no scope.
+**Done when:** an account on the allowlist signs in, an email off it is refused, and FamilySearch accepts an authorize request with no scope. The first and third hold on `malachi` since 13 November; the refusal has not been tried there.
 
 ## Phase 1: shared code
 
@@ -255,16 +255,16 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 - **Data:** under `DATA_DIR`, `/home/data/genealogy-beta` on `malachi`.
 - **Roles:** `dml_role.py`, in the `migrate` one-shot, creates the DML-only role.
 - **DNS:** `tools` names public resolvers. The host's resolver gives the tailnet address, whose listener refuses a container, and public DNS gives the Funnel relay.
-- **Off by default:** `OPENROUTER_LINKING_ENABLED` always, and `UPLOADS_ENABLED` until issue #4001 lands.
-- **Settings:** compose sets `WEB_PUBLIC_URL` from `PUBLIC_URL`. W2's redirect and budget settings, `FS_REDIRECT_URI` and `GENEALOGY_SIGNIN_CALLS_PER_MINUTE`, are in compose and the env template, unset by default. Before invited users, set the FamilySearch budget, and the transcription cap at 5 or more.
+- **Off by default:** `OPENROUTER_LINKING_ENABLED` always, `UPLOADS_ENABLED`, and `OPENROUTER_SEED_AT_CONNECT`. On `malachi` uploads and seeding are both on (lead, 2026-11-26). With seeding on, a user the connector's consent creates gets the env file's `OPENROUTER_SEED_KEY` on their row, with no `make malachi-openrouter` run.
+- **Settings:** compose sets `WEB_PUBLIC_URL` from `PUBLIC_URL`. W2's redirect and budget settings, `FS_REDIRECT_URI` and `GENEALOGY_SIGNIN_CALLS_PER_MINUTE`, are in compose and the env template, unset by default. On `malachi` the transcription cap is 20 and neither budget is set; the alpha sets no budget either (lead, 2026-11-26).
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`; `beta-block-user ACCOUNT=` and `beta-delete-user ACCOUNT= CODE= [CONFIRM=yes]`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
-**D2 Monitoring.** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
+**D2 Monitoring (issue #4867).** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The check already ends with tool calls signed in as one user (`CHECK_EMAIL`). The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
-**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp` builds `releases/genealogy-plugin-connector.zip`.
+**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before the acceptance run. In the one redeploy measured, a new chat took the changed definitions with the connector left in place and approvals held (P0.2 item 5). After each deploy, run one ranked record search in Claude: the signed-in calls in `make malachi-check` reach no search. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp` builds `releases/genealogy-plugin-connector.zip`.
 
 **D4 Onboarding page.**
 1. Install the plugin once from the Plugins page. It follows the Claude account.
@@ -340,6 +340,7 @@ When FamilySearch hosts the open beta:
 Each of these is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
 - **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide and per-user limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
+- **Web bundle,** `apps/server/proto/eb-web/`: a prebuild hook that, only with `TOOLS_UPSTREAM_URL` set, routes `/mcp`, its metadata and `/img` to the tools tier, as malachi's edge does, for a connector deployment on FamilySearch's platform. Unset, nginx is unchanged; malachi does not use the bundle.
 - **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings ten packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt`, `sse-starlette`, and `pywin32`, pinned under a win32 marker only. Before W2 merges, Richard reviews the dependency change.
 - **The tool server,** `packages/engine/mcp-server/`: E2, E3 and E5, and the MCP App's fold into `createServer`.
 - **The plugin,** which `eb-worker.zip` carries: G5's wording, E3's and E5's agent lines, and G6.
@@ -350,15 +351,16 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 
 | Item | Issue | Who | Due |
 |---|---|---|---|
-| W2 Claude's authorization server | issue #3997 | remote-server agent | Merged; the first live sign-in is owed |
-| E3 Sign-in link and wording | issue #3995 | remote-server agent | Merged; the run with a planted dead token is owed |
-| D2 Monitoring | none | remote-server agent | Before invited users |
-| MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |
+| W2 Claude's authorization server | issue #3997 | remote-server agent | Merged; signed in live since 13 Nov |
+| E3 Sign-in link and wording | issue #3995 | remote-server agent | Merged; passed on `malachi` 26 Nov |
+| D2 Monitoring | issue #4867 | team | Before invited users |
+| MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The fold, the first cards and the case file are on main and drew on `malachi` 26 Nov. The question card and the four step cards are issues #4857 to #4861 |
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
-| W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
-| E5 Fit for a connector | issue #3996 | team | The pin |
+| W4 Plain pages (D4) | issue #4001 | team | Done |
+| E5 Fit for a connector | issue #3996 | team | Done |
 | E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
-| S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
+| S2 Deleting and blocking one user | issue #4000 | team, senior | Done |
+| Refusals are not errors in chat | PR #4869, then issue #4865 | remote-server agent, then team | Before invited users |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 
@@ -373,8 +375,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 | Sun 8 Nov | Sitting 1 |
 | Thu 12 Nov | Sitting 2. A long token with no refresh, and one install, are decided; the length is the lead's call, and E3 follows from the results |
 | 13 Nov | E2 and E3 merged; the stack up on `malachi` with the edge on, running the MCP App's fold. Nobody has signed in yet |
-| About 19 Nov | The first live sign-in |
-| About 23 Nov | A full run with cards, a planted dead token, and signing in again |
+| 26 Nov | Main deployed to `malachi`. A card and the case file drew in claude.ai, a session that had ended was signed in again from the link, and a ranked record search ran |
 | By 1 Dec | Policy text and plain pages |
 | Before the demo | The MCP App's M1, M2 and M3, with the new case file, then one pinned commit, schemas frozen, approvals warmed, and timed rehearsals |
 | When it is ready | The demo, which has no date |

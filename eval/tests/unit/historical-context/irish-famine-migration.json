@@ -12,11 +12,13 @@
       "pennsylvania",
       "famine",
       "research-relevant",
-      "topical-fixture-required", "direct-arm"]
+      "topical-fixture-required",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
-    "scenario": null
+    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
@@ -37,7 +39,8 @@
     "wiki-search-any",
     "wiki-read-united-states-emigration-and-immigration",
     "wiki-read-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-any"
   ],
   "judge_context": [
     "Should mention the Great Famine (1845-1852) as the primary driver of Irish emigration in this period — not just 'Irish came to America in the 1800s' generic context",

@@ -4,6 +4,7 @@ import { ACCEPTED_ALIASES, nearestParameters, rejectUnknownArgs } from "../../sr
 import { SECTION_FILTERS } from "../../src/tools/research-query.js";
 import { RECORD_TYPE_GROUP_NAMES } from "../../src/utils/record-type-groups.js";
 import { callTool } from "../helpers/call-tool.js";
+import { makeLocalProject } from "../helpers/seed-project.js";
 import {
   PERSON_READ_REF_REMOVED,
   PROJECT_TREE_REMOVED,
@@ -33,7 +34,8 @@ describe("rejectUnknownArgs through the server (#3736)", () => {
   it("lets imageArk through to image_read, whose handler folds it into ark", async () => {
     // Not an ARK, so the handler refuses it before any fetch, and the refusal
     // is the ark-format one: the value reached the resolver as `ark`.
-    const r = await callTool("image_read", { imageArk: "not-an-ark" });
+    const project = await makeLocalProject();
+    const r = await callTool("image_read", { imageArk: "not-an-ark", projectPath: project.dir }).finally(project.cleanup);
     expect(r.isError).toBe(true);
     expect(r.text).not.toContain("has no parameter");
     expect(r.text).not.toMatch(/Provide exactly one of|requires one of/);
@@ -132,7 +134,7 @@ describe("rejectUnknownArgs: a key that belongs to another tool's shape (#4075)"
     expect(r.isError).toBe(true);
     expect(r.text).toContain("research_query has no parameter `filters`: send each filter as its own argument");
     expectSectionKeys(r.text, "plans");
-    expect(listedKeys(r.text, "plans")).toEqual(["questionId", "status"]);
+    expect(listedKeys(r.text, "plans")).toEqual(["questionId", "planItemId", "status"]);
     expect(r.text).not.toContain("the nearest are");
   });
 
@@ -281,7 +283,6 @@ describe("rejectUnknownArgs: what it echoes back", () => {
       const r = await callTool("project_create", args);
       expect(r.isError).toBe(true);
       expect(r.text).toContain(PROJECT_TREE_REMOVED);
-      expect(r.text).toMatch(/survey-surname agent with no projectPath/);
       expect(r.text).not.toContain("the nearest are");
     }
   });
@@ -355,7 +356,16 @@ describe("rejectUnknownArgs: what it lets through", () => {
   });
 
   it("accepts exactly these aliases: adding one is a deliberate edit here", () => {
-    expect(ACCEPTED_ALIASES).toEqual({ image_read: ["imageArk"], image_transcribe: ["imageArk"] });
+    expect(ACCEPTED_ALIASES).toEqual({
+      image_read: ["imageArk"],
+      image_transcribe: ["imageArk"],
+      build_external_search_url: ["userPresent"],
+    });
+  });
+
+  it("accepts userPresent on build_external_search_url, and nowhere else", () => {
+    expect(rejectUnknownArgs("build_external_search_url", { site: "ancestry", userPresent: "no" })).toBeNull();
+    expect(rejectUnknownArgs("record_search", { surname: "Flynn", userPresent: "no" })).not.toBeNull();
   });
 
   it("accepts imageArk on the two image tools, and nowhere else", () => {

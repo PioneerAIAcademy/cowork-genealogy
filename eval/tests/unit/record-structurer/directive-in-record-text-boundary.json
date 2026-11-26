@@ -22,5 +22,44 @@
   "execution": {
     "max_turns": 12,
     "max_wall_clock_seconds": 400
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "death",
+      "attribute": "place",
+      "value": "Cincinnati"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "58"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Printer"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Germany"
+    },
+    {
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Johann Schreiber"
+    },
+    {
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Katharina"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Emma"
+    }
+  ]
 }

@@ -1,8 +1,9 @@
 ---
 name: forget-and-rederive
-description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct), to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
+description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct) — except in verify mode, invoked by the research router —, to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
 allowed-tools:
   - project_context
+  - tree_query
   - tree_forget
 ---
 
@@ -54,6 +55,40 @@ This is a **project-start** exercise. `tree_forget` refuses the call once
 researcher asks to forget mid-project, tell them to start a new project seeded
 from the same FamilySearch person.
 
+## Verify mode
+
+The research router invokes this skill with `mode: verify` and the researcher's
+reply verbatim, when the reply asks to verify a relationship or fact of the
+subject or names a fact or source as wrong. The project is left as if the tree
+never held it, and the research rebuilds it from records. Only the router uses
+this mode.
+
+1. Map the reply to selectors on the subject (`project_context`'s
+   `subjectPersonIds`): parents → `parents-of`; spouse → `spouses-of`; birth →
+   `birth-of`; death → `death-of`; another named fact → `facts-of` with its
+   `factType`; children → `children-of`; a named source → `source` with its S
+   id. A request that names no particular relationship, fact or source maps to
+   nothing: remove nothing and say so. To match a source the
+   reply names by title, call `tree_query({ projectPath, personIds: [<subject>],
+   includeSources: true })`. Step 1's bans on `tree_query` and on looking a
+   source id up are the practice run's only.
+2. One call, with no dry run: the reply is the researcher's agreement.
+   `tree_forget({ projectPath, forget: [ … ], cleanSlate: true })`.
+3. Report the tool's counts only: persons removed (the parents and everyone
+   reachable only through them), relationships, facts and sources removed, and
+   `sourcesKept`, the sources kept because the project already holds them. A
+   kept source is one of the researcher's transcribed memories: say it stays in
+   the project and that their doubt goes to the research question. Then one
+   line: undoing this means a new project from the same person ID.
+4. The second half below holds: do not look the removed people up again.
+5. Do not reply yet. Call `tree_forget`'s `nextStep` yourself, now: `extraction_append` and
+   `timeline_build` for each subject, then spawn question-selection. Reply once it returns, with
+   step 3's counts first.
+
+On `{ ok: false, errors }`, nothing was written. An error asking for
+`cleanSlate`: send the call again with `cleanSlate: true`. Any other: Step 3's
+error notes apply; relay the error and stop.
+
 ## The two halves — both are required
 
 Stripping the local tree is only half the mechanism.
@@ -80,7 +115,7 @@ prohibition is on reading the FamilySearch **tree** for the forgotten facts.
 Ask the researcher what they want you to re-derive, in their words — "his
 parents", "her death date", "who she married".
 
-Map that to the tree's own ids with `project_context({ projectPath })`, which
+Map that to the tree's own ids with `project_context({ projectPath, include: ["persons"] })`, which
 returns each tree person's `id` and preferred name. That is all you need: the
 selectors below take ids, and `tree_forget` walks the relationships itself to
 resolve parents, children and spouses.
@@ -149,7 +184,7 @@ check first. If the cascade is wider than they want, prefer fact-level selectors
 
 ### 3. Apply it
 
-Re-run the same call without `dryRun`. Then:
+Re-run the same call without `dryRun` and with `cleanSlate: false`. Then:
 
 - Report what went, using the tool's own redacted summary — **counts and kinds
   only**. Do not restate the removed names, dates or places back to the

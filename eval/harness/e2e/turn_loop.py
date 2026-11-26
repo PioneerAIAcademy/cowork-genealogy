@@ -1,16 +1,14 @@
 """One session, many turns: the e2e harness answering its own step boundaries.
 
-Section F. Until step mode the e2e harness ran a fixture as ONE `process_query`
-call kept alive by the Stop hook's nudges (deleted in step mode phase 2). Under step mode a turn runs one step
-and ends, so a one-shot query would stop after the first step and the run would
-look finished. This drives turn after turn on one `ClaudeSDKClient` session,
-sending the reply production's host would send.
+Section F. A turn runs one step and ends, so a one-shot query would stop after
+the first step and the run would look finished. This drives turn after turn on
+one `ClaudeSDKClient` session, answering each boundary as a researcher would:
+`next_reply` is the simulated researcher, which sends "Continue." at each offer,
+flagged `--autonomous` as the opener is,
+and stops where only a real researcher could answer. No production plane sends
+a reply of its own; this picker exists only because an e2e run is unattended.
 
-**The reply decision is NOT made here.** `decide_reply` is injected, and the
-orchestrator passes `step_boundary.next_auto_reply` — the same function the
-prototype worker calls. That is the whole point of section F: e2e exercises
-production's mechanism rather than a harness-shaped imitation of it. What lives
-here is only the sequencing: send, consume one turn, ask, repeat.
+`stream_turns` is only the sequencing: send, consume one turn, ask, repeat.
 
 **`max_replies` is a runaway guard, not a result.** It bounds one run's replies.
 Silence inside a turn is the orchestrator's to detect, with its existing
@@ -52,7 +50,7 @@ class Turn:
     #: A halt ends the turn before the model writes its offer line, so the host
     #: answers this instead -- as the prototype worker does.
     halt_offer: str | None = None
-    #: The mode the turn RAN under (`step` / `job` / `wrapup`). A wrap-up turn
+    #: The mode the turn RAN under (`step` / `wrapup`). A wrap-up turn
     #: runs several steps, so the per-step report must keep it out of the step it
     #: opened with -- as `proto/steps.py` does on the prototype side.
     mode: str | None = None
@@ -62,6 +60,143 @@ class Turn:
     #: turn under a persistent session, where a one-shot query had exactly one
     #: for the whole run.
     usage: dict[str, Any] | None = None
+
+
+#: How many replies one run may send.
+MAX_REPLIES = 30
+
+#: The simulated researcher's "Continue.": the run is unattended, so each reply
+#: carries the opener's `--autonomous` flag and the router keeps passing
+#: `userPresent: no`. "Wrap it up." goes bare: a wrap-up turn already passes it.
+UNATTENDED_CONTINUE = "/research --autonomous Continue."
+
+
+def _reply_state(state: dict | None) -> tuple[int, int, list, int]:
+    state = state if isinstance(state, dict) else {}
+    replies = state.get("replies")
+    rounds = state.get("planning_rounds")
+    answered = state.get("answered")
+    touched = state.get("touched_items")
+    return (
+        replies if isinstance(replies, int) and replies > 0 else 0,
+        rounds if isinstance(rounds, int) and rounds > 0 else 0,
+        [tuple(pair) for pair in answered if isinstance(pair, (list, tuple))]
+        if isinstance(answered, list)
+        else [],
+        touched if isinstance(touched, int) and touched > 0 else 0,
+    )
+
+
+def _touched_items_count(boundary, research: dict, question_id) -> int:
+    """How many of the current question's ACTIVE plan items are no longer
+    `planned` -- a count, not a boolean, so growth between turns is visible."""
+    return sum(
+        1 for item in boundary.active_plan_items(research, question_id)
+        if item.get("status") != "planned"
+    )
+
+
+def _last_question_id(research: dict):
+    """The most recently CREATED question, regardless of status.
+
+    `proof-conclusion` resolves the question it concludes in the same batch as
+    writing its summary, so by the time this reads `research.json` back a
+    successful conclusion's question is no longer `current_question`'s "last
+    unresolved entry". Array order is creation order and question-selection only
+    appends, so the last entry names the question this turn worked on in the
+    ordinary case (issue #4601 names the case where it does not)."""
+    questions = research.get("questions") if isinstance(research, dict) else None
+    if not isinstance(questions, list) or not questions:
+        return None
+    last = questions[-1]
+    return last.get("id") if isinstance(last, dict) else None
+
+
+def _planning_exempt(boundary) -> frozenset[str]:
+    """Steps after which a research-plan turn is the ordinary first plan, not a
+    re-plan, so it does not spend the run's one planning round."""
+    groups = ("setup", "question", "plan")
+    return frozenset(s for g in groups for s in boundary.GROUPS.get(g, ()))
+
+
+def next_reply(
+    boundary,
+    state: dict | None,
+    turn_mode: str,
+    prev_step,
+    turn_step,
+    offered_step,
+    outcome: str,
+    *,
+    research: dict | None = None,
+) -> dict:
+    """The simulated researcher's reply to a turn, or None to end the run.
+
+    Returns ``{"reply": str | None, "state": dict}``. Pure: the caller persists
+    the returned state and never mutates the one it passed in.
+
+    Ends the run after a wrap-up turn, when the turn did not finish cleanly, made
+    no offer, offered `wrap-up` (only the researcher answers that), ran
+    proof-conclusion and the question it worked already has a proof summary (or
+    `research` could not be read), repeated a (step, offer) pair already answered
+    since the last planning round or since the current question's active-plan
+    items last grew in count, or hit `MAX_REPLIES`. A second planning round's
+    plan offer is answered "Wrap it up.".
+    """
+    replies, rounds, answered, touched = _reply_state(state)
+    step = boundary.bare_name(turn_step) if turn_step else ""
+    offer = boundary.offer_key(offered_step)
+    prev = boundary.bare_name(prev_step) if prev_step else ""
+
+    def done(reply):
+        return {
+            "reply": reply,
+            "state": {
+                "replies": replies + (1 if reply else 0),
+                "planning_rounds": rounds,
+                "answered": [list(pair) for pair in answered],
+                "touched_items": touched,
+            },
+        }
+
+    if turn_mode == "wrapup":
+        return done(None)
+    if outcome not in ("ok", "completed"):
+        return done(None)
+    if not offer or offer == boundary.WRAP_UP:
+        return done(None)
+    if step == "proof-conclusion":
+        if research is None or boundary.has_proof_summary(research, _last_question_id(research)):
+            return done(None)
+    if replies >= MAX_REPLIES:
+        return done(None)
+
+    # A planning round bounds both loops: a second "not exhaustive" round and a
+    # conflict's second evidence round.
+    if step == "research-plan" and prev and prev not in _planning_exempt(boundary):
+        if rounds >= 1:
+            return done(None)
+        rounds += 1
+        answered = []
+
+    if research is not None:
+        question = boundary.current_question(research)
+        current = _touched_items_count(
+            boundary, research, question.get("id") if question else None
+        )
+        if current > touched:
+            answered = []
+        touched = current
+
+    pair = (step, offer)
+    if pair in answered:
+        # A link-and-assess cycle that never plans.
+        return done(None)
+    answered = answered + [pair]
+
+    if offer == "plan" and rounds >= 1:
+        return done(boundary.REPLY_WRAP_UP)
+    return done(UNATTENDED_CONTINUE)
 
 
 async def stream_turns(

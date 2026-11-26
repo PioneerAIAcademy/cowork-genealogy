@@ -317,14 +317,35 @@ def _enumerative_skip(item: dict, question: dict | None) -> bool:
     )
 
 
+_PARENTAGE_QUESTION_RE = re.compile(r"\b(?:parents?|father|mother)\b", re.IGNORECASE)
+
+
+def _parentage_vital_skip(item: dict, question: dict | None) -> bool:
+    """The second exception (lead ruling on #4696, 2026-11-22): on a parentage
+    question, the subject's own birth record or death certificate that cannot
+    be searched is written `skipped`, `inaccessible` or `no_coverage`, with a
+    reason. A question is parentage when its text names a parent: neither the
+    question nor the test carries a marker, and the `parentage` test tag is
+    missing from five such tests. Known limit: it does not check whose record
+    the item is, so a parent's sealed certificate passes here too; only the
+    tag-gated `test_research_plan_plans_subject_birth_and_death` reads that."""
+    return (
+        bool(_PARENTAGE_QUESTION_RE.search(str((question or {}).get("question") or "")))
+        and item.get("status") == "skipped"
+        and item.get("skip_category") in ("inaccessible", "no_coverage")
+        and bool(str(item.get("skip_reason") or "").strip())
+        and bool(_covered_events(item) & {"birth", "death"})
+    )
+
+
 def test_new_plan_items_planned_status(before_state, after_state, test):
     """Tag-gated: new plan items default to status='planned' (not
     in_progress) and fallback_for=null unless an explicit fallback chain
     is being set up. Items created mid-execution would have status set
     by the search-* skills via log entries — never by research-plan.
-    The one exception is `_enumerative_skip`; on a targeted or unlabelled
-    question a `skipped` item at creation still fails, which is what stops
-    the enumerative obligation over-firing. The tag means the test writes a
+    The exceptions are `_enumerative_skip` and `_parentage_vital_skip`; any
+    other `skipped` item at creation still fails, which is what stops the
+    enumerative obligation over-firing. The tag means the test writes a
     plan, so a run that adds no new item (to a new plan or an existing one)
     fails rather than passing with nothing checked (#4477)."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
@@ -352,7 +373,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
                 continue  # pre-existing item, not our responsibility
             new_items += 1
             status = item.get("status")
-            if status != "planned" and not _enumerative_skip(item, question):
+            if status != "planned" and not (
+                _enumerative_skip(item, question) or _parentage_vital_skip(item, question)
+            ):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
@@ -666,6 +689,71 @@ def test_enumerative_plan_accounts_for_five_events(before_state, after_state, te
                 for i in plan.get("items") or []
             )
         )
+
+
+# --- Tag-gated: a pre-1850 parentage plan reaches a child-naming record first -
+
+# Issue #4163. A US federal census before 1850 names only the head of
+# household, so a parentage plan needs a record that can name a child, planned
+# ahead of every census item from those years. Whether a rationale *frames* the
+# census as placement or as proof stays with the judge: a phrase match fails
+# sound rationales ("confirm I1's residence") as often as it catches a bad one.
+_CHILD_NAMING_RECORD_TYPES = re.compile(
+    r"probate|(?<!real[_ ])estate|\bwills?\b|land|deed|church|parish|vital|town",
+    re.IGNORECASE,
+)
+_FIRST_YEAR_RE = re.compile(r"\b(1[6-9]\d\d)\b")
+
+
+def _is_pre1850_census(item: dict) -> bool:
+    if not _CENSUS_RE.search(str(item.get("record_type") or "")):
+        return False
+    first = _FIRST_YEAR_RE.search(str(item.get("date_range") or ""))
+    return bool(first) and int(first.group(1)) < 1850
+
+
+def test_pre1850_parentage_plan_puts_child_naming_record_first(
+    before_state, after_state, test
+):
+    """Tag-gated: every new plan has an item of a record type that can name a
+    child, sequenced ahead of every census item whose date range starts before
+    1850."""
+    if "pre1850-census" not in (test.get("tags") or []):
+        pytest.skip("not a pre1850-census test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+
+    for plan in plans:
+        items = [i for i in plan.get("items") or [] if i.get("status") != "skipped"]
+        naming = [
+            i.get("sequence")
+            for i in items
+            if _CHILD_NAMING_RECORD_TYPES.search(str(i.get("record_type") or ""))
+            and isinstance(i.get("sequence"), int)
+        ]
+        census = [
+            i.get("sequence")
+            for i in items
+            if _is_pre1850_census(i) and isinstance(i.get("sequence"), int)
+        ]
+        listing = "; ".join(
+            f"{i.get('id')} seq {i.get('sequence')} {i.get('record_type')} {i.get('date_range')}"
+            for i in items
+        )
+        assert naming, (
+            f"{plan.get('id')} plans no record type that can name a child "
+            f"(probate, land or deeds, church, vital or town records). Items: {listing}"
+        )
+        if census:
+            assert min(naming) < min(census), (
+                f"{plan.get('id')} plans a pre-1850 census (sequence {min(census)}) "
+                f"ahead of every record that can name a child (first at sequence "
+                f"{min(naming)}). Items: {listing}"
+            )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
@@ -1197,7 +1285,18 @@ _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
     r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
-    r"for\s+(?:this|the)\s+\w+)\b",
+    r"entries|files?|pages?|documents?|for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# The same adjective after its noun ("estate files not yet indexed on
+# FamilySearch") describes those files. Issue #4163: ut_research_plan_csn,
+# v17_2026-11-07_11-50-41, pli_008, "for unindexed entries" charged to 1500692
+# (personCount > 0); ut_research_plan_hoh, 2026-11-10, pli_012, "Berkshire County
+# estate files not yet indexed on FamilySearch" charged to 3155889 (81433).
+# "records" is left out: "its records are not indexed" is a collection claim.
+_NON_COLLECTION_NOUN_THEN_ADJ_RE = re.compile(
+    r"\b(?:entries|files?|pages?|documents?)\s+"
+    r"(?:(?:that\s+)?(?:are|were)\s+)?(?:not\s+(?:yet\s+)?indexed|un-?indexed)\b",
     re.I,
 )
 # An availability adjective describes the nearest identifier before it. When
@@ -1311,9 +1410,11 @@ def test_research_plan_availability_claim_matches_counts(
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
                 claims_indexed = _claim_on_collection(
-                    _INDEXED_RE, claim_text, cid
-                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
-                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                    _INDEXED_RE, _UNINDEXED_RE.sub(" ", claim_text), cid
+                )
+                about_collection = _NON_COLLECTION_NOUN_THEN_ADJ_RE.sub(
+                    " ", _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                )
                 claims_browse = _claim_on_collection(
                     _BROWSE_ONLY_RE, about_collection, cid
                 ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)
@@ -1344,8 +1445,12 @@ def test_research_plan_availability_claim_matches_counts(
 
 def _collections_scope(place: str) -> str:
     """Python port of `standardPlaceToCollectionsQuery`
-    (packages/engine/mcp-server/src/tools/collections-search.ts): the scope a
-    `collections_search` call on `place` is answered at."""
+    (packages/engine/mcp-server/src/utils/collection-scope.ts): the scope a
+    `collections_search` call on `place` is answered at. It follows the TS for
+    the United States, Canada and Mexico. It does not model the places the TS
+    matches by leading terms (`collectionScopeTerms`: the United Kingdom's
+    countries, Guadeloupe, Martinique and the others it lists): here a UK place
+    stays at "United Kingdom" and a Guadeloupe place at "France"."""
     parts = [p.strip() for p in place.split(",") if p.strip()]
     if not parts:
         return place.strip()
@@ -2075,4 +2180,205 @@ def test_research_plan_reads_locality_rows(before_state, after_state, test):
         "no plan item uses the birth register the locality entry's record_types rows name "
         f"(pattern {fact.pattern!r}); items: "
         + "; ".join(f"{i.get('id')} {i.get('record_type')}: {str(i.get('rationale'))[:80]}" for i in items)
+    )
+
+
+
+# --- Parentage: the subject's own birth record and death certificate (issue #4696 Part B) ----
+
+# test id -> (the subject's given name, birth year, death year). Alan Applegarth: born 1936
+# and died 2023 in Utah, both certificates closed to the public (recent-birth-first-plan).
+_SUBJECT_VITALS_BY_TEST_ID = {
+    "ut_research_plan_zgw": ("Alan", 1936, 2023),
+}
+
+_DEATH_RECORD_WORD = (
+    r"(?:death(?:\s+or\s+burial)?\s+(?:certificate|record|registration|index|entry|entries)\w*"
+    r"|certificates?\s+of\s+death)"
+)
+_BIRTH_RECORD_WORD = (
+    r"(?:births?(?:\s+and\s+christenings)?\s+(?:certificate|record|registration|index)\w*"
+    r"|certificates?\s+of\s+birth)"
+)
+
+
+def _own_record_re(given: str, word: str, event: str) -> re.Pattern:
+    """Ties `word` (a birth- or death-record phrase) to the subject himself:
+    "Alan's 2023 Utah death certificate", "birth record for Alan Applegarth",
+    "certificate of Alan's death", "his own birth certificate". A relative's
+    record ("John Applegarth's death certificate", "Alan's father's death
+    certificate") never puts the subject in those positions, so a sentence
+    that also names the parents still counts."""
+    g = re.escape(given)
+    return re.compile(
+        rf"\b{g}(?:\s+\w+){{0,2}}['’]s\s+(?:own\s+)?(?:[\w-]+\s+){{0,3}}{word}"
+        rf"|{word}(?:\s+[\w-]+){{0,3}}\s+(?:of|for)\s+{g}\b(?!(?:\s+\w+)?['’]s)"
+        rf"|\bcertificates?\s+of\s+{g}(?:\s+\w+){{0,2}}['’]s\s+{event}"
+        rf"|\b(?:his|her|the\s+subject['’]s)\s+own\s+(?:[\w-]+\s+){{0,3}}{word}",
+        re.IGNORECASE,
+    )
+
+
+def _item_text(item: dict) -> str:
+    return " ".join(
+        str(item.get(k) or "") for k in ("rationale", "skip_reason", "jurisdiction")
+    )
+
+
+def _item_seq(item: dict) -> float:
+    seq = item.get("sequence")
+    return seq if isinstance(seq, (int, float)) and not isinstance(seq, bool) else float("inf")
+
+
+def _new_items_or_fail(before_state, after_state) -> list[dict]:
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+    return items
+
+
+def test_research_plan_plans_subject_birth_and_death(before_state, after_state, test):
+    """Tag-gated (``subject-birth-death-items``): a parentage plan carries the
+    subject's own birth record and, the subject having died, his own death
+    certificate, each as an item in any status — planned, or skipped with a
+    reason when sealed (lead ruling on #4696, 2026-11-22).
+
+    An item counts when its rationale, skip_reason or jurisdiction ties a
+    birth- or death-record phrase to the subject (`_own_record_re`), or when it
+    names the subject, carries the record phrase anywhere, and its `date_range`
+    covers the subject's own birth or death year: the 2026-11-23 run wrote
+    "Alan Glen Applegarth was born 29 Apr 1936 … A birth record would name both
+    parents" and "His death certificate would name his parents", which the
+    phrase patterns alone miss. The year is what keeps a parent's death record
+    that mentions the subject (Olive's in 1970, John's in 1998) out. A births
+    index searched for the subject counts for the birth half. An item whose
+    `date_range` is the subject's event year alone counts without the name: the
+    2026-11-23 suite run wrote "a 29 April 1936 Ogden birth record would name
+    both parents" with `date_range` 1936-1936.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _SUBJECT_VITALS_BY_TEST_ID or "subject-birth-death-items" in tags, (
+        f"{test_id} has a _SUBJECT_VITALS_BY_TEST_ID entry but no "
+        "'subject-birth-death-items' tag - restore the tag or delete the entry"
+    )
+    if "subject-birth-death-items" not in tags:
+        pytest.skip("not a subject-birth-death-items test")
+    spec = _SUBJECT_VITALS_BY_TEST_ID.get(test_id)
+    assert spec, (
+        f"{test_id} carries 'subject-birth-death-items' but has no entry in "
+        "_SUBJECT_VITALS_BY_TEST_ID"
+    )
+    given, birth_year, death_year = spec
+    items = _new_items_or_fail(before_state, after_state)
+    named = re.compile(rf"\b{re.escape(given)}\b|\bthe\s+subject\b", re.IGNORECASE)
+
+    def _counts(item: dict, word: str, event: str, year: int) -> bool:
+        text = _item_text(item)
+        if _own_record_re(given, word, event).search(text):
+            return True
+        years = [int(y) for y in re.findall(r"\b(1[5-9]\d\d|20\d\d)\b", str(item.get("date_range") or ""))]
+        if not years or re.search(word, text, re.IGNORECASE) is None:
+            return False
+        other_owner = re.search(
+            rf"\b(?!{re.escape(given)}\b)[A-Z]\w+['’]s\s+(?:[\w-]+\s+){{0,3}}(?i:{word})", text
+        )
+        if min(years) == max(years) == year and not other_owner:
+            return True
+        return bool(named.search(text)) and min(years) <= year <= max(years)
+
+    missing = [
+        label
+        for label, word, event, year in (
+            ("birth record", _BIRTH_RECORD_WORD, "birth", birth_year),
+            ("death certificate", _DEATH_RECORD_WORD, "death", death_year),
+        )
+        if not any(_counts(i, word, event, year) for i in items)
+    ]
+    assert not missing, (
+        f"no new plan item accounts for {given}'s own "
+        + " or ".join(missing)
+        + " (planned, or skipped with its reason); items: "
+        + "; ".join(
+            f"{i.get('id')} {i.get('record_type')} {i.get('status')}: "
+            f"{_item_text(i)[:90]}"
+            for i in items
+        )
+    )
+
+
+# --- Parentage first plan: no item for a ruled-out tree claim, and full-text beside indexed
+# --- search for an early New England vital (issue #4696 Part A) ----
+
+# test id -> the case's names. Alexander Mills (mills-parentage-first-plan): the tree's
+# parents George Mills and Abigail Weed of Stamford married 12 Aug 1760, after Alexander's
+# own 22 Mar 1759 Worcester marriage.
+_RULED_OUT_CLAIM_BY_TEST_ID = {
+    "ut_research_plan_99n": {
+        "given": "Alexander",
+        "excluded_place": "Stamford",
+        "fulltext_place": "Worcester",
+        "fulltext_year": 1759,
+    },
+}
+
+_RULED_OUT_TAGS = ("ruled-out-claim", "fulltext-beside-indexed")
+_FULLTEXT_RE = re.compile(r"\bfull[\s-]?text|\bfulltext", re.IGNORECASE)
+
+
+def _ruled_out_spec(test: dict, tag: str) -> dict:
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _RULED_OUT_CLAIM_BY_TEST_ID or any(t in tags for t in _RULED_OUT_TAGS), (
+        f"{test_id} has a _RULED_OUT_CLAIM_BY_TEST_ID entry but none of the tags "
+        f"{_RULED_OUT_TAGS} - restore a tag or delete the entry"
+    )
+    if tag not in tags:
+        pytest.skip(f"not a {tag} test")
+    spec = _RULED_OUT_CLAIM_BY_TEST_ID.get(test_id)
+    assert spec, f"{test_id} carries {tag!r} but has no entry in _RULED_OUT_CLAIM_BY_TEST_ID"
+    return spec
+
+
+def test_ruled_out_tree_claim_gets_no_item(before_state, after_state, test):
+    """Tag-gated (``ruled-out-claim``): when dated evidence already in the
+    project rules a tree claim out, no item is planned in the place only that
+    claim would send the search to. A rationale may still name the place (to
+    say why it was excluded); only an item's `jurisdiction` fails."""
+    spec = _ruled_out_spec(test, "ruled-out-claim")
+    items = _new_items_or_fail(before_state, after_state)
+    place = spec["excluded_place"]
+    hits = [i for i in items if place.lower() in str(i.get("jurisdiction") or "").lower()]
+    assert not hits, (
+        f"{len(hits)} item(s) planned in {place}, where only the ruled-out tree claim "
+        "points: " + "; ".join(f"{i.get('id')} {i.get('jurisdiction')}" for i in hits)
+    )
+
+
+def test_fulltext_beside_indexed_for_early_vital(before_state, after_state, test):
+    """Tag-gated (``fulltext-beside-indexed``): for a pre-1850 New England
+    vital, an item in that place whose `date_range` covers the event's year
+    names full-text in its rationale, alongside the indexed search rather than
+    as a later fallback. The 1759 Worcester marriage was found that way after
+    six indexed searches came back empty."""
+    spec = _ruled_out_spec(test, "fulltext-beside-indexed")
+    items = _new_items_or_fail(before_state, after_state)
+    place, year = spec["fulltext_place"], spec["fulltext_year"]
+
+    def _covers(item: dict) -> bool:
+        years = [int(y) for y in _YEAR_RE.findall(str(item.get("date_range") or ""))]
+        return bool(years) and min(years) <= year <= max(years)
+
+    in_place = [
+        i for i in items
+        if place.lower() in str(i.get("jurisdiction") or "").lower() and _covers(i)
+    ]
+    assert any(_FULLTEXT_RE.search(str(i.get("rationale") or "")) for i in in_place), (
+        f"no {place} item covering {year} names full-text in its rationale "
+        f"({len(in_place)} item(s) in {place} covering {year}: "
+        + "; ".join(f"{i.get('id')} {i.get('date_range')}" for i in in_place)
+        + ")"
     )

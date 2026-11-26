@@ -13,8 +13,7 @@ written through `research_log_append`. It used to be a loose `<slug>.md` in the
 working folder, which the hosted worker's read-only `/project` refused and no
 ProjectStore ever saw. The judge now sees the entry through
 `file_changes_summary`; the byte-level checks stay here. Positive tests run on
-`empty-project-just-created` with `projectPath: <workspace>`, except the one
-tagged `no-project`, where the agent logs nothing and returns the template.
+`empty-project-just-created` or `person-less-project` with `projectPath: <workspace>`.
 
 `ut_search_wikipedia_008`, the decline, is a direct `grade_on_invariant`
 negative, so every validator below that skips non-positive tests skips it, and
@@ -61,11 +60,7 @@ def test_only_lookup_and_log_called(tool_calls, test):
 
     The agent delivers its summary as one log entry (#3244 option L), so the
     log call is part of the workflow, not a stray tool. On `scope-decline` it
-    must make no log call at all: a declined request logs nothing. On the
-    `no-project` tag the one call is still allowed -- it is how the agent
-    learns there is no project (`reason: "no_project"`) -- and
-    `test_no_project_returns_template` checks that nothing was logged.
-
+    must make no log call at all: a declined request logs nothing. 
     Skips `ut_search_wikipedia_008`, which is a negative.
     """
     if test.get("type") != "positive":
@@ -119,8 +114,6 @@ def _skip_unless_logging_run(test) -> None:
     tags = test.get("tags", [])
     if "scope-decline" in tags:
         pytest.skip("scope-decline: the agent declines, so it logs nothing")
-    if "no-project" in tags:
-        pytest.skip("no-project: test_no_project_returns_template grades this run")
     if "lookup-failed" in tags:
         pytest.skip("lookup-failed: test_lookup_failed_logs_nothing grades this run")
 
@@ -294,28 +287,6 @@ def test_notes_title_is_returned_title(before_state, after_state, tool_calls, te
             assert h1 == f"# {_TITLE_TAGS[tag]}", (
                 f"tag {tag} pins the H1 '# {_TITLE_TAGS[tag]}'; got {h1!r}"
             )
-
-
-def test_no_project_returns_template(before_state, after_state, tool_calls, agent_returns, text_response, test):
-    """Tag-gated (`no-project`): with no project the agent logs nothing and
-    returns the filled template as its reply instead (`research_log_append`
-    answers `reason: "no_project"`). Fails on a new log entry, a new file, or a
-    reply that does not carry the template verbatim.
-    """
-    if "no-project" not in test.get("tags", []):
-        pytest.skip("not a no-project scenario")
-    new = new_log_entries(before_state, after_state)
-    assert not new, f"no project, so nothing may be logged; got {len(new)} new entries"
-    files = _files_created(before_state, after_state)
-    assert not files, f"no project: the template is the reply, not a file; wrote: {files}"
-    responses = _wikipedia_responses(tool_calls)
-    if not responses:
-        pytest.skip("no successful wikipedia_search response to compare against")
-    reply = _graded_reply(agent_returns, text_response)
-    assert any(_filled_template(r).rstrip() in reply for r in responses), (
-        "no project: the reply must be the filled template, verbatim. "
-        f"Expected to find:\n  {_filled_template(responses[0])!r}\nReply was:\n  {reply!r}"
-    )
 
 
 NOT_FOUND_PREFIX = "No Wikipedia article found"

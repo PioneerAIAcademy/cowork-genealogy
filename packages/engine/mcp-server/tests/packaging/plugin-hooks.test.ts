@@ -15,6 +15,7 @@ import {
   wholeSectionOwners,
 } from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
+import { AGENT_ONLY, AGENT_ONLY_NOTE, allToolSchemas } from "../../src/tool-schemas.js";
 
 // The plugin's PreToolUse hook is the ONLY guardrail that reaches Cowork.
 //
@@ -205,7 +206,7 @@ const PYTHON: string[] | null = resolvePython();
  * pass here and still break in the VM. Every other third-party import is
  * caught on every machine.
  */
-function execGuard(input: string): string {
+function execGuard(input: string, env?: NodeJS.ProcessEnv): string {
   if (!PYTHON) {
     throw new Error(
       `No Python 3 found (tried: ${describePythonCandidates()}). The plugin's ` +
@@ -213,25 +214,34 @@ function execGuard(input: string): string {
     );
   }
   const [cmd, ...pre] = PYTHON;
-  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8" });
+  return execFileSync(cmd, [...pre, GUARD], { input, encoding: "utf-8", ...(env ? { env } : {}) });
 }
 
 /** Run the guard script the way the runtime does: payload on stdin, JSON out. */
-function runGuard(payload: unknown): any {
-  return JSON.parse(execGuard(JSON.stringify(payload)));
+function runGuard(payload: unknown, env?: NodeJS.ProcessEnv): any {
+  return JSON.parse(execGuard(JSON.stringify(payload), env));
 }
 
+/** The environment a hosted plane gives the hook (`GENEALOGY_HOSTED_PLANE`). */
+const HOSTED_ENV = { ...process.env, GENEALOGY_HOSTED_PLANE: "1" };
+
 /**
- * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
- * read by loading the script rather than by regex: the dict values are tuples
- * and strings that carry their own parentheses.
+ * The guard's AGENT_ONLY_TOOLS (tool -> owning agents), MAIN_THREAD_OK keys and
+ * MAIN_THREAD_DENIED (tool -> deny text), read by loading the script rather than
+ * by regex: the dict values are tuples and strings that carry their own
+ * parentheses.
  */
-function guardAgentOnlyTables(): { agentOnly: Record<string, string[]>; mainThreadOk: string[] } {
+function guardAgentOnlyTables(): {
+  agentOnly: Record<string, string[]>;
+  mainThreadOk: string[];
+  mainThreadDenied: Record<string, string>;
+} {
   if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
   const [cmd, ...pre] = PYTHON;
   const code =
     "import json, runpy, sys; g = runpy.run_path(sys.argv[1]); " +
-    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK'])}))";
+    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK']), " +
+    "'mainThreadDenied': g['MAIN_THREAD_DENIED']}))";
   return JSON.parse(execFileSync(cmd, [...pre, "-c", code, GUARD], { encoding: "utf-8" }));
 }
 
@@ -556,9 +566,12 @@ describe("plugin hooks are packaged and wired", () => {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
     }
-    const agentOnlyTools = Object.keys(guardAgentOnlyTables().agentOnly);
+    const { agentOnly, mainThreadDenied } = guardAgentOnlyTables();
+    const agentOnlyTools = Object.keys(agentOnly);
+    const deniedTools = Object.keys(mainThreadDenied);
     expect(agentOnlyTools.length).toBeGreaterThan(0);
-    for (const tool of [...ownerRoutedTools, ...agentOnlyTools]) {
+    expect(deniedTools.length).toBeGreaterThan(0);
+    for (const tool of [...ownerRoutedTools, ...agentOnlyTools, ...deniedTools]) {
       // An MCP tool, so all THREE server spellings — the same rule agent
       // frontmatter follows, and for the same reason: the server's name is
       // chosen by whoever registers it and the plugin cannot control that.
@@ -609,6 +622,17 @@ describe("plugin hooks are packaged and wired", () => {
       ).toEqual(agents.get(tool) ?? []);
     }
   });
+
+  it("opens the description of exactly the tools the hook denies the main thread with the agents-only note", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    expect(
+      [...AGENT_ONLY].sort(),
+      "src/tool-schemas.ts AGENT_ONLY differs from AGENT_ONLY_TOOLS in hooks/guard_project_files.py: " +
+        "a tool the hook denies must say so in its description, and one it allows must not",
+    ).toEqual(Object.keys(agentOnly).sort());
+    const noted = allToolSchemas.filter((s) => s.description.startsWith(AGENT_ONLY_NOTE)).map((s) => s.name);
+    expect(noted.sort()).toEqual([...AGENT_ONLY].sort());
+  });
 });
 
 describe("the guard script's decisions", () => {
@@ -626,13 +650,36 @@ describe("the guard script's decisions", () => {
   it.each([
     ["Agent", { subagent_type: "record-extractor", prompt: "p" }],
     ["Agent", { subagent_type: "genealogy-research:record-extractor", prompt: "p" }],
-    ["Task", { subagent_type: "general-purpose", prompt: "p" }],
-    ["Agent", { prompt: "p" }],
-    ["Agent", { subagent_type: null, prompt: "p" }],
     ["Agent", { subagent_type: ["fork"], prompt: "p" }],
     ["mcp__genealogy__record_read", { subagent_type: "fork" }],
   ])("has no opinion on %s %j", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  it.each([
+    ["Task", { subagent_type: "general-purpose", prompt: "p" }, "general-purpose"],
+    ["Agent", { prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: null, prompt: "p" }, "general-purpose"],
+    ["Agent", { subagent_type: "claude", prompt: "p" }, "claude"],
+    ["Agent", { subagent_type: "Explore", prompt: "p" }, "Explore"],
+  ])("denies a hosted plane's main thread %s %j, a built-in agent, and names the way out", (tool_name, tool_input, name) => {
+    const out = runGuard({ tool_name, tool_input }, HOSTED_ENV);
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`"${name}"`);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("Spawn the plugin agent the step calls for");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("leaves a built-in agent type alone inside a subagent", () => {
+    expect(
+      runGuard({ tool_name: "Agent", agent_id: "a1", tool_input: { subagent_type: "claude", prompt: "p" } }, HOSTED_ENV),
+    ).toEqual({});
+  });
+
+  it.each(["claude", "general-purpose"])("leaves Cowork and Desktop free to spawn %s", (subagent_type) => {
+    const env = { ...process.env };
+    delete env.GENEALOGY_HOSTED_PLANE;
+    expect(runGuard({ tool_name: "Agent", tool_input: { subagent_type, prompt: "p" } }, env)).toEqual({});
   });
 
   it.each([
@@ -1702,14 +1749,19 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(
       /Name a source, collection, book or citation only if a tool result in this session returned it/,
     );
-    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from a collections search, which the locality-guide and research-plan agents run/);
     expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("does not add the hosted planes' routing sentence in Cowork and Desktop", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Investigate Patrick Flynn." }));
+    expect(out.hookSpecificOutput.additionalContext).not.toMatch(/Hand each genealogy request/);
   });
 
   it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
     const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
     expect(out.hookSpecificOutput.additionalContext).toMatch(
-      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent, even when it names no images: start a project first with\s+project_create/s,
     );
   });
 
@@ -1736,6 +1788,45 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
   });
 });
 
+describe("the main thread is denied person_search (#4791)", () => {
+  const REASON =
+    "Ask the researcher for the FamilySearch person ID; a project never starts from a name search.";
+
+  it.each([
+    "mcp__genealogy__person_search",
+    "mcp__remote-devices__Genealogy_Research__person_search",
+    "mcp__Genealogy_Research__person_search",
+  ])("denies a main-thread %s with the ask-for-the-ID reason", (tool_name) => {
+    const out = runGuard({ tool_name, tool_input: { surname: "Hagell" } });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toBe(REASON);
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("does not touch a subagent's person_search", () => {
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__person_search",
+        tool_input: { surname: "Hagell" },
+        agent_id: "a1",
+        agent_type: "genealogy-research:tree-survey",
+      }),
+    ).toEqual({});
+  });
+
+  it("denies only tools no agent holds and no skill declares", () => {
+    const { mainThreadDenied, agentOnly, mainThreadOk } = guardAgentOnlyTables();
+    const { agents, skillDeclared } = toolHolders();
+    const all = manifestToolNames();
+    for (const tool of Object.keys(mainThreadDenied)) {
+      expect(all, `${tool} is no tool the server advertises`).toContain(tool);
+      expect(agents.get(tool) ?? [], `an agent holds ${tool}`).toEqual([]);
+      expect(skillDeclared.has(tool), `a skill declares ${tool}`).toBe(false);
+      expect(tool in agentOnly || mainThreadOk.includes(tool), `${tool} is on another list`).toBe(false);
+    }
+  });
+});
+
 describe("the main thread is denied the tools only agents hold", () => {
   const SPELLINGS = (tool: string) => [
     `mcp__genealogy__${tool}`,
@@ -1750,7 +1841,7 @@ describe("the main thread is denied the tools only agents hold", () => {
     const reason = runGuard({ tool_name: "Write", tool_input: { file_path: "/project/research.json" } })
       .hookSpecificOutput.permissionDecisionReason as string;
     const named = Object.keys(agentOnly).filter((t) => new RegExp(`\\b${t}\\b`).test(reason));
-    expect(named).toEqual(expect.arrayContaining(["project_create", "tree_edit", "external_links_search"]));
+    expect(named).toEqual(expect.arrayContaining(["tree_edit", "external_links_search"]));
     for (const tool of named) {
       expect(agentOnly[tool].some((a) => reason.includes(`\`@plugin:${a}\``)), tool).toBe(true);
     }
@@ -1821,5 +1912,77 @@ describe("the main thread is denied the tools only agents hold", () => {
 
   it("does not deny image_read, which no agent holds", () => {
     expect(runGuard({ tool_name: "mcp__genealogy__image_read", tool_input: {} })).toEqual({});
+  });
+});
+
+const AGENT_RELAY_NOTE = join(PLUGIN_DIR, "hooks", "agent_relay_note.py");
+
+function runRelayNote(input: string, hosted: boolean): any {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const env = { ...process.env };
+  delete env.GENEALOGY_HOSTED_PLANE;
+  if (hosted) env.GENEALOGY_HOSTED_PLANE = "1";
+  return JSON.parse(execFileSync(cmd, [...pre, AGENT_RELAY_NOTE], { input, encoding: "utf-8", env }));
+}
+
+describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
+  it("is bound on Agent|Task returns", () => {
+    const hooks = JSON.parse(readFileSync(HOOKS_JSON, "utf-8")).hooks;
+    const [entry] = hooks.PostToolUse;
+    expect(entry.matcher).toBe("Agent|Task");
+    expect(entry.hooks[0].command).toContain("agent_relay_note.py");
+  });
+
+  it.each(["Agent", "Task"])("tells a hosted main thread to relay a %s return word for word", (tool_name) => {
+    const out = runRelayNote(JSON.stringify({ tool_name, tool_input: {}, tool_response: {} }), true);
+    expect(out.hookSpecificOutput.hookEventName).toBe("PostToolUse");
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/after the final `---` word for word/);
+  });
+
+  it.each(["historical-context", "plugin:historical-context", "genealogy-research:historical-context"])(
+    "tells a hosted main thread to relay %s's overview above its Search implications, not the text after ---",
+    (subagent_type) => {
+      const out = runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type }, tool_response: {} }), true);
+      const note = out.hookSpecificOutput.additionalContext;
+      expect(note).toMatch(/everything above its `### Search implications` heading word for word/);
+      expect(note).not.toMatch(/after the final `---`/);
+    },
+  );
+
+  it("gives init-project a note that keeps its source lines and closing questions on a job", () => {
+    const note = runRelayNote(
+      JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "init-project" }, tool_response: {} }),
+      true,
+    ).hookSpecificOutput.additionalContext;
+    expect(note).toMatch(/^That was init-project's report\. Relay its text after the final `---` word for word, its source lines included/);
+    expect(note).toMatch(/then add exactly these two lines and nothing else: "What do you want to verify or research\?/);
+    expect(note).toMatch(/and "Continue with `choosing the question`\?"/);
+    expect(note).toMatch(/Only when the researcher's message is a bounded request/);
+    expect(note).toMatch(/`Verify request: broad` line \(the broad audit is then what was asked\)/);
+  });
+
+  it.each(["locality-guide", "genealogy-research:locality-guide"])(
+    "gives %s its own note: its report and research-plan's both relayed word for word",
+    (subagent_type) => {
+      const note = (s: string) =>
+        runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: s }, tool_response: {} }), true)
+          .hookSpecificOutput.additionalContext;
+      expect(note(subagent_type)).toMatch(/locality-guide's first, then research-plan's/);
+      expect(note(subagent_type)).toMatch(/word for word/);
+      expect(note(subagent_type)).not.toBe(note("search-records"));
+    },
+  );
+
+  it.each([
+    ["Cowork and Desktop", { tool_name: "Agent" }, false],
+    ["a subagent's call", { tool_name: "Agent", agent_id: "a1" }, true],
+    ["another tool", { tool_name: "Read" }, true],
+  ])("says nothing for %s", (_label, payload, hosted) => {
+    expect(runRelayNote(JSON.stringify(payload), hosted as boolean)).toEqual({});
+  });
+
+  it("says nothing on bad input rather than raising", () => {
+    expect(runRelayNote("not json", true)).toEqual({});
   });
 });

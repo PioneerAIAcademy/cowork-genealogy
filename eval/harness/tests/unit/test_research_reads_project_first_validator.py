@@ -2,10 +2,11 @@
 `test_research.test_reads_project_state_before_routing` (tag ``reads-project-first``).
 
 Issue #3766. Replays committed research run logs through both validators: red on
-the transcripts that motivated them, green on a released run. Only released
-``v{N}.json`` logs are read, because the harness prunes candidates after five newer
-ones land. The PR #3727 transcript never reached main, so its two entries are
-committed, trimmed, under ``tests/fixtures/reads_project_first/``. `testpaths`
+the transcripts that motivated them, green on a later run. The two research run
+logs it reads are kept under ``tests/fixtures/runlogs/research/``, because the
+harness prunes run logs after five newer ones land. The PR #3727 transcript never
+reached main, so its two entries are committed, trimmed, under
+``tests/fixtures/reads_project_first/``. `testpaths`
 excludes `validators/`, which is why these live here.
 """
 
@@ -26,7 +27,7 @@ from test_research import (  # noqa: E402
     test_reads_project_state_before_routing as reads_project,
 )
 
-_RUNLOGS = _REPO / "eval" / "runlogs" / "unit" / "research"
+_RUNLOGS = _HARNESS / "tests" / "fixtures" / "runlogs" / "research"
 _PR3727_V32 = _HARNESS / "tests" / "fixtures" / "reads_project_first" / "pr3727_v32.json"
 _TAG = "reads-project-first"
 

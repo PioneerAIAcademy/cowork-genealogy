@@ -931,7 +931,7 @@ def test_a_fixture_that_is_valid_json_but_not_an_object_does_not_raise(tmp_path)
     "name,scanned",
     [
         ("v1_2026-01-01_00-00-00.json", True),
-        ("v2.json", True),
+        ("v2.json", False),
         ("v10_2026-12-31_23-59-59.json", True),
         ("scratch_2026-01-01_00-00-00.json", False),
         ("v1_2026-01-01_00-00-00.ann.json", False),
@@ -940,7 +940,7 @@ def test_a_fixture_that_is_valid_json_but_not_an_object_does_not_raise(tmp_path)
         ("vNOTAVERSION.json", False),
     ],
 )
-def test_only_released_and_candidate_filenames_are_scanned(
+def test_only_committed_run_log_filenames_are_scanned(
     tmp_path, monkeypatch, capsys, name, scanned
 ):
     """Delegates to `harness.versioning.classify` rather than a local

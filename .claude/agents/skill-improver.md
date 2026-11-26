@@ -22,9 +22,8 @@ not your job. Write every proposed edit to the prose standard in
 
 For skill `<X>` (paths relative to repo root):
 
-- **The latest releasable, active run log:**
-  `eval/runlogs/unit/<X>/v{N}.json` (released) or, if none, the highest
-  `v{N}_<ts>.json` candidate. **Ignore `scratch_*.json`.** Run-log
+- **The latest releasable, active run log:** the newest
+  `eval/runlogs/unit/<X>/v{N}_<ts>.json` by (version, timestamp). **Ignore `scratch_*.json`.** Run-log
   format: [`eval/README.md`](../../eval/README.md) "Reading a run log"
   and [`eval/CLAUDE.md`](../../eval/CLAUDE.md).
 - **Its annotation sibling** `*.ann.json` — the human corrections; schema
@@ -32,8 +31,7 @@ For skill `<X>` (paths relative to repo root):
   Each `corrections[]` entry is `{test_id, dimension_source,
   dimension_name, llm_score, corrected_score, comment}`; "agreed" is
   computed as `corrected_score == llm_score` (no separate field). A
-  *released* run log is fully annotated (the release gate requires it); a
-  *candidate* may have none yet — if so, see "When you cannot".
+  run log may have no annotation yet — if so, see "When you cannot".
 - **The run log's `snapshot`** — the exact `SKILL.md` + files that
   produced these scores.
 - **The current skill:** `packages/engine/plugin/skills/<X>/SKILL.md`
@@ -48,8 +46,8 @@ For skill `<X>` (paths relative to repo root):
 ## Process
 
 1. **Resolve and validate the run log.** Pick the latest *releasable* run
-   log — a `--skill` invocation with no tag: `v{N}.json` if released, else
-   the newest-timestamp `v{N}_<ts>.json` candidate; ignore `scratch_*.json`.
+   log — a `--skill` invocation with no tag: the newest `v{N}_<ts>.json` by
+   (version, timestamp); ignore `scratch_*.json`.
    Confirm it is **active** — the `SKILL.md` in its `snapshot` byte-matches
    the working tree's `SKILL.md` under the harness's `normalize()`. **If
    the run log is stale (snapshot ≠ working tree), propose no edits** —
@@ -147,7 +145,7 @@ For skill `<X>` (paths relative to repo root):
    a big fix — gate on "the failing dimension now passes, nothing obvious
    regressed," not a small weighted-mean delta (no `temperature=0`;
    sub-noise movement is noise). Reserve a full `--skill` run for the
-   release candidate.
+   run log the PR commits.
 
 ## Report format
 

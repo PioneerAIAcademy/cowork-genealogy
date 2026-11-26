@@ -13,7 +13,8 @@
     ]
   },
   "input": {
-    "delegation": "Search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama."
+    "delegation": "Search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama.\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "negative": {
     "correct_skill": [

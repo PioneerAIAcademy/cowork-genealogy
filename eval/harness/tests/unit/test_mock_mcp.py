@@ -44,6 +44,13 @@ COMPACTOR_JS = (
 )
 
 
+@pytest.fixture(autouse=True)
+def _gate_off_unless_asked(request, monkeypatch):
+    """These tests exercise one handler each; the project gate has its own tests below."""
+    if "project_gate" not in request.node.name:
+        monkeypatch.setattr(mock_mcp, "PROJECT_GATE_ENABLED", False)
+
+
 def _extract_response_dict(handler_result):
     """The mock handler returns {'content': [{'type':'text','text': '<json>'}]}."""
     return json.loads(handler_result["content"][0]["text"])
@@ -288,7 +295,7 @@ def test_build_schema_advertised_for_fixture_backed_tool():
         schema = tools_by_name["record_person_matches"].input_schema
         # Real production schema: `id` is required and it is not the
         # permissive `additionalProperties: True` fallback.
-        assert schema.get("required") == ["id"]
+        assert schema.get("required") == ["id", "projectPath"]
         assert schema.get("additionalProperties") is not True
 
 
@@ -974,6 +981,22 @@ def test_wiki_search_fails_open_without_the_build(tmp_path, monkeypatch):
     with pytest.warns(UserWarning, match="wiki_search fixtures are served unchanged"):
         out = mock_mcp._compact_wiki_search(response, True)
     assert out == response
+
+
+@pytest.mark.requires_engine_build
+def test_catalog_search_film_year_adds_production_line(tmp_path):
+    """With `filmYear`, the canned answer gains production's `filmForYear` (#4721);
+    without it, the fixture is served as recorded."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["catalog-search-ochtrup"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {"standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"}
+    with_year = _extract_response_dict(_invoke(tools_by_name, "catalog_search", {**args, "filmYear": 1836}))
+    kb = next(h for h in with_year["hits"] if h["id"] == "koha:202974")
+    assert kb["filmForYear"]["filmNumber"] == "876540"
+    assert "viewable only at a FamilySearch Center" in kb["filmForYear"]["line"]
+    plain = _extract_response_dict(_invoke(tools_by_name, "catalog_search", dict(args)))
+    assert all("filmForYear" not in h for h in plain["hits"])
 
 
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
@@ -3277,13 +3300,38 @@ def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
     # keeps the model and the size.
     assert "metadata" not in body
     assert "nameExpansion" not in body
-    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    # The tool logs its own read (#4721), which moves the staged file to its sidecar.
+    envelope = json.loads((tmp_path / "results" / f"{body['logId']}.json").read_text(encoding="utf-8"))
     assert envelope["tool"] == "image_transcribe"
     assert envelope["payload"]["query"] == _WILL_ARGS
     [element] = envelope["payload"]["results"]
     assert element["id"] == "007936749_00008"
     assert element["source"] == {"imageId": "007936749_00008"}
     assert element["transcription"] == full
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_logs_its_own_read_as_production_does(tmp_path):
+    """Issue #4721: the mock writes the entry production's `imageTranscribeMcpTool`
+    writes, through the same compiled `researchLogAppend` and `readOutcome`: one
+    entry, `written_by: "image_transcribe"`, under the call's plan item, its query
+    the staged echo, its outcome from `found`."""
+    body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path), "planItemId": "pli_004"})
+    assert body.get("staged"), body.get("stagingError")
+    assert body.get("logId"), body.get("logRefused")
+    log = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))["log"]
+    [entry] = [e for e in log if e.get("written_by") == "image_transcribe"]
+    assert entry["id"] == body["logId"]
+    assert {k: entry[k] for k in ("tool", "plan_item_id", "outcome", "results_examined", "staged_ref", "results_ref", "query")} == {
+        "tool": "image_transcribe",
+        "plan_item_id": "pli_004",
+        # The canned page carries no `found`, so a `lookingFor` with none is partial.
+        "outcome": "partial",
+        "results_examined": 1,
+        "staged_ref": body["staged"]["resultsRef"],
+        "results_ref": f"results/{body['logId']}.json",
+        "query": _WILL_ARGS,
+    }
 
 
 @pytest.mark.requires_engine_build
@@ -3318,21 +3366,6 @@ def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_pa
     assert "In the name of God, Amen" in json.dumps(read)
 
 
-def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path):
-    """Production reads with no projectPath and returns the page inline, staging
-    nothing (#4136), so the fixture's page reaches the agent with no `staged`."""
-    _copy_scenario(tmp_path)
-    _s, _c, tools_by_name = create_mock_server(
-        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
-    )
-    result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
-    body = _extract_response_dict(result)
-    assert not result.get("is_error"), body
-    assert body["transcription"].startswith("Will Book G, page 112.")
-    for key in ("staged", "digest", "imageRef", "stagingError"):
-        assert key not in body
-
-
 def _messy_page_server(tmp_path, transcription, match=None):
     """A mock server over one canned page carrying production's in-process
     extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
@@ -3364,57 +3397,10 @@ def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_
     )
     assert body.get("staged"), body.get("stagingError")
     cleaned = "Name\nAnna Weber\n\n===\nPeter Weber"
-    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    envelope = json.loads((tmp_path / "results" / f"{body['logId']}.json").read_text(encoding="utf-8"))
     assert envelope["payload"]["results"][0]["transcription"] == cleaned
     assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
-    assert sorted(body) == ["digest", "found", "readingNote", "staged"]
-
-
-@pytest.mark.requires_engine_build
-def test_image_transcribe_without_a_project_runs_the_compiled_compactor(tmp_path):
-    """The no-project answer goes through production's compactor too: the text
-    cleaned and cut at the inline bound with a notice, `found` kept, no
-    `truncated`, and `metadata` and `nameExpansion` dropped."""
-    rows = [f"Row {i}:  Weber, Anna Maria    farmer's daughter    Alsweiler   " for i in range(1, 700)]
-    tools_by_name = _messy_page_server(tmp_path, "\n".join(rows))
-    result = _invoke(tools_by_name, "image_transcribe", {"imageId": "004884748_02613"})
-    body = _extract_response_dict(result)
-    assert not result.get("is_error"), body
-    assert sorted(body) == ["found", "transcription", "truncationNotice"]
-    assert body["found"] == "FOUND"
-    assert body["transcription"].startswith("Row 1:  Weber, Anna Maria    farmer's daughter    Alsweiler\nRow 2:")
-    assert len(json.dumps(body["transcription"], ensure_ascii=False)) - 2 <= 36_000
-    assert body["truncationNotice"].startswith("Only the first ")
-
-
-def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):
-    """A projectPath naming an empty folder is no project: the page comes back
-    inline and no results/ is created there, as production writes nothing."""
-    _s, _c, tools_by_name = create_mock_server(
-        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
-    )
-    result = _invoke(tools_by_name, "image_transcribe", {**_WILL_ARGS, "projectPath": str(tmp_path)})
-    body = _extract_response_dict(result)
-    assert not result.get("is_error"), body
-    assert body["transcription"].startswith("Will Book G, page 112.")
-    assert "staged" not in body
-    assert not (tmp_path / "results").exists()
-
-
-def test_image_transcribe_file_with_no_project_answers_no_project(tmp_path):
-    _s, _c, tools_by_name = create_mock_server(["image-transcribe-any"], FIXTURES_DIR, workspace=tmp_path)
-    body = _extract_response_dict(
-        _invoke(tools_by_name, "image_transcribe", {"file": "uploads/scan.jpg", "projectPath": str(tmp_path)})
-    )
-    assert body == {"ok": False, "reason": "no_project", "errors": [mock_mcp.NO_PROJECT_MESSAGE_READ]}
-
-
-def test_no_project_read_message_has_not_drifted_from_the_typescript_source():
-    src = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
-    base = src.split('const NO_PROJECT_BASE = "', 1)[1].split('";', 1)[0]
-    read = src.split("export const NO_PROJECT_MESSAGE_READ =", 1)[1].split("`;", 1)[0]
-    read = read.split("${NO_PROJECT_BASE} ", 1)[1]
-    assert f"{base} {read}" == mock_mcp.NO_PROJECT_MESSAGE_READ
+    assert sorted(body) == ["digest", "found", "logId", "readingNote", "staged"]
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
@@ -3588,27 +3574,22 @@ def test_guard_passes_a_real_parameter_and_an_accepted_alias(tmp_path):
 def test_guard_checks_the_models_args_not_the_injected_projectPath(tmp_path):
     """The ordering trap, on a LIVE compiled tool.
 
-    `_make_compiled_tool_handler` adds `projectPath` to its own copy of the
-    args. `convert_calendar` does not declare `projectPath` (nor does
-    `project_list`), so a guard run AFTER that injection would refuse every call
-    to those two. Checking the model's own args is
-    what keeps this call legal.
+    `_make_compiled_tool_handler` adds `projectPath` to its own copy of the args.
+    `project_list` does not declare `projectPath`, so a guard run AFTER that
+    injection would refuse every call to it. Checking the model's own args is what
+    keeps the bare call legal.
     """
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "jurisdiction": "England"})
+    _invoke(tools_by_name, "project_list", {})
 
     assert call_log[-1]["matched"]["kind"] != "unknown_args_refused", (
-        "convert_calendar was refused — the guard is reading the post-injection "
+        "project_list was refused — the guard is reading the post-injection "
         "copy (input_obj) instead of the model's own args"
     )
-    # And the guard itself agrees, driven directly: the bare call is legal, the
-    # post-injection shape is not.
-    assert mock_mcp._reject_unknown_args("convert_calendar", {"date": {"year": 1700}}) is None
-    assert mock_mcp._reject_unknown_args(
-        "convert_calendar", {"date": {"year": 1700}, "projectPath": "/p"}
-    ) is not None
+    assert mock_mcp._reject_unknown_args("project_list", {}) is None
+    assert mock_mcp._reject_unknown_args("project_list", {"projectPath": "/p"}) is not None
 
 
 @pytest.mark.requires_engine_build
@@ -3730,6 +3711,40 @@ def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_pat
     [element] = envelope["payload"]["results"]
     assert "birthRanges" not in element["gedcomx"]
     assert element["indexFields"] == {"p1": {"age": "11"}}
+
+
+def test_project_gate_refuses_a_non_exempt_tool_with_no_project_in_the_words_of_server_ts(tmp_path):
+    """Issue #4686: the mock refuses as server.ts's gate does, word for word."""
+    _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    result = _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1750, "month": 2, "day": 10}})
+    assert result["is_error"] is True
+    assert _extract_response_dict(result) == {"error": mock_mcp.NO_PROJECT_REFUSAL}
+    assert call_log[-1]["matched"]["kind"] == "unknown_args_refused"
+    # A named folder that holds no project is refused the same way.
+    named = _invoke(
+        tools_by_name, "convert_calendar", {"date": {"year": 1750, "month": 2, "day": 10}, "projectPath": str(tmp_path)}
+    )
+    assert _extract_response_dict(named) == {"error": mock_mcp.NO_PROJECT_REFUSAL}
+
+
+def test_project_gate_lets_a_tool_through_in_a_project_and_exempts_the_listed_tools(tmp_path):
+    _seed_project(tmp_path)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    ran = _invoke(
+        tools_by_name,
+        "convert_calendar",
+        {"date": {"year": 1750, "month": 2, "day": 10}, "corrections": {"osNsYear": True}, "projectPath": str(tmp_path)},
+    )
+    assert "error" not in _extract_response_dict(ran)
+    assert mock_mcp.PROJECT_EXEMPT_TOOLS == {
+        "project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps",
+    }
+
+
+def test_project_gate_words_match_the_typescript_source():
+    source = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
+    flat = re.sub(r'"\s*\+\s*"', "", source)
+    assert mock_mcp.START_PROJECT_RULE in flat
 
 
 @pytest.mark.requires_engine_build

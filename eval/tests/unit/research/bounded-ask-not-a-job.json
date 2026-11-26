@@ -15,7 +15,8 @@
     "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
-    "image-transcribe-driscoll-1881-census"
+    "image-transcribe-driscoll-1881-census",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_turns": 20,

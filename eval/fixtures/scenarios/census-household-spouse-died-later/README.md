@@ -12,6 +12,9 @@ County, sourced to a death register (tree source **S3**). She died 24 years
 is still expected in the household George heads, and her absence is still an
 unexplained identity question.
 
+`starting-tree.gedcomx.json` — the same persons; every one pre-existed this
+research (the baseline `project_create` writes in production).
+
 ## What it guards
 
 The household check reads `project_context`'s `diedByYear` for each of the

@@ -1816,7 +1816,9 @@ PROJECT_WRITER_TOOLS = {
 # edit. It writes on a narrower condition still (only when the search found
 # nothing), but nil-ness is not visible in the call's args, and the projectPath
 # test is the one this guard can actually make.
-CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"}
+# `image_transcribe` joins them at issue #4721: in a project it logs its own page
+# read, keyed on the response for the same reason as record_search.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search", "image_transcribe"}
 
 #: Of the conditional writers, the ones whose write is decided by the RESPONSE,
 #: not the args, with the response keys that prove the write happened.
@@ -1829,11 +1831,18 @@ CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"
 #: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
 #: catch reads as coverage and is worse than none.
 #:
+#: `build_external_search_url` writes its in-flight entry unless the call carries
+#: `awaitingCapture: false`, and returns the entry's `logId` only when it wrote.
+#:
 #: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
 #: written, so it legitimizes no project-file change. Both keys survive into the
 #: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
 #: post hoc as it does live.
-RESPONSE_KEYED_PROJECT_WRITERS = {"record_search": ("logId",)}
+RESPONSE_KEYED_PROJECT_WRITERS = {
+    "record_search": ("logId",),
+    "image_transcribe": ("logId",),
+    "build_external_search_url": ("logId",),
+}
 
 
 def _is_project_writer_call(call: dict) -> bool:

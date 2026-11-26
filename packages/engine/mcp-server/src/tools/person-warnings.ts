@@ -9,7 +9,7 @@ import { getProjectStore } from "../store/project-store.js";
 import { findAnchor } from "../utils/tree-person.js";
 import { setAsideParents } from "../utils/conclusion-status.js";
 import { toArk } from "../utils/ark.js";
-import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
+import { classifyProjectPath, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
   SimplifiedGedcomX,
@@ -5482,7 +5482,7 @@ export async function personWarningsTool(
   // to run person_read first).
   switch (await classifyProjectPath(input.projectPath)) {
     case "no_project":
-      return noProjectResult("read");
+      throw new Error(NO_PROJECT_REFUSAL);
     case "missing_dir":
       throw new Error(missingProjectDirMessage(input.projectPath));
   }

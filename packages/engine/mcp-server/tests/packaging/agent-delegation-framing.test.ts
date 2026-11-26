@@ -332,7 +332,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -369,7 +369,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -402,7 +402,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -496,9 +496,10 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  // Issue #4381: an interpretive ask is a bounded deliverable. The caller reads
-  // tree_query for places and years, so the no-invention clause is pinned beside
-  // the shared paragraph, with the relay rule for its overview.
+  // Issue #4381: an interpretive ask is a bounded deliverable. The caller sends
+  // project_context's historicalContext prompt and the message and nothing else,
+  // so that clause is pinned beside the shared paragraph, with the relay rule for
+  // its overview.
   "research -> historical-context": {
     pins: [
       {
@@ -508,7 +509,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
       {
         side: "caller",
-        excerpt: "with any the project objective states named as the objective's; never another place or year.",
+        excerpt:
+          "spawn the agent with `historicalContext.prompt`\nas given, the message copied verbatim after its last line `message:`, and nothing else.",
       },
       {
         side: "caller",

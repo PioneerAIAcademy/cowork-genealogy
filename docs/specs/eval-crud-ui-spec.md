@@ -196,9 +196,9 @@ The Results section opens to a dashboard with two panels:
 
 ### Comparison view (cross-PR)
 
-- For a given skill, shows the current PR's run log side-by-side with main's most recent run log for that skill.
+- For a given skill, defaults to its two newest run logs side-by-side (on a PR, the run log it adds and the one before); any pair can be picked.
 - Both sides display: weighted mean, count histogram (number of `3`s / `2`s / `1`s across all dimensions), and per-dimension breakdown.
-- Per-test rows: tests in both run logs are listed once, with their corrected weighted means on each side. Tests the two run logs' `snapshot` blocks disagree on are flagged "edited — excluded from headline comparison" and visually de-emphasized; the senior can still inspect them individually. (The per-test `test_content_hash` this used to key on was never built — the whole-snapshot model replaced it; see `docs/plan/eval-runlog-versioning.md` §A2/A4/A7.)
+- Per-test rows: tests in both run logs are listed once, with their corrected weighted means on each side. Tests the two run logs' `snapshot` blocks disagree on are flagged "edited — excluded from headline comparison" and visually de-emphasized; the senior can still inspect them individually. (The per-test `test_content_hash` this used to key on was never built — the whole-snapshot model replaced it; see `eval/CLAUDE.md` "Snapshot model".)
 - **Within-variance advisory:** when the weighted-mean delta between PR and main is below 0.3, the comparison view displays "within typical run-to-run variation — interpret cautiously." Advisory only; the senior decides what to make of it. Either party can re-run the harness for a second sample via the Python script. Per plan §2.10.
 - No statistical gate; no auto-merge. The senior reviews holistically (prompt diff + test diff + `.ann` + comparison) and accepts or rejects the PR through standard GitHub UI.
 

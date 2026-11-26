@@ -6,8 +6,9 @@
 // author call this instead of opening the file, which Cowork's VM cannot see.
 // Spec: docs/specs/tree-query-tool-spec.md.
 
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { linkedPersons } from "../utils/tree-person.js";
+import { familyReadPersonIds } from "../utils/import-baseline.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 
 export interface TreeQueryInput {
@@ -96,8 +97,12 @@ export type TreeQueryResult =
       sources?: TreeQuerySource[];
       /** Requested personIds that match no tree id and no person's FamilySearch link. */
       missingPersonIds: string[];
+      /** Tree persons whose own spouses, parents and children were read from
+       *  Family Tree; absent when none were. For anyone else a missing relative
+       *  means not copied, not none. */
+      familyReadPersonIds?: string[];
     }
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 const str = (v: unknown): string | null => (typeof v === "string" ? v : null);
 const lastSegment = (t: unknown): string | null => (typeof t === "string" ? t.split("/").pop() ?? t : null);
@@ -224,7 +229,6 @@ export async function treeQuery(input: TreeQueryInput): Promise<TreeQueryResult>
   try {
     tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
 
@@ -277,6 +281,7 @@ export async function treeQuery(input: TreeQueryInput): Promise<TreeQueryResult>
     if (s && typeof s === "object" && typeof s.id === "string" && !sourceById.has(s.id)) sourceById.set(s.id, s);
   }
   const treeSourceOrder = [...sourceById.keys()];
+  const familyRead = familyReadPersonIds(tree);
 
   /** The edges for the first `k` persons: every edge when nothing narrows the
    *  persons, else those with an end among them. */
@@ -324,6 +329,7 @@ export async function treeQuery(input: TreeQueryInput): Promise<TreeQueryResult>
       relationships: keptEdges.map((e: any) => e.edge),
       ...(withSources ? { sources: sourceIds.map((id) => projectSource(sourceById.get(id))) } : {}),
       missingPersonIds,
+      ...(familyRead.length > 0 ? { familyReadPersonIds: familyRead } : {}),
     };
     return result;
   };
@@ -376,7 +382,13 @@ export const treeQuerySchema = {
     "[{id, ark, living, gender, names, facts, sourceRefs}] with each fact's type, date, " +
     "standardDate, place, standardPlace, value and sourceRefs; relationships [{type: Couple " +
     "or ParentChild, person1, person2, parent, child, subtype, facts, notes}] — marriages " +
-    "and their dates live on the Couple's facts; and missingPersonIds. A key that would be " +
+    "and their dates live on the Couple's facts; and missingPersonIds. The tree is a copy of " +
+    "part of Family Tree: familyReadPersonIds names the persons whose own spouses, parents and " +
+    "children were read from it, and is absent when no one's were. For a person not in it, a " +
+    "missing or short set of Couple and ParentChild edges means not copied from Family Tree, " +
+    "not none: their parents, other spouses (a stepparent) and children may be in Family Tree. " +
+    "Say \"not in the project tree\"; say what Family Tree records only after person_read of " +
+    "their FamilySearch id, and only when your answer depends on it. A key that would be " +
     "null or empty is left out (preferred and primary are sent only when true), and a fact's place (or date) is left out when it equals " +
     "standardPlace (or standardDate). Source entries [{id, title, citation, author, url}] " +
     "come back only when asked: includeSources: true returns those cited by what is " +

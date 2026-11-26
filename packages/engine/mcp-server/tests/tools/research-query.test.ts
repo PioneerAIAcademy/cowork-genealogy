@@ -369,7 +369,7 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/missing or not an array/);
   });
 
-  it("answers rather than erroring when the folder is not a project", async () => {
+  it("fails with the project refusal when the folder is not a project", async () => {
     // `dir` is a bare temp directory — neither project file. That is not a read
     // failure, it is a user who is not in a research project (issue #1695), and
     // research_query is one of the two READS the issue calls out. The loud
@@ -378,7 +378,8 @@ describe("research_query", () => {
     const result = await researchQuery({ projectPath: dir, section: "assertions" });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect((result as any).reason).toBe("no_project");
+    expect((result as any).reason).toBeUndefined();
+    expect(result.errors.join(" ")).toContain("No project:");
   });
 
   it("evaluations takes only targetId/focus — another filter is an error naming them", async () => {
@@ -1404,6 +1405,27 @@ describe("research_query — fields no caller reads are left out", () => {
       pli_001: undefined, pli_002: undefined, pli_008: "R8", pli_009: undefined,
       pli_003: "R3", pli_004: "R4", pli_005: "R5", pli_006: "R6",
     });
+  });
+
+  it("plans × planItemId returns the one plan holding that item", async () => {
+    await writeResearch({ plans: PLANS });
+    const all = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!all.ok) throw new Error(all.errors.join(" "));
+    const holder = (all.items as any[]).filter((p) => p.items.some((i: any) => i.id === "pli_008"));
+    expect(holder).toHaveLength(1);
+    const r = await researchQuery({ projectPath: dir, section: "plans", planItemId: "pli_008" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect((r.items as any[]).map((p) => p.id)).toEqual([holder[0].id]);
+    const none = await researchQuery({ projectPath: dir, section: "plans", planItemId: "pli_999" });
+    expect(none.ok && none.count).toBe(0);
+  });
+
+  it("plans: a plan item id sent as questionId is refused, naming planItemId", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans", questionId: "pli_008" } as any);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/'pli_008' is a plan item id.*pass planItemId 'pli_008'/);
   });
 
   it("plans: the omission is in the answer only, never in research.json", async () => {
