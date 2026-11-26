@@ -1726,7 +1726,7 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
 	# thread's busiest moment. Removes reports whose run log was pruned (same
 	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
-	# rewrites them (needed after a log is rehashed or released under a new name).
+	# rewrites them (needed after a log is rehashed).
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 

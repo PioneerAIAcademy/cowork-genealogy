@@ -474,7 +474,7 @@ up while the body ran on the main thread, and each cost a run to find.
   table reports each test's majority outcome. 42 runs showed 14/14 pass while
   three tests had a failed or partial run. Read `tests[].runs[].outcome` and
   `tests[].flaky`.
-- **Move failing candidate logs out of the suite's run-log directory.** They
+- **Move failing run logs out of the suite's run-log directory.** They
   can never be committed (rule 6) but still occupy keep-newest-5 slots, and
   the next run's prune then deletes committed, annotated logs (rule 7).
   Restore any `D` it shows with `git restore`.
