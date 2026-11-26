@@ -25,9 +25,9 @@ skill, so route those suggestions to them instead of proposing an edit.
 
 For skill `<X>` (paths relative to repo root):
 
-- **Run logs** under `eval/runlogs/unit/<X>/` — the latest released
-  `v{N}.json` and, when present, **prior versions** (variance/trend across
-  versions is the strongest signal). Per-test
+- **Run logs** under `eval/runlogs/unit/<X>/` — the newest
+  `v{N}_<ts>.json` and the **prior run logs** beside it (the harness keeps
+  five; variance across them is the strongest signal). Per-test
   `outcome_summary.aggregated_dimensions[]` and per-run
   `runs[].judge.dimensions[]` = `{source, name, score 1|2|3|null, rationale}`;
   `tests[].flaky`. Format: [`eval/README.md`](../../eval/README.md),
@@ -43,12 +43,12 @@ For skill `<X>` (paths relative to repo root):
   every suite, from the newest run log per skill. Start there so your reading
   goes to what the counts cannot answer: whether a flat dimension is flat
   because the bar is wrong or because the skill genuinely passes it, and the
-  cross-version variance a single-log reader cannot see.
+  cross-run-log variance a single-log reader cannot see.
 
 ## What to flag
 
 1. **Non-discriminating dimension** — scores (nearly) the same across every
-   test and version. Split by direction:
+   test and run log. Split by direction:
    - **All `3`** — the dimension separates nothing. **Recommend deleting it,
      not rewriting it.** A rubric is capped at 5 dimensions, so one that grades
      nothing holds a slot a discriminating dimension could take, and every kept
@@ -64,7 +64,7 @@ For skill `<X>` (paths relative to repo root):
    - **All `1`** — broken, mis-scoped, or beyond current capability. Never
      recommend deleting one; that hides a real failure.
 2. **Flaky / high-variance dimension** — `flaky: true` recurs, or a dimension's
-   score swings across runs/versions with no code change. Flag as
+   score swings across runs/run logs with no code change. Flag as
    non-deterministic; the improver must not chase it.
 3. **Unexercised dimension** — a rubric dimension that is `null`/absent on every
    test, or that no test could ever *fail* on. It is decorative until a test
@@ -80,15 +80,15 @@ For skill `<X>` (paths relative to repo root):
 ```
 # Rubric Audit: <X>
 
-Run logs read: <files / versions>   (annotations: complete/partial/absent)
+Run logs read: <files>   (annotations: complete/partial/absent)
 
 ## Dimension scorecard
-Per dimension (base + rubric): discriminates? (score spread across tests/versions)
+Per dimension (base + rubric): discriminates? (score spread across tests/run logs)
 | variance/flaky | exercised by which tests | judge-vs-human agreement.
 
 ## Flags
 Each issue from "What to flag", with evidence (dimension, scores across
-tests/versions, the human comments) and where it routes:
+tests/run logs, the human comments) and where it routes:
 → skill-rubric edit (the loop-runner applies it) or → escalate to the
 maintainer (base rubric / global judge prompt).
 
@@ -102,15 +102,15 @@ The dimensions that discriminate cleanly — so the reader knows what NOT to tou
   or any skill. Your tools are Read/Grep/Glob/Bash by design.
 - **One skill at a time.**
 - **Quote the evidence.** Name the dimension and its scores across the tests
-  and versions; paste the human comments. No vague "rubric could be better".
+  and run logs; paste the human comments. No vague "rubric could be better".
 - **Keep the bar high.** Flag the few items a rubric author would call a "good
   catch", not every dimension — a noisy critic gets ignored (skill-creator's
   grader bar).
 
 ## When you cannot
 
-- Only one run log / one version → variance and trend signal is limited; report
-  what the single run shows at lower confidence and say a few versions are
+- Only one run log → variance signal is limited; report
+  what the single run shows at lower confidence and say a few run logs are
   needed for a real discrimination read.
 - No `.ann.json` → the judge-vs-human divergence check (flag #4) cannot run;
   say so and report the other three from judge scores alone.

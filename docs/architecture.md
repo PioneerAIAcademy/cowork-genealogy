@@ -23,7 +23,7 @@ command that recomputes it.
 
 **Who this is not for.** Genealogists working on skill prose and evals — that
 is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
-(reviewing and releasing). Different audience, different workflow.
+(reviewing a PR). Different audience, different workflow.
 
 ---
 

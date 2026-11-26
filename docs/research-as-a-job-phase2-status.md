@@ -623,11 +623,9 @@ release commit in this repo (`7e79d0d97`, `eeff413a0` — the latter is this
 workstream's own phases 0-1) lands `v{N}.json` and `v{N}.ann.json` **together**. So
 the annotation pass comes first.
 
-`check_runlogs.py` therefore still reports one violation — "latest full-skill run log
-`v5.json` is NOT active". That is expected and resolves at release, not before:
-`latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate
-(`if released: ... elif candidates:`), so a branch that edits a skill cannot clear it
-until its candidate is released. No PR is open, so nothing is blocked meanwhile.
+`check_runlogs.py` therefore still reported one violation — "latest full-skill run log
+`v5.json` is NOT active" — because `latest_full_skill_runlog` then preferred a released
+`v{N}.json` over every candidate. The release tier has since been removed (PR #4823).
 
 **Two run-log rules worth knowing before the next run.** A run log may not carry a
 red — rule 6 is explicit, and the red `v6_2026-09-30_13-13-47.json` was committed

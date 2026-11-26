@@ -49,8 +49,7 @@ from typing import Literal
 DEFAULT_SINCE_DAYS = 14
 
 # Matches the date in either corpus's filename: `run-2026-07-31_13-02-13.json`
-# and `v1_2026-07-31_12-57-04.json` alike. A released `v{N}.json` carries no
-# date and is never aged out.
+# and `v1_2026-07-31_12-57-04.json` alike.
 _DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
 
@@ -93,8 +92,7 @@ def parse_since(value: str | None) -> date | None:
 def filter_since(paths: list[Path], cutoff: date | None) -> list[Path]:
     """Keep runs dated on/after `cutoff`. A run whose filename carries no
     parseable date is KEPT — dropping it would silently shrink the sample on a
-    naming change (and would age out released `v{N}.json`), which is the
-    failure mode this module exists to avoid."""
+    naming change, which is the failure mode this module exists to avoid."""
     if cutoff is None:
         return list(paths)
     return [p for p in paths if (d := run_date(p)) is None or d >= cutoff]
