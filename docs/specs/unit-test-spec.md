@@ -1709,8 +1709,10 @@ appears under `{file_changes_summary}`, not here.
 Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the
 judge can only see results 1-3. Prompt size is bounded by the total-size
-guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole calls, oldest first, with a stated
-marker; per-string and depth caps still apply inside each result. A larger array
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole calls, oldest uncited first
+and a cited call last, then adds dropped calls back newest first while they
+still fit, with a stated marker that counts the calls still dropped; per-string
+and depth caps still apply inside each result. A larger array
 cap was rejected — it only moves the cliff. The drop budget is measured with
 the args of every live call (`matched.kind == "live"`, which is how every writer
 runs) replaced by a short omission marker, because the agent's own write is
@@ -1729,11 +1731,22 @@ that cut, the render appends one excerpt for it after the truncation suffix:
 ±150 chars, at most 16 per string, marked `[harness excerpt at char N of M]`,
 and the judge prompt says what that marker is. A wiki page runs 20–34K chars, so
 without this a URL correctly taken from later in the page read to the judge as
-invented. Excerpts are left out of the drop budget, and the guard drops the
-oldest call that carries no excerpt, keeping a cited page until no uncited call
-is left. Past the hard cap the render tries, in order: live args as-is with
-excerpts, live args string-capped with excerpts, string-capped without excerpts,
-then the measured view. `_summarize_response` is unchanged, so e2e run-log
+invented. A call carries an excerpt only when its render shows one: a string at
+the depth cap (`_RESPONSE_MAX_DEPTH`) is replaced by the depth marker and shows
+none, so a URL hidden there protects nothing. Excerpts are left out of the drop
+budget, and the guard drops the oldest call that carries no excerpt, keeping a
+cited page until no uncited call is left. That pass drops the agent's writes as
+readily as any uncited call, so a refill pass follows: each dropped call, newest
+first, is added back if the measured view, its marker recounted, still fits.
+Refill only adds, so no call the drop pass keeps is lost. Sparing writes in the
+drop order itself was rejected: it dropped `ut_locality_guide_029`'s only
+Pulaski County `locality_survey` to keep six writes, leaving the judge a Pulaski
+guide with no Pulaski source (#4682). The `_dropped_for_size` marker states how
+many calls are dropped and how many of them carried an excerpt, and no order,
+because after the refill the missing calls are not simply the oldest. Past the
+hard cap the render tries, in order: live args as-is with excerpts, live args
+string-capped with excerpts, string-capped without excerpts, then the measured
+view. `_summarize_response` is unchanged, so e2e run-log
 captures carry no excerpts.
 
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.

@@ -2112,6 +2112,261 @@ def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host(data
     assert '"tool": "mcp__genealogy__tool_1"' not in rendered
 
 
+# --- size guard: what the judge sees decides what is kept (issue #4682) ----
+
+# `origin/main`'s marker before #4682 (8e406a8a7), held as a literal so the
+# baselines below cannot move with judge.py.
+_MAIN_DROPPED_MARKER = (
+    "(_dropped_for_size: {n} tool calls dropped, oldest first but keeping any "
+    "that carries a harness excerpt, to keep tool calls under 50000 chars, "
+    "not counting live calls' args, a refused writer's omitted args, or "
+    "harness excerpts)\n"
+)
+
+
+def _read_call(i: int, size: int = 1_500) -> dict:
+    return {
+        "tool": f"mcp__genealogy__tool_{i}",
+        "args": {"q": f"call-{i}"},
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"data": "x" * size},
+    }
+
+
+def _nested(value, depth: int):
+    for _ in range(depth):
+        value = {"n": value}
+    return value
+
+
+def _rendered_calls(rendered: str) -> list[dict]:
+    body = rendered.split("\n", 1)[1] if rendered.startswith("(_dropped_for_size") else rendered
+    return json.loads(body)
+
+
+def test_a_string_under_the_depth_cap_carries_no_excerpt():
+    """#4682 case 1: `_summarize_response` replaces whatever sits at
+    `_RESPONSE_MAX_DEPTH` with a depth marker, so a URL cited from past the cut
+    of a page nested that deep never reaches the judge. Counting the call as
+    cited protected it from the size guard for an excerpt nobody saw."""
+    deep = _nested(_page_with(_ROOTS_URL, 6_118), judge._RESPONSE_MAX_DEPTH + 1)
+    needles = judge._citation_needles(_ROOTS_URL, "")
+    assert not judge._carries_excerpt(deep, needles)
+    deep_call = {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"title": "Deep Nested Page"},
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"sections": ["y" * 1_900] * 5, "deep": deep},
+    }
+    calls = [deep_call] + [_read_call(i) for i in range(40)]
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert "Deep Nested Page" not in rendered
+    assert rendered == judge._render_tool_calls_with_size_guard(calls)
+
+
+def test_size_guard_refills_the_agents_write_after_dropping():
+    """#4682 case 5: the drop pass takes every uncited call before a cited one,
+    the agent's writes included, and once enough cited pages are gone there can
+    be room for a write again. ut_locality_guide_q4m (locality-guide v10) lost
+    all four of its research_append calls although dropping the 44.6K survey
+    alone left room for them."""
+    pages = [_wiki_page_call(_page_with(_ROOTS_URL, 6_118)) for _ in range(25)]
+    write = _live_write_call(
+        {
+            "projectPath": "/p",
+            "section": "localities",
+            "op": "append",
+            "entry": {"place": "Ohio", "guide_markdown": "G" * 20_000},
+        }
+    )
+    calls = pages + [_read_call(i) for i in range(10)] + [write]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"tool": "mcp__genealogy__research_append"' in rendered
+    assert "G" * 20_000 in rendered
+
+
+def test_size_guard_never_drops_the_only_cited_call():
+    """locality-guide v6 `k9d`, against the issue's proposed order (drop the
+    oldest call that is neither cited nor live, else the oldest): with one
+    cited page over the budget on its own and a live write after it, that
+    order dropped the page and kept the write."""
+    sections = ["s" * 2_500 for _ in range(30)]
+    sections[12] = _page_with(_ROOTS_URL, 6_118)
+    page = {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"title": "Ireland Church Records"},
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"sections": sections},
+    }
+    assert len(judge._render_tool_calls_with_size_guard([page])) > judge._TOOL_CALLS_MAX_CHARS
+    calls = [page, _live_write_call({"projectPath": "/p", "entry": {"note": "n"}})]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"title": "Ireland Church Records"' in rendered
+    assert "[harness excerpt at char 6118 of 20000]" in rendered
+
+
+def _main_kept(calls: list[dict], cited: list[bool]) -> list[bool]:
+    """The calls `origin/main`'s guard kept before #4682: its drop order (the
+    oldest uncited call, else the oldest), measured with its marker. Written
+    out here rather than called from judge.py, so a change to the guard's own
+    drop pass cannot move this baseline with it."""
+    keep = [True] * len(calls)
+
+    def measured() -> int:
+        view = judge._render_kept_calls(calls, keep, cited, judge._live_args_omitted)
+        dropped = keep.count(False)
+        if not dropped:
+            return len(view)
+        marker = judge._dropped_for_size_marker(
+            dropped, sum(c and not k for c, k in zip(cited, keep))
+        )
+        assert view.startswith(marker)
+        return len(view) - len(marker) + len(_MAIN_DROPPED_MARKER.format(n=dropped))
+
+    while keep.count(True) > 1 and measured() > judge._TOOL_CALLS_MAX_CHARS:
+        kept = [i for i, k in enumerate(keep) if k]
+        keep[next((i for i in kept if not cited[i]), kept[0])] = False
+    return keep
+
+
+def _guard_case_uniform():
+    return [_read_call(i) for i in range(100)], ()
+
+
+def _guard_case_mixed_sizes():
+    sizes = (40, 1_900, 700, 1_300, 150)
+    return [_read_call(i, sizes[i % len(sizes)]) for i in range(80)], ()
+
+
+def _guard_case_cited_and_live():
+    calls = []
+    for i in range(48):
+        if i % 4 == 0:
+            calls.append(_wiki_page_call(_page_with(_ROOTS_URL, 6_118)))
+        elif i % 4 == 1:
+            calls.append(_live_write_call({"projectPath": "/p", "entry": {"note": "N" * 9_000}}))
+        elif i % 4 == 2:
+            calls.append(_read_call(i))
+        else:
+            calls.append(_refused("research_append", {"entry": {"narrative_markdown": "D" * 900}}))
+    return calls, judge._citation_needles(_ROOTS_URL, "")
+
+
+def _survey_call(host: str) -> dict:
+    collections = [{"title": f"Collection {j}", "description": "d" * 2_500} for j in range(6)]
+    collections[3]["description"] = _page_with(f"https://www.{host}/records", 2_200, 2_500)
+    return {
+        "tool": "mcp__genealogy__locality_survey",
+        "args": {"projectPath": "/p", "place": host},
+        "matched": {"kind": "live", "index": None},
+        "response": {"collections": collections},
+    }
+
+
+def _guard_case_029_shape():
+    """ut_locality_guide_029 (locality-guide v10): three cited live surveys,
+    then a refused write and a run of small live writes."""
+    hosts = ["pulaski.example.gov", "faulkner.example.gov", "saline.example.gov"]
+    write = {
+        "tool": "mcp__genealogy__research_append",
+        "args": {"projectPath": "/p", "section": "localities", "entry": {"guide_markdown": "G" * 3_000}},
+        "matched": {"kind": "live", "index": None},
+        "response": {"ok": True, "ids": ["loc_001"], "summary": "s" * 600},
+    }
+    calls = (
+        [
+            {
+                "tool": "mcp__genealogy__project_context",
+                "args": {"projectPath": "/p"},
+                "matched": {"kind": "live", "index": None},
+                "response": {"objective": "o" * 2_400},
+            }
+        ]
+        + [
+            {
+                "tool": "mcp__genealogy__place_search",
+                "args": {"query": f"Pulaski {j}"},
+                "matched": {"kind": "predicate", "index": None},
+                "response": {"places": [{"name": "n" * 300}]},
+            }
+            for j in range(3)
+        ]
+        + [_survey_call(h) for h in hosts]
+        + [
+            {
+                "tool": "mcp__genealogy__research_append",
+                "args": {"projectPath": "/p", "entry": {"guide_markdown": "G" * 3_000}},
+                "matched": {"kind": "live", "index": None},
+                "response": {"ok": False, "errors": ["e" * 1_900, "f" * 600]},
+            }
+        ]
+        + [dict(write) for _ in range(12)]
+    )
+    return calls, judge._citation_needles(" ".join(f"https://www.{h}/records" for h in hosts), "")
+
+
+@pytest.mark.parametrize(
+    "build",
+    [_guard_case_uniform, _guard_case_mixed_sizes, _guard_case_cited_and_live, _guard_case_029_shape],
+)
+def test_size_guard_keeps_every_call_main_keeps(build):
+    """#4682 case 5: the refill pass only adds calls back, so no run loses a
+    call the guard kept before it. Changing the drop order instead was tried
+    twice and lost evidence both times: the issue's order dropped q4g's only
+    cited call, and sparing writes dropped 029's only Pulaski County survey."""
+    calls, needles = build()
+    calls = [{**c, "matched": {**c["matched"], "index": i}} for i, c in enumerate(calls)]
+    cited = [judge._carries_excerpt(c.get("response"), needles) for c in calls]
+    main = _main_kept(calls, cited)
+    loop = judge._size_guard_drop_loop(calls, cited)
+    final = judge._size_guard_keep(calls, cited)
+    assert not all(main), "the construction must make the guard drop"
+    lost_from_main = [i for i, (m, f) in enumerate(zip(main, final)) if m and not f]
+    assert not lost_from_main, f"calls main keeps were dropped: {lost_from_main}"
+    lost_from_loop = [i for i, (k, f) in enumerate(zip(loop, final)) if k and not f]
+    assert not lost_from_loop, f"refill removed calls the drop pass kept: {lost_from_loop}"
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert [c["matched"]["index"] for c in _rendered_calls(rendered)] == [
+        i for i, k in enumerate(final) if k
+    ]
+
+
+def test_dropped_marker_counts_the_dropped_calls_that_carried_excerpts():
+    """#4682 case 2: the marker said dropped calls were the oldest ones that
+    carried no excerpt, which is false once every uncited call is gone and
+    cited ones go too. It now says how many of the dropped calls carried one."""
+    reads = [_read_call(i) for i in range(5)]
+    pages = [
+        {**_wiki_page_call(_page_with(_ROOTS_URL, 6_118)), "args": {"title": f"Page {j}"}}
+        for j in range(30)
+    ]
+    calls = reads + pages
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    kept = _rendered_calls(rendered)
+    dropped = len(calls) - len(kept)
+    dropped_cited = len(pages) - sum(c["tool"].endswith("wiki_read") for c in kept)
+    assert dropped_cited >= 1
+    assert rendered.startswith(
+        f"(_dropped_for_size: {dropped} tool calls dropped whole, "
+        f"{dropped_cited} of them with harness excerpts, "
+    )
+    bare = judge._render_tool_calls_with_size_guard(calls)
+    bare_dropped = len(calls) - len(_rendered_calls(bare))
+    assert bare.startswith(
+        f"(_dropped_for_size: {bare_dropped} tool calls dropped whole, "
+        "0 of them with harness excerpts, "
+    )
+
+
 def test_needle_inside_the_head_adds_no_excerpt():
     calls = [_wiki_page_call(_page_with(_ROOTS_URL, 500))]
     rendered = judge._render_tool_calls_with_size_guard(
@@ -2954,6 +3209,20 @@ def test_refusal_marker_growth_against_raw_args_is_bounded_and_measured():
     growth = len(judge._REFUSED_ARGS_MARKER) - len(json.dumps(rendered_today))
     # It may grow -- that is the honest statement -- but by a bounded amount.
     assert growth <= 40, f"refusal marker grows the measured view by {growth} chars"
+
+
+def test_dropped_marker_cannot_grow_the_size_guard_budget():
+    """The `_dropped_for_size` line is part of the measured view. Were it longer
+    than `origin/main`'s at any count, the drop pass would stop later than
+    main's did and drop a call main kept, which the refill pass cannot be
+    relied on to bring back (#4682)."""
+    longer = [
+        (n, k)
+        for n in range(1, 1_000)
+        for k in range(n + 1)
+        if len(judge._dropped_for_size_marker(n, k)) > len(_MAIN_DROPPED_MARKER.format(n=n))
+    ]
+    assert not longer, f"marker longer than main's at (dropped, cited) = {longer[:5]}"
 
 
 def test_refused_research_log_append_keeps_its_args():
