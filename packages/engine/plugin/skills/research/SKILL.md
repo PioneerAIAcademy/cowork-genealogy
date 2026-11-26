@@ -779,12 +779,15 @@ you check the 1850 census?" is a plan item: spawn `@plugin:research-plan` in
 its edit or add-new mode, at any boundary. The same holds for work that used
 to open a helper question — a conflict that needs new evidence, a FAN pivot,
 an objective-level sub-question. All three are plan items on the current
-question. So is "who is this person in the record/household?" for someone with
-no candidate in the project tree: spawn `@plugin:research-plan` in its add-new
-or edit mode on the current question, as for a FAN pivot, never
-`@plugin:question-selection` or `@plugin:person-evidence`. A direct request for
-a record ("Find her in the 1910 census") is not a steer: it is a bounded ask,
-and `@plugin:search-records` runs it now.
+question. So is "who is this person in the record/household?" for someone the
+project names no candidate for (no tree person, hypothesis or namesake) and no
+record states the relationship of, even when their records are already
+extracted: spawn `@plugin:research-plan` in its add-new or edit mode on the
+current question with the researcher's question, as for a FAN pivot, never
+`@plugin:question-selection` or `@plugin:person-evidence`, and offer no kinship
+reading of your own. A direct request for a record ("Find her in the 1910
+census") is not a steer: it is a bounded ask, and `@plugin:search-records`
+runs it now.
 
 When a steer opens this turn's search step and the previous turn offered
 `linking the records to people in this project`, the sentence before this
@@ -814,13 +817,17 @@ has that link.
 
 ## A question between steps
 
+**Never this: who a person in a record or household is, when the project
+names no candidate for them (no tree person, hypothesis or namesake) and no
+record states their relationship,** even when their records are already
+extracted. Spawn `@plugin:research-plan` for it this turn (§"A different
+question, or a steer") and offer no kinship reading of your own.
+
 The researcher asks something rather than answering the offer — "why that
-census?", "who is this person again?". Answer it from what you hold, spawn
-**no** agent, and end with the **same** "Continue with …?" line the last turn
-offered. The turn ran no step, so nothing moves. "Who is this person again?"
-asks about someone the project already holds; asking who a person in a record
-or household is who has no candidate in the project tree is not this: it is a
-steer (§"A different question, or a steer").
+census?", "who is this person again?" about someone the project already holds.
+Answer it from what you hold, spawn **no** agent, and end with the **same**
+"Continue with …?" line the last turn offered. The turn ran no step, so
+nothing moves.
 
 ## When to stop
 
@@ -859,7 +866,8 @@ produced, end the turn as §"Bounded request or job" says to.
 
 For an identity or completeness ask — "find this record", "is this the
 same person", "find the missing children" — report **candidates**, never
-a verdict:
+a verdict. Who an unidentified person in a record or household is goes to
+§"A question between steps" instead:
 
 - give each candidate with how strong the match is and what was searched
   to find it;

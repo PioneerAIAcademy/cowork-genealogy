@@ -9,7 +9,8 @@
       "routing",
       "routes-to:research-plan",
       "from-cowork",
-      "phipps-1860-household-member"
+      "phipps-1860-household-member",
+      "identity-steer-names-member"
     ]
   },
   "input": {

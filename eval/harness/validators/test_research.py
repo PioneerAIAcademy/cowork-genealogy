@@ -823,6 +823,38 @@ def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
     assert not problems, "; ".join(problems)
 
 
+# Issue #4670: "who is this person in the household?" is a steer to
+# research-plan, and research-plan plans the relatives' marriages only when its
+# delegation asks who that person is. Keyed per test id: who is asked about is
+# the scenario's.
+_STEER_MEMBER_BY_TEST_ID = {
+    "ut_research_veq": "Harriet",
+    "ut_research_ygb": "Harriet",
+}
+
+
+def test_identity_steer_names_the_household_member(test, builtin_tool_calls):
+    """Tag-gated (``identity-steer-names-member``). A research-plan spawn's
+    prompt names the household member the researcher asked about, so the steer
+    is not a generic planning turn. Read from the hook records, which the judge
+    cannot see."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _STEER_MEMBER_BY_TEST_ID or "identity-steer-names-member" in tags, (
+        f"{test_id} has a _STEER_MEMBER_BY_TEST_ID entry but no "
+        "'identity-steer-names-member' tag - restore the tag or delete the entry"
+    )
+    if "identity-steer-names-member" not in tags:
+        pytest.skip("not an identity-steer-names-member test")
+    member = _STEER_MEMBER_BY_TEST_ID.get(test_id)
+    assert member, f"{test_id} carries 'identity-steer-names-member' but has no entry in _STEER_MEMBER_BY_TEST_ID"
+    prompts = _spawn_prompts(builtin_tool_calls, "research-plan")
+    assert prompts, "no research-plan spawn"
+    assert any(re.search(rf"\b{re.escape(member)}\b", p, re.IGNORECASE) for p in prompts), (
+        f"no research-plan spawn prompt names {member!r}, the person the researcher asked about"
+    )
+
+
 def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     """The spawn the router actually sent names ``focus:`` and ``target_id:``.
 

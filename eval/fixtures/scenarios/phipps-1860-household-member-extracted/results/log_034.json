@@ -1,0 +1,507 @@
+{
+  "log_id": "log_034",
+  "tool": "record_read",
+  "retrieved": "2026-11-26T19:51:21.097Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MFZQ-VND"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MFZQ-VND",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_372724692",
+              "ark": "ark:/61903/1:1:MFZQ-VND",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "af1fd965-67f8-4e3c-be30-74658d2c14c0",
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "46f3bae3-5fd5-4766-81d1-6059a34dcdc1",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "71d11436-2042-4ca7-b9be-4270f3ca143a",
+                  "type": "Birth",
+                  "date": "1816",
+                  "standard_date": "1816",
+                  "place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724693",
+              "ark": "ark:/61903/1:1:MFZQ-VN6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "4b7d79e7-4819-453a-a12e-bfc7dc9218e6",
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Keep House"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "80c0c8a4-e2b2-4689-98ce-a99b86f190da",
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Connecticut, United States"
+                },
+                {
+                  "id": "3c30ac5c-d9c9-45a0-a2cf-1f5832378cca",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724694",
+              "ark": "ark:/61903/1:1:MFZQ-VNX",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "de8a473f-a073-4572-989d-5066636778f4",
+                  "type": "BirthName",
+                  "given": "Charles",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "At Home"
+                },
+                {
+                  "id": "84d9d323-0d6c-4541-94e4-aed059b54902",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "8cc98b9c-2f36-469d-83b0-54cf02c87c22",
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724695",
+              "ark": "ark:/61903/1:1:MFZQ-VNF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "ad0821a5-0c4d-49b4-8ec1-da6f6cf4be29",
+                  "type": "BirthName",
+                  "given": "George",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "At School"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "4a4aef03-a08b-4b7a-9cc7-076a2806e1e0",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "21e69a92-936e-4e6a-acbe-ab7a033a4447",
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868",
+                  "place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724696",
+              "ark": "ark:/61903/1:1:MFZQ-VNN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "6af3855d-d248-4498-a49d-0db5fa3b2182",
+                  "type": "BirthName",
+                  "given": "Fannie",
+                  "surname": "Carrington"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "House Keeper"
+                },
+                {
+                  "id": "3e875197-f544-4329-a9ec-441d623926c2",
+                  "type": "Birth",
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": "Connecticut, United States"
+                },
+                {
+                  "id": "1a4a1ff8-4ad0-4cc1-96aa-f0e8cc3ce453",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724697",
+              "ark": "ark:/61903/1:1:MFZQ-VNJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "ad4d7d4f-2a87-4265-9429-e76bf6bf1b44",
+                  "type": "BirthName",
+                  "given": "Emily",
+                  "surname": "Child"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "At Home"
+                },
+                {
+                  "id": "b11620db-4a0c-437b-a6b8-cef8be928bb0",
+                  "type": "Birth",
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "Connecticut, United States"
+                },
+                {
+                  "id": "cb6da242-bb4b-459b-b1ed-30397342ede1",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, ED 136, Windham, CT, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "f010cc24-7f8b-4210-9bd3-ab6267b59891",
+              "type": "ParentChild",
+              "parent": "p_372724692",
+              "child": "p_372724695"
+            },
+            {
+              "id": "3e869ff2-8f60-42cb-86c1-acf37252ace2",
+              "type": "Couple",
+              "person1": "p_372724692",
+              "person2": "p_372724693"
+            },
+            {
+              "id": "d0e48cb5-5202-4bac-9a2b-e30274832207",
+              "type": "ParentChild",
+              "parent": "p_372724692",
+              "child": "p_372724694"
+            },
+            {
+              "id": "664f316a-f80d-45d6-b5a0-21a3af531b1d",
+              "type": "ParentChild",
+              "parent": "p_372724697",
+              "child": "p_372724692"
+            },
+            {
+              "id": "5b317ea1-6c3e-4d43-96c9-1508c216bf3c",
+              "type": "ParentChild",
+              "parent": "p_372724693",
+              "child": "p_372724695"
+            },
+            {
+              "id": "76793c83-c1b1-43a5-9df4-2df9b0558ce1",
+              "type": "ParentChild",
+              "parent": "p_372724693",
+              "child": "p_372724694"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_219602449",
+              "resource_type": "Record",
+              "title": "Household of Benjamin Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND : Wed Sep 09 14:17:27 UTC 2026), Entry for Benjamin Phipps and Mary Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MC93-DLK",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-9CC7",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_p_372724692",
+              "resource_type": "Person",
+              "title": "Benjamin Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND : Wed Sep 09 14:17:27 UTC 2026), Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND"
+            },
+            {
+              "id": "sd_p_372724695",
+              "resource_type": "Person",
+              "title": "George Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNF : Wed Sep 09 14:17:27 UTC 2026), George Phipps in entry for Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNF"
+            },
+            {
+              "id": "sd_p_372724694",
+              "resource_type": "Person",
+              "title": "Charles Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNX : Wed Sep 09 14:17:27 UTC 2026), Charles Phipps in entry for Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNX"
+            },
+            {
+              "id": "sd_p_372724693",
+              "resource_type": "Person",
+              "title": "Mary Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VN6 : Wed Sep 09 14:17:27 UTC 2026), Mary Phipps in entry for Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VN6"
+            },
+            {
+              "id": "sd_p_372724697",
+              "resource_type": "Person",
+              "title": "Emily Child, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNJ : Wed Sep 09 14:17:27 UTC 2026), Emily Child in entry for Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNJ"
+            },
+            {
+              "id": "sd_p_372724696",
+              "resource_type": "Person",
+              "title": "Fannie Carrington, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNN : Wed Sep 09 14:17:27 UTC 2026), Fannie Carrington in entry for Benjamin Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNN"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1790 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1790-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_3779481"
+            }
+          ]
+        },
+        "indexFields": {
+          "p_372724692": {
+            "relationshipToHead": "Head",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_000",
+            "personNbr": "0",
+            "lineNbr": "00083",
+            "householdId": "5398134",
+            "age": "64 years",
+            "fatherBirthPlace": "Connecticut, United States",
+            "motherBirthPlace": "Massachusetts, United States",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_372724693": {
+            "relationshipToHead": "Wife",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_001",
+            "personNbr": "1",
+            "lineNbr": "00084",
+            "householdId": "5398134",
+            "age": "52 years",
+            "fatherBirthPlace": "Massachusetts, United States",
+            "motherBirthPlace": "Connecticut, United States",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_372724694": {
+            "relationshipToHead": "Son",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_002",
+            "personNbr": "2",
+            "lineNbr": "00085",
+            "householdId": "5398134",
+            "age": "18 years",
+            "fatherBirthPlace": "Connecticut, United States",
+            "motherBirthPlace": "Connecticut, United States",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_372724695": {
+            "relationshipToHead": "Son",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_003",
+            "personNbr": "3",
+            "lineNbr": "00086",
+            "householdId": "5398134",
+            "age": "12 years",
+            "fatherBirthPlace": "Connecticut, United States",
+            "motherBirthPlace": "Connecticut, United States",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_372724696": {
+            "relationshipToHead": "Other",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_004",
+            "personNbr": "4",
+            "lineNbr": "00087",
+            "householdId": "5398134",
+            "age": "15 years",
+            "fatherBirthPlace": "England",
+            "motherBirthPlace": "England",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_372724697": {
+            "relationshipToHead": "Mother",
+            "sortKey": "0000000005157325_00492_5434499_0000000219602449_005",
+            "personNbr": "5",
+            "lineNbr": "00088",
+            "householdId": "5398134",
+            "age": "74 years",
+            "fatherBirthPlace": "Connecticut, United States",
+            "motherBirthPlace": "Connecticut, United States",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          }
+        }
+      }
+    ]
+  }
+}
