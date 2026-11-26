@@ -46,6 +46,7 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { NOT_YOUR_PROJECT_MESSAGE, startHttpServer } from "../../src/http-server.js";
+import { CONNECTOR_REFUSAL_NOTE } from "../../src/tool-result.js";
 import {
   authorizeAttempt,
   createPgS3Backend,
@@ -1101,7 +1102,10 @@ if (!DSN || !ENDPOINT) {
           name: "convert_calendar",
           arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
         });
-        expect(refused.isError).toBe(true);
+        // A refusal, and this is the connector door: an ordinary result under the note,
+        // with no error mark (connectorToolResult, src/tool-result.ts).
+        expect(refused.isError ?? false).toBe(false);
+        expect(JSON.parse(textOf(refused)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
         expect(textOf(refused)).toContain("No project:");
       });
 

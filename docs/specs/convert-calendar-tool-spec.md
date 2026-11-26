@@ -67,7 +67,8 @@ convert_calendar({
     doubleYear?: number,  // the "/N" of a double-dated year, e.g. 1 for "1750/1"
   },
 
-  // Optional. The place the record names, matched offline against §4.5's
+  // Optional. The place the record or the request names (a nationality names
+  // one: "this English date" is England), matched offline against §4.5's
   // table. Supplying it lets the tool identify the REGIME (§5). NOT a
   // standardPlace: resolving one would pull place-resolver.ts and the
   // FamilySearch Places API into a tool §6 declares "not a network tool",
