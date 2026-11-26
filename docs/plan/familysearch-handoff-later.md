@@ -52,8 +52,8 @@
   the alias URL as its authorization server, then a sign-in with its Client ID Metadata Document and
   a loopback redirect, then tool calls; it does not record which of the two documents it read
   (the stub's request log in FS112 Splunk does, unread). The claude.ai connector client is a
-  different client and is **not measured**: Richard's Claude org blocks adding any connector, custom
-  or shipped in a plugin. If it passes too, the beta's tiers can run under an alias once
+  different client and is **not measured**: the org account used blocks adding any connector,
+  custom or shipped in a plugin. If it passes too, the beta's tiers can run under an alias once
   `oauth_issuer()` (`apps/server/proto/web/auth.py`) accepts a path, the web tier serves its
   metadata at `/.well-known/openid-configuration` as well as `METADATA_PATH`
   (`apps/server/proto/web/connector_auth.py`), and `isServerUrl` (`scripts/package-plugin.mjs`)
