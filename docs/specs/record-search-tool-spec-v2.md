@@ -531,14 +531,27 @@ refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 ### A birth range may not exclude a candidate already found
 
 A call with `projectPath`, `subjectId` and a birth range (`birthYearFrom`,
-`birthYearTo` or both) that is a search **for the subject** is refused, before
-any request, when the range excludes the birth year of a **candidate** an
-earlier search for the same subject returned. A search is for the subject when
-its `givenName` or `givenNameAlt` matches one of the given names the project
-tree holds for `subjectId` (every `names[].given`, alternates included), matched
-as below; a call with no given name is too. A call under the subject's id whose
-given name is not the subject's (a search for a parent or a spouse) is not
-judged. A subject the tree does not hold, or holds with no given name, allows the
+`birthYearTo` or both) is refused, before any request, when the range excludes
+the birth year of a **candidate** an earlier search for the same subject
+returned, and the call is one the candidate binds:
+
+- a call with no given name of its own that names a parent (`fatherGivenName`,
+  `fatherSurname`, `motherGivenName`, `motherSurname`, `parentGivenName` or
+  `parentSurname`, not blank) is a search for the subject's child and is not
+  judged. A spouse's or a household member's name (`spouseGivenName`,
+  `otherGivenName`) is still a search for the subject;
+- a call whose `givenName` or `givenNameAlt` matches one of the given names the
+  project tree holds for `subjectId` (every word of every `names[].given`,
+  alternates included), matched as below, or that has no given name, is judged
+  against every candidate;
+- a call under another given name is judged only against the candidates whose
+  first given name it searches, so on a tree that holds only "Ann" a search for
+  "Antoine" or "Antoinette" is refused by an Antoine and a search for "Margaret"
+  is not.
+
+An initial in the subject's tree name (a one-letter word) matches only an
+initial: with "Hannah E" in the tree, "E" is a search for her and "Edwin" is
+not. A subject the tree does not hold, or holds with no given name, allows the
 call.
 
 A candidate is a row of a logged `record_search` sidecar
@@ -558,60 +571,94 @@ A candidate is a row of a logged `record_search` sidecar
   `givenNameAlt` (a wildcard pattern by wildcard, otherwise by prefix or a
   Dice coefficient of at least 0.66);
 - the row has a birth year (the first year in its `birthDate`);
-- the record is neither rejected for the subject (`rejected_links`, through the
-  rejected assertion's `record_id`) nor listed in one of the subject's
-  `namesakes[].record_ids`.
+- the record is not rejected for the subject (`rejected_links`, through the
+  rejected assertion's `record_id`), not listed in one of the subject's
+  `namesakes[].record_ids`, and not linked `confident`, and not superseded, to
+  another person (`person_evidence`).
 
 The error names each excluded candidate, its record, birth year and log entry,
 and says to search again with no birth range or one that includes those years.
 Either is always accepted, so the rule never blocks a search, only the range.
-Any failure to read `research.json`, `tree.gedcomx.json` or a sidecar allows the
-call.
+A `research.json` or `tree.gedcomx.json` that cannot be read allows the call;
+a sidecar that cannot be read is skipped and the others are judged.
+
+**A namesake row may not drop a candidate either.** `research_append` refuses a
+`namesakes` append or update whose `record_ids` name a candidate of the row's
+`person_id` (the definition above, judged against the project as it stood
+before the call), unless something besides the birth year separates them: the
+candidate's `birthDate` is a full day-month-year date; its `birthPlace` names
+another country, US state or Canadian province than the person's tree birth;
+or the project links the person `probable` or `confident`, not superseded, to
+another record. A record a row named before the call is no candidate, so a
+standing row is never refused (`research-append-tool-spec.md`, the namesake
+candidate row). A namesake is what releases a candidate from the range refusal,
+so without this the same write that drops her would also let the next tight
+range through.
 
 In a reported research session `log_099` returned an 1870 household
 headed by Antoine Tyler, born 1833; the next search for the subject, born about
 1853, kept birth 1848–1858, came back nil, and the nil was reported as a
 finding. The search-records agent body forbade it and the agent still did it in
-4 of 5 runs of `ut_search_records_035` (2026-11-23); the rule is decidable from the project's
-own files, so the tool enforces it (ADR-0011). The eval mock runs the same
-compiled `candidateExclusionRefusal` and logs a refused call as
-`matched.kind: "candidate_excluded_refused"`.
+4 of 5 runs of `ut_search_records_035` (2026-11-23); the rule is decidable from
+the project's own files, so the tool enforces it (ADR-0011). With the range
+refused, the agent recorded Antoine as the subject's namesake on her birth year
+in 3 of 3 runs (2026-11-25), so the namesake rule followed. The eval mock runs
+the same compiled `candidateExclusionRefusal` and logs a refused call as
+`matched.kind: "candidate_excluded_refused"`; `research_append` runs for real in
+the mock, so the namesake rule needs no mirror.
 
 **Corpus refusal measurement (ADR-0011).** Measured on 2026-11-25 over the run
-logs and scenarios at `499f656be` by `npx tsx dev/measure-candidate-exclusions.ts
---list` (from `packages/engine/mcp-server`), which runs `excludedCandidates` on a
-temporary project rebuilt for each call: the starting state plus every
-`record_search` the run had logged by then. Of 717 `record_search` calls in the
-committed unit and e2e run logs with a `subjectId`, a `projectPath` and a birth
-range, it refuses **2**, both in `ut_search_records_020`: a search for Job
-Purnell born about 1826 with 1823–1829 and 1824–1828, after the run had logged
-a Job Purnell baptised in 1821. That is the rule's intended shape (the 1821
-record was still a logged candidate, recorded neither as a namesake nor
-rejected), and either way out — widening to 1821 or recording the namesake —
-leaves the search the test needs. Over the same corpus the guard holds 20
-candidates (each scenario, and each e2e run's final reconstructed state); 4
-would refuse a search for the subject under the subject's own birth year ±5:
-Antoine Tyler (the case above), the 1825 Thomas Hanrahan and 1861 Thomas
-Hanshan on one two-row page in `thomas-hanrahan-marriage` (subject b. 1840),
-and "S W Spriggs" b. 1870 in `spriggs-parents-1898`, whose initial matches the
-subject's middle name Spencer on a three-row page the run logged `positive`
-for another row. Those three are accepted: each sits on a short page logged
-`positive` and recorded neither as a namesake nor rejected, so the refusal is
-satisfied by either, or by a range that includes it.
+logs and scenarios at `9531a7ac7` by `npx tsx dev/measure-candidate-exclusions.ts
+--list` (from `packages/engine/mcp-server`), which runs `excludedCandidates` and
+`namesakeCandidateRefusals` on a temporary project rebuilt for each call: the
+starting state plus every `record_search` and `namesakes` row the run had
+logged by then.
 
-The first version of the rule, without the subject-name condition, refused 13
-calls, 11 of them wrong: in `spriggs-parents-1898`, six searches for the subject
-Reuben and one for a John Spriggs, all blocked by three adult household heads a
-surname-only search under Reuben's id had returned; in `hannah-earnest-children`,
-three searches for the subject Hannah's father Joseph, blocked by Hannah's own
-candidate and by her husband Edwin Grice, whom an Edwin search under her id had
-made a candidate for her. The subject-name condition removes all eleven.
+- **Ranges.** Of 738 `record_search` calls in the committed unit and e2e run
+  logs with a `subjectId`, a `projectPath` and a birth range, it refuses **2**.
+  In `hannah-earnest-children` (run 2026-11-24_05-04-48), a search for Hannah
+  Grice with birth 1857 only, after the run had logged two Hannah Ernest
+  records born 1856. In `ut_search_records_020`, a search for Job Purnell born
+  about 1826 with 1824–1828, after the run had logged a Job Purnell baptised
+  in 1821. Both are the intended shape: each record was still a logged
+  candidate, and widening the range by its years leaves the search the run
+  needed.
+- **Namesake rows.** Of 99 `namesakes` appends and updates, it refuses **1**:
+  in `thomas-hanrahan-marriage` (run 2026-11-09_12-14-54), a row for the subject
+  (b. about 1840) naming a Thomas Hanrahan the run's own search for him had
+  returned, born 1825 by an 1865 census age, whose notes give the birth year as
+  the only ground. That is the shape the rule refuses, accepted. Links come
+  from the starting research only, so a row a later link in the same run
+  would release counts as refused; the one refusal has none.
+- **Candidates.** Over the same corpus the guard holds 22 candidates (each
+  scenario, and each e2e run's final reconstructed state); 4 would refuse a
+  search for the subject under the subject's own birth year ±5: Antoine Tyler
+  (the case above), the 1825 Thomas Hanrahan and 1861 Thomas Hanshan on one
+  two-row page in `thomas-hanrahan-marriage` (subject b. 1840), and "S W
+  Spriggs" b. 1870 in `spriggs-parents-1898`, on a three-row page the run
+  logged `positive` for another row. Those three are accepted: widening the
+  range satisfies the refusal.
 
-Its limits: 1,236 logged e2e and unit `record_search` ops could not be paired with
-the call that staged them (914 from e2e run logs whose captures are stripped
-after 14 days), so the e2e count is a lower bound; rows are the page the run log
-kept, not the sidecar; and an e2e call is judged against the fixture's starting
-tree. These are eval-corpus counts, not production.
+Each condition was added because a version without it refused correct calls,
+read individually. Without the subject-name condition the rule refused 13 calls
+at `499f656be`, 11 of them wrong: in `spriggs-parents-1898`, 8 calls, seven searches for the
+subject Reuben and one for a John Spriggs, all blocked by three adult household
+heads a surname-only search under Reuben's id had returned; in
+`hannah-earnest-children`, three searches for the subject Hannah's father
+Joseph, blocked by Hannah's own candidate and by her husband Edwin Grice, whom
+an Edwin search under her id had made a candidate for her. Without the child
+rule, once that run's 2026-11-24 log landed, it refused 16 of 738, 14 of them
+the run's searches for Hannah's children (no given name, a parent's name, births
+from 1877 or 1886 to 1900) asked to widen to her own 1856. Without the birthplace
+exception the namesake rule refused 4 of 99 rows, the other three the same row
+in three runs of `ut_search_records_016`: a Sarah Price ruled out on an indexed
+New York birthplace against the subject's Wisconsin birth.
+
+Its limits: 1,239 logged e2e and unit `record_search` ops could not be paired
+with the call that staged them (most from e2e run logs whose captures are
+stripped after 14 days), so the e2e count is a lower bound; rows are the page
+the run log kept, not the sidecar; and an e2e call is judged against the
+fixture's starting tree. These are eval-corpus counts, not production.
 
 ### Rows at or below the matcher floor are slimmed (experiment)
 

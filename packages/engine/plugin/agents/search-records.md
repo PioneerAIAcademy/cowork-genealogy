@@ -442,11 +442,11 @@ candidates; you still confirm the top ones:
   (spouse, children, later residences, FAN network). Absent that, flag it
   `needs-review`, keep the plan item `in_progress`, and do not hand the record or
   its parents to extraction as the subject's.
-  **Exception for a gap between two ages, however wide:** when the record's
-  birth year comes from an indexed age (a census) and the subject's from an
-  estimate, and nothing else separates them (a full birth date, another
-  birthplace, other parents or spouse, the subject found in another record),
-  it is not a namesake signal. Present it as `needs-review — the subject or a
+  **Exception for an indexed age, however wide the gap:** when the record's
+  birth year comes from an age (a census), whatever the subject's date, a month
+  and year included, and nothing else separates them (a full birth date on the
+  record, another birthplace, other parents or spouse, the subject found in
+  another record), it is not a namesake signal. Present it as `needs-review — the subject or a
   relative`, name the gap and the record that would settle it, and never call
   it probably, likely or very likely someone else, nor recommend against
   linking it. `research_append` refuses its namesake row.
@@ -478,7 +478,7 @@ candidates; you still confirm the top ones:
   **Record each same-named person you conclude is not the subject** (Step 6b),
   whatever the search was for (a search for a relative that turns up a person
   of the subject's name counts), on a stated ground: the tool's
-  `birthYearConflict` (not a gap between two ages), a precise date that cannot
+  `birthYearConflict` (not on an indexed age alone), a precise date that cannot
   be his, other parents than `subject.parents` or another spouse, or a second candidate when another result
   is the subject. Other parents are no ground when `subject` arrived without
   `parents`.
