@@ -32,7 +32,7 @@ cost (real `claude -p` calls). It is **not** part of CI and has not been run
 end-to-end in this repo yet — the first team use validates it; treat its output
 as advisory and apply the proposed description as a human-reviewed SKILL.md edit.
 `make optimize-skill` writes `results.json` + the HTML report to
-`eval/runlogs/optimizer/<ts>/` (excluded from the release gate + comparisons).
+`eval/runlogs/optimizer/<ts>/` (excluded from the run-log gates + comparisons).
 
 Spec / rationale / lifecycle: `docs/skill-lifecycle.md` §8.
 
