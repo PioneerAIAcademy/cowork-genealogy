@@ -35,6 +35,10 @@ only when the fixture asks for it:
 - ``stop`` — the turn ended on its own. A turn a cap or watchdog cut off fails
   here: what it saved before the cut is not an answer the patron got. The cost
   cap is not a cut-off (it only labels a finished run), so it does not fail this.
+- ``read_before_search`` — graded only when the fixture sets it: each named tool
+  was called without error before the turn's first search (``SEARCH_TOOLS``), on
+  any thread, or anywhere in a turn that searched nothing. ``required_tools`` asks
+  only whether a call happened; this asks whether it came before the search.
 - ``ends_on_offer`` — graded only when the fixture sets it: the turn's last
   main-thread assistant text ends on a "Continue with …?" line naming a step,
   read with the step boundary's own ``offered_step``. An invented label is no
@@ -86,9 +90,12 @@ def missing_guide_headings(guide: Any) -> list[str]:
             missing.append(heading)
     return missing
 CHECKS = (
-    "owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop",
-    "ends_on_offer",
+    "owner", "no_research_job", "save", "forbidden_tools", "required_tools",
+    "read_before_search", "stop", "ends_on_offer",
 )
+# The tools that look for a record or a person; `read_before_search` is graded against
+# the first of these. A catalog, collection or volume lookup finds no record.
+SEARCH_TOOLS = frozenset({"record_search", "fulltext_search", "image_search", "person_search"})
 # Set after the fact from the final ResultMessage; the turn was not cut off.
 LABEL_ONLY_STOPS = ("cost_cap",)
 ASYNC_LAUNCH = "Async agent launched"
@@ -105,6 +112,7 @@ class SingleAskSpec:
     must_not: str = ""
     forbidden_tools: tuple[str, ...] = ()
     required_tools: tuple[str, ...] = ()
+    read_before_search: tuple[str, ...] = ()
     ends_on_offer: bool = False
     # An open issue that owns this fixture's FAIL ("#2813"): printed KNOWN-FAIL and
     # left out of the panel's exit code, so a new FAIL stands out.
@@ -315,6 +323,22 @@ def grade(
         else "none declared",
     )
 
+    if spec.read_before_search:
+        first = next(
+            (i for i, e in enumerate(tool_calls) if _bare(str(e.get("tool") or "")) in SEARCH_TOOLS),
+            len(tool_calls),
+        )
+        before = {
+            _bare(str(e.get("tool") or "")) for e in tool_calls[:first] if e.get("is_error") is not True
+        }
+        late = [t for t in spec.read_before_search if t not in before]
+        where = "the first search" if first < len(tool_calls) else "the end of a turn that searched nothing"
+        checks["read_before_search"] = (
+            not late,
+            f"not called without error before {where}: {', '.join(late)}" if late
+            else f"[{', '.join(spec.read_before_search)}] called before {where}",
+        )
+
     extraction_appends = sum(
         1 for e in tool_calls if _bare(str(e.get("tool") or "")) == "extraction_append"
     )
@@ -381,7 +405,7 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
         )
     if not g.checks["no_research_job"][0]:
         line += f"\n    research job: {g.checks['no_research_job'][1]}"
-    for name in ("forbidden_tools", "required_tools", "ends_on_offer"):
+    for name in ("forbidden_tools", "required_tools", "read_before_search", "ends_on_offer"):
         if name in g.checks and not g.checks[name][0]:
             line += f"\n    {name}: {g.checks[name][1]}"
     if spec.known_issue and g.passed:

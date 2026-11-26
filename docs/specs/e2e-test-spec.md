@@ -2805,6 +2805,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, `{"section": "plans"}` (only with `is_plan_ask`; the loader refuses it otherwise), or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
 | `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
+| `read_before_search` | no (`[]`) | bare tool names that must each be called without error before the turn's first search (`record_search`, `fulltext_search`, `image_search` or `person_search`), on any thread; in a turn that searched nothing, anywhere. `required_tools` asks only whether a call happened |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
@@ -2852,8 +2853,8 @@ Memories as sources, so a new source shows nothing about the deliverable
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all seven hold, the
-seventh only when the fixture asks for it (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all eight hold, the
+seventh and eighth only when the fixture asks for them (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
@@ -2879,6 +2880,9 @@ namespace; it is stripped, as it is from spawned names):
    turn's last **main-thread** assistant text is a "Continue with …?" offer, read
    with the step boundary's own `offered_step` (`plugin/hooks/step_boundary.py`).
    Never a subagent's text or a harness line. An invented label is no offer.
+8. **`read_before_search`** — only with `read_before_search`: each named tool was
+   called without error before the turn's first search (`SEARCH_TOOLS`), on any
+   thread, or anywhere in a turn that searched nothing.
 
 **A missing final `research.json`.** From a seeded project it fails `save` and
 `no_research_job`. In an empty-folder fixture it means no new rows: it adds no

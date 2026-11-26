@@ -604,6 +604,61 @@ def test_an_errored_required_call_does_not_count():
     assert g.failed == ["required_tools"], line
 
 
+# --- read_before_search: the read comes before the first search, on any thread --------
+
+ATTACHED_FIRST = SingleAskSpec(
+    id="children-attached-first",
+    message="Find all the children of X.",
+    expected_owner="search-records",
+    expected_save={"section": "log", "tool": "record_search"},
+    read_before_search=("record_read",),
+)
+RECORD_READ = {"tool": "mcp__genealogy__record_read", "args": {}, "thread": "main"}
+SEARCHED = final(log=[{"id": "log_002", "tool": "record_search"}])
+
+
+def test_a_read_before_the_first_search_passes_on_either_thread():
+    for read in (RECORD_READ, {**RECORD_READ, "thread": "sub"}):
+        g, line = run([read, agent("search-records"), {**SEARCH, "thread": "sub"}], final_research=SEARCHED, spec=ATTACHED_FIRST)
+        assert g.passed, line
+        assert g.checks["read_before_search"] == (True, "[record_read] called before the first search")
+
+
+def test_a_read_only_after_the_first_search_fails():
+    calls = [agent("search-records"), {**SEARCH, "thread": "sub"}, RECORD_READ]
+    g, line = run(calls, final_research=SEARCHED, spec=ATTACHED_FIRST)
+    assert g.failed == ["read_before_search"], line
+    assert "read_before_search: not called without error before the first search: record_read" in line
+
+
+def test_an_errored_read_before_the_search_does_not_count():
+    calls = [{**RECORD_READ, "is_error": True}, agent("search-records"), {**SEARCH, "thread": "sub"}]
+    g, line = run(calls, final_research=SEARCHED, spec=ATTACHED_FIRST)
+    assert g.failed == ["read_before_search"], line
+
+
+def test_any_search_tool_ends_the_window_and_a_turn_with_no_search_needs_the_read_anywhere():
+    full_text = {"tool": "mcp__genealogy__fulltext_search", "args": {}, "thread": "sub"}
+    g, _ = run([agent("search-records"), full_text, RECORD_READ], final_research=SEARCHED, spec=ATTACHED_FIRST)
+    assert g.failed == ["read_before_search"]
+    g, _ = run([agent("search-records"), RECORD_READ], final_research=SEARCHED, spec=ATTACHED_FIRST)
+    assert g.passed and "searched nothing" in g.checks["read_before_search"][1]
+    g, _ = run([agent("search-records")], final_research=SEARCHED, spec=ATTACHED_FIRST)
+    assert g.failed == ["read_before_search"]
+
+
+def test_read_before_search_is_not_graded_unless_the_fixture_sets_it():
+    g, _ = run([agent("source-evaluation")])
+    assert "read_before_search" not in g.checks
+
+
+def test_loader_carries_read_before_search_and_refuses_a_bad_name(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, id="ok-read", read_before_search=["record_read"]))
+    assert spec.read_before_search == ("record_read",)
+    with pytest.raises(FixtureError, match="read_before_search names"):
+        load_single_ask_fixture(_write(tmp_path, id="bad-read", read_before_search=["mcp__genealogy__record_read"]))
+
+
 def test_a_background_spawn_fails_an_absence_pass():
     bg = {**agent("search-records"), "response_summary": "Async agent launched"}
     g, line = run([READ, bg], final_research=START, spec=ATTACHED)

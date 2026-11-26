@@ -55,7 +55,7 @@ REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
 FIXTURE_KEYS = frozenset({
     *REQUIRED_KEYS, "is_plan_ask", "setup_units", "must_not", "forbidden_tools",
     "required_tools", "model", "caps", "tags", "blocked_tools", "ends_on_offer",
-    "known_issue",
+    "known_issue", "read_before_search",
 })
 KNOWN_ISSUE_RE = re.compile(r"^#[1-9]\d*$")
 STARTING_FILES = ("starting-research.json", "starting-tree.gedcomx.json")
@@ -138,7 +138,7 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         )
     save = tuple(alternatives) if isinstance(save, list) else save
     tool_lists = {}
-    for key in ("forbidden_tools", "required_tools"):
+    for key in ("forbidden_tools", "required_tools", "read_before_search"):
         names = raw.get(key) or []
         if not isinstance(names, list) or not all(isinstance(t, str) and t for t in names):
             raise FixtureError(f"{fixture_dir.name}: {key} must be a list of tool names")
