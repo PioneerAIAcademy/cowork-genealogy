@@ -585,7 +585,8 @@ up while the body ran on the main thread, and each cost a run to find.
   Handed state (#3581, `v10_2026-10-23_05-59-03.json`, same counting): 28 tests reach
   `record_search`; the MCP calls before it are a median of 1 and a mean of 1.04 (min 0,
   max 4), and `research_query` precedes the search in 3 of 28 (the ids-only and
-  ad-hoc tests). Against the released `v8.json` (median 2, mean 1.58, 23 of 26) the
+  ad-hoc tests). Against `v8.json`, deleted from the tree and living in commit
+  3e2dc331d (median 2, mean 1.58, 23 of 26), the
   median halves and the mean falls by 0.54. Re-run with
   `python eval/harness/scripts/pre_search_calls.py <run-log.json>...`. The `Read` of the
   tree is not in `tool_calls`, so its saving is asserted by
