@@ -3,27 +3,40 @@
     "id": "ut_research_wtm",
     "skill": "research",
     "name": "'Write this up' mid-research, with no proof summary, reports what is established and open and gives no tier",
-    "type": "negative",
-    "description": "The researcher asks for a written report on a project whose question has no proof summary. The main thread builds it from tool reads, spawns no agent (so no proof-conclusion), never calls research_append, never reads the raw project files, and states no tier. Issue #4576.",
+    "type": "positive",
+    "description": "The researcher asks for a written report on a project whose question has no proof summary. The main thread builds it from tool reads, spawns no agent (so no proof-conclusion), never calls research_append, never reads the raw project files, and states no tier. The skill must activate: the message opens with /research, as the other bounded-request tests do. Issue #4576.",
     "tags": [
+      "routing",
+      "routes-to:stop",
+      "bounded-request",
       "write-this-up-no-proof"
     ]
   },
   "input": {
-    "user_message": "Write this up for me so I can keep it.",
+    "user_message": "/research Write this up for me so I can keep it.",
     "scenario": "mid-research-flynn-no-proof"
   },
-  "negative": {
-    "correct_skill": [],
-    "explanation": "With no proof summary on the question, the report gives what is established and what is open, with no tier, and never concludes. The validator gates: no agent spawn; no research_append; no direct read of the raw project files; no tier word (probable, proved, disproved, not proved) in the report text.",
-    "grade_on_invariant": false
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "question-selection",
+      "timeline",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-structurer",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
   },
   "judge_context": [
+    "This is a BOUNDED-REQUEST test. A written report is in the skill's bounded list and the main thread writes it itself, with no hand-off. `test_routes_to_expected_skill` (`routes-to:stop`) owns the absence of any hand-off, and the `write-this-up-no-proof` validator owns the ban on research_append and raw file reads and on a tier given as a rating. Do not grade those yourself.",
     "The report must come from project state and add no claim; the deterministic validator cannot check that, the judge does.",
     "Facts of this scenario: the questions are who the parents of Patrick Flynn (b. about 1845, PA, d. 1908) were, and where Patrick was in the 1850 census. Neither has a proof summary and there is no reviewer's verdict. One conflict, Patrick's birthplace, is resolved. The report should say what is established, what is open, and that no conclusion has been written and no review requested.",
     "A report that rates the parentage (probable, proved or any tier), or says a reviewer approved it, fails."
   ],
-  "execution": {
-    "max_wall_clock_seconds": 600
-  }
+  "judge_reads_files": true
 }
