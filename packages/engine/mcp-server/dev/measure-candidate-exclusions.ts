@@ -15,7 +15,7 @@
  *   CALLS. Every `record_search` a committed run log made with a `projectPath`
  *   and a birth range, judged against the project as it stood at that call, and
  *   counted apart by whether it named a `subjectId` (a call that names none is
- *   judged for the project subjects whose given name it searches): the starting state (a unit test's scenario `research.json` and
+ *   judged, when it has a given name, for the project subjects whose tree birth year its range includes): the starting state (a unit test's scenario `research.json` and
  *   its `results/`; an e2e fixture's `starting-research.json`) plus every
  *   `record_search` the run had already logged by then — a
  *   `research_log_append` op with `stagedResultsRef` and `outcome`, paired with
@@ -292,7 +292,7 @@ for (const n of scenarios) {
 const head = execFileSync("git", ["rev-parse", "--short=9", "HEAD"], { cwd: repoRoot, encoding: "utf-8" }).trim();
 console.log(`HEAD ${head}; ${files.length} run-log files; ${scenarios.length} scenarios`);
 console.log(`CALLS: record_search calls with subjectId, projectPath and a birth range: ${rangedCalls}; refused: ${refusals.length}`);
-console.log(`  with no subjectId (judged for the subjects whose given name they search): ${unnamedCalls}; refused: ${unnamedRefusals.length}`);
+console.log(`  with no subjectId (judged for the subjects whose tree birth year their range includes): ${unnamedCalls}; refused: ${unnamedRefusals.length}`);
 console.log(`  logged record_search ops whose staged search could not be paired (skipped): ${unpairedOps}`);
 console.log(`NAMESAKES: namesakes appends and updates replayed: ${namesakeWrites}; refused: ${namesakeRefusals.length}`);
 console.log(`CANDIDATES: ${candidateCount} (scenarios + e2e final states); the subject's own +/-5 range would be refused by ${naturalRefused}`);

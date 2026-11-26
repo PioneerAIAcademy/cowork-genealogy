@@ -20,9 +20,9 @@ birth range excludes 1833, when that search asks for one of her given names (Ann
 Anthony), for Antoine's, or for none. A search for I1 under another given name is for
 someone else and is not refused, nor is a search with no given name that names a parent
 (`motherGivenName` and the like), which is a search for her child. A search that names
-no `subjectId` is judged as one for I1 when it asks for one of her given names and its
-range includes her tree birth year, 1853, so an "Ann" search for 1848–1858 with no
-subject is refused too. `research_append`
+no `subjectId` is judged as one for I1 when it has a given name and its range includes
+her tree birth year, 1853, so an "Ann" or "Antoine" search for 1848–1858 with no
+subject is refused too, and only one with no given name reaches the nil fixture. `research_append`
 refuses a `namesakes` row for I1 that names Antoine: nothing in the project rules her out
 but her birth year (I1 is linked to no other record of the 1870 census, Antoine's row names
 no parents, and the row's 1833 is an age, not a full date).

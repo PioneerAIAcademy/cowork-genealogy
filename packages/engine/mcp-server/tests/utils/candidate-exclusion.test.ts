@@ -171,7 +171,7 @@ describe("candidateExclusionRefusal (issue #4580)", () => {
       await seed([ANTOINE], "I1", subjects(["I1"]));
       const refusal = await candidateExclusionRefusal(bare({ givenName: "Ann" }));
       expect(refusal).toContain("an earlier search for I1 already returned: Antoine Tyler");
-      expect(refusal).toContain("This call names no subjectId; its given name is I1's");
+      expect(refusal).toContain("This call names no subjectId; its range includes I1's tree birth year");
       expect(await candidateExclusionRefusal(bare({ givenNameAlt: "Antone" }))).not.toBeNull();
       expect(await excludedCandidates(bare({ givenName: "Ann" }))).toEqual([
         { subjectId: "I1", recordId: ANTOINE.recordId, personName: "Antoine Tyler", birthYear: 1833, logId: "log_001" },
@@ -186,17 +186,47 @@ describe("candidateExclusionRefusal (issue #4580)", () => {
       expect(await candidateExclusionRefusal(bare({ motherGivenName: "Ann" }))).toBeNull();
     });
 
-    it("is not judged when the project names no subject, or the searched name is another subject's", async () => {
+    it("is not judged when the project names no subject, or only subjects whose candidates it is not", async () => {
       for (const ids of [undefined, null, [], ["I2"], ["I9"]]) {
         await seed([ANTOINE], "I1", subjects(ids));
         expect(await candidateExclusionRefusal(bare({ givenName: "Ann" })), JSON.stringify(ids)).toBeNull();
       }
     });
 
-    it("is judged only for the matching subject of several", async () => {
+    it("is judged only for the subject of several whose tree birth year its range includes", async () => {
+      const t: any = tree();
+      t.persons[0].facts = [{ id: "F1", type: "Birth", date: "Apr 1853" }];
+      t.persons[1].facts = [{ id: "F2", type: "Birth", date: "1820" }];
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", t);
       await seed([ANTOINE], "I1", subjects(["I2", "I1"]));
       expect((await excludedCandidates(bare({ givenName: "Ann" }))).map((c) => c.subjectId)).toEqual(["I1"]);
       expect(await excludedCandidates(bare({ givenName: "Margaret" }))).toEqual([]);
+    });
+
+    it("on a tree holding I1 only as 'Ann', is judged under the candidate's own spelling too", async () => {
+      const t: any = tree(["Ann"]);
+      t.persons[0].facts = [{ id: "F1", type: "Birth", date: "Apr 1853" }];
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", t);
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      expect(await candidateExclusionRefusal(bare({ givenName: "Antoine" }))).not.toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Antoinette" }))).not.toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Margaret" }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Antoine", birthYearFrom: 1878, birthYearTo: 1884 }))).toBeNull();
+    });
+
+    it("reads the subject's birth year from any birth-like fact that has one", async () => {
+      const facts = async (fs: unknown[]) => {
+        const t: any = tree();
+        t.persons[0].facts = fs;
+        await getProjectStore().writeJson(dir, "tree.gedcomx.json", t);
+      };
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      await facts([{ id: "F1", type: "Birth" }, { id: "F2", type: "Christening", date: "1853" }]);
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann" }))).not.toBeNull();
+      await facts([{ id: "F1", type: "Birth", date: "1833" }, { id: "F2", type: "Birth", date: "Apr 1853" }]);
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann" }))).not.toBeNull();
+      await facts([{ id: "F1", type: "Residence", date: "1853" }]);
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann" }))).toBeNull();
     });
   });
 
@@ -445,6 +475,45 @@ describe("candidateExclusionRefusal (issue #4580)", () => {
       expect(await excludedCandidates(ranged())).toHaveLength(1);
       await seed([ANTOINE], "I1", linked("I1", "confident"));
       expect(await excludedCandidates(ranged())).toHaveLength(1);
+    });
+
+    describe("only a link of the candidate's own entry in the record releases it", () => {
+      const REC = "https://familysearch.org/ark:/61903/1:1:MFLB-F5N";
+      const household = (linkedId: string, persona = true) => ({
+        assertions: [
+          { id: "a_h", record_id: REC, record_role: "head_of_household", fact_type: "name", value: "Antoine Tyler", ...(persona ? { record_persona_id: "p_1" } : {}) },
+          { id: "a_hb", record_id: REC, record_role: "head_of_household", fact_type: "birth", value: "1833", ...(persona ? { record_persona_id: "p_1" } : {}) },
+          { id: "a_c", record_id: REC, record_role: "child_1", fact_type: "name", value: "Joseph Tyler", ...(persona ? { record_persona_id: "p_2" } : {}) },
+        ],
+        person_evidence: [{ id: "pe_1", assertion_id: linkedId, person_id: "I7", confidence: "confident" }],
+      });
+
+      it("a household member's confident link to I7 does not release the head, by persona or by role", async () => {
+        await seed([ANTOINE], "I1", household("a_c"));
+        expect(await excludedCandidates(ranged())).toHaveLength(1);
+        await seed([ANTOINE], "I1", household("a_c", false));
+        expect(await excludedCandidates(ranged())).toHaveLength(1);
+      });
+
+      it("a confident link of any of the head's own assertions does", async () => {
+        await seed([ANTOINE], "I1", household("a_h"));
+        expect(await excludedCandidates(ranged())).toEqual([]);
+        await seed([ANTOINE], "I1", household("a_hb"));
+        expect(await excludedCandidates(ranged())).toEqual([]);
+        await seed([ANTOINE], "I1", household("a_hb", false));
+        expect(await excludedCandidates(ranged())).toEqual([]);
+      });
+
+      it("a rejected link of a household member does not release the head either", async () => {
+        const extra: any = household("a_c");
+        extra.person_evidence = [];
+        extra.rejected_links = [{ id: "rj_1", assertion_id: "a_c", person_id: "I1", created: "2026-11-26" }];
+        await seed([ANTOINE], "I1", extra);
+        expect(await excludedCandidates(ranged())).toHaveLength(1);
+        extra.rejected_links[0].assertion_id = "a_h";
+        await seed([ANTOINE], "I1", extra);
+        expect(await excludedCandidates(ranged())).toEqual([]);
+      });
     });
   });
 });

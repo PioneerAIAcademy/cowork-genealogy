@@ -233,6 +233,75 @@ describe("namesakeCandidateRefusals: when a row may name a candidate", () => {
       await withParents("Michael", null);
       expect(await judge()).toHaveLength(1);
     });
+
+    /** Gives Antoine's record the parents `rec` and I1 the tree parents `treeP`,
+     *  each as [given, gender]. With `childOther`, the record also gives her a
+     *  child and that child's father, unrelated to anyone. */
+    const withGendered = async (rec: [string, string][], treeP: [string, string][], childOther = false) => {
+      const s: any = await readProjectJson(dir, "results/log_001.json");
+      const r0 = s.payload.results[0];
+      r0.primaryId = "p1";
+      const persons: any[] = [{ id: "p1", gender: "Female", names: [{ given: "Antoine", surname: "Tyler" }] }];
+      const relationships: any[] = [];
+      rec.forEach(([given, gender], i) => {
+        persons.push({ id: `rp${i}`, gender, names: [{ given, surname: "Tyler" }] });
+        relationships.push({ type: "ParentChild", parent: `rp${i}`, child: "p1" });
+      });
+      if (childOther) {
+        persons.push({ id: "kid", gender: "Male", names: [{ given: "Joseph", surname: "Tyler" }] });
+        persons.push({ id: "kdad", gender: "Male", names: [{ given: "Zebulon", surname: "Tyler" }] });
+        relationships.push({ type: "ParentChild", parent: "p1", child: "kid" });
+        relationships.push({ type: "ParentChild", parent: "kdad", child: "kid" });
+      }
+      r0.gedcomx = { persons, relationships };
+      await getProjectStore().writeJson(dir, "results/log_001.json", s);
+      tree = structuredClone(tree);
+      tree.persons = tree.persons.filter((p: any) => !String(p.id).startsWith("TP"));
+      tree.relationships = (tree.relationships ?? []).filter((r: any) => !String(r.parent).startsWith("TP"));
+      treeP.forEach(([given, gender], i) => {
+        tree.persons.push({ id: `TP${i}`, gender, names: [{ given, surname: "Tyler" }] });
+        tree.relationships.push({ type: "ParentChild", parent: `TP${i}`, child: "I1" });
+      });
+    };
+
+    it("compares a record mother only with tree mothers: Job and Bridget, or Bridget alone, against a tree father Job", async () => {
+      await withGendered([["Job", "Male"], ["Bridget", "Female"]], [["Job", "Male"]]);
+      expect(await judge()).toHaveLength(1);
+      await withGendered([["Bridget", "Female"]], [["Job", "Male"]]);
+      expect(await judge()).toHaveLength(1);
+    });
+
+    it("allows Michael and Mary against tree parents Thomas and Mary, and Michael against Thomas", async () => {
+      await withGendered([["Michael", "Male"], ["Mary", "Female"]], [["Thomas", "Male"], ["Mary", "Female"]]);
+      expect(await judge()).toEqual([]);
+      await withGendered([["Michael", "Male"]], [["Thomas", "Male"]]);
+      expect(await judge()).toEqual([]);
+    });
+
+    it("reads only the principal's own parents, not those of a child the record gives her", async () => {
+      await withGendered([["Job", "Male"]], [["Job", "Male"]], true);
+      expect(await judge()).toHaveLength(1);
+    });
+  });
+
+  describe("the subject's role in the other record of the same collection", () => {
+    /** `research` with I1 linked probable to an assertion of OWN_1870 in `role`. */
+    const linkedAs = async (role: string) => {
+      const r: any = await linked(OWN_1870, "probable");
+      r.assertions = [{ id: "a_001", record_id: OWN_1870, record_role: role }];
+      return r;
+    };
+
+    it.each(["head_of_household", "wife", "child_2", "grandmother"])("an entry of her own (%s) releases the row", async (role) => {
+      expect(await judge(await linkedAs(role))).toEqual([]);
+    });
+
+    it.each(["mother", "Father", "informant", "witness_1", "mother_of_groom"])(
+      "a link naming her as %s of another person's record does not",
+      async (role) => {
+        expect(await judge(await linkedAs(role))).toHaveLength(1);
+      },
+    );
   });
 
   it("allows it when the candidate's birth date is a full day-month-year date", async () => {

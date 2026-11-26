@@ -555,18 +555,21 @@ initial: with "Hannah E" in the tree, "E" is a search for her and "Edwin" is
 not. A subject the tree does not hold, or holds with no given name, allows the
 call.
 
-**A call with no `subjectId`** is judged for each subject in
-`project.subject_person_ids` whose given name its `givenName` or
-`givenNameAlt` searches (matched as above) **and** whose tree birth year (the
-first year of the tree's `Birth` fact) its range includes. Leaving the id off
-would otherwise let the same range through unjudged: in a run of
-`ut_search_records_035` at `4e25a70` every search went without `subjectId`, and
-an "Ann" search for 1848–1858 ran and came back nil. The birth year is what
+**A call with no `subjectId`** that has a `givenName` or `givenNameAlt` is
+judged for each subject in `project.subject_person_ids` one of whose tree birth
+years (the first year of each of the tree's birth-like facts: `Birth`,
+`Christening`, `Baptism` and the rest of `BIRTHLIKE_FACT_TYPES`) its range
+includes. Its given name then binds it to that subject's candidates exactly as
+under the subject's id (the two bullets above), so on a tree holding only "Ann"
+an "Antoine" search is refused by an Antoine and a "Margaret" search is not.
+Leaving the id off would otherwise let the same range through unjudged: in a run
+of `ut_search_records_035` at `4e25a70` every search went without `subjectId`,
+and an "Ann" search for 1848–1858 ran and came back nil. The birth year is what
 tells the subject from a daughter named for her: a search for Hannah born
 1878–1884 leaves out her mother's 1857 and is not judged as a search for the
-mother. A call with no given name, under a name no subject holds, or for a
-subject the tree gives no birth year, is not judged. The refusal adds that the
-call named no `subjectId` and was judged as a search for that subject.
+mother. A call with no given name (a surname sweep), or for a subject the tree
+gives no birth year, is not judged. The refusal adds that the call named no
+`subjectId` and that its range includes that subject's tree birth year.
 
 A candidate is a row of a logged `record_search` sidecar
 (`results/<log_id>.json`, reached through a `log` entry's `results_ref`) where:
@@ -585,10 +588,15 @@ A candidate is a row of a logged `record_search` sidecar
   `givenNameAlt` (a wildcard pattern by wildcard, otherwise by prefix or a
   Dice coefficient of at least 0.66);
 - the row has a birth year (the first year in its `birthDate`);
-- the record is not rejected for the subject (`rejected_links`, through the
-  rejected assertion's `record_id`), not listed in one of the subject's
-  `namesakes[].record_ids`, and not linked `confident`, and not superseded, to
-  another person (`person_evidence`).
+- the record is not listed in one of the subject's `namesakes[].record_ids`,
+  and the row's own entry in it is not rejected for the subject
+  (`rejected_links`) or linked `confident`, and not superseded, to another
+  person (`person_evidence`). The row's own entry is the persona (by
+  `record_persona_id`, else by `record_role`) whose extracted `name` assertion
+  has the row's first given name, so a confident link of a child of the
+  candidate's household to another tree person does not release her; when no
+  extracted entry carries her name, a link of any assertion of the record
+  counts.
 
 The error names each excluded candidate, its record, birth year and log entry,
 and says to search again with no birth range or one that includes those years.
@@ -602,14 +610,22 @@ a sidecar that cannot be read is skipped and the others are judged.
 before the call), unless something besides the birth year separates them: the
 candidate's `birthDate` is a full day-month-year date; its `birthPlace` names
 another country, US state or Canadian province than the person's tree birth;
-the project links the person `probable` or `confident`, not superseded, to
-another record of the candidate's own collection (the `collectionId` a logged
-search's row gives it: the person found elsewhere in the same record set); or
-the candidate's own staged record (`gedcomx`, `primaryId`) names a parent whose
-given name is not the same as, a match for, or a variant or nickname of any tree
-parent's (`givenNamesRelated`). A link to a record of another collection says
-nothing about who the candidate was, and one no logged search returned has no
-collection to compare. A record a row named before the call is no candidate, so a
+the project links the person `probable` or `confident`, not superseded, in an
+entry of their own, to another record of the candidate's own collection (the
+`collectionId` a logged search's row gives it: the person found elsewhere in the
+same record set); or the candidate's own staged record (`gedcomx`, `primaryId`)
+names a parent of the candidate whose given name is not the same as, a match
+for, or a variant or nickname of (`givenNamesRelated`) the person's tree parent
+of the same role. Roles are compared by `gender`: a record parent is read only
+against the tree parents of its gender (any, when either side gives none), and
+one whose role the tree holds no parent in rules nothing out, so a record naming
+the tree father Job and a mother Bridget the tree does not hold is still
+refused. A link to a record of another collection says nothing about who the
+candidate was; nor does a link whose `record_role` names the person as a parent,
+informant, witness, godparent or sponsor of someone else's record
+(`/^(father|mother|parent|informant|witness|godparent|sponsor)/`, lower-cased;
+`grandmother` and `head_of_household` are entries of the person's own); and one
+no logged search returned has no collection to compare. A record a row named before the call is no candidate, so a
 standing row is never refused (`research-append-tool-spec.md`, the namesake
 candidate row). A namesake is what releases a candidate from the range refusal,
 so without this the same write that drops her would also let the next tight
@@ -2348,7 +2364,7 @@ For each `entry` in `response.entries`:
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
 | `recordType` not in the eight allowed values or the six plan-item values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other (a plan item's vital_record, church, cemetery, land, court or tax is also accepted)."` |
-| A birth range that excludes a candidate an earlier search for the same subject returned, the subject being the call's `subjectId` or, with none, a project subject it names (see "A birth range may not exclude a candidate already found") | Throw, before any request: `"Refused: the birth range <from>–<to> excludes a candidate an earlier search for <subjectId> already returned: <name> (<recordId>), born <year>, from <log_id>. …Search again with no birth range, or with one that includes <years>."`, plus, for a call with no `subjectId`, `" This call names no subjectId; its given name is <subjectId>'s, so it is judged as a search for <subjectId>."` |
+| A birth range that excludes a candidate an earlier search for the same subject returned, the subject being the call's `subjectId` or, with none, a project subject whose tree birth year its range includes (see "A birth range may not exclude a candidate already found") | Throw, before any request: `"Refused: the birth range <from>–<to> excludes a candidate an earlier search for <subjectId> already returned: <name> (<recordId>), born <year>, from <log_id>. …Search again with no birth range, or with one that includes <years>."`, plus, for a call with no `subjectId`, `" This call names no subjectId; its range includes <subjectId>'s tree birth year, so it is judged as a search for <subjectId>."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |

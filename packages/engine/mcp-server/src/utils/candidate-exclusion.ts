@@ -7,8 +7,10 @@
  *   - research_append refuses a `namesakes` row that rules a candidate out on
  *     nothing the project holds but its birth year (`namesakeCandidateRefusals`):
  *     not a precise birth date, a birthplace in another country or state, a link
- *     of the person to another record of the candidate's own collection, or
- *     parents on the candidate's record unrelated to the person's tree parents.
+ *     of the person, in their own entry and not as a parent, informant, witness
+ *     or sponsor, to another record of the candidate's own collection, or a
+ *     parent on the candidate's record unrelated to the person's tree parent of
+ *     the same role.
  *
  * In the reported session `log_099` returned an 1870 household headed by
  * "Antoine Tyler", born 1833, for a subject born about 1853. The next search,
@@ -37,8 +39,12 @@
  * match what that search asked for. A subject the tree does not hold, or holds
  * with no given name, has no candidates. A row whose record the researcher
  * rejected for the subject (`rejected_links`), recorded as a namesake of the
- * subject (`namesakes`), or linked `confident` (not superseded) to another person
- * (`person_evidence`) is not a candidate either.
+ * subject (`namesakes`), or whose own entry is linked `confident` (not
+ * superseded) to another person (`person_evidence`), is not a candidate either.
+ * A rejected or confident link counts only on the candidate's own entry in the
+ * record (the entry whose extracted name has the row's first given name), so
+ * linking a child of her household to another tree person does not release
+ * her; when no extracted entry carries her name, any link of the record counts.
  *
  * The record_search call being judged: one with no given name of its own that
  * names a parent (`fatherGivenName`, `motherSurname`, …) searches for the
@@ -50,14 +56,16 @@
  * range, or widening it to the named years, is always accepted.
  *
  * A call with no `subjectId` is judged for each of the project's subjects
- * (`project.subject_person_ids`) whose given name it searches and whose tree
- * birth year its range includes: an "Ann" search for 1848–1858 with no subject
- * is a search for the subject the tree calls Ann, born 1853, and leaving the id
- * off would otherwise let the range through unjudged. The birth year is what
- * tells the subject from a daughter named for her, whose search (Hannah, 1878–
- * 1884, for a mother born 1857) leaves the mother's year out. One with no given
- * name (a surname sweep), under a name no subject holds, or for a subject the
- * tree gives no birth year, is not judged.
+ * (`project.subject_person_ids`) one of whose tree birth years (from any
+ * birth-like fact: Birth, Christening, Baptism, …) its range includes, whatever
+ * given name it searches: an "Ann" search for 1848–1858 with no subject is a
+ * search for the subject born 1853, and leaving the id off would otherwise let
+ * the range through unjudged. Its given name then binds it to candidates as it
+ * does under the subject's id, so "Antoine" is judged against Antoine and
+ * "Margaret" against no one. The birth year is what tells the subject from a
+ * daughter named for her, whose search (Hannah, 1878–1884, for a mother born
+ * 1857) leaves the mother's year out. One with no given name (a surname sweep),
+ * or for a subject the tree gives no birth year, is not judged.
  *
  * Reads only; a document it cannot read allows the call (an unreadable sidecar
  * is skipped and the rest are judged), because a refusal built on a document it
@@ -69,6 +77,7 @@ import { birthCountriesDiffer, yearsIn } from "./attached-births.js";
 import { givenNamesRelated } from "./attachment-support.js";
 import { stdDate } from "./date-standardize.js";
 import { isPerfectStandardDate } from "./fact-helpers.js";
+import { BIRTHLIKE_FACT_TYPES } from "./mob.js";
 import { divisionContradiction } from "./place-resolver.js";
 import { readProjectJson } from "./project-io.js";
 import { diceCoefficient, normalizeString } from "./string-similarity.js";
@@ -119,19 +128,44 @@ export interface Candidate {
   birthPlace: string | null;
   /** The row's collection, or null when the row names none. */
   collectionId: string | null;
-  /** Given names of the parents the row's own record names, or empty. */
-  parentGivenNames: string[];
+  /** The parents the row's own record names for its principal, each by first
+   *  given name and gender (null when the record gives none), or empty. */
+  parents: RecordParent[];
   logId: string;
+}
+
+export interface RecordParent {
+  given: string;
+  gender: string | null;
 }
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 
+/** A person's gender, lower-cased, or null when it names none. */
+const genderOf = (p: any): string | null =>
+  typeof p?.gender === "string" && p.gender.trim() !== "" ? p.gender.trim().toLowerCase() : null;
+
+/** Record roles that name a person as a parent, informant, witness or sponsor of
+ *  another person's record, not in an entry of their own. */
+const NOT_OWN_ENTRY_ROLE = /^(father|mother|parent|informant|witness|godparent|sponsor)/;
+
 /** Dice cutoff for two given names to be the same name (MobWarnings' DICE_CUTOFF). */
 const GIVEN_NAME_DICE = 0.66;
 
-/** Records ruled not to be the subject: rejected links, recorded namesakes, and
- *  records linked `confident` to another person. */
-function ruledOutRecordIds(research: any, subjectId: string): Set<string> {
+/** The entry of a record an assertion belongs to: its persona, else its role. */
+const entryKey = (a: any): string =>
+  typeof a?.record_persona_id === "string" ? `p:${a.record_persona_id}` : `r:${a?.record_role ?? ""}`;
+
+/** What rules a row out for the subject: the records named as the subject's
+ *  namesakes, and, by bare record id, every assertion of each record with those
+ *  the researcher rejected for the subject or linked `confident` to another
+ *  person. */
+interface RuledOut {
+  namesakeRecords: Set<string>;
+  byRecord: Map<string, { all: any[]; ruled: any[] }>;
+}
+
+function ruledOutFor(research: any, subjectId: string): RuledOut {
   const rejected = new Set(
     arr(research?.rejected_links)
       .filter((r) => r?.person_id === subjectId && typeof r?.assertion_id === "string")
@@ -142,17 +176,39 @@ function ruledOutRecordIds(research: any, subjectId: string): Set<string> {
       .filter((pe) => pe?.confidence === "confident" && pe?.person_id !== subjectId && !pe?.superseded_by)
       .map((pe) => pe?.assertion_id),
   );
-  const out = new Set<string>();
+  const byRecord = new Map<string, { all: any[]; ruled: any[] }>();
   for (const a of arr(research?.assertions)) {
-    if ((rejected.has(a?.id) || elsewhere.has(a?.id)) && typeof a?.record_id === "string") {
-      out.add(arkToBareId(a.record_id));
-    }
+    if (typeof a?.record_id !== "string") continue;
+    const id = arkToBareId(a.record_id);
+    const slot = byRecord.get(id) ?? { all: [], ruled: [] };
+    slot.all.push(a);
+    if (rejected.has(a?.id) || elsewhere.has(a?.id)) slot.ruled.push(a);
+    byRecord.set(id, slot);
   }
+  const namesakeRecords = new Set<string>();
   for (const n of arr(research?.namesakes)) {
     if (n?.person_id !== subjectId) continue;
-    for (const id of arr(n?.record_ids)) if (typeof id === "string") out.add(arkToBareId(id));
+    for (const id of arr(n?.record_ids)) if (typeof id === "string") namesakeRecords.add(arkToBareId(id));
   }
-  return out;
+  return { namesakeRecords, byRecord };
+}
+
+/** Whether `row` (record `recordBareId`) is ruled out for the subject: named as
+ *  a namesake, or a ruling link on the row's own entry in the record. The row's
+ *  entry is each one whose extracted name has the row's first given name; when
+ *  no entry's has, every entry counts. */
+function isRuledOut(ruled: RuledOut, recordBareId: string, row: any): boolean {
+  if (ruled.namesakeRecords.has(recordBareId)) return true;
+  const slot = ruled.byRecord.get(recordBareId);
+  if (!slot || slot.ruled.length === 0) return false;
+  const given = typeof row?.personName === "string" ? row.personName.trim().split(/\s+/)[0] : "";
+  const own = new Set(
+    slot.all
+      .filter((a) => a?.fact_type === "name" && typeof a?.value === "string")
+      .filter((a) => givenMatches(a.value.trim().split(/\s+/)[0], given))
+      .map(entryKey),
+  );
+  return own.size === 0 || slot.ruled.some((a) => own.has(entryKey(a)));
 }
 
 function givenMatches(given: string, pattern: string): boolean {
@@ -173,16 +229,22 @@ function queryGivenWords(query: any): string[] {
     .flatMap((v) => v.trim().split(/\s+/));
 }
 
-/** Given names of the parents a staged row's record names for its principal
- *  (`gedcomx` and `primaryId`), or empty when the row carries no record. */
-function rowParentGivenNames(row: any): string[] {
+/** The parents a staged row's record names for its principal (`gedcomx` and
+ *  `primaryId`), each by first given name and gender, or empty when the row
+ *  carries no record. */
+function rowParents(row: any): RecordParent[] {
   const g = row?.gedcomx;
   if (!g || typeof row?.primaryId !== "string") return [];
   const byId = new Map(arr(g.persons).map((p: any) => [p?.id, p]));
   return arr(g.relationships)
     .filter((r: any) => r?.type === "ParentChild" && r?.child === row.primaryId)
-    .flatMap((r: any) => arr(byId.get(r?.parent)?.names).map((n: any) => n?.given))
-    .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "");
+    .flatMap((r: any) => {
+      const parent = byId.get(r?.parent);
+      return arr(parent?.names)
+        .map((n: any) => n?.given)
+        .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+        .map((v: string) => ({ given: v.trim().split(/\s+/)[0], gender: genderOf(parent) }));
+    });
 }
 
 /** Whether `row` is a hit for the given name `query` searched for. A query with
@@ -236,7 +298,7 @@ export async function candidatesFor(
   if (subjectWords.length === 0) return [];
   const callIsForSubject = call === undefined || queryGivenWords(call).length === 0 || queryIsForSubject(call, subjectWords);
 
-  const ruledOut = ruledOutRecordIds(research, subjectId);
+  const ruledOut = ruledOutFor(research, subjectId);
   const out: Candidate[] = [];
   const seen = new Set<string>();
 
@@ -258,7 +320,7 @@ export async function candidatesFor(
     for (const row of rows) {
       if (typeof row?.recordId !== "string") continue;
       const id = arkToBareId(row.recordId);
-      if (seen.has(id) || ruledOut.has(id) || !rowMatchesQueryGiven(row, payload.query)) continue;
+      if (seen.has(id) || isRuledOut(ruledOut, id, row) || !rowMatchesQueryGiven(row, payload.query)) continue;
       if (!callIsForSubject && !rowMatchesQueryGiven(row, call)) continue;
       const [birthYear] = yearsIn(row.birthDate);
       if (birthYear === undefined) continue;
@@ -270,7 +332,7 @@ export async function candidatesFor(
         birthYear,
         birthPlace: typeof row.birthPlace === "string" ? row.birthPlace : null,
         collectionId: typeof row.collectionId === "string" ? row.collectionId : null,
-        parentGivenNames: rowParentGivenNames(row),
+        parents: rowParents(row),
         logId: typeof entry.id === "string" ? entry.id : entry.results_ref,
       });
     }
@@ -278,26 +340,31 @@ export async function candidatesFor(
   return out;
 }
 
-/** The first year of the tree's birth fact for `personId`, or undefined. */
-function treeBirthYear(tree: any, personId: string): number | undefined {
+/** The first year of each birth-like fact (Birth, Christening, Baptism, …) the
+ *  tree holds for `personId`; a fact with no year is skipped. */
+function treeBirthYears(tree: any, personId: string): number[] {
   const person = arr(tree?.persons).find((p) => p?.id === personId);
-  const birth = arr(person?.facts).find((f) => f?.type === "Birth");
-  return birth ? yearsIn(birth.standard_date ?? birth.date)[0] : undefined;
+  return arr(person?.facts)
+    .filter((f) => typeof f?.type === "string" && BIRTHLIKE_FACT_TYPES.has(f.type))
+    .map((f) => yearsIn(f.standard_date ?? f.date)[0])
+    .filter((y): y is number => y !== undefined);
 }
 
-/** The subjects a call is judged for: its own `subjectId`, else each project
- *  subject one of whose given names the call searches and whose tree birth year
- *  its range includes. */
+/** The subjects a call is judged for: its own `subjectId`, else, for a call that
+ *  searches a given name, each project subject one of whose tree birth years its
+ *  range includes. Which of that subject's candidates the call's given name
+ *  binds is `candidatesFor`'s to decide, as it is under the subject's id. */
 function subjectsJudged(input: CandidateExclusionInput, research: any, tree: any): string[] {
   if (input.subjectId) return [input.subjectId];
+  if (queryGivenWords(input).length === 0) return [];
   const { birthYearFrom: from, birthYearTo: to } = input;
   return arr(research?.project?.subject_person_ids)
     .filter((id): id is string => typeof id === "string")
-    .filter((id) => queryIsForSubject(input, subjectGivenWords(tree, id)))
-    .filter((id) => {
-      const born = treeBirthYear(tree, id);
-      return born !== undefined && (typeof from !== "number" || from <= born) && (typeof to !== "number" || born <= to);
-    });
+    .filter((id) =>
+      treeBirthYears(tree, id).some(
+        (born) => (typeof from !== "number" || from <= born) && (typeof to !== "number" || born <= to),
+      ),
+    );
 }
 
 /** Every candidate the call's birth range excludes, oldest log entry first. */
@@ -340,7 +407,7 @@ export function candidateExclusionMessage(
   const subjects = [...new Set(excluded.map((c) => c.subjectId))].join(", ");
   const inferred = input.subjectId
     ? ""
-    : ` This call names no subjectId; its given name is ${subjects}'s, so it is judged as a search for ${subjects}.`;
+    : ` This call names no subjectId; its range includes ${subjects}'s tree birth year, so it is judged as a search for ${subjects}.`;
   return (
     `Refused: the birth range ${range} excludes a candidate an earlier search for ` +
     `${subjects} already returned: ${named}. An empty result under this range ` +
@@ -377,10 +444,12 @@ async function loggedCollections(projectPath: string, research: any): Promise<Ma
 }
 
 /** Whether `research` links `personId`, `probable` or `confident` and not
- *  superseded, to a record other than `recordId` in the same collection
- *  (`collectionId`, looked up in `collectionOf`): the subject found elsewhere in
- *  the same record set is what makes the candidate someone else. A link to a
- *  record of another collection says nothing about who the candidate was. */
+ *  superseded, in an entry of their own, to a record other than `recordId` in the
+ *  same collection (`collectionId`, looked up in `collectionOf`): the subject
+ *  found elsewhere in the same record set is what makes the candidate someone
+ *  else. A link to a record of another collection says nothing about who the
+ *  candidate was, and nor does one naming the subject as a parent, informant,
+ *  witness or sponsor of someone else's record (`NOT_OWN_ENTRY_ROLE`). */
 function linkedToAnotherRecord(
   research: any,
   personId: string,
@@ -391,6 +460,7 @@ function linkedToAnotherRecord(
   const recordOf = new Map<string, string>(
     arr(research?.assertions)
       .filter((a) => typeof a?.id === "string" && typeof a?.record_id === "string")
+      .filter((a) => typeof a?.record_role !== "string" || !NOT_OWN_ENTRY_ROLE.test(a.record_role.toLowerCase()))
       .map((a) => [a.id, arkToBareId(a.record_id)]),
   );
   return arr(research?.person_evidence).some((pe) => {
@@ -402,18 +472,26 @@ function linkedToAnotherRecord(
 }
 
 /** Whether the candidate's own record names a parent whose given name is
- *  unrelated to every parent the tree holds for `personId` (not the same, a
- *  match, or a variant or nickname): the record is of another family. */
+ *  unrelated to the tree parent of the same role for `personId` (not the same, a
+ *  match, or a variant or nickname): the record is of another family. A record
+ *  parent is compared only with the tree parents of its own gender (with any,
+ *  when either side gives none), so a record mother is never read against a tree
+ *  father, and one whose role the tree holds no one in rules nothing out. */
 function otherParents(c: Candidate, tree: any, personId: string): boolean {
-  if (c.parentGivenNames.length === 0) return false;
-  const parentIds = arr(tree?.relationships)
+  if (c.parents.length === 0) return false;
+  const treeParents = arr(tree?.relationships)
     .filter((r) => r?.type === "ParentChild" && r?.child === personId && typeof r?.parent === "string")
-    .map((r) => r.parent as string);
-  const treeWords = parentIds.flatMap((id) => subjectGivenWords(tree, id));
-  if (treeWords.length === 0) return false;
-  return c.parentGivenNames.some((g) => {
-    const first = g.trim().split(/\s+/)[0];
-    return !treeWords.some((t) => givenMatches(t, first) || givenNamesRelated(t, first) !== "different");
+    .map((r) => ({
+      words: subjectGivenWords(tree, r.parent),
+      gender: genderOf(arr(tree?.persons).find((p) => p?.id === r.parent)),
+    }))
+    .filter((t) => t.words.length > 0);
+  return c.parents.some((p) => {
+    const sameRole = treeParents.filter((t) => p.gender === null || t.gender === null || t.gender === p.gender);
+    if (sameRole.length === 0) return false;
+    return !sameRole.some((t) =>
+      t.words.some((w) => givenMatches(w, p.given) || givenNamesRelated(w, p.given) !== "different"),
+    );
   });
 }
 
@@ -444,10 +522,11 @@ export interface NamesakeCandidateRefusal {
  * a full day-month-year date (a precise date, not an age), when its indexed
  * birthplace names another country, US state or Canadian province than the
  * person's tree birth, when the project links the person `probable` or
- * `confident` to another record of the candidate's own collection (the subject is
+ * `confident`, in an entry of their own and not as a parent, informant, witness
+ * or sponsor, to another record of the candidate's own collection (the subject is
  * found elsewhere in the same record set), or when the candidate's own record
- * names a parent whose given name is unrelated to every tree parent of the person
- * (the record is of another family). Otherwise the
+ * names a parent whose given name is unrelated to the person's tree parent of the
+ * same role (the record is of another family). Otherwise the
  * row would drop a record the search found for the subject on its birth year
  * alone, and an indexed age can be years off.
  *
@@ -495,11 +574,11 @@ export async function namesakeCandidateRefusals(
         "so it may still be the subject and is not recorded as a namesake. Leave it out of the row and " +
         "report it as needs-review, the subject or a relative, naming the disagreement and the record that " +
         "would settle it; do not call it probably or likely someone else. A row may " +
-        `name it once '${personId}' is linked probable or confident to another record of the same ` +
-        `collection, when its birth date is a full day-month-year date, when its birthplace names another ` +
-        `country or state than '${personId}''s, or when its record names a parent unrelated to ` +
-        `'${personId}''s tree parents. If a spouse rules it out, hand it to person-evidence to record as a ` +
-        "rejected link.",
+        `name it once '${personId}' is linked probable or confident, in an entry of their own and not as a ` +
+        "parent, informant, witness or sponsor, to another record of the same collection, when its birth " +
+        "date is a full day-month-year date, when its birthplace names another country or state than " +
+        `'${personId}''s, or when its record names a parent unrelated to '${personId}''s tree parent of ` +
+        "the same role.",
     });
   }
   return out;
