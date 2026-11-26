@@ -658,6 +658,19 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       { id: "I5", name: "Michael Flynn", relationship: "father" },
       { id: "I6", name: "Bridget Flynn", relationship: "sibling" },
     ]);
+    // The sources cited on the subject, by tree id and title, each once (#4791).
+    const subject: any = expected.persons.find((p: any) => p.id === "I1");
+    const cited = [
+      ...new Set(
+        [subject, ...(subject.names ?? []), ...(subject.facts ?? [])].flatMap((h: any) =>
+          (h.sources ?? []).map((r: any) => r.ref),
+        ),
+      ),
+    ];
+    expect(cited.length).toBeGreaterThan(0);
+    expect(result.subjectSources).toEqual(
+      cited.map((id) => ({ id, title: (expected.sources as any[]).find((s: any) => s.id === id).title })),
+    );
     expect(result.idMap).toBeUndefined();
     expect(JSON.stringify(result).length).toBeLessThanOrEqual(2000);
   });

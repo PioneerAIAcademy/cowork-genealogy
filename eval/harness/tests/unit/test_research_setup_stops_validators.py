@@ -76,8 +76,6 @@ def test_setup_stop_fails_when_an_attached_record_is_read():
 
 
 def test_setup_stop_fails_without_the_sources_the_ask_or_the_offer():
-    with pytest.raises(AssertionError, match="includeSources"):
-        _setup(calls=[_mcp("tree_query", personIds=["MRQ1-JBM"])])
     with pytest.raises(AssertionError, match="S<n>: <title>"):
         _setup(text=SETUP_REPLY.replace("S1: ", "").replace("S2: ", ""))
     with pytest.raises(AssertionError, match="verify or research"):

@@ -1554,13 +1554,15 @@ def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_respon
     )
 
 
-# init-project's own next-step sentence (agents/init-project.md, "Present to the
-# user"): "The next step is the first research question: the single fact we go
-# after first." Matched on its wording, not on the phrase "first research
-# question", which the router may use in its own sentence explaining the
-# `setting up the project` step it offers.
+# init-project's own closing paragraph (agents/init-project.md, "Present to the
+# user"): "The next step is choosing the first research question: the single fact
+# we go after first.", then "What do you want to verify or research? ...". Matched
+# on its wording, not on the phrase "first research question", which the router may
+# use in its own sentence explaining the step it offers.
 _INIT_PROJECT_NEXT_STEP = re.compile(
-    r"next step is the first research question|single fact we go after", re.I
+    r"next step is (?:choosing )?the first research question|single fact we go after"
+    r"|what do you want to verify or research",
+    re.I,
 )
 
 
@@ -1678,9 +1680,9 @@ def test_job_setup_stops_after_init_project(
 ):
     """Tag-gated (``setup-stop``). A job's first message with a FamilySearch ID and
     no project runs init-project alone (issue #4791, stop 1): no attached record is
-    read, the subject's sources are listed as ``S<n>: <title>`` from a
-    ``tree_query`` with ``includeSources``, the reply asks what to verify or
-    research, and it ends on "Continue with `choosing the question`?"."""
+    read, the subject's sources are listed as ``S<n>: <title>`` (init-project's
+    report, from ``project_create``'s ``subjectSources``), the reply asks what to
+    verify or research, and it ends on "Continue with `choosing the question`?"."""
     from harness.skill_runner import load_step_boundary
 
     if _SETUP_STOP_TAG not in test.get("tags", []):
@@ -1693,8 +1695,6 @@ def test_job_setup_stops_after_init_project(
         if bare_tool_name(str(c.get("tool") or "")) in ("extraction_append", "timeline_build", "record_read")
     })
     assert not read, f"the setup turn read attached records: {read}"
-    listed = [c for _, c in _mcp_named(tool_calls, "tree_query") if (c.get("args") or {}).get("includeSources") is True]
-    assert listed, "no tree_query with includeSources: true for the subject's sources"
     text = (text_response or "").replace("`", "")
     assert len(_SOURCE_LINE.findall(text)) >= 2, "the reply lists no sources as `S<n>: <title>`"
     assert _VERIFY_ASK.search(text), "the reply does not ask what the researcher wants to verify or research"

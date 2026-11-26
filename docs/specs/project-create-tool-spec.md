@@ -265,7 +265,9 @@ keeps every FamilySearch-supplied value; only the warning is new.
 `familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
 has them), `objective` and `title` as stored, `relatives` (each other person's `id`, `name`, and `relationship` to
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
-`parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
+`parent` when the sex is unknown; `child`, `sibling`, or `relative`), `subjectSources` (each
+source cited on the subject's person, names or facts, as its tree `id` and `title`, each once;
+init-project lists them as `S<n>: <title>` at the setup stop), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
 subject's memories that were and were not transcribed), `relativeSourcesSkipped`
 (the tree ids of relatives whose attached sources could not be read; present only
@@ -273,7 +275,7 @@ when there is one, and never trimmed), `notes` (a sentence per
 loop the build broke, first, then the read's own notes), and
 `validation.warnings`. Over the cap, whole entries are dropped, the last
 first, in this order: `warnings`, `notes`, the untranscribed titles, the
-transcribed titles, then relatives, and among relatives only a child, sibling or
+transcribed titles, `subjectSources`, then relatives, and among relatives only a child, sibling or
 other relative. A parent or a spouse is never dropped, since those are the slots
 a caller checks before adding anyone, so a pathological family can leave the
 summary over the cap. `omitted` counts each list's loss; an entry is never cut,

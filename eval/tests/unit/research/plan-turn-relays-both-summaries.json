@@ -66,6 +66,7 @@
   },
   "judge_context": [
     "The two summaries in the reply, verbatim, and the closing \"Continue with `running the searches`?\" line are checked by test_plan_turn_relays_both_summaries. Do not re-grade them.",
+    "locality-guide and research-plan are stubbed. Their summaries are this canned text, which the router relays and did not invent: locality-guide \"Kentucky began statewide death certificates in 1911; before that, Muhlenberg County deaths were recorded only in the 1852-1862 and 1874-1878 vital-statistics registers and in county probate and church records.\"; research-plan \"The plan searches the 1874-1878 Muhlenberg County death register first, then the county probate index for an estate after 1870, then the 1880 mortality schedule.\".",
     "Both agents are stubbed with canned summaries, so nothing reaches research.json; that is not a failure.",
     "Grade whether the router added nothing to the two summaries but its closing line: no restatement, table or summary of its own.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."

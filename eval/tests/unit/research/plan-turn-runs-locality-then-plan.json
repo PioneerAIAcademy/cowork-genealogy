@@ -66,6 +66,7 @@
   },
   "judge_context": [
     "Stop 3 of a research job (issue #4791): planning the searches is locality-guide followed by research-plan in one turn. The two hand-offs and their order are checked by test_plan_turn_runs_locality_guide_then_research_plan. Do not re-grade them.",
+    "locality-guide and research-plan are stubbed. Their summaries are this canned text, which the router relays and did not invent: locality-guide \"Kentucky began statewide death certificates in 1911; before that, Muhlenberg County deaths were recorded only in the 1852-1862 and 1874-1878 vital-statistics registers and in county probate and church records.\"; research-plan \"The plan searches the 1874-1878 Muhlenberg County death register first, then the county probate index for an estate after 1870, then the 1880 mortality schedule.\".",
     "Both agents are stubbed with canned summaries, so no locality or plan reaches research.json; that is not a failure. Nothing is searched in this turn, which is correct.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
   ],

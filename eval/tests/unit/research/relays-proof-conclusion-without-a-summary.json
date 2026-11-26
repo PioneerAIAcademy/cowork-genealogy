@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "The router relays proof-conclusion's report and adds no summary of its own",
     "type": "positive",
-    "description": "Issue #4791, from feedback #4761: after proof-conclusion's relayed reply the main thread added its own summary and leaked a proof summary id. research/SKILL.md: relay everything after the final `---` verbatim, then only the turn's closing line. proof-conclusion is stubbed with a known summary; the validator reads what the reply adds after it and any project id in the reply.",
+    "description": "Issue #4791, from feedback #4761: after proof-conclusion's relayed reply the main thread added its own summary and leaked a proof summary id. research/SKILL.md: relay everything after the final `---` verbatim, then only the turn's closing line. compound-objective-fully-covered routes to proof-conclusion for the completion write (as ut_research_s59 pins); proof-conclusion is stubbed with a known summary, and the validator reads what the reply adds after it and any research id in the reply.",
     "tags": [
       "routing",
       "routes-to:proof-conclusion",
@@ -12,8 +12,8 @@
     ]
   },
   "input": {
-    "user_message": "/research You offered `writing the conclusion`. Continue.",
-    "scenario": "flynn-parentage-not-proved"
+    "user_message": "Keep researching this project — drive the workflow forward.",
+    "scenario": "compound-objective-fully-covered"
   },
   "mcp_fixtures": [
     "person-read-empty-any"
@@ -24,7 +24,7 @@
     "stub_skills": [
       {
         "skill": "proof-conclusion",
-        "response": "ps_001 written for q_001 at not_proved.\n---\nThe parentage of Patrick Flynn is not proved. The searches planned for this question all ran, and none of the records found names his parents; his 1908 death certificate leaves both blank.\n\nA baptism or marriage record naming his parents would advance this; that search would be planned next."
+        "response": "project.status written: completed.\n---\nThe research on this project is complete. Both parts of the objective are answered, and the conclusion is in the tree.\n\nA baptism or other record naming his birthplace directly would strengthen the conclusion; that search would be planned next."
       },
       {
         "skill": "question-selection",
@@ -66,8 +66,8 @@
   },
   "judge_context": [
     "What the reply adds after proof-conclusion's relayed summary, and any project id such as ps_001 or q_001 in the reply, are checked by test_reply_adds_nothing_after_the_relay. Do not re-grade them.",
-    "proof-conclusion is stubbed with a canned summary, so no proof summary reaches research.json; that is not a failure.",
-    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+    "proof-conclusion is stubbed with this canned summary, which the router relays: \"The research on this project is complete. Both parts of the objective are answered, and the conclusion is in the tree. A baptism or other record naming his birthplace directly would strengthen the conclusion; that search would be planned next.\" It is not the router's invention. Nothing reaches research.json; that is not a failure.",
+    "ROUTING IS NOT YOURS TO GRADE. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
   ],
   "judge_reads_files": true
 }

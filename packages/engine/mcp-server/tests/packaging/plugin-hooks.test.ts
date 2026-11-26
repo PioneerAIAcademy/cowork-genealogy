@@ -1950,6 +1950,18 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     },
   );
 
+  it.each(["locality-guide", "genealogy-research:locality-guide"])(
+    "gives %s its own note: its report and research-plan's both relayed word for word",
+    (subagent_type) => {
+      const note = (s: string) =>
+        runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: s }, tool_response: {} }), true)
+          .hookSpecificOutput.additionalContext;
+      expect(note(subagent_type)).toMatch(/locality-guide's first, then research-plan's/);
+      expect(note(subagent_type)).toMatch(/word for word/);
+      expect(note(subagent_type)).not.toBe(note("search-records"));
+    },
+  );
+
   it.each([
     ["Cowork and Desktop", { tool_name: "Agent" }, false],
     ["a subagent's call", { tool_name: "Agent", agent_id: "a1" }, true],

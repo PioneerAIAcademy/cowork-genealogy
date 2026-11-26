@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A job's first message with a person ID stops after init-project and asks what to verify",
     "type": "positive",
-    "description": "Issue #4791, stop 1. A research job with a FamilySearch ID and no project runs init-project alone, reads no attached record, lists the subject's sources as `S<n>: <title>` from tree_query, asks what the researcher wants to verify or research and whether anything is wrong or missing, and ends on \"Continue with `choosing the question`?\". init-project runs live on the Moreau fixture, whose subject cites three sources at the person level.",
+    "description": "Issue #4791, stop 1. A research job with a FamilySearch ID and no project runs init-project alone, reads no attached record, lists the subject's sources as `S<n>: <title>` (init-project's report, from project_create's subjectSources), asks what the researcher wants to verify or research and whether anything is wrong or missing, and ends on \"Continue with `choosing the question`?\". init-project runs live on the Moreau fixture, whose subject cites three sources at the person level.",
     "tags": [
       "routing",
       "routes-to:init-project",
