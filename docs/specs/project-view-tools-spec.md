@@ -200,7 +200,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 |---|---|
 | URI | `ui://genealogy/viewer-<12 hex>.html`, the first 12 hex of the page's sha256 (`pageUri`); `ui://genealogy/viewer.html` when no page is installed |
 | MIME type | `text/html;profile=mcp-app` |
-| `resources/list` | `{ resources: [{ uri, name: "Genealogy Viewer", mimeType }] }` |
+| `resources/list` | `{ resources: [{ uri, name: "Genealogy Research", mimeType }] }` |
 | `resources/read` | `{ contents: [{ uri, mimeType, text, _meta: { ui: { csp: { resourceDomains } } } }] }` |
 
 `resourceDomains` is `[<origin>]`, where the origin is `webPublicUrl` trimmed with no
