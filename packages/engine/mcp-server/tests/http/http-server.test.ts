@@ -71,6 +71,7 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import { CONNECTOR_REFUSAL_NOTE } from "../../src/tool-result.js";
 import { processImageTokens } from "../../src/utils/image-tokens.js";
 import { pageUri } from "../../src/tools/project-view.js";
 import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
@@ -320,16 +321,19 @@ describe("tool server over Streamable HTTP", () => {
     bindStore.mockClear();
     const client = await connect();
     const { projectPath: _omit, ...noPath } = createArgs("Nobody");
+    // Both are refusals, and a connector caller's refusal is an ordinary result under a
+    // note (test 2c): nothing ran, and the result says so without the error mark.
     const created = await client.callTool({ name: "project_create", arguments: noPath });
-    expect(created.isError).toBe(true);
+    expect(created.isError ?? false).toBe(false);
+    expect(JSON.parse(textOf(created)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
 
     // Every tool but six needs a project, so even a store-less lookup refuses with none.
     const converted = await client.callTool({
       name: "convert_calendar",
       arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
     });
-    console.log("DBG", JSON.stringify(converted).slice(0,300));
-    expect(converted.isError).toBe(true);
+    expect(converted.isError ?? false).toBe(false);
+    expect(JSON.parse(textOf(converted)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
     expect(textOf(converted)).toContain("No project:");
 
     expect(bindStore).not.toHaveBeenCalled();
@@ -654,6 +658,38 @@ describe("tool server over Streamable HTTP", () => {
       await badFence.text();
       expect(authorize).not.toHaveBeenCalled();
     });
+  });
+
+  it("2c. a refusal reaches a connector caller as an ordinary result with a note, and the worker as an error", async () => {
+    // In chat a result marked isError is a red error box in front of the user, and a
+    // refusal is the tools working (lead, 2026-11-26). The worker keeps the mark.
+    const connector = await connect();
+    const projectPath = await ownedConnectorPath();
+
+    // A writer tool's own refusal: { ok: false, errors }.
+    const write = await connector.callTool({
+      name: "research_append",
+      arguments: { projectPath, section: "questions", op: "append", entry: {} },
+    });
+    expect(write.isError ?? false).toBe(false);
+    const refused = JSON.parse(textOf(write));
+    expect(Object.keys(refused)[0]).toBe("refused");
+    expect(refused.refused).toBe(CONNECTOR_REFUSAL_NOTE);
+    expect(refused.ok).toBe(false);
+    expect(refused.errors.length).toBeGreaterThan(0);
+
+    // The dispatcher's own refusal: an argument that is not a parameter.
+    const stray = await connector.callTool({ name: "auth_status", arguments: { bogus: 1 } });
+    expect(stray.isError ?? false).toBe(false);
+    const strayBody = JSON.parse(textOf(stray));
+    expect(strayBody.refused).toBe(CONNECTOR_REFUSAL_NOTE);
+    expect(strayBody.error).toContain("bogus");
+
+    // The worker's copy of the same refusal is what it always was.
+    const worker = await connect({ [PROJECT_HEADER]: `refusal-${randomUUID()}` });
+    const workerStray = await worker.callTool({ name: "auth_status", arguments: { bogus: 1 } });
+    expect(workerStray.isError).toBe(true);
+    expect(Object.keys(JSON.parse(textOf(workerStray)))).toEqual(["error"]);
   });
 
   it("3. a FamilySearch token the upstream refuses gets the connector's sign-in message, never the desktop's or the worker's", async () => {

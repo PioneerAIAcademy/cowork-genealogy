@@ -129,6 +129,55 @@ export function writerToolResult(result: OkFalseResult): McpToolResult {
   const envelope: McpToolResult = {
     content: [{ type: "text", text: JSON.stringify(result) }],
   };
-  if (result?.ok === false && result?.reason !== "no_project") envelope.isError = true;
+  if (result?.ok === false && result?.reason !== "no_project") {
+    envelope.isError = true;
+    markRefusal(envelope);
+  }
   return envelope;
+}
+
+/**
+ * The envelopes that are REFUSALS: the call broke a rule, the tool did nothing,
+ * and the remedy is the caller's (reword the note, drop the stray argument,
+ * start a project). Tagged where the refusal is made rather than recognised by
+ * shape afterwards, so a failure that happens to carry `ok: false` in its text
+ * is never taken for one. A thrown error is not tagged: the catch arms cannot
+ * tell a rule from a fault (a timeout, a FamilySearch 5xx, an ended session).
+ */
+const refusals = new WeakSet<object>();
+
+export function markRefusal<T extends object>(envelope: T): T {
+  refusals.add(envelope);
+  return envelope;
+}
+
+/** The first key of a connector caller's refusal, so the model reads it before the errors. */
+export const CONNECTOR_REFUSAL_NOTE =
+  "Refused, and nothing was written or changed. A rule was not met; nothing is broken. " +
+  "Fix what the message below names and send the call again.";
+
+/**
+ * What a CONNECTOR caller gets for a refusal: the same body under a `refused`
+ * note, with no `isError`.
+ *
+ * In claude.ai and Desktop Chat a result marked `isError` is drawn as a red
+ * "Error" box holding the raw JSON, in front of the user. A refusal is the
+ * writer tools working as designed, and about one call in ten is one, so a
+ * researcher saw errors all through a run in which nothing had gone wrong
+ * (lead, 2026-11-26). The mark exists so the model and the harness's detectors
+ * cannot read a refused write as a success (issue #1282); on this surface the
+ * note does that job for the model, and the worker, the desktop and the harness
+ * keep the mark. Anything not tagged a refusal is returned as it is.
+ */
+export function connectorToolResult<T extends object>(envelope: T): T | McpToolResult {
+  if (!refusals.has(envelope)) return envelope;
+  const text = (envelope as Partial<McpToolResult>).content?.[0]?.text;
+  let body: unknown;
+  try {
+    body = JSON.parse(text ?? "");
+  } catch {
+    return envelope;
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) return envelope;
+  return { content: [{ type: "text", text: JSON.stringify({ refused: CONNECTOR_REFUSAL_NOTE, ...body }) }] };
 }
