@@ -2,6 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { connectorReauthMessage, isConnector } from "../auth/config.js";
 import { getProjectStore } from "../store/project-store.js";
 import { matchPairs } from "../utils/matcher.js";
+import { Mob } from "../utils/mob.js";
 import type { MatchCall, MatcherBackend } from "../types/matcher.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
@@ -182,8 +183,13 @@ export async function rankSearchMatches(
       ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
       : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
-  if (input.checkAttachments && matches.length > 0 && subject.familySearchId) {
-    await applyAttachments(matches, subject.familySearchId, principal);
+  // Flags are emitted only when true, so a row with no flag reads as attached to
+  // nobody. When the check did not run (no FamilySearch id) or failed, say so.
+  let attachmentsChecked: boolean | undefined;
+  if (input.checkAttachments && matches.length > 0) {
+    attachmentsChecked = subject.familySearchId
+      ? await applyAttachments(matches, subject.familySearchId, principal)
+      : false;
   }
 
   const out: RankSearchMatchesResult = {
@@ -192,9 +198,11 @@ export async function rankSearchMatches(
     returnedCount: matches.length,
     scoringErrors,
     scoreLogError,
+    realNegativeFloor: realNegative,
     ...tooThinField(subject),
     matches,
   };
+  if (attachmentsChecked === false) out.attachmentsChecked = false;
   if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
   if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
 
@@ -668,6 +676,42 @@ function surnameTokens(surname: string): string[] {
   return long.length > 0 ? long : words;
 }
 
+/** Surname particles. A run of them is joined onto the word after it when
+ *  comparing a surname spelled with a space against one spelled without
+ *  ("Van Buren" / "VanBuren"). */
+const SURNAME_PARTICLES = new Set([
+  "van", "von", "de", "di", "du", "la", "le", "mc", "mac", "st", "ste", "saint",
+  "ten", "ter", "op", "des", "del", "der", "den", "fitz", "vander", "vande",
+  "vanden", "ver", "ap",
+]);
+
+/** A surname's joined words: split as in `surnameTokens`, with each run of
+ *  particles joined onto the word after it ("van der linde" → "vanderlinde",
+ *  "mc williams" → "mcwilliams"; a trailing "." is dropped before the particle
+ *  check), and "." and "'" removed. A surname made only of particles is one
+ *  token ("van der" gives "vander"), and a run after the last word is dropped
+ *  ("linde, van der" gives "linde,"). As in `surnameTokens`, a joined word whose
+ *  own word has three letters or fewer is dropped while a longer one remains, so
+ *  "da costa" gives "costa" and "van 't veer" gives "veer". */
+function joinedSurnameTokens(surname: string): string[] {
+  const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
+  const out: { joined: string; word: string }[] = [];
+  let run = "";
+  for (const w of words) {
+    const bare = w.replace(/\.$/, "");
+    if (SURNAME_PARTICLES.has(bare)) {
+      run += bare;
+    } else {
+      const word = w.replace(/[.']/g, "");
+      out.push({ joined: run + word, word });
+      run = "";
+    }
+  }
+  if (run && out.length === 0) out.push({ joined: run, word: run });
+  const long = out.filter((t) => t.word.length > 3);
+  return (long.length > 0 ? long : out).map((t) => t.joined);
+}
+
 const SOUNDEX_CODES: Record<string, string> = {
   b: "1", f: "1", p: "1", v: "1",
   c: "2", g: "2", j: "2", k: "2", q: "2", s: "2", x: "2", z: "2",
@@ -712,11 +756,17 @@ function similarSurnameToken(a: string, b: string): boolean {
 }
 
 /** True when any word of `candidate` is a spelling of any word of any of the
- *  subject's surnames. */
+ *  subject's surnames, or when any joined word of one (particles joined on:
+ *  "VanBuren" / "Van Buren") is within one edit of any joined word of the other.
+ *  Joined words are never compared by Soundex: a joined word's code is mostly
+ *  its particle (vandyke and vandeusen are both V532). */
 function surnameOnSubject(candidate: string, subjectSurnames: string[]): boolean {
   const cand = surnameTokens(candidate);
-  return subjectSurnames.some((s) =>
-    surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))),
+  const candJoined = joinedSurnameTokens(candidate);
+  return subjectSurnames.some(
+    (s) =>
+      surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))) ||
+      joinedSurnameTokens(s).some((t) => candJoined.some((c) => levenshteinDistance(c, t) <= 1)),
   );
 }
 
@@ -783,7 +833,8 @@ function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooT
 }
 
 interface SubjectDoc {
-  /** The enriched subject alone: what FamilySearch's matcher is sent. */
+  /** What FamilySearch's matcher is sent: the enriched subject with the parents,
+   *  spouses, children and siblings the tree gives them (`familyCut`). */
   doc: SimplifiedGedcomX;
   /** The project tree with the enriched subject in place of the tree person:
    *  what the matcher service is sent, cut around the subject. */
@@ -825,6 +876,23 @@ function subjectFamilySearchId(person: SimplifiedPerson): string | undefined {
   if (linked) return linked.toUpperCase();
   const id = person.id ?? "";
   return isFamilySearchPersonId(id) ? id.toUpperCase() : undefined;
+}
+
+/**
+ * The enriched subject with their family, cut as `same_person` and the matcher
+ * service cut it (`Mob.matchSubset()`), so a household record's spouse and
+ * children are compared with the tree's. Sent alone, the subject is a lone name,
+ * date and place: in thomas-hanrahan-marriage the right 1865 household (Thomas,
+ * Joanna, Mary) scored 0.003 against Thomas alone, under the 0.01 floor, so the
+ * page read as a real negative, and 0.168 with his family, top by twenty times.
+ * A subject the tree relates to no one is sent alone, as before.
+ */
+function familyCut(tree: SimplifiedGedcomX, subjectId: string, enriched: SimplifiedPerson): SimplifiedGedcomX {
+  try {
+    return new Mob(tree, subjectId).matchSubset().gedcomx;
+  } catch {
+    return { persons: [enriched] };
+  }
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -974,12 +1042,13 @@ export async function buildSubjectDoc(
     surnames = [];
   }
 
+  const withSubject: SimplifiedGedcomX = {
+    ...safeTree,
+    persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
+  };
   return {
-    doc: { persons: [enriched] },
-    tree: {
-      ...safeTree,
-      persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
-    },
+    doc: familyCut(withSubject, subjectId, enriched),
+    tree: withSubject,
     birthYear: subjectBirthYear(enriched),
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
@@ -1178,7 +1247,7 @@ async function applyAttachments(
   matches: RankedMatch[],
   familySearchId: string,
   principal: Principal,
-): Promise<void> {
+): Promise<boolean> {
   const uris = matches.map((m) => m.recordId);
   const isSubject = (p: { personId: string }) =>
     p.personId?.toUpperCase() === familySearchId;
@@ -1189,6 +1258,7 @@ async function applyAttachments(
       stub.attachedToSubject = persons.some(isSubject);
       stub.attachedToOther = persons.some((p) => !isSubject(p));
     }
+    return true;
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
     // A connector caller whose FamilySearch session has ended must be told: with
@@ -1199,6 +1269,7 @@ async function applyAttachments(
     }
     // Best-effort: any other attachments failure must not fail the rank. Leave
     // the attachedTo* fields unset rather than asserting a wrong answer.
+    return false;
   }
 }
 

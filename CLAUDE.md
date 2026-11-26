@@ -170,38 +170,41 @@ workbench". Commands: the `Makefile`.
 
 ## Work you find along the way
 
-Implementing one task always turns up others. **Filing an issue is the last
-resort, not the default** — an issue costs about four people: someone vets it
-(`/review-ready`), someone implements it, and two review it. So the test is not
-"is this issue justified?" — it is **"is the work big enough to carry
-four-person overhead?"** A half-day genealogist deep dive carries it comfortably.
-A change of four functions in one file does not; build that one.
+The project winds down at the end of 2026, and every issue filed now costs
+someone to vet it, someone to implement it and two to review it. **Finish what
+your task turns up in the PR you are working on.** Stop at the first of these
+that fits:
 
-Walk these in order and stop at the first that fits:
-
-1. **Fix it in the current PR.** The default, and the right answer about two
-   times in three. You already have the context loaded; whoever picks up the
-   ticket has to rebuild it from nothing.
-2. **Drop it** if it is a nit — a wording preference, a tidier structure, a test
-   you would like but nothing is broken without.
-3. **Comment on the issue that already covers it.** One search, then stop:
+1. **Fix it in this PR.** The default. You have the context loaded; whoever
+   picks up a ticket has to rebuild it from nothing. This always covers what your
+   change broke, left half-done or made stale, and the rest of your own issue.
+2. **Comment on the issue that already covers it.** One search, then stop:
    `gh issue list --state open --search "<path or symbol>"`, plus a grep of the
    `**Touches:**` lines.
-4. **File a new issue**, in the same PR that defers it.
+3. **Drop it.** An improvement, a nit, a test you would like, an open question,
+   anything that would cost a second paid eval run — whatever does not meet step 4.
+   Don't list it in the PR body.
+4. **File a new issue** only for a bug that harms researchers' data, or a missing
+   guard (a way CI can be green while the thing is broken), that you cannot fix
+   here: it needs a different skill (a code fix found during fixture work, or
+   vice versa), or it is too big **and you have opened the call sites and
+   counted**. Name which, with the files and roughly the lines, in both the PR
+   body and the issue body.
+
+**A failing test is never a new issue.** Don't delete, skip or `xfail` a test to
+land and then file one to restore it. Make it pass in this PR; if its fix belongs
+to another open issue, put the restore in that issue's done-when
+(`eval/CLAUDE.md`, "Grading Scale").
+
+**While working a PR, Claude does not propose new issues.** No "follow-ups",
+"out of scope" or "suggested issues" lists, and no "should I file an issue for
+this?". Fix it, comment on the existing issue, or drop it. Offer to file only
+what meets step 4, and say which part of step 4 it meets.
 
 A follow-on PR, a Task, and a "known limitation" written into a docstring or a
 PR body are all step 4 wearing a disguise — same debt, minus the tracking. If
 you can describe the limitation precisely enough to document it, you understand
 it well enough to fix it.
-
-You may only reach step 4 by naming, in both the PR body and the issue body,
-which of these is true: the fix needs a different reviewer or skill; it depends
-on a decision only the lead can make **and he is not reachable** (a decision is a
-question, not work — if you can ask, ask); it is a different skill's paid eval
-slot; or it is too big for this PR **and you have opened the call sites and
-counted**, stating the files and roughly the lines. "It feels out of scope" is
-not a measurement. "I noticed it in passing" and "I'm not sure if this is in
-scope" are not on that list at all — they are reasons to fix it now, or drop it.
 
 **Creating the issue is the whole job: do not call the Projects API yourself**
 (no `gh project` commands, no `addProjectV2ItemById`). A workflow files the card
@@ -226,7 +229,8 @@ reader who goes looking there.
 Everything else — the exact `gh issue create` line, the `**Touches:**` line, the
 `icebox` label, what belongs in a body and what does not, and the hook that
 gates filing — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) § "Follow-on work you
-find along the way", which owns these rules.
+find along the way". The order above is the rule; that section owns only the
+mechanics.
 
 ## Tools and skills
 
@@ -256,12 +260,18 @@ decrypted FamilySearch token, the project comes from the call's own
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
-starts from a FamilySearch person ID: `init-project` never searches by name, and with
-no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
-front door — its routing table sends a first message with no project to `init-project`
-or `tree-survey` (or, for the names in a record set with no person ID, to
-`search-images`), so nothing prefixes an opener onto the user's first message.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. Every activity starts a
+project, including one with no person in it (lead, 2026-11-19, narrowing the 2026-10-15
+rule): `server.ts` refuses a call to any tool but `project_create`, `project_list`,
+`project_context`, `login`, `logout`, `auth_status` and `tree_gaps` (the tree survey, which
+writes nothing and runs with no project in folder mode; lead, 2026-11-23) that names no project, and a
+person-less project comes from `project_create` with no `personId`, not through
+`init-project`. Research on a named person still needs a FamilySearch person ID:
+`init-project` never searches by name, and with no ID it creates nothing and asks for
+one; a project with no person refuses `research_append`'s `questions` append. `research`
+is the only front door — its routing table sends a first message with no project to
+`init-project` (a person), or to `project_create` and then `tree-survey` or
+`search-images` (no person), so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -361,35 +371,70 @@ incidents, and what the probe retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
-The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
-Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
+The plugin's hooks are the **only** guardrails that reach Cowork and the connector:
+the guard, `guard_project_files.py`, and the step gate, `step_gate_hook.py`, both on
+`PreToolUse`. `hooks=` is an SDK argument the hosted control plane can set and Cowork
 cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. The hosted
 path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 `"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
-A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two passages
 to each Cowork researcher message: a conditional one (no project → a research request goes
-to the research skill; a no-PID ask for the names in a record set goes to
-search-images) and one naming a source, collection, book or citation only from a
-tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+to the research skill; a no-PID ask for the names in a record set starts a project with
+`project_create` and goes to search-images) and one naming a source, collection, book or citation only from a
+tool result, and that nothing here changes FamilySearch's Family Tree. It holds a third,
+`ROUTING_NOTE` (every genealogy request goes to the research skill or the agent whose work
+it is), which it does not add: only the hosted planes, which run the Haiku main thread,
+carry it. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
-`continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
+`continue_policy.SOURCES_GUIDANCE`, `continue_policy.ROUTING_GUIDANCE` and
+`continue_policy.NO_PROJECT_NOTE` appended beside it).
 The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
-sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
-`no_project_route.SOURCES_NOTE`), pinned by
-`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add it the
-same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not the
-routing sentence.
+and routing sentences are too (`continue_policy.SOURCES_GUIDANCE` and `ROUTING_GUIDANCE`,
+which both hosted planes append, and `no_project_route.SOURCES_NOTE` and `ROUTING_NOTE`),
+pinned by `test_the_sources_sentence_is_the_one_the_plugin_hook_adds` and
+`test_the_routing_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add those two
+as `UserPromptSubmit` context (`context_policy.sources_note_hook`), since they measure the
+hosted main thread, and not the conditional no-project sentence.
+
+**The step gate, `step_gate_hook.py`,** holds one step per turn on the connector and in
+Cowork: a second `PreToolUse` entry on `Agent|Task|Skill` and a second `UserPromptSubmit`
+entry. It imports `step_boundary.py`, which stays a library (lead, 2026-11-24), keeps the
+turn in a per-session state file under a lockfile, and denies every out-of-group
+main-thread spawn, never halting. It gates only this plugin's research steps: the plugin's
+hooks load in Claude Code too, so any other agent or skill is left alone. It is silent under `GENEALOGY_HOSTED_PLANE`: the web app
+and the prototype gate in process. `make hook-smoke` drives the hosted loader, where it is
+silent, so only a live connector or Cowork session proves it binds.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
 the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
-ours, so the hook denies the call there. Change one, change both.
+ours, so the hook denies the call there. Change one, change both. On the hosted planes
+(`GENEALOGY_HOSTED_PLANE` set) the hook also denies the main thread a built-in agent type
+(`claude`, `general-purpose`, `Explore`, `Plan`, `web-fetch`; `BUILTIN_SUBAGENT_TYPES`),
+which runs a step the same way; Cowork and Desktop may spawn them. Both harnesses mirror the
+hosted deny.
+
+**Auto-memory is off on every path whose environment we set.** The same three
+builders as above — serving the hosted path, both harnesses and the prototype
+worker — set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
+researcher's remark is saved as a memory file under the session's `~/.claude` —
+outside the project, unreviewed, and loaded into later sessions. **The value is
+`"1"`, and the `CLAUDE_CODE_FORK_SUBAGENT` line directly above it is `"0"`**: on
+this variable a falsy value is not a weaker disable, it is `forced_on`, which
+overrides even a settings-level `autoMemoryEnabled: false`. Copying the
+neighbour's value turns memory on everywhere with every dict assertion still
+green, so `eval/harness/tests/unit/test_auto_memory_off.py` captures the CLI's
+own system prompt keylessly and pins both the binding and the polarity. A new
+SDK entrypoint sets this key too. Cowork gets no memory hook arm until a live
+Cowork session shows auto-memory writing a file (Richard, 2026-11-25); the next
+Cowork census records whether "remember to …" produces a Write under
+`~/.claude/projects/*/memory/`.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
@@ -408,7 +453,7 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* a `PreToolUse` hook (it probes no other event), and since the script must never raise, a hook that
+proves a runtime *binds* a hook (`PreToolUse`, and the relay note's `PostToolUse`), and since the script must never raise, a hook that
 stopped binding looks exactly like one with no opinion. It is live, billed, and
 run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
 `nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
@@ -422,7 +467,9 @@ shipped hook already does it: it routes `research_append` by caller identity
 denies the main thread every tool only agents hold (`AGENT_ONLY_TOOLS`), naming
 the agents to delegate to; a tool only agents hold goes on that map or on
 `MAIN_THREAD_OK` with its reason, **by hand, never derived** (lead, 2026-10-20),
-and `plugin-hooks.test.ts` fails until it does. Grant a new tool to an agent and
+and `plugin-hooks.test.ts` fails until it does. A tool no agent holds that the main
+thread must never call goes on `MAIN_THREAD_DENIED` with its deny text
+(`person_search`). Grant a new tool to an agent and
 you owe that line, plus the `hooks.json` matcher if it is denied. The one arm
 still harness-only is `image_read`, which no agent holds; porting it was
 **declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006
@@ -715,7 +762,8 @@ request's `Authorization: Bearer` (never `LOCAL`) — the worker path from the
 `X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), every
 other MCP request from a `connector_tokens` lookup against the caller's own
 `/proj_<16 hex>` path (E1), and a new tool's arm goes in
-`server.ts`, never in an entrypoint. A new tool also needs a row in
+`server.ts`, never in an entrypoint. A new tool lists `projectPath` in `required` unless it manages projects or
+sign-in (`src/utils/project-gate.ts`; `tests/packaging/project-gate.test.ts`). A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.
 

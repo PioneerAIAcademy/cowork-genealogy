@@ -50,7 +50,6 @@ identifiers reach it through a closure, never a global.
 from __future__ import annotations
 
 import dataclasses
-import importlib.util
 import json
 import os
 import re
@@ -64,6 +63,7 @@ from app.agent.continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     env_float,
@@ -80,9 +80,11 @@ from app.agent.continue_policy import (
     wants_status_before,
 )
 from app.agent.main_thread import MainThread, load_main_thread
+from app.agent.plugin_lib import default_plugin_dir as _default_plugin_dir  # noqa: F401 - re-exported
+from app.agent.plugin_lib import load_step_boundary  # noqa: F401 - re-exported
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
-from app.agent.real_agent import direct_project_file_write
+from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
 from proto.worker.writer_record import writer_record
@@ -109,9 +111,6 @@ GATEWAY_AGENT_MODELS = {
 }
 BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
-# The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
-# raised so one oversized JSON line cannot end a turn.
-MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
 
@@ -472,36 +471,12 @@ STOP_REASON = "Stopped by the researcher."
 
 # ── The step boundary (decision 25) ──────────────────────────────────────────────
 #
-# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
-# `context_policy.py` loads `guard_project_files.py`. It is not a hook anywhere:
-# this worker is the only plane that ENFORCES the boundary, and it does so from
-# its own `PreToolUse` below.
-
-def _default_plugin_dir() -> Path:
-    """Where the plugin is. ``ENGINE_PLUGIN_DIR`` in the deployed image, which the
-    worker's predeploy hook puts at ``/opt/genealogy/plugin``; the checkout otherwise.
-    Read the same way ``worker.py`` reads it, so the two cannot point at different
-    copies."""
-    env = os.environ.get("ENGINE_PLUGIN_DIR")
-    if env:
-        return Path(env)
-    return Path(__file__).resolve().parents[4] / "packages" / "engine" / "plugin"
-
-
-def load_step_boundary(path: Path | None = None):
-    """Import the plugin's step boundary. Raises if it is missing.
-
-    A checkout always has the file and the worker bundle ships the plugin, so an image
-    without it is broken in a way that must be LOUD -- the alternative is a turn that
-    silently enforces no boundary, which looks exactly like the feature working.
-    """
-    target = Path(path) if path is not None else _default_plugin_dir() / "hooks" / "step_boundary.py"
-    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", target)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load the step boundary at {target}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, by the loader in
+# `app/agent/plugin_lib.py`, which both planes share (issue #4660). It is not a hook
+# anywhere: this worker enforces the boundary from its own `PreToolUse` below, as the web
+# app does from its own. `load_step_boundary` and `_default_plugin_dir` are
+# re-exported from here for `proto/steps.py`, `worker.py` and the tests that read them
+# off this module (`test_step_gate.py`, `test_step_mode_wiring.py`).
 
 
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
@@ -726,10 +701,12 @@ def make_pretool_hook(
 REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
-    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "image_index",
+    "image_read", "image_search", "image_transcribe", "locality_survey", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "source_screen",
     "tree_gaps", "volume_bisect", "volume_search",
 })
 
@@ -880,17 +857,22 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style. "
         "With no project and no FamilySearch person ID, a request for the names and details "
-        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "recorded in a record set (a roll, register, muster list or volume), or to re-index "
+        "one page or compare it with its FamilySearch index, goes to the "
         "search-images agent with no projectPath, even when it names no images; relay "
         "everything after its final --- verbatim."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
-    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{ROUTING_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,

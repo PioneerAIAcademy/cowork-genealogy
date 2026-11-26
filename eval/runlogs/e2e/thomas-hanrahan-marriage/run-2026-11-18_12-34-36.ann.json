@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Vacuous pass: no Marriage fact anywhere in the tree and R1 empty, but the Ballylooby records (6267-W22Q, QGV8-PQK7) were never found or extracted, so nothing was declined on evidence.",
+    "f2": "No proof summary; q_001 still open with plan active. Ballylooby never named, marriage never stated as unidentified, Johanna's preferred name still Ryan. Run opened unresolved identity conflicts c_001 (Mary 93RB-RTD) and c_002 (John M8R7-2TR) on Irish baptisms vs NY census births, but stopped before concluding."
+  },
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "43d2b4dfd5e2a7e0735ffc57af39208e587cdd441fb2917c07b96c87daaaf69f"
+}

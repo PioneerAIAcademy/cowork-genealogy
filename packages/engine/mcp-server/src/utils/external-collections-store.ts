@@ -223,6 +223,40 @@ export async function readExternalCollections(projectPath: string): Promise<Exte
  *  and `research_log_append` (`externalSite.urlGenerated`). */
 export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
 
+/** The rows' `link_text`s that can name a site, deduplicated (#4665). A row whose
+ *  `link_text` is one comma segment of its own `place` is left out: FamilySearch
+ *  lists a place's own page under the place's name ("New York" under "New York,
+ *  United States", "South Africa" under "South Africa"), and matched against a
+ *  jurisdiction that name is the place, not a site. Without this cut the corpus
+ *  replay refused 87 ordinary jurisdictions (`dev/replay-outside-site-guard.ts`). */
+export function siteLinkTexts(rows: ReadonlyArray<Partial<StoredCollectionRow>>): string[] {
+  const out = new Set<string>();
+  for (const row of rows) {
+    const text = typeof row?.link_text === "string" ? row.link_text.trim() : "";
+    if (text === "") continue;
+    const place = typeof row?.place === "string" ? placeSegments(row.place) : [];
+    if (place.includes(text.toLowerCase())) continue;
+    out.add(text);
+  }
+  return [...out];
+}
+
+/** `siteLinkTexts` over every stored row; `[]` when the file is absent or
+ *  unreadable. Never throws: `research_append`'s outside-site jurisdiction check
+ *  (#4665) reads it, and a bad file must not block a plan write, only narrow that
+ *  check to its fixed site names. */
+export async function loadStoredLinkTexts(projectPath: string): Promise<string[]> {
+  let doc: ExternalCollectionsDoc | null;
+  try {
+    doc = await readExternalCollections(projectPath);
+  } catch {
+    return [];
+  }
+  return siteLinkTexts(
+    Object.values(doc?.places ?? {}).flatMap((entry) => (Array.isArray(entry?.rows) ? entry.rows : [])),
+  );
+}
+
 export async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
   try {
     return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };

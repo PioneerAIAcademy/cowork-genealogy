@@ -183,7 +183,7 @@ matters when hand-authoring:
   "researcher_profile": {
     "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Never sound surer than the evidence was rated: say the records show it for a well established fact or relationship, probably for a likely one and possibly for a tentative one, and never write that someone is the parent, spouse or child of another without one of these. Say match or search result, never hit; never write ARK: name the record or link to it. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -262,19 +262,11 @@ stripped starting tree, then reviewed and pruned by the author.
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
-truly part of the answer — and, second, for an `avoid` finding whose
-guard is *structurally dead*: one whose name tokens unavoidably collide
-with a person the starting tree legitimately contains, which
-`apply_avoid_guard` force-fails on every run including a perfect one
-(§3.4.1). At `required: true` that makes `pass` unreachable and the
-fixture ungradable. A fixture using the lever this way must say so in
-its README and name what the dead guard costs: the `recall_total`
-ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
-and one structural judge-vs-human disagreement per annotated run
-against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
-`eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
+truly part of the answer. (It once also served an `avoid` finding whose
+name tokens collided with a starting-tree person; the guard now subtracts
+the starting tree, so no avoid finding needs it, §3.4.1.)
 
-Third, for a non-answer finding that a record attached to the subject
+Second, for a non-answer finding that a record attached to the subject
 answers on its own. A project extracts every attached record before its
 first question (§6.1), so such a finding measures setup, not research.
 `maria-bracero-marriage`'s f2, her parents, is the worked example: her
@@ -310,36 +302,80 @@ A fixture may mix `recover` and `avoid` findings. At least one negative
 fixture should exist in the suite so over-claiming is sampled (§1).
 
 The judge's grade on an `avoid` finding is backstopped by a
-deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
-applied by the orchestrator and by judge calibration): if the avoided
-claim's target is present in the agent's final tree — the stripping
-linter's own matcher, given+surname token overlap plus fact type for
-`fact` findings — the finding is forced to `matched: "false"`, the
-recall fractions are recomputed, and the verdict is recomputed
-**downgrade-only**. What was forced is recorded under the result's
-`judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The guard is **unconditional on presence**: it overrides the
-rejected-hypothesis allowance rather than preserving it. A target that
-appears in the agent's final tree is forced to `matched: "false"`
-however the agent annotated it — including as an explicitly rejected
-candidate, which is the outcome the allowance exists to permit.
-Measured against the shipped guard with every judge label set to `true`:
-a clean final tree scores the avoid finding `true`, and the same tree
-plus the avoided person written in as a rejected candidate scores it
-`false`. So an `avoid` finding must not promise a pass route through the
-tree. Word its pass condition to put a rejected candidate in the
-research log (`research.json`) and keep it out of `tree.gedcomx.json`;
-a finding whose text offers the tree route describes a pass that cannot
-be taken. Authoring gates treat
-`avoid` findings accordingly: the presence mirror skips them (the
-claim was never in the tree), while the stripping linter still warns
-when an avoided claim is already present in the *starting* tree — a
-fixture must not pre-assert the thing it forbids. `finding_shape_errors`
-(`eval/harness/e2e/validate_fixture.py`) now enforces the wording rule above
-at authoring time (`lint_fixture`) and in CI (`test_committed_fixture_passes_the_hard_gates`):
-no `avoid` description may conflate the two stores as `tree/research`, and
-any that mentions rejection must name both `tree.gedcomx.json` and
-`research.json`.
+deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`, its
+checks in `e2e/avoid_guard.py`, applied by the orchestrator, by
+`grade_files` and by judge calibration). Which check a finding gets is read
+from its own shape (Decision 20 of `docs/plan/conclusion-tree.md`):
+
+- **Wrong-person** — the finding carries `details.wrong_candidate.records`.
+  It fails when any tree name, fact, person, relationship or relationship
+  fact cites one of those records, in any role, attached or not: a tree
+  source whose `url`, `citation` or `title` holds one of the ids, or the
+  tree source a research assertion on one of them cites. A tree person that
+  a live `person_evidence` link (`confident` or `probable`, not superseded)
+  ties to an assertion on one of the records counts too, so a candidate
+  minted with no source in the tree is still caught; a `speculative` link is
+  a recorded hypothesis and does not. It also fails on the edge check below,
+  against `wrong_candidate.name`, unless `wrong_candidate.provenance_only` is
+  `true` (a same-named relative the fixture allows: hinrich-burmeister-spouse
+  f1). The edge half catches an empty list, a different record of the same
+  candidate, and a candidate read from an image with no persona ARK.
+- **Fact** — `type: "fact"`. It fails when a fact of `details.fact_type`
+  (Christening and Baptism are one type) carrying the avoided value is on any
+  person, the subject included, or on a Couple (a Marriage lives on the edge).
+  The value is `details.date`/`.place`, `wrong_candidate.date`/`.place`, or
+  `details.wrong_value`. A stated date decides: every component it states
+  (year, month, day) must equal the fact's. A full day-month-year binds on
+  any person; a year-only or month-year value binds on the subject only,
+  since a bare year is too common to hold against a relative. On the subject,
+  a fact dated less precisely ("1808" against "24 August 1808") also counts
+  when its stated components agree and the avoided place matches too. A
+  `wrong_candidate.record` is also checked by provenance.
+- **Wrong-relationship** — a `relationship` finding with no records. It fails
+  on an edge joining a subject to the candidate in the role
+  `details.relation` forbids (`child`; `parent`/`parents`/`mother`/`father`;
+  `spouse`/`wife`/`husband`). A ParentChild edge of subtype Step, Adoptive,
+  Foster or Guardian passes; any other subtype, absent included, counts. The
+  candidate is a person whose names share a given and a surname token with
+  `wrong_candidate.name` (else `target_person.name`). With
+  `wrong_candidate.any_new: true` — "no other wife", "no different family's
+  parents" — it is any person except one sharing a name token with a recover
+  finding's target (the subject's own name tokens aside) or already an
+  endpoint of a starting-tree relationship.
+
+**Every check subtracts the starting tree.** The same checks run over
+`starting-tree.gedcomx.json` and `starting-research.json`, and whatever they
+find there is not held against the run: an imported namesake, an existing
+edge (whatever subtype the run later gives it), a value the tree arrived with.
+There is no subject exemption; a wrong fact or record on the subject fails.
+
+A finding with a hit is forced to `matched: "false"`, the recall fractions are
+recomputed, and the verdict is recomputed **downgrade-only**. What was forced
+is recorded under the result's `judge_output.avoid_guard.forced_false` and in
+the finding's `notes`. The guard is **unconditional on annotation**: what it
+finds in the final tree fails the finding however the agent labelled it,
+including as an explicitly rejected candidate. So an `avoid` finding must not
+promise a pass route through the tree. Word its pass condition to put a
+rejected candidate in the research log (`research.json`) and keep it out of
+`tree.gedcomx.json`. `finding_shape_errors`
+(`eval/harness/e2e/validate_fixture.py`) enforces that wording at authoring
+time and in CI: no `avoid` description may conflate the two stores as
+`tree/research`, and any that mentions rejection must name both files. It
+also enforces what each check reads, because a check with nothing to read
+passes every run: a list of `ark:/61903/1:1:` persona ARKs (an empty list
+with a `note`); records on a `person` avoid; on a wrong-relationship finding a
+mapped `relation` and either a name with a given and a surname token before
+its first comma or `any_new`; on a fact finding a `fact_type` and an avoided
+value. `lint_fixture` adds one more: a `relationship` or `person` avoid in a
+`hint.identity: "different"` fixture must carry records.
+
+Authoring gates run the same checks with no baseline over the fixture's own
+starting tree (`check_stripping`, and
+`test_no_fixture_pre_asserts_what_an_avoid_finding_forbids` over the corpus):
+a fixture must not pre-assert the thing it forbids. That mode skips the
+name-matched edge half of a wrong-person finding and any `any_new` finding,
+which cannot tell a starting-tree relative from a candidate without a
+baseline.
 
 A wrong-person `avoid` finding (a `relationship` or `person` finding in a
 `hint.identity: "different"` fixture, plus swarbrick-christening f4) carries
@@ -347,8 +383,7 @@ A wrong-person `avoid` finding (a `relationship` or `person` finding in a
 persona on every record of the rejected candidate, read live, leaving out any
 record a correct run's `tree.gedcomx.json` would cite or the starting tree
 already cites (a record the paired negative-conclusion finding cites in
-`research.json` stays listed); an empty list carries a `note` saying why. The guard above does not read it yet; the
-provenance rebuild of `apply_avoid_guard` will.
+`research.json` stays listed); an empty list carries a `note` saying why.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
@@ -366,25 +401,12 @@ conclusion **rest on a named conflicting record** — the disproving
 record of §3.6.1 — and say in the finding that a conclusion resting
 only on failure to confirm does not satisfy it.
 
-**Open doctrine call: guards that can never go green (as of 2026-09-18).**
-Three committed fixtures — `antonio-lucas-spouse`,
-`thomas-seaver-other-wife` and `heinrich-zinsmeister-death` — carry a
-`required: true` avoid finding whose name tokens collide with a
-non-exempt person in their own starting tree, so `apply_avoid_guard`
-force-fails it on every run and their ceiling is `partial`, a perfect run
-included. Four remedies have been named and none adopted: relax the guard
-so it matches on more than name tokens, drop `required` on the colliding
-findings, re-author those findings so their target names no longer
-collide, or exclude guard-forced findings from `calibrate_judge`'s
-denominator. Which one to take is the lead's call, not the fixture
-author's. Until it is made the set is pinned by
-`test_no_new_fixture_becomes_unpassable_via_the_avoid_guard`
-(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
-**both** directions — a fourth fixture entering the state fails it, and
-fixing one of the three fails it too — so the defect can neither spread
-nor be silently repaired while the call is open. The mirror-image defect —
-a guard that can never go *red* — is a different thing and is tracked
-separately.
+**Guards that could never go green (closed).** Three fixtures —
+`antonio-lucas-spouse`, `thomas-seaver-other-wife` and
+`heinrich-zinsmeister-death` — once carried a required avoid finding the
+name-token guard failed on every run. The rebuilt guard subtracts the starting
+tree (Decision 20 of `docs/plan/conclusion-tree.md`), so none is unpassable,
+and the pin that held the set is replaced by the pre-assertion check above.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 
@@ -677,15 +699,19 @@ message verbatim, see §16):
 ```
 
 When the fixture bundles provided documents, the message also names them (§6.2).
-After that, under the default `--step-mode job`, the harness answers for the
-researcher, one reply per turn, with what `next_auto_reply` returns ("Keep going.",
-or "Wrap it up." in place of a further round of planning); `--wrap-up-after` swaps
-in "Wrap it up." after a named step. A `job` turn that ends cleanly on a question
-for the researcher, while research is left (it did not run proof-conclusion and the
-project is not completed), is answered with the fixture's own `researcher_question`,
-at most once per run. The run ends when the host sends no reply (sections A2 and F
-of `docs/specs/research-step-mode-spec.md` list when) or one of §6's stop signals
-ends it. `--step-mode step` sends no replies.
+After that, under the default `--step-mode unattended`, the harness is a simulated
+researcher: it answers each turn with what `next_reply` (`eval/harness/e2e/turn_loop.py`)
+returns: `/research --autonomous Continue.` at each offer (`UNATTENDED_CONTINUE`; the
+flag rides on every reply so the router keeps passing `userPresent: no`), or a bare
+"Wrap it up." at the plan offer after a planning round; `--wrap-up-after` swaps in "Wrap it up." after a named step. A turn that is not a
+wrap-up and ends cleanly on a question for the researcher, while research is left (it
+did not run proof-conclusion and the project is not completed), is answered with the
+fixture's own `researcher_question`, at most once per run. The run ends when the
+simulated researcher sends no reply (section F of
+`docs/specs/research-step-mode-spec.md` lists when) or one of §6's stop signals ends it.
+`--step-mode step` runs one turn and sends no reply. `unattended` replaced `job` on
+2026-11-24, when "Keep going" was retired; older run logs record `usage.step_mode: "job"`
+and still load.
 
 **Only the router reads the flag.** No other plugin body contains `--autonomous`:
 `grep -rln -- '--autonomous' packages/engine/plugin/` lists only the router. These
@@ -699,20 +725,26 @@ rules in `research/SKILL.md` branch on it; find them with
   state, one step per turn, rather than handed straight to the step that owns a
   single deliverable.
 - **No researcher present.** On an autonomous run the router hands `userPresent: no`
-  to two agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
   otherwise `yes`". `@plugin:person-evidence` gets
-  it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
-  run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". The rules are there so an e2e run never waits on an
-  external-site capture nobody will upload. No check makes the router send the field
-  to search-external-sites (the research unit suite checks it only on person-evidence's spawn),
-  and an agent reads a missing field as `yes`:
+  it on a "Wrap it up." turn too: "On a "Wrap it up." turn and in an autonomous run,
+  pass `userPresent: no`" (§"One step per turn"), and its spawn fields name the same,
+  "turn and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
+  run, so an objective holding several facts gets a question for the first one instead
+  of an ask nobody answers. The rules are there so an e2e run never waits on an
+  external-site capture nobody will upload. The research unit suite checks that the router sends
+  the field to search-external-sites on the opening turn of an autonomous run
+  (`ut_research_ue1`, tag `delegates-user-present-no-external`), and to question-selection
+  on the opening turn of an autonomous run with an objective and no questions
+  (`ut_research_uq1`, tag `delegates-qs-user-present-no`). A spawn later in a
+  run is checked by nothing, and an agent reads a missing field as `yes`:
   `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
   search-external-sites without it, and that plan item stayed `in_progress` waiting
   for a capture.
 
-Those three agents read the `userPresent` field, not the string. The e2e
+Of those three, search-external-sites and question-selection read the `userPresent`
+field, not the string; person-evidence receives it but does not read it. The e2e
 orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
 flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lead,
 2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded
@@ -796,7 +828,7 @@ the `max_cost_usd` note in §6 step 5.
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns`. On a step run `num_turns` arrives per turn, so the host sums it across the run and sends no further reply once the sum crosses the cap |
    | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **Label only — this does not stop a run, a step run included: the host keeps replying past it.** A later turn cap, tool cap or SDK error still stops the run and replaces the label. See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the host sent no reply to the last turn (`next_auto_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the simulated researcher sent no reply to the last turn (`next_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
    | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
@@ -934,8 +966,8 @@ the `max_cost_usd` note in §6 step 5.
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
-   job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
-   purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
+   unattended` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
+   purpose, and the simulated researcher's reply, `next_reply`, continues the run (section F of
    `docs/specs/research-step-mode-spec.md`). No Stop hook is bound, and a run writes neither
    `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
    a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
@@ -1236,6 +1268,12 @@ since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` fr
 presence alone discriminates for it, and a second tool added to the set is
 covered here automatically.
 
+The same hook also denies the shipped hook's `MAIN_THREAD_DENIED` tools, which no
+agent holds and no step may call on the main thread: today `person_search`, because a
+project starts only from a FamilySearch person ID. Its predicate is imported
+(`context_policy.main_thread_denial`), and a denied call is recorded in
+`blocked_context_calls` like the rest.
+
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
 response: the denial reason names a reachable recovery — read the page with
@@ -1257,7 +1295,7 @@ session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
 (since the caller-ownership rules shipped), `Agent` / `Task`, for the fork deny,
-and a final alternative naming every `AGENT_ONLY_TOOLS` key. It still never sees an
+and a final alternative naming every `AGENT_ONLY_TOOLS` and `MAIN_THREAD_DENIED` key. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the `image_read` policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the
@@ -1339,10 +1377,11 @@ So a fixture may **bundle** the captures it needs:
 
 - Place them in `eval/tests/e2e/<slug>/provided-documents/` (e.g.
   `findagrave-quass.pdf`).
-- The harness copies each into the **workspace root** — exactly where an
-  uploaded capture lands — and names them in the user message so the
-  agent reads the local file instead of pausing to ask for an upload.
-- The agent uses its ordinary `Read` tool. No new MCP tool, no live
+- The harness copies each into the workspace's **`uploads/`** — exactly where an
+  uploaded capture lands — and names them (`uploads/<name>`) in the user message
+  so the agent reads the file instead of pausing to ask for an upload.
+- The agent reads it as it reads any upload (`sidecar_read` or
+  `image_transcribe` with `file: "uploads/<name>"`). No new MCP tool, no live
   network; the harness simply plays the role of the user who provides
   the documents.
 
@@ -1496,8 +1535,9 @@ gate, and its artifacts are written with the gitignored `scratch_` prefix
 (§8).
 
 When the §3.4.1 avoid-guard fires, the persisted `judge_output`
-additionally carries `avoid_guard.forced_false` (which findings the
-harness overrode, and the matching final-tree person ids), the affected
+additionally carries `avoid_guard.forced_false` (per overridden finding: its
+`finding_id`, the `branch` that fired, the final-tree `person_ids` involved,
+and the `evidence`), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
 
@@ -2070,7 +2110,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage.per_turn` | **Step mode only** — one row per turn: `{index, step, wall_ms, sent, reply, duration_ms, duration_api_ms, num_turns, total_cost_usd}`. Written by `turn_loop.accumulate_usage`. The top-level quantities keep their whole-run meaning, so every existing reader works unchanged — but not all by summing: `total_cost_usd` and `duration_api_ms` are RUNNING totals the CLI already reports, so the latest turn's value is taken rather than the sum, which would multiply them (decided by the lead, 2026-10-26: a `ResultMessage` now arrives per TURN, and a plain assignment would have recorded only the last one and understated corpus spend quietly). `wall_ms` and `step` come from the turn rather than the `ResultMessage`. A turn that ran no step carries no `step`. Absent on every non-step run; `make e2e-latency BY_STEP=1` prints per-step p50/p90 wait and spend from it, in the order the run reached the steps, and says "no per-step data" rather than zeroes when it is absent. |
-| `usage.wrap_up_after` | **Step mode only** — the step after which the host answered `Wrap it up.` instead of `next_auto_reply`'s choice (`--wrap-up-after`), exercising B2's link-then-conclude path. `null` on every other run. A run with this set is **not** comparable to a step run without it: it ends deliberately early, so its turn count, spend and per-step figures all describe a shorter run. |
+| `usage.wrap_up_after` | **Step mode only** — the step after which the simulated researcher answered `Wrap it up.` instead of `next_reply`'s choice (`--wrap-up-after`), exercising B2's link-then-conclude path. `null` on every other run. A run with this set is **not** comparable to a step run without it: it ends deliberately early, so its turn count, spend and per-step figures all describe a shorter run. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). **A step-mode run is the case this field's caveat cannot see.** The caveat is detected by `result_message_covers_last_query_only`, which counts `system:init` rows; a persistent `ClaudeSDKClient` is one CLI process emitting one init however many turns it serves, so a many-turn step run is never flagged even though a `ResultMessage` arrived per turn. What makes the figures whole-run there is not the flag but `accumulate_usage` summing them at assembly (`usage.per_turn`) — do not remove that on the strength of the flag reading clean. |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
@@ -2090,7 +2130,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call), `duration_seconds` (earliest to latest record timestamp in its transcript — earliest/latest, since `queued_command` attachments can step backwards; `null` with fewer than two; within 0.1 s of the CLI's own `duration_ms` on the 16 helpers measured), `peak_window_tokens` (the tallest single window the subagent read — `input` + `cache_read` + `cache_creation` of one message, the **max** over its messages, 0 when none carries usage), `compactions` (one `{trigger, pre_tokens, post_tokens}` per `system`/`compact_boundary` record in the subagent's own transcript; a missing or non-numeric figure is `null`, never 0; the **count** is the signal — `pre_tokens` saturates at the trigger like the peak does), `models` (the distinct model ids its messages ran on, first-seen order, `<synthetic>` excluded), and `tool_messages` (the bare tool names each assistant API message called, one list per message that called any, grouped by `message.id`, in order — calls in one list ran side by side in one round trip). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call), `duration_seconds` (earliest to latest record timestamp in its transcript — earliest/latest, since `queued_command` attachments can step backwards; `null` with fewer than two; within 0.1 s of the CLI's own `duration_ms` on the 16 helpers measured), `peak_window_tokens` (the tallest single window the subagent read — `input` + `cache_read` + `cache_creation` of one message, the **max** over its messages, 0 when none carries usage), `compactions` (one `{trigger, pre_tokens, post_tokens}` per `system`/`compact_boundary` record in the subagent's own transcript; a missing or non-numeric figure is `null`, never 0; the **count** is the signal — `pre_tokens` saturates at the trigger like the peak does), `models` (the distinct model ids its messages ran on, first-seen order, `<synthetic>` excluded), `long_prompt_usage` (the four token totals of its messages that bill at a long-prompt multiple, `pricing.LONG_PROMPT`; all zeros when none did), and `tool_messages` (the bare tool names each assistant API message called, one list per message that called any, grouped by `message.id`, in order — calls in one list ran side by side in one round trip). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
 | `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
@@ -2214,7 +2254,10 @@ priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
 rate); a spawn recording no model predates the field and keeps the flat Sonnet
 table, labelled; a spawn on a model the table does not know, or on more than one
 model, is listed as unpriced with its reason — never as $0 and never at the Sonnet
-rate. An agent that ran on more than one model gets a sub-row per model.
+rate. An agent that ran on more than one model gets a sub-row per model. A Haiku 5.5
+request over 100,000 prompt tokens bills at 5x (`pricing.LONG_PROMPT`), a per-request
+price no sum can carry, so a spawn adds that premium from `long_prompt_usage`; a spawn
+captured before that field is unpriced when its `peak_window_tokens` passed the line.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
@@ -2727,9 +2770,10 @@ research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
-the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
-units in order and any reason), exits 0 when all pass, 1 when
-any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+the whole panel. It prints a short block per fixture (a PASS, FAIL or KNOWN-FAIL
+line, then the units in order and any reason) and a closing count. It exits 0 when
+every fixture passes or fails with its `known_issue` set, 1 when any other fails or
+goes ungraded, and 2 when a run never happened (bad fixture, no build, the genealogy
 MCP server unavailable — §6).
 
 ### 16.1 Directories
@@ -2737,6 +2781,10 @@ MCP server unavailable — §6).
 - Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
 - Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
   committed; a PR that changes a fixture's result pastes the printed block instead.
+- **Which PRs owe a run:** one that changes the research skill's `SKILL.md`, any
+  agent's `description:`, `plugin/hooks/no_project_route.py` or
+  `plugin/main-thread.json` runs the whole panel and pastes the printed block. A
+  KNOWN-FAIL is fine; a plain FAIL is new and the PR says why.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2754,12 +2802,14 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
 | `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
-| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, `{"section": "plans"}` (only with `is_plan_ask`; the loader refuses it otherwise), or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
 | `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
+| `known_issue` | no | the open issue that owns this fixture's FAIL, as `"#N"`. The line prints KNOWN-FAIL and the panel's exit code ignores it, so a new FAIL stands out. The README names it ("Issue #N owns it"; a unit test checks). A known-issue fixture that passes prints a note to remove the field |
+| `ends_on_offer` | no (false) | also requires the turn to end on a "Continue with …?" offer (§16.4, check 7). Not set on a turn whose right ending is a question for the researcher, which writes no offer line |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
 | `blocked_tools` | no | as for autonomous fixtures (§6.1) |
 
@@ -2768,15 +2818,24 @@ name that is not a bare name from `manifest.json` or a built-in, and a save list
 names one section both `absent` and present (it could never fail).
 
 Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
-autonomous fixtures. Every fixture starts from an existing project: with no
-project and no PID, `init-project` creates nothing and asks for an ID, so the turn
-would grade as "no unit ran" for a reason that has nothing to do with routing.
-There is no `expected-findings.json` and no judge.
+autonomous fixtures, **or neither**: a fixture with neither runs in an empty
+folder, the shape of most first messages. The loader refuses a fixture with one
+and not the other (partial seeding is an authoring mistake). An empty-folder
+fixture with a FamilySearch person ID lists `init-project` in `setup_units`; one
+with no ID expects `init-project` to ask for it and create nothing. Its save
+cannot be `sources` when init-project runs: `project_create` imports the person's
+Memories as sources, so a new source shows nothing about the deliverable
+(the loader refuses a `sources` save on any empty-folder fixture). There is no `expected-findings.json` and no judge.
 
 ### 16.3 How the turn runs
 
 - The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
   provided-documents suffix. The system prompt is the autonomous mode's.
+- **Cowork's routing sentence.** Each message gets what Cowork's plugin hook sends:
+  `no_project_route.decision()`'s routing sentence and `SOURCES_NOTE`, called from
+  the shipped hook, not copied (`context_policy.route_note_hook`). This holds for
+  every fixture, seeded or not, because Cowork sends it whether or not a project
+  exists. The autonomous run and the unit harness add `SOURCES_NOTE` alone.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
   mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
@@ -2791,7 +2850,8 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all six hold (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all seven hold, the
+seventh only when the fixture asks for it (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
@@ -2803,15 +2863,26 @@ namespace; it is stripped, as it is from spawned names):
    no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
    unless `is_plan_ask`, a new `plans` entry.
 3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
-   a new `log` entry whose `tool` (and `outcome`, when given) is the expected
+   a new `plans` entry, a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
-   in the final `research.json` and not in `starting-research.json`.
+   in the final `research.json` and not in `starting-research.json`; in an
+   empty-folder fixture every row is new.
 4. **`forbidden_tools`** — no call to any of them, on any thread, matched by
    bare name.
 5. **`required_tools`** — at least one call to each that did not error.
 6. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
+7. **`ends_on_offer`** — only with `ends_on_offer: true`: the last line of the
+   turn's last **main-thread** assistant text is a "Continue with …?" offer, read
+   with the step boundary's own `offered_step` (`plugin/hooks/step_boundary.py`).
+   Never a subagent's text or a harness line. An invented label is no offer.
+
+**A missing final `research.json`.** From a seeded project it fails `save` and
+`no_research_job`. In an empty-folder fixture it means no new rows: it adds no
+`no_research_job` reason, an `absent` save passes, and any other save fails. A
+`research.json` that exists but does not parse is not "missing": it fails both, as
+unreadable.
 
 Printed, not graded: every unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
@@ -2823,7 +2894,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha, whose system prompt
-(`apps/server/app/agent/real_agent.py`) differs from the harness's. Since step mode's
+(`apps/server/app/agent/real_agent.py`) differs from the harness's. The panel sends
+Cowork's routing sentence, which the hosted planes do not, so a pass on a
+first-message fixture does not show the hosted route fixed either. Since step mode's
 phase 2 neither plane nudges a stop or halts on a delivery signal: a single ask ends
 where the model ends it.
 

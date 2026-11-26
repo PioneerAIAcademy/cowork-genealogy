@@ -95,8 +95,7 @@ from harness.versioning import (
 
 
 def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
-    """The newest released-or-candidate run log for a skill that was
-    ANNOTATED, or None.
+    """The newest committed run log for a skill that was ANNOTATED, or None.
 
     A run log with no sibling `.ann.json` is one nobody reviewed. Taking its
     cursor would mark its 5 sampled tests covered and rotate straight past them
@@ -109,12 +108,6 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     Sorts by `classify()`'s (version, timestamp), NOT by filename: a
     lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
     every suite at v1, and cheap to avoid here.
-
-    A RELEASED `v{N}.json` has `timestamp=None` and must sort **last** within its
-    version — it supersedes every candidate of that version. Release renames
-    `v{N}_<ts>.json` in place and leaves the earlier candidates behind (pruning
-    keeps 5), so treating None as `""` would let a superseded candidate outrank
-    the blessed release and hand the next run a stale cursor.
     """
     if not skill_runlog_dir.is_dir():
         return None
@@ -123,13 +116,11 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
         if not p.name.endswith(".json") or p.name.endswith(".ann.json"):
             continue
         c = classify(p.name)
-        if c.kind not in ("released", "candidate") or c.version is None:
+        if c.kind != "candidate" or c.version is None:
             continue
         if not (skill_runlog_dir / ann_filename_for(p.name)).exists():
             continue  # nobody reviewed it — its cursor is not evidence
-        # A released log has timestamp=None and must sort LAST within its
-        # version — it supersedes every candidate of that version.
-        dated.append(((c.version, c.timestamp or "￿"), p))
+        dated.append(((c.version, c.timestamp or ""), p))
     if not dated:
         return None
     newest = max(dated, key=lambda pair: pair[0])[1]
@@ -612,6 +603,7 @@ def _print_summary(rows: list[dict]) -> None:
     _print_outcome_counts(rows)
     _print_judge_warnings(rows)
     _print_readme_fallbacks(rows)
+    _print_unparsed_tool_inputs(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -690,6 +682,26 @@ def _print_readme_fallbacks(rows: list[dict]) -> None:
     print(
         f"{len(tests)} test(s) graded without a judge brief, on a README or "
         f"nothing ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+    )
+    print()
+
+
+def _print_unparsed_tool_inputs(rows: list[dict]) -> None:
+    """Say how many tool calls Claude Code refused as invalid JSON.
+
+    Such a call never reaches the tool: the agent writes it again, whole, and the
+    test still passes on the retry. A move to a cheaper model took locality-guide's
+    count from 2 to 17 in one suite with every test passing (#4588), so every run
+    names the tests it happened in.
+    """
+    tests = [r for r in rows if r.get("unparsed_tool_inputs")]
+    if not tests:
+        return
+    total = sum(r["unparsed_tool_inputs"] for r in tests)
+    named = ", ".join(f"{r['test_id']} x{r['unparsed_tool_inputs']}" for r in tests)
+    print(
+        f"{total} tool call(s) in {len(tests)} test(s) were refused as invalid JSON "
+        f"before reaching the tool, and written again: {named}"
     )
     print()
 
@@ -1025,8 +1037,8 @@ def main(argv: list[str] | None = None) -> int:
     # Judge model stamped at the envelope so judge-model bumps are dated and
     # comparable rather than silently invalidating historical scores (issue
     # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
-    # override today, and `DEFAULT_JUDGE_MODEL` is already a dated id, not
-    # an alias.
+    # override today. `DEFAULT_JUDGE_MODEL` (`claude-sonnet-4-6`) has no date
+    # suffix, so this records the alias, not a dated snapshot id.
     from harness.judge import DEFAULT_JUDGE_MODEL as _DEFAULT_JUDGE_MODEL
     judge_model = _DEFAULT_JUDGE_MODEL
     snapshot_cache: dict[str, dict] = {}
@@ -1100,7 +1112,6 @@ def main(argv: list[str] | None = None) -> int:
                 log = build_run_log(
                     skill=skill,
                     version=None,
-                    released=False,
                     releasable=False,
                     invocation=mode,
                     timestamp=invocation_timestamp,
@@ -1415,6 +1426,11 @@ def main(argv: list[str] | None = None) -> int:
                 # Scenarios with no judge-brief.md yet, graded on a whole
                 # README or on nothing (#2478). Its own line, not the judge
                 # tally: a fixture advisory, not a grading rule.
+                "unparsed_tool_inputs": sum(
+                    w.get("count") or 0
+                    for w in iter_run_warnings(entry)
+                    if w.get("kind") == "unparsed_tool_input"
+                ),
                 "readme_fallback_scenarios": sorted({
                     w.get("scenario") or ""
                     for w in iter_run_warnings(entry)
@@ -1514,7 +1530,6 @@ def main(argv: list[str] | None = None) -> int:
         log = build_run_log(
             skill=skill,
             version=version,
-            released=False,
             releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,

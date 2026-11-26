@@ -16,7 +16,9 @@
     "scenario": "becker-attachment-links-question"
   },
   "mcp_fixtures": [
-    "same-person-becker-strong"
+    "same-person-becker-strong",
+    "source-screen-becker-attachment-links",
+    "source-screen-becker-attachment-links-fsid"
   ],
   "judge_context": [
     "Each named assertion's only live link is an attachment link (speculative, no `match_score`, the fixed rationale 'Linked because FamilySearch has this record attached to this person; not verified.'), so each counts as unlinked. The expected work: score with `same_person` (a strong match, 0.91, here), append a scored link to I1 per assertion, then set each attachment link's `superseded_by` to its new `pe_`. The `supersedes-named-attachment-links` validator owns the writes; do not re-check them.",

@@ -40,7 +40,7 @@ So the split is:
 |---|---|---|---|
 | Jurisdictions, boundary changes, register start dates, indexing quirks, record loss and substitutes | place | `locality-guide` | the `localities` entry research-plan reads |
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
-| Which records exist for the place | place | `research-plan` | the `localities` entry's `collections[]` when its `time_period` covers the years being planned and every one carries a `person_count` (no `collections_search` for that place, its state, or outside the US, Canada and Mexico its country, then; the national `United States` call is unchanged), else `collections_search`; `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
+| Which records exist for the place | place | `research-plan` | the `localities` entry's `collections[]` when its `time_period` covers the years being planned and every one carries a `person_count` (no `collections_search` for that place, its state, or outside the US, Canada and Mexico its country, then); for the US, Canada and Mexico, the censuses and broad national indexes from `project_context` `nationalCollections`, with `collections_search` for the country, when an item will name one, for a collection that depends on who the person was (military, immigration, Freedmen's Bureau, Native American, land), a year no row covers, or a country with no entry, else `collections_search`; `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
 | Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each person the question's text names who is not a project subject (`project_context` `subjectPersonIds`) and whose tree entry has an `ark`, before any plan item; no one else's profile is read. A subject is planned from the project tree, which `project_create` built from the subject's full read. That holds because init-project, the one caller, creates a project with `personId` and `subjectPersonIds` set to that same id and no hand-built `tree`; a subject a project was given some other way (a hand-built tree, a second subject) is not covered, and no shipped caller produces one. The trade: memories left untranscribed at creation, and sources attached on FamilySearch since, are no longer picked up by research-plan's re-read; another agent's `person_read`, at the researcher's request, still can |
 | Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and its Appendices A and B |
 
@@ -127,6 +127,40 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
+- **A pre-1850 US federal census names only the head.** The
+  federal schedules of 1790–1840 name the head of household and count everyone
+  else in age brackets, except that 1840 also names each Revolutionary or
+  military pensioner in the household, with his age, often an aged parent
+  living with a son, so it is the one early census that can name a second
+  member; 1850–1870 name every member without stating a
+  relationship; 1880 adds relationship to the head; birthplace first appears in
+  1850. It is one national rule, not a jurisdiction fact, and the localities
+  entries the agent reads do not carry it. Before the rule, all three baseline
+  runs of `ut_research_plan_hoh` (2026-11-06) read an unnamed tally in Paul
+  Raymond Sr.'s 1790–1820 household as his son ("may show a young man of about
+  20 (I1) still in the household"), one invented a "16–26" bracket for 1790, and
+  one said the 1820 census records the head's state of birth. Every run put
+  probate ahead of census, so the rule is about what a census can show, not
+  where it sits in the order. A hedged tally reading ("a male 16–25 in his
+  1790 household is consistent with the son") is standard tick-mark analysis
+  and is allowed; what the rule forbids is a rationale saying the census names
+  the child or shows the relationship (Benter, 2026-11-10, after a stricter
+  "not even as corroboration" wording failed 2 of 3 runs on exactly that
+  hedged sentence). The order is guarded by the validator
+  `test_pre1850_parentage_plan_puts_child_naming_record_first`; the framing
+  stays with the judge, since a phrase match over the 18 replayed runs flagged
+  sound placement lines ("confirm I1's residence") and caught no real claim.
+- **Availability is the engine's label, not the agent's reading of counts.**
+  Collection 2106411 (Massachusetts Land Records) returns personCount 18
+  beside 5.7 million images. In 3 of 9 runs (2026-11-06) the agent judged that
+  effectively zero and wrote `browse-only (personCount 0)`, a number the
+  response never returned. The first fix was prose: any count above 0 is
+  name-searchable (Benter, 2026-11-10). The move to Haiku 5.5 then put the
+  decision in the engine: `collectionAvailability` labels a collection browse-only below 0.001
+  indexed persons per image, which makes 2106411 browse-only in production,
+  and the body has the agent copy that label. The `ut_research_plan_hoh`
+  fixture row carries no `imageCount`, so the harness labels it
+  name-searchable.
 - **The dedicated parents'-marriage item, re-checked at return time.** The
   body's parentage rule (a dedicated item for the candidate parents' marriage
   to each other, Appendix B) slipped roughly one full run in seven by folding
@@ -141,6 +175,82 @@ that would replace it (probed 2026-10-02, §5):
   `plans[]` (their validators fail any appended item). This spec has no fuller
   return-contract description; the agent body's "Return contract" section is
   the source. The validator is in §7.
+- **The subject's own birth record and death certificate.** On a parentage question the plan carries the subject's own birth
+  record and, when the subject has died, their death certificate, each as an
+  item: planned, or written `skipped` with `skip_category` `inaccessible`
+  (sealed or destroyed) or `no_coverage` (never kept for that place and period)
+  and a `skip_reason`. It is the second exception, beside the enumerative one, to
+  "never write a new item `skipped`: leave out what you would not search" (lead,
+  2026-11-22). Why a skipped item rather than an omission: research-exhaustiveness
+  judges what a plan holds and misses what it leaves out. On a project holding
+  the subject's 2023 obituary and no mention of his death certificate, it named
+  the gap 4 to 5 times in 10; with the certificate carried as a skipped item, 29
+  of 30 and 20 of 20. Measured on `ut_research_plan_zgw` (Alan
+  Applegarth, both certificates sealed in Utah): the planner planned his own
+  birth record in 3 of 3 runs on the unedited body and his own death record
+  in 2 of 3 (the third planned only his parents' death records); after the
+  edit, both in 3 of 3 (scratch runs, 2026-11-23). The death half also extends Step 4 self-check 6 and
+  the return-contract death line to "or on a parentage question whose subject
+  has died", the same return-time re-check the parents'-marriage item uses. Not a
+  `research_append` precondition: questions carry no parentage marker, plan
+  `record_type` has no birth/death distinction, and the subject's tree person
+  may hold no Death fact (Alan's death is known only from the obituary). The
+  planned-status validator excuses such a skip by the question's own text
+  (`_parentage_vital_skip`), since the `parentage` test tag is missing from five
+  parentage tests.
+  The body limits that skip to a question asking who the subject's parents are:
+  worded as "a parentage question", it leaked into `ut_research_plan_016`, a
+  death-date question, which wrote its death certificate `skipped` in 1 of 3
+  suite runs (0 of 3 after). It also says the subject has died when the tree or
+  the log gives a death date, a burial or an obituary for the subject:
+  `ut_research_plan_zgw` left out Alan's death certificate in 2 of 7 runs while
+  reading his 2023 obituary only as evidence of his parents (0 of 3 after).
+- **No item for a tree claim the project's own dates rule out.** From an alpha
+  feedback session: the tree gave Alexander Mills's
+  parents as George Mills and Abigail Weed, whose marriage the same tree dates
+  to 1760, after Alexander's own 1759 marriage; the planner said so and still
+  planned Stamford items, and the tester had to strike them. The rule is scoped
+  to impossibility shown by dated evidence already in the project; a doubt alone
+  does not count. It **omits** the item rather than writing it `skipped`, because
+  the body's "never write a new item skipped" rule stands outside the two
+  exceptions above, and the tester's request to prove or disprove the tree is met
+  by the one return line naming the excluded claim and its evidence. The
+  parents'-marriage item and its return-time append are both limited to a
+  couple who remain candidates, or the mandatory marriage item would re-plan the
+  ruled-out couple (it did, as `pli_002`, in the before-runs). Prose, not a tool
+  rule: it judges the planner's own reading of the evidence. Measured on
+  `ut_research_plan_99n`: an item in Stamford in 9 of 9 plans before the edit,
+  5 of 9 after (6 of 9 on an earlier wording). The plans that still fail accept
+  that the couple is ruled out and keep a Stamford item under another purpose:
+  separating the merged 1761 Alexander, or an origin search for any
+  Stamford-born Alexander. Its last sentence says the rule removes only tree
+  claims: without it `ut_research_plan_010` (a supersede on a death date the
+  user supplies) refused or edited in place in 2 of 4 suite runs, calling the
+  date "not in the project's sources" (0 of 3 on `main`, 0 of 3 after). Short of 3 of 3, so the test was deleted
+  (`unit-test-spec.md`, `expected_outcome`); restoring it and making it pass 3
+  of 3 is open work.
+- **Not landed: full-text beside indexed search for a pre-1850 New England
+  vital, land or court record (item 3).** The 1759 Worcester marriage was found
+  by full-text after six empty indexed searches. A Step 3 rule in Appendix B,
+  keyed on the `localities` entry's `volume_summary` `fulltext_only` count with
+  "pre-1850 New England" as the fallback, and then a seventh breadth self-check
+  naming it, were measured on `ut_research_plan_99n`, whose Worcester entry
+  (`loc_003`, added for the test) carries no count: no Worcester item covering
+  1759 named full-text in 8 of 9 plans before, 5 of 9 and 7 of 9 after the two
+  wordings. That is no gain beyond run-to-run spread, so the prose was removed.
+  It cannot be a `research_append` precondition either without a schema change:
+  nothing marks an item as full-text (`record_type` has no such value,
+  `repository` is free text). Without `loc_003` the planner left Massachusetts
+  out of 7 of 8 first plans and asked for a locality survey instead, so the
+  scenario keeps it. Nothing routes a planned full-text item straight to
+  search-full-text either: `research` sends a FamilySearch item to
+  search-records, which only offers full-text as a hand-back.
+- **Not landed: the subject's own birth evidence before the alleged parents'
+  records (item 2).** Its check failed 3 of 9 on the body with this section's
+  first rule already in, at or under the stop rule (drop an item whose check fails 3 or fewer of 9
+  runs before the edit), so neither the
+  prose nor the check was kept. Counting a death entry stating age as birth
+  evidence, as the issue does, is what brought it under the bar.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -221,8 +331,8 @@ change; keep no local copy.
   `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
   equals that of the `place` of a `localities` entry counted on every collection, unless the
   call's `startYear`–`endYear` reach outside the entry's `time_period`; an entry with no
-  parseable `time_period` covers nothing. `United States` is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
-  availability check grades a plan written from the entry. `test_names_collections_only_from_search`
+  parseable `time_period` covers nothing. `United States` is exempt. `_collection_availability` also reads entry labels (else counts) for collections no response served, so the
+  availability check grades a plan written from the entry, against each collection's `availability` label. `test_names_collections_only_from_search`
   (`validators/test_research.py`, Kenya test only) still accepts only search-returned
   titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
 - `test_research_plan_hints_review_first`: on `fs-hints-first` tests (ut_016,
@@ -243,3 +353,24 @@ change; keep no local copy.
   a church marriage register is a valid dedicated item (review decision,
   2026-10-30). Proven to fail in
   `eval/harness/tests/unit/test_research_plan_validator.py`.
+- `test_research_plan_plans_subject_birth_and_death`: on
+  `subject-birth-death-items` tests (`ut_research_plan_zgw`), some new item, in
+  any status, ties a birth-record phrase to the subject and some item ties a
+  death-certificate phrase to him, read from `rationale`, `skip_reason` and
+  `jurisdiction`. A parent's record does not count; a sentence that also names
+  the parents does. Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`.
+- `test_new_plan_items_planned_status` excuses a new `skipped` item on two
+  exceptions: the enumerative one, and `_parentage_vital_skip` (a question whose
+  text names a parent, `inaccessible` or `no_coverage`, a reason, and a birth or
+  death event). It does not check whose record the skipped item is. Proven in
+  `eval/harness/tests/unit/test_research_plan_planned_status_validator.py`.
+- `test_ruled_out_tree_claim_gets_no_item` (`ruled-out-claim`) and
+  `test_fulltext_beside_indexed_for_early_vital` (`fulltext-beside-indexed`), on
+  `ut_research_plan_99n`: no new item's `jurisdiction` names the ruled-out place
+  (a rationale may), and some item in the event's place whose `date_range`
+  covers its year names full-text in its rationale. Both fail on a replay of the
+  plan that alpha feedback session wrote, and are proven in
+  `eval/harness/tests/unit/test_research_plan_parentage_4696_validator.py`. No
+  live test carries either tag while `ut_research_plan_99n` is deleted; they are
+  kept as the measurement its restore needs.

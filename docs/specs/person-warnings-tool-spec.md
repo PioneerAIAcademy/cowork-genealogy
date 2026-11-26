@@ -789,6 +789,11 @@ reading of them. Every other tag reads as before.
 | `tooManyFathers2` | implausible | Two or more male parents (only one biological father is possible) | A step/adoptive father recorded as biological, or a wrong link |
 | `tooManyMothers2` | implausible | Two or more female parents | As above |
 | `tooManyParents3` | implausible | Three or more biological parents, at least one with no sex recorded (which `tooManyFathers2` and `tooManyMothers2` cannot count) | A duplicate parent, or a step link recorded as biological |
+
+The three parent counts above skip set-aside and ruled-out parents. A parent whose edge reads **set aside** (a weaker claim, or a denial below the proof bar, beside a concluded parent of the same slot whose own edge is in the tree) or **ruled out** (a `disproved` claim covers it) in a proof summary's claims is not counted, so an import set aside in favour of the concluded parent no longer reads as a rival. With no claims nothing is skipped. `person_warnings` reads
+`research.json` for this, in the single-id and list forms, and fails open to counting every parent when the file is
+absent or does not parse; `merge_warnings` applies it to the merged mob, and the write gate to both sides of its
+subtraction (`tree-edit-tool-spec.md` §6).
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
 | `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
@@ -1136,7 +1141,7 @@ is worth recording so it isn't "fixed" back later by mistake:
 | `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | **throw** `NO_PROJECT_REFUSAL`; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. The tool classifies the directory itself, so a folder with no tree gets this message rather than a raw path error |
 | `projectPath` is not an existing directory | Throw: `"projectPath does not exist: {projectPath}"` |
 | `tree.gedcomx.json` not found at path, in a folder that *does* hold `research.json` | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` — a broken project stays loud, and this message is the more useful one |
 | `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
@@ -1308,7 +1313,7 @@ Grep for `calculateWarnings` when sizing the blast radius.
   same predicate at the same severity evaluated from a different anchor, so
   splitting a pair means one write refuses and an identical one does not.
   Stated here as prose the rule was silently broken by four pairs, one of them
-  refusing a write in a released run log, so it is now derived from
+  refusing a write in a committed run log, so it is now derived from
   `ALL_WARNING_TAGS` and asserted by `person-warnings-spec-drift.test.ts`
   rather than maintained by hand.
 

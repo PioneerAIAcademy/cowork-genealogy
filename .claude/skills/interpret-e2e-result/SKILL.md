@@ -241,8 +241,8 @@ Translate `stop_reason` into something a researcher can act on:
   proof-conclusion fired. Look at the final tree to judge quality.
 - `natural_end` — the run ended with the project not completed. On a
   step-mode run (`usage.step_mode`, every run since step mode phase 2)
-  this usually means the host sent no reply to the last turn
-  (`next_auto_reply`): the turn made no "Continue with …?" offer, offered
+  this usually means the simulated researcher sent no reply to the last turn
+  (`next_reply` in `eval/harness/e2e/turn_loop.py`): the turn made no "Continue with …?" offer, offered
   wrap-up, repeated a step it had already offered, started a second
   planning round, or hit the reply cap. Read the last entry of
   `usage.per_turn` (its step and the reply sent) and the last `narration`
@@ -257,9 +257,10 @@ Translate `stop_reason` into something a researcher can act on:
 - `timeout` — wall-clock cap fired (default 120 min; a fixture's `caps` can
   override). Either the question is too big for the cap or the agent looped.
   Skim the tail of `tool_calls` for repeating patterns.
-- `tool_cap` — agent hit the per-run tool-call cap (default 300).
-  Almost always means looping. Read the last 20 tool calls; the loop
-  shape is usually obvious.
+- `tool_cap` — agent hit the per-run tool-call cap (`caps.tool_calls` in the run log; default in `FixtureCaps`).
+  Either the question is too big for the cap or the agent looped. Read the
+  last 20 tool calls: a loop repeats one call shape; varied searches and
+  reads mean it was still working.
 - `cost_cap` — spent past the cost threshold. **Not an interruption** — it
   is a post-hoc label (the cost-cap row of the stop-reason table in
   `docs/specs/e2e-test-spec.md`); on a step-mode run the host keeps replying

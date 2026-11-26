@@ -1,8 +1,13 @@
 """Structured before/after diff per unit-test-spec.md §15.
 
 The algorithm: per section (array of objects keyed by `id`), compute
-added/modified/deleted. The project section is a single object — treated
-as a one-entry array for diff purposes.
+added/modified/deleted. `project` and `researcher_profile` are single
+objects, not arrays — each is treated as a one-entry array for diff
+purposes, keyed by its own `id` field when it has one (`project`),
+else by the section name itself (`researcher_profile`, which has no
+`id` per its schema) — the same `entryId` `research_append` echoes for
+a singleton write. A future single-object section only needs adding to
+`research_sections.SINGLETON_SECTIONS`; the keying falls back automatically.
 
 Fields added during modification emit {"before": null, "after": value};
 fields removed emit {"before": value, "after": null}. Literal null is
@@ -11,11 +16,9 @@ used so the judge sees a uniform shape.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
-
-# Sections of research.json that are single objects, not arrays of IDed entries.
-_SINGLETON_SECTIONS = {"project"}
+from harness.research_sections import SINGLETON_SECTIONS as _SINGLETON_SECTIONS
 
 
 def diff_research_json(
@@ -37,11 +40,14 @@ def diff_research_json(
         if section in _SINGLETON_SECTIONS:
             b_list = [b] if isinstance(b, dict) else []
             a_list = [a] if isinstance(a, dict) else []
+            # A singleton keys on its own `id` field when it has one (`project`);
+            # otherwise fall back to the section name, the same synthetic
+            # `entryId` research_append echoes for a singleton write.
+            section_diff = _diff_array(b_list, a_list, key_fn=lambda e, s=section: e.get("id", s))
         else:
             b_list = b if isinstance(b, list) else []
             a_list = a if isinstance(a, list) else []
-
-        section_diff = _diff_array(b_list, a_list)
+            section_diff = _diff_array(b_list, a_list)
         if section_diff["added"] or section_diff["modified"] or section_diff["deleted"]:
             out_diff[section] = section_diff
             modified_sections.append(section)
@@ -76,11 +82,17 @@ def diff_tree_gedcomx(
 
 
 def _diff_array(
-    before_list: list[dict[str, Any]], after_list: list[dict[str, Any]]
+    before_list: list[dict[str, Any]],
+    after_list: list[dict[str, Any]],
+    key_fn: Callable[[dict[str, Any]], Any] | None = None,
 ) -> dict[str, list]:
-    """Diff two arrays of objects keyed by 'id'."""
-    by_id_before = {e["id"]: e for e in before_list if isinstance(e, dict) and "id" in e}
-    by_id_after = {e["id"]: e for e in after_list if isinstance(e, dict) and "id" in e}
+    """Diff two arrays of objects, keyed by 'id' unless `key_fn` says otherwise."""
+    if key_fn is None:
+        by_id_before = {e["id"]: e for e in before_list if isinstance(e, dict) and "id" in e}
+        by_id_after = {e["id"]: e for e in after_list if isinstance(e, dict) and "id" in e}
+    else:
+        by_id_before = {key_fn(e): e for e in before_list if isinstance(e, dict)}
+        by_id_after = {key_fn(e): e for e in after_list if isinstance(e, dict)}
 
     added = [by_id_after[i] for i in by_id_after if i not in by_id_before]
     deleted = [by_id_before[i] for i in by_id_before if i not in by_id_after]

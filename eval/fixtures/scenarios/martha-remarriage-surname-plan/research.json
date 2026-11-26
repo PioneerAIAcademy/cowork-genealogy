@@ -265,7 +265,282 @@
         {
           "id": "1915984",
           "title": "Alabama, State Census, 1820-1866",
-          "date_range": "1820-1866"
+          "date_range": "1820-1866",
+          "person_count": 34978,
+          "record_count": 34978,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1743384",
+          "title": "Alabama County Marriages, 1711-1992",
+          "date_range": "1711-1992",
+          "person_count": 22361777,
+          "record_count": 6049753,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2534485",
+          "title": "Alabama County Marriages, 1818-1936",
+          "date_range": "1818-1936",
+          "person_count": 13492,
+          "record_count": 6764,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1661470",
+          "title": "Alabama, Births and Christenings, 1881-1930",
+          "date_range": "1881-1930",
+          "person_count": 586111,
+          "record_count": 164600,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2487274",
+          "title": "Alabama, Census of Confederate Veterans, 1907, 1921, 1927",
+          "date_range": "1907-1927",
+          "person_count": 20407,
+          "record_count": 20403,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2790182",
+          "title": "Alabama, Church Records, 1831-1994",
+          "date_range": "1831-1994",
+          "person_count": 24024,
+          "record_count": 11048,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932139",
+          "title": "Alabama, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 1213534,
+          "record_count": 1213534,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932389",
+          "title": "Alabama, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 31582,
+          "record_count": 31582,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3029256",
+          "title": "Alabama, Confederate Pension Applications, ca. 1880-1939's",
+          "date_range": "1879-1940",
+          "person_count": 494669,
+          "record_count": 265618,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3335352",
+          "title": "Alabama, County Birth Registers, 1881-1939",
+          "date_range": "1881-1939",
+          "person_count": 1005680,
+          "record_count": 258125,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1674670",
+          "title": "Alabama, Deaths and Burials, 1881-1952",
+          "date_range": "1881-1952",
+          "person_count": 194460,
+          "record_count": 71989,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1307888",
+          "title": "Alabama, Deaths, 1908-1974",
+          "date_range": "1908-1974",
+          "person_count": 5801575,
+          "record_count": 1875684,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1978117",
+          "title": "Alabama, Estate Files, 1830-1976",
+          "date_range": "1830-1976",
+          "person_count": 25298,
+          "record_count": 25277,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333770",
+          "title": "Alabama, Freedmen's Bureau Field Office Records, 1865-1872",
+          "date_range": "1865-1872",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1548510",
+          "title": "Alabama, Jefferson County Circuit Court Papers, 1870-1916",
+          "date_range": "1870-1916",
+          "person_count": 193012,
+          "record_count": 97322,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1978142",
+          "title": "Alabama, Madison County Chancery and Circuit Court Records, 1829-1968",
+          "date_range": "1829-1968",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1674672",
+          "title": "Alabama, Marriages, 1816-1957",
+          "date_range": "1816-1957",
+          "person_count": 1666947,
+          "record_count": 797938,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4113740",
+          "title": "Alabama, Military Discharges, ca.1819 - ca.1963",
+          "date_range": "1819-1963",
+          "person_count": 31897,
+          "record_count": 30259,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1925446",
+          "title": "Alabama, Probate Records, 1809-1985",
+          "date_range": "1809-1985",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2180391",
+          "title": "Alabama, Southern Claims Commission Approved Claims, 1871-1880",
+          "date_range": "1871-1880",
+          "person_count": 5248,
+          "record_count": 5248,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1915987",
+          "title": "Alabama, State Census, 1866",
+          "date_range": "1866-1867",
+          "person_count": 243781,
+          "record_count": 243781,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1939212",
+          "title": "Alabama, Sumter County Circuit Court Files, 1840-1950",
+          "date_range": "1840-1950",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "5000133",
+          "title": "Alabama, U.S. District Court Naturalization Records, 1855-1969",
+          "date_range": "1855-1969",
+          "person_count": 59733,
+          "record_count": 45766,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4016429",
+          "title": "Alabama, Voter Registration and Poll Tax Cards, 1834-1981",
+          "date_range": "1834-1996",
+          "person_count": 737482,
+          "record_count": 701463,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3002227",
+          "title": "Alabama, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 47356,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2865018",
+          "title": "Alabama, World War I Service Cards, 1917-1919",
+          "date_range": "1917-1919",
+          "person_count": 103670,
+          "record_count": 103669,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2691991",
+          "title": "Alabama, World War II Draft Registration Cards, 1940-1945",
+          "date_range": "1940-1945",
+          "person_count": 1513883,
+          "record_count": 754273,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840-1840",
+          "person_count": 2566652,
+          "record_count": 2566652,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1401638",
+          "title": "United States, Census, 1850",
+          "date_range": "1850-1850",
+          "person_count": 20224571,
+          "record_count": 20224571,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1473181",
+          "title": "United States, Census, 1860",
+          "date_range": "1860-1860",
+          "person_count": 27176265,
+          "record_count": 27176265,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [
@@ -319,12 +594,542 @@
         {
           "id": "1416518",
           "title": "Texas, County Marriage Records, 1837-1965",
-          "date_range": "1837-1965"
+          "date_range": "1837-1965",
+          "availability": null
         },
         {
           "id": "2272001",
           "title": "Texas, Probate Case Files, 1800-1990",
-          "date_range": "1800-1990"
+          "date_range": "1800-1990",
+          "availability": null
+        },
+        {
+          "id": "1828544",
+          "title": "Texas, Bexar County, San Antonio Cemetery Records, 1893-2007",
+          "date_range": "1893-2007",
+          "person_count": 59252,
+          "record_count": 59251,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803956",
+          "title": "Texas, Birth Certificates, 1903-1936",
+          "date_range": "1903-1936",
+          "person_count": 6612281,
+          "record_count": 2280173,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949342",
+          "title": "Texas, Birth Index, 1903-1997",
+          "date_range": "1903-1997",
+          "person_count": 47587776,
+          "record_count": 17102106,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681015",
+          "title": "Texas, Births and Christenings, 1840-1981",
+          "date_range": "1840-1981",
+          "person_count": 3953531,
+          "record_count": 1339376,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2534480",
+          "title": "Texas, Church Marriages, 1839-1982",
+          "date_range": "1839-1982",
+          "person_count": 138,
+          "record_count": 69,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2534484",
+          "title": "Texas, Church Records, 1845-1957",
+          "date_range": "1845-1957",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2790180",
+          "title": "Texas, Church Records, 1852-1994",
+          "date_range": "1852-1994",
+          "person_count": 14134,
+          "record_count": 6107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932381",
+          "title": "Texas, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 956501,
+          "record_count": 956501,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1932425",
+          "title": "Texas, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865",
+          "person_count": 33955,
+          "record_count": 33955,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930271",
+          "title": "Texas, Coleman County Records, 1849-2008",
+          "date_range": "1849-2008",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1831470",
+          "title": "Texas, Comanche County Records, 1858-1955",
+          "date_range": "1858-1955",
+          "person_count": 125654,
+          "record_count": 48522,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930272",
+          "title": "Texas, Concho County Records, 1849-2008",
+          "date_range": "1849-2008",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "3736261",
+          "title": "Texas, Confederate Army and Commanding Officer Card Index, ca.1861-ca.1865",
+          "date_range": "1860-1866",
+          "person_count": 83002,
+          "record_count": 83001,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2691683",
+          "title": "Texas, Cooke County, Birth Records 1873-1876",
+          "date_range": "1873-1876",
+          "person_count": 486,
+          "record_count": 162,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2804974",
+          "title": "Texas, Cooke County, Deeds, 1895-1924",
+          "date_range": "1895-1924",
+          "person_count": 67856,
+          "record_count": 32795,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2804902",
+          "title": "Texas, Cooke County, Probate Records, 1849-1982",
+          "date_range": "1849-1982",
+          "person_count": 4854,
+          "record_count": 4854,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803987",
+          "title": "Texas, County Marriage Index, 1837-1977",
+          "date_range": "1837-1977",
+          "person_count": 3170766,
+          "record_count": 1579466,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1803985",
+          "title": "Texas, County Marriage Records, 1837-2010",
+          "date_range": "1837-2010",
+          "person_count": 4319782,
+          "record_count": 2149016,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1827575",
+          "title": "Texas, County Tax Rolls, 1837-1910",
+          "date_range": "1837-1910",
+          "person_count": 4575346,
+          "record_count": 4575333,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3656813",
+          "title": "Texas, Dallas County, Oakland Cemetery Interment Cards, 1891-1999",
+          "date_range": "1891-1999",
+          "person_count": 87779,
+          "record_count": 79888,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1949337",
+          "title": "Texas, Death Index, 1903-2000",
+          "date_range": "1903-2000",
+          "person_count": 7255794,
+          "record_count": 7255830,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1375599",
+          "title": "Texas, Death Index, 1964-1998",
+          "date_range": "1964-1998",
+          "person_count": 4113934,
+          "record_count": 4113934,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681049",
+          "title": "Texas, Deaths and Burials, 1903-1973",
+          "date_range": "1903-1973",
+          "person_count": 584602,
+          "record_count": 241388,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1983324",
+          "title": "Texas, Deaths, 1890-1977",
+          "date_range": "1890-1977",
+          "person_count": 12507754,
+          "record_count": 4539443,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1930157",
+          "title": "Texas, Deaths, 1977-1986",
+          "date_range": "1977-1986",
+          "person_count": 308503,
+          "record_count": 108598,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2038378",
+          "title": "Texas, Divorce Index, 1968-2010",
+          "date_range": "1968-2010",
+          "person_count": 7198522,
+          "record_count": 3599261,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1911179",
+          "title": "Texas, Eastland County Records, 1868-1949",
+          "date_range": "1868-1949",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "1989155",
+          "title": "Texas, Freedmen's Bureau Field Office Records, 1865-1870",
+          "date_range": "1865-1870",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "3023822",
+          "title": "Texas, Gonzales County, Birth Records, 1878-1945",
+          "date_range": "1878-1945",
+          "person_count": 215511,
+          "record_count": 55105,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2761118",
+          "title": "Texas, Gonzales County, Death records, 1863-1985",
+          "date_range": "1863-1985",
+          "person_count": 98218,
+          "record_count": 36321,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3029257",
+          "title": "Texas, Gonzales County, Divorce Records, 1911-1958",
+          "date_range": "1911-1958",
+          "person_count": 3868,
+          "record_count": 1934,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3019663",
+          "title": "Texas, Gonzales County, School Records, 1910-1970",
+          "date_range": "1910-1970",
+          "person_count": 453948,
+          "record_count": 453948,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1918470",
+          "title": "Texas, Gonzalez de la Garza Genealogy Collection",
+          "date_range": "1892-2010",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "4129993",
+          "title": "Texas, Grimes County, Deed Records, 1869-1917",
+          "date_range": "1869-1917",
+          "person_count": 28592,
+          "record_count": 14873,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3518927",
+          "title": "Texas, Grimes County, Marriage Records, 1916-1971",
+          "date_range": "1916-1971",
+          "person_count": 23294,
+          "record_count": 6237,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3661039",
+          "title": "Texas, Grimes County, Probate Records of Births, 1939-1957",
+          "date_range": "1870-1957",
+          "person_count": 30228,
+          "record_count": 10138,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502088",
+          "title": "Texas, Hardin County Clerk, Death Records, 1908-1948",
+          "date_range": "1908-1948",
+          "person_count": 11210,
+          "record_count": 4017,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502091",
+          "title": "Texas, Hardin County, Deed Records, 1840-1920",
+          "date_range": "1840-1920",
+          "person_count": 70182,
+          "record_count": 37487,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502089",
+          "title": "Texas, Hardin County, Marriage Records, 1837-2009",
+          "date_range": "1837-2009",
+          "person_count": 113378,
+          "record_count": 56689,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3502087",
+          "title": "Texas, Hardin County, Registers of Births, 1882-1939",
+          "date_range": "1882-1939",
+          "person_count": 18140,
+          "record_count": 6107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3460988",
+          "title": "Texas, Harrison County Delayed Birth Records, 1860-1960",
+          "date_range": "1860-1960",
+          "person_count": 18754,
+          "record_count": 6319,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2526188",
+          "title": "Texas, Manifests of Permanent and Statistical Alien Arrivals at El Paso, 1924-1954",
+          "date_range": "1924-1954",
+          "person_count": 81013,
+          "record_count": 81002,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1681052",
+          "title": "Texas, Marriages, 1837-1973",
+          "date_range": "1837-1973",
+          "person_count": 2396528,
+          "record_count": 1155237,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2031191",
+          "title": "Texas, Marriages, 1966-2010",
+          "date_range": "1966-2010",
+          "person_count": 15212254,
+          "record_count": 7606127,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1390096",
+          "title": "Texas, Matagorda County, School Census Records, 1923-1946",
+          "date_range": "1923-1946",
+          "person_count": 114526,
+          "record_count": 114526,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3734716",
+          "title": "Texas, Military Discharge Records, 1916-1990",
+          "date_range": "1916-1990",
+          "person_count": 43215,
+          "record_count": 43059,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1837923",
+          "title": "Texas, Mills County Clerk Records, 1841-1985",
+          "date_range": "1841-1985",
+          "person_count": 17658,
+          "record_count": 8828,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1389983",
+          "title": "Texas, Naturalization Records, 1906-1989",
+          "date_range": "1906-1989",
+          "person_count": 85638,
+          "record_count": 85937,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1425534",
+          "title": "Texas, Nolan County, Civil Court Minutes and Case Files, 1881-1938",
+          "date_range": "1881-1938",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2141045",
+          "title": "Texas, Passenger and Crew List of Airplanes, 1931-1964",
+          "date_range": "1931-1964",
+          "person_count": 374857,
+          "record_count": 374851,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3348478",
+          "title": "Texas, Passenger and Crew Lists Arriving at Various Ports, 1896-1951",
+          "date_range": "1896-1951",
+          "person_count": 196101,
+          "record_count": 196075,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3160706",
+          "title": "Texas, Passenger and Crew Lists of Vessels Arriving at Corpus Christi, Texas, and Vicinity, June 1948-January 1959",
+          "date_range": "1948-1959",
+          "person_count": 80009,
+          "record_count": 80009,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2016287",
+          "title": "Texas, Probate Records, 1800-1990",
+          "date_range": "1800-1990",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        },
+        {
+          "id": "2103490",
+          "title": "Texas, Swisher County Records, 1879-2012",
+          "date_range": "1879-2012",
+          "person_count": 29340,
+          "record_count": 11410,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3163398",
+          "title": "Texas, Voter Records, 1867-1918",
+          "date_range": "1867-1918",
+          "person_count": 163551,
+          "record_count": 158565,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3748251",
+          "title": "Texas, Washington County, Birth Records, 1903-1991",
+          "date_range": "1901-1991",
+          "person_count": 51038,
+          "record_count": 17807,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3158845",
+          "title": "Texas, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 72846,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2202707",
+          "title": "Texas, World War I Records, 1917-1920",
+          "date_range": "1917-1920",
+          "person_count": 217025,
+          "record_count": 209675,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2729394",
+          "title": "Texas, World War II Draft Registration Cards, 1940-1947",
+          "date_range": "1940-1947",
+          "person_count": 3576567,
+          "record_count": 1794395,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239069,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1473181",
+          "title": "United States, Census, 1860",
+          "date_range": "1860-1860",
+          "person_count": 27176265,
+          "record_count": 27176265,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 42384138,
+          "record_count": 40350030,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1610551",
+          "title": "United States, Census, 1890",
+          "date_range": "1890-1890",
+          "person_count": 7393,
+          "record_count": 6285,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
         }
       ],
       "quirks": [

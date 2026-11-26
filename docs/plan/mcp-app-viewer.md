@@ -3,7 +3,8 @@
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
 an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). M1's
 cards and M3's case file are built and on main. Still to do: their first live run on the
-deployed server; M2's five step cards, the link card first (issue #4573); M3's demo
+deployed server; M2's step cards other than the link card (plan, conflict, hypothesis and
+assess); M3's demo
 script and recording; and the router lines (issue #4297).
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
@@ -143,14 +144,21 @@ leaving the page, so a researcher can compare without losing their place.
   subject ("Mary's son"). A person's page is their life in time order, each fact
   with the evidence behind it and how strongly it is linked, the gaps, and any
   namesakes they are not.
-- **Sources,** in three groups:
+- **Sources,** in four groups:
   - **Direct mentions:** every record with its full citation and classification,
     and a chip per person with their link strength. There is no confidence badge per
     source: the same register can be confident for the child and speculative for the
     mother. The pane shows the page image beside its transcription, then the record's
     findings as labelled facts.
   - **Leads:** the list from The case.
-  - **Background:** the locality guides and outside collections.
+  - **Background:** the locality guides.
+  - **Other websites:** FamilySearch's curated outside collections, one list for each
+    place FamilySearch files links under (a county lookup also brings its state's list),
+    in name order, each closed until opened. A place with no rows is skipped, including
+    one FamilySearch refused as too large to list. Each list's line names the place and the count,
+    marks a place too large to list in full as part of a longer list, and says this is
+    FamilySearch's list for planning: being listed does not mean a site was searched or
+    paid for. It is never presented as a source.
 - **Log:** every search in time order in plain words, filterable by question and
   outcome, opening its results.
 
@@ -626,8 +634,8 @@ project.
 
 Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 
-- The **setup, search and conclusion cards**, plus `latest`; until M2, planned
-  shows setup and evidence-gathered shows search. The conclusion card's action is
+- The **setup, search and conclusion cards**, plus `latest`; until the plan card,
+  planned shows setup. Evidence-gathered shows the link card (M2, issue #4573). The conclusion card's action is
   "Open the case file". It gains "Compare with FamilySearch" in M3, as one line that
   opens that page, and `latest` shows the same line under whatever card it draws: "This
   research found 2 new relatives and 3 new facts that aren't on FamilySearch yet", each

@@ -47,6 +47,11 @@ _WRITERS: dict[str, tuple[str, str]] = {
     "tree_forget":          ("tree",        "forget"),
     "timeline_build":       ("timelines",   "append"),
     "build_external_search_url": ("log",    "append"),
+    # A nil `record_search` writes the search's own log entry (issue #4527), the
+    # same shape `build_external_search_url` writes, so it records the same way.
+    "record_search":        ("log",         "append"),
+    # `image_transcribe` logs its own page read in a project (issue #4721).
+    "image_transcribe":     ("log",         "append"),
 }
 
 # Fields that name something a diff should be able to reach back to.

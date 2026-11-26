@@ -215,6 +215,18 @@ tree_edit({
   fact into a couple event is refused (§7); editing one already there is not.
   `add_person` and `add_relationship` apply the same `primary: false` deletion
   to each inline fact they author.
+- **`primary` follows its claim** (Decision 34 of `docs/plan/conclusion-tree.md`,
+  rule id `primary-claimed`, warn mode until Stage 1c). After every op applies,
+  each fact the call left `primary: true` that no live affirmed claim at
+  `probable` or better covers (Decision 31's join) is a finding when the call set
+  the flag (`add_fact`, `add_person`'s inline facts, `add_relationship`'s inline
+  Couple facts, `update_fact`) or moved a claimed fact's `type`, `date`,
+  `standard_date`, `place`, `standard_place` or `value` off its claim. Each comes
+  back in `validation.warnings` as `Will be refused: personId <id>, factId <id>: …`
+  (or `relationshipId <id>, factId <id>`), since a fact id alone is ambiguous across
+  persons. A primary no claim covered before the call (legacy or imported) is
+  never a finding when corrected (Decision 24). In refuse mode the same findings
+  refuse the write. tree_correct shares this applier.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred
@@ -276,6 +288,30 @@ tree_edit({
   - **A self-Couple is refused** — a person cannot be their own spouse, and the
     pair would survive every downstream rule that reads the two endpoints as
     different people.
+  - **A pair a proof summary rules out is refused** (Decision 10 of `docs/plan/conclusion-tree.md`) — when a
+    live claim with `proof_tier: "disproved"` covers the proposed edge, or the
+    existing edge a corroboration would land on (an untyped edge matches any
+    subtype), nothing lands, and the error names the summary and the claim. A
+    disproof naming a subtype covers only that subtype, untyped and Biological
+    reading as one; an untyped disproof covers the whole pair, so "not the
+    biological father" leaves a Step edge free. Only proof-conclusion can revise
+    the claim, which lifts it. It refuses at once, with no warn mode: no
+    disproved claim existed before Stage 1b.
+- **Synthetic warnings that fire without claims** (Decisions 7 and 32 of `docs/plan/conclusion-tree.md`), justified through the warning gate like any
+  introduced warning:
+  - `removeImport|<holder>|<factId>` or `removeImport|<relationshipId>` — a `remove`
+    that drops a fact or edge the import baseline (Decision 7, built on the
+    pre-call tree from `starting-tree.gedcomx.json`) reads as an import, which no
+    live `disproved` claim covers. With no starting tree, a ref-less object reads as
+    an import too, and the message says so. A fact that leaves with its removed
+    Couple edge is that edge's to answer only when the edge itself warns or a
+    disproof covers it; on any other removed edge its facts are judged on their own.
+    A fact edited in place stops matching the baseline, so editing an import and
+    then removing it warns on neither write (Stage 1b warns on removals and retypes,
+    not edits).
+  - `retypeUnclaimed|<relationshipId>|<subtype>` — an `update_relationship` to a
+    subtype no live affirmed claim covering the edge names (untyped and
+    Biological agreeing: an untyped claim names Biological).
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
@@ -329,7 +365,10 @@ tree_edit({
   untyped edge but no typed one); refuses a Couple, which carries no `subtype`
   (`TREE_COUPLE_FIELDS`; the simplified-GedcomX `parent_subtype` enum is
   ParentChild's); and refuses a retype that would make the edge match another
-  edge already on the pair (`relationshipMatches`), naming that edge. This is the
+  edge already on the pair (`relationshipMatches`), naming that edge. It also
+  refuses a retype that newly brings the edge under a live `disproved` claim
+  (the subtype scope above), naming the summary and claim; a retype away from a
+  ruled-out subtype passes. This is the
   op `add_relationship`'s corroboration warning names, so a subtype only ever
   moves on an explicit correction.
 - **`remove`** `{ factId }` **or** `{ relationshipId }` — delete that entry. **Only
@@ -577,7 +616,10 @@ parent arrives by a new edge, a merge, or a parent's gender being set. No
 `warningJustifications` entry passes it: the refusal leads with the route, and
 asks for justifications only for any other warnings the same write introduces.
 An adoptive, step, foster or guardian parent is written with that subtype and is
-never counted. Each value names one parent as
+never counted. Nor is a parent whose edge reads set aside or ruled out in a proof
+summary's claims (`setAsideParents`), on either side, so the concluded parent's
+edge lands beside a set-aside import; a parent with no claim still competes, and
+with no claims the refusal and its routing are unchanged. Each value names one parent as
 `"<personId> <name> (<evidence>)"`. The evidence is the call's
 `sourceAssertionId` for the proposed edge; else the parentage assertions
 `person_evidence` links to that parent on the edge's sources, plus
@@ -852,6 +894,8 @@ Sequence (validate-before-persist, tree-only):
 | `projectPath` missing `tree.gedcomx.json` / invalid JSON | input error; write nothing |
 | An op cites a record onto a fact or name of a person with a namesake row, and the record does not tie to them (§4.5) | refused; write nothing; the error names the record, why it does not tie, and the route |
 | `personId` / `factId` / `nameId` / `relationshipId` / `sourceId` not found in the on-disk tree | staleness error; write nothing |
+| `add_relationship` proposes a pair a live `disproved` claim covers (a subtype-naming disproof covers that subtype only), or would corroborate an existing edge one covers | refused, new edge and corroboration alike; write nothing; the error names the summary and claim, and that proof-conclusion revises it |
+| `update_relationship` retypes an edge onto a subtype a live `disproved` claim covers, when its current subtype is not covered | refused; write nothing; the error names the summary and claim |
 | `operation` requires a payload that is absent (e.g. `add_fact` with no `fact`, `add_source` with no `source`, `update_source` with no `sourceId`/`source`) | input error |
 | `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
 | `add_source` with a source missing `title` | validation failure; write nothing (the shared validate-before-persist pass requires `[id, title]`) |
@@ -875,7 +919,7 @@ Sequence (validate-before-persist, tree-only):
 | FamilySearch standardized a fact's place text differently on the record personas it is about | leave `standard_place` unset, look nothing up, and add a warning naming the values (§4.1.1) |
 | A supplied `standard_place` on a fact with no place, naming another country, its place text does not confirm, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
 | `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
-| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 | Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
 
@@ -900,6 +944,12 @@ The caller (`tree-edit` skill) still:
 ---
 
 ## 9. Test plan (vitest, mirroring the merge tool tests)
+
+- **disproved pair** — `add_relationship` refuses a pair a disproved claim covers,
+  naming the summary; the corroborate path refuses it too, including a Step add
+  onto a ruled-out untyped edge and an untyped add onto a ruled-out Step edge; a
+  disproved claim on another pair does not refuse, and a Biological disproof
+  leaves a Step edge free (added or corroborated).
 
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
   same-type primary; `primary: false` is deleted rather than stored, on
@@ -963,8 +1013,9 @@ The caller (`tree-edit` skill) still:
   notes land on it, and an inline primary fact takes `primary` from the edge's
   existing one of that type (no swap on a newly created edge).
 - **update_relationship** — retypes a ParentChild edge; refuses an empty or
-  whitespace subtype, a Couple, an unknown id, and a retype that would duplicate
-  an edge already on the pair, writing nothing in each case.
+  whitespace subtype, a Couple, an unknown id, a retype that would duplicate
+  an edge already on the pair, and a retype onto a ruled-out subtype, writing
+  nothing in each case; a retype away from a ruled-out subtype passes.
 - **fact payload shape** — a nested `{ original }` date (or non-string
   place/standard_date/…) is rejected on every fact write path (add_fact person +
   relationship, update_fact, add_person inline, add_relationship facts) with an

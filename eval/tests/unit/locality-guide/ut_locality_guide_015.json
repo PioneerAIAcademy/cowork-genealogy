@@ -39,9 +39,11 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-pennsylvania-quaker",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Recognize the 1793 yellow fever epidemic in Philadelphia. Mention church burial registers, hospital logs, city council reports, and newspaper notices. Highlight repositories like Pennsylvania State Archives, city archives, churches, and historical societies. Avoid modern health databases or CDC records and statewide vital registration as if they existed in 1793."
+    "Recognize the 1793 yellow fever epidemic in Philadelphia. The fixtures name church burial registers, the minutes of the citizens' relief committee and the records of Bush Hill hospital, held by the Philadelphia City Archives, the Historical Society of Pennsylvania and various churches; mention these. No fixture names newspaper notices, city council reports or the Pennsylvania State Archives, so do not require them; a newspaper link an external_links_search result returned is grounded. Avoid modern health databases or CDC records and statewide vital registration as if they existed in 1793."
   ]
 }

@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_person_evidence_up1",
     "skill": "person-evidence",
-    "name": "userPresent: no resolves a weak match downward, on a wrap-up",
+    "name": "A wrap-up delegation with userPresent: no: a weak match still gets no link",
     "type": "positive",
-    "description": "Plan section B2. The downward resolution used to key on 'an autonomous run where no user can ever confirm'. A wrap-up has the researcher present and still needs it, so the rule now keys on the delegation's `userPresent: no`. `ut_person_evidence_023` is the autonomous half of this; this is the wrap-up half, and it is the case the old wording could not express.",
+    "description": "Plan section B2. The router passes person-evidence `userPresent: no` on a wrap-up, but the agent receives the field and does not read it: a weak match gets no link on every run, whether or not a user is present. `ut_person_evidence_023` is the autonomous half of this; this is the wrap-up half.",
     "tags": [
       "step-mode",
       "wrap-up"
@@ -22,8 +22,8 @@
   },
   "judge_reads_files": true,
   "judge_context": [
-    "`userPresent: no` is what makes the downward resolution apply. The researcher being mid-conversation is irrelevant: they asked to wrap up, so there is nobody to pause with on THIS link.",
-    "A weak match, or one capped at `speculative` by a qualitative conflict, becomes a NO-LINK: no `pe_` entry, and no rejection recorded either — only the researcher records one.",
+    "The no-link rule applies whether or not a user is present (lead ruling 2026-11-15): the agent decides every link itself and never asks. The delegation's `userPresent: no` changes nothing here.",
+    "A weak match, or one a qualitative conflict rules out, is a NO-LINK: no `pe_` entry, and no rejection recorded either — only the researcher records one.",
     "The absence of a user never upgrades confidence. Linking at `probable` to close the question off is the failure this rule exists for.",
     "The returned summary names the candidate, the score, and what conflicted, so the researcher can pick it up later."
   ]

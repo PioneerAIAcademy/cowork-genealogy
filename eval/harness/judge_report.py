@@ -1,6 +1,6 @@
 """Non-discrimination scan for the *unit* eval judge — the free calibration pass.
 
-The unit judge grades every unit run (`claude-haiku-4-5`, temperature pinned to 0)
+The unit judge grades every unit run (`claude-sonnet-4-6`, temperature pinned to 0)
 and nothing measures it. `make e2e-calibrate` measures a *different* judge, on a
 different model and cadence. `/audit-rubric` defines the right checks but runs one
 skill at a time, by LLM judgment, only when someone remembers to invoke it — which
@@ -29,7 +29,7 @@ Two definitions do the work, and both are load-bearing:
   accuracy`, `Result triage`, `Actionability`, `Accuracy` — collapsing the corpus
   from ~169 keys to ~93 and averaging two suites' rubrics into one reading.
 
-Scope, deliberately: **one run log per skill**, the newest released-or-candidate.
+Scope, deliberately: **one run log per skill**, the newest committed one.
 An older log's scores describe a SKILL.md and rubric that no longer exist, and that
 depth read is `rubric-critic`'s job. The choice is not cosmetic — the two readings
 disagree on roughly a third of dimensions.

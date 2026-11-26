@@ -14,6 +14,7 @@
  * a connector-only tool is advertised to the connector and to nobody else.
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { PROJECT_EXEMPT_TOOLS } from "../src/utils/project-gate.js";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, posix } from "node:path";
@@ -320,11 +321,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   {
     tool: "project_create",
-    label: "project_create (no personId)",
+    label: "project_create (blank personId)",
     offline: true,
-    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a create with no person refused?" }),
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a blank personId refused?", personId: " " }),
     expect: (res) => ({
-      ok: res.body?.ok === false && carries(res, "personId is required"),
+      ok: res.body?.ok === false && carries(res, "personId is blank"),
       detail: brief(res, 300),
     }),
   },
@@ -616,6 +617,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // P1 carries no indexed attachment, so this reaches an empty screen: the
+    // transport and the reads, not the checks (Vitest covers those).
+    tool: "source_screen",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
     // transport and the read, not the event logic (Vitest covers that).
     tool: "timeline_build",
@@ -653,10 +662,38 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     },
   },
   {
+    // No identity claim covers P1 and P2, so the merge is refused until justified
+    // (Decision 13 of docs/plan/conclusion-tree.md).
     tool: "merge_tree_persons",
+    label: "merge_tree_persons (refused: no identity claim)",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath, merges: [["P1", "P2"]] }),
-    expect: okTrue,
+    expect: (res) => ({
+      ok: res.body?.ok === false && res.body?.reason === "unjustified_warnings",
+      detail: brief(res),
+    }),
+    after: (res, ctx) => {
+      ctx.values.mergeWarningIds = (res.body?.warnings ?? []).map((w: any) => w?.warningId).filter(Boolean);
+    },
+  },
+  {
+    tool: "merge_tree_persons",
+    label: "merge_tree_persons (justified)",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      merges: [["P1", "P2"]],
+      warningJustifications: ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).map((warningId) => ({
+        warningId,
+        justification: "The user instructed this merge.",
+      })),
+    }),
+    // With no warning ids the refused step above already failed; say so here
+    // rather than report the re-merge's unrelated error.
+    expect: (res, ctx) =>
+      ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).length === 0
+        ? { ok: false, detail: "skipped: the refused merge above returned no warning ids to justify" }
+        : okTrue(res),
   },
   {
     tool: "tree_forget",
@@ -708,7 +745,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "build_external_search_url",
     offline: true,
-    args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
+    args: () => ({ site: "findagrave", baseUrl: "https://www.findagrave.com/memorial/search", attributes: { surname: "Smoke" } }),
     expect: okTrue,
   },
   {
@@ -738,6 +775,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   tokenStep("collections_search", { standardPlace: "England" }),
   tokenStep("source_attachments", { uris: ["ark:/61903/1:1:QVS9-DHDB"] }),
   tokenStep("image_search", { imageGroupNumber: "004884748" }),
+  // The one shape measured to answer (issue #4632): the Peru page with its cc.
+  tokenStep("image_index", { imageId: "ark:/61903/3:1:33SQ-GYY1-B2G", collectionId: "1803958" }),
   tokenStep("volume_search", { standardPlace: "England" }),
   tokenStep("same_person", {
     gedcomx1: { persons: [{ id: "A" }] },
@@ -808,6 +847,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     count: 3,
     hydrate: 2,
   }),
+  // The other path: one entry by its id, which makes no search and no place call.
+  { ...tokenStep("catalog_search", { catalogId: "koha:36984" }), label: "catalog_search (catalogId)" },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
@@ -848,6 +889,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
     expect: (res) => ({
       ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "locality_survey",
+    args: (ctx) => ({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1850, endYear: 1880, projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok:
+        !res.isError &&
+        Array.isArray(res.body?.pagesRead) &&
+        res.body.pagesRead.length === 4 &&
+        typeof res.body?.staged?.resultsRef === "string",
       detail: brief(res),
     }),
   },
@@ -909,6 +962,13 @@ export interface RunPlanResult {
   failures: string[];
 }
 
+/** Every tool but six requires a project, so a row that names none gets the smoke's own,
+ *  which the driver seeds in the rows that open the plan. */
+function withProject(tool: string, args: Record<string, unknown>, ctx: SmokeCtx): Record<string, unknown> {
+  if (PROJECT_EXEMPT_TOOLS.has(tool) || "projectPath" in args) return args;
+  return { ...args, projectPath: ctx.projectPath };
+}
+
 /** Execute the plan in order, one report line per call; returns the failing labels. */
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
   const steps = CALL_PLAN.filter((s) => (!opts.offlineOnly || s.offline) && (ctx.connector || !s.connectorOnly));
@@ -928,7 +988,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     let verdict: Expectation;
     try {
       if (step.before) await step.before(ctx);
-      const res = await call(step.tool, step.args(ctx));
+      const res = await call(step.tool, withProject(step.tool, step.args(ctx), ctx));
       verdict = step.expect(res, ctx);
       step.after?.(res, ctx);
     } catch (error) {

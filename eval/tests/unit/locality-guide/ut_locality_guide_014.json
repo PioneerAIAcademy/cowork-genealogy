@@ -36,6 +36,10 @@
     "wiki-search-pennsylvania-vital-records",
     "wikipedia-search-homestead-strike",
     "wiki-place-page-any",
+    "wiki-read-allegheny-county-pennsylvania-genealogy-part-2",
+    "wiki-read-allegheny-county-pennsylvania-genealogy-part-3",
+    "wiki-read-allegheny-county-pennsylvania-genealogy",
+    "wiki-read-pennsylvania-vital-records",
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
@@ -43,7 +47,9 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-pennsylvania",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Recognize Pittsburgh\u2019s steel industry boom in the late 1800s. Mention employment registers, union lists, city directories, census schedules, and tax rolls. Highlight repositories like Heinz History Center, Pennsylvania State Archives, Carnegie Library, and National Archives. Avoid modern employment databases or HR systems and statewide vital registration as the main source for occupational data."

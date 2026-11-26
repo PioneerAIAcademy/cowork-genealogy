@@ -369,6 +369,92 @@ def test_an_objective_rewrite_by_a_non_owner_passes():
     check_research(before, after, RESEARCH, POSITIVE, tool_calls=[])
 
 
+_REOPEN_CALL = [{"tool": "mcp__genealogy__research_append", "args": {}}]
+
+
+def test_research_appends_own_reopen_passes_ownership():
+    """Issue #4698. The engine sets a completed project back to active when a
+    call leaves a question unresolved. Question writers are not project
+    callers, so without `_explained_by_project_reopen` every such unit run
+    fails ownership. Deleting that helper makes this test fail.
+    """
+    before = _with_project(research([SURVIVOR]), status="completed")
+    after = _with_project(research([SURVIVOR]), status="active", updated="2026-11-20")
+    check_research(before, after, RESEARCH, POSITIVE, tool_calls=_REOPEN_CALL)
+
+
+def test_an_explicit_status_write_producing_the_same_delta_still_fails():
+    """The reopen authorization matches a DELTA SHAPE, and a non-owner writing
+    `status: "active"` on a completed project produces exactly that shape. Only
+    the call log distinguishes the two, so without `_wrote_project_status` the
+    ownership check launders the write the project row exists to catch.
+    """
+    before = _with_project(research([SURVIVOR]), status="completed")
+    after = _with_project(research([SURVIVOR]), status="active", updated="2026-11-20")
+    with pytest.raises(AssertionError):
+        check_research(
+            before,
+            after,
+            RESEARCH,
+            POSITIVE,
+            tool_calls=[
+                {
+                    "tool": "mcp__genealogy__research_append",
+                    "args": {"section": "project", "op": "update", "fields": {"status": "active"}},
+                }
+            ],
+        )
+
+
+def test_the_same_write_sent_as_a_stringified_batch_also_fails():
+    """`ops` arrives stringified on some paths; the walk must decode it, as its
+    siblings in this module do, or the laundering returns by another spelling."""
+    import json as _json
+
+    before = _with_project(research([SURVIVOR]), status="completed")
+    after = _with_project(research([SURVIVOR]), status="active", updated="2026-11-20")
+    with pytest.raises(AssertionError):
+        check_research(
+            before,
+            after,
+            RESEARCH,
+            POSITIVE,
+            tool_calls=[
+                {
+                    "tool": "mcp__genealogy__research_append",
+                    "args": {
+                        "ops": _json.dumps(
+                            [{"section": "project", "op": "update", "fields": {"status": "active"}}]
+                        )
+                    },
+                }
+            ],
+        )
+
+
+@pytest.mark.parametrize(
+    "before_fields, after_fields, why",
+    [
+        ({"status": "paused"}, {"status": "active"}, "only completed reopens"),
+        ({"status": "completed"}, {"status": "paused"}, "only active is the reopen target"),
+        (
+            {"status": "completed"},
+            {"status": "active", "objective": "A different goal"},
+            "a second field rides along",
+        ),
+    ],
+)
+def test_a_project_write_that_is_not_the_reopen_still_fails(before_fields, after_fields, why):
+    """The other direction: the authorization is one exact delta, not a licence
+    to write `project.status`. Without these, a helper that returned True on any
+    status change would pass the test above and open the field entirely.
+    """
+    before = _with_project(research([SURVIVOR]), **before_fields)
+    after = _with_project(research([SURVIVOR]), **after_fields)
+    with pytest.raises(AssertionError):
+        check_research(before, after, RESEARCH, POSITIVE, tool_calls=_REOPEN_CALL)
+
+
 def test_a_title_rewrite_by_a_non_owner_still_fails():
     """The other direction: only `objective` and `updated` were opened."""
     before = _with_project(research([SURVIVOR]), title="Old")

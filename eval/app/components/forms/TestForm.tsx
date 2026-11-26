@@ -197,6 +197,9 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
       if (!payload.negative) payload.negative = { correct_skill: [], explanation: '' };
       payload.negative.correct_skill = payload.negative.correct_skill ?? [];
       payload.negative.explanation = payload.negative.explanation ?? '';
+      // The runnability gate refuses na_dimensions on a negative test, and the
+      // form has no field to remove it, so drop it here.
+      delete payload.na_dimensions;
     } else {
       delete payload.negative;
     }
@@ -311,7 +314,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                 />
                 <Switch
                   label="Hold out from the skill-improver"
-                  description="Reserve this test as a generalization check. The body-optimizer won't read or tune against it when proposing SKILL.md edits — it only checks afterward whether the edit helped. The harness still runs, grades, and releases it like any other test. Mark ~2–3 diverse, representative tests and keep them stable."
+                  description="Reserve this test as a generalization check. The body-optimizer won't read or tune against it when proposing SKILL.md edits — it only checks afterward whether the edit helped. The harness still runs and grades it like any other test. Mark ~2–3 diverse, representative tests and keep them stable."
                   checked={!!form.values.test.holdout}
                   onChange={(e) => form.setFieldValue('test.holdout', e.currentTarget.checked)}
                 />

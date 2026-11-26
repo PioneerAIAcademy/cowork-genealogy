@@ -14,6 +14,7 @@ agent being broken rather than as a missing decision.
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 
 import pytest
@@ -130,13 +131,69 @@ def test_a_turn_init_project_opens_is_grouped_by_the_step_after_it():
     assert sb.step_allowed(["init-project", "search-hints"], "search-records") is False
 
 
-def test_a_job_after_init_project_keeps_the_setup_chain():
-    assert sb.step_allowed(["init-project"], "question-selection") is True
-    assert sb.step_allowed(["init-project", "question-selection"], "locality-guide") is True
-    assert sb.step_allowed(["init-project", "question-selection"], "research-plan") is False
-    # The bounded locality deliverable fixes `setup` too, so question-selection
-    # may follow it: only the router's prose keeps it out of a bounded turn.
-    assert sb.step_allowed(["init-project", "locality-guide"], "question-selection") is True
+def test_a_job_stops_after_init_project():
+    """Stop 1: a turn init-project opens never chooses or plans the question."""
+    assert sb.step_allowed(["init-project"], "question-selection") is False
+    assert sb.step_allowed(["init-project"], "research-plan") is False
+    # The bounded deliverables still run in the turn that created the project.
+    assert sb.step_allowed(["init-project"], "search-records") is True
+    assert sb.step_allowed(["init-project"], "locality-guide") is True
+
+
+def test_a_bounded_locality_turn_admits_nothing_further():
+    """locality-guide's home group is `plan`, which would admit research-plan."""
+    assert sb.step_allowed(["init-project", "locality-guide"], "research-plan") is False
+    assert sb.step_allowed(["init-project", "locality-guide"], "question-selection") is False
+    assert sb.step_allowed(["init-project", "locality-guide"], "locality-guide") is True
+
+
+def test_a_denial_after_init_project_offers_choosing_the_question():
+    for candidate in ("research-plan", "question-selection", "person-evidence"):
+        reason = sb.deny_reason(candidate, "step", ["init-project"])
+        assert "choosing the question" in reason, candidate
+        assert sb.offered_step(reason) == "question", candidate
+    late = sb.deny_reason("research-plan", "step", ["init-project", "locality-guide"])
+    assert sb.offered_step(late) == "question"
+    # Once a bounded step fixed the group, an out-of-group step offers itself.
+    assert sb.offered_step(
+        sb.deny_reason("person-evidence", "step", ["init-project", "search-records"])
+    ) == "link"
+
+
+def test_choosing_the_question_is_its_own_step():
+    """Stop 2: question-selection ends its turn before any plan."""
+    assert sb.home_group("question-selection") == "question"
+    assert sb.step_allowed(["question-selection"], "locality-guide") is False
+    assert sb.step_allowed(["question-selection"], "research-plan") is False
+    assert sb.offered_step(sb.deny_reason("research-plan", "step", ["question-selection"])) == "plan"
+
+
+def test_a_verify_turn_admits_the_question_but_no_plan():
+    """forget-and-rederive in verify mode, then the question, in one turn."""
+    opened = ["forget-and-rederive"]
+    assert sb.step_allowed(opened, "question-selection") is True
+    assert sb.step_allowed(opened, "locality-guide") is False
+    assert sb.step_allowed(opened, "research-plan") is False
+    # A practice run keeps its chain.
+    assert sb.step_allowed(opened, "init-project") is True
+    assert sb.step_allowed(opened, "record-structurer") is True
+    assert sb.home_group("forget-and-rederive") == "forget"
+
+
+def test_a_broad_verify_audits_then_checks_the_warnings_in_one_turn():
+    """The audit of the attached sources, then check-warnings; no question, no removal."""
+    assert sb.step_allowed(["source-evaluation"], "check-warnings") is True
+    assert sb.step_allowed(["source-evaluation"], "question-selection") is False
+    assert sb.step_allowed(["source-evaluation"], "forget-and-rederive") is False
+    assert sb.step_allowed(["check-warnings"], "source-evaluation") is False
+    assert sb.offered_step(sb.deny_reason("source-evaluation")) == "source-evaluation"
+
+
+def test_planning_the_searches_runs_locality_guide_then_research_plan():
+    """Stop 3: an unsurveyed place is surveyed inside the plan step."""
+    assert sb.home_group("locality-guide") == "plan"
+    assert sb.step_allowed(["locality-guide"], "research-plan") is True
+    assert sb.step_allowed(["locality-guide", "research-plan"], "search-records") is False
 
 
 def test_after_init_project_a_spawn_that_is_no_step_is_still_denied():
@@ -196,9 +253,9 @@ def test_names_are_compared_after_the_last_colon():
 @pytest.mark.parametrize(
     "text,expected",
     [
-        ("keep going.", "job"),
-        ("Keep going!", "job"),
-        ("  KEEP GOING  ", "job"),
+        ("keep going.", "step"),
+        ("Keep going!", "step"),
+        ("  KEEP GOING  ", "step"),
         ("wrap it up.", "wrapup"),
         ("Wrap it up", "wrapup"),
         ("continue.", "step"),
@@ -211,8 +268,12 @@ def test_step_mode_is_exact_phrase_only(text, expected):
     assert sb.step_mode(text) == expected
 
 
-def test_job_mode_allows_every_step():
-    assert sb.step_allowed(["search-records"], "proof-conclusion", mode="job") is True
+def test_keep_going_is_an_ordinary_step_turn():
+    """"Keep going." is retired: it runs one step, the same as "Continue."."""
+    mode = sb.step_mode("Keep going.")
+    assert sb.step_allowed(["search-records"], "proof-conclusion", mode=mode) is False
+    assert not hasattr(sb, "next_auto_reply")
+    assert not hasattr(sb, "REPLY_KEEP_GOING")
 
 
 def test_wrapup_allows_its_members_in_order():
@@ -377,7 +438,66 @@ def test_step_ctx_on_an_empty_project_is_closed_not_crashing():
 def test_the_deny_reason_names_the_step_it_stopped():
     assert "running the searches" in sb.deny_reason("search-records")
     assert "planning the searches" in sb.deny_reason("research-plan")
-    assert "linking the records" in sb.deny_reason("person-evidence")
+    assert "linking the records to people in this project" in sb.deny_reason("person-evidence")
+
+
+_RESEARCH_SKILL = _PLUGIN / "skills" / "research" / "SKILL.md"
+
+
+def _router_table_labels() -> list[str]:
+    """The `<label>` column of research SKILL.md's `| Next step | <label> |` table."""
+    lines = _RESEARCH_SKILL.read_text(encoding="utf-8").splitlines()
+    starts = [i for i, line in enumerate(lines) if re.match(r"\|\s*Next step\s*\|\s*`<label>`\s*\|", line)]
+    assert len(starts) == 1, "research SKILL.md must hold exactly one `| Next step | <label> |` table"
+    labels = []
+    for line in lines[starts[0] + 2 :]:
+        if not line.startswith("|"):
+            break
+        labels.append(line.strip().strip("|").split("|")[-1].strip())
+    return labels
+
+
+def _plugin_prose_offers() -> list[str]:
+    """Every "Continue with <label>?" a plugin skill or agent body spells out.
+
+    Line wraps are joined; a backticked label is kept verbatim, inner spaces included.
+    """
+    offers = []
+    for path in sorted(_PLUGIN.glob("**/*.md")):
+        text = re.sub(r"\s*\n\s*", " ", path.read_text(encoding="utf-8"))
+        for ticked, bare in re.findall(r"Continue with (?:`([^`]*)`|([^?\"`]{1,80}?))\?", text):
+            label = ticked or bare
+            if label not in ("<label>", "…"):
+                offers.append(label)
+    return offers
+
+
+def _assert_the_host_reads_it_back(label: str) -> None:
+    written = label.replace(" N ", " 3 ")
+    if written != label:
+        assert sb.offered_step(f"Continue with `{written}`?") == "extract-matches", repr(label)
+    else:
+        assert sb.offered_step(f"Continue with `{label}`?") is not None, repr(label)
+        assert label in sb.STEP_LABELS.values(), repr(label)
+
+
+def test_every_router_offer_label_is_one_the_host_reads_back():
+    """The router writes SKILL.md's label; `offered_step` looks it up in `STEP_LABELS`.
+
+    A label that differs by a word or a trailing space reads back as no offer, and
+    the reply buttons disappear with every other test still green (issue #4688).
+    """
+    table = _router_table_labels()
+    prose = _plugin_prose_offers()
+    assert len(table) >= 10, table
+    assert len(prose) >= 15, prose
+    for label in table + prose:
+        _assert_the_host_reads_it_back(label)
+
+
+def test_the_retired_link_label_still_reads_back_but_is_never_written():
+    assert sb.offered_step("Continue with `linking the records`?") == "link"
+    assert sb.offer_line("link") == "Continue with linking the records to people in this project?"
 
 
 def test_the_deny_reason_tells_the_model_to_report_and_stop():
@@ -407,15 +527,15 @@ def test_no_offer_means_no_buttons():
     assert sb.reply_options("", _with_question()) == []
 
 
-def test_an_ordinary_offer_gets_continue_keep_going_and_wrap_it_up():
+def test_an_ordinary_offer_gets_continue_and_wrap_it_up():
     options = sb.reply_options("search-records", _with_question())
-    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP]
+    assert options == [sb.REPLY_CONTINUE, sb.REPLY_WRAP_UP]
 
 
 def test_no_wrap_it_up_when_no_question_is_unresolved():
     """init-project's offer: there is nothing yet to wrap up."""
     options = sb.reply_options("question-selection", {"questions": []})
-    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING]
+    assert options == [sb.REPLY_CONTINUE]
 
 
 def test_no_wrap_it_up_beside_a_proof_conclusion_offer():
@@ -424,8 +544,11 @@ def test_no_wrap_it_up_beside_a_proof_conclusion_offer():
 
 
 def test_no_wrap_it_up_beside_a_question_selection_offer():
-    """The offer after a wrap-up, where the question may be one a conflict held open."""
+    """The offer after setup or a wrap-up, where the question may be one a conflict
+    held open."""
     assert sb.REPLY_WRAP_UP not in sb.reply_options("question-selection", _with_question())
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("question", _with_question())
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("setup", _with_question())
 
 
 def test_only_wrap_it_up_for_a_wrap_up_offer():
@@ -435,7 +558,7 @@ def test_only_wrap_it_up_for_a_wrap_up_offer():
 def test_a_wrap_up_turn_offering_the_next_question_still_gets_buttons():
     """Keyed on the offer line, never on the step the turn ran."""
     options = sb.reply_options("question-selection", _with_question())
-    assert sb.REPLY_CONTINUE in options and sb.REPLY_KEEP_GOING in options
+    assert sb.REPLY_CONTINUE in options
 
 
 _LOW = {"stopped_because": "resources_spent", "justification": "Overturn risk: low. Two sources agree."}
@@ -464,116 +587,6 @@ def test_search_more_goes_once_the_question_is_concluded():
     research = _with_question(search_stop=_LOW)
     research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
     assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", research)
-
-
-# ---------------------------------------------------------------------------
-# next_auto_reply (section A2)
-# ---------------------------------------------------------------------------
-
-
-def _reply(state=None, mode="job", prev="search-records", step="person-evidence",
-           offer="research-exhaustiveness", outcome="ok"):
-    return sb.next_auto_reply(state, mode, prev, step, offer, outcome)
-
-
-def test_an_ordinary_offer_is_answered_with_keep_going():
-    out = _reply()
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    assert out["state"]["replies"] == 1
-
-
-def test_only_a_job_turn_gets_a_reply():
-    """A "Continue." or "Wrap it up." turn ends the run."""
-    assert _reply(mode="step")["reply"] is None
-    assert _reply(mode="wrapup")["reply"] is None
-
-
-def test_a_turn_that_did_not_finish_cleanly_ends_the_run():
-    assert _reply(outcome="stopped")["reply"] is None
-    assert _reply(outcome="error")["reply"] is None
-    assert _reply(outcome="completed")["reply"] == sb.REPLY_KEEP_GOING
-
-
-def test_no_offer_ends_the_run():
-    """Including a step that ended on a question for the researcher."""
-    assert _reply(offer=None)["reply"] is None
-
-
-def test_a_wrap_up_offer_ends_the_run_because_only_the_researcher_answers_it():
-    assert _reply(offer=sb.WRAP_UP)["reply"] is None
-
-
-def test_a_proof_conclusion_turn_ends_the_run():
-    assert _reply(step="proof-conclusion", offer="question-selection")["reply"] is None
-
-
-def test_the_run_stops_at_max_auto_replies():
-    at_cap = {"replies": sb.MAX_AUTO_REPLIES, "planning_rounds": 0, "answered": []}
-    assert _reply(state=at_cap)["reply"] is None
-    under = {"replies": sb.MAX_AUTO_REPLIES - 1, "planning_rounds": 0, "answered": []}
-    assert _reply(state=under)["reply"] == sb.REPLY_KEEP_GOING
-
-
-def test_a_repeated_step_and_offer_pair_ends_the_run():
-    """A link-and-assess cycle that never plans."""
-    first = _reply()
-    second = sb.next_auto_reply(
-        first["state"], "job", "search-records", "person-evidence",
-        "research-exhaustiveness", "ok",
-    )
-    assert second["reply"] is None
-
-
-def test_the_first_planning_round_is_allowed():
-    out = _reply(prev="research-exhaustiveness", step="research-plan", offer="search-records")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    assert out["state"]["planning_rounds"] == 1
-
-
-def test_a_research_plan_offer_after_a_planning_round_gets_wrap_it_up():
-    used = {"replies": 1, "planning_rounds": 1, "answered": []}
-    out = _reply(state=used, prev="person-evidence", step="research-exhaustiveness",
-                 offer="research-plan")
-    assert out["reply"] == sb.REPLY_WRAP_UP
-
-
-def test_a_second_planning_round_ends_the_run():
-    used = {"replies": 2, "planning_rounds": 1, "answered": []}
-    out = _reply(state=used, prev="research-exhaustiveness", step="research-plan",
-                 offer="search-records")
-    assert out["reply"] is None
-
-
-def test_the_ordinary_first_plan_does_not_spend_the_planning_round():
-    """research-plan after setup or after itself is the first plan, not a re-plan."""
-    for prev in ("question-selection", "locality-guide", "init-project", "research-plan"):
-        out = _reply(prev=prev, step="research-plan", offer="search-records")
-        assert out["reply"] == sb.REPLY_KEEP_GOING, prev
-        assert out["state"]["planning_rounds"] == 0, prev
-
-
-def test_a_planning_round_clears_the_answered_pairs():
-    """Pairs are tracked since the run's LAST planning round."""
-    state = {"replies": 1, "planning_rounds": 0,
-             "answered": [["research-plan", "search"]]}
-    out = _reply(state=state, prev="research-exhaustiveness", step="research-plan",
-                 offer="search-records")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
-    # Cleared, then this turn's own pair appended -- so the one pair that stands is
-    # this one, recorded under the OFFER KEY the line parser yields.
-    assert out["state"]["answered"] == [["research-plan", "search"]]
-
-
-def test_next_auto_reply_does_not_mutate_the_state_it_was_given():
-    state = {"replies": 0, "planning_rounds": 0, "answered": []}
-    _reply(state=state)
-    assert state == {"replies": 0, "planning_rounds": 0, "answered": []}
-
-
-def test_next_auto_reply_survives_a_missing_or_junk_state():
-    assert _reply(state=None)["reply"] == sb.REPLY_KEEP_GOING
-    assert _reply(state={})["reply"] == sb.REPLY_KEEP_GOING
-    assert _reply(state={"replies": "x", "answered": "x"})["reply"] == sb.REPLY_KEEP_GOING
 
 
 # ---------------------------------------------------------------------------
@@ -617,7 +630,7 @@ def test_the_wrapup_offer_round_trips_too():
          "zero Matches", "extracting no Match", "a count on another label"],
 )
 def test_a_line_naming_no_entry_is_no_offer(text):
-    """No offer ends a "Keep going" run, so every one of these must read as None --
+    """No offer ends an unattended e2e run, so every one of these must read as None --
     a parser that guessed here would keep a run going past a question for the
     researcher, which is the failure the step boundary exists to prevent."""
     assert sb.offered_step(text) is None
@@ -655,7 +668,6 @@ def test_the_reply_functions_read_an_agent_name_and_its_key_the_same_way():
     for agent, key in (("proof-conclusion", "conclude"), ("research-plan", "plan"),
                        ("question-selection", "setup"), ("search-records", "search")):
         assert sb.reply_options(agent, research) == sb.reply_options(key, research), agent
-        assert _reply(offer=agent)["reply"] == _reply(offer=key)["reply"], agent
 
 
 def test_a_spawn_naming_no_agent_is_still_a_step():
@@ -675,7 +687,7 @@ def test_a_wrap_up_that_has_concluded_names_the_next_step_not_wrapping_up():
     under_way = sb.deny_reason("question-selection", "wrapup", ["research-plan"])
     assert "wrapping up" in under_way
     done = sb.deny_reason("question-selection", "wrapup", ["research-plan", "proof-conclusion"])
-    assert "wrapping up" not in done and sb.STEP_LABELS["setup"] in done
+    assert "wrapping up" not in done and sb.STEP_LABELS["question"] in done
 
 
 # ---------------------------------------------------------------------------
@@ -720,7 +732,32 @@ def test_a_record_structurer_stopped_in_a_review_turn_offers_the_extraction():
 def test_the_extraction_offer_gets_the_default_replies():
     research = _with_question()
     assert sb.reply_options("extract-matches", research) == [
-        sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP,
+        sb.REPLY_CONTINUE, sb.REPLY_WRAP_UP,
     ]
-    out = _reply(prev="search-full-text", step="evaluate-search-results", offer="extract-matches")
-    assert out["reply"] == sb.REPLY_KEEP_GOING
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize(
+    "tail",
+    [
+        "https://www.familysearch.org/ark:/61903/1:1:G9GJ-959",
+        "<https://www.familysearch.org/tree/person/details/G9GJ-959>",
+        "[Iram Hyde](https://www.familysearch.org/tree/person/details/G9GJ-959)",
+    ],
+)
+def test_a_trailing_link_line_does_not_hide_the_offer(tail):
+    from harness.skill_runner import load_step_boundary
+
+    b = load_step_boundary()
+    text = "Three Matches came back.\n\nContinue with `extracting the 3 Matches`?\n\n" + tail
+    assert b.offered_step(text) == "extract-matches"
+
+
+def test_a_trailing_line_with_words_still_hides_the_offer():
+    from harness.skill_runner import load_step_boundary
+
+    b = load_step_boundary()
+    text = "Continue with `planning the searches`?\n\nSee https://www.familysearch.org for more."
+    assert b.offered_step(text) is None

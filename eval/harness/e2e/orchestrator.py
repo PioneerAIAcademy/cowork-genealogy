@@ -43,7 +43,13 @@ from claude_agent_sdk import (
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
-from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
+from e2e.turn_loop import (
+    MAX_REPLIES,
+    Turn as TurnRecord,
+    accumulate_usage,
+    next_reply,
+    stream_turns,
+)
 from harness.main_thread import MAIN_THREAD
 from harness.skill_runner import load_step_boundary  # one loader for both harness planes
 from harness.auth import env_for_sdk, resolve_auth
@@ -54,15 +60,19 @@ from harness.context_policy import (
     OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    builtin_spawn_denial,  # the SHIPPED hook's predicate, not a copy
     is_subagent_call,
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    main_thread_denial,  # the SHIPPED hook's predicate, not a copy
+    route_note_hook,  # single-ask only: the SHIPPED hook's decision(), not a copy
+    relay_note_hook,  # the SHIPPED relay note, as a hosted plane adds it
     sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
-from harness.delegation import foreground_rewrite
+from harness.delegation import foreground_rewrite, keeping_the_rewrite, without_plugin_prefix
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
 from harness.sdk_query import close_query, open_query
@@ -80,6 +90,7 @@ from harness.skill_invocation import (
 )
 
 from e2e import pricing
+from e2e.avoid_guard import read_starting_state
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -631,14 +642,9 @@ def wrap_up_override(boundary, reply: str | None, turn_step: str | None,
                      wrap_up_after: str | None) -> str | None:
     """Section F's separate arm: "Wrap it up." after one named step.
 
-    An override of the REPLY, not a session mode. `next_auto_reply` is
-    production's own function and must not grow a test-only branch, and section
-    F's point is that e2e exercises the real mechanism rather than a
-    harness-shaped imitation of it.
-
-    It swaps a reply; it never invents one. A turn `next_auto_reply` already
-    ended the run on stays ended, so the arm cannot extend a run past where
-    production would have stopped it.
+    An override of the REPLY, not a session mode: it swaps a reply `next_reply`
+    chose and never invents one. A turn `next_reply` already ended the run on
+    stays ended, so the arm cannot extend a run.
     """
     if not reply or not wrap_up_after:
         return reply
@@ -651,7 +657,7 @@ def ended_on_a_question(boundary, text: str | None) -> bool:
     """Whether a turn's last text ends by asking the RESEARCHER something.
 
     A step that ends on a question only the researcher can answer writes no
-    "Continue with ...?" line, so `next_auto_reply` returns nothing and the run
+    "Continue with ...?" line, so `next_reply` returns nothing and the run
     ends there. Both tests are needed: no offer alone also describes a final
     conclusion, and a trailing "?" alone also describes the offer line itself.
 
@@ -666,15 +672,11 @@ def ended_on_a_question(boundary, text: str | None) -> bool:
     return stripped.splitlines()[-1].strip().endswith("?")
 
 
-def step_turn_mode(boundary, opening_mode: str, turn) -> str:
-    """The mode a step-mode turn RAN under (section F).
-
-    The first turn takes the run's own `--step-mode`, standing in for the researcher's
-    opening choice. Every later one is read from the message the host sent, with
-    production's own `step_mode`, so a "Wrap it up." reply is a wrapup turn here exactly
-    as it is on the worker, and the run ends after it as production's does.
-    """
-    return opening_mode if turn.index == 0 else boundary.step_mode(turn.sent)
+def step_turn_mode(boundary, turn) -> str:
+    """The mode a turn RAN under (section F), read from the message it was sent with
+    production's own `step_mode`, so a "Wrap it up." reply is a wrapup turn here
+    exactly as it is on every plane, and the run ends after it."""
+    return boundary.step_mode(turn.sent)
 
 
 def _pretool_deny(reason: str) -> dict[str, Any]:
@@ -754,7 +756,7 @@ class FixtureCaps:
     # the model made no progress for ~40 min until the wall-clock cap. Conservative
     # default; tune down once the per-turn `timeline` shows the normal max gap.
     progress_stall_seconds: int = 600
-    tool_calls: int = 300
+    tool_calls: int = 500
     max_turns: int = 250
     max_cost_usd: float = 15.0
 
@@ -769,8 +771,10 @@ class Fixture:
     judge_model: str
     caps: FixtureCaps
     expected_findings: dict[str, Any]
-    starting_research_path: Path
-    starting_tree_path: Path
+    # None for a single-ask empty-folder fixture (e2e-test-spec §16.2): both or
+    # neither. `load_fixture` (autonomous e2e) always sets both.
+    starting_research_path: Path | None
+    starting_tree_path: Path | None
     # Extra tools denied for THIS fixture's runs, beyond the universal
     # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
     # For fixtures whose ground truth derives from a source an MCP tool
@@ -790,7 +794,8 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
 
-    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # Subject person id(s): the avoid guard's edge check reads the forbidden
+    # role from the subject's side of an edge. Primary
     # source is starting-research.json's project.subject_person_ids; source_pid
     # is added when it's a real PID (not the "PID-TODO" marker).
     subject_ids: set[str] = set()
@@ -843,9 +848,9 @@ def load_caps(caps_raw: dict[str, Any]) -> FixtureCaps:
 # A fixture may bundle external-evidence captures (PDFs the real /research
 # flow expects a USER to upload from sites with no API — Ancestry, Find A
 # Grave, …). A headless run has no human, so the harness pre-provides them:
-# the docs live in `provided-documents/` and are copied into the workspace
-# root, exactly where search-external-sites expects an uploaded capture
-# (it reads them by `capture_filename`). See spec §6.2.
+# the docs live in `provided-documents/` and are copied into the workspace's
+# `uploads/`, exactly where search-external-sites and record-structurer read an
+# uploaded capture (`uploads/<name>`). See spec §6.2.
 PROVIDED_DOCS_DIRNAME = "provided-documents"
 
 
@@ -893,13 +898,16 @@ def build_workspace(
     setting_sources=["project"].
     """
     target = Path(target)
-    shutil.copy(fixture.starting_research_path, target / "research.json")
-    shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
-    # Also seed the write-once baseline the tree-encoding gate diffs against
-    # (issue #1490), matching what project_create writes in production. Without
-    # it the gate treats every seeded fact as new and manufactures the very
-    # mismatch it measures.
-    shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
+    # An empty-folder single-ask fixture has neither path and copies nothing.
+    if fixture.starting_research_path is not None:
+        shutil.copy(fixture.starting_research_path, target / "research.json")
+    if fixture.starting_tree_path is not None:
+        shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
+        # Also seed the write-once baseline the tree-encoding gate diffs against
+        # (issue #1490), matching what project_create writes in production. Without
+        # it the gate treats every seeded fact as new and manufactures the very
+        # mismatch it measures.
+        shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
@@ -923,10 +931,13 @@ def build_workspace(
                     encoding="utf-8",
                 )
 
-    # Drop bundled captures into the workspace root, where an uploaded PDF
-    # would land — the agent reads them by filename like a user upload.
-    for doc in provided_documents(fixture):
-        shutil.copy(doc, target / doc.name)
+    # Drop bundled captures into `uploads/`, where an uploaded file lands and
+    # the only place the agents' read tools reach.
+    docs = provided_documents(fixture)
+    if docs:
+        (target / "uploads").mkdir(exist_ok=True)
+    for doc in docs:
+        shutil.copy(doc, target / "uploads" / doc.name)
     return target
 
 
@@ -941,10 +952,10 @@ def _render_user_message(fixture: Fixture) -> str:
     docs = provided_documents(fixture)
     if not docs:
         return base
-    names = ", ".join(d.name for d in docs)
+    names = ", ".join(f"uploads/{d.name}" for d in docs)
     return (
         f"{base}\n\n"
-        f"(Pre-provided external captures are in the working directory: {names}. "
+        f"(Pre-provided external captures are in the project's uploads folder: {names}. "
         "When research calls for a document from an external site that's among "
         "these, read the local file instead of asking me to upload it.)"
     )
@@ -1868,7 +1879,8 @@ async def _run_agent(
     blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
 
-    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn, and
+    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn with
+    Cowork's routing sentence beside ``SOURCES_NOTE`` (``route_note_hook``), and
     the universal live-tree block is lifted, since
     a single-ask fixture has no answer key to hide. ``user_message`` defaults
     to the autonomous ``/research --autonomous`` rendering.
@@ -1999,18 +2011,16 @@ async def _run_agent(
             flush=True,
         )
 
-    # The step boundary (decision 25, rider 3). OFF unless the run asks for it: an e2e
-    # run drives a whole research flow, so enforcing by default would end every fixture
-    # at its first step. Section F turns it on for real, when the orchestrator replies
-    # to each turn with `next_auto_reply` instead of running one long turn.
+    # The step boundary (decision 25, rider 3). OFF unless the run asks for it. Section
+    # F turns it on: one step per turn, each boundary answered by the simulated
+    # researcher (`next_reply`) in an `unattended` run.
     _step_gate = None
     _boundary = None
     #: The run's turns, appended by `stream_turns` and read by the pretool hook
     #: (to stamp `step`) and the ResultMessage branch (to stamp `usage`). Empty
     #: on every non-step run, where the hook's stamp is a no-op.
     _step_turns: list[TurnRecord] = []
-    #: `next_auto_reply`'s state, carried across the run's turns. The host owns
-    #: it in production (`sessions.auto_reply`); here it is one dict.
+    #: `next_reply`'s state, carried across the run's turns.
     _reply_state: dict[str, Any] = {}
     if step_mode:
         _boundary = load_step_boundary()
@@ -2020,7 +2030,7 @@ async def _run_agent(
     _gate_turn: dict[str, Any] = {"index": None}
 
     def _turn_mode(turn) -> str:
-        return step_turn_mode(_boundary, step_mode, turn)
+        return step_turn_mode(_boundary, turn)
 
     def _current_gate():
         nonlocal _step_gate
@@ -2030,12 +2040,20 @@ async def _run_agent(
         if _gate_turn["index"] != turn.index:
             _gate_turn["index"] = turn.index
             _step_gate = _boundary.StepGate(
-                boundary=_boundary, mode=_boundary.gate_mode(_turn_mode(turn)),
+                boundary=_boundary, mode=_turn_mode(turn),
                 ctx=lambda: _boundary.step_ctx(read_research_json(workspace) or {}),
             )
         return _step_gate
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
+        # A `plugin:` on a spawn is dropped first, as the hosted planes'
+        # `foreground_rewrite` drops it, so every check below sees that agent.
+        fixed = without_plugin_prefix(input_data)
+        if fixed is None:
+            return await _pretool(input_data, _tool_use_id, _ctx)
+        return keeping_the_rewrite(await _pretool(fixed, _tool_use_id, _ctx), fixed["tool_input"])
+
+    async def _pretool(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
         # spec §11 Step 0 — record caller identity for EVERY call, including ones
         # about to be denied below (an unnamed subagent attempting a raw
@@ -2066,11 +2084,16 @@ async def _run_agent(
                 return _out
             # Allowed, so if it was the step that fixed this turn's group, record
             # which (init-project, then the step after it when one runs).
-            # `next_auto_reply` keys on the step a turn ran, and the gate is the
+            # `next_reply` keys on the step a turn ran, and the gate is the
             # only thing that knows: by the time the turn ends, the spawn is just
             # another tool call among dozens.
             if _step_turns and _gate.first_step and _step_turns[-1].step != _gate.first_step:
                 _step_turns[-1].step = _gate.first_step
+
+        # The shipped hook's deny of a built-in agent type on the main thread.
+        if (builtin_denial := builtin_spawn_denial(input_data)) is not None:
+            _emit(f"[blocked built-in spawn] {tool_name}")
+            return builtin_denial
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
@@ -2096,8 +2119,8 @@ async def _run_agent(
                         "tree_edit or tree_correct (from the main session, invoke "
                         "`@plugin:tree-edit`). These validate "
                         "before persisting. Direct file writes never validate. "
-                        "external-collections.json is written only by external_links_search given a "
-                        "projectPath (from the main session, invoke `@plugin:locality-guide`)."
+                        "external-collections.json is written only by locality_survey or external_links_search given a "
+                        "projectPath (from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
                     ),
                 },
             }
@@ -2197,6 +2220,28 @@ async def _run_agent(
             _emit(f"[blocked context call] {bare} (main-thread subagent-only tool)")
             return subagent_only_denial(bare)
 
+        # The shipped hook's MAIN_THREAD_DENIED: a tool no step may call on the
+        # main thread, e.g. `person_search` (a project starts from a person ID).
+        if (never := main_thread_denial(input_data)) is not None:
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": f"`{bare}` denied on the main thread — "
+                            + never["hookSpecificOutput"]["permissionDecisionReason"],
+                }
+            )
+            _emit(f"[blocked main-thread call] {bare}")
+            return never
+
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
         # true of image_read and false of research_append: that one is
@@ -2219,7 +2264,18 @@ async def _run_agent(
             # `section.field` and an `out_of_lane` one names a section the map
             # deliberately does not hold, so an unconditional lookup raises on
             # the three arms this was widened to serve.
-            if rule == "routed":
+            if rule == "routed" and owned == "sources":
+                # citation refines a source and never creates one, so a main
+                # thread composing one is sent to extraction, as the hook's
+                # SOURCES_REASON says, not told to delegate to citation.
+                text = (
+                    f"`{bare}` denied on `sources` — a new record goes through "
+                    "`extraction_append` (record-structurer for a non-FamilySearch "
+                    "source), and a citation refinement to the citation agent. "
+                    "Everything else in "
+                    f"`{bare}` is unaffected."
+                )
+            elif rule == "routed":
                 text = (
                     f"`{bare}` denied on `{owned}` — that section is routed to the "
                     f"{OWNED_SECTION_OWNERS[owned]} agent. Everything else in "
@@ -2443,14 +2499,23 @@ async def _run_agent(
         # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
         # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
         # through — observed killing this exact e2e run on a real FamilySearch
-        # death-certificate image (2026-07-08). Raised generously here since
-        # this is eval-harness-only config; it does not change production
-        # Cowork behavior or the tool's own inline-image ceiling.
-        max_buffer_size=10 * 1024 * 1024,
+        # death-certificate image (2026-07-08). A main-thread PDF Read also
+        # puts the file's base64 on one line twice (#4694). Mirrors the hosted
+        # planes' apps/server/app/agent/real_agent.py MAX_BUFFER_BYTES, which
+        # this harness cannot import; apps/server/tests/test_sdk_buffer.py
+        # fails if the two differ.
+        max_buffer_size=96 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[relay_note_hook])],
             # Issue #4011: the sentence every production path carries, added as Cowork does.
-            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
+            # A single ask gets all of what Cowork sends, the routing sentence too (spec §16.3).
+            "UserPromptSubmit": [
+                HookMatcher(
+                    matcher=None,
+                    hooks=[route_note_hook if single_ask else sources_note_hook],
+                )
+            ],
         },
     )
 
@@ -2565,14 +2630,9 @@ async def _run_agent(
         _answered_question = {"done": False}
 
         def _decide_reply(turn):
-            """What the host replies after this turn, via production's own function.
+            """What the simulated researcher replies after this turn (`next_reply`).
 
-            Section F's whole point: `next_auto_reply` is the function the
-            prototype worker calls, so e2e exercises the mechanism rather than a
-            harness-shaped imitation. Everything here is just gathering its
-            arguments.
-
-            The caps bound the RUN, and the host is where a step run can stop
+            A `step` run sends none: it is one turn. The caps bound the RUN, and the host is where a step run can stop
             between steps: no reply once a cap has fired. `num_turns` is per turn,
             so the turn cap is checked here on the run's sum. `cost_cap` is the
             exception: it stays a reporting threshold (spec, "`cost_cap` was a
@@ -2580,6 +2640,8 @@ async def _run_agent(
             still fires and outranks it, as the tool cap and an SDK error do.
             """
             nonlocal aborted_reason, error
+            if step_mode != "unattended":
+                return None
             run_turns = accumulate_usage(_step_turns[: turn.index + 1]).get("num_turns") or 0
             if aborted_reason in (None, "cost_cap") and run_turns > fixture.caps.max_turns:
                 aborted_reason = "max_turns"
@@ -2593,31 +2655,29 @@ async def _run_agent(
             outcome = "ok"
             if (turn.usage or {}).get("is_error"):
                 outcome = str((turn.usage or {}).get("stop_reason") or "error")
-            # The turn an answered question opens runs as `job`: without this the
-            # answer buys exactly one step and the run ends, because
-            # `next_auto_reply` replies to nothing but a `job` turn. Stamped on
-            # the turn too, so the per-step report can tell a wrap-up turn --
-            # which runs several steps -- from the step it opened with.
+            # Stamped on the turn, so the per-step report can tell a wrap-up
+            # turn -- which runs several steps -- from the step it opened with.
             mode = turn.mode = _turn_mode(turn)
-            if turn.index == _answered_question.get("opened"):
-                mode = turn.mode = "job"
-            decision = _boundary.next_auto_reply(
+            # Read once and reused below (`project_completed`) -- `research.json`
+            # does not change between the two checks in this same turn.
+            research = read_research_json(workspace)
+            decision = next_reply(
+                _boundary,
                 _reply_state,
                 mode,
                 previous,
                 turn.step,
                 _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
+                research=research,
             )
             _reply_state.clear()
             _reply_state.update(decision.get("state") or {})
             reply = decision.get("reply")
             # Section F's separate arm: answer "Wrap it up." after one named step
-            # instead of what `next_auto_reply` chose, which exercises B2's
-            # link-then-conclude path. An override of the REPLY, not a session
-            # mode -- `next_auto_reply` is production's own function and must not
-            # grow a test-only branch. The run ends after it, because the next
-            # turn reads `wrapup` and that function answers nothing for one.
+            # instead of what `next_reply` chose, which exercises B2's
+            # link-then-conclude path. The run ends after it, because the next
+            # turn reads `wrapup` and `next_reply` answers nothing for one.
             reply = wrap_up_override(_boundary, reply, turn.step, wrap_up_after)
             # Section F: "answers the fixture's own question when asked for a
             # single one". A step that ends on a question for the researcher
@@ -2625,19 +2685,18 @@ async def _run_agent(
             # question already on file. Answered at most once: a second time
             # would be a loop, and a run that asks twice has not understood the
             # answer, which is a finding rather than something to paper over.
-            # Only a `job` turn, and only while there is research left to do. The
+            # Never after a wrap-up turn, and only while there is research left to do. The
             # arm existed to keep a run going past a question it could answer; a
             # concluded or completed project has nothing to keep going, and
             # answering a proof-conclusion turn's closing courtesy question
             # ("shall I look for his parents next?") would run a new step on a
             # finished project and change the very files the judge grades.
             if (not reply and not _answered_question["done"]
-                    and outcome == "ok" and mode == "job"
+                    and outcome == "ok" and mode != "wrapup"
                     and turn.step != "proof-conclusion"
-                    and not project_completed(read_research_json(workspace) or {})
+                    and not project_completed(research or {})
                     and ended_on_a_question(_boundary, _last_text(turn))):
                 _answered_question["done"] = True
-                _answered_question["opened"] = turn.index + 1
                 reply = fixture.researcher_question
                 _emit(f"[host reply] turn {turn.index} answers the fixture's own question")
             if reply:
@@ -2653,7 +2712,7 @@ async def _run_agent(
                     first_message=current_prompt,
                     decide_reply=_decide_reply,
                     turns=_step_turns,
-                    max_replies=_boundary.MAX_AUTO_REPLIES,
+                    max_replies=MAX_REPLIES,
                 ).__aiter__()
             else:
                 iterator = live["it"] = open_query(
@@ -3502,7 +3561,7 @@ async def run_e2e_test(
     deny_project_reads: bool = False,
     context_1m: bool = False,
     tool_search: bool = True,
-    step_mode: str | None = "job",
+    step_mode: str | None = "unattended",
     wrap_up_after: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
@@ -3641,12 +3700,19 @@ async def run_e2e_test(
                     model=fixture.judge_model,
                 )
                 # Deterministic §3.4.1 backstop: an `avoid` finding whose
-                # target is still in the final tree is forced to matched:
-                # "false" and the verdict recomputed (downgrade-only).
+                # forbidden record, edge or value is in the final tree but not
+                # the starting tree is forced to matched: "false" and the
+                # verdict recomputed (downgrade-only).
+                _, starting_research = read_starting_state(
+                    fixture.starting_research_path.parent
+                )
                 judge_output = judge_module.apply_avoid_guard(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
+                    starting_tree=starting_tree,
+                    starting_research=starting_research,
                     subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")
@@ -3762,9 +3828,9 @@ async def run_e2e_test(
             # corpus — every schema is loaded up front — and CI rejects a run
             # with either one False committed under eval/runlogs/e2e/.
             "tool_search": tool_search,
-            # Section F: the mode the run OPENED in, or None for the one long turn every
-            # committed run used. A step run is many turns on one session answered by
-            # `next_auto_reply`, so it is not comparable to a run without it.
+            # Section F: `unattended` (each boundary answered by `next_reply`), `step`
+            # (one turn), or None for the one long turn older runs used. Older runs
+            # record `job`, the unattended run before "Keep going." was retired.
             "step_mode": step_mode,
             "wrap_up_after": wrap_up_after,
         }

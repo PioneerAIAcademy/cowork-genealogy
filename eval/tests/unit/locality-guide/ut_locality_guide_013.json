@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_013",
     "skill": "locality-guide",
-    "name": "Locality guide for Pennsylvania, late 1700s \u2014 Quaker meeting records",
+    "name": "Locality guide for Pennsylvania, late 1700s — Quaker meeting records",
     "type": "positive",
-    "description": "Verifies that the skill recognizes Pennsylvania\u2019s strong Quaker presence in the late 1700s and directs researchers to meeting minutes, membership lists, marriage certificates, and disciplinary records. Ensures jurisdiction\u2011aware guidance by highlighting repositories such as the Friends Historical Library, local meeting houses, and state archives, while avoiding anachronistic references to statewide vital registration.",
+    "description": "Verifies that the skill recognizes Pennsylvania’s strong Quaker presence in the late 1700s and directs researchers to meeting minutes, membership lists, marriage certificates, and disciplinary records. Ensures jurisdiction‑aware guidance by highlighting repositories such as the Friends Historical Library, local meeting houses, and state archives, while avoiding anachronistic references to statewide vital registration.",
     "tags": [
       "Pennsylvania",
       "Quakers",
@@ -42,10 +42,12 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Recognize Pennsylvania\u2019s Quaker communities in the late 1700s and mention meeting minutes, membership lists, marriage certificates, and burial records. Highlight repositories like Friends Historical Library, local meeting houses, and state archives. Note that Quaker records often substitute for civil registration. Avoid statewide vital registration and modern databases as if they existed in the 1700s.",
-    "volume_search returns one fully browse-only image group of Philadelphia Yearly Meeting minutes (1750-1800, recordSearchablePercent 0, fulltextSearchable false). The skill should mention this specific digitized volume is available to browse page-by-page on FamilySearch, since it is not name- or full-text searchable, reinforcing the guide's existing point that Quaker records often require manual searching."
+    "Recognize Pennsylvania’s Quaker communities in the late 1700s and mention meeting minutes, membership lists, marriage certificates, and burial records. Highlight repositories like Friends Historical Library, local meeting houses, and state archives. Note that Quaker records often substitute for civil registration. Avoid statewide vital registration and modern databases as if they existed in the 1700s.",
+    "locality_survey's volumes part returns one fully browse-only image group of Philadelphia Yearly Meeting minutes (1750-1800, recordSearchablePercent 0, fulltextSearchable false). The skill should mention this specific digitized volume is available to browse page-by-page on FamilySearch, since it is not name- or full-text searchable, reinforcing the guide's existing point that Quaker records often require manual searching."
   ]
 }

@@ -22,6 +22,7 @@ import type { PersonWarning } from "../types/person-warnings.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { Mob } from "../utils/mob.js";
+import { setAsideParents } from "../utils/conclusion-status.js";
 import { calculateWarnings } from "./person-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -30,8 +31,6 @@ import {
   sanitizeCandidate,
   validateCandidateGedcomx,
   formatIssues,
-  NoProjectError,
-  noProjectResult,
 } from "./merge-shared.js";
 
 export async function mergeWarnings(
@@ -86,6 +85,8 @@ export async function mergeWarnings(
     //    (pre-merge record persona), and merged (post-all-merges survivor)
     //    mobs, and run the merge-mode checks. Dedupe identical warnings that
     //    several pairs surface on the shared merged family.
+    // Decision 26: a parent whose edge reads set aside or ruled out is not counted.
+    const skip = setAsideParents(research, merged);
     const warnings: PersonWarning[] = [];
     const seen = new Set<string>();
     for (const [treeId, candidateId] of merges) {
@@ -95,7 +96,7 @@ export async function mergeWarnings(
       try {
         targetMob = new Mob(tree, treeId);
         candidateMob = new Mob(candidate, candidateId);
-        mergedMob = new Mob(merged, treeId);
+        mergedMob = new Mob(merged, treeId, { setAsideParentIds: skip.get(treeId) });
       } catch (e) {
         // mergeGedcomx already validated the ids; this is defensive.
         return {
@@ -126,7 +127,6 @@ export async function mergeWarnings(
       sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings, ...formatIssues(validation.warnings)],
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;
   }

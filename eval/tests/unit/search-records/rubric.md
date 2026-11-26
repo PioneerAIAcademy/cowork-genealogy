@@ -97,6 +97,39 @@ narrowly" above** — a `record_read` aimed at a recordId that never appeared
 in any search result this run is still a real defect (a fabricated id), and
 that exclusion stands for it unchanged.
 
+### Every-mention survey — `isPrincipal` narrowing and role reporting
+
+Issue #4348 (Czelusniak / image group `004118433`): a request for every
+occurrence or mention of a surname across a record set is a **survey**, not a
+search for one person's own record, and is graded against that rule — the
+skill must not narrow with `isPrincipal`. It runs the unfiltered search plus
+`isPrincipal: true` and `isPrincipal: false`, and reports all three
+`totalMatches`, not just one filtered count presented as the total. The
+reference incident's live, confirmed numbers are 424 (unfiltered) / 185
+(`isPrincipal: true`) / 239 (`isPrincipal: false`), and the `isPrincipal:
+false` set must keep the Mathias Opiekum × Marianna Czelusniak marriage
+(`ark:/61903/1:1:6V91-SLZ6`, 15 May 1843) — a non-principal hit a silent
+`isPrincipal: true` narrowing drops. Silently narrowing to `isPrincipal: true`
+and reporting it as the total is the defect this rule exists to catch, scored
+under Tool Arguments (the narrowing itself) and Search strategy (parameters
+that would not answer what was actually asked) — not a stylistic preference.
+
+### Census nil escalation — no mandatory maiden-name search (issue #4699)
+
+**Decided (review-ready, 2026-11-19): do not require a maiden-name search for
+a married woman before calling a post-marriage census "not found."** She is
+enumerated under the married surname in a census taken after the marriage,
+and the surname-free household search Step 8 item 2 now requires already
+reaches a misindexed surname (it anchors on the place and a household member,
+not on any particular surname). A rejected alternative was a mandatory
+maiden-name search before every such nil — it doubles the searches on the
+commonest case (an already-married woman, correctly indexed under her married
+name) for a shape (reverted or never-adopted married name) that rarely holds;
+that shape is the widow/reverted-name case PR #4650's sentence already covers.
+Do not score Search strategy or Nil escalation down for the *absence* of a
+maiden-name search on a census nil — for a male subject it never applies, and
+for a female subject it is optional once the surname-free search ran.
+
 ## Search strategy
 
 Did the skill construct appropriate search parameters from the plan item? Name variants, date ranges, and jurisdictions should match the research context, and the broad-to-narrow default should be followed unless the plan item justifies a narrow start.
@@ -111,7 +144,7 @@ Did the skill obtain a real match signal against the research subject, and then
 reason on top of it? When `record_search` is given a `subjectId` it ranks the
 staged pool host-side and returns a `ranked` block — `matches[]` carrying
 `matchRank`, `searchRank`, `matchScore`, `candidateFactCount`,
-and `attachedToSubject` / `attachedToOther`. The ranking is a **review surface,
+and `attachedToSubject` / `attachedToOther` (present only when true). The ranking is a **review surface,
 not a verdict**; this dimension grades whether the skill treated it as one.
 
 **This dimension owns the promising / needs-review / not-relevant verdict and the

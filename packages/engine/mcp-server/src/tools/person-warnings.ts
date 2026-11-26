@@ -7,8 +7,9 @@
 
 import { getProjectStore } from "../store/project-store.js";
 import { findAnchor } from "../utils/tree-person.js";
+import { setAsideParents } from "../utils/conclusion-status.js";
 import { toArk } from "../utils/ark.js";
-import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
+import { classifyProjectPath, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
   SimplifiedGedcomX,
@@ -113,6 +114,18 @@ async function loadAnchor(
 ): Promise<LoadedAnchor> {
   const tree = await loadTree(projectPath);
   return { tree, anchor: findAnchor(tree.persons ?? [], personId) };
+}
+
+/** Parents to skip per child (Decision 26), read from research.json's claims.
+ *  Fails open to none: a missing or unreadable research.json skips nothing. */
+async function loadSetAsideParents(projectPath: string, tree: SimplifiedGedcomX): Promise<Map<string, Set<string>>> {
+  let research: unknown;
+  try {
+    research = JSON.parse(await getProjectStore().readText(projectPath, "research.json"));
+  } catch {
+    return new Map();
+  }
+  return setAsideParents(research, tree);
 }
 
 async function loadTree(projectPath: string): Promise<SimplifiedGedcomX> {
@@ -608,12 +621,15 @@ export function isNonBiologicalSubtype(sub: unknown): boolean {
 }
 
 /** Ids of the anchor's parents by a relationship that claims biological
- *  parentage — every ParentChild edge except the four subtypes above. */
+ *  parentage — every ParentChild edge except the four subtypes above — leaving
+ *  out a parent whose edge reads set aside or ruled out from claims (Decision 26,
+ *  `mob.setAsideParentIds`). */
 function biologicalParentIds(mob: Mob): Set<string> {
   const out = new Set<string>();
   for (const r of mob.tree.relationships ?? []) {
     if (r.type !== "ParentChild" || r.child !== mob.anchorId) continue;
     if (isNonBiologicalSubtype((r as { subtype?: string }).subtype)) continue;
+    if (r.parent && mob.setAsideParentIds.has(r.parent)) continue;
     if (r.parent) out.add(r.parent);
   }
   return out;
@@ -5466,7 +5482,7 @@ export async function personWarningsTool(
   // to run person_read first).
   switch (await classifyProjectPath(input.projectPath)) {
     case "no_project":
-      return noProjectResult("read");
+      throw new Error(NO_PROJECT_REFUSAL);
     case "missing_dir":
       throw new Error(missingProjectDirMessage(input.projectPath));
   }
@@ -5481,7 +5497,8 @@ export async function personWarningsTool(
   // Single-anchor / final mode: target === candidate === merged, isFinal=true
   // (warnings.java:118 getWarnings(mob, mob, mob, true)). The merge-only bucket
   // and the marriage-guarded checks self-suppress in this configuration.
-  const mob = new Mob(tree, anchor.id);
+  const skip = await loadSetAsideParents(input.projectPath, tree);
+  const mob = new Mob(tree, anchor.id, { setAsideParentIds: skip.get(anchor.id) });
   const warnings = calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true);
 
   const pairs = birthResidencePairs(mob);
@@ -5514,12 +5531,13 @@ async function listWarnings(
   opts: PersonWarningsOptions,
 ): Promise<PersonWarningsResult> {
   const tree = await loadTree(projectPath);
+  const skip = await loadSetAsideParents(projectPath, tree);
   const anchors: Array<{ personId: string; mob?: Mob; warnings?: PersonWarning[]; pairs?: BirthResidencePair[]; error?: string }> = [];
   for (const personId of ids) {
     try {
       const anchor = findAnchor(tree.persons ?? [], personId);
       if (!anchor.id) throw new Error(`Person '${personId}' has no id field.`);
-      const mob = new Mob(tree, anchor.id);
+      const mob = new Mob(tree, anchor.id, { setAsideParentIds: skip.get(anchor.id) });
       anchors.push({
         personId,
         mob,

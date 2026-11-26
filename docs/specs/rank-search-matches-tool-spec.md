@@ -107,8 +107,11 @@ snake_case envelope it reads.
    for re-ranking a logged
    search.
 2. **Build the subject doc.** Read the project's `tree.gedcomx.json`, locate the
-   person whose `id === subjectId`, and assemble a minimal simplified-GedcomX
-   doc `{ persons: [subject] }` (v1), used directly as `gedcomx2`. `same_person`
+   person whose `id === subjectId`, and assemble the subject document used as
+   `gedcomx2`: the enriched subject (below) with the parents, spouses, children
+   and siblings the tree gives them, cut as `same_person` cuts a family
+   (`Mob.matchSubset()`, at most 40 persons). A subject the tree relates to no one
+   is sent alone. `same_person`
    is designed to work **without real FS IDs** — it mints a conforming FS id so
    `matchTwoExamples` never chokes on a malformed/absent id, and the score is
    unaffected because **FS matches on document content** (`buildRawWithAnchor` in `src/utils/match-engine.ts`).
@@ -124,7 +127,24 @@ snake_case envelope it reads.
    valid one (ark-less included), not just to normalize a bad ark.** This makes
    subject scoring deterministic and hardens the external-record path. If
    `subjectId` is absent from the tree, return an LLM-actionable input error.
-   *(Future: enrich with 1-hop relatives; deferred — the minimal doc scored decisively.)*
+   **The family is sent, not the subject alone.** Alone, the subject is a name,
+   a date and a place, so a household record's spouse and children count for
+   nothing. In thomas-hanrahan-marriage the right 1865 household (Thomas, Joanna,
+   Mary; search rank 1) scored 0.003 against Thomas alone, fifth on its page and
+   under the 0.01 floor, so the page read as a real negative; with his family it
+   scored 0.168, twenty times the next row. Across 85 ranked searches replayed
+   from the committed e2e runs (`dev/measure-rank-family.ts`, judged by
+   FamilySearch's own attachments), the family put 63 of the 70 attached records
+   within their page's top k (k = the page's attached records) against 53 alone;
+   no page with an attached record fell under the floor (2 did alone); and no
+   record attached to someone else outranked the best attached one either way.
+   Records attached to someone else clearing the floor rose from 95 to 109. Of
+   the six lifted furthest, three are the subject under a duplicate FamilySearch
+   id, two cannot be judged from the tree, and one is the known cost: a
+   same-named brother with the same parents (isabel-carvajal-daughter, his 1911
+   burial 0.012 → 0.465). Leaving him out of the cut does not change that (0.499;
+   the parents alone give 0.250), so it stays with person-evidence's
+   core-identifier gate, which compares the births.
 
    **Thin subject (guardrail).** A subject that is a sparse local stub (few
    facts, e.g. a not-in-FS `I1` person) can score uniformly near-zero against
@@ -157,7 +177,7 @@ snake_case envelope it reads.
    `RecordSearchResult`) with `matchScore: null` and **no call** — a
    person-less doc is a certain-400 and must not burn three retries. FamilySearch's
    matcher scores the rest as `scorePair(result.gedcomx, result.primaryId,
-   subjectDoc, subjectId)`, the enriched subject alone, 10 at a time with
+   subjectDoc, subjectId)`, the enriched subject with their family, 10 at a time with
    `withRetry`. The matcher service takes the whole page in one POST, each pair's
    tree the project tree with the enriched subject in place of the tree person,
    cut around the subject; a service call that scores no pair throws. **Concurrency 10** — confirmed with the
@@ -191,7 +211,11 @@ snake_case envelope it reads.
    `attachedToSubject`; one attached to any other id sets `attachedToOther`.
    When neither rule yields an id, no attachments call is made and both flags
    stay unset rather than asserting a wrong answer — as they do when the
-   attachments call fails.
+   attachments call fails. In both cases the result carries
+   `attachmentsChecked: false`, because on `record_search` a row with no flag
+   reads as attached to nobody. The result also carries `realNegativeFloor` (the
+   active matcher's `floors.realNegative`), which `record_search` uses to slim
+   below-floor rows.
 7. **Return** every scored stub (below), or the first `top` when the caller
    supplied one. Bulk gedcomx is never in the return.
 
@@ -273,7 +297,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
-      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id
+      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id; the standalone tool keeps false, `record_search` rows carry it only when true
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
@@ -291,7 +315,8 @@ Sorted by `matchScore` descending; no gedcomx.
 
 On a subject-named `record_search` there is ONE row list: `results` comes back
 ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
-`attachedTo*` and ordered best first, and `ranked` carries metadata only
+`attachedTo*` (only when true; `matchScore` rounded to 2 decimals) and ordered
+best first, and `ranked` carries metadata only
 (ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
 `tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
 rejected drop shape is 35,956 bytes, the shipped one 34,206 — 4.9% smaller.
@@ -400,6 +425,27 @@ Anderson, and Van Buren against van Dyke, are (Soundex keeps the first letter).
 A Sorensen-Dice cutoff of 0.66 is not used: it treats Nelson/Olson and
 Anderson/Henderson as one name. The cost is that distinct surnames coded alike
 (Hall/Hill, Kimbrell/Kemper) are not flagged.
+
+Two surnames are also the same when a *joined* form of one is within one edit of
+a joined form of the other, so a particle spaced differently from the tree's is
+not flagged: Van Buren/VanBuren, Mc Williams/McWilliams, Mc Andrew/McAndrew,
+Van der Linde/Vanderlinde and St. Clair/StClair. A joined form splits on spaces
+and hyphens, drops a trailing "." from each word before checking the particle
+list (van, von, de, di, du, la, le, mc, mac, st, ste, saint, ten, ter, op, des,
+del, der, den, fitz, vander, vande, vanden, ver, ap), joins each run of
+particles onto the word after it, and drops "." and "'". A surname made only of
+particles is one joined form (Van Der/Vander), and a run of particles after the
+last word is dropped, so Linde, van der against Berg, van der or Vander, and
+Rosa, de la against Cruz, de la, stay flagged. Like the words above,
+a joined form whose own word has three letters or fewer is dropped while a longer
+one remains, so da Silva against da Costa and van 't Hof against van 't Veer stay
+flagged. Joined forms are
+compared by edit distance only, never by Soundex: a joined form's code is mostly
+its particle (vandyke/vandeusen are both V532, vanburen/vanbergen both V516,
+mcwilliams/mclean both M245), so Soundex would clear Van Dyke against Van
+Deusen and McWilliams against Mc Lean. The joined forms add to the comparison
+above and do not replace it, so a tree Van Buren still matches a record indexed
+Buren.
 
 When at least one returned row carries the flag, the response carries
 `surnameNote` (`SURNAME_NOT_ON_SUBJECT_NOTE`): each such row is `needs-review`,
@@ -665,7 +711,9 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 1. **Threshold** — intentionally none, and no host-side cut either: every
    scored candidate is returned, ordered. Set a threshold later
    from `results/match-scores.jsonl`.
-2. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
-   Minimal scored decisively in the probe; revisit if real cases need more.
+2. **Subject enrichment** — revisited: the enriched subject with their family
+   (step 2). Minimal scored decisively in the first probe, on a
+   well-populated FamilySearch subject; the e2e replay in step 2 shows the
+   household records it missed.
 3. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
    clear of the results-orphan validator.

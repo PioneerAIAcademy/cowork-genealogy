@@ -1,0 +1,35 @@
+{
+  "tool": "tree_forget",
+  "description": "tree_forget in verify mode on disputed-parents-unsourced: parents-of I1 (Anton Vogt) with cleanSlate. Removes Johann and Maria Vogt, their Couple and both ParentChild links, the Marriage fact and S1, which is cited on the removed Marriage and on Anton's birth. Counts only, as the tool returns them (#4791).",
+  "args": {
+    "cleanSlate": true,
+    "forget": "~parents-of"
+  },
+  "response": {
+    "ok": true,
+    "dryRun": false,
+    "removed": {
+      "persons": 2,
+      "relationships": 3,
+      "relationshipsCascaded": 1,
+      "factsByType": {
+        "Marriage": 1
+      },
+      "sources": 1
+    },
+    "sourcesKept": 0,
+    "remaining": {
+      "persons": 1,
+      "relationships": 0
+    },
+    "filesWritten": [
+      "tree.gedcomx.json"
+    ],
+    "restoreFile": ".tree-before-forget.gedcomx.json",
+    "validation": {
+      "valid": true,
+      "warnings": []
+    },
+    "nextStep": "Not done yet: do not reply now. Call these yourself, in this turn: for each id in subjectPersonIds, extraction_append({ projectPath, personId }) and timeline_build({ projectPath, personId }); then spawn question-selection with the researcher's reply as researcherReply: and a statedQuestion: line for each relationship or fact removed. Reply once question-selection returns."
+  }
+}

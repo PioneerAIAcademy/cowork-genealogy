@@ -7,11 +7,53 @@ import {
   WIKI_OFFSET_PROPERTY,
   WIKI_PAGE_MAX_CHARS,
   WIKI_PAGING_NOTE,
+  WIKI_TOPIC_SUFFIXES,
   type WikiReadInput,
-  type WikiPageResult,
+  type WikiReadResult,
 } from "../types/wikiPage.js";
+import {
+  COLLECTION_NOTICE_MAX_CHARS,
+  COLLECTION_NOTICE_MAX_PAGES,
+  FS_WIKI_BASE,
+  WIKI_EXTRAS_DEADLINE_MS,
+  collectionNoticesFor,
+  collectionPageSlugs,
+  fetchPage,
+  legacyNotice,
+} from "../utils/wiki-page-fetch.js";
 
-const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
+export { COLLECTION_NOTICE_MAX_CHARS, COLLECTION_NOTICE_MAX_PAGES, collectionPageSlugs, legacyNotice };
+
+/**
+ * For a regional record-type slug `{Region},_{Country}_{Suffix}`, the country's own
+ * `{Country}_{Suffix}` slug; null for any other slug.
+ */
+export function countryTopicSlug(slug: string): string | null {
+  for (const suffix of WIKI_TOPIC_SUFFIXES) {
+    if (!slug.endsWith(`_${suffix}`)) continue;
+    const prefix = slug.slice(0, -(suffix.length + 1));
+    const cut = prefix.lastIndexOf(",_");
+    if (cut < 0) return null;
+    const country = prefix.slice(cut + 2);
+    return country ? `${country}_${suffix}` : null;
+  }
+  return null;
+}
+
+/** The not-found message, naming the country's page when a regional one is missing and it exists. */
+async function notFoundMessage(slug: string, baseUrl: string): Promise<string> {
+  const base = `No wiki page found for "${slug}". The page may not exist in the corpus.`;
+  const country = countryTopicSlug(slug);
+  if (!country) return base;
+  try {
+    if ((await fetchPage(baseUrl, country)) !== null) {
+      return `${base} The country's page exists: ${FS_WIKI_BASE}/${country}`;
+    }
+  } catch {
+    // The hint is extra; a failed lookup leaves the plain message.
+  }
+  return base;
+}
 
 function urlToSlug(url: string): string {
   const match = url.match(/\/wiki\/([^?#]+)/);
@@ -27,7 +69,8 @@ interface PageApiResponse {
   source_url: string;
 }
 
-export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiPageResult> {
+export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiReadResult> {
+  const deadlineAt = Date.now() + WIKI_EXTRAS_DEADLINE_MS;
   // Argument checks first: a bad offset must not cost a request.
   const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   const slug = urlToSlug(input.url);
@@ -47,9 +90,7 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   }
 
   if (response.status === 404) {
-    throw new Error(
-      `No wiki page found for "${slug}". The page may not exist in the corpus.`
-    );
+    throw new Error(await notFoundMessage(slug, baseUrl));
   }
 
   if (!response.ok) {
@@ -62,7 +103,12 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   // goes before the cut, so `totalChars` and `offset` count the text the caller reads.
   if (typeof data.content !== "string") return { url, content: data.content };
   const { content, paging } = pageText(stripWikiSidebar(data.content), offset, WIKI_PAGE_MAX_CHARS);
-  return { url, content, ...paging };
+  const result: WikiReadResult = { url, content, ...paging };
+  if (!offset) {
+    const notices = await collectionNoticesFor(content, baseUrl, deadlineAt);
+    if (notices.length) result.collectionNotices = notices;
+  }
+  return result;
 }
 
 export const wikiReadSchema = {
@@ -71,6 +117,7 @@ export const wikiReadSchema = {
     "Read any FamilySearch wiki page from the hosted wiki-query-api server. " +
     "Pass the full FamilySearch wiki URL; the page title is extracted and the corresponding markdown is fetched from the server. " +
     "Use this for specific wiki pages not covered by the country-specific tools. " +
+    "On the first part, `collectionNotices` lists the FamilySearch collection pages the page links that carry a Legacy-collection notice (a partial index that is no longer added to or corrected), with that notice. " +
     WIKI_PAGING_NOTE,
   inputSchema: {
     type: "object" as const,

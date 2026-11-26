@@ -21,7 +21,8 @@ skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
 
 It also denies the main thread the tools only agents hold (AGENT_ONLY_TOOLS,
-issue #3528), naming the agents to delegate to, and denies a fork.
+issue #3528), naming the agents to delegate to, the tools no step may call there
+(MAIN_THREAD_DENIED), and a fork.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent
@@ -45,6 +46,7 @@ entitled to make. Every failure path falls through to allowing the call, which
 is the same posture the prose rule had.
 """
 import json
+import os
 import sys
 
 # Matched on the basename, so an absolute or relative path is caught alike.
@@ -101,7 +103,8 @@ READ_TARGET_KEYS = {"Read": ("file_path", "path"), "Grep": ("path", "glob"), "Gl
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
-# The delegation tools, denied only for `subagent_type: "fork"`. From Claude Code
+# The delegation tools, denied for `subagent_type: "fork"` and, on a hosted plane's main
+# thread, for a built-in agent type (BUILTIN_SUBAGENT_TYPES below). From Claude Code
 # 2.1.302 the SDK and the desktop app offer a fork by default: a copy of the main
 # thread with its context and tools, which runs a step without the plugin agent's
 # instructions or `tools:` list. The hosted path, both harnesses and the prototype
@@ -109,6 +112,19 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # environment is not ours to set, and this hook is the one thing that reaches it.
 DELEGATION_TOOLS = ("Agent", "Task")
 FORK_SUBAGENT_TYPE = "fork"
+
+# Claude Code's built-in agent types (CLI 2.1.3xx lists these beside the plugin's).
+# Spawned from the MAIN THREAD, each runs a step the way a fork does: without the
+# plugin agent's instructions or `tools:` list. A Haiku 5.5 router spawned `claude`
+# for a hypothesis-tracking step (ut_research_9k4). Denied only on the hosted planes,
+# which run the Haiku main thread and set HOSTED_PLANE_ENV; Cowork and Desktop run
+# their own model and may spawn them (lead, 2026-11-24). A spawn with no
+# `subagent_type` is `general-purpose`. A subagent holds no Agent tool, so only the
+# main thread is checked.
+HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
+BUILTIN_SUBAGENT_TYPES = frozenset(
+    {"claude", "general-purpose", "Explore", "Plan", "web-fetch", "statusline-setup"}
+)
 
 # MCP tools held only by agents, denied on the MAIN THREAD (no `agent_id` key),
 # mapped to the BARE names of the agents whose `tools:` grant them -- the deny
@@ -132,7 +148,6 @@ FORK_SUBAGENT_TYPE = "fork"
 AGENT_ONLY_TOOLS = {
     "build_external_search_url": ("search-external-sites", "where-else-to-search"),
     "catalog_search": (
-        "locality-guide",
         "search-external-sites",
         "search-images",
         "search-records",
@@ -140,31 +155,29 @@ AGENT_ONLY_TOOLS = {
     "census_children_gap": ("check-warnings", "question-selection"),
     "collections_search": (
         "gps-mentor",
-        "locality-guide",
         "research-plan",
         "search-external-sites",
     ),
     "convert_calendar": ("conflict-resolution", "convert-dates"),
     "evaluation_append": ("gps-mentor",),
     "external_links_search": (
-        "locality-guide",
         "research-plan",
         "search-external-sites",
         "where-else-to-search",
     ),
     "fulltext_search": ("search-full-text",),
     "get_name_variants": ("search-full-text",),
+    "image_index": ("search-images",),
     "image_search": ("search-images",),
     "materialize_facts": ("person-evidence",),
     "merge_tree_persons": ("proof-conclusion", "tree-edit"),
-    "merge_warnings": ("person-evidence", "proof-conclusion"),
+    "merge_warnings": ("proof-conclusion",),
     "person_person_matches": ("tree-edit",),
-    "person_quality": ("person-evidence", "source-evaluation"),
+    "person_quality": ("source-evaluation",),
     "person_record_matches": ("search-hints", "tree-edit"),
     "person_warnings": (
         "check-warnings",
         "person-evidence",
-        "question-selection",
         "source-evaluation",
     ),
     "place_distance": (
@@ -173,7 +186,8 @@ AGENT_ONLY_TOOLS = {
         "person-evidence",
         "timeline",
     ),
-    "place_population": ("historical-context", "locality-guide"),
+    "locality_survey": ("locality-guide",),
+    "place_population": ("historical-context",),
     "place_search": (
         "conflict-resolution",
         "gps-mentor",
@@ -195,15 +209,15 @@ AGENT_ONLY_TOOLS = {
         "timeline",
         "tree-edit",
     ),
-    "project_create": ("init-project",),
     "record_search": ("search-records", "survey-surname"),
     "same_person": ("person-evidence",),
+    "source_screen": ("person-evidence", "source-evaluation"),
     "tree_correct": ("proof-conclusion", "tree-edit"),
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),
     "volume_bisect": ("search-images",),
-    "volume_search": ("locality-guide", "research-plan", "search-images"),
-    "wiki_place_page": ("gps-mentor", "locality-guide"),
+    "volume_search": ("research-plan", "search-images"),
+    "wiki_place_page": ("gps-mentor",),
     "wiki_read": (
         "citation",
         "conflict-resolution",
@@ -225,6 +239,16 @@ AGENT_ONLY_TOOLS = {
     "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
 }
 
+# Tools the main thread may never call, each with its deny text. Not on
+# AGENT_ONLY_TOOLS: no agent holds them, so there is no agent to delegate to.
+# hooks.json's matcher must name every key here.
+MAIN_THREAD_DENIED = {
+    "person_search": (
+        "Ask the researcher for the FamilySearch person ID; a project never "
+        "starts from a name search."
+    ),
+}
+
 # Tools held only by agents that the main thread may still call, each with the
 # legitimate main-thread call that keeps it off AGENT_ONLY_TOOLS. Seeded from the
 # false-deny replay over the committed e2e runs made after the skills became
@@ -232,6 +256,11 @@ AGENT_ONLY_TOOLS = {
 # skill declares it -- it is then not held only by agents -- and the drift test
 # says so.
 MAIN_THREAD_OK = {
+    "project_create": (
+        "every activity starts a project and one with no person is created from the "
+        "researcher's request without init-project (lead, 2026-11-19, issue #4686); the "
+        "tool itself refuses a person-less project a research question"
+    ),
     "image_transcribe": (
         "research/SKILL.md delivers a bounded transcription itself (lead, "
         "2026-10-18; issue #2490 retires the wrapper agent)"
@@ -312,6 +341,20 @@ OWNED_SECTIONS = {
     # merge_tree_persons re-keys `person_id` by tool identity and never
     # reaches this hook.
     "hit_verdicts": "evaluate-search-results",
+    # sources, 2026-11-16 (issue #2475, row from issue #1874). Closes the main
+    # thread composing a source to stand in for a failed extraction (alpha
+    # feedback issue #2214). `citation` is the only agent whose research_append
+    # writes the section; it is not the section's owner -- the ownership row
+    # keeps `owner: null`, because `extraction_append` writes it by tool identity
+    # and never reaches this hook. `init-project` is unaffected: its lane leaves
+    # the section out and `project_create` writes its sources. Measured over the
+    # e2e corpus: main-thread `sources` ops 360 in 2026-06/07, 1 in 2026-09, 0 in
+    # the 36 run logs captured since 2026-10-17. Accepted false deny: a
+    # main-thread correction of `repository`, `access_date`, `url` or
+    # `url_archived` has no route, since citation is told never to change them.
+    # deny_reason gives an unlaned caller SOURCES_REASON, never OWNER_REASON,
+    # which would send a new record to `citation`, an agent that cannot create one.
+    "sources": "citation",
 }
 
 # Agents that may also write a section OWNED_SECTIONS routes. The owner stays the
@@ -539,6 +582,14 @@ OWNER_REASON = (
     "unaffected; only this section is routed."
 )
 
+SOURCES_REASON = (
+    "Writing research.json's `sources` from here is disabled. A new record goes "
+    "through `extraction_append` (invoke `@plugin:record-structurer` for a "
+    "non-FamilySearch source), which writes the source with its assertions and "
+    "classifications. Refining an existing source's citation is "
+    "`@plugin:citation`'s: invoke it. Do not compose a source yourself."
+)
+
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
     "a non-null `stopped_because` value is owned by the {agent} agent, which "
@@ -603,13 +654,14 @@ OUT_OF_LANE_REASON = (
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
-    "which writes both files together (from the main session, invoke "
-    "`@plugin:init-project`, which calls it); to add to an existing one use "
+    "which writes both files together (from the main session, call it directly for a "
+    "project with no person, and invoke `@plugin:init-project` for research on a "
+    "person); to add to an existing one use "
     "research_append or research_log_append, and for the tree tree_edit or "
     "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "
-    "external-collections.json is written only by external_links_search given a projectPath "
-    "(from the main session, invoke `@plugin:locality-guide`)."
+    "external-collections.json is written only by locality_survey or external_links_search given a projectPath "
+    "(from the main session, invoke `@plugin:locality-guide` or `@plugin:research-plan`)."
 )
 
 READ_REASON = (
@@ -623,6 +675,13 @@ FORK_REASON = (
     "without the plugin agent's instructions and tool limits. Delegate to the named "
     "plugin agent the step calls for (its name is the subagent_type), or do the step "
     "yourself."
+)
+
+BUILTIN_SPAWN_REASON = (
+    '{tool} with subagent_type "{name}" is disabled from the main session: a built-in '
+    "agent runs the step without the plugin agent's instructions and tool limits. Spawn "
+    "the plugin agent the step calls for; its name is the subagent_type, without "
+    "`plugin:`."
 )
 
 AGENT_ONLY_REASON = (
@@ -974,6 +1033,16 @@ def agent_only_denied(tool_name: str, payload: dict) -> str | None:
     return bare if bare in AGENT_ONLY_TOOLS else None
 
 
+def main_thread_denied(tool_name: str, payload: dict) -> str | None:
+    """The deny text when a main-thread call reaches MAIN_THREAD_DENIED, else None.
+
+    Told apart and matched as `agent_only_denied` does.
+    """
+    if "agent_id" in payload:
+        return None
+    return MAIN_THREAD_DENIED.get(_basename(tool_name.replace("__", "/")))
+
+
 def agent_only_reason(tool: str) -> str:
     """The deny text for a main-thread call to an AGENT_ONLY_TOOLS member.
 
@@ -995,7 +1064,17 @@ def deny_reason(denied: tuple) -> str:
     # Branch on `rule`, never on the shape of `section` — a "declaration"
     # return carries a dotted `section.field`, which is a key in neither
     # OWNED_SECTIONS nor AGENT_WRITABLE_SECTIONS.
-    if rule == "routed":
+    if rule == "routed" and section == "sources":
+        # A laned agent holds no extraction_append and cannot invoke another
+        # agent, so it gets its lane. Every other caller (the main thread, a
+        # subagent with a null agent_type, a general-purpose stand-in) has no
+        # lane to index -- AGENT_WRITABLE_SECTIONS[caller] would raise.
+        if caller in AGENT_WRITABLE_SECTIONS:
+            allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
+            reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+        else:
+            reason = SOURCES_REASON
+    elif rule == "routed":
         reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
     elif rule == "owned_append":
         # A subagent cannot invoke another agent, so it is told to hand off.
@@ -1031,8 +1110,20 @@ def deny_reason(denied: tuple) -> str:
     return reason
 
 
-def decision(payload: dict) -> dict:
+def builtin_spawn_denied(tool_name: str, tool_input: dict, payload: dict, hosted: bool) -> str | None:
+    """The built-in agent type a main-thread spawn names on a hosted plane, else None."""
+    if not hosted or tool_name not in DELEGATION_TOOLS or payload.get("agent_id"):
+        return None
+    raw = tool_input.get("subagent_type")
+    if raw is not None and not isinstance(raw, str):
+        return None
+    name = raw or "general-purpose"
+    return name if name in BUILTIN_SUBAGENT_TYPES else None
+
+
+def decision(payload: dict, env: dict | None = None) -> dict:
     """The hook's stdout payload: a deny, or `{}` for no opinion."""
+    env = os.environ if env is None else env
     tool_input = payload.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(payload.get("tool_name") or "")
@@ -1046,6 +1137,16 @@ def decision(payload: dict) -> dict:
             },
         }
 
+    builtin = builtin_spawn_denied(tool_name, tool_input, payload, bool(env.get(HOSTED_PLANE_ENV)))
+    if builtin is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": BUILTIN_SPAWN_REASON.format(tool=tool_name, name=builtin),
+            },
+        }
+
     tool = agent_only_denied(tool_name, payload)
     if tool is not None:
         return {
@@ -1053,6 +1154,16 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": agent_only_reason(tool),
+            },
+        }
+
+    never = main_thread_denied(tool_name, payload)
+    if never is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": never,
             },
         }
 

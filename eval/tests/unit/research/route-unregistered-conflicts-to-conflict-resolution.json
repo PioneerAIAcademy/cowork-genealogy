@@ -77,5 +77,8 @@
     "Fail the router's own work if it weighs the conflicting records itself, for example by picking one birthplace as more reliable, explaining a discrepancy away as an enumerator error, or calling the conflict immaterial to the question. Deciding whether a conflict matters to the question is conflict-resolution's analysis, not the router's.",
     "Every callee is stubbed and returns a denial telling the router to stop. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of a conflict verdict."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

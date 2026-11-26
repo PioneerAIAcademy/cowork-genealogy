@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "findings_hash": "f3612c5c5d21403deecc7426a0ad3daa9d4233e7a164cc37b63a5c0ce934771e",
+  "blind_bundle_digest": "65ebf46974427ba49c1996267a9ba860a4128e8185e264b5dbdb8dbb5196819d"
+}

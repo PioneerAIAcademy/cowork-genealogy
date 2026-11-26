@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_timeline_ehb",
+    "skill": "timeline",
+    "name": "Hypothesis timeline reads English census years from the England_Census wiki page",
+    "type": "positive",
+    "description": "Mode B for hypothesis h_001 (england-census-hypothesis): William Ashford I1 (b. ~1838 Canterbury, 1851 census) and William Ashford I2 (m. 1859, d. 1874 Canterbury), all in England. A hypothesis timeline reads census years from the residence country's {Country}_Census wiki page, not timeline_build's table, so the timeline must fetch England_Census and expect the 1841, 1861 and 1871 English censuses, with no US federal year.",
+    "tags": [
+      "timeline",
+      "identity-testing",
+      "one-life",
+      "mode-b",
+      "hypothesis",
+      "non-us",
+      "census-from-wiki",
+      "I1",
+      "I2",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build a candidate timeline for hypothesis h_001, covering persons I1 and I2.\n\nprojectPath: <workspace>",
+    "scenario": "england-census-hypothesis"
+  },
+  "mcp_fixtures": [
+    "place-search-canterbury",
+    "place-distance-canterbury",
+    "wiki-read-england-census",
+    "wiki-read-any"
+  ],
+  "judge_context": [
+    "The delegation names a hypothesis, so it is Mode B: a candidate timeline with `hypothesis_id` `h_001` that aggregates the assertions of BOTH persons, I1 (a_001 birth ~1838, a_002 the 1851 census) and I2 (a_003 marriage 1859, a_004 death 1874). All four events are at Canterbury, Kent, England.",
+    "The records cohere into one life: one name, one town, and a birth about 1838 is compatible with an 1859 marriage and an 1874 death. The reply should report this as evidence supporting h_001 and should NOT flag an impossibility.",
+    "Census years in Mode B come from the residence country's `{Country}_Census` wiki page, so a `wiki_read` of `England_Census` is expected; the `census-from-wiki` validator owns it. Its gaps should name the 1841 census (between the ~1838 birth and 1851) and the 1861 and 1871 censuses (between the 1859 marriage and the 1874 death), each with its own year. No US federal census year (1850, 1860, 1870, ...) may appear for this England-only life.",
+    "Every persisted `standard_place` and every persisted `distance_from_previous_km` must trace to a tool response in THIS run's tool ledger (`place_search`'s `standardPlace`, `place_distance`'s `kilometers`), or be `0` for two consecutive events sharing one `standard_place`. `distance_from_previous_km` is the distance from the immediately preceding event in the sorted list.",
+    "The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

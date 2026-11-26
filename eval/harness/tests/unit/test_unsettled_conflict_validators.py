@@ -100,3 +100,128 @@ def test_a_resolved_question_fails():
     after["research_json"]["questions"][0]["status"] = "resolved"
     msg = _fails(_pc.test_unsettled_conflict_not_proved_left_open, _state("dutch-mother-searched-out-weighed"), after, _TAGGED)
     assert "resolved" in msg
+
+
+# --- conflict-resolution: identity conflicts resolve (#4326) ---
+
+_ID = {"tags": ["resolved-flynn-identity"]}
+_ID_IF_WORKED = {"tags": ["resolved-flynn-identity-if-worked"]}
+_FATHERS = {"tags": ["resolved-competing-fathers"]}
+
+
+def _conflict(state, cid):
+    return next(c for c in state["research_json"]["conflicts"] if c["id"] == cid)
+
+
+def _resolve_c002(state, preferred="a_001", status="resolved"):
+    c = _conflict(state, "c_002")
+    c.update(status=status, preferred_assertion_id=preferred, resolution_rationale="why")
+    return state
+
+
+def _skips(fn, *args):
+    with pytest.raises(pytest.skip.Exception):
+        fn(*args)
+
+
+def test_identity_resolved_passes():
+    before = _state("flynn-multi-conflict")
+    _cr.test_resolved_flynn_identity(before, _resolve_c002(_state("flynn-multi-conflict")), _ID)
+
+
+def test_identity_left_open_fails_unconditionally():
+    before = _state("flynn-multi-conflict")
+    msg = _fails(_cr.test_resolved_flynn_identity, before, copy.deepcopy(before), _ID)
+    assert "resolved" in msg
+
+
+def test_identity_deferred_with_analysis_fails_when_worked():
+    before = _state("flynn-multi-conflict")
+    after = _state("flynn-multi-conflict")
+    _conflict(after, "c_002")["resolution_rationale"] = "defer: cannot confirm"
+    msg = _fails(_cr.test_resolved_flynn_identity, before, after, _ID_IF_WORKED)
+    assert "status='unresolved'" in msg
+
+
+def test_identity_resolved_to_the_wrong_assertion_fails():
+    before = _state("flynn-multi-conflict")
+    after = _resolve_c002(_state("flynn-multi-conflict"), preferred="a_011")
+    msg = _fails(_cr.test_resolved_flynn_identity, before, after, _ID)
+    assert "a_001" in msg
+
+
+def test_identity_skips_when_the_pass_took_the_birthplace_conflict():
+    before = _state("flynn-identity-geographic")
+    after = _state("flynn-identity-geographic")
+    c001 = _conflict(after, "c_001")
+    c001.update(status="resolved", preferred_assertion_id="a_002", resolution_rationale="why")
+    _skips(_cr.test_resolved_flynn_identity, before, after, _ID_IF_WORKED)
+
+
+def test_identity_worked_in_the_three_conflict_scenario_is_asserted():
+    before = _state("flynn-identity-geographic")
+    after = _resolve_c002(_state("flynn-identity-geographic"))
+    _cr.test_resolved_flynn_identity(before, after, _ID_IF_WORKED)
+    _conflict(after, "c_002")["status"] = "unresolved"
+    _fails(_cr.test_resolved_flynn_identity, before, after, _ID_IF_WORKED)
+
+
+def test_identity_untagged_skips():
+    before = _state("flynn-multi-conflict")
+    _skips(_cr.test_resolved_flynn_identity, before, copy.deepcopy(before), {"tags": []})
+
+
+def _with_fathers_conflict(cid="c_007", status="resolved", preferred="a_004", ctype="identity", competing=("a_004", "a_018")):
+    state = _state("flynn-competing-fathers-parentage")
+    state["research_json"]["conflicts"].append({
+        "id": cid, "conflict_type": ctype, "competing_assertion_ids": list(competing),
+        "status": status, "preferred_assertion_id": preferred,
+    })
+    return state
+
+
+def test_fathers_resolved_passes_under_any_id():
+    _cr.test_resolved_competing_fathers(_with_fathers_conflict(cid="c_002"), _FATHERS)
+    _cr.test_resolved_competing_fathers(_with_fathers_conflict(cid="c_099", preferred="a_013"), _FATHERS)
+
+
+def test_fathers_recorded_but_open_fails():
+    msg = _fails(_cr.test_resolved_competing_fathers, _with_fathers_conflict(status="unresolved", preferred=None), _FATHERS)
+    assert "status='unresolved'" in msg
+
+
+def test_fathers_resolved_for_the_dead_father_fails():
+    msg = _fails(_cr.test_resolved_competing_fathers, _with_fathers_conflict(preferred="a_018"), _FATHERS)
+    assert "a_004" in msg
+
+
+def test_fathers_no_conflict_recorded_fails():
+    msg = _fails(_cr.test_resolved_competing_fathers, _state("flynn-competing-fathers-parentage"), _FATHERS)
+    assert "no identity conflict" in msg
+
+
+def test_fathers_birthplace_conflict_alone_is_not_the_parentage_conflict():
+    msg = _fails(_cr.test_resolved_competing_fathers, _with_fathers_conflict(ctype="fact", competing=("a_018", "a_004")), _FATHERS)
+    assert "no identity conflict" in msg
+
+
+_THIN = {"tags": ["stays-unresolved-flynn-identity"]}
+
+
+def test_thin_left_open_passes():
+    _cr.test_unresolved_flynn_identity_thin(_state("flynn-identity-geographic-thin"), _THIN)
+
+
+def test_thin_resolved_fails():
+    msg = _fails(_cr.test_unresolved_flynn_identity_thin, _resolve_c002(_state("flynn-identity-geographic-thin")), _THIN)
+    assert "stays unresolved" in msg
+
+
+def test_thin_open_with_a_preferred_assertion_fails():
+    after = _resolve_c002(_state("flynn-identity-geographic-thin"), status="unresolved")
+    msg = _fails(_cr.test_unresolved_flynn_identity_thin, after, _THIN)
+    assert "a_001" in msg
+
+
+def test_thin_untagged_skips():
+    _skips(_cr.test_unresolved_flynn_identity_thin, _state("flynn-identity-geographic-thin"), {"tags": []})

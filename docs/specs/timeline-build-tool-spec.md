@@ -159,7 +159,8 @@ after the earliest year that event allows. When its earlier side is open
 a FamilySearch index covers: `year`, `label`, `covers` (every standard-place
 suffix the area takes, since Places names change with the era — "Kent, England"
 before 1801, "Kent, England, United Kingdom" after), `collectionId`,
-`headsOnly`. A row covers a place when one of its `covers` is a whole-segment
+`headsOnly`, and an optional `schedule` that `record_search`'s `census` block reads
+(`headsOnly` is `schedule === "headsOnly"`). A row covers a place when one of its `covers` is a whole-segment
 suffix of it.
 
 Rows hold only population censuses: no school, church, mortality, veterans,
@@ -227,7 +228,7 @@ hypothesis or multi-person timeline is never touched. Ownership: the
 
 - `projectPath` missing or naming no directory, or one project file missing or
   unparseable: `{ ok: false, errors }` naming it. A folder holding neither file:
-  `noProjectResult("write")`.
+  `{ ok: false, errors }` carrying `NO_PROJECT_REFUSAL`.
 - `personId` missing, or naming no tree person: `{ ok: false, errors }`.
 - A write `research_append` refuses: its `{ ok: false, errors }`, and nothing
   written.

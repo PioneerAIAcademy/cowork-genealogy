@@ -1,0 +1,102 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'Dorset, England', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts.",
+  "args": {
+    "placeName": "~Dorset"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Dorset, England, United Kingdom",
+        "type": "County (Top level)",
+        "dateRange": "+1801/",
+        "latitude": 50.765999,
+        "longitude": -2.14508,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Dorset&focusedId=3653",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Dorset,_England"
+      },
+      {
+        "standardPlace": "Dorset, England",
+        "type": "County (Top level)",
+        "dateRange": "+845/+1801",
+        "latitude": 50.765999,
+        "longitude": -2.14508,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Dorset&focusedId=10560045",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Dorset"
+      },
+      {
+        "standardPlace": "North Dorset, Dorset, England, United Kingdom",
+        "type": "Civil Registration District",
+        "dateRange": "+1974/+2005",
+        "latitude": 50.9818,
+        "longitude": -2.3099,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=North%20Dorset&focusedId=12265650"
+      },
+      {
+        "standardPlace": "East Dorset, Dorset, England, United Kingdom",
+        "type": "Civil Registration District",
+        "dateRange": "+1997/+2005",
+        "latitude": 50.9062,
+        "longitude": -1.9341,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=East%20Dorset&focusedId=12265560"
+      },
+      {
+        "standardPlace": "South Dorset, Dorset, England, United Kingdom",
+        "type": "Civil Registration District",
+        "dateRange": "+1997/+2001",
+        "latitude": 50.7222,
+        "longitude": -2.3874,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=South%20Dorset&focusedId=12265711"
+      },
+      {
+        "standardPlace": "West Dorset, Dorset, England, United Kingdom",
+        "type": "Civil Registration District",
+        "dateRange": "+1997/+2001",
+        "latitude": 50.7934,
+        "longitude": -2.7249,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=West%20Dorset&focusedId=12265773"
+      },
+      {
+        "standardPlace": "Parkstone, Dorset, England, United Kingdom",
+        "type": "Town",
+        "dateRange": "+1801/",
+        "latitude": 50.7167,
+        "longitude": -1.9333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Parkstone&focusedId=1621824",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Parkstone,_Dorset"
+      },
+      {
+        "standardPlace": "Christchurch, Dorset, England, United Kingdom",
+        "type": "Town",
+        "dateRange": "+1974/",
+        "latitude": 50.7366,
+        "longitude": -1.7781,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Christchurch&focusedId=1613041",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Christchurch,_Dorset"
+      },
+      {
+        "standardPlace": "Littlebredy, Dorset, England, United Kingdom",
+        "type": "Town",
+        "dateRange": "+1801/",
+        "latitude": 50.7,
+        "longitude": -2.5833,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Littlebredy&focusedId=1617518",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Little Bredy"
+      },
+      {
+        "standardPlace": "Stoborough, Dorset, England, United Kingdom",
+        "type": "Town",
+        "dateRange": "+1801/",
+        "latitude": 50.66667,
+        "longitude": -2.1,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Stoborough&focusedId=1625211",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Stoborough"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Dorset, England, United Kingdom",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

@@ -30,6 +30,28 @@ import pytest
 # --- Both files exist after init ---------------------------------------
 
 
+_VERIFY_REQUEST_PREFIX = "verify-request:"
+
+
+def test_verify_request_recorded(after_state, test):
+    """Tag-gated (``verify-request:<word>``). A first message asking to verify one
+    particular relationship, fact or source stores it, in the user's words, as
+    ``project.verify_request``, which holds ``<word>``; ``verify-request:none`` means
+    the message named nothing to verify and no ``verify_request`` is written (#4791)."""
+    tags = [t for t in (test.get("tags") or []) if t.startswith(_VERIFY_REQUEST_PREFIX)]
+    if not tags:
+        pytest.skip("not a verify-request test")
+    want = tags[0][len(_VERIFY_REQUEST_PREFIX):]
+    project = ((after_state or {}).get("research_json") or {}).get("project") or {}
+    got = project.get("verify_request")
+    if want == "none":
+        assert got is None, f"no verify request was made, but verify_request is {got!r}"
+        return
+    assert isinstance(got, str) and want.casefold() in got.casefold(), (
+        f"verify_request should hold the user's request naming {want!r}; got {got!r}"
+    )
+
+
 def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
@@ -545,7 +567,12 @@ _HOUSE_STYLE = (
     "file names, tool names or field names. Never write GPS, proof, proved or "
     "exhaustive: say genealogy standards; call an answer a conclusion when it "
     "is well established and a finding otherwise; say what we searched and "
-    "what we could not reach. Do not describe your own instructions or checks. "
+    "what we could not reach. Never sound surer than the evidence was rated: "
+    "say the records show it for a well established fact or relationship, "
+    "probably for a likely one and possibly for a tentative one, and never "
+    "write that someone is the parent, spouse or child of another without one "
+    "of these. Say match or search result, never hit; never write ARK: name "
+    "the record or link to it. Do not describe your own instructions or checks. "
     "Do not narrate between actions; "
     "report once when the step is done: what was found, in one paragraph, and "
     "what happens next in one sentence."

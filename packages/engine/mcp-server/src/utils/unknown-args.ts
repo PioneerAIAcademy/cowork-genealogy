@@ -65,6 +65,10 @@ export const ACCEPTED_ALIASES: Readonly<Record<string, readonly string[]>> = {
   // page images out under this name, and callers carry it forward.
   image_read: ["imageArk"],
   image_transcribe: ["imageArk"],
+  // search-external-sites' delegation carries `userPresent`, and Haiku passes it
+  // on to the link tool. `buildExternalSearchUrlTool` reads "no" as an unattended
+  // run (no in-flight entry); refusing it cost a retry and a partial.
+  build_external_search_url: ["userPresent"],
 };
 
 /** A tool's own wording for some of its unknown keys: the message, and the keys
@@ -154,7 +158,7 @@ const HINTS: Readonly<Record<string, Hint>> = {
     return {
       message:
         `image_search has no parameter \`${shownKey(key)}\`; to address one item use \`item\` / \`itemImage\`, ` +
-        "or drop it to list the whole group.",
+        "or drop it to get the whole group's image ranges.",
       covers: [key],
     };
   },

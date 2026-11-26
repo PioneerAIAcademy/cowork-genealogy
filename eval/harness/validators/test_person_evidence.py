@@ -1507,6 +1507,103 @@ def test_corridor_move_links_confident(before_state, after_state, test):
     )
 
 
+# --- Warnings a link would introduce (same_person's warningsIfLinked) ---
+
+_DEATH_WORDS = re.compile(r"\b(buri\w*|inter\w+|death|died|dead|deceased)\b", re.IGNORECASE)
+
+
+def _new_strong_links_to_subject(before: dict, after: dict) -> list[dict]:
+    subjects = _subject_ids(before)
+    return [
+        e for e in _new_person_evidence(before, after)
+        if e.get("person_id") in subjects
+        and e.get("confidence") in ("confident", "probable")
+        and not e.get("superseded_by")
+    ]
+
+
+def test_link_warning_no_link(before_state, after_state, test):
+    """Tag-gated (`link-warning-no-link`): `same_person` listed an impossible
+    warning the link would introduce, and the tree fact behind it stands (it
+    came with the tree, or records back it at `confident`), so the record is a
+    different person. No new `confident` or `probable` link to the subject may
+    stand, and no link the project already held may be lowered to make room for
+    the record."""
+    if "link-warning-no-link" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-no-link test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = _new_strong_links_to_subject(before, after)
+    assert not strong, (
+        "the link would introduce an impossible warning against a tree fact that "
+        "stands, so the record is a different person; these new links to the subject stand: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in strong]}"
+    )
+    was = {e.get("id"): e.get("confidence") for e in (before.get("person_evidence") or [])}
+    moved = [
+        (e.get("id"), was[e.get("id")], e.get("confidence"))
+        for e in (after.get("person_evidence") or [])
+        if e.get("id") in was and (e.get("confidence") != was[e.get("id")] or e.get("superseded_by"))
+    ]
+    assert not moved, (
+        "the tree fact stands; the links the project held must stay as they "
+        f"were, but these changed (id, before, after): {moved}"
+    )
+
+
+def test_link_warning_explained_links_and_names_it(before_state, after_state, test):
+    """Tag-gated (`link-warning-explained`): the mirror arm. The warning comes
+    from a thinly supported fact already on the tree person and the record is
+    the well-supported side, so the subject is linked at `probable` or
+    `confident` and a rationale names the death-like fact in doubt. No link is
+    the warning rule over-firing."""
+    if "link-warning-explained" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-explained test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = _new_strong_links_to_subject(before, after)
+    assert strong, (
+        "the record is the well-supported side of the warning, so the subject is "
+        "linked at `probable` or `confident`; new links to the subject: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in _new_person_evidence(before, after)] or 'none'}"
+    )
+    assert any(_DEATH_WORDS.search(e.get("rationale") or "") for e in strong), (
+        "a link written past a listed warning names the warning and the tree fact "
+        "in doubt; no new link to the subject mentions the burial: "
+        f"{[(e.get('id'), (e.get('rationale') or '')[:120]) for e in strong]}"
+    )
+
+
+
+def test_link_warning_implausible_still_links(before_state, after_state, test):
+    """Tag-gated (`link-warning-implausible-links`): the listed warning is
+    implausible, not impossible, and the rest of the record fits, so the person
+    it stands against is still linked. In `carter-census-late-child` that is the
+    census wife and the tree's Ann (I2). No `confident` or `probable` link to
+    her is the warning rule over-firing."""
+    if "link-warning-implausible-links" not in (test.get("tags") or []):
+        pytest.skip("not a link-warning-implausible-links test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    strong = [
+        e for e in _new_person_evidence(before, after)
+        if e.get("person_id") == "I2"
+        and e.get("confidence") in ("confident", "probable")
+        and not e.get("superseded_by")
+    ]
+    assert strong, (
+        "an implausible warning is unlikely, not excluded: the wife is linked to "
+        "I2 at `probable` or `confident`; new links written: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('person_id'), e.get('confidence')) for e in _new_person_evidence(before, after)] or 'none'}"
+    )
+
+
 # --- Arrival to naturalization interval (issue #3969) -----------------
 
 # The Gaetjen scenarios: a_007 is the 13 Aug 1875 naturalization, a_014 the
@@ -1535,7 +1632,7 @@ _SHORTFALL = re.compile(
 # A negator up to two words before the match, in the same clause: "no
 # shortfall", "no residence shortfall", "does not fall short".
 _NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
-_CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
+_CLAUSE_BREAK = re.compile(r"[,.;:!?\n()]")
 # A negator anywhere earlier in the clause: "there is no evidence that this was
 # a return trip", "nothing here is impossible".
 _CLAUSE_NEGATOR = re.compile(
@@ -1747,6 +1844,125 @@ def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, 
     assert _states_naturalization_shortfall(reply), (
         "the run linked neither a_007 nor a_014, and its reply does not state the "
         "residence shortfall either"
+    )
+
+
+_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+_LINK_NOUN = r"(?:\bpe_\w*\s+(?:entry|entries|link|links|record)\b|\blinks?\b|\blinking\b|\bentry\b|\bentries\b)"
+_NOT_A_GAP_WORD = r"(?:conflicts?|contradict\w*|problems?|issues?|edits?|changes?|writes?|further|more|additional|other|new|need)"
+_BETWEEN = r"(?:(?!\b" + _NOT_A_GAP_WORD + r"\b)[^.\n]){0,40}?"
+_MISSING_LINK = re.compile(
+    r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b)" + _BETWEEN + _LINK_NOUN
+    + r"|(?:\bnot|n['’]t)\s+(?:yet\s+)?(?:been\s+)?(?:linked|connected)\b|\bunlinked\b|\bnothing\s+links\b"
+    + r"|" + _LINK_NOUN + r"[^.\n]{0,60}?\b(?:is\s+missing|is\s+absent|don['’]t\s+see|do\s+not\s+see"
+    + r"|(?:has|have)(?:\s+not|n['’]t)\s+(?:yet\s+)?been\s+(?:created|made|written|added))\b"
+    + r"|" + _LINK_NOUN + r"\s+(?:are\s+)?missing\b",
+    re.IGNORECASE,
+)
+_I2_NAMES = re.compile(r"\ba_013\b|\bI2\b|\bThomas\b")
+_OTHER_ID = re.compile(r"\bI(?!2\b)\d+\b|\bpe_\d+|\ba_(?!013\b)\d+|\bentry\s+date\b")
+_SCORE_TERM = r"(?:`?match_score`?|\bmatch\s+score|`?same_person`?\s+score|\bscore)"
+_UNEXPLAINED = (
+    r"(?:\bunexplained\b|\bno\s+explanation\b|\bnever\s+says\s+why\b|\bno\s+(?:stated\s+|given\s+)?reason\b"
+    r"|\bnot\s+disclosed\b|\b(?:does\s+not|doesn['’]t)\s+(?:say|explain|mention\s+why)\b"
+    r"|\bno\s+rationale\s+for\b|\bno\s+(?:statement|note)\s+of\s+why\b"
+    r"|\b(?:does\s+not|doesn['’]t)\s+state\s+why\b"
+    r"|\bnot\s+(?:recorded|obtained|stated|explained|computed)\b|\bno\s+disclosure\b"
+    r"|\bmentions\s+no\b|\bnever\s+computed\b|\bno\s+account\b"
+    r"|\bnor\s+(?:says|explains|states|gives)\s+why\b|\bwhy\s+none\s+was\b)"
+)
+_SCORE_UNEXPLAINED = re.compile(
+    _SCORE_TERM + r"[^\n]{0,80}?" + _UNEXPLAINED
+    + r"|" + _UNEXPLAINED + r"[^\n]{0,80}?" + _SCORE_TERM
+    + r"|\bno\s+(?:`?same_person`?\s+score|match\s+score|`?match_score`?)\b"
+    + r"|\bno\s+score\s+(?:disclosed|stated|given|recorded|reported)\b"
+    + r"|" + _SCORE_TERM + r"\s+is\s+missing\b",
+    re.IGNORECASE,
+)
+_NUMERIC_SCORE = re.compile(r"\b[01]?\.\d+\b")
+
+
+def _sentences(text):
+    return [s for s in _SENTENCE.split(text or "") if s.strip()]
+
+
+def _names_missing_i2_link(text):
+    """a_013 is named somewhere in the reply (the whole review is about it, so
+    it need not repeat in the same sentence pair as the gap), and two adjacent
+    sentences name Thomas / I2 with one of them saying the link is absent. A
+    negation tied to something else ("no edits to pe_005", "no conflict
+    against the links", "no further link is needed"), or a second sentence
+    about another person or entry, does not count."""
+    if not re.search(r"\ba_013\b", text or ""):
+        return False
+    sents = _sentences(text)
+    for i in range(len(sents)):
+        pair = sents[i:i + 2]
+        if not re.search(r"\bI2\b|\bThomas\b", " ".join(pair)):
+            continue
+        if any(
+            _MISSING_LINK.search(s)
+            and (_I2_NAMES.search(s) or (j > 0 and not _OTHER_ID.search(s)))
+            for j, s in enumerate(pair)
+        ):
+            return True
+    return False
+
+
+def _names_unexplained_score(text):
+    """One sentence says the match score is absent or left unexplained, within
+    80 characters of the score term and with no numeric score in the sentence;
+    a bare `match_score null` field listing does not count."""
+    return any(
+        _SCORE_UNEXPLAINED.search(s) and not _NUMERIC_SCORE.search(s)
+        for s in _sentences(text)
+    )
+
+
+_OTHER_LINK = re.compile(r"\bpe_(?!005\b)\d+|\ba_(?!013\b)\d+")
+_SAME_PERSON = re.compile(r"\bsame_person\b", re.IGNORECASE)
+_SAME_PERSON_NOT_RUN = re.compile(
+    r"(?:\bno\b|\bnot\b|\bnever\b|n['’]t\b)[^.\n]{0,30}\bsame_person\b"
+    r"|\bsame_person\b[^.\n]{0,30}(?:\bnot\b|\bnever\b|n['’]t\b)",
+    re.IGNORECASE,
+)
+
+
+def _reports_computed_score(text):
+    """Two adjacent sentences give the `same_person` score the review computed:
+    one says it ran `same_person` and one gives the number ("I ran same_person
+    for a_013 against I1. That call returned 0.86."), and the one with the number
+    names no other link or assertion. A review calls `same_person` on a null
+    match_score and reports the score without writing it, as the agent's body
+    says, so a stated score answers the gap as well as naming the null does."""
+    sents = _sentences(text)
+    for i in range(len(sents)):
+        pair = sents[i:i + 2]
+        if not any(_SAME_PERSON.search(s) and not _SAME_PERSON_NOT_RUN.search(s) for s in pair):
+            continue
+        if any(_NUMERIC_SCORE.search(s) and not _OTHER_LINK.search(s) for s in pair):
+            return True
+    return False
+
+
+def test_review_names_gaps(test, agent_returns=None, text_response=None):
+    """Tag-gated (`review-names-gaps`): a review of pe_005 names both gaps a
+    review owes, because the test marks the linking dimensions N/A
+    (`na_dimensions`, #4548): a_013 names Thomas Flynn (I2) as father but no
+    pe_ entry links it to I2, and pe_005's null match_score is dealt with: the
+    review gives the `same_person` score it computed, or says the null is
+    unexplained."""
+    if "review-names-gaps" not in (test.get("tags") or []):
+        pytest.skip("not a review-names-gaps test")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "person-evidence", test)
+    assert _names_missing_i2_link(reply), (
+        "the review does not say that a_013 has no pe_ link to Thomas Flynn (I2)"
+    )
+    assert _names_unexplained_score(reply) or _reports_computed_score(reply), (
+        "the review neither gives pe_005's computed same_person score nor says its "
+        "match_score is null and unexplained"
     )
 
 
@@ -2062,4 +2278,35 @@ def test_supersedes_named_attachment_links(before_state, after_state, test):
     assert not problems, (
         "named assertions' attachment links must be superseded by a scored link, "
         "and every other attachment link left alone:\n  - " + "\n  - ".join(problems)
+    )
+
+
+# --- A record source_screen calls misattributed is linked at speculative at most ---
+
+def test_screen_misattributed_caps_link(before_state, after_state, test):
+    """Tag-gated (``screen-misattributed-cap``, issue #3504 item 7).
+
+    Every new `pe_` written for an assertion the delegation names (those
+    carrying a question id) is `speculative`: the scenario's source_screen
+    fixture calls their record misattributed, which caps the link there.
+    """
+    if "screen-misattributed-cap" not in (test.get("tags") or []):
+        pytest.skip("not a screen-misattributed-cap test")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    named = {
+        a["id"] for a in before.get("assertions", [])
+        if isinstance(a, dict) and a.get("extracted_for_question_ids")
+    }
+    assert named, "scenario drift: expected question-tied assertions before the run"
+    old_ids = {pe.get("id") for pe in before.get("person_evidence", []) if isinstance(pe, dict)}
+    over = [
+        f"{pe.get('id')} ({pe.get('assertion_id')}) is {pe.get('confidence')!r}"
+        for pe in after.get("person_evidence", [])
+        if isinstance(pe, dict) and pe.get("id") not in old_ids
+        and pe.get("assertion_id") in named and pe.get("confidence") != "speculative"
+    ]
+    assert not over, (
+        "a link to a record source_screen calls misattributed is speculative at most:\n  - "
+        + "\n  - ".join(over)
     )

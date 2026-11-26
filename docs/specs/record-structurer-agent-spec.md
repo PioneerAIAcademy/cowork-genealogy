@@ -106,8 +106,50 @@ is §11.7's code.
   with no `date` becomes the fact's date, marked computed. Any other stray entry still
   refuses the batch.
 - **Every named person is their own person.** A father named inside a groom's
-  block gets his own entry and his own name. `names[0]` is the bare name. The
-  tie is a relationship or a `statedRelation`.
+  block gets his own entry and his own name. Each name the text gives a person
+  is its own `names` entry, the one the text shows first first: the persona
+  projection marks the first name preferred, and `extraction_append` writes one
+  `name` assertion per entry. The tie is a relationship or a `statedRelation`.
+- **Names: a type only where the text says whose surname it is.** The agent
+  sets `type` (`birth`, `married`, `nickname`, `also_known_as`) from the text's
+  own words, and `materialize_facts` mints the tree's name type from it and
+  from nothing else (`tree-materialization-spec.md`, "No name type is
+  invented, on either arm"). The rules, and why each reads as it does:
+  - `Mary (Johnson) Smith` and `nee` / `née` give a `birth` and a `married`
+    name. `nee` is often written without a comma; book-to-tree found 302 such
+    names across 113 family histories (588,798 people).
+  - `Mrs. Thomas Flynn` names a woman by her husband. Her given name is unknown,
+    not Thomas: she is surname Flynn, `married`, with a `couple` to him.
+  - A bracket ending a name, or several brackets in a row, gives each surname
+    its own name with no type. Which bracket is her birth surname differs
+    between books: where relatives could tell, one book printed the birth
+    surname before the brackets and three printed it in the first bracket, and
+    book-to-tree's parser, assuming the first, published 15 women with a
+    husband's surname as their own. A published tree needs a surname and takes
+    that guess; a research record needs no surname the record does not state.
+  - A bracketed spelling of the word before it is an `also_known_as` name, a
+    short form of the person's own given name a `nickname`. In a man's name a
+    bracket is never a maiden name: in an obituary survivor list a woman's given
+    name there is his wife, and elsewhere a given name in it is a nickname.
+  - `(Mrs)`, `(widow)`, `(adopted)` are notes, never name parts; they were the
+    commonest non-surname in an end bracket in book-to-tree's books.
+  - Surname particles stay with the surname: `St`, `Ste`, `Saint`, `Mc`, `Mac`,
+    `Van`, `Von`, `De`, `Di`, `Del`, `Des`, `Du`, `Le`, `La`, `Fitz`, `ten`,
+    `ter`, `Op`, `Vander`, `Vande`, `Vanden`, `Ver`, `Zum`, `dem`, `San`,
+    `Santa`, `ap`, `verch`. book-to-tree's 2026-11-13 measurement on 120 books
+    keeps a word only when its books use it more often in a surname than as a
+    first name: `Vander` and `Vande` 25 of 25 sampled uses, `ap` 15 of 15, `Von` and
+    `Mac` 14 of 15, `Del` 10 of 15, the others measured in every sampled use;
+    `Ste`, `Saint` and `ter` were not measured. `Ben`, `Al`, `Della`, `Delle`, `Les`,
+    `El`, `Don`, `Mack`, `Dell` and `Delos` stay off (`Ben` 1 of 15, `Al` 0 of 9),
+    and no single letter is a particle. Where a name assertion has no structured
+    value, or one with both parts empty, `nameParts` applies the same rule to
+    its last-token split, and reads a last token that is a single Latin
+    letter, with or without a period, and follows no particle, as an initial:
+    the whole value is the given and the surname is blank ("Benjamin F."), while
+    "Maria de la O" keeps "de la O".
+  - A bare `O` before a surname is a middle initial unless written `O'`: 64 of
+    book-to-tree's 89 such names read as an initial and 6 as `O'`.
 - **Stated relationships only.** The agent emits a relationship only where the
   text states it, including a stated sibling. It never
   deduces one from who lived with whom. On a census, the column's value goes
@@ -124,7 +166,15 @@ is §11.7's code.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
-  City", 1 of 3).
+  City", 1 of 3). `extraction_append` refuses a document residence that has a
+  `value` and no `place` (lead, 2026-11-23; a page-pass reading is not checked): on Haiku 5.5 low (v3) all four of
+  ut_record_structurer_001's residences held the place only in `value`, so none
+  got a standard place, and a rule the tool checks binds on every model. A
+  date-shaped residence goes in `date`. The engine still never reads a place out
+  of `value`; it refuses rather than guess.
+- **Age (lead, 2026-11-23).** An age the text gives is an `age` fact on that
+  person. Without the line Haiku dropped the obituary's "91" (v1, v2, v5) or
+  wrote it as `age_at_death` (v3), which no `age` row matches.
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,
@@ -134,12 +184,15 @@ is §11.7's code.
   without a gender is written as a father.
 - **Probate (2026-10-04).** The will's execution is a `will` fact; the
   court's acts (proof, letters granted) are `probate` facts, all on the
-  testator, even where the letters name the executor.
+  testator, even where the letters name the executor. Each bequest is a
+  `bequest` fact on the person who receives it (lead, 2026-11-23); the rule
+  named none, and v1 and v2 dropped all three of ut_record_structurer_005's
+  bequests while the judge scored the test 3.
 - **Newspaper notices (2026-10-04).** A wedding, birth, engagement or
   anniversary notice is `newspaper_announcement`, never the event's own
   record type.
 - **Obituary survivor lists.** `given (surname) married-surname` is one woman
-  with her maiden name. `given (given) surname` is a person plus a spouse, and
+  with a `birth` and a `married` name (Names, above). `given (given) surname` is a person plus a spouse, and
   that spouse is a child-in-law who takes the surname outside the parentheses
   (genealogist, 2026-10-04: "Robert (Linda) Whitaker" gives Linda Whitaker; a
   trial wrote her as bare "Linda" in 1 of 3 runs). Neighbours, friends and pallbearers are
@@ -171,8 +224,9 @@ read images, write the log, or call the calendar tool.
 
 ## 6. Verification
 
-- `extraction_append` rejects a malformed document, shown failing two ways: a
-  smuggled `record_basis`, and a census with no `census` block. It also refuses
+- `extraction_append` rejects a malformed document, shown failing three ways: a
+  smuggled `record_basis`, a census with no `census` block, and a residence with
+  a `value` and no `place`. It also refuses
   the whole batch when one document is malformed, and writes nothing.
 - The unit fixtures that start from text reach this agent directly (the
   harness's direct-agent arm, since no skill remains in front of it). They pass

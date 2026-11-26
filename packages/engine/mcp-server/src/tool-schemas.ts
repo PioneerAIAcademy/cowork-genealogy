@@ -20,8 +20,9 @@ import { wikiSearchSchema } from "./tools/wiki-search.js";
 import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
+import { localitySurveySchema } from "./tools/locality-survey.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
-import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
+import { imageTranscribeToolSchema } from "./tools/image-transcribe-mcp.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
@@ -41,7 +42,9 @@ import { wikiPlacePageSchema } from "./tools/wiki-place-page.js";
 import { validateResearchSchemaSchema } from "./tools/validate-research-schema.js";
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
+import { imageIndexSchema } from "./tools/image-index.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { sourceScreenToolSchema } from "./tools/source-screen.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
@@ -66,6 +69,7 @@ import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.
 import { treeQuerySchema } from "./tools/tree-query.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
 import { getNameVariantsSchema } from "./tools/name-variants.js";
+import { PROJECT_EXEMPT_TOOLS } from "./utils/project-gate.js";
 
 // Tools exempt from ToolSearch deferral: their schemas load up front instead of
 // costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
@@ -91,9 +95,11 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "external_links_search",
   "fulltext_search",
   "get_name_variants",
+  "image_index",
   "image_read",
   "image_search",
   "image_transcribe",
+  "locality_survey",
   "merge_warnings",
   "person_ancestors",
   "person_person_matches",
@@ -116,6 +122,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "research_query",
   "sidecar_read",
   "source_attachments",
+  "source_screen",
   "tree_gaps",
   "tree_query",
   "validate_research_schema",
@@ -141,6 +148,7 @@ export const allToolSchemas = [
   placeDistanceToolSchema,
   populationToolSchema,
   externalLinksSearchToolSchema,
+  localitySurveySchema,
   imageReadToolSchema,
   imageTranscribeToolSchema,
   recordSearchToolSchema,
@@ -160,7 +168,9 @@ export const allToolSchemas = [
   validateResearchSchemaSchema,
   sourceAttachmentsSchema,
   imageSearchSchema,
+  imageIndexSchema,
   personWarningsToolSchema,
+  sourceScreenToolSchema,
   personQualityToolSchema,
   mergeWarningsSchema,
   volumeSearchSchema,
@@ -195,5 +205,76 @@ function mark(set: ReadonlySet<string>, setName: string, fields: object): void {
     Object.assign(schema, fields);
   }
 }
+/** The tools the plugin hook refuses the main conversation (`AGENT_ONLY_TOOLS` in
+ *  plugin/hooks/guard_project_files.py; tests/packaging/plugin-hooks.test.ts keeps
+ *  the two equal). Each description opens with `AGENT_ONLY_NOTE`, so a main thread
+ *  that loads the schema reads the rule before it calls. */
+export const AGENT_ONLY: ReadonlySet<string> = new Set([
+  "build_external_search_url",
+  "catalog_search",
+  "census_children_gap",
+  "collections_search",
+  "convert_calendar",
+  "evaluation_append",
+  "external_links_search",
+  "fulltext_search",
+  "get_name_variants",
+  "image_index",
+  "image_search",
+  "locality_survey",
+  "materialize_facts",
+  "merge_tree_persons",
+  "merge_warnings",
+  "person_person_matches",
+  "person_quality",
+  "person_record_matches",
+  "person_warnings",
+  "place_distance",
+  "place_population",
+  "place_search",
+  "place_search_all",
+  "record_search",
+  "same_person",
+  "source_screen",
+  "tree_correct",
+  "tree_edit",
+  "tree_gaps",
+  "volume_bisect",
+  "volume_search",
+  "wiki_place_page",
+  "wiki_read",
+  "wiki_search",
+  "wikipedia_search",
+]);
+
+export const AGENT_ONLY_NOTE =
+  "Agents only: the main conversation is refused this tool, so hand the request to the plugin agent whose work it is. ";
+
+for (const name of AGENT_ONLY) {
+  const schema = allToolSchemas.find((s) => s.name === name);
+  if (!schema) throw new Error(`AGENT_ONLY names unknown tool "${name}"`);
+  // Set in place, as `mark` does: ownership-manifest.test.ts matches schemas by object identity.
+  if (!schema.description.startsWith(AGENT_ONLY_NOTE)) {
+    Object.assign(schema, { description: AGENT_ONLY_NOTE + schema.description });
+  }
+}
+
 mark(ALWAYS_LOAD, "ALWAYS_LOAD", { _meta: { "anthropic/alwaysLoad": true } });
 mark(READ_ONLY, "READ_ONLY", { annotations: { readOnlyHint: true } });
+
+// Every tool outside PROJECT_EXEMPT_TOOLS requires `projectPath` (utils/project-gate.ts;
+// server.ts refuses a call without one). Set in place here so no tool file has to
+// remember it and a new tool cannot be advertised without it; a tool that already
+// describes the parameter keeps its own description. Declared last so the marks above
+// are untouched.
+// Short on purpose: the description is billed on every tool in every session, and the
+// refusal itself says how to start a project.
+const PROJECT_PATH_DESCRIPTION = "Absolute path of the project directory. Required.";
+for (const schema of allToolSchemas as Array<{ name: string; inputSchema: any }>) {
+  if (PROJECT_EXEMPT_TOOLS.has(schema.name)) continue;
+  const input = schema.inputSchema;
+  input.properties ??= {};
+  input.properties.projectPath ??= { type: "string", description: PROJECT_PATH_DESCRIPTION };
+  const required: string[] = (input.required ??= []);
+  if (!required.includes("projectPath")) required.push("projectPath");
+}

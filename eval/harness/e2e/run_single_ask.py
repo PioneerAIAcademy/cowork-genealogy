@@ -4,10 +4,12 @@
 
 Each fixture under ``eval/tests/e2e-single-ask/<slug>/`` is one message a patron
 typed, sent verbatim as one ordinary turn into a project built from the
-fixture's starting state, and graded deterministically by ``single_ask_grade``:
+fixture's starting state (or into an empty folder, when it has neither starting
+file), and graded deterministically by ``single_ask_grade``:
 no judge, no ``expected-findings.json``. Live and billed (FamilySearch + model).
 
-Exit 0 when every fixture passes, 1 when any fails, 2 when a run never happened
+Exit 0 when every fixture passes or fails with its ``known_issue`` set, 1 when any
+other fails or goes ungraded, 2 when a run never happened
 (bad fixture, no server build, the genealogy MCP server unavailable).
 """
 
@@ -16,6 +18,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sys
 import tempfile
 from functools import lru_cache
@@ -41,6 +44,7 @@ from e2e.single_ask_grade import (
     SingleAskSpec,
     format_line,
     grade,
+    last_main_text,
 )
 
 DEFAULT_SINGLE_ASK_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e-single-ask"
@@ -50,8 +54,11 @@ DEFAULT_SINGLE_ASK_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e-single-ask"
 REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
 FIXTURE_KEYS = frozenset({
     *REQUIRED_KEYS, "is_plan_ask", "setup_units", "must_not", "forbidden_tools",
-    "required_tools", "model", "caps", "tags", "blocked_tools",
+    "required_tools", "model", "caps", "tags", "blocked_tools", "ends_on_offer",
+    "known_issue",
 })
+KNOWN_ISSUE_RE = re.compile(r"^#[1-9]\d*$")
+STARTING_FILES = ("starting-research.json", "starting-tree.gedcomx.json")
 MANIFEST = REPO_ROOT / "packages" / "engine" / "mcp-server" / "manifest.json"
 # Built-in tools a fixture may name beside the MCP server's.
 BUILTIN_TOOLS = frozenset({"Agent", "Task", "Skill", "Read", "Write", "Edit", "Bash", "Glob", "Grep", "ToolSearch"})
@@ -67,6 +74,15 @@ class FixtureError(ValueError):
 
 
 @lru_cache(maxsize=1)
+def _read_json_or_none(path: Path) -> Any:
+    """A project file the run left, parsed, or None when absent or unreadable: the stored
+    curated-link rows (`external-collections.json`) the recall check counts as available."""
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
 def known_tool_names() -> frozenset[str]:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     return frozenset(t["name"] for t in manifest["tools"]) | BUILTIN_TOOLS
@@ -138,8 +154,14 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
             f"{fixture_dir.name}: a fixture with an `absent` expected_save alternative needs "
             "required_tools, or an empty turn passes"
         )
-    if not isinstance(raw.get("is_plan_ask", False), bool):
-        raise FixtureError(f"{fixture_dir.name}: is_plan_ask must be true or false")
+    known_issue = raw.get("known_issue", "")
+    if not isinstance(known_issue, str) or (known_issue and not KNOWN_ISSUE_RE.match(known_issue)):
+        raise FixtureError(f"{fixture_dir.name}: known_issue must be an issue number like \"#2813\"")
+    for key in ("is_plan_ask", "ends_on_offer"):
+        if not isinstance(raw.get(key, False), bool):
+            raise FixtureError(f"{fixture_dir.name}: {key} must be true or false")
+    if any(alt.get("section") == "plans" and not alt.get("absent") for alt in alternatives) and not raw.get("is_plan_ask"):
+        raise FixtureError(f"{fixture_dir.name}: a plans expected_save needs is_plan_ask: true, or no_research_job fails it")
     setup = raw.get("setup_units") or []
     if not isinstance(setup, list) or not all(isinstance(u, str) for u in setup):
         raise FixtureError(f"{fixture_dir.name}: setup_units must be a list of unit names")
@@ -148,15 +170,27 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     for key in ("model", "caps"):
         if key in raw and not isinstance(raw[key], dict):
             raise FixtureError(f"{fixture_dir.name}: `{key}` must be an object")
-    for name in ("starting-research.json", "starting-tree.gedcomx.json"):
-        if not (fixture_dir / name).is_file():
-            raise FixtureError(f"{fixture_dir.name}: {name} is missing")
-    try:
-        starting = json.loads((fixture_dir / "starting-research.json").read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        raise FixtureError(f"{fixture_dir.name}: starting-research.json does not parse: {e}") from e
-    if not isinstance(starting, dict):
-        raise FixtureError(f"{fixture_dir.name}: starting-research.json must be a JSON object")
+    # Both starting files (a seeded project) or neither (an empty folder), never one.
+    present = [name for name in STARTING_FILES if (fixture_dir / name).is_file()]
+    if len(present) == 1:
+        missing_file = next(n for n in STARTING_FILES if n not in present)
+        raise FixtureError(
+            f"{fixture_dir.name}: {missing_file} is missing; a fixture has both starting "
+            "files or neither (an empty folder)"
+        )
+    empty_folder = not present
+    if empty_folder and any(alt["section"] == "sources" for alt in alternatives):
+        raise FixtureError(
+            f"{fixture_dir.name}: an empty-folder fixture cannot save `sources`: project_create "
+            "imports the person's Memories as sources, so one passes before the deliverable runs"
+        )
+    if not empty_folder:
+        try:
+            starting = json.loads((fixture_dir / "starting-research.json").read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise FixtureError(f"{fixture_dir.name}: starting-research.json does not parse: {e}") from e
+        if not isinstance(starting, dict):
+            raise FixtureError(f"{fixture_dir.name}: starting-research.json must be a JSON object")
     model = raw.get("model") or {}
     fixture = Fixture(
         id=raw["id"],
@@ -166,8 +200,8 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         judge_model="",
         caps=load_caps(raw.get("caps") or {}),
         expected_findings={},
-        starting_research_path=fixture_dir / "starting-research.json",
-        starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
+        starting_research_path=None if empty_folder else fixture_dir / "starting-research.json",
+        starting_tree_path=None if empty_folder else fixture_dir / "starting-tree.gedcomx.json",
         blocked_tools=frozenset(raw.get("blocked_tools") or ()),
     )
     spec = SingleAskSpec(
@@ -178,6 +212,8 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         is_plan_ask=raw.get("is_plan_ask", False),
         setup_units=tuple(setup),
         must_not=str(raw.get("must_not") or ""),
+        ends_on_offer=raw.get("ends_on_offer", False),
+        known_issue=known_issue,
         **tool_lists,
     )
     return fixture, spec
@@ -198,7 +234,7 @@ async def run_one(
     effort_level: str | None,
     agent_model: str | None,
 ) -> tuple[SingleAskSpec, dict[str, Any], SingleAskGrade | None]:
-    starting_research = json.loads(
+    starting_research = None if fixture.starting_research_path is None else json.loads(
         fixture.starting_research_path.read_text(encoding="utf-8")
     )
     with tempfile.TemporaryDirectory(
@@ -216,6 +252,8 @@ async def run_one(
             effort=effort_level,
         )
         final_research = read_research_json(workspace)
+        research_json_exists = (workspace / "research.json").exists()
+        final_external_collections = _read_json_or_none(workspace / "external-collections.json")
 
     aborted = record["aborted_reason"]
     if aborted in NEVER_HAPPENED:
@@ -228,6 +266,8 @@ async def run_one(
             starting_research=starting_research,
             final_research=final_research,
             aborted_reason=aborted,
+            last_text=last_main_text(record.get("narration")),
+            research_json_exists=research_json_exists,
         )
     out_dir = runlog_root / fixture.id
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -250,6 +290,7 @@ async def run_one(
                 },
                 **record,
                 "final_research": final_research,
+                "final_external_collections": final_external_collections,
             },
             indent=2,
             ensure_ascii=False,
@@ -299,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No single-ask fixtures under {args.fixtures_root}", file=sys.stderr)
         return 2
 
-    failures = 0
+    failures = known = passes = 0
     for fixture, spec in loaded:
         try:
             spec, record, g = asyncio.run(
@@ -323,10 +364,16 @@ def main(argv: list[str] | None = None) -> int:
             failures += 1
             print(f"UNGRADED {spec.id}  stop={record['aborted_reason']}")
         else:
-            failures += 0 if g.passed else 1
+            if g.passed:
+                passes += 1
+            elif spec.known_issue:
+                known += 1
+            else:
+                failures += 1
             print(format_line(spec, g))
         shown = f"{cost:.2f}" if isinstance(cost, (int, float)) else "?"
         print(f"    cost~${shown}  runlog: {record['runlog']}")
+    print(f"\n{len(loaded)} fixtures: {passes} pass, {known} known fail, {failures} fail or ungraded")
     return 1 if failures else 0
 
 

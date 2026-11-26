@@ -5,11 +5,18 @@
     "name": "Translate a Latin Catholic marriage record",
     "type": "positive",
     "description": "Different language and record type from the seed test (which covered German baptism). Catholic Latin marriage records use specific formulaic terminology (e.g., 'matrimonium iniverunt' = 'entered into matrimony'; 'filius/filia' = 'son/daughter of'; 'parochus' = 'parish priest'; 'praesentibus testibus' = 'with the witnesses present'). Tests Latin-specific genealogical terminology.",
-    "tags": ["latin", "catholic", "marriage", "church-record", "formulaic-terminology", "direct-arm"]
+    "tags": [
+      "latin",
+      "catholic",
+      "marriage",
+      "church-record",
+      "formulaic-terminology",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Translate this Latin Catholic marriage record: 'Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.'",
-    "scenario": null
+    "delegation": "Translate this Latin Catholic marriage record: 'Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

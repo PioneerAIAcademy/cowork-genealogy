@@ -38,5 +38,8 @@
     "Read `project_context` first and follow its `nextStep`. A null `nextStep` beside a non-empty `openConflictIds` is not 'nothing is wrong' — it means the research ended on a conflict that cannot be settled from what is on file.",
     "Re-spawning `@plugin:conflict-resolution` is the failure. It would weigh exactly the evidence it weighed last time, which is the loop the ladder's rung exists to end.",
     "The reply says the research ended on the unsettled conflict, names it, and ends with NO \"Continue with …?\" line — nothing further will help. It may say a different question is still possible."
+  ],
+  "mcp_fixtures": [
+    "person-read-empty-any"
   ]
 }

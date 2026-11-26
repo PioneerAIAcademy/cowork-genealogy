@@ -18,6 +18,8 @@ Block a test from executing when:
   on a direct-arm test, or leaves one of the agent's fixture-backed tools with
   no fixture
 - a positive test in a routing suite lists no `execution.stub_skills`
+- `na_dimensions` names a dimension that is not a heading in the suite's
+  rubric.md, or is set on a negative test
 """
 
 from __future__ import annotations
@@ -33,6 +35,7 @@ from harness.allowed_tools import (
 )
 from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
 from harness.gate_tags import file_gate_tags
+from harness.judge import _REQUIRED_BASE_DIMENSIONS
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
@@ -379,12 +382,56 @@ def check_runnable(
     # file is a runnability failure (it's a typo, not an opt-out), and so
     # is a blank one — opting out means deleting the file.
     try:
-        parse_rubric_or_empty(
+        rubric = parse_rubric_or_empty(
             spec.skill,
             rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
         )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")
+
+    # `na_dimensions` (#4548) must name rubric headings exactly. A typo would
+    # coerce nothing and still exit green, and a base dimension (Correctness,
+    # Completeness) is what `_compute_outcome` gates on, so both are refused.
+    # A negative test is judged against an empty rubric, where the field could
+    # only do nothing.
+    if spec.na_dimensions:
+        if spec.type == "negative":
+            return RunnabilityResult(
+                False,
+                "na_dimensions is set on a negative test, which is judged "
+                "without its suite's rubric, so it would coerce nothing",
+            )
+        base = [n for n in spec.na_dimensions if n in _REQUIRED_BASE_DIMENSIONS]
+        if base:
+            return RunnabilityResult(
+                False,
+                f"na_dimensions names base dimension(s) {base}; only rubric "
+                "dimensions can be marked N/A",
+            )
+        valid = [d.name for d in rubric.dimensions]
+        unknown = [n for n in spec.na_dimensions if n not in valid]
+        if unknown:
+            return RunnabilityResult(
+                False,
+                f"na_dimensions names {unknown}, which are not `## ` headings "
+                f"in {rubric_path}. Rubric dimensions: {valid or 'none'}",
+            )
+        # Nulling a dimension removes its coverage; the spec's authoring rule
+        # is that a tag-gated validator grades what it held. Without one the
+        # field only deletes signal, the grade_on_invariant failure mode.
+        gate_tags = tag_gated_validator_tags(
+            validators_dir, spec.skill
+        ) | tag_gated_validator_tags(validators_dir, "universal")
+        if not set(spec.tags or []) & gate_tags:
+            return RunnabilityResult(
+                False,
+                "na_dimensions is set but no validator gates on any of this "
+                f"test's tags {sorted(spec.tags or [])}, so nulling "
+                f"{list(spec.na_dimensions)} would only delete coverage. Add a "
+                f"tag-gated validator to {validators_dir}/test_"
+                f"{spec.skill.replace('-', '_')}.py that grades what those "
+                "dimensions held, then tag the test with it.",
+            )
 
     # A positive test in a ROUTING suite must list its stubs (#3568). Every agent
     # it spawns is denied by default, but the ownership validators skip only on a

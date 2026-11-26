@@ -8,6 +8,7 @@
     "tags": [
       "newspaper-announcement",
       "wedding",
+      "wife-by-husband-name",
       "direct-arm"
     ]
   },
@@ -105,6 +106,12 @@
       "record_basis": "stated",
       "informant_proximity": "family_not_present",
       "information_quality": "secondary"
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Shenandoah"
     }
   ]
 }

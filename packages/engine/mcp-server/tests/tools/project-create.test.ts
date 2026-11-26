@@ -24,6 +24,8 @@ import {
   type ProjectCreateDeps,
 } from "../../src/tools/project-create.js";
 import { PERSON_ID_REQUIRED, PROJECT_TREE_REMOVED } from "../../src/utils/tool-hint-messages.js";
+import { researchAppend } from "../../src/tools/research-append.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 import { runWithProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
@@ -132,13 +134,13 @@ describe("project_create", () => {
     });
 
     expect(r.ok).toBe(true);
-    if (!r.ok) return;
+    if (!r.ok || !("counts" in r)) throw new Error("expected a create summary");
     expect(r.filesWritten).toEqual([
       "tree.gedcomx.json",
       "research.json",
       "starting-tree.gedcomx.json",
     ]);
-    expect(r.counts).toEqual({ persons: 1, relationships: 0, sources: 1, memorySources: 0 });
+    expect("counts" in r ? r.counts : undefined).toEqual({ persons: 1, relationships: 0, sources: 1, memorySources: 0 });
 
     const research = await readResearch();
     expect(research.project.objective).toBe("Identify the parents of Patrick Flynn");
@@ -200,8 +202,6 @@ describe("project_create", () => {
   // ── A project always starts from a FamilySearch person (lead, 2026-11-02) ──
 
   it.each([
-    ["absent", undefined],
-    ["null", null],
     ["empty", ""],
     ["whitespace", " \n "],
   ])("refuses a %s personId before reading anyone, and writes nothing", async (_label, personId) => {
@@ -210,10 +210,46 @@ describe("project_create", () => {
     expect(r.ok).toBe(false);
     expect(r.errors).toEqual([PERSON_ID_REQUIRED]);
     expect(r.errors[0]).toMatch(/FamilySearch person ID/);
-    expect(r.errors[0]).toMatch(/survey-surname agent with no projectPath/);
     expect(oneReads).toBe(0);
     expect(await exists("research.json")).toBe(false);
     expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["null", null],
+  ])("creates a project with no person from the objective alone when personId is %s", async (_label, personId) => {
+    oneReads = 0;
+    const r: any = await projectCreate({ projectPath: dir, objective: "Read this page", personId } as any);
+    expect(r).toMatchObject({ ok: true, subject: null, objective: "Read this page" });
+    expect(oneReads).toBe(0);
+    const research = await readResearch();
+    expect(research.project.subject_person_ids).toEqual([]);
+    expect(research.researcher_profile).toEqual(HOUSE_RESEARCHER_PROFILE);
+    expect(JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).persons).toEqual([]);
+  });
+
+  it("refuses subjectPersonIds when there is no personId", async () => {
+    const r: any = await projectCreate({ projectPath: dir, objective: "x", personId: undefined, subjectPersonIds: ["I1"] });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/subjectPersonIds needs a personId/);
+    expect(await exists("research.json")).toBe(false);
+  });
+
+  it("a project with no person refuses a question but still takes a log entry", async () => {
+    await projectCreate({ projectPath: dir, objective: "Read this page", personId: undefined });
+    const q: any = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "append",
+      entry: { question: "Who?", question_kind: "targeted", rationale: "r", selection_basis: "user_directed", priority: "high", status: "open", depends_on: [], unblocks: [], resolved: null, resolution_assertion_ids: [], search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } },
+    } as any);
+    expect(q.ok).toBe(false);
+    expect(JSON.stringify(q)).toMatch(/FamilySearch person ID/);
+    const log: any = await researchLogAppend({
+      projectPath: dir, tool: "record_search", query: { surname: "X" }, outcome: "negative", resultsExamined: 0, resultsAvailable: 0,
+    } as any);
+    expect(log.ok, JSON.stringify(log)).toBe(true);
   });
 
   it("refuses a personId that is not a string, saying what one looks like", async () => {
@@ -455,6 +491,7 @@ describe("project_create", () => {
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { attachedSources } from "../../src/utils/search-delegations.js";
 
 const FAMILY = JSON.parse(
   readFileSync(
@@ -514,7 +551,7 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       persons: [
         {
           id: "I1", ark: "ark:/61903/4:1:LZNY-BRF", gender: "Male", living: false,
-          names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn" }],
+          names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn", sources: [FS] }],
           facts: [
             fact("F1", { type: "Birth", date: "~1845", standard_date: "Abt 1845", place: "Ireland", standard_place: "Ireland" }),
             fact("F2", { type: "Death", date: "1908", standard_date: "1908", place: "Schuylkill County, Pennsylvania, United States", standard_place: "Schuylkill, Pennsylvania, United States" }),
@@ -522,27 +559,27 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
         },
         {
           id: "I2", ark: "ark:/61903/4:1:LZNY-K2M", gender: "Female", living: false,
-          names: [{ id: "N2", preferred: true, given: "Mary", surname: "Kelly" }],
+          names: [{ id: "N2", preferred: true, given: "Mary", surname: "Kelly", sources: [FS] }],
           facts: [fact("F3", { type: "Birth", date: "1849", standard_date: "1849", place: "Ireland", standard_place: "Ireland" })],
         },
         {
           id: "I3", ark: "ark:/61903/4:1:LZNY-P7Q", gender: "Male", living: false,
-          names: [{ id: "N3", preferred: true, given: "James", surname: "Flynn" }],
+          names: [{ id: "N3", preferred: true, given: "James", surname: "Flynn", sources: [FS] }],
           facts: [fact("F4", { type: "Birth", date: "1871", standard_date: "1871", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
         },
         {
           id: "I4", ark: "ark:/61903/4:1:LZNY-R4T", gender: "Female", living: false,
-          names: [{ id: "N4", preferred: true, given: "Margaret", surname: "Flynn" }],
+          names: [{ id: "N4", preferred: true, given: "Margaret", surname: "Flynn", sources: [FS] }],
           facts: [fact("F5", { type: "Birth", date: "1874", standard_date: "1874", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
         },
         {
           id: "I5", ark: "ark:/61903/4:1:LZNY-M3F", gender: "Male", living: false,
-          names: [{ id: "N5", preferred: true, given: "Michael", surname: "Flynn" }],
+          names: [{ id: "N5", preferred: true, given: "Michael", surname: "Flynn", sources: [FS] }],
           facts: [fact("F6", { type: "Birth", date: "~1815", standard_date: "Abt 1815", place: "Ireland", standard_place: "Ireland" })],
         },
         {
           id: "I6", ark: "ark:/61903/4:1:LZNY-B8S", gender: "Female", living: false,
-          names: [{ id: "N6", preferred: true, given: "Bridget", surname: "Flynn" }],
+          names: [{ id: "N6", preferred: true, given: "Bridget", surname: "Flynn", sources: [FS] }],
           facts: [fact("F7", { type: "Birth", date: "1848", standard_date: "1848", place: "Ireland", standard_place: "Ireland" })],
         },
       ],
@@ -622,8 +659,55 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       { id: "I5", name: "Michael Flynn", relationship: "father" },
       { id: "I6", name: "Bridget Flynn", relationship: "sibling" },
     ]);
+    // The subject's attached sources, as project_context lists them: the
+    // Family Tree source left out (#4791).
+    expect(result.subjectSources).toEqual(attachedSources(expected, "I1"));
     expect(result.idMap).toBeUndefined();
     expect(JSON.stringify(result).length).toBeLessThanOrEqual(2000);
+  });
+
+  it("lists the subject's attached sources by tree id and title, without the Family Tree source (#4791)", async () => {
+    const read = structuredClone(FAMILY);
+    read.persons[0].sources = [{ ref: "MMM9-1QF" }];
+    const result: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, read);
+    expect(result.ok).toBe(true);
+    const tree = await readJson("tree.gedcomx.json");
+    const s2 = tree.sources.find((s: any) => s.title === src("MMM9-1QF").title);
+    expect(result.subjectSources).toEqual([{ id: s2.id, title: s2.title }]);
+    expect(result.subjectSources).toEqual(attachedSources(tree, "I1"));
+  });
+
+  it("stores verifyRequest as project.verify_request, named as the objective is, and omits a blank one (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "  Verify LZNY-BRF's parents. " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project.verify_request).toBe("Verify Patrick Flynn's parents.");
+  });
+
+  it("writes no verify_request when verifyRequest is blank (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "   " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project).not.toHaveProperty("verify_request");
+  });
+
+  it("never trims the subject's attached sources, even past the summary cap (#4791)", async () => {
+    const read = structuredClone(FAMILY);
+    const extra = Array.from({ length: 40 }, (_, i) => ({
+      id: `X${i}`,
+      title: `Patrick Flynn, "Pennsylvania, County Marriages and Probate Records, 1683-1950", entry ${i}`,
+    }));
+    read.sources.push(...extra);
+    read.persons[0].sources = extra.map((x: any) => ({ ref: x.id }));
+    const result: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, read);
+    expect(result.ok).toBe(true);
+    expect(result.subjectSources).toHaveLength(40);
+    expect(result.omitted?.subjectSources).toBeUndefined();
+    expect(JSON.stringify(result).length).toBeGreaterThan(2000);
   });
 
   it("cites every relative's facts to a FamilySearch-tree source that names no one person's page", async () => {
@@ -804,7 +888,7 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     }, { objective: "x" }, /already exist/],
     ["no objective", async () => {}, { objective: " " }, /objective is required/],
     ["a tree beside personId", async () => {}, { objective: "x", tree: { persons: [STUB] } }, /tree is no longer accepted/],
-    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId is required/],
+    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId is blank/],
   ])("refuses %s before reading anyone", async (_l, setup, extra, message) => {
     await setup();
     reads = 0;

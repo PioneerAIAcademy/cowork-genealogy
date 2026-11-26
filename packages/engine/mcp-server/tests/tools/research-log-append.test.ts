@@ -426,6 +426,400 @@ describe("research_log_append", () => {
     expect(await exists(handle!.resultsRef)).toBe(false); // consumed
   });
 
+  describe("an image-tool entry with no image call behind it (#4581)", () => {
+    // The log_113 shape: the main thread read an uploaded crop itself with `Read`
+    // and logged that reading as an image_transcribe call that never happened.
+    const unstagedTranscribe = {
+      tool: "image_transcribe",
+      query: { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    };
+    const errorsOf = (result: Awaited<ReturnType<typeof researchLogAppend>>) =>
+      result.ok ? [] : result.errors;
+
+    it("refuses an image_transcribe entry with no staged ref (the log_113 shape)", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe });
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/needs the `stagedResultsRef` its call returned/);
+      expect(message).toMatch(/tool: "user_provided"/);
+      expect(message).toMatch(/staged\.resultsRef/);
+      expect(message).not.toMatch(/image_read/);
+      expect(message).not.toMatch(/image_search/);
+      expect(message).not.toMatch(/Name the tool/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it('refuses it when stagedResultsRef is the string "null"', async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, stagedResultsRef: "null" });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+    });
+
+    it("refuses it in a batch before any op is applied, and keeps the sibling's staged file", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Tyler" }, results: [{ recordId: "A" }] },
+      });
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: handle!.resultsRef } as any,
+          unstagedTranscribe,
+        ],
+      });
+      expect(result.ok).toBe(false);
+      const errors = errorsOf(result);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^ops\[1\]: an `image_transcribe` entry needs/);
+      expect((await readJson("research.json")).log).toEqual([]);
+      expect(await exists(handle!.resultsRef)).toBe(true);
+    });
+
+    // Offer image_search, which is unchecked, only to an entry whose query itself
+    // lists or spans two or more distinct pages; a single reading offered it would
+    // come back relabelled. One row per case (search-result-staging-spec.md §6.1).
+    const BROWSE_CASES: [string, Record<string, unknown>, number, boolean][] = [
+      ["a numeric range (a cap-stopped browse)", { imageGroupNumber: "100881427", pagesAttempted: "650-712" }, 0, true],
+      ["two image ids", { imageIds: ["007226375_00231", "007226375_00232"] }, 2, true],
+      ["a range beside one image id", { imageId: "004516861_00257", imageRange: "00257-00279", subVolume: "_004" }, 23, true],
+      ["a list of pages read", { pagesRead: ["004410623_00073", "004410623_00079"] }, 2, true],
+      ["a comma list in a group", { imageGroupNumber: "007936749", imagesAttempted: "00001, 00005" }, 4, true],
+      ["image ids examined", { imageIdsExamined: ["004410623_00073", "004410623_00079"] }, 2, true],
+      ["an images-examined range", { imagesExamined: "00040-00075" }, 36, true],
+      ["a comma list with no space", { imagesAttempted: "00001,00005" }, 2, true],
+      ["a pages-attempted range", { pagesAttempted: "650-712" }, 0, true],
+      ["a range with an en dash", { imageRange: "00257\u201300279" }, 23, true],
+      ["a semicolon list with no space", { imagesExamined: "00040;00041" }, 2, true],
+      ["a JSON-text list of two", { imageIds: JSON.stringify(["007226375_00231", "007226375_00232"]) }, 2, true],
+      ["a whole group with no page named", { imageGroupNumber: "004410623_002_M9CV-5CM" }, 0, false],
+      ["a space-separated list", { pagesAttempted: "40 41 42" }, 3, false],
+      ["one ARK, however many claimed", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" }, 5, false],
+      ["an upload with a range beside it", { file: "uploads/crop1.jpg", imagesExamined: "1-2" }, 2, false],
+      ["uploads under another key", { files: ["uploads/a.jpg", "uploads/b.jpg"] }, 2, false],
+      ["a null list key", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", imageIds: null }, 1, false],
+      ["one ARK in a group", { imageGroupNumber: "004433380", imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" }, 1, false],
+      ["one image id in a group", { imageGroupNumber: "004433380", imageId: "004433380_00033" }, 1, false],
+      ["one ark in a group", { imageGroupNumber: "004433380", ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, 1, false],
+      ["one image number in a group", { imageGroupNumber: "004433380", imageNumber: 33 }, 1, false],
+      ["a one-element id list", { imageIds: ["007226375_00235"] }, 1, false],
+      ["one id as text", { imageIds: "007226375_00235" }, 1, false],
+      ["a hyphenated ARK as text", { imageIds: "ark:/61903/3:1:3QS7-L9QX-2H77" }, 1, false],
+      ["a one-element JSON-text list", { imageIds: JSON.stringify(["3:1:3QS7-L9QX-2H77"]) }, 1, false],
+      ["a hyphenated group id as text", { pagesRead: "004410623_002_M9CV-5CM" }, 1, false],
+      ["a count in words", { imagesExamined: "1 image" }, 1, false],
+      ["a page reference", { imageRange: "p. 106" }, 1, false],
+      ["one page listed twice", { imageIds: ["007226375_00235", "007226375_00235"] }, 2, false],
+      ["one page listed twice as JSON text", { imageIds: JSON.stringify(["007226375_00235", "007226375_00235"]) }, 2, false],
+      ["an ARK with digits either side of a hyphen", { imageIds: "ark:/61903/3:1:3QS7-99CH-CY6T" }, 1, false],
+      ["one image id standing for a volume check", { imageId: "004516862_00001", volume: "004516862", note: "not baptisms" }, 5, false],
+      ["an empty range", { imageRange: "" }, 0, false],
+      ["two uploads listed as image ids", { imageIds: ["uploads/crop1.jpg", "uploads/crop2.jpg"] }, 2, false],
+      ["prose with a comma in a page key", { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", pagesRead: "page 12, line 27" }, 1, false],
+      [
+        "a range inside prose",
+        { imageIdsExamined: "004433380_00033\u201300047 (14 of 16 pages; 00032 not attempted, 00038 hard scan)" },
+        14,
+        false,
+      ],
+      ["an id with a hyphen, not a range", { imageRange: "004410623-00073" }, 1, false],
+      ["a range of one page", { imageRange: "257-257" }, 1, false],
+      ["a range whose ends differ in length", { imagesExamined: "5-12" }, 8, true],
+      ["a range beside a null file", { file: null, imageRange: "1-2" }, 2, true],
+      ["page numbers in a list", { imageIds: [12, 13] }, 2, true],
+      ["two ARKs in a list", { imageIds: ["ark:/61903/3:1:S3HT-6XYZ-123", "ark:/61903/3:1:S3HT-6XYZ-124"] }, 2, true],
+      ["a DGS id range", { imageIdsExamined: "004433380_00033-00047" }, 15, true],
+      ["a DGS id range with an en dash", { imageIdsExamined: "004433380_00033\u201300047" }, 15, true],
+      ["a DGS id range with its prefix repeated", { imageIdsExamined: "004433380_00033-004433380_00047" }, 15, true],
+      ["a comma list with a trailing comma", { imagesAttempted: "00001,00005," }, 2, true],
+      ["two words", { pagesRead: "recto, verso" }, 2, false],
+      ["two bare names", { imageIds: ["crop1", "crop2"] }, 2, false],
+      ["two file names", { imageIds: ["crop1.jpg", "crop2.jpg"] }, 2, false],
+      ["one ARK in two spellings", { imageIds: ["ark:/61903/3:1:S3HT-6XYZ-123", "3:1:s3ht-6xyz-123"] }, 2, false],
+      ["one DGS id in two spellings", { imageIds: ["004433380_00033", "4433380_00033"] }, 2, false],
+      ["a page id beside an upload path", { imageIds: ["uploads/a.jpg", "00033"] }, 2, false],
+      ["a range followed by words", { imageRange: "33-47 of 68" }, 15, false],
+      ["hyphenated words", { pagesRead: ["recto-verso", "left-right"] }, 2, false],
+      ["a range across two groups", { imageIdsExamined: "004433380_00033-004433381_00047" }, 15, false],
+      [
+        "two ARK resolver URLs",
+        {
+          imageIds: [
+            "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H77",
+            "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9QX-2H78",
+          ],
+        },
+        2,
+        true,
+      ],
+    ];
+    for (const [label, query, resultsExamined, hint] of BROWSE_CASES) {
+      it(`${hint ? "offers" : "does not offer"} image_search to ${label}`, async () => {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_transcribe",
+          query,
+          outcome: "partial",
+          resultsExamined,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(false);
+        const [message] = errorsOf(result);
+        expect(message).toMatch(/tool: "user_provided"/);
+        if (hint) expect(message).toMatch(/several pages, or one the image cap stopped, is logged as `tool: "image_search"`/);
+        else expect(message).not.toMatch(/image_search/);
+      });
+    }
+
+    it("refuses it when stagedResultsRef is a JSON null", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, stagedResultsRef: null });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+    });
+
+    it("refuses it before asking for a missing required field", async () => {
+      await writeProject(baseResearch());
+      const { outcome: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ...rest } as any);
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/needs the `stagedResultsRef` its call returned/);
+      expect(message).not.toMatch(/missing required/);
+    });
+
+    it("refuses it before asking for a missing required field in a batch too", async () => {
+      await writeProject(baseResearch());
+      const { outcome: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ops: [rest as any] });
+      expect(result.ok).toBe(false);
+      const [message] = errorsOf(result);
+      expect(message).toMatch(/^ops\[0\]: an `image_transcribe` entry needs/);
+      expect(message).not.toMatch(/missing required/);
+    });
+
+    it("refuses it under the tool's qualified, case-folded, padded or hyphenated name", async () => {
+      for (const tool of [
+        "mcp__genealogy__image_transcribe",
+        "mcp__remote-devices__Genealogy_Research__image_transcribe",
+        "MCP__genealogy__image_transcribe",
+        "mcp__image_transcribe",
+        "Image_Transcribe",
+        " image_transcribe ",
+        "image-transcribe",
+      ]) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, tool });
+        expect(result.ok).toBe(false);
+        expect(errorsOf(result)[0]).toMatch(/needs the `stagedResultsRef` its call returned/);
+        // The staged file's tool is compared exactly, so the variant is named.
+        expect(errorsOf(result)[0]).toMatch(/Name the tool `image_transcribe`: the staged file records that name/);
+        expect((await readJson("research.json")).log).toEqual([]);
+      }
+      await writeProject(baseResearch());
+      const read = await researchLogAppend({
+        projectPath: dir,
+        tool: "mcp__genealogy__image_read",
+        query: { file: "uploads/x.jpg" },
+        outcome: "positive",
+        resultsExamined: 1,
+        planItemId: null,
+      });
+      expect(read.ok).toBe(false);
+      expect(errorsOf(read)[0]).toMatch(/`image_read` takes no `file`/);
+    });
+
+    it("refuses only the unstaged op when a failed call is logged beside it in one batch", async () => {
+      // The error exemption is per op: it must not stand the check down for the batch.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...unstagedTranscribe, outcome: "error", resultsExamined: 0 }, unstagedTranscribe],
+      });
+      expect(result.ok).toBe(false);
+      const errors = errorsOf(result);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^ops\[1\]: an `image_transcribe` entry needs/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("refuses an image_read naming a file in a batch, and writes neither op", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", query: { surname: "Tyler" }, outcome: "negative", resultsExamined: 0, planItemId: null },
+          { tool: "image_read", query: { file: "uploads/x.jpg" }, outcome: "positive", resultsExamined: 1, planItemId: null },
+        ],
+      });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)).toEqual([expect.stringMatching(/^ops\[1\]: `image_read` takes no `file`/)]);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("sends a correction to a logged page to a new read, not to an entry with no ref", async () => {
+      // Told to drop the ref, the caller would be refused here and sent back to
+      // the logged ref: a loop. The message names the way out, and it works.
+      await writeProject(baseResearch());
+      const stagePage = () =>
+        stageSearchResults({
+          projectPath: dir,
+          tool: "image_transcribe",
+          response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27: Winston" }] },
+        });
+      const first = await stagePage();
+      const page = { tool: "image_transcribe", outcome: "positive", resultsExamined: 1, planItemId: null };
+      expect((await researchLogAppend({ projectPath: dir, ...page, stagedResultsRef: first!.resultsRef })).ok).toBe(true);
+
+      const resend = await researchLogAppend({ projectPath: dir, ...page, outcome: "negative", stagedResultsRef: first!.resultsRef });
+      expect(resend.ok).toBe(false);
+      const [message] = errorsOf(resend);
+      expect(message).toMatch(/call `image_transcribe` again with `projectPath` and log it with the new `staged\.resultsRef`/);
+      expect(message).not.toMatch(/without the stagedResultsRef/);
+
+      const second = await stagePage();
+      const correction = await researchLogAppend({
+        projectPath: dir,
+        ...page,
+        outcome: "negative",
+        notes: "Corrects log_001: line 27 is not the subject.",
+        stagedResultsRef: second!.resultsRef,
+      });
+      expect(correction.ok).toBe(true);
+      expect((await readJson("research.json")).log).toHaveLength(2);
+    });
+
+    it("answers a re-send of a logged page under a variant of its own tool name with the logged entry", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "image_transcribe",
+        response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27" }] },
+      });
+      const page = { tool: "image_transcribe", outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      const first = await researchLogAppend({ projectPath: dir, ...page });
+      expect(first.ok).toBe(true);
+      const again = await researchLogAppend({ projectPath: dir, ...page, tool: "mcp__genealogy__image_transcribe" });
+      expect(again.ok).toBe(true);
+      if (!again.ok || !("logId" in again)) throw new Error("expected a single-op success");
+      expect(again.alreadyLogged).toBe(true);
+      expect((await readJson("research.json")).log).toHaveLength(1);
+    });
+
+    it("gives the ordinary advice to a logged page re-sent as user_provided, and the re-read advice when the tool is omitted", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "image_transcribe",
+        response: { query: { ark: "ark:/61903/3:1:S3HT-6XYZ-123" }, results: [{ id: "page", transcription: "Line 27" }] },
+      });
+      const page = { outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      expect((await researchLogAppend({ projectPath: dir, tool: "image_transcribe", ...page })).ok).toBe(true);
+
+      const asUser = await researchLogAppend({ projectPath: dir, tool: "user_provided", ...page });
+      expect(asUser.ok).toBe(false);
+      expect(errorsOf(asUser)[0]).toMatch(/without the stagedResultsRef/);
+      expect(errorsOf(asUser)[0]).not.toMatch(/call `image_transcribe` again/);
+
+      const noTool = await researchLogAppend({ projectPath: dir, ...page, outcome: "negative" } as any);
+      expect(noTool.ok).toBe(false);
+      expect(errorsOf(noTool)[0]).toMatch(/call `image_transcribe` again with `projectPath`/);
+    });
+
+    it("gives the ordinary correction advice when a re-send claims image_transcribe for another tool's staged file", async () => {
+      await writeProject(baseResearch());
+      const staged = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_read",
+        response: { query: { recordId: "ark:/61903/1:1:XXXX-XXX" }, results: [{ recordId: "ark:/61903/1:1:XXXX-XXX" }] },
+      });
+      const read = { outcome: "positive", resultsExamined: 1, planItemId: null, stagedResultsRef: staged!.resultsRef };
+      expect((await researchLogAppend({ projectPath: dir, tool: "record_read", ...read })).ok).toBe(true);
+      const resend = await researchLogAppend({ projectPath: dir, tool: "image_transcribe", ...read });
+      expect(resend.ok).toBe(false);
+      const [message] = errorsOf(resend);
+      expect(message).toMatch(/differs in tool 'image_transcribe' \(logged 'record_read'\)/);
+      expect(message).toMatch(/without the stagedResultsRef/);
+      expect(message).not.toMatch(/call `image_transcribe` again/);
+    });
+
+    it("accepts a failed image_transcribe call logged as an error that examined nothing", async () => {
+      for (const resultsExamined of [0, "0"] as const) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          ...unstagedTranscribe,
+          outcome: "error",
+          resultsExamined: resultsExamined as any,
+          notes: "403 Forbidden: the image is restricted.",
+        });
+        expect(result.ok).toBe(true);
+        expect((await readJson("research.json")).log[0].tool).toBe("image_transcribe");
+      }
+    });
+
+    it("refuses an error entry that claims it examined a page, naming the failed-call shape", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, ...unstagedTranscribe, outcome: "error", resultsExamined: 1 });
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`/);
+    });
+
+    it("leaves a missing resultsExamined on an error entry to the required-fields check", async () => {
+      await writeProject(baseResearch());
+      const { resultsExamined: _omitted, ...rest } = unstagedTranscribe;
+      const result = await researchLogAppend({ projectPath: dir, ...rest, outcome: "error" } as any);
+      expect(result.ok).toBe(false);
+      expect(errorsOf(result)[0]).toMatch(/missing required field `resultsExamined`/);
+    });
+
+    it("refuses an image_read entry whose query names a file, as an object, a JSON string or an empty one", async () => {
+      for (const query of [{ file: "uploads/x.jpg" }, JSON.stringify({ file: "uploads/x.jpg" }), { file: "" }]) {
+        for (const outcome of ["positive", "error"]) {
+          await writeProject(baseResearch());
+          const result = await researchLogAppend({
+            projectPath: dir,
+            tool: "image_read",
+            query,
+            outcome,
+            resultsExamined: outcome === "error" ? 0 : 1,
+            planItemId: null,
+          });
+          expect(result.ok).toBe(false);
+          const [message] = errorsOf(result);
+          expect(message).toMatch(/`image_read` takes no `file`/);
+          expect(message).toMatch(/tool: "user_provided"/);
+          expect((await readJson("research.json")).log).toEqual([]);
+        }
+      }
+    });
+
+    it("accepts an image_read entry keyed by its image ARK, with no file or a null one", async () => {
+      for (const query of [
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123" },
+        { imageArk: "ark:/61903/3:1:S3HT-6XYZ-123", file: null },
+      ]) {
+        await writeProject(baseResearch());
+        const result = await researchLogAppend({
+          projectPath: dir,
+          tool: "image_read",
+          query,
+          outcome: "positive",
+          resultsExamined: 1,
+          planItemId: null,
+        });
+        expect(result.ok).toBe(true);
+      }
+    });
+  });
+
   it("prefers an explicit `query` over the staged payload's echo", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({
@@ -1508,24 +1902,21 @@ describe("research_log_append", () => {
       expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
-    it("does not warn for image_transcribe or record_read — record-extraction logs both without a stagedResultsRef by instruction", async () => {
-      for (const [tool, query] of [
-        ["image_transcribe", { imageArk: "ark:/61903/3:1:XXXX-XXX" }],
-        ["record_read", { recordId: "ark:/61903/1:1:XXXX-XXX" }],
-      ] as const) {
-        await writeProject(baseResearch());
-        const result = await researchLogAppend({
-          projectPath: dir,
-          tool,
-          query,
-          outcome: "positive",
-          resultsExamined: 1,
-          resultsAvailable: 1,
-          planItemId: null,
-        });
-        expect(result.ok).toBe(true);
-        expect(warnOf(result)).not.toMatch(/retained none/);
-      }
+    it("does not warn for a record_read logged without a stagedResultsRef", async () => {
+      // Its image_transcribe half moved to the #4581 block above: an unstaged
+      // image_transcribe entry is now refused, not merely left unwarned.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_read",
+        query: { recordId: "ark:/61903/1:1:XXXX-XXX" },
+        outcome: "positive",
+        resultsExamined: 1,
+        resultsAvailable: 1,
+        planItemId: null,
+      });
+      expect(result.ok).toBe(true);
+      expect(warnOf(result)).not.toMatch(/retained none/);
     });
 
     it("(batch) surfaces one warning per offending op", async () => {
@@ -1603,6 +1994,21 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     // never blocks: the log entry still lands
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     expect(research.log).toHaveLength(3);
+  });
+
+  it("does not count a page image_transcribe logged itself as a positive search (#4721)", async () => {
+    const read = (n: number) => ({ ...pos(n), tool: "image_transcribe", written_by: "image_transcribe" });
+    await write(baseResearch([read(1), read(2), read(3)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
   });
 
   it.each([
@@ -2068,6 +2474,12 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
   });
 
+  it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+    const read = nil(3, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 });
+    await write(project([nil(1), nil(2), read]));
+    expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
+  });
+
   it("does not count a search that had results it left unexamined", async () => {
     await write(project([nil(1), nil(2, { results_available: 450 })]));
     expect(((await logNil()) as any).escalationDue).toBeUndefined();
@@ -2084,6 +2496,98 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(r.ok).toBe(true);
     expect(r.escalationDue).toContain("census plan item pli_001");
     expect(r.escalationDue).toContain("census plan item pli_002");
+  });
+
+  describe("the tool-written nil dedupe (issue #4527)", () => {
+    // The entry record_search wrote for itself: same query and plan item as nilOp().
+    const written = (extra: any = {}) =>
+      nil(1, { written_by: "record_search", query: { surname: "Flynn", givenName: "Patrick" }, ...extra });
+
+    it("answers an identical hand-logged nil with the entry the tool wrote", async () => {
+      await write(project([written()]));
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_001");
+      expect(r.alreadyLogged).toBe(true);
+    });
+
+    it("names the nil search, not a stagedResultsRef the op never sent", async () => {
+      await write(project([written()]));
+      const r: any = await logNil();
+      const warning = r.validation.warnings.join(" ");
+      expect(warning).toContain("record_search already logged this nil search as log_001");
+      expect(warning).not.toContain("stagedResultsRef");
+    });
+
+    // A query plus a plan item names a SHAPE that is deliberately re-run, not one
+    // search. So a re-send claiming a different result is a second search event
+    // and must be written; swallowing it files a positive under the old negative.
+    it("writes a later positive on the same query instead of returning the nil", async () => {
+      await write(project([written()]));
+      const r: any = await logNil({ ...nilOp(), outcome: "positive", resultsExamined: 12 });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+      expect(r.alreadyLogged ?? false).toBe(false);
+    });
+
+    it("writes a re-send that examined rows even if it still calls itself negative", async () => {
+      await write(project([written()]));
+      const r: any = await logNil({ ...nilOp(), resultsExamined: 3 });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+    });
+
+    // The tool writes at the moment of the nil, before the agent knows the
+    // variants are exhausted. That conclusion arrives only on a later hand-log.
+    it("writes a re-log carrying notes the tool's entry does not have", async () => {
+      await write(project([written()]));
+      const notes = "FamilySearch spelling variants exhausted; escalate to Ancestry.";
+      const r: any = await logNil({ ...nilOp(), notes });
+      expect(r.ok).toBe(true);
+      expect(r.logId).toBe("log_002");
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log.at(-1).notes).toBe(notes);
+    });
+
+    it("still dedupes when the note only repeats what the entry already says", async () => {
+      const notes = "Checking the 1850 census.";
+      await write(project([written({ notes })]));
+      const r: any = await logNil({ ...nilOp(), notes });
+      expect(r.logId).toBe("log_001");
+      expect(r.alreadyLogged).toBe(true);
+    });
+
+    it("does not dedupe a different query on the same plan item", async () => {
+      await write(project([written()]));
+      const r: any = await logNil(nilOp("Flinn"));
+      expect(r.logId).toBe("log_002");
+    });
+
+    it("refuses a batch op's forged `writtenBy` rather than stamping it", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...nilOp(), writtenBy: "record_search" } as any],
+      });
+      expect(r.ok).toBe(true);
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log.at(-1).written_by).toBeUndefined();
+    });
+
+    // A forged stamp is not merely a false provenance line: it makes the entry a
+    // dedupe target, so the agent's own next genuine nil is answered with it and
+    // never written — the swallowed negative the dedupe exists to avoid.
+    it("leaves a later genuine nil writable after a forged stamp attempt", async () => {
+      await write(project([]));
+      await researchLogAppend({
+        projectPath: dir,
+        ops: [{ ...nilOp(), writtenBy: "record_search" } as any],
+      });
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.alreadyLogged ?? false).toBe(false);
+      expect(r.logId).toBe("log_002");
+    });
   });
 
   describe("planRationale, on the first nil for a plan item", () => {
@@ -2128,6 +2632,11 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     it("stays silent when the plan item has already found something", async () => {
       await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
       expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+      await write(project([nil(1, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
     });
 
     it("stays silent for a search that had results it left unexamined", async () => {
@@ -3185,4 +3694,331 @@ describe("research_log_append — pinned zero-hit record_search names its unpinn
       expect(reads()).toBe(3);
     });
   }
+});
+
+describe("research_log_append — a negative search whose rows include a record the tree cites on its subject (#4667)", () => {
+  let dir: string;
+  // The Phipps session: I1 cites S4, Benj Phillips in the 1860 census.
+  const CITED = "ark:/61903/1:1:MHR9-JWT";
+  const CENSUS_1860 = {
+    recordId: CITED,
+    collectionId: "1473181",
+    events: [
+      { type: "Race", value: "White" },
+      { type: "Census", date: "1860", place: "Thompson, Windham, Connecticut, United States" },
+    ],
+  };
+  const OTHER_ROW = {
+    recordId: "ark:/61903/1:1:MH51-GM3",
+    collectionId: "1473181",
+    events: [{ type: "Census", date: "1860", place: "Pomfret, Windham, Connecticut, United States" }],
+  };
+  const SENT_1860 = {
+    surname: "Phipps",
+    givenName: "Benjamin",
+    residenceYearFrom: 1860,
+    residenceYearTo: 1860,
+    residencePlace: "Thompson, Windham, Connecticut, United States",
+    recordType: "census",
+    projectPath: "/project",
+    subjectId: "I1",
+  };
+  function treeWith(
+    personSources: any[] = [{ ref: "S4" }],
+    factSources: any[] = [],
+    url = `https://familysearch.org/${CITED}`,
+  ) {
+    return {
+      persons: [
+        {
+          id: "I1",
+          names: [{ given: "Benjamin Fairbanks", surname: "Phipps" }],
+          facts: [{ type: "Residence", date: "1860", place: "Thompson", sources: factSources }],
+          sources: personSources,
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S4", title: "Benj Phillips, United States Census, 1860", url }],
+    };
+  }
+  async function setup(tree: any = treeWith()) {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4667-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function stage(query: Record<string, unknown> = SENT_1860, results: any[] = [CENSUS_1860, OTHER_ROW]) {
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { query, results } });
+    return handle!.resultsRef;
+  }
+  const op = (ref: string | null, outcome = "negative", extra: Record<string, unknown> = {}) => ({
+    tool: "record_search",
+    outcome,
+    resultsExamined: 2,
+    resultsAvailable: 2,
+    planItemId: null,
+    stagedResultsRef: ref,
+    ...extra,
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+  const logOf = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+  const { residenceYearFrom: _f, residenceYearTo: _t, ...NO_WINDOW } = SENT_1860;
+
+  it("refuses the Phipps shape, naming the record and the tree source, and writes nothing", async () => {
+    await setup();
+    const ref = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+    expect(errorsOf(r)).toContain("`S4`");
+    expect(errorsOf(r)).toContain("`I1`");
+    expect(errorsOf(r)).toMatch(/Log this search `positive` or `partial`/);
+    expect(errorsOf(r)).not.toMatch(/outcome other than/);
+    expect(errorsOf(r)).toMatch(/as the record the project tree already cites for the subject/);
+    expect(errorsOf(r)).toMatch(/indexed differently does not leave the record unfound/);
+    // A tree citation does not show whose record it is (an unverified attachment, or a relative's entry).
+    expect(errorsOf(r)).not.toMatch(/someone else|as the subject's record|this person's record/);
+    expect(errorsOf(r)).toMatch(/record_read/);
+    expect(await logOf()).toHaveLength(0);
+    expect(await fileExists(dir, ref)).toBe(true);
+  });
+
+  it("refuses the whole batch when one op is the Phipps shape", async () => {
+    await setup();
+    const good = await stage(SENT_1860, [OTHER_ROW]);
+    const bad = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ops: [op(good), op(bad)] } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/^ops\[1\]: /);
+    expect(errorsOf(r)).not.toMatch(/ops\[0\]/);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("refuses on a matching collectionId when the search sent no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1473181" })) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses when an anyYear window holds the row's event year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, anyYearFrom: 1849, anyYearTo: 1878 })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses when the subject cites the source on a fact rather than at the person level", async () => {
+    await setup(treeWith([], [{ ref: "S4" }]));
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("`S4`");
+  });
+
+  it("accepts a death search that returns the subject's cited census", async () => {
+    await setup();
+    const ref = await stage({
+      surname: "Phipps",
+      givenName: "Benjamin",
+      deathYearFrom: 1893,
+      deathYearTo: 1893,
+      deathPlace: "Thompson, Windham, Connecticut, United States",
+      projectPath: "/project",
+      subjectId: "I1",
+    });
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(true);
+    expect(await logOf()).toHaveLength(1);
+  });
+
+  it("accepts a residence window that misses the cited row's year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...SENT_1860, residenceYearFrom: 1850, residenceYearTo: 1850 })),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  // The committed umbelina-azevedo-death / joao-sousa-death / ciriaco-bardales-spouse
+  // e2e shape: a vital-event search pinned to a collection that returns the
+  // subject's cited record in another role or of another type, rightly negative.
+  for (const window of [
+    { deathYearFrom: 1920, deathYearTo: 1990 },
+    { marriageYearFrom: 1850, marriageYearTo: 1870 },
+    { birthYearFrom: 1814 },
+  ]) {
+    it(`accepts a same-collection cited row when the search sent ${Object.keys(window)[0].replace(/From|To/, "")}`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, ...window, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("refuses the Phipps shape logged error: a search that staged rows did not error", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), "error") } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("logged `error`");
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses a same-collection cited row when the search named recordType census", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, recordType: "Census", collectionId: "1473181" })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // A death or marriage search pinned to a mixed collection, with no year window:
+  // the subject's cited record in that collection is not what it was for.
+  for (const recordType of ["death", "marriage", "cemetery"]) {
+    it(`accepts a same-collection cited row when the search named recordType ${recordType} and no window`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, recordType, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts a different collectionId with no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1438024" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts the Phipps shape when the staged query names no subjectId", async () => {
+    await setup();
+    const { subjectId: _s, ...noSubject } = SENT_1860;
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(noSubject)) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a hand-typed negative with no stagedResultsRef", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(null, "negative", { query: { surname: "Phipps", residenceYearFrom: 1860, residenceYearTo: 1860 } }),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const outcome of ["positive", "partial"]) {
+    it(`accepts the Phipps shape logged ${outcome}`, async () => {
+      await setup();
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), outcome) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts when the subjectId is not a tree person", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...SENT_1860, subjectId: "I99" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const [label, url] of [
+    ["no url", ""],
+    ["a url that is not an ARK", "https://example.com/census/MHR9-JWT"],
+  ]) {
+    it(`accepts when the cited source has ${label}`, async () => {
+      await setup(treeWith([{ ref: "S4" }], [], url));
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+});
+
+describe("research_log_append — a page image_transcribe logged itself (#4721)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4721-"));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const log = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log as any[];
+
+  /** The entry image_transcribe writes for its own read: positive, no plan item. */
+  async function toolLoggedPage(writtenBy: string | null = "image_transcribe") {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: { query: { imageId: "004884748_02613" }, results: [{ id: "004884748_02613", transcription: "page" }] },
+    });
+    const first = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: handle!.resultsRef,
+      planItemId: null, outcome: "positive", resultsExamined: 1,
+      ...(writtenBy ? { writtenBy } : {}),
+    });
+    expect(first.ok).toBe(true);
+    return { ref: handle!.resultsRef, logId: (first as any).logId as string };
+  }
+
+  it("a hand-log naming another outcome and plan item returns the tool's entry and writes nothing", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).alreadyLogged).toBe(true);
+    expect((again as any).logId).toBe(logId);
+    expect((again as any).validation.warnings.join(" ")).toMatch(/logged by image_transcribe itself.*outcome 'negative'/);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("carries back a note it could not store, rather than dropping it behind ok", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      outcome: "positive", resultsExamined: 1, notes: "Mary E. named as daughter of Benjamin F.",
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).validation.warnings.join(" ")).toContain('this note was not stored: "Mary E. named as daughter of Benjamin F."');
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("does the same inside a batch", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", stagedResultsRef: ref, planItemId: "pli_007", outcome: "negative", resultsExamined: 1 } as any],
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).results[0]).toMatchObject({ logId, alreadyLogged: true });
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a re-send under another tool", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "record_read", stagedResultsRef: ref, outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a differing re-send of a page an agent logged by hand", async () => {
+    const { ref } = await toolLoggedPage(null);
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect((again as any).errors.join(" ")).toMatch(/already logged as log_001/);
+  });
 });

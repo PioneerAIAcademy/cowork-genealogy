@@ -32,11 +32,15 @@
  * gate's population to within two runs.
  */
 
+import { owedFindings, type OwedFinding } from "./owed-findings.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 import { disputeGroups, disputeGroupKey } from "./page-disputes.js";
 import { countsForLinkedRung } from "./tree-person.js";
-import { isLiveAssertion } from "./assertion-liveness.js";
+import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
+import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
+import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 
 export type QuestionState =
   | "framed"
@@ -85,7 +89,9 @@ const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 /**
  * Positive or partial log entries no assertion cites by `log_entry_id`. An
  * external-site entry whose capture has not come back is an open hand-off, not
- * something to extract.
+ * something to extract. Nor is a page `image_transcribe` logged itself (#4721):
+ * it records a read, not a find — a browsed page, a cut-off read, a hint page
+ * since rejected — and `extraction_append` cites it when the page is extracted.
  */
 function pendingExtraction(research: any, logs: any[]): any[] {
   const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
@@ -93,12 +99,14 @@ function pendingExtraction(research: any, logs: any[]): any[] {
     (e) =>
       (e?.outcome === "positive" || e?.outcome === "partial") &&
       !cited.has(e?.id) &&
+      !isToolLoggedRead(e) &&
       !(e?.tool === "external_site" && e?.external_site?.capture_received !== true),
   );
 }
 
 /** Which search destination a plan item wants: search-hints for a `fs_hints`
- *  item (issue #3153), else by its repository.
+ *  item (issue #3153), else by its repository. `routesToFamilySearch` is the one
+ *  FamilySearch-or-not rule, shared with research_append's outside-site check.
  *
  *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
  *  cannot disagree. They would: the plan writes E's arm as "the next step is
@@ -107,9 +115,8 @@ function pendingExtraction(research: any, logs: any[]): any[] {
  *  spawn the wrong agent. */
 function searchStepFor(item: any): string {
   if (item?.record_type === "fs_hints") return `search-hints — ${item.id}`;
-  const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
-  if (!repo || /familysearch/i.test(repo)) return "search-records";
-  return `search-external-sites — ${item.id} (${repo})`;
+  if (routesToFamilySearch(item)) return "search-records";
+  return `search-external-sites — ${item.id} (${item.repository.trim()})`;
 }
 
 /** The lowest-sequence `planned`/`in_progress` item on a plan that is still
@@ -142,7 +149,7 @@ function openItems(plans: any[]): any[] {
 /** Fact types that name one event per person, so two values are a disagreement
  *  rather than two events. `birthplace` is folded into `birth`'s place, since
  *  extractions record a birth's place under either. */
-const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
+export const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
   birth: "birth",
   birthplace: "birth",
   death: "death",
@@ -151,12 +158,12 @@ const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
 
 /** Years further apart than this disagree. Census ages drift a year or two
  *  between enumerations; that is ordinary, not a conflict. */
-const YEAR_TOLERANCE = 2;
+export const YEAR_TOLERANCE = 2;
 
 /** Both spellings of an assertion's place, each split into components. The raw
  *  and standardized forms are compared separately because standardization
  *  renames ("Forfarshire" → "Angus") and adds a country the raw form omits. */
-const placeForms = (a: any): string[][] =>
+export const placeForms = (a: any): string[][] =>
   [a?.place, a?.standard_place]
     .filter((p): p is string => typeof p === "string" && p.trim() !== "")
     .map((p) => p.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
@@ -166,7 +173,7 @@ const partsMatch = (p: string, q: string): boolean => p.startsWith(q) || q.start
 /** Places agree when every component of the less specific one matches one in
  *  the other — "England" agrees with "Rochdale, Lancashire, England", and
  *  "Russia" with "Russian Empire". Any pair of spellings agreeing is enough. */
-const placesAgree = (xs: string[][], ys: string[][]): boolean =>
+export const placesAgree = (xs: string[][], ys: string[][]): boolean =>
   xs.some((x) =>
     ys.some((y) => {
       const [short, long] = x.length <= y.length ? [x, y] : [y, x];
@@ -181,7 +188,7 @@ const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
  *  disagrees on its open side. A bounded date the standard-date parser cannot
  *  read ("after 1870, before 1880") is left out; any other unreadable date
  *  falls back to its first four-digit year as a one-year span. */
-const yearsOf = (a: any): [number, number] | null => {
+export const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
     if (typeof raw !== "string") continue;
     const lo = earliestYear(raw), hi = latestYear(raw);
@@ -304,6 +311,116 @@ export function competingParentSets(
   return [...parents]
     .filter(([, s]) => s.size > 2)
     .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
+}
+
+/** The person-evidence rung for a partly-linked question: some of its
+ *  assertions are linked and some are not, yet no live link reaches a project
+ *  subject. Null when every assertion is linked or rejected against a subject
+ *  (`rejected_links`; person-evidence has nothing left to do, so the rung
+ *  cannot loop), when a link already names a subject,
+ *  or when no subject is a tree person. `linkedAssertionIds` holds the links
+ *  `countsForLinkedRung` admits. */
+export function subjectUnreached(
+  research: any,
+  tree: any,
+  assertions: readonly any[],
+  linkedAssertionIds: ReadonlySet<unknown>,
+): { unlinked: number; subjects: string[] } | null {
+  if (!tree) return null;
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return null;
+  const rejected = new Set(
+    arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
+  );
+  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id) && !rejected.has(a?.id)).length;
+  if (unlinked === 0 || unlinked === assertions.length) return null;
+  const ids = new Set(assertions.map((a) => a?.id));
+  const reaches = arr(research?.person_evidence).some(
+    (pe) => countsForLinkedRung(pe) && ids.has(pe?.assertion_id) && subjects.includes(pe?.person_id),
+  );
+  return reaches ? null : { unlinked, subjects };
+}
+
+/** Tree persons linked to this question's assertions whom nothing ties to a
+ *  subject: no `ParentChild`/`Couple` path of any length or direction, and no
+ *  record shared with a person who has one. Kinship like that was inferred, not
+ *  read off a record, and needs a hypothesis before anything relies on it.
+ *
+ *  Empty when the question already has any related hypothesis: hypotheses carry
+ *  no person ids, so "one names this person" cannot be computed, and matching
+ *  `claim` text is fragile. Empty with no tree, or when no subject is a tree
+ *  person — every linked person would otherwise count, the subject included.
+ *
+ *  A shared record is `record_id`, or `source_id` for an assertion with none:
+ *  a household member read from the subject's own record is not inferred kin. */
+export function unlinkedKin(
+  research: any,
+  tree: any,
+  questionId: string,
+  questionAssertionIds: ReadonlySet<string>,
+): string[] {
+  if (!tree) return [];
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id).filter((id): id is string => typeof id === "string"));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return [];
+  if (arr(research?.hypotheses).some((h) => arr(h?.related_question_ids).includes(questionId))) return [];
+
+  const links = arr(research?.person_evidence).filter(
+    (pe) => pe?.superseded_by == null && typeof pe?.person_id === "string",
+  );
+  const candidates = new Set<string>(
+    links
+      .filter((pe) => questionAssertionIds.has(pe?.assertion_id) && persons.has(pe.person_id))
+      .map((pe) => pe.person_id),
+  );
+  if (candidates.size === 0) return [];
+
+  const neighbours = new Map<string, string[]>();
+  const connect = (a: unknown, b: unknown): void => {
+    if (typeof a !== "string" || typeof b !== "string") return;
+    for (const [from, to] of [[a, b], [b, a]]) {
+      const list = neighbours.get(from);
+      if (list) list.push(to);
+      else neighbours.set(from, [to]);
+    }
+  };
+  for (const r of arr(tree?.relationships)) {
+    if (r?.type === "ParentChild") connect(r?.parent, r?.child);
+    else if (r?.type === "Couple") connect(r?.person1, r?.person2);
+  }
+  const pathed = new Set<string>(subjects);
+  const queue = [...subjects];
+  for (let i = 0; i < queue.length; i++) {
+    for (const next of neighbours.get(queue[i]) ?? []) {
+      if (!pathed.has(next)) {
+        pathed.add(next);
+        queue.push(next);
+      }
+    }
+  }
+
+  const live = new Map(arr(research?.assertions).filter(isLiveAssertion).map((a) => [a?.id, a]));
+  const recordKey = (a: any): unknown =>
+    typeof a?.record_id === "string" && a.record_id !== "" ? a.record_id : a?.source_id;
+  const keysByPerson = new Map<string, unknown[]>();
+  for (const pe of links) {
+    const key = live.has(pe?.assertion_id) ? recordKey(live.get(pe.assertion_id)) : null;
+    if (key == null) continue;
+    const list = keysByPerson.get(pe.person_id);
+    if (list) list.push(key);
+    else keysByPerson.set(pe.person_id, [key]);
+  }
+  const keysOf = (personId: string): unknown[] => keysByPerson.get(personId) ?? [];
+  const anchored = new Set([...pathed].flatMap(keysOf));
+
+  return [...candidates]
+    .filter((id) => !pathed.has(id) && !keysOf(id).some((k) => anchored.has(k)))
+    .sort();
 }
 
 /** Does `conflict` compete over any assertion in `assertionIds`?
@@ -651,6 +768,87 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
   return Number.isNaN(written) || written >= lastSearched;
 }
 
+/** One tree person's two FamilySearch-attached births that cannot both be
+ *  theirs and that no analysed conflict has weighed yet (#4444). Computed by
+ *  research_append's pair test (a tool, with place lookups) and passed in. */
+export interface AttachedBirthPair {
+  personId: string;
+  a: any;
+  b: any;
+}
+
+/** The conflicts that name a pair the way one answers it: an identity conflict
+ *  naming either record, through any assertion of the same record party (as a
+ *  rejection rules one out), or a fact conflict naming both births. Analysed or
+ *  not: the pair is answered once one of these is analysed, and while none is,
+ *  the one registered is what conflict-resolution has to weigh. */
+export function registeredPairConflictIds(research: any, pair: AttachedBirthPair): string[] {
+  const ids = [pair.a?.id, pair.b?.id];
+  const assertions = arr(research?.assertions);
+  const byId = new Map<string, any>(assertions.map((a: any) => [a?.id, a]));
+  const partyOf = recordPartyKeys(assertions);
+  const pairParties = new Set([pair.a, pair.b].map(partyOf).filter((k): k is string => k != null));
+  return arr(research?.conflicts)
+    .filter((c: any) => {
+      if (!Array.isArray(c?.competing_assertion_ids) || typeof c?.id !== "string") return false;
+      const named = ids.filter((id) => c.competing_assertion_ids.includes(id)).length;
+      if (c.conflict_type === "identity") {
+        return named > 0 || c.competing_assertion_ids.some((id: unknown) => {
+          const key = partyOf(byId.get(id as string));
+          return key != null && pairParties.has(key);
+        });
+      }
+      return c.conflict_type === "fact" && named === 2;
+    })
+    .map((c: any) => c.id as string);
+}
+
+/** What conflict-resolution does for the pairs: weigh the conflict already
+ *  registered for a pair, or open one where none is. Naming the registered one
+ *  matters: told to open a conflict, an orchestrator asked for John's pair to be
+ *  registered again while c_002 sat unweighed (thomas-hanrahan-marriage,
+ *  2026-11-18 14:12). */
+export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], research: any): string {
+  const registered = new Set<string>();
+  const unregistered: string[] = [];
+  for (const pair of pairs) {
+    const ids = registeredPairConflictIds(research, pair);
+    if (ids.length > 0) ids.forEach((id) => registered.add(id));
+    else if (!unregistered.includes(pair.personId)) unregistered.push(pair.personId);
+  }
+  const parts: string[] = [];
+  if (registered.size > 0) {
+    parts.push(`weigh ${[...registered].sort().join(", ")} (registered, not yet analysed)`);
+  }
+  if (unregistered.length > 0) {
+    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.join(", ")}`);
+  }
+  return parts.join("; ");
+}
+
+/** The pairs as one clause: the identity rung's text and the proof gate's. */
+export function describeAttachedBirthPairs(pairs: readonly AttachedBirthPair[]): string {
+  return pairs
+    .map(({ personId, a, b }) => `${personId}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
+    .join("; ");
+}
+
+/** This question's owed items of one kind: `encode` items on its summaries, or
+ *  `hypothesis` items on hypotheses that relate to it. */
+function owedFor(all: readonly OwedFinding[], research: any, qid: unknown, summaries: any[], kind: "encode" | "hypothesis"): OwedFinding[] {
+  const owed = all.filter((f) => f.kind === kind);
+  if (kind === "encode") {
+    const ids = new Set(summaries.map((s) => `${s?.id}/`));
+    return owed.filter((f) => [...ids].some((prefix) => f.ref.startsWith(prefix)));
+  }
+  const related = new Set(
+    arr(research?.hypotheses)
+      .filter((h) => arr(h?.related_question_ids).includes(qid))
+      .map((h) => h?.id),
+  );
+  return owed.filter((f) => related.has(f.ref));
+}
+
 /**
  * The state of one question plus the step it is waiting on.
  *
@@ -658,15 +856,22 @@ export function endsOnConflict(summary: any, lastSearched: number): boolean {
  * question with a proof summary is `concluded` even if its plan is thin,
  * because the artifact is what any downstream check joins on.
  */
-export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
+export function questionStatus(
+  research: any,
+  question: any,
+  tree: any = null,
+  attachedBirthPairs: readonly AttachedBirthPair[] = [],
+  owed?: readonly OwedFinding[],
+): QuestionStatus {
   const qid = question?.id;
+  // Computed only when an owed-finding arm is reached; questionStates passes it.
+  let owedList = owed;
+  const getOwed = (): readonly OwedFinding[] => (owedList ??= owedFindings(research, tree));
 
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
   const itemIds = new Set(plans.flatMap((p) => arr(p?.items).map((i) => i?.id)));
   const logs = arr(research?.log).filter((e) => itemIds.has(e?.plan_item_id));
-  const assertions = arr(research?.assertions).filter((a) =>
-    isLiveAssertion(a) && arr(a?.extracted_for_question_ids).includes(qid),
-  );
+  const assertions = questionAssertions(research, qid);
   const assertionIds = new Set(assertions.map((a) => a?.id));
   const summaries = arr(research?.proof_summaries).filter((s) => s?.question_id === qid);
 
@@ -714,7 +919,18 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
-  if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
+  const kin = resolved ? [] : unlinkedKin(research, tree, qid, assertionIds);
+  const unreached = resolved || summaries.length > 0 || noneLinked
+    ? null
+    : subjectUnreached(research, tree, assertions, linkedAssertionIds);
+  if (attachedBirthPairs.length > 0) {
+    // #4444. First, because research_append refuses every proof summary of this
+    // question (any tier but disproved, resolved or not) until a conflict has
+    // weighed each pair: a rung below one that names proof-conclusion would loop.
+    nextStep =
+      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs)} cannot both ` +
+      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research)}, blocking ${qid}`;
+  } else if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
     // written one with `shortfall: "conflict"`, at the tier the evidence reaches,
     // the research has ended on the conflict and nothing further is due. A
@@ -765,6 +981,14 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
+  } else if (kin.length > 0) {
+    nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+  } else if (unreached) {
+    // Below the kin rung, so it changes no step that rung sets. Some links but
+    // none reaching the subject: the record was linked around them, not to them.
+    nextStep =
+      `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
+      `are unlinked and none of its links reaches the project subject (${unreached.subjects.join(", ")})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
@@ -773,6 +997,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
       lowOverturnRisk(question) ? "proof-conclusion" : "research-plan"
     })`;
+  } else if (tree && owedFor(getOwed(), research, qid, summaries, "encode").length > 0) {
+    // A claim affirmed at probable or better that no tree object carries
+    // (Decision 33's `encode`): proof-conclusion encodes it. Above the concluded
+    // and blocked arms, so a resolved question still reports it. Skipped with no
+    // tree, as competingParentSets is: a tree-less reader cannot tell.
+    nextStep = owedFor(getOwed(), research, qid, summaries, "encode")[0].nextStep;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions
     // gate blocked the conclusion: proof-conclusion resolves the question it
@@ -780,14 +1010,17 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // arms above found nothing open, so the blocker has settled and the next
     // step is to conclude again. Reporting null here would tell the router
     // nothing is left to do.
-    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
-    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
+    nextStep = "proof-conclusion — concluded while blocked: re-conclude this question's proof summary";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
-    nextStep = "research-plan";
+    // A project with no localities entry at all has surveyed no place, so the plan
+    // step opens with locality-guide (issue #4791, stop 3). Whether an entry covers
+    // this question's own place is research-plan's to judge, and it hands back.
+    const surveyed = Array.isArray(research?.localities) && research.localities.length > 0;
+    nextStep = surveyed ? "research-plan" : "locality-guide, then research-plan";
   } else if (state === "evidence-gathered") {
     // Not preempted by an uncited positive/partial entry: agents log
     // inconclusive searches as `partial` and link lists as `positive`, and those
@@ -800,7 +1033,15 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     const planned = openItems(plans)
       .filter((i) => i?.status === "planned" && !waitingOnUpload.has(i?.id))
       .sort((x, y) => (Number(x?.sequence) || 0) - (Number(y?.sequence) || 0));
-    if (planned.length === 0) {
+    // A supported hypothesis on this question, with nothing left to search and no
+    // summary yet: concluding it is the next step (Decision 33's `hypothesis`).
+    // Below extraction, framing and every planned search, which come first.
+    const supported = planned.length === 0 && summaries.length === 0
+      ? owedFor(getOwed(), research, qid, summaries, "hypothesis")
+      : [];
+    if (supported.length > 0) {
+      nextStep = supported[0].nextStep;
+    } else if (planned.length === 0) {
       nextStep = "research-exhaustiveness, then proof-conclusion";
     } else {
       const lane = searchStepFor(planned[0]);
@@ -838,9 +1079,16 @@ export function questionStatus(research: any, question: any, tree: any = null): 
 }
 
 /** Every question's state, in document order. `tree` is optional: without it
- *  `competingParentSets` is always empty. */
-export function questionStates(research: any, tree: any = null): QuestionStatus[] {
+ *  `competingParentSets` is always empty. `attachedBirthPairs` (by question id)
+ *  is optional: without it the identity rung never fires. */
+export function questionStates(
+  research: any,
+  tree: any = null,
+  attachedBirthPairs?: ReadonlyMap<string, readonly AttachedBirthPair[]>,
+): QuestionStatus[] {
+  // The owed list is project-wide: compute it once, not once per question.
+  const owed = owedFindings(research, tree);
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q, tree));
+    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed));
 }

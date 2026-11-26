@@ -1,5 +1,5 @@
-"""`test_spawn_carries_its_step_mode_fields` — the fields a "Keep going." or
-"Wrap it up." turn passes in a spawn prompt.
+"""`test_spawn_carries_its_step_mode_fields` — the fields a "Wrap it up." turn
+or an autonomous run passes in a spawn prompt.
 
 Both directions: the fields pass in the spellings a router writes, and a spawn
 missing one, carrying the wrong value, or not happening at all fails. The
@@ -27,6 +27,7 @@ from test_research import (  # noqa: E402
 KEEP_GOING = {"tags": ["routing", "delegates-user-present-no"]}
 WRAP_UP = {"tags": ["routing", "delegates-wrap-up"]}
 EXTERNAL = {"tags": ["routing", "delegates-user-present-no-external"]}
+QS = {"tags": ["routing", "delegates-qs-user-present-no"]}
 
 
 def _spawn(callee: str, prompt: str) -> dict:
@@ -125,20 +126,24 @@ def test_an_untagged_test_is_skipped():
     assert excinfo.typename == "Skipped"
 
 
-# --- autonomous runs: search-external-sites gets `userPresent: no`
+# --- autonomous runs: search-external-sites and question-selection get `userPresent: no`
 
-@pytest.mark.parametrize("test,callee", [(EXTERNAL, "search-external-sites")])
+@pytest.mark.parametrize(
+    "test,callee", [(EXTERNAL, "search-external-sites"), (QS, "question-selection")]
+)
 def test_autonomous_user_present_no_passes(test, callee):
     validator(test, [_spawn(callee, "planItemId: pli_001\nplanId: pl_001\nuserPresent: no")])
 
 
-@pytest.mark.parametrize("test,callee", [(EXTERNAL, "search-external-sites")])
+@pytest.mark.parametrize(
+    "test,callee", [(EXTERNAL, "search-external-sites"), (QS, "question-selection")]
+)
 @pytest.mark.parametrize("line", ["", "userPresent: yes"])
 def test_autonomous_user_present_missing_or_yes_fails(test, callee, line):
     msg = _expect_fail(test, [_spawn(callee, f"planItemId: pli_001\nplanId: pl_001\n{line}")])
     assert f"'{callee}' spawn lacks userPresent" in msg
 
 
-@pytest.mark.parametrize("test", [EXTERNAL])
+@pytest.mark.parametrize("test", [EXTERNAL, QS])
 def test_autonomous_user_present_without_the_spawn_fails(test):
     assert "no spawn" in _expect_fail(test, [_spawn("search-records", "userPresent: no")])

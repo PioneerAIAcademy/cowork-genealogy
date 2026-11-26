@@ -53,6 +53,8 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # 94 warning entries.
     "routing_negative_judge_fail": "judge",
     "coerced_routing_negative_to_na": "judge",
+    # A rubric dimension the test names in `na_dimensions` (#4548).
+    "coerced_review_dimension_to_na": "judge",
     # --- harness-side (advisories about skill / fixtures / harness) ---
     "unread_skill_call": "harness",
     "missing_tool_usage_dimension": "harness",
@@ -72,6 +74,9 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # An MCP result reached the model as Claude Code's "too large, saved to file"
     # notice, so the agent never saw that tool's answer (#4380).
     "oversize_tool_result": "harness",
+    # Claude Code refused a tool call whose input was not valid JSON, before the
+    # tool saw it, and the agent wrote the call again (#4588).
+    "unparsed_tool_input": "harness",
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})

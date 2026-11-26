@@ -27,10 +27,12 @@ const STEP_WORDS: Array<[RegExp, string]> = [
   [/^conflict-resolution\b/, 'Weigh the evidence that disagrees.'],
   [/^extraction\b/, 'Read the records the searches found.'],
   [/^research-plan\b/, 'Plan the searches.'],
+  [/^locality-guide\b/, 'Plan the searches.'],
   [/^search-hints\b/, "Review FamilySearch's record hints."],
   [/^search-records\b/, "Search FamilySearch's records."],
   [/^search-external-sites\b/, 'Search another website.'],
   [/^person-evidence\b/, 'Link what the records say to the people they are about.'],
+  [/^hypothesis-tracking — unlinked kin\b/, 'Set out how these people might be related before relying on it.'],
   [/^hypothesis-tracking\b/, 'Weigh the competing sets of parents.']
 ]
 

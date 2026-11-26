@@ -8,6 +8,9 @@
  * records on them; only `record_read` returns an `imageArk`, one at a time. So
  * the agent transcribed the page and searched for each name its own OCR read,
  * and reported eight of its own misreadings as entries the index had missed.
+ * (Since 2026-11-17 the `image_index` tool does it, through the platform route
+ * this probe's 403 body names, which answers from outside the church network:
+ * docs/specs/image-index-tool-spec.md.)
  *
  * This script answers only "is there an endpoint, and what does it need". It
  * builds nothing. Step 2 is a separate card.

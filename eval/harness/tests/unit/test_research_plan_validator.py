@@ -272,6 +272,40 @@ def test_v1_grounds_served_hyphenated_range():
     check_v1(before, after, served)
 
 
+def test_v1_grounds_the_film_number_of_a_served_image_group():
+    """A volume_search answer names image groups as `<film>_<part>_<id>`, and a
+    rationale cites the film. `_` is a word character, so the grounding regex
+    found no number in `008216233_005_M9ZZ-4DD` and the citation read as a
+    fabrication (ut_research_plan_csn, Haiku 5.5 low floor baseline, 2026-11-19).
+    Reds without the fix."""
+    served = [_call("volume_search", {"results": [{"imageGroupNumber": "008216233_005_M9ZZ-4DD"}]})]
+    before, after = _states([
+        _item("pli_010", rationale="Browse the death volume for 1853-1861 (image group 008216233)."),
+    ])
+    check_v1(before, after, served)
+
+
+def test_v1_still_fires_on_an_unserved_film_number():
+    """The looser grounding does not ground a film number no response served."""
+    served = [_call("volume_search", {"results": [{"imageGroupNumber": "008216233_005_M9ZZ-4DD"}]})]
+    before, after = _states([
+        _item("pli_010", rationale="Browse image group 008216999 for the deaths."),
+    ])
+    with pytest.raises(AssertionError, match="008216999"):
+        check_v1(before, after, served)
+
+
+def test_v1_fires_on_an_unserved_id_that_ends_a_sentence():
+    """The cited side read a number before a full stop as a decimal and skipped
+    it, so an id ending a sentence was never checked. A decimal still is not an
+    id. Reds without the fix."""
+    before, after = _states([_item("pli_010", rationale="Browse image group 008216999.")])
+    with pytest.raises(AssertionError, match="008216999"):
+        check_v1(before, after, [])
+    before, after = _states([_item("pli_011", rationale="About 12345.6 images per film.")])
+    check_v1(before, after, [])
+
+
 def test_v1_grounds_served_url_path_identifier():
     """A collection id served inside a URL path is grounded.
 
@@ -369,6 +403,34 @@ def test_v5_served_count_wins_over_the_entry_count():
                     {"standardPlace": "Pennsylvania, United States"})]
     with pytest.raises(AssertionError, match="1999196"):
         check_v5(_with_locality(before), after, served)
+
+
+def _thin_locality(state):
+    """A localities entry storing 1999196 at its real 52 persons, labelled
+    browse-only by research_append (52 persons over 3.2 million images)."""
+    out = _with_locality(state, counts=(52, 1048378))
+    out["research_json"]["localities"][0]["collections"][0]["availability"] = "browse-only"
+    return out
+
+
+def test_v5_a_browse_only_label_wins_over_a_nonzero_count():
+    # ut_research_plan_pshape, Haiku 5.5 low floor baseline: "1999196 ... is
+    # likely image-only" failed against its 52 persons. The label decides.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only.")])
+    _no_skip(check_v5, _thin_locality(before), after, [])
+
+
+def test_v5_fires_on_an_indexed_claim_against_a_browse_only_label():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        _no_skip(check_v5, _thin_locality(before), after, [])
+
+
+def test_v5_a_served_label_wins_over_the_served_count():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only.")])
+    served = [_call("collections_search", {"results": [{"id": "1999196", "personCount": 52, "availability": "browse-only"}]},
+                    {"standardPlace": "Pennsylvania, United States"})]
+    check_v5(before, after, served)
 
 
 def test_v5_still_skips_with_no_entry_and_no_call():
@@ -648,6 +710,62 @@ def test_v5_still_fires_on_browse_claim_about_the_collection_itself():
     before, after = _states([_item("pli_010", rationale="Collection 1921317 has browse-only images.")])
     with pytest.raises(AssertionError, match="1921317"):
         check_v5(before, after, _SERVED)
+
+
+# Issue #4163, both verbatim but for the id: an unindexed adjective on entries
+# or files, before or after the noun, describes those, not the collection.
+@pytest.mark.parametrize("rationale", [
+    "Use the collection (1921317, name-searchable) and, for unindexed entries, "
+    "the full-text-searchable volumes.",
+    "If pli_001 yields nothing (collection 1921317 may have incomplete coverage), "
+    "Ancestry may hold estate files not yet indexed on FamilySearch.",
+])
+def test_v5_ignores_unindexed_on_entries_or_files(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Collection 1921317 is not yet indexed.",
+    "Collection 1921317's records are not indexed.",
+    "Collection 1921317 (unindexed) holds the estate files.",
+])
+def test_v5_still_fires_on_not_yet_indexed_about_the_collection(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
+# Issue #4163, ut_research_plan_wzk, v18_2026-11-11_09-44-58, both runs
+# verbatim (trimmed): the collection is name-searchable and only the county's
+# volumes are not. A sentence making both claims is skipped, not read as
+# browse-only.
+_SERVED_AL = [_call("collections_search", _collections([
+    {"id": "1537764", "title": "Alabama, Probate Records, 1809-1985", "personCount": 438210},
+]))]
+
+
+@pytest.mark.parametrize("rationale", [
+    "'Alabama, Probate Records, 1809-1985' (collection 1537764) is name-searchable "
+    "at the statewide level, but loc_001 specifically flags that Blount County "
+    "probate volumes (1845-1957) are full-text searchable but NOT name-indexed "
+    "(0-3%) — a keyword search on 'Wood' is required rather than a name search.",
+    "Alabama, Probate Records, 1809-1985 (collection 1537764) is name-searchable at "
+    "the statewide level, but loc_001 specifically flags Blount County probate "
+    "1845-1957 as full-text searchable but NOT name-indexed (0-3%) — keyword-search "
+    "required.",
+])
+def test_v5_skips_a_sentence_calling_the_collection_both_indexed_and_not(rationale):
+    before, after = _states([_item("pli_007", rationale=rationale)])
+    check_v5(before, after, _SERVED_AL)
+
+
+def test_v5_still_fires_on_not_name_indexed_alone_against_an_indexed_collection():
+    before, after = _states([_item("pli_007", rationale=(
+        "Collection 1537764 is NOT name-indexed; keyword search required."
+    ))])
+    with pytest.raises(AssertionError, match="1537764"):
+        check_v5(before, after, _SERVED_AL)
 
 
 def test_v5_still_fires_on_indexed_collection_beside_a_browsed_volume():

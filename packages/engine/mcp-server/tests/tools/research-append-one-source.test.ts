@@ -105,10 +105,15 @@ function tree(): Record<string, any> {
   };
 }
 
-const link = (assertionId: string, personId: string, confidence = "probable") => ({
+// Every successful call via this helper already requires `attest()` for the
+// pairing (the pre-#4549 score gate), which records 0.9 -- so carry that
+// score by default rather than null; a refusal path that never attests is
+// unaffected either way. A5's circular/minted pairing passes `matchScore:
+// null` explicitly: that pairing must NOT carry a score (mintedFromThisRecord).
+const link = (assertionId: string, personId: string, confidence = "probable", matchScore: number | null = 0.9) => ({
   section: "person_evidence",
   op: "append",
-  entry: { assertion_id: assertionId, person_id: personId, confidence, rationale: "test link", superseded_by: null },
+  entry: { assertion_id: assertionId, person_id: personId, confidence, match_score: matchScore, rationale: "test link", superseded_by: null },
 });
 const update = (entryId: string, fields: Record<string, unknown>) => ({
   section: "person_evidence",
@@ -278,7 +283,7 @@ describe("one source per person_evidence call", () => {
     t.persons.push(stub);
     await writeFile(join(dir, "research.json"), JSON.stringify(research(), null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
-    const r = await call(link("a_010", "I1"));
+    const r = await call(link("a_010", "I1", "probable", null));
     expect(r.ok, errs(r)).toBe(ok);
   });
 

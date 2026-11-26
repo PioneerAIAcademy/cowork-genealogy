@@ -23,6 +23,7 @@ import type { PersonWarning } from "../types/person-warnings.js";
 import { Mob, normalizeGender } from "../utils/mob.js";
 import { calculateWarnings, getPersonName, isNonBiologicalSubtype } from "../tools/person-warnings.js";
 import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
+import { setAsideParents } from "../utils/conclusion-status.js";
 
 /** Stable warning identifier: tag + person + related + sorted fact ids. */
 export function warningId(w: PersonWarning): string {
@@ -82,7 +83,7 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
   "relativesHasEventBeforeBirth365_2",
   "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
-  "hasBlankName",                 // a name node with empty given/surname — named-party materializations
+  "hasBlankName",                 // a name node with empty given/surname — a record naming someone by one part only, when the person has no matching full name
 
   // One person recorded twice: the duplicate-person class, which is what an
   // import produces rather than a claim the writer is making.
@@ -147,11 +148,12 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
 function warningsForPerson(
   tree: SimplifiedGedcomX,
   personId: string,
+  setAsideParentIds?: ReadonlySet<string>,
 ): PersonWarning[] {
   try {
     const persons = tree.persons ?? [];
     if (!persons.some((p) => p.id === personId)) return [];
-    const mob = new Mob(tree, personId);
+    const mob = new Mob(tree, personId, { setAsideParentIds });
     return calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true);
   } catch {
     return [];
@@ -220,7 +222,19 @@ export function introducedWarnings(
    *  script can re-derive the false refusals the widening removes. No shipped
    *  caller passes it. */
   widenOneHop = true,
+  /** The project's research. When given, a parent whose edge reads set aside
+   *  or ruled out from claims (Decision 26) is skipped on both sides. */
+  research?: unknown,
 ): IntroducedWarningsResult {
+  const skip = research === undefined ? new Map<string, Set<string>>() : setAsideParents(research, afterTree);
+  /** The after side's skip set for `child`, with collapsed parent ids folded in for the before side. */
+  const skipFor = (child: string, beforeSide: boolean): ReadonlySet<string> | undefined => {
+    const set = skip.get(collapseMap?.get(child) ?? child);
+    if (!set || !beforeSide || !collapseMap) return set;
+    const widened = new Set(set);
+    for (const [collapsed, survivor] of collapseMap) if (set.has(survivor)) widened.add(collapsed);
+    return widened;
+  };
   // Dedupe touched ids and, for merges, remap collapsed→survivor
   const uniqueIds = new Set<string>();
   for (const id of touchedPersonIds) {
@@ -264,13 +278,13 @@ export function introducedWarnings(
     }
 
     for (const bid of beforeIds) {
-      for (const w of warningsForPerson(beforeTree, bid)) {
+      for (const w of warningsForPerson(beforeTree, bid, skipFor(bid, true))) {
         const remapped = remapWarning(w, collapseMap);
         beforeWarnings.set(warningId(remapped), remapped);
       }
     }
 
-    for (const w of warningsForPerson(afterTree, pid)) {
+    for (const w of warningsForPerson(afterTree, pid, skipFor(pid, false))) {
       afterWarnings.set(warningId(w), w);
     }
   }
@@ -388,6 +402,7 @@ function biologicalParentsByChild(
   tree: SimplifiedGedcomX,
   sex: "Male" | "Female",
   rename: (id: string) => string = (id) => id,
+  skip: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): Map<string, Set<string>> {
   const gender = new Map((tree.persons ?? []).map((p) => [rename(p.id ?? ""), normalizeGender(p.gender)]));
   const out = new Map<string, Set<string>>();
@@ -396,6 +411,7 @@ function biologicalParentsByChild(
     const parent = rename(r.parent);
     if (gender.get(parent) !== sex) continue;
     const child = r.child;
+    if (skip.get(child)?.has(parent)) continue;
     const set = out.get(child) ?? new Set<string>();
     set.add(parent);
     out.set(child, set);
@@ -465,6 +481,10 @@ export interface CompetingParentage {
  *
  * Skipped unless the write changed a ParentChild edge or a person's gender:
  * nothing else can change a child's biological parents.
+ *
+ * A parent whose edge reads set aside or ruled out from claims (Decision 26) is
+ * not counted on either side, so a concluded parent's edge lands beside a
+ * set-aside import; with no claims nothing is skipped.
  */
 export function findCompetingParentage(
   before: SimplifiedGedcomX,
@@ -479,11 +499,12 @@ export function findCompetingParentage(
   if (!collapseMap && edges(before) === edges(after) && genders(before) === genders(after)) return [];
 
   const rename = (id: string) => collapseMap?.get(id) ?? id;
+  const skip = setAsideParents(research, after);
   const people = new Map((after.persons ?? []).map((p) => [p.id, p]));
   const out: CompetingParentage[] = [];
   for (const sex of ["Male", "Female"] as const) {
-    const was = biologicalParentsByChild(before, sex, rename);
-    for (const [child, now] of biologicalParentsByChild(after, sex)) {
+    const was = biologicalParentsByChild(before, sex, rename, skip);
+    for (const [child, now] of biologicalParentsByChild(after, sex, undefined, skip)) {
       if (now.size < 2 || !people.has(child)) continue;
       const prior = was.get(child) ?? new Set<string>();
       if (![...now].some((p) => !prior.has(p))) continue;

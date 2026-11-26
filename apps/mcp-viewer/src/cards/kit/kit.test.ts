@@ -5,6 +5,7 @@ import { conclusionLine, reviewer } from './conclusion'
 import { cardView, currentQuestion, latestKind } from './view'
 import { nextStepWords } from './words'
 import { firstSentence, questionSearches } from './searches'
+import { linksByPerson, questionLinks, ruledOut } from './links'
 import type { ResearchDocument } from '../../contract'
 
 describe('the current question', () => {
@@ -27,12 +28,58 @@ describe('the current question', () => {
   })
 })
 
+describe("the question's links", () => {
+  it('one per record and person, the strongest (the compound proof)', () => {
+    const links = questionLinks(COMPOUND_DOC().research!, 'q_001')
+    expect(new Set(links.map((l) => l.sourceId)).size).toBe(8)
+    expect(links).toHaveLength(16)
+    // src_006 ties I1 by one `probable` link only; src_005 by `confident` ones.
+    expect(links.find((l) => l.sourceId === 'src_006' && l.personId === 'I1')?.confidence).toBe('probable')
+    expect(links.find((l) => l.sourceId === 'src_005' && l.personId === 'I1')?.confidence).toBe('confident')
+  })
+
+  it("another question's links, and a retired link, are not the question's", () => {
+    const research = FLYNN_DOC().research!
+    expect(questionLinks(research, 'q_002').map((l) => l.personId)).toEqual(['I1'])
+    research.person_evidence![0].superseded_by = 'pe_099'
+    expect(questionLinks(research, 'q_002')).toEqual([])
+  })
+
+  it('per person: the subject first, then the most records, strongest strength first', () => {
+    const links = [
+      { sourceId: 's1', personId: 'A', confidence: 'probable' },
+      { sourceId: 's2', personId: 'A', confidence: 'probable' },
+      { sourceId: 's1', personId: 'S', confidence: 'speculative' },
+      { sourceId: 's2', personId: 'S', confidence: 'confident' }
+    ]
+    expect(linksByPerson(links, 'S')).toEqual([
+      { personId: 'S', records: 2, strengths: [['confident', 1], ['speculative', 1]] },
+      { personId: 'A', records: 2, strengths: [['probable', 2]] }
+    ])
+    expect(linksByPerson(links, null).map((p) => p.personId)).toEqual(['A', 'S'])
+  })
+
+  it("ruled out: rejections on the question's assertions, and namesakes by its searches or people", () => {
+    const research = FLYNN_DOC().research!
+    const onQuestion = research.person_evidence!.find((pe) => pe.id === 'pe_001')!.assertion_id
+    const offQuestion = research.person_evidence!.find((pe) => pe.id === 'pe_002')!.assertion_id
+    const rejected = (assertion_id: string, person_id: string) => ({ id: `rl_${person_id}`, assertion_id, person_id, created: '2026-11-16' })
+    const namesake = (person_id: string, log_entry_ids: string[] = []) => ({
+      id: `ns_${person_id}`, person_id, name: 'Patrick Flynn', place: 'Cork', record_ids: [], log_entry_ids, created: '2026-11-16'
+    })
+    // I9 has no live link on q_002: matching on linked people alone would find nothing.
+    research.rejected_links = [rejected(onQuestion, 'I9'), rejected(offQuestion, 'I8')]
+    research.namesakes = [namesake('I9'), namesake('I7')]
+    expect(ruledOut(research, 'q_002', questionLinks(research, 'q_002'))).toEqual({ rejected: 1, namesakes: 1 })
+  })
+})
+
 describe('latest', () => {
   it.each([
     ['framed', 'setup'],
     ['planned', 'setup'],
     ['searching', 'search'],
-    ['evidence-gathered', 'search'],
+    ['evidence-gathered', 'link'],
     ['concluded', 'conclusion'],
     ['critiqued', 'conclusion']
   ] as const)('%s shows %s', (state, kind) => {
@@ -133,8 +180,10 @@ describe('the next step in words', () => {
     ['search-hints — pli_003', "Review FamilySearch's record hints."],
     ['search-records', "Search FamilySearch's records."],
     ['research-plan', 'Plan the searches.'],
+    ['locality-guide, then research-plan', 'Plan the searches.'],
     ['person-evidence — none of this question\'s 4 assertions is linked', 'Link what the records say to the people they are about.'],
-    ['hypothesis-tracking — competing parent sets: I3', 'Weigh the competing sets of parents.']
+    ['hypothesis-tracking — competing parent sets: I3', 'Weigh the competing sets of parents.'],
+    ['hypothesis-tracking — unlinked kin: I2, I3', 'Set out how these people might be related before relying on it.']
   ])('%j', (nextStep, words) => {
     expect(nextStepWords(nextStep)).toBe(words)
   })
