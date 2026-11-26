@@ -40,6 +40,7 @@ import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 
 export type QuestionState =
   | "framed"
@@ -88,7 +89,9 @@ const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 /**
  * Positive or partial log entries no assertion cites by `log_entry_id`. An
  * external-site entry whose capture has not come back is an open hand-off, not
- * something to extract.
+ * something to extract. Nor is a page `image_transcribe` logged itself (#4721):
+ * it records a read, not a find — a browsed page, a cut-off read, a hint page
+ * since rejected — and `extraction_append` cites it when the page is extracted.
  */
 function pendingExtraction(research: any, logs: any[]): any[] {
   const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
@@ -96,6 +99,7 @@ function pendingExtraction(research: any, logs: any[]): any[] {
     (e) =>
       (e?.outcome === "positive" || e?.outcome === "partial") &&
       !cited.has(e?.id) &&
+      !isToolLoggedRead(e) &&
       !(e?.tool === "external_site" && e?.external_site?.capture_received !== true),
   );
 }

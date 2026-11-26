@@ -111,6 +111,10 @@ It does not touch `expandLookingFor` or its table.
 - **Surnames and places.** v1 is given names only. A `kind` parameter for
   surnames/places is deferred pending a probe of the FamilySearch wiki page
   `Guessing_a_Name_Variation`, which was not attempted for this card.
+  Because no surname source exists, search-records' rule that a FamilySearch
+  nil escalates only after a written-out surname spelling is prose
+  plus an eval validator, not a `record_search` hint or a `research_log_append`
+  refusal, which would refuse every first nil.
 - **Retiring the old path.** `expandNameForFulltext` is gone.
   `config/given-name-variants.json`, its drift test and `expandLookingFor`
   remain for `image_transcribe` until that caller moves onto this tool.

@@ -975,6 +975,19 @@ def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[st
     )
 
 
+def _attach_film_for_year(response: dict[str, Any], film_year: Any) -> dict[str, Any]:
+    """Production's `filmForYear` (#4721) on a canned `catalog_search` answer,
+    through the compiled `attachFilmForYear`. Fails OPEN: no build, or a node
+    failure, serves the fixture unchanged with a warning."""
+    return _call_compiled_pure(
+        "tools/catalog-search.js",
+        "attachFilmForYear",
+        [response, film_year],
+        consequence="catalog_search fixtures are served without filmForYear",
+        fallback=response,
+    )
+
+
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     """`response` with `key` moved immediately before `results` — where the real
     record_search serializes `surnameVariantHints`, after the pre-`results` notes."""
@@ -1587,9 +1600,53 @@ def _stage_image_transcribe(
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
             return _unstaged("the node script returned no `staged` key")
-        return parsed
     except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
         return _unstaged(f"{type(exc).__name__}: {exc}")
+    staged = parsed.get("staged")
+    if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str):
+        parsed.update(_write_page_log(input_obj["projectPath"], args, response, staged["resultsRef"]))
+    return parsed
+
+
+_IMAGE_TRANSCRIBE_JS = _MCP_BUILD / "tools" / "image-transcribe-mcp.js"
+
+
+def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str, Any], ref: str) -> dict[str, Any]:
+    """The log entry `image_transcribe` writes for its own staged read (#4721),
+    through production's compiled `logOwnRead` (its outcome, its retry without a
+    refused plan item), so the entry is production's field for field. `{"logId"}` on success, `{"logRefused"}` when
+    the log tool refused; empty, with a warning, when the build is absent or node
+    fails — a harness fault must not read as the tool declining to log."""
+    if not (
+        _compiled_module_present(_RESEARCH_LOG_APPEND_JS, "an image_transcribe read will leave no log entry")
+        and _compiled_module_present(_IMAGE_TRANSCRIBE_JS, "an image_transcribe read will leave no log entry")
+    ):
+        return {}
+    script = (
+        f"import {{ logOwnRead }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await logOwnRead({ projectPath: i.projectPath, planItemId: i.planItemId ?? null,"
+        " ...(i.lookingFor ? { lookingFor: i.lookingFor } : {}) },"
+        " { staged: { resultsRef: i.ref, returnedCount: 1 }, ...i.read });"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    payload = {
+        "projectPath": project_path,
+        "ref": ref,
+        "planItemId": args.get("planItemId"),
+        "lookingFor": args.get("lookingFor") if isinstance(args.get("lookingFor"), str) else None,
+        "read": {k: response[k] for k in ("found", "truncated") if response.get(k) is not None},
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock image_transcribe could not write its log entry ({exc})", stacklevel=2)
+        return {}
+    return {k: logged[k] for k in ("logId", "logRefused") if logged.get(k) is not None}
 
 
 def _unlogged_staged_handles(
@@ -2158,6 +2215,16 @@ def create_mock_server(
                 and "error" not in response
             ):
                 response = _compact_wiki_search(response, args.get("includeText"))
+
+            # Production's catalog_search adds `filmForYear` to each hit when the
+            # call names a `filmYear`; the compiled function adds it here.
+            if (
+                _name == "catalog_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("filmYear") is not None
+            ):
+                response = _attach_film_for_year(response, args.get("filmYear"))
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
@@ -3121,6 +3188,13 @@ def _make_compiled_tool_handler(
                 call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
+            # Production passes the bound project's links (`projectLinks`) so the
+            # capture steps name the upload page; a hosted test's link is the one
+            # its project_context serves.
+            if tool_name == "build_external_search_url":
+                hosted_links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+                upload_url = (hosted_links or {}).get("uploadUrl")
+                call_args += ", " + json.dumps({"uploadUrl": upload_url} if upload_url else {})
 
             # A tool that resolves places gets the test's own answers and no
             # network: the table is installed in the resolver module the tool

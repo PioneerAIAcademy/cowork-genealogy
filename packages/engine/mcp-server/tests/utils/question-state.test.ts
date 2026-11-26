@@ -158,6 +158,34 @@ describe("questionStatus — the state ladder", () => {
       expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
     });
 
+    it.each(["positive", "partial"])(
+      "a %s page image_transcribe logged itself is a read, not a find to extract (#4721)",
+      (outcome) => {
+        const d = doc({
+          plans: [
+            plan([
+              { id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" },
+              { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+            ]),
+          ],
+          log: [
+            { id: "log_1", plan_item_id: "pli_1", tool: "image_search", outcome: "negative" },
+            { id: "log_2", plan_item_id: "pli_1", tool: "image_transcribe", outcome, written_by: "image_transcribe" },
+          ],
+        });
+        expect(questionStatus(d, question()).nextStep).not.toMatch(/^extraction/);
+        expect(questionStatus(d, question()).nextStep).toMatch(/^search-records/);
+      },
+    );
+
+    it("a page an agent logged by hand still routes to extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" }])],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "image_transcribe", outcome: "positive" }],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
+    });
+
     it("once evidence exists an uncited entry does not hold the question on extraction", () => {
       const d = doc({
         plans: [plan([{ id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" }])],

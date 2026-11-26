@@ -9258,6 +9258,18 @@ describe("research_append (batch ops)", () => {
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
+  it("(d4-logattr) a page image_transcribe logged itself is not the item's search (#4721)", async () => {
+    const pageRead = { ...logNaming("log_001", "pli_001"), tool: "image_transcribe", written_by: "image_transcribe" };
+    await writeProject(attrResearch("in_progress", [pageRead]));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_001 \(a page image_transcribe logged itself/);
+
+    await writeProject(attrResearch("in_progress", [pageRead, logNaming("log_002", "pli_001")]));
+    expect((await researchAppend(completeIt() as any)).ok).toBe(true);
+  });
+
   it("(d4-logattr) refuses when log[] is empty", async () => {
     await writeProject(attrResearch("in_progress", []));
     const r = await researchAppend(completeIt() as any);
@@ -16677,6 +16689,28 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
       ]),
     );
     expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+  });
+
+  it("still refuses 'completed' when the item's latest entry is a page image_transcribe logged itself (#4721)", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "image_transcribe",
+          written_by: "image_transcribe",
+          query: { file: "uploads/capture.pdf" },
+          notes: "1850 census household page",
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    const errs = failure(await researchAppend(setStatus("completed") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
   });
 
   it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {
