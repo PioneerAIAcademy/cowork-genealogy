@@ -7432,7 +7432,8 @@ function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
   return (
     `the last open question is resolved, so the minted persons no relationship connects to an ` +
     `imported person were removed from the tree: ${parts.join("; ")}. Tell the researcher, by ` +
-    `name, which persons were removed.`
+    `name, which persons were removed. They are gone: name none of them in a claim, a tree edit ` +
+    `or a later write, and do not add them back.`
   );
 }
 
