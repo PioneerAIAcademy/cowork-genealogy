@@ -26,8 +26,8 @@ describe('annotations — read/write', () => {
       runlogs: [
         {
           skill: 'search-familysearch-wiki',
-          filename: 'v1.json',
-          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          filename: 'v1_2026-05-13_09-30-52.json',
+          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -39,12 +39,12 @@ describe('annotations — read/write', () => {
   });
 
   it('returns null when no annotation file exists', async () => {
-    expect(await readAnnotation('search-familysearch-wiki/v1')).toBeNull();
+    expect(await readAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52')).toBeNull();
   });
 
   it('writes then reads an annotation', async () => {
     const ann: AnnotationFile = {
-      run_log: 'v1.json',
+      run_log: 'v1_2026-05-13_09-30-52.json',
       annotator: 'team-a',
       corrections: [
         {
@@ -57,29 +57,29 @@ describe('annotations — read/write', () => {
         },
       ],
     };
-    await writeAnnotation('search-familysearch-wiki/v1', ann);
-    const loaded = await readAnnotation('search-familysearch-wiki/v1');
+    await writeAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52', ann);
+    const loaded = await readAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52');
     expect(loaded).toEqual(ann);
   });
 
   it('writeAnnotation rejects the deprecated run_index/dimension/source shape', async () => {
     const bad = {
-      run_log: 'v1.json',
+      run_log: 'v1_2026-05-13_09-30-52.json',
       annotator: 'team-a',
       corrections: [
         // legacy per-run shape Claude emits when asked to hand-write a .ann.json
         { test_id: 'ut_001', run_index: 0, dimension: 'Correctness', source: 'base', llm_score: 3, corrected_score: 3 },
       ],
     } as unknown as AnnotationFile;
-    await expect(writeAnnotation('search-familysearch-wiki/v1', bad)).rejects.toThrow(/Invalid annotation/);
+    await expect(writeAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52', bad)).rejects.toThrow(/Invalid annotation/);
     // Nothing should have been persisted.
-    expect(await readAnnotation('search-familysearch-wiki/v1')).toBeNull();
+    expect(await readAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52')).toBeNull();
   });
 
   it('readAnnotation throws on an existing but off-schema file', async () => {
     // Simulate a hand-written file landing on disk (bypassing writeAnnotation).
     const bad = {
-      run_log: 'v1.json',
+      run_log: 'v1_2026-05-13_09-30-52.json',
       annotator: 'team-a',
       corrections: [
         { test_id: 'ut_001', run_index: 0, dimension: 'Correctness', source: 'base', llm_score: 3, corrected_score: 3 },
@@ -87,8 +87,8 @@ describe('annotations — read/write', () => {
     };
     const dir = path.join(runlogsUnitDir(), 'search-familysearch-wiki');
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(path.join(dir, 'v1.ann.json'), JSON.stringify(bad), 'utf8');
-    await expect(readAnnotation('search-familysearch-wiki/v1')).rejects.toThrow(/Invalid annotation/);
+    await fs.writeFile(path.join(dir, 'v1_2026-05-13_09-30-52.ann.json'), JSON.stringify(bad), 'utf8');
+    await expect(readAnnotation('search-familysearch-wiki/v1_2026-05-13_09-30-52')).rejects.toThrow(/Invalid annotation/);
   });
 });
 
@@ -109,9 +109,9 @@ describe('annotations — completeness + sparse helpers', () => {
       ],
     }) as unknown as RunLogFile;
     expect(isAnnotationComplete(log, null)).toBe(false);
-    expect(isAnnotationComplete(log, { run_log: 'v1.json', annotator: 'a', corrections: [] })).toBe(false);
+    expect(isAnnotationComplete(log, { run_log: 'v1_2026-05-13_09-30-52.json', annotator: 'a', corrections: [] })).toBe(false);
     const partial: AnnotationFile = {
-      run_log: 'v1.json',
+      run_log: 'v1_2026-05-13_09-30-52.json',
       annotator: 'a',
       corrections: [
         { test_id: 'ut_001', dimension_source: 'base', dimension_name: 'A', llm_score: 3, corrected_score: 3 },
@@ -144,7 +144,7 @@ describe('annotations — completeness + sparse helpers', () => {
       ],
     }) as unknown as RunLogFile;
     const ann: AnnotationFile = {
-      run_log: 'v1.json',
+      run_log: 'v1_2026-05-13_09-30-52.json',
       annotator: 'a',
       corrections: [
         { test_id: 'ut_001', dimension_source: 'base', dimension_name: 'A', llm_score: 3, corrected_score: 3 },
@@ -158,7 +158,7 @@ describe('annotations — completeness + sparse helpers', () => {
 
 describe('annotations — upsert / delete', () => {
   it('upsertCorrection replaces existing entry for same key', () => {
-    const ann = newAnnotation('v1.json', 'a');
+    const ann = newAnnotation('v1_2026-05-13_09-30-52.json', 'a');
     const a1 = upsertCorrection(ann, {
       test_id: 'ut_001',
       dimension_source: 'base',
@@ -181,7 +181,7 @@ describe('annotations — upsert / delete', () => {
   });
 
   it('deleteCorrection removes by key', () => {
-    const ann = upsertCorrection(newAnnotation('v1.json', 'a'), {
+    const ann = upsertCorrection(newAnnotation('v1_2026-05-13_09-30-52.json', 'a'), {
       test_id: 'ut_001',
       dimension_source: 'base',
       dimension_name: 'A',
@@ -215,7 +215,7 @@ describe('annotations — review sampling', () => {
   };
 
   const annFor = (ids: string[], comment: string | null = 'read it'): AnnotationFile => ({
-    run_log: 'v1.json',
+    run_log: 'v1_2026-05-13_09-30-52.json',
     annotator: 'a',
     corrections: ids.flatMap((test_id) =>
       (['A', 'B'] as const).map((dimension_name) => ({
@@ -270,7 +270,7 @@ describe('annotations — the comment requirement', () => {
   })();
 
   const one = (comment: string | null, score: 1 | 2 | 3 = 2): AnnotationFile => ({
-    run_log: 'v1.json',
+    run_log: 'v1_2026-05-13_09-30-52.json',
     annotator: 'a',
     corrections: [
       {
@@ -359,7 +359,7 @@ describe('annotations — sampledTestIds fails closed', () => {
     return log;
   };
 
-  const emptyAnn: AnnotationFile = { run_log: 'v1.json', annotator: 'a', corrections: [] };
+  const emptyAnn: AnnotationFile = { run_log: 'v1_2026-05-13_09-30-52.json', annotator: 'a', corrections: [] };
 
   // NB: the empty-sample and only-ungraded cases are both decided by the
   // gradeable guard — `.some()` over no matching ids is false either way. They

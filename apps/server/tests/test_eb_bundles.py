@@ -262,7 +262,8 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "web-dist/index.html": (b"<html>", f),
                 "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f),
                 ".platform/nginx/conf.d/01-web-headers.conf": (b"large_client_header_buffers 4 32k;\n", f),
-                ".platform/nginx/conf.d/01-web-uploads.conf": (b"client_max_body_size 26m;\n", f)}
+                ".platform/nginx/conf.d/01-web-uploads.conf": (b"client_max_body_size 26m;\n", f),
+                ".platform/hooks/prebuild/110_tools-proxy.sh": (b"#!/bin/bash\n", 0o755)}
     if tier == "worker":
         return {**common,
                 "Procfile": (b"web: python proto/worker/worker.py\n", f),
@@ -429,6 +430,10 @@ REJECTED = {
                                      "missing .platform/nginx/conf.d/01-web-headers.conf"),
     "no upload-size file in web": ("web", lambda: _drop("web", ".platform/nginx/conf.d/01-web-uploads.conf"),
                                    "missing .platform/nginx/conf.d/01-web-uploads.conf"),
+    "no tools-proxy hook in web": ("web", lambda: _drop("web", ".platform/hooks/prebuild/110_tools-proxy.sh"),
+                                   "missing .platform/hooks/prebuild/110_tools-proxy.sh"),
+    "a web hook without its exec bit": ("web", lambda: _add("web", **{
+        ".platform/hooks/prebuild/110_tools-proxy.sh": (b"#!/bin/bash\n", 0o644)}), "has no exec bit"),
     "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
     "no pg_credentials.py in web": ("web", lambda: _drop("web", "pg_credentials.py"), "missing pg_credentials.py"),
     "no pg_credentials.py in worker": ("worker", lambda: _drop("worker", "proto/pg_credentials.py"),

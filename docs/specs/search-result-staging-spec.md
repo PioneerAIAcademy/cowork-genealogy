@@ -62,10 +62,18 @@ shape: `returned_count` is 1 and finalize recomputes it as usual. The engine exp
 separately — `STAGING_SEARCH_TOOLS` (the two above) and `STAGING_CAPABLE_TOOLS` (every producer)
 — and the eval mock's search notes mirror the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
 **Every nag stays on the search set:** the nil-search note, the unlogged-search note (the reader
-skips an acquisition file) and `research_log_append`'s retained-none warning (§6). Record-extraction
-logs an upload as `user_provided` and a `record_read` with no `stagedResultsRef`, so an acquisition
-file never pairs with a log entry, and a nag on it would tell the model to undo a correctly logged
-read. An acquisition file that is never finalized is removed by the TTL prune like any other.
+skips an acquisition file) and `research_log_append`'s retained-none warning (§6). An acquisition
+file is finalized by the extraction that uses it: `extraction_append` logs each `record_read` and
+each `image_transcribe` page it extracts with that read's own `stagedResultsRef`, and a document
+it has no staged page for as `user_provided`, so a nag on a file not yet logged would tell the model to log a
+read the extraction logs itself. An `image_transcribe` entry logged without its staged ref is
+refused (§6.1). An acquisition file that is never finalized is removed by the TTL prune like any
+other.
+
+**`locality_survey`** (given a `projectPath`) stages its whole answer as a one-element
+`results`, so a `localities` write can read `pagesRead` and `volumeSummary` from it
+(`surveyRef`; `locality-survey-tool-spec.md` §6). It is in neither tool set: no search
+notes fire on it, and it is not a log sidecar.
 
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
@@ -315,6 +323,92 @@ The eval mock echoes the call's arguments into `query` for these two tools
 rather than serving a fixture's recorded query, so the unit harness stages the
 same ground truth production does.
 
+### 6.1 An image entry with no staged page
+
+`research_log_append` refuses two image-tool entries that no image call can stand
+behind. Both refusals run for every op before any op is applied, right after the
+already-logged check and before the required-fields check, so a mislabelled entry is
+not first asked to fill fields it is about to lose. A batch with one is refused whole
+and writes nothing. The tool name is compared trimmed, lower-cased, with hyphens read
+as underscores and any `mcp__` or `mcp__<server>__` prefix dropped, so the qualified name
+a model sees in its own tool list is caught too; the entry is never rewritten.
+
+- **`image_transcribe` with no `stagedResultsRef`** (absent, `null`, or the string
+  `"null"`). `image_transcribe` stages the page it reads whenever it runs in a
+  project (§2), so a genuine entry carries the ref that call returned. One without it
+  is a reading no image tool made (the researcher's own, or the main thread's look at
+  an upload with `Read`, as a tester's `log_113` was), a summary of several
+  pages, or a call made without `projectPath`. **Exempt:** an entry logged
+  `outcome: "error"` whose `resultsExamined` is `0`: a call that failed (a 403, a
+  timeout, the image cap) read and staged nothing, so no ref can exist, and the entry
+  records a real attempt. An `error` entry that claims a page was examined is refused,
+  and one with no `resultsExamined` is asked for it by the required-fields check.
+- **`image_read` whose `query` names a `file`** (as an object, or a JSON string of
+  one), whatever the outcome. `image_read` takes no `file`, so such an entry is always
+  a mislabelled upload.
+
+**Why `image_read` is otherwise unchecked.** It stages nothing, and nothing it writes
+can prove a call happened. It saves the scan to `images/`, which `image_transcribe`
+does too, and adds a line to `results/image-browse.jsonl` (`recordImageBrowse`), which
+is best-effort, records only the first tool to read an image, and is keyed by DGS image
+id; `dgsImageId()` returns `undefined` for a `3:1` ARK, so a check against it would
+refuse every genuine ARK-based `image_read`. Refusing every `image_read` entry was
+rejected: a genuine one is a real tool call and is legitimate to log.
+
+**The refusal names the remedy.** A reading no image tool made is logged as
+`tool: "user_provided"`. A page `image_transcribe` read is logged with the
+`staged.resultsRef` that call returned, and when it returned none (no `projectPath`,
+or a staging failure, `staged: null` with a `stagingError`), by calling it again with
+`projectPath`. For an entry whose `query` lists or spans several pages and names no
+`file`, it adds that a browse across several pages, or one the image cap stopped, is
+logged as `tool: "image_search"`, as search-images logs one. A `query` lists or spans
+several pages when one of its page keys (`imageIds`, `imageIdsExamined`, `pagesRead`,
+`imageRange`, `imagesExamined`, `imagesAttempted`, `pagesAttempted`) names two or more
+distinct page ids: a list of them (JSON text read as one), text whose comma- or
+semicolon-separated parts are all page ids, or a whole value that is a range `lo-hi`
+(hyphen or en dash) of two DGS-style ids whose `hi` has no `_` or shares `lo`'s prefix,
+with `lo`'s last part below `hi`'s (`650-712`, `004433380_00033-00047`). A page id is
+shaped like a FamilySearch one: a number, a DGS-style id (`00033`, `004433380_00033`),
+or an ARK-style id of letter-digit groups joined by hyphens with a digit in it,
+optionally after `ark:/61903/` and `3:1:`. Ids are compared after dropping those
+prefixes, upper-casing and reading each DGS part as a number, so one page in two
+spellings is one page. Words, file names, upload paths and prose are never page ids.
+The rule counts page ids on purpose: reading loose text, or guessing from which keys
+are absent, offered `image_search` to single readings and uploads (an ARK with a hyphen
+in it, one page beside its group id, two upload paths, prose with a comma in it). The
+hint is a message aid over model-written text, so a reading it cannot see as page ids
+simply gets no hint. Its cost: a summary
+naming only its image group, or describing its pages in prose or as a space-separated
+run, gets no such hint. The text never suggests
+`image_read`, and offers `image_search` only to a browse: both are unchecked, so naming
+one to a single-page reading or an upload would teach the model to log the same
+reading under it. One page in a group, or one page however many were claimed, is not a
+browse: a page count never decides it. A failed call that claims a page examined is also
+told the failed-call shape, and one whose tool was named in a variant spelling is told
+to name it `image_transcribe`, since the staged file's tool is compared exactly.
+
+**A correction to a logged page.** A re-send of a staged ref already logged that
+differs in `tool`, `planItemId` or `outcome` is refused with the log's append-only
+advice. Its usual form, a new entry without the `stagedResultsRef`, is the entry this
+rule refuses when that entry would be `image_transcribe`, so when the logged entry and
+the correction are both `image_transcribe` the advice is to call `image_transcribe` again
+with `projectPath` and log the correction with the new ref. The cost of that advice,
+accepted: one more OCR call, even for a correction of `planItemId` alone (the image cap
+still admits a page already read). A re-send under a variant spelling of the logged tool
+(the comparison above) is the same entry, and returns it.
+
+**What it lets through.** A reading logged as a failed call (`outcome: "error"`,
+`resultsExamined: 0`): the entry then claims no reading. An `image_read` naming an upload
+under any key but `file`. A tool name other than the two, or the two spelled some other
+way than the variants above. A staged ref of another page passed with that page's
+`query` rewritten: the staged file's tool is checked, not which page it holds.
+
+**Write-time only.** `validate_research_schema` does not check this. Committed
+fixtures carry entries the rule would now refuse (five `image_transcribe` entries
+with no `results_ref`, by a walk of `log[]` across `eval/**/research.json`), and a
+validator rule would red them. What the rule refuses in the committed runs, and the
+script that measures it: `guardrail-enforcement-spec.md` §4.
+
 ---
 
 ## 7. Lifecycle & cleanup
@@ -421,6 +515,22 @@ output change.
   `stageSearchResults`; a fresh one is kept.
 - **Staging failure is non-fatal** — an unwritable `results/` yields results +
   `staged: null` + note, not a tool error.
+- **An image entry with no staged page (§6.1)**: `research-log-append.test.ts`,
+  "an image-tool entry with no image call behind it". An unstaged
+  `image_transcribe` entry is refused, singly, in a batch, with the ref `null` or
+  `"null"`, under a qualified or variant tool name, and before a missing required
+  field is asked for; its message names `user_provided` and neither unchecked tool. A
+  table of `query` shapes pins which entries are told `image_search` (two or more
+  distinct page ids in a list or separated by commas or semicolons, a rising range of
+  page numbers or DGS ids) and which are not (one page, alone, in a group, listed twice
+  or in two spellings, however many were claimed; an id with a hyphen in it; words,
+  file names, prose and upload paths; a group alone; a null or empty key). A failed call (`error`, 0 examined) passes, and beside an unstaged op in one
+  batch still leaves that op refused; an `error` entry with a page examined does not
+  pass. An `image_read` naming a `file` is refused, singly and in a batch, and one
+  keyed by its ARK passes. A correction to a logged page is told to read it again
+  (also when the re-send omits `tool`), and the new read logs; a re-send under a
+  variant of its own tool name returns the logged entry; one as `user_provided`, or
+  claiming `image_transcribe` for a `record_read` file, gets the ordinary advice.
 
 ---
 

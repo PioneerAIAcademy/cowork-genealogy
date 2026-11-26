@@ -91,6 +91,11 @@ export const treeGapsToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
+      projectPath: {
+        type: "string",
+        description:
+          "Optional. The survey reads FamilySearch only and writes nothing, so it runs with no project.",
+      },
       personId: {
         type: "string",
         description:
@@ -314,7 +319,7 @@ async function readHints(
     if (!window) return;
     try {
       const res = await personRecordMatches(
-        { id, status: ["pending"], count: MAX_HINTS_PER_PERSON },
+        { id, status: ["pending"], minConfidence: 4, count: MAX_HINTS_PER_PERSON },
         principal,
         window,
       );

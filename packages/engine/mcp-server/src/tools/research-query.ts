@@ -27,14 +27,20 @@
 // walk of one call per id. Lists of ids, never lists of sections — one section
 // per call is the 2026-10-10 ruling (research-query-tool-spec.md §3).
 
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
+import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
+import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
 
+/** The most items one page holds, and the most ids one list filter takes. A page
+ *  also stops short of it when the whole answer would pass
+ *  TOOL_RESULT_CHAR_BUDGET (see `pageAt`). */
 const MAX_ITEMS = 50;
 
 export const RESEARCH_QUERY_SECTIONS = [
@@ -129,8 +135,8 @@ export interface ResearchQueryInput {
   place?: string;
   /** external_collections: case-insensitive substring of a row's record type. */
   recordType?: string;
-  /** Pagination, not a filter: skip the first `offset` matches, then return up
-   *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
+  /** Pagination, not a filter: the start of the page to return, 0 or a
+   *  previous page's `nextOffset`. Applies to every section; absent ⇒ 0. */
   offset?: number;
   /** assertions only: also return the ones a re-extraction retired (#3678). */
   includeSuperseded?: boolean;
@@ -140,13 +146,19 @@ export type ResearchQueryResult =
   | {
       ok: true;
       section: ResearchQuerySection;
-      /** Total matches (before the MAX_ITEMS cap and any `offset`). */
+      /** Total matches (before paging and any `offset`). On `assertions` it
+       *  counts assertions, not the groups `items` holds. */
       count: number;
+      /** The section's entries; on `assertions`, persona groups
+       *  (`flattenAssertionGroups` restores the flat assertions). */
       items: any[];
-      /** true when matches remain *beyond this page* (`count > offset +
-       *  items.length`) — page with `offset` (or narrow the filter) rather than
-       *  relying on this being everything. */
+      /** true when matches remain *beyond this page* — page with
+       *  `offset: nextOffset` (or narrow the filter) rather than relying on this
+       *  being everything. Never derive it from `items.length`: on
+       *  `assertions` an item is a group of several matches. */
       truncated: boolean;
+      /** Present only when `truncated`: the `offset` of the next page. */
+      nextOffset?: number;
       /** List calls only: `{id: n}` for every requested id, zeros included,
        *  over the whole match set (identical on every page). On a contains-mode
        *  section an item naming two ids counts under both, so the values can
@@ -162,11 +174,92 @@ export type ResearchQueryResult =
        *  for links carrying a reason — the ordering is by consequence, and a rank
        *  with no reason is a number to distrust. Absent where nothing stands out. */
       reviewReasons?: Record<string, string[]>;
+      /** `person_evidence` only: for the live links on this page, each birth
+       *  place or birth date of the linked record person that a settled fact
+       *  conflict set aside and that differs from the tree person's
+       *  (`settledBirthDisputes`, the sentences `same_person` returns). Links
+       *  sharing the same sentences share one row. A review reads its links
+       *  here and never calls `same_person`, so this is where it learns a
+       *  disagreement is settled. Absent when there is none. */
+      settledConflicts?: SettledConflictRow[];
+      /** `person_evidence` only: for the live links on this page, each two-party
+       *  assertion linked to one tree person while the tree names the other
+       *  party, who has no link to it (§2.7). Absent when there is none. */
+      unlinkedParties?: UnlinkedPartyRow[];
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
+
+export interface SettledConflictRow {
+  /** The `pe_` ids on this page the sentences apply to. */
+  linkIds: string[];
+  notes: string[];
+}
+
+/** Whether any fact conflict is resolved or moot, the only state in which
+ *  `settledBirthDisputes` can return anything: lets a project with none skip
+ *  the tree read. */
+function hasSettledFactConflict(research: any): boolean {
+  return (Array.isArray(research?.conflicts) ? research.conflicts : []).some(
+    (c: any) => c?.conflict_type === "fact" && (c?.status === "resolved" || c?.status === "moot"),
+  );
+}
+
+/** Read settled birth dispute notes for every live link in `ordered`, keyed by
+ *  link id. Called once outside `render` so the tree read is not repeated per
+ *  binary-search probe. */
+async function settledNotesByLink(
+  projectPath: string,
+  research: any,
+  links: any[],
+): Promise<Map<string, string[]>> {
+  const live = links.filter(
+    (pe) =>
+      pe?.superseded_by == null &&
+      typeof pe?.id === "string" &&
+      typeof pe?.assertion_id === "string" &&
+      typeof pe?.person_id === "string",
+  );
+  if (live.length === 0 || !hasSettledFactConflict(research)) return new Map();
+  let tree: any;
+  try {
+    tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return new Map();
+  }
+  const result = new Map<string, string[]>();
+  for (const pe of live) {
+    const notes = settledBirthDisputes(research, tree, pe.assertion_id, pe.person_id);
+    if (notes.length > 0) result.set(pe.id, notes);
+  }
+  return result;
+}
+
+/** Group pre-computed notes for a page slice into `SettledConflictRow[]`. */
+function groupSettled(links: any[], notesByLink: Map<string, string[]>): SettledConflictRow[] {
+  const rows = new Map<string, SettledConflictRow>();
+  for (const pe of links) {
+    if (typeof pe?.id !== "string") continue;
+    const notes = notesByLink.get(pe.id);
+    if (!notes) continue;
+    const key = notes.join("\u0000");
+    const row = rows.get(key) ?? { linkIds: [], notes };
+    row.linkIds.push(pe.id);
+    rows.set(key, row);
+  }
+  return [...rows.values()];
+}
+
+/** The tree `unlinkedPartyRows` reads, once outside `render` as `settledNotesByLink`
+ *  reads it, so a page-size probe does not re-read it. Never throws: no links or
+ *  an unreadable tree yields null, and no page carries `unlinkedParties`. */
+async function unlinkedPartiesTree(projectPath: string, links: any[]): Promise<any | null> {
+  if (links.length === 0) return null;
+  try {
+    return await readProjectJson(projectPath, "tree.gedcomx.json");
+  } catch {
+    return null;
+  }
+}
 
 class ResearchQueryError extends Error {}
 
@@ -174,11 +267,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult(). This tool is one of the two
-    // READS that issue #1695 calls out: a skill that merely looks at project
-    // state before answering must not surface a path error.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -219,6 +307,7 @@ interface FilterRule {
     | "place-or-enclosing"
     | "contains-substring-ci"
     | "plan-question"
+    | "plan-item"
     | "question-conflict";
 }
 
@@ -236,6 +325,10 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   },
   plans: {
     questionId: { field: "question_id", mode: "exact" },
+    // The plan holding that item: a delegation carries a `pli_` id, and with no
+    // filter for it the agent sent it as `questionId` and was refused
+    // (ut_search_external_sites_ulr, 8 of 10 runs on Haiku).
+    planItemId: { field: "items", mode: "plan-item" },
     status: { field: "status", mode: "exact" },
   },
   log: {
@@ -401,11 +494,95 @@ function withoutInactiveRationale(plan: any): any {
   };
 }
 
+/** The keys every fact of one persona repeats, hoisted onto an assertions group.
+ *  Exactly these five: `informant` and `informant_proximity` vary within a
+ *  persona, and `record_document_id` is on too few assertions to pay. */
+const HOISTED_KEYS = ["record_id", "record_persona_id", "record_role", "source_id", "log_entry_id"] as const;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** The hoisted keys `a` carries, in fixed order; an absent key stays absent. */
+function assertionHead(a: Record<string, unknown>): Record<string, unknown> {
+  const head: Record<string, unknown> = {};
+  for (const key of HOISTED_KEYS) if (Object.hasOwn(a, key)) head[key] = a[key];
+  return head;
+}
+
+/** True when two assertions share all five hoisted keys, absent ≠ `null`. */
+function sameHead(a: unknown, b: unknown): boolean {
+  if (!isPlainObject(a) || !isPlainObject(b)) return false;
+  return HOISTED_KEYS.every((key) =>
+    Object.hasOwn(a, key) === Object.hasOwn(b, key) &&
+    (!Object.hasOwn(a, key) || JSON.stringify(a[key]) === JSON.stringify(b[key])),
+  );
+}
+
+/** `a` without the hoisted keys, and without `extracted_for_question_ids` when
+ *  it is exactly `[questionId]` (every hit of a questionId read contains it,
+ *  so its absence there is lossless). */
+function assertionFact(a: Record<string, unknown>, questionId: string | undefined): Record<string, unknown> {
+  const fact: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(a)) {
+    if ((HOISTED_KEYS as readonly string[]).includes(key)) continue;
+    if (
+      key === "extracted_for_question_ids" && questionId !== undefined &&
+      Array.isArray(value) && value.length === 1 && value[0] === questionId
+    ) continue;
+    fact[key] = value;
+  }
+  return fact;
+}
+
+/** An assertions page as groups: each maximal run of consecutive assertions
+ *  sharing the five hoisted keys becomes `{ ...head, facts: [...] }`. Order is
+ *  kept, so `flattenAssertionGroups` restores the page exactly. A non-object
+ *  entry passes through on its own. */
+function groupAssertions(items: unknown[], questionId: string | undefined): unknown[] {
+  const out: unknown[] = [];
+  let open: { facts: unknown[] } | undefined;
+  items.forEach((a, i) => {
+    if (!isPlainObject(a)) {
+      out.push(a);
+      open = undefined;
+      return;
+    }
+    if (open && sameHead(items[i - 1], a)) {
+      open.facts.push(assertionFact(a, questionId));
+      return;
+    }
+    open = { ...assertionHead(a), facts: [assertionFact(a, questionId)] };
+    out.push(open);
+  });
+  return out;
+}
+
+/** The inverse of the grouped `assertions` answer: one flat assertion per
+ *  fact, the group's hoisted keys restored, and `extracted_for_question_ids:
+ *  [questionId]` restored on a questionId read. An entry with no `facts` list
+ *  passes through unchanged, so a flat answer flattens to itself. */
+export function flattenAssertionGroups(items: unknown[], questionId?: string): unknown[] {
+  return items.flatMap((group) => {
+    if (!isPlainObject(group) || !Array.isArray(group.facts)) return [group];
+    const head = assertionHead(group);
+    return group.facts.map((fact) => {
+      const a: Record<string, unknown> = { ...head, ...(fact as Record<string, unknown>) };
+      if (questionId !== undefined && !Object.hasOwn(a, "extracted_for_question_ids")) {
+        a.extracted_for_question_ids = [questionId];
+      }
+      return a;
+    });
+  });
+}
+
 /** The page's items as the tool returns them. A log entry's `staged_ref` is
- *  research_log_append's own bookkeeping, read from research.json directly. */
-function projectItems(section: ResearchQuerySection, items: any[]): any[] {
+ *  research_log_append's own bookkeeping, read from research.json directly.
+ *  Assertions come back grouped by persona (`groupAssertions`). */
+function projectItems(section: ResearchQuerySection, items: any[], questionId?: string): any[] {
   if (section === "plans") return items.map(withoutInactiveRationale);
   if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
+  if (section === "assertions") return groupAssertions(items, questionId);
   return items;
 }
 
@@ -486,6 +663,10 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
     const id = item?.[fields[0]];
     return typeof id === "string" && scope !== undefined && scope.has(id);
   }
+  if (rule.mode === "plan-item") {
+    const items = item?.[fields[0]];
+    return Array.isArray(items) && items.some((i) => i?.id === value);
+  }
   if (rule.mode === "question-conflict") {
     const blocks = item?.[fields[0]];
     if (Array.isArray(blocks) && blocks.includes(value)) return true;
@@ -538,6 +719,67 @@ export function disagreementsInScope(
   return assertionIds === undefined
     ? found
     : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
+}
+
+type OkPage = Extract<ResearchQueryResult, { ok: true }>;
+
+/** The whole answer for items `[start, end)` of the matches, as returned. */
+type RenderPage = (start: number, end: number) => OkPage;
+
+function fitsBudget(page: OkPage): boolean {
+  return JSON.stringify(page).length <= TOOL_RESULT_CHAR_BUDGET;
+}
+
+/** Where the page starting at `start` ends: the most items, up to MAX_ITEMS,
+ *  whose whole answer fits TOOL_RESULT_CHAR_BUDGET, and never fewer than one.
+ *  The window end is tried first: below it the answer only grows with each
+ *  item, so the search is sound there, while at the last match dropping
+ *  `truncated`/`nextOffset` can make a longer page the smaller one. */
+function pageEnd(start: number, count: number, render: RenderPage): number {
+  const last = Math.min(start + MAX_ITEMS, count);
+  if (fitsBudget(render(start, last))) return last;
+  let best = start + 1;
+  let lo = start + 2;
+  let hi = last - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (fitsBudget(render(start, mid))) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
+/** The page of `count` matches at `offset`. Pages are cut greedily from 0, so
+ *  an `offset` is either a page start or refused naming the one at or below
+ *  it: a caller stepping by 50 after a short page would otherwise skip items.
+ *  Past the end is an empty page only when every page but the last is full,
+ *  so no step-by-50 caller can have stepped over a short one. */
+function pageAt(count: number, offset: number, render: RenderPage): OkPage {
+  let start = 0;
+  let allFull = true;
+  while (start < count) {
+    const end = pageEnd(start, count, render);
+    if (offset === start) return render(start, end);
+    if (offset < end) throw new ResearchQueryError(notAPageStart(offset, start));
+    if (end < count && end - start < MAX_ITEMS) allFull = false;
+    if (end >= count && !allFull) throw new ResearchQueryError(notAPageStart(offset, start));
+    start = end;
+  }
+  return render(offset, offset);
+}
+
+function notAPageStart(offset: number, start: number): string {
+  return (
+    `offset ${offset} is not where a page of this answer starts; pages hold up to ${MAX_ITEMS} items ` +
+    `and stop short when the answer would pass ${TOOL_RESULT_CHAR_BUDGET} characters. The page ` +
+    `at or below it starts at offset ${start}: call again with offset: ${start}. That page may ` +
+    `hold items you already have; match them by id rather than counting them twice. While ` +
+    `truncated is true, page with offset: nextOffset.`
+  );
 }
 
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
@@ -632,7 +874,6 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       try {
         doc = await readExternalCollections(projectPath);
       } catch (e) {
-        if (e instanceof NoProjectError) throw e;
         throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
       }
       // Place-key then row-key order, sorted here rather than read from the file:
@@ -645,14 +886,14 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
             )
         : [];
       const hits = rows.filter((item) => activeFilters.every(({ rule, values }) => matches(item, rule, values)));
-      const from = input.offset ?? 0;
-      return {
+      return pageAt(hits.length, input.offset ?? 0, (start, end) => ({
         ok: true,
         section,
         count: hits.length,
-        items: hits.slice(from, from + MAX_ITEMS),
-        truncated: hits.length > from + MAX_ITEMS,
-      };
+        items: hits.slice(start, end),
+        truncated: end < hits.length,
+        ...(end < hits.length ? { nextOffset: end } : {}),
+      }));
     }
 
     const research = await readJson(projectPath, "research.json");
@@ -751,42 +992,64 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       ordered = ranked.map((r) => r.link);
     }
 
-    const start = input.offset ?? 0;
-    const page: Extract<ResearchQueryResult, { ok: true }> = {
-      ok: true as const,
-      section,
-      count: ordered.length,
-      items: projectItems(section, ordered.slice(start, start + MAX_ITEMS)),
-      truncated: ordered.length > start + MAX_ITEMS,
-    };
-    // Reasons for the links on this page only.
-    const reviewReasons = Object.fromEntries(
-      (ranked ?? [])
-        .slice(start, start + MAX_ITEMS)
-        .filter((r) => r.reasons.length > 0)
-        .map((r) => [r.id, r.reasons]),
-    );
-    if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
-    if (listFilter) {
-      const { rule, values } = listFilter;
-      page.countById = Object.fromEntries(
-        values.map((id) => [id, ordered.filter((item) => matches(item, rule, [id])).length]),
+    const countById = listFilter
+      ? Object.fromEntries(
+          listFilter.values.map((id) => [id, ordered.filter((item) => matches(item, listFilter.rule, [id])).length]),
+        )
+      : undefined;
+    // Over the whole set too, and computed before paging: every page carries
+    // it, so every page's size counts it.
+    let unregistered: UnregisteredDisagreement[] | undefined;
+    if (section === "conflicts" && (input.status === undefined || input.status === "unresolved")) {
+      // A conflictId read is scoped to that conflict's own competing assertions.
+      const assertionIds =
+        activeFilters.find((f) => f.key === "assertionId")?.values ??
+        (activeFilters.some((f) => f.key === "conflictId")
+          ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
+          : undefined);
+      unregistered = disagreementsInScope(research, input, assertionIds);
+    }
+
+    const settledNotes =
+      section === "person_evidence"
+        ? await settledNotesByLink(projectPath, research, ordered)
+        : undefined;
+    const unlinkedTree =
+      section === "person_evidence" ? await unlinkedPartiesTree(projectPath, ordered) : null;
+
+    const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
+    return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
+      const page: OkPage = {
+        ok: true as const,
+        section,
+        count: ordered.length,
+        items: projectItems(section, ordered.slice(start, end), questionId),
+        truncated: end < ordered.length,
+      };
+      if (page.truncated) page.nextOffset = end;
+      // Reasons for the links on this page only.
+      const reviewReasons = Object.fromEntries(
+        (ranked ?? [])
+          .slice(start, end)
+          .filter((r) => r.reasons.length > 0)
+          .map((r) => [r.id, r.reasons]),
       );
-    }
-    if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
+      if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
+      if (settledNotes) {
+        const rows = groupSettled(ordered.slice(start, end), settledNotes);
+        if (rows.length > 0) page.settledConflicts = rows;
+      }
+      if (unlinkedTree) {
+        const unlinked = unlinkedPartyRows(research, unlinkedTree, ordered.slice(start, end));
+        if (unlinked.length > 0) page.unlinkedParties = unlinked;
+      }
+      if (countById) page.countById = countById;
+      if (unregistered) page.unregisteredDisagreements = unregistered;
       return page;
-    }
-    // A conflictId read is scoped to that conflict's own competing assertions.
-    const assertionIds =
-      activeFilters.find((f) => f.key === "assertionId")?.values ??
-      (activeFilters.some((f) => f.key === "conflictId")
-        ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
-        : undefined);
-    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
+    });
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
     throw e;
   }
@@ -804,12 +1067,13 @@ export const researchQuerySchema = {
     "\n" +
     "Pick `section` and, optionally, the well-known filter fields that section " +
     "supports (below) — passing a filter a section doesn't support is an error, not " +
-    "a silent no-op. Omit all filters to get the whole section (50 items per call; " +
-    "check `truncated`, then either narrow the filter or page with `offset` to fetch " +
-    "items 51+).\n" +
+    "a silent no-op. Omit all filters to get the whole section, a page at a time: " +
+    "a page holds up to 50 items and stops short when the answer would pass 40,000 " +
+    "characters. Check `truncated`, then either narrow the filter or page with " +
+    "`offset: nextOffset`.\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
-    "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
+    "(questionId, planItemId — the plan holding that item, status), `log` (planItemId, questionId — every entry for any plan item " +
     "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
@@ -833,16 +1097,27 @@ export const researchQuerySchema = {
     "`personId`, `assertionId`, `sourceId`, `recordId` and `conflictId` also take a list (≤50 ids): one call " +
     "returns items matching any, plus `countById` per id.\n" +
     "\n" +
-    "Returns `{ section, count, items, truncated }` — `count` is the total match " +
-    "count before the 50-item page cap and any `offset`; `truncated` is true when " +
-    "matches remain beyond the returned page, so advance `offset` by items.length " +
-    "and call again until it is false. `items` is camelCase-untouched (the " +
+    "Returns `{ section, count, items, truncated, nextOffset? }` — `count` is the total " +
+    "match count before paging and any `offset`; `truncated` is true when matches remain " +
+    "beyond the returned page. While `truncated` is true, call again with " +
+    "`offset: nextOffset`. An `offset` that is not where a page starts is refused, naming " +
+    "the one to use. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document, with two omissions. An item of a plan " +
+    "projection, not a persisted document, with two omissions, and `assertions` " +
+    "come back grouped by persona (below). An item of a plan " +
     "that is not active (superseded or completed) carries no `rationale`, except " +
     "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
     "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
+    "\n" +
+    "`assertions` items are grouped by persona: each run of consecutive assertions " +
+    "sharing `record_id`, `record_persona_id`, `record_role`, `source_id` and " +
+    "`log_entry_id` is one `{ <those keys>, facts: [...] }`, and each fact holds " +
+    "every other field of one assertion (its `id` included). A key absent from the " +
+    "group is absent from its assertions, not null. On a `questionId` read a fact " +
+    "omits `extracted_for_question_ids` when it is exactly `[questionId]`. `count`, " +
+    "`offset`, `nextOffset` and `countById` count assertions (facts), never groups; " +
+    "a persona split across pages repeats its keys on the next page.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
@@ -903,7 +1178,7 @@ export const researchQuerySchema = {
         items: { type: "string" },
         description: "conflicts: matches the conflict's own id (c_NNN).",
       },
-      planItemId: { type: "string", description: "log: matches plan_item_id." },
+      planItemId: { type: "string", description: "log: matches plan_item_id. plans: the plan holding that item." },
       status: {
         type: "string",
         description: "questions/plans/conflicts/hypotheses: matches status.",
@@ -934,10 +1209,11 @@ export const researchQuerySchema = {
       offset: {
         type: "number",
         description:
-          "Pagination (not a filter): 0-based index of the first match to return — " +
-          "skips that many, then returns up to 50. Default 0. When `truncated` is " +
-          "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
-          "Must be a non-negative whole number.",
+          "Pagination (not a filter): where the page starts. Default 0. When " +
+          "`truncated` is true, call again with the response's `nextOffset` here. A " +
+          "page holds up to 50 items, fewer when the answer would pass 40,000 " +
+          "characters, so do not step by 50: a value that is not a page start is " +
+          "refused. Must be a non-negative whole number.",
       },
       includeSuperseded: {
         type: "boolean",

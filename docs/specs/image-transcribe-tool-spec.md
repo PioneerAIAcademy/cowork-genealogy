@@ -370,6 +370,7 @@ consistent across schema, manifest, and skill.)*
   file?: string       // project-relative path to an UPLOADED image/PDF inside the project (needs projectPath)
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
   projectPath?: string // absolute project-folder path; required with `file`; stages the read (§5.5) and saves an FS JPEG (§8.5)
+  planItemId?: string | null // the `pli_` plan item this read serves; the tool's own log entry is filed under it (§5.5.1)
 }
 ```
 
@@ -446,8 +447,7 @@ consistent across schema, manifest, and skill.)*
   an uploaded PDF did (the model opened it itself). Contract:
   - **Requires `projectPath`**; the ref is relative to it. The directory is classified first
     (`classifyProjectPath`): a missing `projectPath` and a missing directory are the shared
-    loud errors, a folder holding neither project file is the no-project *answer*
-    (`{ ok: false, reason: "no_project" }`, the no-project rule) — before any key or path error.
+    loud errors, a folder holding neither project file throws `NO_PROJECT_REFUSAL` — before any key or path error.
   - **Shape, before any I/O:** no leading slash or drive letter, no backslash, no NUL, no
     empty / `.` / `..` segment. Any ref *inside* the project is allowed; the containment guard
     is the store's (`FsProjectStore.readableReal`: realpath'd, symlink-aware, regular files
@@ -524,6 +524,14 @@ periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
+A name is matched with the punctuation beside it stripped: leading `(`, `[`
+and quotes (straight or curly), and trailing `,`, `;`, `:`, `!`, `?`, `)`, `]`
+and quotes. A
+trailing period is kept when the form with it is in the table (`Jas.`) and
+dropped otherwise (`daughter of James.`). So `"Lee, Eliza, father James Lee"`
+expands both Eliza and James, and a page holding Elizabeth, daughter of James
+Lee, is credited.
+
 When expansion fires, `imageTranscribeTool`'s in-process result carries a
 `nameExpansion` field:
 
@@ -533,9 +541,19 @@ When expansion fires, `imageTranscribeTool`'s in-process result carries a
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
-The MCP answer drops it (see "Output"). It was added so a genealogist could see which
-name forms the found check credited, but no caller relays it, and the
-search-images agent reads every `FOUND` page in full before it reports one.
+The MCP answer drops it (see "Output").
+
+What the MCP answer carries instead is `matchedForms`, present only with
+`found: "FOUND"`: for each given name in `lookingFor`, the other forms of it
+that appear on the page, keyed by the name as the caller wrote it —
+`{ "Eliza": ["Elizabeth"] }` for `"Lee, Eliza, father James Lee"` on a page
+holding ELIZABETH, daughter of JAMES LEE. A form counts when it appears as a
+whole word, ignoring case (`formsOnPage`, `src/utils/name-variants.ts`); a name
+whose only form on the page is itself is left out, a form that is also an
+ordinary word (`May`, `Will`, `Ed`) is never counted, and the field is absent
+when none qualifies. A caller told only `FOUND` reads the Elizabeth entry, sees a
+name that differs from the one sought, and reports it as a different person;
+`matchedForms` states, from the table, that it is the same name.
 
 This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
@@ -660,6 +678,7 @@ Text only, no image block:
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
                              // AND the text-only found check (§6.1) replied with a parseable marker —
                              // omitted when that second call fails (it is best-effort)
+  matchedForms?: Record<string, string[]>  // only with found: "FOUND" — other forms of each sought given name on the page (§5.3.1)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
@@ -673,6 +692,11 @@ Text only, no image block:
   metadata?: {               // present only when a Memories page URL was resolved
     memoryArtifactUrl: string
   }
+  readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
+  indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
+                             // in a project, for an `ark` read whose page a held source's image_ark names
+  logId?: string             // the log entry this tool wrote for the read (§5.5.1)
+  logRefused?: string[]      // why that write was refused; the read still answers
 }
 ```
 
@@ -733,6 +757,127 @@ Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is
 shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
 refused (403) and 4 answered 400.
 
+#### Index readings
+
+In a project, every answer across the MCP boundary carries `readingNote`, and, when held
+records sit on the page read, `indexReadings`. Added by `attachIndexReadings`
+(`src/utils/index-readings.ts`) after the compactor, on the project legs of
+`imageTranscribeMcpTool` only: never with no project, and never on person_read's
+in-process call.
+
+- `indexReadings`: `{ sourceId, recordId, role, name }` for each live `fact_type: "name"`
+  assertion of every source whose `image_ark` names the page read, joined on
+  `pageKey` (`src/utils/waiting-pages.ts`), the same key `waitingPages` uses. So a `cc=`
+  query on either side still matches, and an `i=` or `groupId=` ARK matches nothing. A
+  reading of the page, a machine's or the researcher's (an assertion with
+  `disputes_assertion_id`, research-append §11.9), is not the index and is left out. A
+  given name the index left blank is simply absent from `name`. Joined for an `ark` (or
+  its `imageArk` alias) only: an `imageId` and a `file` name no `image_ark`.
+- `readingNote` (`READING_NOTE`): the transcription is one machine reading, not a sight
+  of the page, and its text is never "the name as written". Where it and the index
+  differ, show both side by side, say they differ, name the line, and give `viewerUrl`.
+  Call neither reading the answer or the likelier one, never call the index wrong or a
+  misread, and never state a correction. A reading the researcher gives of the page ranks
+  with the index: it is shown beside the transcription the same way and never corrected
+  from it. A line the transcription leaves blank where the index
+  has a person is a difference between the readings, never evidence the person is absent.
+  A second transcription of the same page, or one
+  made after declining to read it, confirms nothing; only a different record or a
+  different person's reading does. Report each other record's name as that record writes
+  it: it challenges the reading, so never call it a rendering, variant or split of another
+  name, never call a disagreeing spelling consistent, and never drop a reading on a
+  premise the project's own files contradict. The router's skill carries none of these
+  rules itself; it follows the note.
+
+Never an error: an unreadable `research.json` gives the note alone. The unit harness
+calls the same compiled function on its staged canned answers (`_stage_image_transcribe`).
+
+Why a tool and not prose: the same rules as `research/SKILL.md` lines were followed in
+4 of 5 runs of `ut_research_iv1` in one round and 0 of 5 in the next, with the text
+unchanged. Four of those five runs skipped the index lookup the lines asked for
+(scratch 2026-11-18). In the tool result, the index is in front of the model when it
+writes the reply, with no lookup to forget.
+
+### 5.5.1 Logging — the tool logs its own read
+
+Every read made through `imageTranscribeMcpTool` (`src/tools/image-transcribe-mcp.ts`) that stages a page in a project writes
+one `research.json` `log[]` entry itself, through `research_log_append`'s own write path
+(`researchLogAppend`, the same refusals and lock), with `written_by: "image_transcribe"`,
+`tool: "image_transcribe"`, `stagedResultsRef` = the read's `staged.resultsRef`,
+`plan_item_id` = `planItemId` (null when absent), `results_examined: 1`, and `query`
+defaulted from the staged payload's echo (the image named, plus `lookingFor`). The staged
+file becomes `results/<logId>.json`; `sidecar_read`, `extraction_append` and
+`waitingPages` all follow a logged staged ref to it, so the `staged.resultsRef` the
+caller holds keeps working.
+
+`outcome` (`readOutcome`): `negative` on `found: "NOT FOUND"`, `positive` on `FOUND` or
+when no `lookingFor` was sent, and `partial` on a truncated read or when a `lookingFor`
+was sent and no `found` came back (a found check that failed is not a hit).
+
+- **The MCP boundary only.** `person_read` and `source_screen` call
+  `imageTranscribeTool` for reads of their own, which are not research-log events.
+- **No ref, no entry.** A read whose staging failed (`staged: null`), a thrown read, and a
+  read with no project log nothing; an `image_transcribe` entry without its ref is refused.
+- **A refused write never fails the read:** the answer carries `logRefused`, as
+  `record_search` carries `nilLogRefused`. A write refused with a `planItemId` (malformed,
+  or on a superseded plan) is retried once under no plan item, since a refused write keeps
+  its staged file: the page is still logged, and `logRefused` names why the plan item was
+  dropped.
+- **A later hand-log of the same page** returns this entry (`alreadyLogged`) whatever
+  `outcome` or `planItemId` it names, with a warning naming each difference and any note
+  it could not store (`research-log-editor-spec.md`).
+- **A read, never a find or a plan item's search.** A navigation read with no
+  `lookingFor` logs `positive`, so every reader that judges a plan item or a question by
+  its log outcomes skips a `written_by: "image_transcribe"` entry (`isToolLoggedRead`,
+  `src/utils/tool-logged-read.ts`): `questionStatus`'s pending-extraction count,
+  `owedFindings`' `extract` finding, a fallback item's wait on its primary, both halves of
+  the completed-plan-item check (`research_append`), `research_log_append`'s
+  positive-searches-with-nothing-persisted warning, and its nil-escalation and
+  `planRationale` notes. `extraction_append` cites the entry when the page is extracted.
+
+Why the tool writes it (lead, 2026-11-23): a page the main thread transcribed and never
+logged left the project with no record it was read, so agents reported it missing or read
+it again. The tool's write beat filling a tool-written null
+`plan_item_id` from a later agent call, which would amend the append-only rule
+(`research-schema-spec.md`, "Why `log` is append-only"), and beat a prose line in
+`research/SKILL.md`, because ADR-0011 puts a rule decidable from the call alone at the
+write boundary.
+
+### 5.5.2 A page already read — the stored reading is returned
+
+In a project, a call for a page the project already holds a complete reading of does not
+fetch the page and does not run the OCR. It returns that reading, and the answer carries
+`reusedFrom`, the log entry that holds it (`priorImageRead`, `src/utils/prior-image-read.ts`).
+
+- **What counts as already read:** the newest `log[]` entry with `tool: "image_transcribe"`
+  and a `results_ref` whose sidecar element has this call's id and is not `truncated`. The
+  id is the identifier as given (`imageId`, `ark`, a memory's resolved artifact url) or
+  `capture:<basename>` for a `file`.
+- **Only the identifier as given is matched.** The same page under another spelling (a bare
+  ARK and its page URL with `i=`/`cc=`) is read afresh: a bare waypoint ARK can name a
+  different image than its full URL does (§5.3).
+- **Never reused:** a truncated reading, since a fresh read may reach the rest of the page;
+  a reading whose retained scan (`image_ref`) is no longer in the project or cannot be
+  rewritten, so `imageRef` never names a missing file; a `file` whose size or content type differs from the stored
+  reading's, which is a replaced upload; and a read the tool never logged (§5.5.1), so
+  `person_read`'s and `source_screen`'s own reads are not a source for it.
+- **What still runs:** the found check, against this call's `lookingFor`, over the stored
+  text. With no `lookingFor` no model is called, and an `imageId`, `ark` or memory read then
+  needs no OpenRouter key; a `file` read still resolves the key before it reads the file.
+- **What the answer and the log look like:** as a fresh read's. The stored text is staged
+  again under this call's `query`, with the earlier read's `model`, `content_type`,
+  `size_bytes`, `image_ref` and place, and the tool logs it under this call's `planItemId`
+  with this call's outcome (§5.5.1). A second look at a page for another person is its own
+  log entry. The retained scan is rewritten (`refreshSourceImage`), so the image GC's TTL
+  (§8.5) restarts as it does on a fresh read.
+- **The image cap (§5.8) is not consulted:** nothing is fetched, and the cap counts
+  distinct images.
+
+Why (lead, 2026-11-26): in 15 tester sessions 30 of 214 reads repeated an image already
+read in the session, and one census page read five times came back as five different
+texts. A second machine reading of one page confirms nothing (`READING_NOTE`,
+`src/utils/index-readings.ts`), so the project keeps one.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
@@ -741,7 +886,7 @@ refused (403) and 4 answered 400.
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
-| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
+| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file throws `NO_PROJECT_REFUSAL` (the gate in `server.ts` refuses first) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
@@ -833,6 +978,13 @@ block, with its own default ~20s worst case (two sequential FamilySearch
 group-service calls) not drawn from this budget — so the true worst case on
 that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
 lookup," not a hard 180s ceiling on every path.
+
+**An in-process caller can set a tighter whole-call budget.** The internal
+`budgetMs` option (never on the MCP schema) is a budget from entry like the
+connector's, for any principal: one download attempt clamped to what is left,
+then the OCR on the rest; under a connector principal the tighter of the two
+budgets wins. `source_screen` passes it so each page read stops at that tool's
+own deadline (`source-screen-tool-spec.md`, "Time budget").
 
 ### 5.8 Image cap (hard, shared, persisted)
 
@@ -1302,7 +1454,8 @@ built now.)
 
 A read of a page an indexed record sits on is not kept until
 `extraction_append({ attachWaitingPages: true })` copies it onto that record's source
-(`research-append-tool-spec.md` §11.9). This tool writes nothing to `research.json`.
+(`research-append-tool-spec.md` §11.9). Apart from its own log entry for the read (§5.5.1), this tool
+writes nothing to `research.json`.
 
 ## 8.5 Image persistence + viewing (retained sources only)
 

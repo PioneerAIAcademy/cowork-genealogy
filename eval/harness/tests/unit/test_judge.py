@@ -1333,16 +1333,13 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     orchestrator._run_judge's actual behavior.
     """
     runlogs_dir = REPO_ROOT / "eval/runlogs/unit"
-    # Classify rather than glob `v1_*.json`. That literal matches neither a
-    # RELEASED `v{N}.json` nor any v2+ candidate, so the first time any of the
-    # 25+ skills is released — a normal step in the documented per-PR workflow,
-    # not an edge case — this corpus would quietly shrink and the test would go
-    # on passing over whatever was left. Nothing in the corpus is released
-    # today, which is exactly why it has not been noticed.
+    # Classify rather than glob `v1_*.json`, which matches no v2+ run log, so
+    # this corpus would quietly shrink and the test would go on passing over
+    # whatever was left.
     log_paths = sorted(
         p for p in runlogs_dir.rglob("v*.json")
         if not p.name.endswith(".ann.json")
-        and classify(p.name).kind in ("released", "candidate")
+        and classify(p.name).kind == "candidate"
     )
     assert len(log_paths) > 50, (
         f"sanity check: expected a substantial committed run-log corpus, "
@@ -1913,6 +1910,353 @@ def test_tool_calls_size_guard_still_drops_oldest_evidence_beside_a_live_write()
     assert '"tool": "mcp__genealogy__tool_99"' in rendered
     assert "N" * 30_000 in rendered
     assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS + 30_000 + 500
+
+
+# --- excerpts past the per-string cut (issue #4054) ----------------------
+
+_ROOTS_URL = "http://www.rootsireland.ie/"
+
+
+def _wiki_page_call(page: str):
+    return {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"title": "Ireland Church Records"},
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"url": "https://www.familysearch.org/wiki", "content": page},
+    }
+
+
+def _page_with(needle: str, at: int, length: int = 20_000) -> str:
+    return "p" * at + needle + "q" * (length - at - len(needle))
+
+
+def test_cited_url_past_the_cut_reaches_the_judge():
+    """ut_locality_guide_v7h: every guide cited RootsIreland at the URL the tool
+    returned, from char 6,118 of the page, and the judge scored it invented."""
+    out = _minimal_prompt(
+        text_response=f"Search RootsIreland at {_ROOTS_URL}.",
+        tool_calls=[_wiki_page_call(_page_with(_ROOTS_URL, 6_118))],
+    )
+    # The reply carries the URL too, so look only past the truncation suffix.
+    after_cut = out.split("[truncated by harness", 1)[1]
+    assert "[harness excerpt at char 6118 of 20000]" in after_cut
+    assert "rootsireland.ie" in after_cut
+
+
+def test_nothing_cited_renders_todays_truncation_exactly():
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, 6_118))]
+    needles = judge._citation_needles("Nothing linked here.", "")
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert rendered == judge._render_tool_calls_with_size_guard(calls)
+    assert "harness excerpt" not in rendered
+    assert "rootsireland" not in rendered
+
+
+def _guide_file_changes(guide_markdown: str) -> str:
+    """The summary the judge gets for a persisted guide under
+    `judge_reads_files`: built by the real `_summarize_changes`, which
+    JSON-dumps the entry, so line breaks arrive as the two characters `\\n`."""
+    from harness.orchestrator import _summarize_changes
+
+    changes = {
+        "research.json": {
+            "sections_modified": ["localities"],
+            "diff": {
+                "localities": {
+                    "added": [{"id": "loc_001", "guide_markdown": guide_markdown}],
+                    "modified": [],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+    return _summarize_changes(changes, [], include_content=True)
+
+
+def test_needle_only_in_file_changes_is_excerpted():
+    """A skill that persists its deliverable cites in the file changes; the
+    reply is only an id (PR #3500). Bullet-list URLs end a line, so the dumped
+    `\\n` must not glue onto them."""
+    summary = _guide_file_changes(
+        "## Repositories\n- https://www.ancestryireland.com/\n"
+        "www.nidirect.gov.uk\n- Done"
+    )
+    page = list(_page_with("http://www.ancestryireland.com/", 11_632))
+    page[14_000 : 14_000 + len("www.nidirect.gov.uk")] = "www.nidirect.gov.uk"
+    out = _minimal_prompt(
+        text_response="Saved loc_001.",
+        file_changes_summary=summary,
+        tool_calls=[_wiki_page_call("".join(page))],
+    )
+    # The page says http://, the guide https://: matched on the bare host.
+    assert "[harness excerpt at char 11643 of 20000]" in out
+    assert "[harness excerpt at char 14000 of 20000]" in out
+
+
+def test_citation_matches_the_page_in_any_case_and_keeps_its_case():
+    """Wiki pages are mixed case and needles are lower-cased; the excerpt must
+    show the page's own spelling, not a lowered copy."""
+    url = "https://www.FamilySearch.org/en/wiki/Ireland_Census"
+    page = _page_with(url, 9_000)
+    out = judge._with_excerpts(
+        page,
+        judge._summarize_response(page),
+        judge._citation_needles(url.lower() + " and " + url.upper(), ""),
+    )
+    assert "[harness excerpt at char 9000 of 20000]" in out
+    assert url in out.split("[harness excerpt", 1)[1]
+
+
+def test_excerpt_offsets_survive_text_whose_lowering_changes_length():
+    page = "İ" * 400 + _page_with(_ROOTS_URL, 6_000)[400:]
+    out = judge._with_excerpts(
+        page, judge._summarize_response(page), judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert "[harness excerpt at char 6000 of" in out
+    assert "rootsireland.ie" in out.split("[harness excerpt", 1)[1]
+
+
+def test_citation_differing_only_in_scheme_or_www_still_matches():
+    page = _page_with("http://rootsireland.ie/search", 7_000)
+    out = judge._with_excerpts(
+        page,
+        judge._summarize_response(page),
+        judge._citation_needles("https://www.rootsireland.ie/", ""),
+    )
+    assert "[harness excerpt at char 7007 of 20000]" in out
+
+
+def _excerpt_heavy_calls(n_pages: int = 18):
+    """Cut pages each citing 16 hosts past the cut, enough that their excerpts
+    push a render past _TOOL_CALLS_HARD_MAX_CHARS."""
+    hosts = [f"site{i:02d}.org" for i in range(judge._EXCERPTS_PER_STRING_MAX)]
+    page = "p" * 3_000 + "".join(h + "y" * 600 for h in hosts)
+    return [_wiki_page_call(page) for _ in range(n_pages)], " ".join(hosts)
+
+
+def test_excerpts_survive_when_live_args_must_be_capped():
+    """Rung 2: a huge live write forces the args cap; excerpts still render."""
+    calls, cited = _excerpt_heavy_calls(n_pages=2)
+    calls.append(_live_write_call({"entry": {"guide_markdown": "G" * 120_000}}))
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(cited, "")
+    )
+    assert "G" * 120_000 not in rendered
+    assert "G" * 2_000 in rendered
+    assert "[harness excerpt at char" in rendered
+
+
+def test_excerpts_go_before_live_args_are_omitted():
+    """Rung 3: when excerpts alone break the hard max, they are dropped and the
+    live args stay capped rather than falling to the measured view's marker."""
+    calls, cited = _excerpt_heavy_calls()
+    calls.append(_live_write_call({"entry": {"guide_markdown": "G" * 3_000}}))
+    needles = judge._citation_needles(cited, "")
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert "[harness excerpt" not in rendered
+    assert "G" * 2_000 in rendered
+    assert "[args omitted by harness" not in rendered
+
+
+def test_size_guard_drops_uncited_calls_before_the_cited_page():
+    """locality-guide v6 `k9d`: the guard dropped the church-records page, the
+    oldest call, so the judge saw neither its head nor any excerpt."""
+    page_call = _wiki_page_call(_page_with(_ROOTS_URL, 6_118))
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1_500},
+        }
+        for i in range(40)
+    ]
+    calls = [page_call] + filler
+    assert '"title": "Ireland Church Records"' not in (
+        judge._render_tool_calls_with_size_guard(calls)
+    )
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"title": "Ireland Church Records"' in rendered
+    assert "[harness excerpt at char 6118 of 20000]" in rendered
+    # The kept calls stay in their original order: the page first.
+    assert rendered.index("Ireland Church Records") < rendered.index("tool_39")
+    assert '"tool": "mcp__genealogy__tool_0"' not in rendered
+
+
+@pytest.mark.parametrize("data_len", [1_500, judge._RESPONSE_STRING_MAX + 500])
+def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host(data_len):
+    """Every guide cites familysearch.org and nearly every wiki page names it
+    in the first 2,000 chars the judge already sees. Protecting those calls
+    dropped three more from v7h and bought no excerpt."""
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {
+                "data": ("see www.familysearch.org " if i % 2 else "") + "x" * data_len
+            },
+        }
+        for i in range(40)
+    ]
+    needles = judge._citation_needles("www.familysearch.org", "")
+    rendered = judge._render_tool_calls_with_size_guard(filler, needles)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert rendered == judge._render_tool_calls_with_size_guard(filler)
+    assert '"tool": "mcp__genealogy__tool_1"' not in rendered
+
+
+def test_needle_inside_the_head_adds_no_excerpt():
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, 500))]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert "harness excerpt" not in rendered
+    assert "rootsireland.ie" in rendered
+
+
+def test_needle_straddling_the_cut_is_excerpted():
+    at = judge._RESPONSE_STRING_MAX - 5
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, at))]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert f"[harness excerpt at char {at} of 20000]" in rendered
+
+
+def _excerpt_bound(page: str, needle: str) -> int:
+    marker = len(f"\n[harness excerpt at char {len(page)} of {len(page)}] ......")
+    per_excerpt = 2 * judge._EXCERPT_RADIUS + len(needle) + marker
+    return judge._EXCERPTS_PER_STRING_MAX * per_excerpt
+
+
+def test_excerpts_are_bounded_however_many_needles_match():
+    hosts = [f"site{i:02d}.org" for i in range(50)]
+    page = "h" * 3_000 + "".join(h + "x" * 1_000 for h in hosts)
+    summary = judge._summarize_response(page)
+    out = judge._with_excerpts(page, summary, judge._citation_needles(" ".join(hosts), ""))
+    assert out.count("[harness excerpt at char") == judge._EXCERPTS_PER_STRING_MAX
+    assert len(out) <= len(summary) + _excerpt_bound(page, "site00.org")
+
+
+def test_a_repeated_needle_gets_one_excerpt():
+    """A wiki page names its host every ~100 chars; excerpting every hit
+    spent all the slots on one site (714 hits across the v7h renders)."""
+    host = "rootsireland.ie"
+    page = "a" * 2_000 + (host + "b" * 85) * 180
+    out = judge._with_excerpts(page, judge._summarize_response(page), (host,))
+    assert out.count("[harness excerpt at char") == 1
+    assert "[harness excerpt at char 2000 of" in out
+
+
+def test_crowded_needles_share_a_window_instead_of_restating_it():
+    hosts = [f"site{i:02d}.org" for i in range(40)]
+    page = "h" * 3_000 + "".join(h + "x" * 50 for h in hosts) + "z" * 3_000
+    needles = judge._citation_needles(" ".join(hosts), "")
+    summary = judge._summarize_response(page)
+    out = judge._with_excerpts(page, summary, needles)
+    positions = [
+        int(n) for n in re.findall(r"\[harness excerpt at char (\d+) of", out)
+    ]
+    assert 1 < len(positions) <= judge._EXCERPTS_PER_STRING_MAX
+    assert all(b - a > judge._EXCERPT_RADIUS for a, b in zip(positions, positions[1:]))
+    assert len(out) <= len(summary) + _excerpt_bound(page, "site00.org")
+    rendered = judge._render_tool_calls_with_size_guard([_wiki_page_call(page)], needles)
+    bare = judge._render_tool_calls_with_size_guard([_wiki_page_call(page)])
+    assert len(rendered) - len(bare) <= _excerpt_bound(page, "site00.org") * 1.1
+
+
+def test_a_needle_visible_in_the_head_does_not_crowd_out_the_cited_site():
+    """Every wiki output cites familysearch.org, and the page names it every
+    ~100 chars. Already visible in the head, it must not take the slots."""
+    page = list(_page_with(_ROOTS_URL, 6_118))
+    for at in range(100, 19_000, 100):
+        if not 5_900 < at < 6_500:
+            page[at : at + 20] = "www.familysearch.org"
+    page = "".join(page)
+    needles = judge._citation_needles(
+        f"See www.familysearch.org and {_ROOTS_URL}", ""
+    )
+    assert "www.familysearch.org" in needles
+    out = judge._with_excerpts(page, judge._summarize_response(page), needles)
+    assert out.count("[harness excerpt at char") == 1
+    assert "[harness excerpt at char 6118 of 20000]" in out
+
+
+def test_excerpts_do_not_cost_an_earlier_call_its_place():
+    """ut_locality_guide_v7h sat at 47-50K before any excerpt; counting
+    excerpts in the drop budget dropped the wiki page they came from."""
+    page = list(_page_with(_ROOTS_URL, 6_118))
+    cited = ["ancestryireland.com", "nidirect.gov.uk", "proni.gov.uk"]
+    for at, host in zip((9_000, 12_000, 15_000), cited):
+        page[at : at + len(host)] = host
+    page = "".join(page)
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1_500},
+        }
+        for i in range(27)
+    ]
+    calls = [_wiki_page_call(page)] + filler
+    bare = judge._render_tool_calls_with_size_guard(calls)
+    assert "_dropped_for_size" not in bare
+    assert len(bare) > judge._TOOL_CALLS_MAX_CHARS - 2_000
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL + " " + " ".join(cited), "")
+    )
+    # Four excerpts outgrow the headroom, so counting them would drop a call.
+    assert len(rendered) > judge._TOOL_CALLS_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "[harness excerpt at char 6118 of 20000]" in rendered
+    assert "[harness excerpt at char 15000 of 20000]" in rendered
+
+
+def test_excerpt_lands_on_the_nested_string_that_hides_the_needle():
+    response = {"hits": [{"title": "a"}, {"body": _page_with(_ROOTS_URL, 6_118)}]}
+    out = judge._with_excerpts(
+        response,
+        judge._summarize_response(response, array_sample=None),
+        judge._citation_needles(_ROOTS_URL, ""),
+    )
+    assert out["hits"][0] == {"title": "a"}
+    assert "[harness excerpt at char 6118 of 20000]" in out["hits"][1]["body"]
+    assert "full length 20000 chars]\n[harness excerpt" in out["hits"][1]["body"]
+    assert response["hits"][1]["body"] == _page_with(_ROOTS_URL, 6_118)
+
+
+def test_citation_needles_skip_file_names_and_strip_url_punctuation():
+    needles = judge._citation_needles(
+        f"See ({_ROOTS_URL}). Wrote research.json, tree.gedcomx.json and "
+        "README.md; also AncestryIreland.com and nidirect.gov.uk.",
+        "Sources: `https://familysearch.org/ark:/61903/1:1:QV9N-YS37`, "
+        "**https://www.proni.gov.uk/**",
+    )
+    assert needles == (
+        "ancestryireland.com",
+        "familysearch.org",
+        "http://www.rootsireland.ie",
+        "https://familysearch.org/ark:/61903/1:1:qv9n-ys37",
+        "https://www.proni.gov.uk",
+        "nidirect.gov.uk",
+        "proni.gov.uk",
+        "rootsireland.ie",
+    )
+
+
+def test_citation_needles_ignore_dotted_tokens_in_agent_prose():
+    """Tokens the committed run logs carry most often: field paths, glued
+    sentence ends, query syntax."""
+    text = (
+        "lnmsrs.false et.birth fn.Josiah ln.Flynn project.status "
+        "relativeTerms.spouse agent.Extraction extractor.Logged now.The"
+    )
+    assert judge._citation_needles(text, "") == ()
 
 
 def _prompt_parts_kwargs(sample_rubric):
@@ -2490,8 +2834,11 @@ def test_judge_client_times_out_and_leaves_retries_to_call_judge():
     from harness.judge import JUDGE_TIMEOUT_SECONDS, _make_client
 
     client = _make_client(AuthConfig(skill_runner_mode="api_key", api_key="sk-test", detail="t"))
-    assert client.timeout == JUDGE_TIMEOUT_SECONDS
+    assert client.timeout.read == JUDGE_TIMEOUT_SECONDS
     assert JUDGE_TIMEOUT_SECONDS <= 300
+    # A dead upload fails fast; only generation gets the full read limit (#4054).
+    assert client.timeout.write <= 30
+    assert client.timeout.connect <= 30
     assert client.max_retries == 0
 
 
@@ -2616,8 +2963,10 @@ def test_writer_tools_classifies_every_ownership_writer():
     """A new writer tool must not silently leak its refused draft to the judge.
 
     `docs/specs/schemas/ownership.json` is the repo's own register of which tool
-    may perform a write. Every tool it authorizes must be classified here —
-    blanked, or named in `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps it.
+    may perform a write. Every tool it authorizes must be classified in one of
+    three places — blanked by `_WRITER_TOOLS`, named in
+    `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps its args, or named in
+    `_WRITER_NO_REFUSAL_PATH` because it has no refusal to render at all.
     A blind sync would be wrong (some writers' args are themselves graded), so
     this asserts the classification exists, not that the sets are equal.
     """
@@ -2627,8 +2976,43 @@ def test_writer_tools_classifies_every_ownership_writer():
     repo = _Path(__file__).resolve().parents[4]
     rows = _json.loads((repo / "docs/specs/schemas/ownership.json").read_text(encoding="utf-8"))
     authorized = {t for row in rows.get("rows", []) for t in (row.get("writerTools") or [])}
-    unclassified = authorized - judge._WRITER_TOOLS - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+    unclassified = (
+        authorized
+        - judge._WRITER_TOOLS
+        - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+        - set(judge._WRITER_NO_REFUSAL_PATH)
+    )
     assert not unclassified, (
         f"ownership.json authorizes {sorted(unclassified)} to write, but judge.py "
         f"neither blanks their refused args nor records why it keeps them"
     )
+
+
+def test_no_refusal_path_writers_are_inert():
+    """`_WRITER_NO_REFUSAL_PATH` may only hold tools `_is_refused_writer` ignores.
+
+    That set exists to classify a writer WITHOUT moving `judge_render_hash`,
+    which is sound only while nothing in the render graph consults it. The
+    claim each entry makes is that the tool is absent from `_WRITER_TOOLS`, so
+    `_is_refused_writer` is False for it however a call answers — i.e. the
+    entry is inert and the fingerprint is right to ignore it.
+
+    The moment someone wants one of these drafts blanked they must move the
+    name into `_WRITER_TOOLS`, which moves the hash and bills the regrade then.
+    This is that trip-wire: without it the two sets could disagree silently and
+    a blanked draft would be rendered under a stale fingerprint.
+    """
+    overlap = set(judge._WRITER_NO_REFUSAL_PATH) & judge._WRITER_TOOLS
+    assert not overlap, (
+        f"{sorted(overlap)} is in both `_WRITER_NO_REFUSAL_PATH` and `_WRITER_TOOLS`. "
+        f"A blanked draft is a rendering decision, so move it out of the former "
+        f"and run `make judge-regrade`"
+    )
+    for tool, reason in judge._WRITER_NO_REFUSAL_PATH.items():
+        assert isinstance(reason, str) and reason.strip(), (
+            f"`_WRITER_NO_REFUSAL_PATH[{tool!r}]` must record why the tool cannot "
+            f"refuse, as the two sets above record their rules"
+        )
+        assert not judge._is_refused_writer(
+            {"tool": f"mcp__genealogy__{tool}", "response": {"ok": False}, "args": {"a": 1}}
+        ), f"{tool} is treated as a refused writer, so its classification is not inert"

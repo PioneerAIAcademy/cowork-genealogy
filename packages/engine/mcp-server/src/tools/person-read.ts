@@ -5,6 +5,12 @@ import {
   simplifySourceDescription,
 } from "../utils/gedcomx-convert.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import {
+  TREE_PERSONS_BASE,
+  TREE_PERSON_ACCEPT,
+  classifyTreePersonStatus,
+  extractPersonId,
+} from "../utils/tree-person-status.js";
 import { START_PROJECT_RULE } from "../utils/project-io.js";
 import {
   fetchMemories,
@@ -55,8 +61,8 @@ import type {
 } from "../types/person-read.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
-const API_BASE = "https://api.familysearch.org/platform/tree/persons";
-const ACCEPT_HEADER = "application/x-fs-v1+json";
+const API_BASE = TREE_PERSONS_BASE;
+const ACCEPT_HEADER = TREE_PERSON_ACCEPT;
 const MAX_REDIRECTS = 1;
 const PARENT_CHILD_URI = "http://gedcomx.org/ParentChild";
 
@@ -295,6 +301,9 @@ export interface PersonReadOutcome {
    *  (lead, 2026-08-21); it exists for `project_create`, which classifies the
    *  memory sources it writes. */
   memoryKinds: Record<string, MemoryKind>;
+  /** The relatives (FamilySearch PIDs) whose attached sources could not be read, so
+   *  `project_create` can name them and read them later. Empty when none were skipped. */
+  relativeSourcesSkipped?: string[];
 }
 
 /**
@@ -305,6 +314,12 @@ export interface PersonReadOutcome {
  *
  * `opts.deadline` is the read's wall-clock budget; it defaults to
  * `OCR_PHASE_BUDGET_MS` from now, the budget `person_read` has always used.
+ *
+ * `opts.relativeSourcesFirst`: memory transcription starts only once the relatives'
+ * and the edges' source reads have settled, so OCR spends only what they leave of the
+ * budget. `project_create` sets it: a relative's sources are structure there (a record
+ * attached to two people is one source cited on both), and an untranscribed memory
+ * already has a read-later path.
  */
 export async function readPerson(
   personId: string,
@@ -316,6 +331,7 @@ export async function readPerson(
     memoryText?: boolean;
     /** `true`: read only the descriptions cited on edges that name the subject. */
     subjectEdgeSourcesOnly?: boolean;
+    relativeSourcesFirst?: boolean;
   },
   principal: Principal,
 ): Promise<PersonReadOutcome> {
@@ -400,6 +416,9 @@ export async function readPerson(
       deadline,
       projectPath,
       memoryText,
+      opts.relativeSourcesFirst
+        ? Promise.all([relativesPending, edgeDescriptionsPending])
+        : undefined,
     ));
   }
 
@@ -407,14 +426,17 @@ export async function readPerson(
   // person-level and relationship-level ref whose target is not already in `sources[]`,
   // so merging after it would fetch every description and throw them away, all tests
   // still green.
+  const relativesFetched = await relativesPending;
+  let relativeSourcesSkipped = relativesFetched.skipped;
   try {
     result.sources = applyRelativeSources(
       result,
-      await relativesPending,
+      relativesFetched,
       resolvedId,
       relativeIds.length,
     );
   } catch (err) {
+    relativeSourcesSkipped = relativeIds;
     process.stderr.write(
       `person_read: relative sources failed for ${resolvedId}, ` +
         `returning tree sources only: ${String(err)}\n`,
@@ -434,7 +456,7 @@ export async function readPerson(
   }
 
   keepResolvableSourceRefs(result);
-  return { result, resolvedId, memoryKinds };
+  return { result, resolvedId, memoryKinds, relativeSourcesSkipped };
 }
 
 /**
@@ -607,9 +629,6 @@ async function transcribeMemories(
         // 90s budget -- which is why the phase-level stop below exists too.
         { ocrTimeoutMs: remaining, imageKey: m.id },
       );
-      // The widened return (issue #2048) carries a no-project answer only on
-      // the `file` input, which this leg never sends; narrow so tsc can see it.
-      if ("ok" in out) throw new Error(out.errors.join(" "));
       finished.set(m.id, {
         ...(out.transcription.trim() ? { text: out.transcription } : {}),
         ...(out.imageRef ? { image_ref: out.imageRef } : {}),
@@ -674,6 +693,8 @@ async function mergeMemories(
   deadline: number,
   projectPath?: string,
   memoryText = true,
+  /** Transcription waits for this to settle (`relativeSourcesFirst`). Never rejects. */
+  transcribeAfter?: Promise<unknown>,
 ): Promise<{ sources: TreeSource[]; kinds: Record<string, MemoryKind> }> {
   try {
     // allSettled, NOT all. Both of these go through fetchWithRetry, which
@@ -701,6 +722,7 @@ async function mergeMemories(
     // sampled). An id-keyed dedupe could never fire, so it is not written.
     const memorySources = kept.map(toTreeSource);
     if (memoryText) {
+      if (transcribeAfter) await transcribeAfter;
       await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
     }
     const kinds: Record<string, MemoryKind> = {};
@@ -800,14 +822,20 @@ function mergeDescriptions(
   if (descriptions.length === 0) return sources;
 
   const have = new Set(sources.map((s) => s.id));
-  const shaped = shapeSources(
-    descriptions.map((d) => simplifySourceDescription(d)),
-    descriptions as FSSourceDescription[],
-  );
+  const shaped = shapeDescriptions(descriptions);
   // A source attached to BOTH the subject and a relative is the common case for a
   // marriage record, and the subject's copy is already in `sources[]`.
   const added = shaped.filter((d) => !have.has(d.id));
   return added.length > 0 ? [...sources, ...added] : sources;
+}
+
+/** Fetched descriptions as `sources[]` entries: the one shaping `mergeDescriptions` and
+ *  `project_create`'s `fillRelativeSources` share. `SD_*` metadata entries are dropped. */
+export function shapeDescriptions(descriptions: GedcomXSourceDescription[]): TreeSource[] {
+  return shapeSources(
+    descriptions.map((d) => simplifySourceDescription(d)),
+    descriptions as FSSourceDescription[],
+  );
 }
 
 /**
@@ -892,13 +920,15 @@ async function fetchAndConvert(
     redirect: "manual",
   });
 
+  const outcome = classifyTreePersonStatus(res);
+
   // 204: living person, no body — return a stub.
-  if (res.status === 204) {
+  if (outcome === "living") {
     return { result: livingPersonStub(pid), resolvedId: pid };
   }
 
   // 301: merged. Follow the Location header to the new ID (capped).
-  if (res.status === 301) {
+  if (outcome === "merged") {
     if (redirectsFollowed >= MAX_REDIRECTS) {
       throw new Error(
         `FamilySearch tree API error: redirect loop while resolving ${pid}.`,
@@ -914,26 +944,26 @@ async function fetchAndConvert(
     return fetchAndConvert(principal, newId, redirectsFollowed + 1, deadline);
   }
 
-  if (res.status === 401) {
+  if (outcome === "unauthorized") {
     throw new Error(await rejectedTokenMessage(principal));
   }
-  if (res.status === 403) {
+  if (outcome === "restricted") {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);
   }
-  if (res.status === 404) {
+  if (outcome === "not_found") {
     throw new Error(`Person ${pid} not found in the FamilySearch Family Tree.`);
   }
-  if (res.status === 410) {
+  if (outcome === "deleted") {
     throw new Error(
       `Person ${pid} has been deleted from the FamilySearch Family Tree.`,
     );
   }
-  if (res.status === 429) {
+  if (outcome === "rate_limited") {
     throw new Error(
       "FamilySearch rate limit reached. Wait a moment and try again.",
     );
   }
-  if (!res.ok) {
+  if (outcome === "error") {
     throw new Error(`FamilySearch tree API error: ${res.status}`);
   }
 
@@ -1308,11 +1338,6 @@ function buildUrl(
   if (sourceDescriptions) params.push("sourceDescriptions=true");
   const qs = params.length > 0 ? `?${params.join("&")}` : "";
   return `${API_BASE}/${encodeURIComponent(pid)}${qs}`;
-}
-
-function extractPersonId(locationHeader: string): string | null {
-  const match = locationHeader.match(/\/persons\/([^/?#]+)/);
-  return match ? match[1] : null;
 }
 
 function livingPersonStub(pid: string): PersonReadResult {

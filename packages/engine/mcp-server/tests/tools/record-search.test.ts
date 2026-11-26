@@ -1,4 +1,8 @@
 import { LOCAL } from "../../src/auth/principal.js";
+import {
+  researchLogAppend,
+  PLAN_ITEM_WITHOUT_PROJECT_NOTE,
+} from "../../src/tools/research-log-append.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -49,6 +53,7 @@ import type {
   RecordSearchToolResponse,
 } from "../../src/types/record-search.js";
 import { compactStagedRecordSearch } from "../../src/utils/staged-compaction.js";
+import { readStagedEnvelopeQuery } from "../../src/utils/results-staging.js";
 import type { KinPrefix, KinTerm } from "../../src/types/relative-terms.js";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
@@ -1020,8 +1025,18 @@ describe("recordSearchTool — inline compaction", () => {
   });
 
   describe("unlogged-search notes (#2056)", () => {
-    const writeResearch = async (log: unknown[]) =>
-      writeFile(join(dir, "research.json"), JSON.stringify({ log }, null, 2), "utf-8");
+    // A nil search now writes its own entry through `researchLogAppend`, which
+    // validates the WHOLE project — so a fixture with no tree.gedcomx.json gets
+    // an honest refusal (`nilLogRefused`) rather than a write. Both files, so
+    // these tests exercise the write path they are about (issue #4527).
+    const writeResearch = async (log: unknown[]) => {
+      await writeFile(join(dir, "research.json"), JSON.stringify({ log }, null, 2), "utf-8");
+      await writeFile(
+        join(dir, "tree.gedcomx.json"),
+        JSON.stringify({ persons: [], relationships: [], sources: [] }, null, 2),
+        "utf-8",
+      );
+    };
 
     it("emits the unlogged-search note when a prior staged search was never finalized", async () => {
       await writeResearch([]);
@@ -1057,11 +1072,13 @@ describe("recordSearchTool — inline compaction", () => {
       );
       const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(out.unloggedSearches).toBeTruthy();
-      expect(out.nilSearchNeedsLog).toBeTruthy();
+      // record_search writes the nil entry itself now (issue #4527), so the id
+      // it returns stands where the ask-the-agent note used to.
+      expect(out.logId).toBeTruthy();
 
       const keys = Object.keys(out);
       expect(keys.indexOf("unloggedSearches")).toBeLessThan(keys.indexOf("results"));
-      expect(keys.indexOf("nilSearchNeedsLog")).toBeLessThan(keys.indexOf("results"));
+      expect(keys.indexOf("logId")).toBeLessThan(keys.indexOf("results"));
     });
 
     it("asks for a negative log entry on a nil projectPath search", async () => {
@@ -1071,7 +1088,16 @@ describe("recordSearchTool — inline compaction", () => {
       );
       const out = await recordSearchTool({ surname: "Nonesuch", projectPath: dir }, LOCAL);
       expect(out.staged).toBeNull();
-      expect(out.nilSearchNeedsLog).toContain('outcome: "negative"');
+      // Not a note asking the agent to log it — the entry is on disk, written by
+      // this tool, and its query is the call's own arguments.
+      expect(out.logId).toBeTruthy();
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const entry = after.log.find((e: any) => e.id === out.logId);
+      expect(entry.tool).toBe("record_search");
+      expect(entry.outcome).toBe("negative");
+      expect(entry.results_examined).toBe(0);
+      expect(entry.written_by).toBe("record_search");
+      expect(entry.query).toEqual({ surname: "Nonesuch" });
     });
 
     it("does not ask for a negative log entry when entries failed mapping but matches exist", async () => {
@@ -1092,7 +1118,8 @@ describe("recordSearchTool — inline compaction", () => {
 
       expect(out.results).toHaveLength(0);
       expect(out.totalMatches).toBe(812);
-      expect(out.nilSearchNeedsLog).toBeUndefined();
+      // Matches exist, so this is not a nil: nothing is logged.
+      expect(out.logId).toBeUndefined();
     });
 
     it("says nothing about logging when no projectPath was supplied", async () => {
@@ -1100,7 +1127,7 @@ describe("recordSearchTool — inline compaction", () => {
         makeOkResponse({ results: 0, index: 0, entries: [] }),
       );
       const out = await recordSearchTool({ surname: "Nonesuch" }, LOCAL);
-      expect(out.nilSearchNeedsLog).toBeUndefined();
+      expect(out.logId).toBeUndefined();
       expect(out.unloggedSearches).toBeUndefined();
     });
 
@@ -1118,7 +1145,72 @@ describe("recordSearchTool — inline compaction", () => {
       );
       // The sidecar records what the search RETURNED, not instructions to the model.
       expect(envelope.payload.unloggedSearches).toBeUndefined();
-      expect(envelope.payload.nilSearchNeedsLog).toBeUndefined();
+      expect(envelope.payload.logId).toBeUndefined();
+    });
+
+    // ── the nil dedupe (issue #4527, the lead's "A + dedupe fallback") ──
+    // `alreadyLogged` keys on stagedResultsRef, which a nil never has, so
+    // without this a habitual re-log writes a duplicate.
+
+    it("re-logging a nil record_search already wrote returns its id and writes nothing", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse({ results: 0, index: 0, entries: [] }));
+      const out = await recordSearchTool({ surname: "Nonesuch", projectPath: dir }, LOCAL);
+      expect(out.logId).toBeTruthy();
+
+      const again = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Nonesuch" },
+        outcome: "negative",
+        resultsExamined: 0,
+      });
+      expect(again.ok).toBe(true);
+      if (!again.ok) return;
+      // The single-op form returns the entry; the batch form returns `results`.
+      // Narrow rather than cast: a cast would turn a shape regression into a
+      // silently undefined `logId` and a confusing failure here.
+      if ("results" in again) throw new Error("expected the single-op result");
+      expect(again.logId).toBe(out.logId);
+      expect(again.alreadyLogged).toBe(true);
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log).toHaveLength(1);
+    });
+
+    it("record_search nilling twice on the same query writes BOTH — its own write is never deduped", async () => {
+      // The guard that makes this true is `op.writtenBy !== undefined`. Without
+      // it the tool's second genuine search would be swallowed and never logged.
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse({ results: 0, index: 0, entries: [] }));
+      const first = await recordSearchTool({ surname: "Nonesuch", projectPath: dir }, LOCAL);
+      mockFetch.mockResolvedValueOnce(makeOkResponse({ results: 0, index: 0, entries: [] }));
+      const second = await recordSearchTool({ surname: "Nonesuch", projectPath: dir }, LOCAL);
+      expect(first.logId).toBeTruthy();
+      expect(second.logId).toBeTruthy();
+      expect(second.logId).not.toBe(first.logId);
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log).toHaveLength(2);
+    });
+
+    it("a hand-logged repeat of an earlier HAND-logged nil still writes", async () => {
+      // The other direction: the dedupe must not block a real repeat search.
+      // Neither entry carries `written_by`, so neither is a dedupe target.
+      await writeResearch([]);
+      const one = await researchLogAppend({
+        projectPath: dir, tool: "record_search", query: { surname: "Byhand" },
+        outcome: "negative", resultsExamined: 0,
+      });
+      const two = await researchLogAppend({
+        projectPath: dir, tool: "record_search", query: { surname: "Byhand" },
+        outcome: "negative", resultsExamined: 0,
+      });
+      expect(one.ok && two.ok).toBe(true);
+      if (!one.ok || !two.ok) return;
+      if ("results" in one || "results" in two) throw new Error("expected the single-op result");
+      expect(two.logId).not.toBe(one.logId);
+      expect(two.alreadyLogged).toBeUndefined();
+      const after = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(after.log).toHaveLength(2);
     });
   });
 
@@ -1301,6 +1393,315 @@ describe("recordSearchTool — inline compaction", () => {
     expect(r.personName).toBe("Abraham Lincoln");
     // Nothing staged, so the query echo is the only copy and stays.
     expect(out.query).toEqual({ surname: "Lincoln" });
+  });
+});
+
+// Issue #4527's remaining engine-test obligations. These exercise the write
+// THROUGH record_search: the log tool's own suite already covers each rule at
+// its own level, and that is a different claim — it says the rule works when
+// called correctly, not that record_search calls it that way. The escalation
+// note in particular is written between the append and the validate, and only a
+// `writtenBy` op reaches that branch, so no research_log_append test can reach
+// it the way a nil search does.
+describe("recordSearchTool — the nil log write, end to end (#4527)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-nil-write-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const NIL: FSSearchResponse = { results: 0, index: 0, entries: [] };
+  const nilOnce = () => mockFetch.mockResolvedValueOnce(makeOkResponse(NIL));
+  const readResearch = async () =>
+    JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  /** A prior nil on `pli_001`, the shape `log[]` holds. */
+  const priorNil = (n: number) => ({
+    id: `log_${String(n).padStart(3, "0")}`,
+    plan_item_id: "pli_001",
+    performed: "2026-01-01T00:00:00.000Z",
+    tool: "record_search",
+    query: {},
+    outcome: "negative",
+    results_examined: 0,
+    external_site: null,
+    results_ref: null,
+  });
+
+  /** A project with one open question and one census plan item, so the
+   *  escalation trigger is reachable; `log` is whatever the test needs before. */
+  const writeProject = async (log: unknown[] = [], withPlan = true) => {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify(
+        {
+          project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+          questions: withPlan
+            ? [
+                {
+                  id: "q_001",
+                  question: "Who were the parents of Patrick Flynn (b. ~1845)?",
+                  rationale: "Primary research objective.",
+                  selection_basis: "objective_decomposition",
+                  priority: "high",
+                  status: "in_progress",
+                  depends_on: [],
+                  unblocks: [],
+                  created: "2026-05-04",
+                  resolved: null,
+                  resolution_assertion_ids: [],
+                  search_stop: {
+                    stopped_because: null,
+                    justification: null,
+                    log_entry_ids: [],
+                    stop_criteria: null,
+                    not_reached: [],
+                  },
+                },
+              ]
+            : [],
+          plans: withPlan
+            ? [
+                {
+                  id: "pl_001",
+                  question_id: "q_001",
+                  status: "active",
+                  created: "2026-05-04",
+                  items: [
+                    {
+                      id: "pli_001",
+                      sequence: 1,
+                      record_type: "census",
+                      jurisdiction: "Schuylkill County, Pennsylvania",
+                      date_range: "1850",
+                      repository: "FamilySearch",
+                      rationale: "The 1850 census places Patrick in a household.",
+                      fallback_for: null,
+                      status: "in_progress",
+                    },
+                  ],
+                },
+              ]
+            : [],
+          log,
+          sources: [],
+          assertions: [],
+          person_evidence: [],
+          conflicts: [],
+          hypotheses: [],
+          timelines: [],
+          proof_summaries: [],
+          evaluations: [],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({ persons: [], relationships: [], sources: [] }, null, 2),
+      "utf-8",
+    );
+  };
+
+  it("carries the escalation text in the ENTRY's notes, after the agent's own note", async () => {
+    // The two prior nils on this census plan item make this search the third,
+    // which is the trigger. The note is computed from the log INCLUDING this
+    // entry, so it can only be written after the append — this asserts it
+    // reached the file, not merely the response.
+    await writeProject([priorNil(1), priorNil(2)]);
+    nilOnce();
+    const out = await recordSearchTool(
+      { surname: "Flynn", givenName: "Patrick", projectPath: dir, planItemId: "pli_001", note: "Third variant." },
+      LOCAL,
+    );
+
+    expect(out.logId).toBeTruthy();
+    expect(out.escalationDue).toContain("escalation trigger has fired");
+
+    const entry = (await readResearch()).log.find((e: any) => e.id === out.logId);
+    expect(entry.notes).toContain("escalation trigger has fired");
+    expect(entry.notes).toContain("3 FamilySearch searches for census plan item pli_001");
+    // The agent's pre-search note comes first, the escalation after it.
+    expect(entry.notes.startsWith("Third variant.")).toBe(true);
+    expect(entry.notes.indexOf("Third variant.")).toBeLessThan(
+      entry.notes.indexOf("escalation trigger"),
+    );
+  });
+
+  it("leaves the agent's note alone when the write brings no escalation", async () => {
+    // The other direction: without this, a `notes` field that always appended
+    // something would pass the test above and corrupt every ordinary nil.
+    await writeProject([]);
+    nilOnce();
+    const out = await recordSearchTool(
+      { surname: "Flynn", projectPath: dir, planItemId: "pli_001", note: "First try." },
+      LOCAL,
+    );
+    expect(out.escalationDue).toBeUndefined();
+    const entry = (await readResearch()).log.find((e: any) => e.id === out.logId);
+    expect(entry.notes).toBe("First try.");
+  });
+
+  it("refuses a pinned nil with no unpinned retry, and takes it in a batch with one", async () => {
+    // §8.5 (issue #3854): a zero-hit search pinned to one collection does not
+    // rule the record out. The SEARCH still succeeds — the refusal is reported,
+    // not thrown — and the agent then logs it by hand with the retry.
+    await writeProject([]);
+    nilOnce();
+    const out = await recordSearchTool(
+      { surname: "Flynn", givenName: "Patrick", collectionId: "2000219", projectPath: dir, planItemId: "pli_001" },
+      LOCAL,
+    );
+
+    expect(out.logId).toBeUndefined();
+    expect(out.nilLogRefused).toBeDefined();
+    expect(out.nilLogRefused!.join(" ")).toContain("pinned to");
+    // The search is the answer and is unharmed by the refusal.
+    expect(out.totalMatches).toBe(0);
+    expect((await readResearch()).log).toHaveLength(0);
+
+    // The hand-written batch the message asks for: the pinned nil plus its
+    // unpinned retry, in one call.
+    const batch = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        {
+          tool: "record_search",
+          query: { surname: "Flynn", givenName: "Patrick", collectionId: "2000219" },
+          outcome: "negative",
+          resultsExamined: 0,
+          planItemId: "pli_001",
+        },
+        {
+          tool: "record_search",
+          query: { surname: "Flynn", givenName: "Patrick" },
+          outcome: "negative",
+          resultsExamined: 0,
+          planItemId: "pli_001",
+        },
+      ],
+    });
+    expect(batch.ok).toBe(true);
+    const after = await readResearch();
+    expect(after.log).toHaveLength(2);
+    // Hand-logged, so neither is a dedupe target for a later identical entry.
+    expect(after.log.every((e: any) => e.written_by === undefined)).toBe(true);
+  });
+
+  it("gives three nils sent at once three ids, in sequence, with nothing lost", async () => {
+    // Each write takes the project lock in turn. Without that serialization two
+    // of the three would read the same `log[]` and one id would be reused or an
+    // entry dropped — the failure the lock exists to prevent, and the one a
+    // single-call test cannot see.
+    await writeProject([]);
+    mockFetch.mockResolvedValue(makeOkResponse(NIL));
+
+    const outs = await Promise.all(
+      ["Flynn", "Flinn", "Flyn"].map((surname) =>
+        recordSearchTool({ surname, projectPath: dir, planItemId: "pli_001" }, LOCAL),
+      ),
+    );
+
+    const ids = outs.map((o) => o.logId);
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(3);
+    expect([...ids].sort()).toEqual(["log_001", "log_002", "log_003"]);
+
+    const after = await readResearch();
+    expect(after.log).toHaveLength(3);
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001", "log_002", "log_003"]);
+    // Each entry kept its OWN query — the lock must not let one write's payload
+    // reach another's entry.
+    expect(after.log.map((e: any) => e.query.surname).sort()).toEqual(["Flinn", "Flyn", "Flynn"]);
+  });
+
+  it("keeps planItemId and note out of a results-returning search's staged and logged query", async () => {
+    // They are plumbing, not filters. If either reached the query, every logged
+    // search would claim a filter it never sent — the exact defect this whole
+    // change exists to make impossible.
+    await writeProject([]);
+    mockFetch.mockResolvedValueOnce(makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }));
+    const out = await recordSearchTool(
+      { surname: "Lincoln", projectPath: dir, planItemId: "pli_001", note: "Checking the 1850 household." },
+      LOCAL,
+    );
+
+    // A search WITH results stages and is logged by the agent — the tool writes
+    // no entry for it.
+    expect(out.logId).toBeUndefined();
+    expect(out.staged).toBeTruthy();
+
+    // The staged query as `research_log_append` reads it — the boundary that
+    // decides what the log claims was sent. The RAW envelope echo is a different
+    // thing: `echoQuery` copies every supplied input, so it carries
+    // `projectPath` and `subjectId` too and always has. Nothing consumes it
+    // unstripped, which is why the assertion is on the reader and not the file.
+    const staged = await readStagedEnvelopeQuery(dir, out.staged!.resultsRef);
+    expect(staged!.query).not.toHaveProperty("planItemId");
+    expect(staged!.query).not.toHaveProperty("note");
+    expect(staged!.query).toEqual({ surname: "Lincoln" });
+
+    // ...and the raw echo does carry them, so the test above is proving the
+    // strip rather than restating an input the tool never recorded.
+    const envelope = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(envelope.payload.query).toHaveProperty("planItemId");
+
+    // ...and neither reaches the entry the agent then writes from that staged ref.
+    const logged = await researchLogAppend({
+      projectPath: dir,
+      stagedResultsRef: out.staged!.resultsRef,
+      planItemId: "pli_001",
+      outcome: "positive",
+      resultsExamined: 1,
+    });
+    expect(logged.ok).toBe(true);
+    const entry = (await readResearch()).log.at(-1);
+    expect(entry.query).not.toHaveProperty("planItemId");
+    expect(entry.query).not.toHaveProperty("note");
+    expect(entry.plan_item_id).toBe("pli_001");
+  });
+
+  it("says planItemId was ignored when it arrives with no projectPath", async () => {
+    // Nothing is logged and the search answers normally, so without the note the
+    // plan item is dropped in silence. Same wording build_external_search_url
+    // gives for the same mistake.
+    nilOnce();
+    const out = await recordSearchTool({ surname: "Nonesuch", planItemId: "pli_001" }, LOCAL);
+    expect(out.planItemIdIgnored).toBe(PLAN_ITEM_WITHOUT_PROJECT_NOTE);
+    expect(out.logId).toBeUndefined();
+    const keys = Object.keys(out);
+    expect(keys.indexOf("planItemIdIgnored")).toBeLessThan(keys.indexOf("results"));
+  });
+
+  it("fires that note on a search that FOUND records too — the trigger is the args", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }));
+    const out = await recordSearchTool({ surname: "Lincoln", planItemId: "pli_001" }, LOCAL);
+    expect(out.planItemIdIgnored).toBe(PLAN_ITEM_WITHOUT_PROJECT_NOTE);
+  });
+
+  it("stays silent when planItemId is absent, and when a project WAS given", async () => {
+    // Both directions, so the note cannot become unconditional.
+    mockFetch.mockResolvedValueOnce(makeOkResponse(NIL));
+    expect((await recordSearchTool({ surname: "Nonesuch" }, LOCAL)).planItemIdIgnored).toBeUndefined();
+
+    await writeProject([]);
+    nilOnce();
+    const withProject = await recordSearchTool(
+      { surname: "Nonesuch", projectPath: dir, planItemId: "pli_001" },
+      LOCAL,
+    );
+    expect(withProject.planItemIdIgnored).toBeUndefined();
+    expect(withProject.logId).toBeTruthy();
+
+    // An explicit null plan item is an ad-hoc search, not a mistake.
+    mockFetch.mockResolvedValueOnce(makeOkResponse(NIL));
+    expect(
+      (await recordSearchTool({ surname: "Nonesuch", planItemId: null }, LOCAL)).planItemIdIgnored,
+    ).toBeUndefined();
   });
 });
 
@@ -2548,8 +2949,8 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
     ]);
   });
 
-  // The shape the real index answers: the bride is not indexed as a principal,
-  // only as the groom's spouse (eval/tests/e2e/anders-monsen-ancestry/README.md).
+  // The bride searched as the groom's spouse, a shape the anders-monsen-ancestry e2e runs used
+  // (eval/tests/e2e/anders-monsen-ancestry/README.md).
   it("emits on spouseSurname when the bride is the secondary party", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
 
@@ -3195,10 +3596,13 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     const dir = await mkdtemp(join(tmpdir(), "record-search-expand-nil-"));
     try {
       const nil = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir }, LOCAL);
-      expect(nil.nilSearchNeedsLog).toBeDefined();
+      // This dir is not a project, so the write is refused — which is itself
+      // the proof the tool SAW a nil: one of the two nil-log keys is always set
+      // when `isNilSearch` holds, and neither is when it does not.
+      expect(nil.logId ?? nil.nilLogRefused).toBeDefined();
       byPlace["Rieti, Umbria, Papal States"] = [TARGET];
       const hit = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir }, LOCAL);
-      expect(hit.nilSearchNeedsLog).toBeUndefined();
+      expect(hit.logId ?? hit.nilLogRefused).toBeUndefined();
       expect(hit.totalMatches).toBe(1);
     } finally {
       await rm(dir, { recursive: true, force: true });

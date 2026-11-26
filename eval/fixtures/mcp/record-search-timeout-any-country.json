@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "record_search times out on any record_search with a recordCountry and no surname matched first: the error record-search.ts throws when fetchWithRetry exhausts its budget on a stalled FamilySearch connection, marked is_error because src/server.ts returns {error} with isError: true. Used by ut_research_fl2 (issue #4777): FamilySearch search is not answering, so the reply offers a retry and never hands the researcher a search link.",
+  "args": {
+    "recordCountry": "~"
+  },
+  "is_error": true,
+  "response": {
+    "error": "FamilySearch record search did not complete after retries (network timeout or transient error): Request to https://www.familysearch.org/service/search/hr/v2/personas?q.surname=Renhard&q.givenName=Charles&count=20 timed out after 25000ms. This is a transient failure, NOT an empty result — coverage is unknown."
+  }
+}

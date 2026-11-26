@@ -652,8 +652,14 @@ def test_per_claim_tree_encoding(before_state, after_state, test):
         "independently (#1711), not folded into one scalar `tier`"
     )
 
-    paternity = next((c for c in claims if c.get("claim") == "paternity"), None)
-    maternity = next((c for c in claims if c.get("claim") == "maternity"), None)
+    # `claim` is a free-text label (proof-conclusion.md: "paternity",
+    # "maternity"), so "paternity (Thomas Flynn)" names the paternity claim too.
+    def labelled(word):
+        return next((c for c in claims
+                     if str(c.get("claim") or "").strip().lower().startswith(word)), None)
+
+    paternity = labelled("paternity")
+    maternity = labelled("maternity")
     assert paternity is not None, f"no 'paternity' entry in claims[]: {claims!r}"
     assert maternity is not None, f"no 'maternity' entry in claims[]: {claims!r}"
 
@@ -723,6 +729,12 @@ _EXCLUSION_SPOILERS = re.compile(
     r"Thomas|Bridget|grand|first\s+(?:son|daughter)|support|consistent|suggest",
     re.IGNORECASE,
 )
+#: "support" the sentence denies ("did not use them as support", "no support")
+#: is part of the exclusion, not a spoiler; any other "support" still spoils it.
+_NEGATED_SUPPORT = re.compile(
+    r"\b(?:not|never)\s+(?:\w+\s+){0,3}?as\s+support\b|\bno\s+support\b|\bnot\s+support\w*",
+    re.IGNORECASE,
+)
 
 
 def _naming_sentences(text):
@@ -733,7 +745,7 @@ def _naming_sentences(text):
         if _MATERNAL_GRANDMOTHER.search(s):
             hits.append(s.strip())
         elif _NAMING_CUSTOM.search(s) and not (
-            _BARE_EXCLUSION.search(s) and not _EXCLUSION_SPOILERS.search(s)
+            _BARE_EXCLUSION.search(s) and not _EXCLUSION_SPOILERS.search(_NEGATED_SUPPORT.sub("", s))
         ):
             hits.append(s.strip())
     return hits

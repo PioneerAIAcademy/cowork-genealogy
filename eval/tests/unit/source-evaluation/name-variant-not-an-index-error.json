@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_v8n",
+    "skill": "source-evaluation",
+    "name": "A spelling of her name the census states (Orfey, Orphy) is reported as a variant, not an indexing error",
+    "type": "positive",
+    "description": "Issue #4584, from feedback #4507 and #4508 (Orpha (Brooks) Wheaton, LZPF-WMT, no project). The live agent called the 1850 census's 'Orfey Wheaton' and the 1865 New York census's 'Orphy Wheaton' 'almost certainly a transcription misread of cursive handwriting' and told the researcher to submit an index correction, having seen neither image. The tester: 'The census records are not transcription errors but likely the name she was going by.' Both are spellings that sound like Orpha and that the records state; neither is a mis-key, and the evidence shows no other value keyed wrong. FamilySearch's own checklist adds a lure: its CONSISTENCY issue says 'Orpha ... does not match the name Orfey', and detail.conflicts pairs the 1850 census's name against the Find a Grave and the two Michigan death records. The 1850 census's age-derived birth (1785-1786) and the 1865 census's (1784-1785) are within two years of the profile's 11 Nov 1784, which is ordinary variance. Fixtures are re-captured live on 2026-11-17, not copied from the 2381ff72c bundle.",
+    "tags": [
+      "name-variant",
+      "census-variance-trap",
+      "person-less-project",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate the sources attached to Orpha (Brooks) Wheaton, FamilySearch person ID LZPF-WMT. Tell me whether each one belongs on her profile and whether anything in them was indexed wrong. Use the project path /project if a project exists there, otherwise operate without one.\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 1500
+  },
+  "mcp_fixtures": [
+    "person-read-wheaton-attached-sources",
+    "record-read-wheaton-qvnj-4qxs",
+    "record-read-wheaton-mc1g-1lv",
+    "record-read-wheaton-2w67-brd",
+    "record-read-wheaton-fhlz-s99",
+    "record-read-wheaton-n3kl-628",
+    "record-read-wheaton-qk1g-j74z",
+    "person-quality-wheaton-detail",
+    "source-screen-wheaton-no-project"
+  ],
+  "variant_names": [
+    "Orfey",
+    "Orphy"
+  ],
+  "judge_context": [
+    "'Orfey' (1850 United States Census, household of James Devoor) and 'Orphy' (1865 New York State Census, Erin) are spellings of Orpha that the records themselves state, consistent with how the name sounds. They are not indexing or transcription errors. Calling either one an indexing error, a transcription error or a misreading, or recommending an index correction for either, is the defect this test exists for and fails Remediation doctrine, even when the reply hedges it as 'possible' and even though FamilySearch's own checklist flags the 1850 name.",
+    "Reporting the variants outside the numbered findings, as forms of the name she was recorded under, is the expected behaviour and must not be deducted for Completeness or Classification. A reply that does not mention the variants at all is a Completeness partial, not a fail.",
+    "The 1850 census's age-derived birth (1785-1786) and the 1865 census's (1784-1785) against the profile's 11 November 1784 are ordinary census variance and must not be counted as findings.",
+    "The New York City municipal death (William Wheaton, 1893) and the two Michigan death records (Silas W. Wheaton, 1896, naming parents William and Orpha Wheaton) record her sons' deaths, not hers. Treating them as records naming her as a parent is correct. Do not grade whether the reply judges them as belonging on her profile, except that recommending an index correction for her name in them is the defect above.",
+    "The project has no person: person_warnings is not called or finds no such person, and the reply should say impossible-date checks need a project. Seven attached sources carry no record ARK (an Ancestry link, four FamilySearch image links, a MyHeritage tree entry, an uploaded memory image); naming them as unchecked is correct."
+  ]
+}

@@ -2796,6 +2796,7 @@ describe("Research closed shapes", () => {
           resolved: null,
           resolution_assertion_ids: [],
           date_window: "1830-1900",
+          audits_tree: true,
           search_stop: {
             stopped_because: "question_answered",
             log_entry_ids: ["log_001"],
@@ -3058,6 +3059,14 @@ describe("Research closed shapes", () => {
             by_record_type: [{ group: "Census", volumes: 2, browse_only: null, fulltext_only: null }],
             untyped: { volumes: 1, browse_only: 1, fulltext_only: 0 },
           },
+          record_types: [{
+            type: "church", years: "1814-1900", level: "parish", held_at: "Regional archive",
+            access: "browse", collection_ids: ["4237104"], summary: "Church books by parish.",
+            source_url: "https://x/Norway_Church_Records",
+          }],
+          repositories: [{ name: "Statsarkivet i Hamar", holds: "church books", access: "online", url: "https://x/hamar" }],
+          losses: [{ record_set: "Ringebu church book 1740-1760", years: "1740-1760", source_url: "https://x/loss" }],
+          catalog: [{ id: "koha:1", title: "Kirkebøker", place: "Ringebu", repository_calls: ["Online"], film_count: 3 }],
           source: "locality-guide",
           created: "2026-01-02",
           updated: "2026-01-02",
@@ -3131,6 +3140,23 @@ describe("Research closed shapes", () => {
     expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
   });
 
+  // #4430 — questions[].audits_tree, optional boolean. The maximal document
+  // carries `true` (acceptance).
+  it("refuses a non-boolean questions[].audits_tree", async () => {
+    for (const bad of ["true", 1, null, "yes"]) {
+      const research = maximalResearch();
+      research.questions[0].audits_tree = bad;
+      const result = await validateParsed(research, maximalTree);
+      const messages = result.errors.map((e: any) => e.message);
+      expect(messages.some((m: string) => m.startsWith("audits_tree must be true or false")), String(bad)).toBe(true);
+    }
+    const research = maximalResearch();
+    research.questions[0].audits_tree = false;
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
+    delete research.questions[0].audits_tree;
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
+  });
+
   it("accepts the openarch search site on external_site.site (#3185)", async () => {
     const research = maximalResearch();
     research.log[1].external_site.site = "openarch";
@@ -3192,7 +3218,7 @@ describe("Research closed shapes", () => {
     it("rejects a registration_start entry with a bad event, level or year, or no source_url", async () => {
       const research = maximalResearch();
       research.localities[0].registration_start = [
-        { event: "baptism", level: "province", year: "1876" },
+        { event: "baptism", level: "federal", year: "1876" },
       ];
       const result = await validateParsed(research, maximalTree);
       const msgs = result.errors
@@ -3200,7 +3226,7 @@ describe("Research closed shapes", () => {
         .map((e) => e.message)
         .join(" | ");
       expect(msgs).toMatch(/'baptism' is not a valid registration_event/);
-      expect(msgs).toMatch(/'province' is not a valid registration_level/);
+      expect(msgs).toMatch(/'federal' is not a valid registration_level/);
       expect(msgs).toMatch(/year must be an integer/);
       expect(msgs).toMatch(/source_url/);
     });
@@ -3232,6 +3258,24 @@ describe("Research closed shapes", () => {
             e.message.includes("'timeout' is not a valid locality_page_outcome")
         )
       ).toBe(true);
+    });
+
+    it("rejects an out-of-set collections[].availability (collection_availability)", async () => {
+      const research = maximalResearch();
+      research.localities[0].collections = [
+        { id: "1999196", title: "Pennsylvania, Probate Records, 1683-1994", availability: "indexed" },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/collections[0]" &&
+            e.message.includes("'indexed' is not a valid collection_availability")
+        )
+      ).toBe(true);
+      research.localities[0].collections[0].availability = null;
+      expect((await validateParsed(research, maximalTree)).valid).toBe(true);
     });
   });
 
@@ -3823,6 +3867,10 @@ describe("Research closed shapes", () => {
     proof_claim_finding: schema.$defs.proof_claim_finding,
     evaluation_entry: schema.$defs.evaluation_entry,
     locality: schema.$defs.locality,
+    locality_record_type_row: schema.$defs.locality_record_type_row,
+    locality_repository: schema.$defs.locality_repository,
+    locality_loss: schema.$defs.locality_loss,
+    locality_catalog_entry: schema.$defs.locality_catalog_entry,
     warning_justification: schema.$defs.warning_justification,
     namesake: schema.$defs.namesake,
     hit_verdict_entry: schema.$defs.hit_verdict_entry,
@@ -3936,6 +3984,10 @@ describe("Research closed shapes", () => {
       proof_claim_finding: (r) => claim(r, 4).finding,
       evaluation_entry: (r) => r.evaluations[0],
       locality: (r) => r.localities[0],
+      locality_record_type_row: (r) => r.localities[0].record_types[0],
+      locality_repository: (r) => r.localities[0].repositories[0],
+      locality_loss: (r) => r.localities[0].losses[0],
+      locality_catalog_entry: (r) => r.localities[0].catalog[0],
       warning_justification: (r) => r.warning_justifications[0],
       namesake: (r) => r.namesakes[0],
       hit_verdict_entry: (r) => r.hit_verdicts[0],

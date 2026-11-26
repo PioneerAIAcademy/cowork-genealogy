@@ -334,6 +334,17 @@ describe('tests — hasGradingRelevantChange', () => {
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 
+  it('detects an na_dimensions edit (it decides which scores gate the outcome)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.na_dimensions = ['Score discipline'];
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+    const c = JSON.parse(JSON.stringify(b)) as UnitTestFile;
+    c.na_dimensions = ['Score discipline', 'Rationale quality'];
+    expect(hasGradingRelevantChange(b, c)).toBe(true);
+    expect(hasGradingRelevantChange(b, JSON.parse(JSON.stringify(b)))).toBe(false);
+  });
+
   it('treats absent holdout and explicit false as equivalent', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;

@@ -434,7 +434,7 @@ describe("mergeGedcomx — name equivalence", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — fact equivalence", () => {
-  it("merges a less-specific birth into the more specific one, taking date+place, marked primary", () => {
+  it("merges a less-specific birth into the more specific one, taking date+place, and sets no primary", () => {
     const out = mergeGedcomx(
       {
         persons: [
@@ -477,10 +477,11 @@ describe("mergeGedcomx — fact equivalence", () => {
     expect(births).toHaveLength(1);
     expect(births[0].standard_date).toBe("10 Jan 1900"); // most complete date
     expect(births[0].standard_place).toBe("Provo, Utah, United States"); // most specific place
-    expect(births[0].primary).toBe(true);
+    // Decision 34: a merge never sets `primary`; it follows a claim.
+    expect(births[0].primary).toBeUndefined();
   });
 
-  it("keeps two conflicting births and marks exactly one (the better) as primary", () => {
+  it("keeps two conflicting births and marks neither primary", () => {
     const out = mergeGedcomx(
       {
         persons: [
@@ -497,7 +498,7 @@ describe("mergeGedcomx — fact equivalence", () => {
 
     const births = (out.persons![0].facts ?? []).filter((f) => f.type === "Birth");
     expect(births).toHaveLength(2);
-    expect(births.filter((f) => f.primary === true)).toHaveLength(1);
+    expect(births.filter((f) => f.primary === true)).toHaveLength(0);
   });
 
   it("merges compatible residences, keeps distinct ones, and marks none primary (non-vital type)", () => {
@@ -792,15 +793,30 @@ describe("mergeGedcomx — adversarial edge cases", () => {
   it("never leaves two primaries of the same vital type, even when both inputs were primary", () => {
     const out = mergeGedcomx(
       { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", primary: true, standard_date: "1900" }] }] },
-      { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", primary: true, standard_date: "1888" }] }] },
+      { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", primary: true, standard_date: "10 Jan 1888" }] }] },
       [["I1", "I1"]],
     );
     const births = (out.persons![0].facts ?? []).filter((f) => f.type === "Birth");
     expect(births).toHaveLength(2); // distinct → both kept
     expect(births.filter((f) => f.primary === true)).toHaveLength(1); // exactly one
+    // The survivor's keeps it (Decision 34), not the more complete one.
+    expect(births.find((f) => f.primary === true)?.standard_date).toBe("1900");
   });
 
-  it("marks a lone vital fact primary even when nothing was merged into it", () => {
+  it("keeps the survivor's own primary over a collapsed one that lands on an earlier fact", () => {
+    const out = mergeGedcomx(
+      { persons: [
+        { id: "I1", facts: [{ id: "F1", type: "Birth", standard_date: "1900" }, { id: "F2", type: "Birth", primary: true, standard_date: "1905" }] },
+        { id: "I2", facts: [{ id: "F3", type: "Birth", primary: true, standard_date: "1900" }] },
+      ] },
+      null,
+      [["I1", "I2"]],
+    );
+    const births = (out.persons!.find((p) => p.id === "I1")!.facts ?? []).filter((f) => f.type === "Birth");
+    expect(births.filter((f) => f.primary === true).map((f) => f.standard_date)).toEqual(["1905"]);
+  });
+
+  it("leaves a lone vital fact unmarked when nothing was merged into it", () => {
     const out = mergeGedcomx(
       { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", standard_date: "1900" }] }] },
       { persons: [{ id: "I1", names: [{ id: "N1", given: "Pat", surname: "Flynn" }] }] },
@@ -808,7 +824,7 @@ describe("mergeGedcomx — adversarial edge cases", () => {
     );
     const births = (out.persons![0].facts ?? []).filter((f) => f.type === "Birth");
     expect(births).toHaveLength(1);
-    expect(births[0].primary).toBe(true);
+    expect(births[0].primary).toBeUndefined();
   });
 
   it("does NOT merge births that differ at month precision (Jan vs Feb)", () => {

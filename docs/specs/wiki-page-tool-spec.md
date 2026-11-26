@@ -80,12 +80,49 @@ Behavior:
 3. On 200 → return the existing `WikiPageResult` shape `{ url, content }`: the
    server's `{ title, content, source_url }` remapped, with the sidebar removed
    (see **The sidebar**) and `content` cut to one part when the page is longer
-   than the cap (see **Pagination**).
+   than the cap (see **Pagination**). The first part also carries `collectionNotices`
+   when the page links a collection page that carries a Legacy notice (see **Collection
+   notices**).
 4. On 404 → throw `No wiki page found for "<slug>". The page may not
-   exist in the corpus.` (matches today's wording).
+   exist in the corpus.` (matches today's wording). When the slug is a regional
+   record-type page, `{Region},_{Country}_{Suffix}` with a suffix from
+   `WIKI_TOPIC_SUFFIXES` (see **Country topic pages**), one more `GET` checks the
+   country's `{Country}_{Suffix}`; when it exists the message adds ` The country's
+   page exists: <url>`. A failed check leaves the plain message.
 5. On 5xx → `wiki-query-api error: {status}`.
 6. On network failure → `Could not reach wiki-query-api at {base}
    ({cause}).`
+
+#### Collection notices (`collectionNotices`, first part only)
+
+FamilySearch's wiki has one page per historical-record collection, titled
+`<Collection> - FamilySearch Historical Records`, and a record-type page links them ("How
+to Use this Collection"). When a collection is a partial index that is no longer added to
+or corrected, its page opens with the wiki's standard notice, which begins
+`**This is a Legacy Collection**`. A record-type page (`England_Church_Records`) can link
+that page while saying nothing of the notice, so an agent reading the record-type page
+never sees it.
+
+The first part of a `wiki_read` answer (no `offset`, or `0`) carries
+`collectionNotices: [{ title, url, notice }]` for the collection pages that part links
+whose own text carries the notice:
+
+- a link counts when its target is `https://www.familysearch.org/en/wiki/<slug>` with
+  `<slug>` ending `_-_FamilySearch_Historical_Records`; an anchor is ignored and each
+  page is checked once, in the order first linked;
+- at most `COLLECTION_NOTICE_MAX_PAGES` (10) pages are checked, all at once;
+- `notice` is the notice's line as plain text: link targets, emphasis marks and the
+  table's closing `|` removed, whitespace collapsed, and cut at the last sentence end within
+  `COLLECTION_NOTICE_MAX_CHARS` (450), so a full part with ten notices stays under the CLI
+  spill line (the real notice's first four sentences, through "Legacy" collection, fit in 344);
+- a page that is missing, fails or carries no notice adds nothing, and the read still
+  returns; with none found the key is absent;
+- the lookups share `WIKI_EXTRAS_DEADLINE_MS` (50 s from the start of the call, under the
+  Cowork bridge's 60 s abort; `settleByDeadline` in `src/utils/wiki-page-fetch.ts`): at the
+  deadline the notices found so far are returned and a lookup still running adds nothing.
+
+Nothing in the code names a country or a collection: the link pattern and the notice
+marker are the wiki's own conventions.
 
 ### `wiki_place_page` (`src/tools/wiki-place-page.ts`)
 
@@ -158,6 +195,48 @@ jurisdiction (`Schuylkill County, Pennsylvania`) for a page resolved by title.
 The place is resolved first, then the page loses its sidebar (see **The sidebar**) and
 is cut, so every way of resolving one is served the same way; a truncated answer, or a
 call that passes `offset`, adds the paging members described under **Pagination**.
+
+#### Country topic pages (`topicPages`, `home` only)
+
+The first part of a `home` answer (no `offset`, or `offset: 0`) carries `topicPages`, a
+list of `{ topic, url }` for the record-type pages of the place's country that exist.
+The suffixes are `WIKI_TOPIC_SUFFIXES` (`src/types/wikiPage.ts`): Church_Records,
+Naming_Customs, Vital_Records, Civil_Registration, Census, Probate_Records,
+Land_and_Property, Military_Records. For each, the place's comma parts are tried
+broadest first (`countryCandidates`), and the first `{Part}_{Suffix}` page the server
+returns is listed, so the country's page wins and a part the wiki does not title topic
+pages by falls through to the next (`England, United Kingdom` lists
+`England_Church_Records`). A page found under a part narrower than the country is listed
+only when it fits the place (`topicPageFitsPlace`): the first `{Place}_Genealogy` link in
+its first 2,000 characters (the breadcrumb) must name only comma parts of `standardPlace`,
+so `Victoria_Church_Records` (breadcrumb `Victoria,_Australia_Genealogy`) is not listed for
+`Victoria, British Columbia, Canada`, and a page with no such link is not listed; the
+country's own page is listed without this check. The list is in suffix order and may be
+empty. A lookup that fails omits that topic and never fails the place page. The lookups
+share a deadline, `WIKI_EXTRAS_DEADLINE_MS` (50 s from the start of the call, under the
+Cowork bridge's 60 s abort; `settleByDeadline` in `src/utils/wiki-page-fetch.ts`): at the
+deadline the topics found so far are returned, a topic still being looked up is omitted,
+and no lookup for a later candidate starts. A list built with no failure and before the
+deadline is memoised per wiki URL and place; one cut short by a failure or the deadline is
+not. Why: the corpus copy of a country's home page links
+none of these pages (measured 2026-11-15 for Norway, Germany, Mexico and England), and an
+agent asked about church books did not construct `{Country}_Church_Records` on its own. Cost: up to eight `GET`s per part, in parallel, on the first `home` call
+for a place.
+
+#### Search help (`searchHelp`, `research_tips` only)
+
+The first part of a `research_tips` answer carries `searchHelp` when the page (sidebar
+removed) links a wiki page whose link title matches `SEARCH_HELP_TITLE`,
+`/\b(search results|search tips|searching)\b/i`. The first such link is read and cut to
+8,000 escaped characters: `{ title, url, content, truncated }`. A missing or unreadable
+linked page adds nothing. The lookup shares the call's `WIKI_EXTRAS_DEADLINE_MS` (see
+**Country topic pages**): it is skipped when the deadline has already passed, and bounded by
+the time remaining otherwise, adding nothing if the deadline comes first. The pattern is narrow on purpose: a bare "search" also matches
+the research-strategy pages many countries link (`England Search Strategies for Births,
+Marriages and Deaths`, the Norway record-search strategy series), which are not about
+searching the index. Measured 2026-11-15 across 14 research-tips pages, it matches only
+`Improve your Search Results for Hispanic Ancestors in FamilySearch.org` (Mexico, Spain,
+Peru, Chile). The 8,000 cap keeps a full-size part plus the help under the CLI spill line.
 
 ---
 
@@ -340,13 +419,14 @@ the line; they cannot prove an agent reads them all.
   characters; one heading and one 46,000-character row; 66,000 double quotes): every
   part serializes under 50,000 characters; the parts joined across the `nextOffset` chain
   equal the page exactly; the chain ends with `truncated: false` and no `nextOffset`; a
-  9,000-character page returns exactly today's object with no extra key; `offset` of
+  9,000-character page returns exactly today's object with no extra key (for a `home` page, plus `topicPages`); `offset` of
   `"5"`, `-1` and `1.5` is refused before any request. For `wiki_place_page` the same over
   a title-resolved page and an alternate-name page, and over the continuation: a title-resolved
   page read in parts makes no search and no Places call after the first part and still joins;
   the next part comes back when the Places lookup fails by then; a continuation with no entry,
   after a 404 on the remembered page, or from the start resolves in full; another section, place
   or wiki server URL does not take an entry.
+- Country topic pages and search help (`wiki-place-page.test.ts`): only existing topic pages are listed, in suffix order; a topic falls through from a part the wiki does not title topic pages by to the next (`England, United Kingdom`); an empty list; a failed lookup omits that topic and the page still returns; no `topicPages` on a continuation part or another section; `searchHelp` carries a search-results page, ignores a research-strategy page, cuts a long help page and says so, and adds nothing when the linked page is missing; `SEARCH_HELP_TITLE` matches search-results, search-tips and searching titles, not strategies. Calls that count requests count only the place's own resolution, not the topic lookups. In `wiki-read.test.ts`: `countryTopicSlug` on regional, country-level and non-topic slugs; the not-found message names the country's page when it exists, stays plain when it does not or the lookup fails, and makes no second request for a non-topic slug. Collection notices (`wiki-read.test.ts`): a linked page with the notice comes back as plain text with its title and URL; a page with no notice, a missing page and a failed lookup add nothing and the read still returns; a page linked twice (one with an anchor) is checked once; of 12 linked pages only the first 10 are checked, all in flight together; a later part makes no lookup; a long notice is cut at a sentence end within the cap; a full part with ten long notices serializes under the CLI spill line; the description names the field.
 - `tests/utils/text-page.test.ts` — the cut rules and their edges (a heading exactly at
   the midpoint is not past it; a part that already ends at a heading is kept), the cap
   taken from `maxChars` and not a constant, progress for a `maxChars` under 6, the cut checked

@@ -278,6 +278,15 @@ mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer
 	mkdir -p $(ENGINE_DIR)/viewer/page
 	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
 
+# Local, not CI: it reads teammates' committed e2e runs, which must never red someone's PR.
+.PHONY: mcp-viewer-sweep
+MCP_VIEWER_SWEEP_DIR := $(CURDIR)/releases/mcp-viewer-sweep
+# Exported rather than an inline `VAR=… cmd` prefix, which cmd.exe cannot parse.
+mcp-viewer-sweep: export SWEEP_DIR := $(MCP_VIEWER_SWEEP_DIR)
+mcp-viewer-sweep: $(JS_DEPS) $(ENGINE_DEPS) ## Render the MCP App page's cards and text over the McAndrew capture and every committed e2e end state
+	cd $(ENGINE_DIR) && npx tsx dev/sweep-stage.ts --out "$(MCP_VIEWER_SWEEP_DIR)"
+	pnpm --filter mcp-viewer exec vitest run --config vitest.sweep.config.ts
+
 # `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
 .PHONY: viewer
 viewer: mcp-viewer-build $(ENGINE_DEPS) ## Open the MCP App viewer in a browser tab: make viewer PROJECT=<folder> [PORT=8090]
@@ -391,6 +400,23 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-auto-memory
+probe-auto-memory: $(ENGINE_BUILD) ## Live probe: does CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 actually stop a memory write? (issue #4778; 2 short sessions)
+	# test_auto_memory_off.py proves the CLI offers no memory block; this runs
+	# the real agent twice and proves no memory file lands.
+	#
+	# Control arm is "0" (forced_on), not unset: per the bundled CLI's Nm()/Z8(),
+	# a falsy value returns before swt() and the autoMemoryEnabled setting, so it
+	# is the stronger control and it tests the polarity live.
+	#
+	# An EMPTY control arm is reported VOID, not PASS: the model must choose to
+	# persist a memory, so an empty control and a working fix look identical.
+	# Both arms redirect HOME and CLAUDE_CONFIG_DIR into a tempdir, and the probe
+	# fails if the operator's own ~/.claude/projects changed.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_auto_memory.py
+
 .PHONY: probe-agent-nesting
 probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
 	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
@@ -435,6 +461,9 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
 	# The read case (issue #3836) provokes a built-in Read of research.json and requires
 	# READ_REASON's text. First run 2026-11-05 (Claude Code 2.1.308, SDK 0.2.172, macOS): BOUND.
+	# The relay case spawns a plugin agent on a hosted plane and requires agent_relay_note.py's
+	# PostToolUse note in the session transcript. First run 2026-11-24 (SDK 0.2.172, macOS): BOUND
+	# on all five cases. A VOID arm (the Haiku main thread made no call) runs again, three times at most.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so the Cowork gap (docs/architecture.md
@@ -939,7 +968,7 @@ e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a R
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),) $(if $(TEST),--test $(TEST),)
 
 .PHONY: replay-sizes
-replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [SECTION=a,b] [TRACKED_ONLY=1] [JSON=<path>]
 	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
 	# local-state read tools (research_query, project_context, person_warnings,
 	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
@@ -952,7 +981,7 @@ replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base 
 	# Exit 2: selection, usage or build error. Exit 3: the replay is not
 	# measuring what it claims (rebase broke, state errors over the margin, a
 	# read wrote files, a network call) — it refuses to print a misleading 0%.
-	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(SECTION),--section $(SECTION),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: replay-collapse
 replay-collapse: $(ENGINE_BUILD) ## Replay recorded research_query walks against the one call that replaces each — rule plan-log (log×planItemId walk -> log×questionId, T2.1) and rule plural-id (one-id walks -> one call with a list of ids, T2.3) — zero model calls: make replay-collapse [RULE=plan-log|plural-id] [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
@@ -1163,7 +1192,7 @@ malachi-rehearsal: ## Bring the whole stack up, through every target but malachi
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-screen source-screen-judge source-screen-score
 source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
@@ -1184,11 +1213,15 @@ source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: m
 	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
 
+source-screen-screen: $(ENGINE_DEPS) ## Build each copy's project and run source_screen over it: make source-screen-screen SNAPSHOT=<dir> [WITHOUT="a h"] [IMAGE_READ=1]
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts screen --snapshot "$(abspath $(SNAPSHOT))" $(foreach c,$(WITHOUT),--without $(c)) $(if $(filter 1 true yes on,$(IMAGE_READ)),--image-read)
+
 source-screen-judge: $(ENGINE_BUILD) ## Run the source-evaluation agent over a snapshot, on your Claude subscription: make source-screen-judge SNAPSHOT=<dir>
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
 	cd eval/harness && uv run python source_screen_judge.py --snapshot "$(abspath $(SNAPSHOT))"
 
-source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl"
+source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl <dir>/screen.jsonl"
 	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
 
@@ -1287,7 +1320,8 @@ eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-part
 .PHONY: judge-regrade
 judge-regrade: ## Regrade committed unit run logs against the current judge prompt AND render code (satisfies rule 2b, both halves): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
-	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
+	# is the cheap satisfaction path (~$30 of judge-only spend for every suite's
+	# latest log, ~$1 a suite on the Sonnet 4.6 judge, measured 2026-11-16).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
 	# `make harness-test` to prove the renderer reads from disk on every call.
 	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.
@@ -1692,7 +1726,7 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
 	# thread's busiest moment. Removes reports whose run log was pruned (same
 	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
-	# rewrites them (needed after a log is rehashed or released under a new name).
+	# rewrites them (needed after a log is rehashed).
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 

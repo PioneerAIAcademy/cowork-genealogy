@@ -11,6 +11,7 @@ import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
+import { mergeClaimWarnings, mergeIdentityWarnings } from "../validation/merge-claim-warnings.js";
 import { atomicWriteBoth, withProjectLock } from "../utils/project-io.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -20,8 +21,6 @@ import {
   personMapByIds,
   remapResearchPersonIds,
   formatIssues,
-  NoProjectError,
-  noProjectResult,
 } from "./merge-shared.js";
 import type { MergeResult } from "./merge-shared.js";
 import {
@@ -114,10 +113,16 @@ export async function mergeTreePersons(
     // 5b. Warning gate: refuse if the merge introduces unjustified warnings.
     //     Pass collapseMap so pre-existing warnings on collapsed persons are
     //     matched against their survivor and not read as introduced.
+    //     Decision 13: the claim states the merge leaves (rules 2, 9, 12) and a
+    //     re-created ruled-out pair, computed before the gate persists anything.
+    const claimWarnings = [
+      ...mergeIdentityWarnings(before, merges),
+      ...mergeClaimWarnings(before, { research, tree: merged }, merges),
+    ];
     const mergeGateResult = await checkWarningGate(
       tree, merged, research, projectPath,
       input.warningJustifications, "merge_tree_persons",
-      collapseMap,
+      collapseMap, undefined, claimWarnings,
     );
     if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult;
 
@@ -143,7 +148,6 @@ export async function mergeTreePersons(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;
   }
@@ -168,8 +172,9 @@ export function joinedPairRefusals(tree: SimplifiedGedcomX, merges: Array<[strin
   if (lines.length === 0) return [];
   return [
     ...lines,
-    "Two people a relationship joins are not one person. If they are, remove that relationship with " +
-      "tree_correct (operation 'remove', relationshipId) and merge again; otherwise do not merge.",
+    "Two people a relationship joins are not one person: do not merge them. Report the relationship. " +
+      "If it is itself wrong, that is a separate correction for the researcher to make from a record, " +
+      "not a step to clear this refusal.",
   ];
 }
 

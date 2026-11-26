@@ -103,6 +103,11 @@ const ALLOWED: Record<string, string> = {
     "reads the frozen run-log corpus, which still carries the retired spelling",
   "packages/engine/mcp-server/src/utils/record-basis.ts":
     "the engine's back-compat reader for research.json documents written before the rename",
+  "apps/mcp-viewer/src/file/record-basis.ts":
+    "the MCP App page's back-compat reader: Compare and the person page must not show an " +
+    "absent assertion from a document written before the rename as something the record said",
+  "apps/mcp-viewer/src/file/compare-fixture.ts":
+    "the page's planted test project, with one assertion in the legacy spelling to test that reader",
   "packages/engine/mcp-server/tests/utils/record-basis.test.ts":
     "tests the back-compat reader, so it must name the retired spelling",
   "packages/engine/mcp-server/tests/tools/research-append.test.ts":
@@ -113,6 +118,12 @@ const ALLOWED: Record<string, string> = {
     "one case feeds the record-side projection a legacy-spelled assertion, to " +
     "prove it is still excluded from a projected persona; without the retired " +
     "spelling that case cannot be written",
+  "packages/engine/mcp-server/dev/build-claim-grounding-vectors.ts":
+    "copies assertions out of the frozen run-log corpus, keeping the legacy field the " +
+    "engine's back-compat reader (record-basis.ts) still reads as absence evidence",
+  "packages/engine/mcp-server/tests/fixtures/claim-grounding-vectors.json":
+    "a verbatim extract of frozen run-log assertions (claim rule 7's measured corpus); " +
+    "rewriting the legacy spelling would change what the back-compat reader sees",
   "packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts":
     "this file — it names the retired token in order to ban it",
 

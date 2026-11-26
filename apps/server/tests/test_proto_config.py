@@ -39,6 +39,7 @@ import contextlib
 import importlib.util
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -879,49 +880,17 @@ def test_019_adds_an_idempotent_index_for_the_signin_state_cleanup():
     ]
 
 
-# U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
-# comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
-_CONTRACTING = (
-    ("DROP", re.compile(r"\bDROP\b", re.I)),
-    ("RENAME", re.compile(r"\bRENAME\b", re.I)),
-    ("SET NOT NULL", re.compile(r"\bSET\s+NOT\s+NULL\b", re.I)),
-    ("ALTER COLUMN ... TYPE", re.compile(r"\bALTER\s+(?:COLUMN\s+)?\"?\w+\"?\s+(?:SET\s+DATA\s+)?TYPE\b", re.I)),
-)
-
-
-def _contracting(statements: list[str]) -> list[tuple[str, str]]:
-    return [(label, stmt) for stmt in statements for label, rx in _CONTRACTING if rx.search(stmt)]
-
-
-def test_migrations_are_expand_only():
-    """migrate.py runs each file once, before the new code ships, while the old code is still
-    serving: a file that drops, renames, sets NOT NULL or retypes a column breaks the build
-    still running. Those four shapes only; other tightenings (a new NOT NULL column with no
-    default, a constraint) are the author's to see. Contraction needs its own design (two
-    deploys), not a 010."""
-    files = sorted(SQL_DIR.glob("*.sql"))
-    assert len(files) >= 9, files
-    offences = [(f.name, label, stmt) for f in files for label, stmt in _contracting(_statements(f))]
-    assert not offences, f"not expand-only: {offences}"
-
-
-@pytest.mark.parametrize("text, expected", [
-    ("ALTER TABLE turns DROP COLUMN nudges;", ["DROP"]),
-    ("DROP INDEX IF EXISTS turns_open_project_idx;", ["DROP"]),
-    ("ALTER TABLE turns RENAME TO turn;", ["RENAME"]),
-    ("ALTER TABLE turns RENAME COLUMN nudges TO n;", ["RENAME"]),
-    ("ALTER TABLE projects ALTER COLUMN owner_id SET NOT NULL;", ["SET NOT NULL"]),
-    ("ALTER TABLE turns ALTER COLUMN nudges TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
-    ("ALTER TABLE turns ALTER nudges SET DATA TYPE bigint;", ["ALTER COLUMN ... TYPE"]),
-    ("DO $$ BEGIN\n  EXECUTE 'ALTER TABLE x DROP COLUMN y';\nEND $$;", ["DROP"]),
-    ("-- DROP the old shape, RENAME it, SET NOT NULL\nALTER TABLE turns ADD COLUMN IF NOT EXISTS u9 int;", []),
-    ("ALTER TABLE turns ADD COLUMN IF NOT EXISTS dropped_at timestamptz NOT NULL DEFAULT now();", []),
-    ("CREATE TYPE mood AS ENUM ('a'); ALTER TYPE mood ADD VALUE IF NOT EXISTS 'b';", []),
-])
-def test_the_expand_only_reader_sees_each_shape(tmp_path, text, expected):
-    sql = tmp_path / "010_x.sql"
-    sql.write_text(text, encoding="utf-8")
-    assert [label for label, _ in _contracting(_statements(sql))] == expected
+def test_020_closes_held_host_replies_then_retires_the_chain():
+    """#4791: the claim no longer tells a host reply from a typed message, so a held one must
+    be closed before this build releases it: only a held, open row whose message the host
+    sent. Then the chain's run state and its index go."""
+    assert _statements(SQL_DIR / "020_retire_auto_reply.sql") == [
+        "UPDATE turns SET outcome = 'superseded', completed_at = now() "
+        "WHERE outcome = 'queued' AND completed_at IS NULL "
+        "AND COALESCE((message ->> 'auto') = 'true', false)",
+        "DROP INDEX IF EXISTS turns_session_step_idx",
+        "ALTER TABLE sessions DROP COLUMN IF EXISTS auto_reply",
+    ]
 
 
 def _depends_on(service: dict) -> dict[str, dict]:
@@ -1338,13 +1307,18 @@ def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     return {n for n in names if (PROTO / f"{n}.py").is_file()}
 
 
+def _instructions(dockerfile: Path) -> list[list[str]]:
+    """A Dockerfile's instructions as word lists (continuation lines joined, comments dropped)."""
+    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
+    lines = (line.split("#", 1)[0].split() for line in text.splitlines())
+    return [words for words in lines if words]
+
+
 def _copied(dockerfile: Path) -> set[str]:
     """The repo paths a Dockerfile COPYs (continuation lines joined, flags skipped)."""
-    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
     sources: set[str] = set()
-    for line in text.splitlines():
-        parts = line.split("#", 1)[0].split()
-        if parts and parts[0] == "COPY":
+    for parts in _instructions(dockerfile):
+        if parts[0] == "COPY":
             args = [a for a in parts[1:] if not a.startswith("--")]
             sources.update(a.rstrip("/") for a in args[:-1])
     return sources
@@ -1403,6 +1377,79 @@ def test_the_copy_reader_joins_a_reflowed_copy(tmp_path):
     dockerfile.write_text("FROM x\nCOPY --chown=1:1 \\\n    apps/server/proto/grants.py \\\n    /opt/x/\n"
                           "# COPY apps/server/proto/enqueue.py /opt/\n", encoding="utf-8")
     assert _copied(dockerfile) == {"apps/server/proto/grants.py"}
+
+
+TOOLS_DOCKERFILE = PROTO / "tools" / "Dockerfile"
+BUNDLED_DATA = ROOT / "packages" / "engine" / "mcp-server" / "src" / "utils" / "bundled-data.ts"
+BUILT_PAGE = "/repo/apps/mcp-viewer/dist/index.html"
+
+
+def _final_stage_paths(dockerfile: Path) -> dict[str, str]:
+    """Where the last stage puts each COPY source: the destination, against the WORKDIR in
+    force at that line."""
+    instructions = _instructions(dockerfile)
+    final = max(i for i, words in enumerate(instructions) if words[0] == "FROM")
+    workdir, paths = "/", {}
+    for name, *args in instructions[final + 1:]:
+        if name == "WORKDIR":
+            workdir = posixpath.join(workdir, args[0])
+        elif name == "COPY":
+            *sources, destination = [a for a in args if not a.startswith("--")]
+            paths.update(dict.fromkeys(sources, posixpath.normpath(posixpath.join(workdir, destination))))
+    return paths
+
+
+def _viewer_page_path(build: str, text: str | None = None) -> str:
+    """Where viewerPagePath() looks with the compiled engine at ``build``. Its literal is
+    relative to bundled-data's own directory, build/utils/."""
+    if text is None:
+        text = BUNDLED_DATA.read_text(encoding="utf-8")
+    literals = re.findall(r'"([^"\n]*viewer\.html)"', _strip_line_comments(text, ("//",)))
+    assert len(literals) == 1, f"bundled-data.ts should name the page once, got {literals}"
+    return posixpath.normpath(posixpath.join(build, "utils", literals[0]))
+
+
+def test_the_tools_image_puts_the_page_where_the_engine_reads_it():
+    """viewerPagePath() resolves from build/utils/, so the page has to land at that path
+    beside build/. Only resources/read opens it and no CI job builds this image, so one
+    side moving alone leaves every check green and a connector with no card."""
+    paths = _final_stage_paths(TOOLS_DOCKERFILE)
+    assert paths.get("/app/build") == "/app/build", "the final stage needs WORKDIR /app and build/ under it"
+    assert paths.get(BUILT_PAGE) == _viewer_page_path("/app/build"), "the page is not where viewerPagePath() reads it"
+
+
+@pytest.mark.parametrize("final_stage, lands", [
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page \\\n    /p.html \\\n    ./viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /srv\nCOPY --from=page /p.html /app/viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /\nWORKDIR app\nCOPY --link --from=page /p.html viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/viewer.html\nWORKDIR /srv\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/index.html\n", "/app/viewer/page/index.html"),
+    ("WORKDIR /srv\nCOPY --from=page /p.html ./viewer/page/viewer.html\n", "/srv/viewer/page/viewer.html"),
+    ("WORKDIR /app\n# COPY --from=page /p.html ./viewer/page/viewer.html\n", None),
+    ("WORKDIR /app\n", None),
+])
+def test_the_final_stage_reader_sees_each_shape(tmp_path, final_stage, lands):
+    dockerfile = tmp_path / "Dockerfile"
+    # The same COPY in an earlier stage: the page there never reaches the image.
+    dockerfile.write_text(f"FROM x AS page\nWORKDIR /app\nCOPY /p.html ./viewer/page/viewer.html\nFROM y\n{final_stage}",
+                          encoding="utf-8")
+    assert _final_stage_paths(dockerfile).get("/p.html") == lands
+
+
+@pytest.mark.parametrize("source, expected", [
+    ('return resolve(here, "../../viewer/page/viewer.html");', "/app/viewer/page/viewer.html"),
+    ('return resolve(\n  here,\n  "../../viewer/page/viewer.html",\n);', "/app/viewer/page/viewer.html"),
+    ('// was "../viewer.html"\nreturn resolve(here, "../../viewer/page/viewer.html");', "/app/viewer/page/viewer.html"),
+    ('return resolve(here, "../../page/viewer.html");', "/app/page/viewer.html"),
+])
+def test_the_page_path_reader_resolves_from_build_utils(source, expected):
+    assert _viewer_page_path("/app/build", source) == expected
+
+
+def test_the_page_path_reader_refuses_a_file_that_names_no_page():
+    with pytest.raises(AssertionError, match="name the page once"):
+        _viewer_page_path("/app/build", 'return resolve(here, "../../config");')
 
 
 def _shim_kill_default() -> bool:

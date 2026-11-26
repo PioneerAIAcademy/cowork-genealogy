@@ -294,6 +294,64 @@ def test_not_reached_lists_uncaptured_handoffs(before_state, after_state, test):
     assert not bad, "not_reached hand-off entries wrong:\n  - " + "\n  - ".join(bad)
 
 
+_DECLINED_SKIP_CATEGORIES = frozenset({"user_declined", "no_coverage", "inaccessible"})
+
+
+def declined_skip_items(research: dict, question_id: str) -> list[dict]:
+    """Items on the question's plans skipped `user_declined`, `no_coverage` or
+    `inaccessible`, minus any item an uncaptured hand-off already lists as
+    `handed_to_user` (issue #4551)."""
+    handoff_ids = set(uncaptured_handoff_ids(research, question_id))
+    handed_items = {e.get("plan_item_id") for e in (research.get("log") or []) if e.get("id") in handoff_ids}
+    return [
+        item
+        for plan in (research.get("plans") or [])
+        if plan.get("question_id") == question_id
+        for item in (plan.get("items") or [])
+        if item.get("status") == "skipped"
+        and item.get("skip_category") in _DECLINED_SKIP_CATEGORIES
+        and item.get("id") not in handed_items
+    ]
+
+
+def _names_item(description: str, item: dict) -> bool:
+    text = (description or "").casefold()
+    record_type = (item.get("record_type") or "").replace("_", " ").casefold()
+    item_id = (item.get("id") or "").casefold()
+    return bool(item_id and re.search(rf"\b{re.escape(item_id)}\b", text)) or bool(record_type and record_type in text)
+
+
+def test_not_reached_lists_declined_skips(before_state, after_state, test):
+    """Tag-gated: every plan item skipped `user_declined` or `no_coverage` has a
+    `skipped_plan_item` entry, and every item skipped `inaccessible` has an
+    entry of any kind — on a declaration §3's exception may list it as
+    `privacy_sealed`, `browse_only` and the like. Every `skipped_plan_item`
+    entry carries `log_entry_id: null` and `wiki_title: null`.
+
+    Entries carry no `plan_item_id`, so an entry matches an item when its
+    description names the item id as a whole word or its record type; two
+    skipped items of one record type can share an entry, and a variant
+    spelling of the record type does not match."""
+    if "not-reached-skipped-item" not in test.get("tags", []):
+        pytest.skip("not a not-reached-skipped-item scenario")
+    before = before_state.get("research_json") or {}
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        entries = q["search_stop"].get("not_reached") or []
+        skipped_entries = [e for e in entries if e.get("kind") == "skipped_plan_item"]
+        bad += [f"{q.get('id')}: skipped_plan_item entry carries log_entry_id "
+                f"{e.get('log_entry_id')!r} / wiki_title {e.get('wiki_title')!r}; both must be null"
+                for e in skipped_entries
+                if e.get("log_entry_id") is not None or e.get("wiki_title") is not None]
+        for item in declined_skip_items(before, q.get("id")):
+            pool = entries if item.get("skip_category") == "inaccessible" else skipped_entries
+            if not any(_names_item(e.get("description") or "", item) for e in pool):
+                wanted = "not_reached" if pool is entries else "skipped_plan_item"
+                bad.append(f"{q.get('id')}: {item.get('id')} ({item.get('record_type')}, "
+                           f"{item.get('skip_category')}) has no {wanted} entry")
+    assert not bad, "not_reached skipped-item entries wrong:\n  - " + "\n  - ".join(bad)
+
+
 def test_not_reached_wiki_title_is_page_title(before_state, after_state, test):
     """Tag-gated: a `wiki_named_untouched` entry names a page the project
     read, by its title from `pages_read[].url` — never the section enum,
@@ -374,10 +432,19 @@ def test_fetches_registration_start_date(tool_calls, test):
     them — `refuse-in-progress` and `refuse-planned` are both the active-plan
     check. The classification and person_evidence blocks have no test today, so
     a test that stops at one will need its tag added here too.
+
+    `wrap-up` is a different population (issue #4551): under `wrapUp: yes` the
+    agent records `resources_spent` with `stop_criteria: null` and "nothing
+    else", so no criterion reads a start date. ut_020 failed here 3/3 while the
+    judge scored its every dimension 3. The skip keys on the tag, not on the
+    `resources_spent` it writes — ut_014/ut_015 decline the same way and still
+    owe the fetch.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:
         pytest.skip("negative routing test — the agent is never spawned")
+    if "wrap-up" in tags:
+        pytest.skip("wrapUp: yes records the stop with no criteria to assess")
     if (
         "refuse-in-progress" in tags
         or "refuse-planned" in tags
@@ -633,3 +700,68 @@ def report_refusal_marks_the_blocker_open(before_state, text_response, test, age
         "the reply names the in-progress item but no sentence naming it marks "
         f"it as still open. Sentences naming it: {[seg.strip()[:120] for seg in named]!r}"
     )
+
+
+# --- Tag-gated: the decline names the subject's death record ----------
+
+_DEATH_RECORD_RE = re.compile(
+    r"death\s+(certificate|record|registration)|certificate\s+of\s+death|obituar|funeral\s+notice",
+    re.IGNORECASE,
+)
+_BIRTH_CERTIFICATE_RE = re.compile(r"birth\s+certificate", re.IGNORECASE)
+
+
+def test_decline_names_a_death_record(before_state, after_state, test):
+    """Tag-gated: the stop names a death-era record as what is unsearched, and
+    does not defer the birth certificate.
+
+    `ut_research_exhaustiveness_022` holds no death-era record, and its judge
+    notes call a decline that "names only the sealed birth certificate" a fail.
+    The judge passed 26 of 26 runs on 2026-11-17 because each one declined; two
+    of them never named a death record. The naming is in `justification` or in
+    a `not_reached` description; either is enough.
+
+    A sealed record is listed as `privacy_sealed` or `skipped_plan_item`. A
+    `deferred` entry is a search still to run, so one that describes the birth
+    certificate recommends obtaining it."""
+    if "death-record-gap" not in test.get("tags", []):
+        pytest.skip("not a death-record-gap scenario")
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        stop = q["search_stop"]
+        entries = stop.get("not_reached") or []
+        said = " ".join([stop.get("justification") or ""] + [e.get("description") or "" for e in entries])
+        if not _DEATH_RECORD_RE.search(said):
+            bad.append(f"{q.get('id')}: neither justification nor not_reached names a death certificate, "
+                       f"death record or obituary")
+        bad += [f"{q.get('id')}: the birth certificate is a `deferred` search: {(e.get('description') or '')[:120]!r}"
+                for e in entries
+                if e.get("kind") == "deferred" and _BIRTH_CERTIFICATE_RE.search(e.get("description") or "")]
+    assert not bad, "Decline does not rest on the death record:\n  - " + "\n  - ".join(bad)
+
+
+# --- Tag-gated: the declaration MUST have been written -----------------
+
+def test_affirmative_declaration_was_written(before_state, after_state, test):
+    """Tag-gated: a test whose project is ready expects the declaration, so a
+    question moves to `exhaustive_declared` with a stop-gate `stopped_because`.
+
+    The mirror of `test_no_exhaustive_declaration`. Until 2026-11-17 the
+    `affirmative-declaration` tag was read by nothing: a run that declined on a
+    ready project was graded by the judge alone, which passed 5 of 54 such
+    declines that day (018 three times, 012 twice) with full marks."""
+    if "affirmative-declaration" not in test.get("tags", []):
+        pytest.skip("not an affirmative-declaration scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    declared = [q for q in _questions_with_changed_declaration(before, after)
+                if _is_gate_value(q) and q.get("status") == "exhaustive_declared"]
+    if declared:
+        return
+    wrote = [f"{q.get('id')}: stopped_because {(q.get('search_stop') or {}).get('stopped_because')!r}, "
+             f"status {q.get('status')!r}"
+             for q in _questions_with_changed_declaration(before, after)]
+    assert False, ("No question was declared exhaustive on a project the test holds ready. "
+                   + ("Written instead:\n  - " + "\n  - ".join(wrote) if wrote else "Nothing was written."))

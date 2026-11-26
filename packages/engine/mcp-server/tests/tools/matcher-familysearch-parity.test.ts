@@ -10,7 +10,10 @@ import { fileURLToPath } from "url";
 // existed. Every request body, both ranking diagnostics and every output must
 // stay the same under the FamilySearch backend; the outputs may differ only in
 // the fields the shim removes or adds, which `normalize` deletes.
-// Regenerate only on the PR's merge base: UPDATE_MATCHER_GOLDEN=1.
+// Regenerate only on the PR's merge base: UPDATE_MATCHER_GOLDEN=1. One change
+// since, made on purpose (issue #4444): ranking's tree document carries the
+// subject's family (`Mob.matchSubset()`), not the subject alone, so the `rank`
+// and `rankRealNegative` requests gained the relatives; every output held.
 
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(async () => "test-token"),

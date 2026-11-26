@@ -528,6 +528,15 @@ through the survey, with the error telling it to narrow the query. The US
 places counted had 1 to 3 names (Shelby 1, Denver 2, Boston 3); with 3 the
 refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 
+### Rows at or below the matcher floor are slimmed (experiment)
+
+A ranked row whose unrounded `matchScore` is at or below
+`ranked.realNegativeFloor` (`FAMILYSEARCH_FLOORS.realNegative` when absent) keeps
+only `recordId`, `recordArk`, `personName`, `role`, `birthDate`, `birthPlace`,
+`events`, `relativeTerms`, `batchNumber`, `collectionId`, `matchRank`,
+`searchRank`, `matchScore` and `attachedTo*` when true. No row is dropped. A row
+whose `matchScore` is `null` is never slimmed. The staged sidecar is unchanged.
+
 ### The response is re-ordered; the staged sidecar is not
 
 When a search ranks, `results` comes back **annotated in place** — each row
@@ -535,7 +544,8 @@ carries `matchRank`, `searchRank`, `matchScore`, and where available
 `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
 birth years differ by more than two, `surnameNotOnSubject` with
 `candidateSurname` when the surname is none the project gives the subject, and
-the `attachedTo*` flags — and the
+the `attachedTo*` flags (only when true; `ranked.attachmentsChecked` is `false`
+when they could not be checked) — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` and its `subjectTooThinNote` when the subject lacks both a
 narrow date and a named relative — see `rank-search-matches-tool-spec.md` §
@@ -648,13 +658,17 @@ Strict surname + birth-place match:
 | `placeExpansion` | object \| undefined | Present **only** when a place field was searched under more than one name: `searches[]` (each search's `places`, `totalMatches`, rows `returned`, and an `error` if it failed), `mergedCount` (records in the merged list read), `truncated` when names were left out to stay within 12 searches, `rankedPoolCapped` when only the first 300 merged rows were staged and ranked, and a one-sentence `note`. **Serialized before `results`**; staged with the response, since it records what was searched. See "Life event fields". |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses **this tool made** with no `research.json` log entry. A `record_search` is never told about a `fulltext_search` file, nor the reverse, so one agent is not asked to log another agent's searches. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
-| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
+| `logId` | string \| undefined | The research-log entry this tool wrote for a nil search. Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. **Serialized before `results`.** See "Nil log write". |
+| `planRationale` / `escalationDue` | string \| undefined | Returned alongside `logId` when the log write produces them, so everything the agent needs at the moment of a nil arrives in one response. **Serialized before `results`.** |
+| `validationWarnings` | string[] \| undefined | The log write's own warnings. **Serialized before `results`.** |
+| `nilLogRefused` | string[] \| undefined | Returned **instead of** `logId` when the log tool refused the write. The SEARCH still succeeded — this is not a failure. **Serialized before `results`.** |
+| `planItemIdIgnored` | string \| undefined | Present **only** when `planItemId` was supplied with no `projectPath`. There is no project to write to, so nothing was logged and the plan item reached no entry. The same note `build_external_search_url` gives for the same mistake, from the one constant both tools import. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | Always present. FamilySearch's own search order (under a place expansion, the merged order), or best first with score fields when ranking ran — one row list, never two; see "The response is re-ordered; the staged sidecar is not". |
 | `collections` | object \| undefined | `collectionId` → collection title for every collection in `results`, hoisted off the rows by the compaction every answer gets (see the `gedcomx` row of `RecordSearchResult`). Absent when no row carries a title. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 | `surnameVariantHints` | object \| undefined | Present **only** on a search that did not identify the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. A nil search needs neither `projectPath` nor `subjectId`; a search that returned rows fires only through ranking's `subjectResolvable: false`, which needs both. **Serialized before `results`**; never staged. See below. |
 
-### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
+### `unloggedSearches` and the nil log write — the log obligation, at the tool
 
 A search whose results are never logged leaves no trace in `research.json`: the
 nil results that prove a query shape fails, the candidates that were examined and
@@ -691,7 +705,7 @@ obligation satisfiable from disk, and `research_log_append` fills `query` from t
 staged payload verbatim. The note also tells the model to log each search as it
 goes, matching `search-records/SKILL.md`'s rule against batching log calls.
 
-**`nilSearchNeedsLog` is keyed on the UPSTREAM total**, not on `results.length`.
+**The nil log write is keyed on the UPSTREAM total**, not on `results.length`.
 `results` is the post-`mapEntry` set, and `mapEntry` drops an entry with no
 represented person or no `entry.id`, so a page whose entries all fail mapping
 empties `results` while `totalMatches` is non-zero — and `staged` is null there too,
@@ -752,10 +766,65 @@ Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
 claiming ranking was skipped when it ran, or the reverse.
 
+#### Nil log write
+
+A search that returns nothing writes its own research-log entry, through
+`research_log_append`'s write path — the same refusals, the same project lock.
+The tool takes two inputs for it: `planItemId` (null for an ad-hoc search) and
+`note`, the reason for the search, known before it runs.
+
+**Why the tool and not the agent.** A search WITH results stages its response,
+and the log tool fills `query` from that staged payload, so the entry is what was
+sent. A search with no results stages nothing, so before this the agent typed the
+query in by hand and nothing could check it at the write. A gate run logged a
+`collectionId` filter its search never sent, and only a unit validator saw it.
+Writing the entry here makes a wrong query in a nil entry impossible, and saves
+one call per nil.
+
+**What is written.** `tool: "record_search"`, the call's own arguments as `query`
+with plumbing stripped (`projectPath`, `subjectId`, `planItemId`, `note` are not
+filters and never reach it), `outcome: "negative"`, `results_examined: 0`, the
+agent's `note` as `notes`, and `written_by: "record_search"`.
+
+**The after-the-result note is the tool's too.** A nil's `notes` is the agent's
+pre-search note followed by the escalation text when the write produces one. The
+agent writes none. Only escalation — no coverage or browse-only line. This is
+computed from the log INCLUDING the entry being written, so it is applied between
+the append and the validate, which is the only window where the entry's `notes`
+can still change and still be what the schema checks and the file holds.
+
+**A refused write does not fail the search.** The response carries
+`nilLogRefused` with the log tool's errors and keeps its results; in practice this
+is the pinned-nil rule, and the agent then logs that nil by hand batched with the
+retry the message names. A `no_project` refusal is relayed as a note.
+
+**`planItemId` with no `projectPath` is answered, not dropped.** There is no
+project to write to, so no entry is written and the plan item reaches none —
+and because the search itself answers normally, nothing would otherwise say so.
+The response carries `planItemIdIgnored`, the same note
+`build_external_search_url` gives for the same mistake; both tools write through
+`research_log_append`, so the one constant serves both. It is not returned
+alongside `nilLogRefused`: there a write WAS attempted, and the refusal is the
+thing to report.
+
+**Re-logging is absorbed, a repeat search is not.** `research_log_append` returns
+the existing entry with `alreadyLogged: true`, writing nothing, when an agent
+re-logs a nil this tool already wrote — matched on the plan item and full query
+equality against an entry carrying `written_by: "record_search"`. It never
+applies to the tool's own write, so a genuine second search on the same query is
+logged as the second event it is. The key is deliberately strict: a looser one
+would swallow a different nil on the same plan item, and a swallowed negative is
+the asymmetric error, where a duplicate is merely visible. The cost, stated: when
+a hand-typed query differs from the tool's by even one key the dedupe misses and
+a second entry lands.
+
 #### Key order
 
 `rankingSkipped` is emitted **before `results`** in the response object, and so
-are `unloggedSearches`, `nilSearchNeedsLog` and `placeExpansion`. `results`
+are `unloggedSearches`, `placeExpansion` and the nil log write's own keys —
+`logId`, `planRationale`, `escalationDue`, `validationWarnings`, `nilLogRefused`,
+`planItemIdIgnored`.
+`results`
 is by far the largest field, so anything serialized after it is the first thing any
 size bound drops. The motivating evidence: across the 46 `record_search` calls in
 `run-2026-07-31_13-02-13` the existing `ranked` **field** appears in the run log
@@ -1204,7 +1273,12 @@ Scandinavian clerks wrote the patronymic ending *-datter* / *-dotter*
 ("daughter") short, and FamilySearch's indexes transcribe the short form
 without its period. The bride a tree records as "Unna Halsteinsdatter" is
 indexed "Urna Halsteinsdr" in Norway, Marriages, 1660-1926 (collection
-`1468080`), so a search on the full spelling returns nothing. The tool lists the
+`1468080`). A live check on 2026-11-16 (collection 1468080, 1770-1800) found her
+with `givenName=Urna` and either `surname=Halsteinsdatter` or
+`surname=Halsteinsdr`, and with neither surname under `givenName=Unna`; the
+abbreviated surname is not needed. The measured basis below was taken against an
+earlier `ut_search_records_023` mock, in which only the abbreviated surname found
+her; 023 now serves live captures. The tool lists the
 abbreviated forms itself rather than relying on the caller to remember them —
 the same reasoning as `jurisdictionHints`.
 
@@ -1357,11 +1431,18 @@ the country) and changed no other answer.
 ```
 
 - `schedules` — at most 8, earliest first. `recorded` is present only where the
-  table knows it: a heads-only schedule; the relationship-to-head column from
-  1880 for the US federal census and from 1851 for England and Wales and
-  Scotland (`US_RELATIONSHIP_COLUMN_FROM`, `BRITISH_RELATIONSHIP_COLUMN_FROM`,
-  which `research_log_append`'s pre-1880 gate also reads). Rows for other
-  jurisdictions carry no `recorded` yet.
+  row's `schedule` says what the schedule recorded (`headsOnly`, `everyone` or
+  `relationship`, one sentence each); a row with no `schedule` gets none. Filled:
+  the US federal census (heads only 1790-1840, the relationship-to-head column
+  from 1880, `US_RELATIONSHIP_COLUMN_FROM`), England and Wales and Scotland (the
+  column from 1851, `BRITISH_RELATIONSHIP_COLUMN_FROM`; both constants are also
+  read by `research_log_append`'s pre-1880 gate), the heads-only Illinois 1855
+  and 1865 and Wisconsin 1855-1895 state censuses, the Colorado and Florida 1885
+  state censuses, and Norway 1801, 1865, 1891 and 1900. Each row outside the US
+  federal and British censuses cites, in a comment beside it, the FamilySearch
+  wiki page its `schedule` was read from. Rows with no `schedule` are blank: the
+  wiki did not settle them (North Dakota 1915 and 1925, Mexico 1930) or no one
+  has read their page yet.
 - `fragmentYears` — years searched whose census of the place survives only as
   fragments.
 - With `recordType: "census"` and no census of the years searched, `schedules`

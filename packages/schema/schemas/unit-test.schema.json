@@ -58,7 +58,7 @@
         "holdout": {
           "type": "boolean",
           "default": false,
-          "description": "Reserves this test as a generalization check for the skill-improvement loop. When true, the body-optimizer must not read or tune against this test when proposing SKILL.md edits — it consults holdout tests only to measure whether an edit generalized beyond the cases it was written from. The harness runs holdout tests like any other (they are still graded, annotated, and released); the flag governs only the improver's behavior. See docs/skill-lifecycle.md."
+          "description": "Reserves this test as a generalization check for the skill-improvement loop. When true, the body-optimizer must not read or tune against this test when proposing SKILL.md edits — it consults holdout tests only to measure whether an edit generalized beyond the cases it was written from. The harness runs holdout tests like any other (they are still graded and annotated); the flag governs only the improver's behavior. See docs/skill-lifecycle.md."
         },
         "expected_outcome": {
           "type": "string",
@@ -303,6 +303,13 @@
       "default": false,
       "description": "Opt-in. When true, the harness includes the actual content of the entries this run wrote to research.json / tree.gedcomx.json (truncated) in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply (e.g. proof-conclusion's narrative_markdown). Defaults to false, which preserves the legacy counts-only judge input for every other test/skill, so enabling it for one skill does not affect any other. See unit-test-spec.md Section 5.9."
     },
+    "na_dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1},
+      "description": "Opt-in. Rubric dimension names (each must be a `## ` heading in the suite's rubric.md) that are N/A for this test. After the judge returns, the harness coerces every non-null score on these dimensions to null and keeps the judge's original score and rationale in a `coerced_review_dimension_to_na` warning. For a review or audit test whose rubric dimensions grade linking work the test does not ask for. Base dimensions are refused, an unknown name makes the test not_runnable, and a negative test may not carry it. A test that uses it must carry a tag-gated validator that checks what those dimensions held. See unit-test-spec.md Section 5.14."
+    },
     "execution": {
       "type": "object",
       "additionalProperties": false,
@@ -346,8 +353,8 @@
         },
         "step_mode": {
           "type": "string",
-          "enum": ["step", "job", "wrapup"],
-          "description": "The step boundary this test's turn runs under (decision 25, docs/specs/research-step-mode-spec.md). OMIT for no boundary, which is the default and what nearly every test measures: the harness builds no gate at all. Declare `step` to enforce one step per turn (the first spawn fixes the group, or the spawn after init-project when init-project opens the turn; a second, out-of-group spawn is DENIED, and a second crossing HALTS the run as the worker's does); `job` to allow every step, as Cowork's one-turn \"Keep going\" does; `wrapup` for the dispose-to-conclusion order. The check runs BEFORE the stubs, so a stub's canned reply cannot stand in for a step denial. The predicate is the plugin's own packages/engine/plugin/hooks/step_boundary.py, loaded by the worker and both harnesses, so a test measures the rule production runs."
+          "enum": ["step", "wrapup"],
+          "description": "The step boundary this test's turn runs under (decision 25, docs/specs/research-step-mode-spec.md). OMIT for no boundary, which is the default and what nearly every test measures: the harness builds no gate at all. Declare `step` to enforce one step per turn (the first spawn fixes the group, or the spawn after init-project when init-project opens the turn; a second, out-of-group spawn is DENIED, and a second crossing HALTS the run as the worker's does), or `wrapup` for the dispose-to-conclusion order. The check runs BEFORE the stubs, so a stub's canned reply cannot stand in for a step denial. The predicate is the plugin's own packages/engine/plugin/hooks/step_boundary.py, loaded by the worker and both harnesses, so a test measures the rule production runs."
         },
         "stop_at_stub": {
           "type": "boolean",
@@ -386,6 +393,12 @@
     "index_error_source": {
       "type": "string",
       "description": "Optional. Names the ONE attached source this test declares to be an indexing error — the source that must never be recommended for detaching. Consumed by test_index_discrepancy_does_not_recommend_detaching in eval/harness/validators/test_source_evaluation.py, which splits the reply on blank lines and fails if the passage naming this source also recommends detaching or unlinking. Exists because a reply-wide check cannot express the rule: a correct report also contains a genuinely misattributed source for which detaching IS right, so any reply-wide licence is always granted and the assertion can never fail (see unit-test-spec.md § 5.12). The test declares the situation; the validator asserts the rule."
+    },
+    "variant_names": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional. The name spellings a test declares to be variants the records themselves state, not indexing errors. Consumed by test_name_variant_not_called_index_error in eval/harness/validators/test_source_evaluation.py, which fails a passage that names one of these spellings beside an un-negated indexing-error or index-correction term. Scoped to the declared names because a reply-wide check cannot express the rule: a correct report can recommend an index correction for some other source. A test tagged name-variant must declare it (see unit-test-spec.md § 5.13)."
     }
   },
   "allOf": [

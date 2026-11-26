@@ -65,7 +65,7 @@ def _states(rows, field):
     return Counter(r.state for r in rows if r.field == field)
 
 
-def _search(doc, *, tool="mcp__genealogy__record_search", **extra):
+def _search(doc, *, tool="mcp__genealogy__fulltext_search", **extra):
     """A search-tool call carrying a decoded-response `doc`."""
     call = {"tool": tool, "response_summary": _doc_envelope(doc, as_text_block=False)}
     call.update(extra)
@@ -83,7 +83,7 @@ def _log_append(**args):
 def test_nil_fired_and_acted(tmp_path, as_text_block):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     calls = [
-        {"tool": "mcp__genealogy__record_search",
+        {"tool": "mcp__genealogy__fulltext_search",
          "response_summary": _doc_envelope(nil_doc, as_text_block=as_text_block)},
         _log_append(outcome="negative"),  # negative, no stagedResultsRef, before next search
     ]
@@ -95,7 +95,7 @@ def test_nil_fired_and_acted(tmp_path, as_text_block):
 def test_nil_fired_and_ignored(tmp_path, as_text_block):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     calls = [
-        {"tool": "mcp__genealogy__record_search",
+        {"tool": "mcp__genealogy__fulltext_search",
          "response_summary": _doc_envelope(nil_doc, as_text_block=as_text_block)},
         # another search before any qualifying log append (itself an emitter,
         # so it classifies too — here never-held, since its response has no note)
@@ -111,7 +111,7 @@ def test_nil_fired_and_ignored(tmp_path, as_text_block):
 def test_nil_condition_never_held(tmp_path, as_text_block):
     # observable search response with no nil note
     doc = {"results": [{"id": "x"}], "totalMatches": 5}
-    calls = [{"tool": "mcp__genealogy__record_search",
+    calls = [{"tool": "mcp__genealogy__fulltext_search",
               "response_summary": _doc_envelope(doc, as_text_block=as_text_block)}]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({NEVER_HELD: 1})
@@ -119,7 +119,7 @@ def test_nil_condition_never_held(tmp_path, as_text_block):
 
 def test_nil_not_observable_predates_ship(tmp_path):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
-    calls = [{"tool": "mcp__genealogy__record_search",
+    calls = [{"tool": "mcp__genealogy__fulltext_search",
               "response_summary": _doc_envelope(nil_doc, as_text_block=False)}]
     # captured before the search ship date -> engine could not have emitted it
     rows = scan([_write_run(tmp_path, calls, captured_at=OLD)]).rows
@@ -127,7 +127,7 @@ def test_nil_not_observable_predates_ship(tmp_path):
 
 
 def test_nil_not_observable_no_summary(tmp_path):
-    calls = [{"tool": "mcp__genealogy__record_search"}]  # no response_summary
+    calls = [{"tool": "mcp__genealogy__fulltext_search"}]  # no response_summary
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({NOT_OBSERVABLE: 1})
 
@@ -351,7 +351,7 @@ def test_firing_call_carries_its_agent_label(tmp_path):
 
 def test_error_firing_call_is_skipped_entirely(tmp_path):
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
-    calls = [{"tool": "mcp__genealogy__record_search", "is_error": True,
+    calls = [{"tool": "mcp__genealogy__fulltext_search", "is_error": True,
               "response_summary": _doc_envelope(nil_doc, as_text_block=False)}]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert [r for r in rows if r.field == "nilSearchNeedsLog"] == []
@@ -365,7 +365,7 @@ def test_partition_identity_holds(tmp_path):
         _search(nil_fire), _log_append(outcome="negative"),   # acted (log before next search)
         _search(nil_fire),                                     # ignored (next emitter is a search)
         _search(nil_clean),                                   # never-held
-        {"tool": "mcp__genealogy__record_search"},            # not-observable (no summary)
+        {"tool": "mcp__genealogy__fulltext_search"},            # not-observable (no summary)
     ]
     rows = scan([_write_run(tmp_path, calls)]).rows
     nil = _states(rows, "nilSearchNeedsLog")
@@ -456,7 +456,7 @@ def test_resolvable_sha_decides_observability_over_captured_at(tmp_path):
 
 def test_nil_fires_on_a_search_capture_cut_mid_document(tmp_path):
     raw = _doc_envelope({"nilSearchNeedsLog": "Nothing returned", "results": []}, as_text_block=False)
-    calls = [{"tool": "mcp__genealogy__record_search", "response_summary": raw[:40] + "..."},
+    calls = [{"tool": "mcp__genealogy__fulltext_search", "response_summary": raw[:40] + "..."},
              _log_append(outcome="negative")]
     assert _states(scan([_write_run(tmp_path, calls)]).rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
 
@@ -484,10 +484,37 @@ def test_a_links_fetch_in_a_run_after_the_change_is_neither_an_emitter_nor_a_sea
 
 
 def test_a_record_search_in_a_run_after_the_change_still_counts(tmp_path):
+    """A fulltext_search still emits the note after #4527 — only record_search retired."""
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
     rows = scan([_write_run_with(tmp_path, [_search(nil_doc), _log_append(outcome="negative")],
                                  external_collection_keys={})]).rows
     assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_record_search_from_before_the_change_still_scores(tmp_path):
+    """#4527 retires record_search's arm PER RUN, so its history is not erased.
+
+    A pre-change run is dated before the retiring commit, so the call is still an
+    emitter and still partitions. Removing record_search from the field's
+    `emitters` instead would drop this row entirely — 321 of the corpus's 430
+    firings — and read as "agents stopped ignoring it".
+    """
+    nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
+    call = _search(nil_doc, tool="mcp__genealogy__record_search")
+    rows = scan([_write_run_with(tmp_path, [call, _log_append(outcome="negative")],
+                                 external_collection_keys={},
+                                 captured_at="2026-10-01T00:00:00Z")]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_record_search_from_after_the_change_is_not_an_emitter(tmp_path):
+    """A run postdating #4527 gets no note from record_search, so it scores nothing."""
+    nil_doc = {"results": [], "totalMatches": 0, "logId": "log_007"}
+    call = _search(nil_doc, tool="mcp__genealogy__record_search")
+    rows = scan([_write_run_with(tmp_path, [call, _log_append(outcome="negative")],
+                                 external_collection_keys={},
+                                 captured_at="2026-11-18T00:00:00Z")]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter()
 
 
 def test_a_links_fetch_in_a_run_before_the_change_scores_as_before(tmp_path):

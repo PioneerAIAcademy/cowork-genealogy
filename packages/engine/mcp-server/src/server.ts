@@ -12,7 +12,9 @@ import type { Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
 import {
@@ -30,13 +32,16 @@ import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import { localitySurveyTool } from "./tools/locality-survey.js";
+import type { LocalitySurveyInput } from "./types/locality-survey.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
-import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "./tools/image-transcribe-mcp.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
-import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { ImageTranscribeInput, ImageTranscribeToolResponse } from "./types/image-transcribe.js";
 import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
+import type { RecordSearchToolResponse } from "./types/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
 import { samePerson } from "./tools/same-person.js";
@@ -71,7 +76,10 @@ import { sourceAttachmentsTool } from "./tools/source-attachments.js";
 import type { SourceAttachmentsInput } from "./types/source-attachments.js";
 import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
+import { imageIndexTool } from "./tools/image-index.js";
+import type { ImageIndexInput } from "./types/image-index.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
+import { sourceScreenTool, type SourceScreenInput } from "./tools/source-screen.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
 import { personQualityTool } from "./tools/person-quality.js";
 import type { PersonQualityInput } from "./types/person-quality.js";
@@ -97,9 +105,10 @@ import {
   buildExternalSearchUrlTool,
   type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
+import { projectLinks } from "./utils/project-links.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
-import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
+import { treeForgetTool, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
   researchAppendFromCaller,
   type ResearchAppendInput,
@@ -126,6 +135,19 @@ import {
   projectCreate,
   type ProjectCreateInput,
 } from "./tools/project-create.js";
+import {
+  callProjectView,
+  connectorPageRead,
+  connectorProjectView,
+  connectorPageUri,
+  connectorProjectViewSchemas,
+  connectorViewFailure,
+  isProjectViewTool,
+  PAGE_MIME_TYPE,
+  pageResourceList,
+  pointAtPage,
+  UI_EXTENSION,
+} from "./tools/project-view.js";
 import { sidecarRead, type SidecarReadInput } from "./tools/sidecar-read.js";
 import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variants.js";
 import { allToolSchemas } from "./tool-schemas.js";
@@ -134,18 +156,40 @@ import { allToolSchemas } from "./tool-schemas.js";
 import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 import { rejectUnknownArgs } from "./utils/unknown-args.js";
+import { projectGateRefusal } from "./utils/project-gate.js";
+
+const ADVERTISED_TOOLS: ReadonlySet<string> = new Set(allToolSchemas.map((t) => t.name));
 
 export function createServer(principal: Principal): Server {
+  // The two view tools and their page exist on this surface alone. The list never
+  // varies by what a client declares: a host may share one `tools/list` per login.
+  const connector = principal.kind === "bearer" && principal.surface === "connector";
+  const view = connector ? connectorProjectView(principal.config) : null;
+
   const server = new Server(
     // The stamped build (base+date.sha, or base+dev) — issue #2126. The same
     // string is the `buildId` project_context and auth_status return.
     { name: "genealogy-mcp", version: readBuildInfo().version },
-    { capabilities: { tools: {} } }
+    {
+      capabilities: {
+        tools: {},
+        ...(connector ? { resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [PAGE_MIME_TYPE] } } } : {}),
+      },
+    }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: allToolSchemas,
+    tools: connector ? [...allToolSchemas, ...pointAtPage(connectorProjectViewSchemas, connectorPageUri())] : allToolSchemas,
   }));
+
+  // Only here: the SDK throws on a resources handler with no resources capability.
+  if (connector) {
+    const { config } = principal;
+    server.setRequestHandler(ListResourcesRequestSchema, async () => pageResourceList(connectorPageUri()));
+    server.setRequestHandler(ReadResourceRequestSchema, async (request) =>
+      connectorPageRead(request.params.uri, config),
+    );
+  }
 
   // Tool results are serialized COMPACT — `JSON.stringify(result)`, never
   // `(result, null, 2)`. The sole consumer is the model, and pretty-print
@@ -158,12 +202,37 @@ export function createServer(principal: Principal): Server {
   // Nothing downstream parses the formatting; a human debugging a transcript can
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    // `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so these two check
+    // their own arguments. Every other surface falls through to `Unknown tool`.
+    if (view && isProjectViewTool(request.params.name)) {
+      try {
+        return await callProjectView(view, request.params.name, request.params.arguments ?? {});
+      } catch (error) {
+        // Plain text, not the `{"error":...}` JSON below: a card shows it.
+        return connectorViewFailure(error);
+      }
+    }
+
     // Argument NAMES only (`unknown-args.ts`): a key that is not a parameter is
     // refused here, before any arm, instead of being dropped by the handler.
     const unknownArgs = rejectUnknownArgs(request.params.name, request.params.arguments);
     if (unknownArgs !== null) {
       return {
         content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
+        isError: true
+      };
+    }
+
+    // The one project gate (utils/project-gate.ts): every tool but the six that manage projects or sign-in, and tree_gaps, that
+    // manage projects or sign-in refuses a call with no project and names the two
+    // calls that start one. The two connector-only view tools were dispatched
+    // above, outside this gate on purpose: they resolve the project themselves.
+    const noProject = ADVERTISED_TOOLS.has(request.params.name)
+      ? await projectGateRefusal(request.params.name, request.params.arguments)
+      : null;
+    if (noProject !== null) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: noProject }) }],
         isError: true
       };
     }
@@ -348,6 +417,19 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
+    if (request.params.name === "locality_survey") {
+      try {
+        const args = request.params.arguments as unknown as LocalitySurveyInput;
+        const result = await localitySurveyTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
     if (request.params.name === "image_read") {
       try {
         const args = request.params.arguments as unknown as ImageReadInput;
@@ -383,10 +465,9 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
-        const result = await imageTranscribeMcpTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }],
-        };
+        // A document writer since issue #4721 (it logs its own read).
+        const result: ImageTranscribeToolResponse & OkFalseResult = await imageTranscribeMcpTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -398,10 +479,14 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "record_search") {
       try {
         const args = request.params.arguments as unknown as RecordSearchInput;
-        const result = await recordSearchTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }]
-        };
+        // record_search became a document writer in issue #4527 — it writes a
+        // nil search's own log entry — so it routes through the writer envelope.
+        // Its response carries no `ok` today (a refused log write keeps the
+        // search result and reports `nilLogRefused`), so this never marks an
+        // error; the intersection is the same idiom external_links_search uses
+        // above, and it surfaces an `ok: false` correctly if one is ever added.
+        const result: RecordSearchToolResponse & OkFalseResult = await recordSearchTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -630,11 +715,31 @@ export function createServer(principal: Principal): Server {
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
       }
     }
+    if (request.params.name === "image_index") {
+      try {
+        const args = request.params.arguments as unknown as ImageIndexInput;
+        const result = await imageIndexTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
     if (request.params.name === "person_warnings") {
       try {
         const args = request.params.arguments as unknown as PersonWarningsInput;
         const result = await personWarningsTool(args);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "source_screen") {
+      try {
+        const args = request.params.arguments as unknown as SourceScreenInput;
+        const result = await sourceScreenTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
@@ -733,7 +838,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "build_external_search_url") {
       try {
         const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
-        const result = await buildExternalSearchUrlTool(args);
+        const result = await buildExternalSearchUrlTool(args, await projectLinks(principal));
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -763,7 +868,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "tree_forget") {
       try {
         const args = request.params.arguments as unknown as TreeForgetInput;
-        const result = await treeForget(args);
+        const result = await treeForgetTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

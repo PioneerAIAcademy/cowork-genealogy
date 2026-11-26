@@ -19,5 +19,43 @@
   "execution": {
     "max_turns": 12,
     "max_wall_clock_seconds": 600
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "deceased",
+      "fact_type": "burial"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "age"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "attribute": "place"
+    },
+    {
+      "record_role": "child",
+      "fact_type": "christening"
+    },
+    {
+      "record_role": "child",
+      "fact_type": "birth",
+      "attribute": "date"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "immigration"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Shenandoah"
+    }
+  ]
 }

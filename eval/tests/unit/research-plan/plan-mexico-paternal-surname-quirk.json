@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_plan_q4m",
+    "skill": "research-plan",
+    "name": "Mexico parentage plan carries the paternal-surname and parent-search quirk into the civil-registration item's rationale",
+    "type": "positive",
+    "description": "mexico-paternal-surname-quirk-first-plan: q_001 has no plan yet, and the localities entry loc_001 already carries a collection quirk from the FamilySearch Wiki (https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org). Issue #4516 removes that rule from the search-records body, so it now reaches a search only through the plan item: research-plan must write it into the affected item's persisted rationale.",
+    "tags": [
+      "planning",
+      "reads-localities-entry",
+      "first-plan",
+      "collection-quirks",
+      "wiki-quirk-route",
+      "mexico",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — who were the parents of María Guadalupe Hernández Ramírez (b. about 1895, Guadalajara, Jalisco, Mexico)?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "mexico-paternal-surname-quirk-first-plan"
+  },
+  "mcp_fixtures": [
+    "wiki-read-mexico-naming-customs",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "A `localities` entry (loc_001) is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan does not hold those tools). Do NOT fail it for not surveying.",
+    "The quirk under test is loc_001's: \"Although Mexicans use two surnames, most indexed records carry only the first (paternal) surname — search with the paternal surname alone; when the person is not found, search through the parents (a parent search with each parent's first surname, leaving out the child's name). (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Improve_your_Search_Results_for_Hispanic_Ancestors_in_FamilySearch.org)\"",
+    "The persisted `plan_items[].rationale` is the only place that counts — narration is not persisted and search-records never sees it. Correctness turns on the plan item that searches Jalisco civil registration (collection 1918187) for her birth: its persisted rationale must state that the index usually carries only the paternal surname (so search 'Hernández', not 'Hernández Ramírez'), and that a parent search is the fallback. A plan whose reply mentions the quirk while that item's rationale does not fails this point. Paraphrase is fine.",
+    "Plan items must include rationale explaining why each record type was chosen for the question — generic rationale ('more records would help') is a fail."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

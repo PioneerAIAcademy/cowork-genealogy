@@ -974,6 +974,66 @@ def _explained_by_birth_year_fill(before_section, after_section) -> bool:
     return changed
 
 
+def _wrote_project_status(tool_calls) -> bool:
+    """True when any research_append call in this run wrote `project.status`.
+
+    The reopen authorization below matches a DELTA SHAPE, and the shape a
+    non-owner produces by writing `status: "active"` on a completed project is
+    identical to the engine's own reopen. Without this the ownership check
+    launders exactly the write the project row exists to catch — "a non-owner
+    sets status mid-project". The engine draws the same line (it declines to
+    reopen when the call wrote the field itself), so this is that rule read from
+    the call log rather than a second policy.
+
+    Walks `ops` as its siblings do, including the stringified form.
+    """
+    for c in tool_calls or []:
+        if not str(c.get("tool", "")).endswith("research_append"):
+            continue
+        args = c.get("args") or {}
+        candidates = [args]
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (TypeError, ValueError):
+                ops = None
+        if isinstance(ops, list):
+            candidates = ops
+        for op in candidates:
+            if not isinstance(op, dict) or op.get("section") != "project":
+                continue
+            for key in ("fields", "entry"):
+                block = op.get(key)
+                if isinstance(block, dict) and "status" in block:
+                    return True
+    return False
+
+
+def _explained_by_project_reopen(before_section, after_section) -> bool:
+    """True when the only change to `project` is research_append's own reopen.
+
+    Issue #4698: a call that leaves a question it wrote at a status other than
+    `resolved`, on a project that was `completed`, sets the project back to
+    `active` and stamps `updated`. The engine does that itself, so a unit run
+    where (say) question-selection appends to a completed project would
+    otherwise fail ownership — the project row's callers are init-project and
+    proof-conclusion only.
+
+    Deliberately NOT done by adding callers to the project row: that would let
+    those skills write `status` by any path, to any value. This authorizes one
+    exact delta and nothing else — `completed` -> `active`, plus `updated`. A
+    different status pair, any other field, or a non-dict section fails closed.
+    """
+    if not isinstance(before_section, dict) or not isinstance(after_section, dict):
+        return False
+    if before_section.get("status") != "completed" or after_section.get("status") != "active":
+        return False
+    rest_before = {k: v for k, v in before_section.items() if k not in ("status", "updated")}
+    rest_after = {k: v for k, v in after_section.items() if k not in ("status", "updated")}
+    return rest_before == rest_after
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -1147,6 +1207,17 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                 before.get(section), after.get(section)
             ):
                 continue
+            # research_append's own reopen (#4698): a write that leaves a
+            # question unresolved on a completed project sets the project back
+            # to active. The engine writes it, not the caller, so it is not a
+            # caller write and does not go on the project row's callers.
+            if (
+                section == "project"
+                and "research_append" in called
+                and not _wrote_project_status(tool_calls)
+                and _explained_by_project_reopen(before.get(section), after.get(section))
+            ):
+                continue
             # research_append's unanchored-person sweep: the whole delta is the
             # deletion of the entries naming the persons it reported removing,
             # after a merge's remap only where the merge itself is authorized.
@@ -1172,6 +1243,27 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
 #: added there and not here silently stops being authorized, which fails CLOSED
 #: (the write is refused) rather than open.
 _REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
+
+
+def _claims_changed(tool_calls) -> bool:
+    """Whether this run wrote a proof summary through `research_append`: the only
+    way it clears `primary` on a fact no assertion correction moved (Decision 34)."""
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in candidates):
+            return True
+    return False
 
 
 def _corrected_assertion_ids(tool_calls) -> set[str]:
@@ -1243,6 +1335,23 @@ def _fact_identity(fact: dict) -> tuple:
             fact.get("standard_date"), fact.get("assertion_id"), refs)
 
 
+def _primary_cleared(before_fact: dict, after_fact: dict) -> bool:
+    """`primary` was true and is now absent: research_append's claim rule clears
+    it when the claim covering the fact goes (Decision 34). A flag set, never."""
+    return before_fact.get("primary") is True and after_fact.get("primary") is not True
+
+
+def _same_but_primary(before_fact: dict, after_fact: dict) -> bool:
+    """Identity equal apart from `primary`, which may only have been cleared."""
+    if _fact_identity(before_fact)[:1] + _fact_identity(before_fact)[2:] != (
+        _fact_identity(after_fact)[:1] + _fact_identity(after_fact)[2:]
+    ):
+        return False
+    return (before_fact.get("primary") is True) == (after_fact.get("primary") is True) or _primary_cleared(
+        before_fact, after_fact
+    )
+
+
 def _person_identity(person: dict) -> tuple:
     """The same, for one person: nothing but its facts' mirrored attrs may move."""
     names = tuple(
@@ -1275,7 +1384,7 @@ def _person_identity(person: dict) -> tuple:
 _SANITIZER_MINTED_KEYS = frozenset({"id"})
 
 
-def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
+def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected, claims_changed=False) -> bool:
     """True when the whole persons delta is the assertion-backlink fact rewrite.
 
     `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
@@ -1299,8 +1408,6 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
         return False
     if len(before_section) != len(after_section):
         return False
-    if not corrected:
-        return False
 
     assertions = {}
     if isinstance(research_after, dict):
@@ -1310,6 +1417,7 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
             if isinstance(a, dict)
         }
 
+    cleared_any = False
     for b_person, a_person in zip(before_section, after_section):
         if not isinstance(b_person, dict) or not isinstance(a_person, dict):
             return False
@@ -1326,11 +1434,17 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
         for b_fact, a_fact in zip(b_facts, a_facts):
             if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
                 return False
-            if _fact_identity(b_fact) != _fact_identity(a_fact):
+            if not _same_but_primary(b_fact, a_fact):
                 return False
             changed = [
                 k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
             ]
+            if _primary_cleared(b_fact, a_fact):
+                # A claim write clears it anywhere; otherwise only the rewrite that
+                # moved this fact off its claim can have.
+                if not claims_changed and not (changed and b_fact.get("assertion_id") in corrected):
+                    return False
+                cleared_any = True
             if not changed:
                 continue
             link = b_fact.get("assertion_id")
@@ -1357,7 +1471,38 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
                     return False
                 if got != want:
                     return False
-    return True
+    return bool(corrected) or cleared_any
+
+
+def _explained_by_primary_clear(before_section, after_section, claims_changed=False) -> bool:
+    """True when the whole relationships delta is cleared `primary` flags on
+    Couple facts, the only change research_append makes there (Decision 34)."""
+    if not claims_changed:
+        return False
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    cleared_any = False
+    for b_rel, a_rel in zip(before_section, after_section):
+        if not isinstance(b_rel, dict) or not isinstance(a_rel, dict):
+            return False
+        strip = lambda r: {k: v for k, v in r.items() if k != "facts"}
+        if strip(b_rel) != strip(a_rel):
+            return False
+        b_facts = b_rel.get("facts") or []
+        a_facts = a_rel.get("facts") or []
+        if not isinstance(b_facts, list) or not isinstance(a_facts, list) or len(b_facts) != len(a_facts):
+            return False
+        for b_fact, a_fact in zip(b_facts, a_facts):
+            if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
+                return False
+            if {k: v for k, v in b_fact.items() if k != "primary"} != {k: v for k, v in a_fact.items() if k != "primary"}:
+                return False
+            if not _same_but_primary(b_fact, a_fact):
+                return False
+            cleared_any = cleared_any or _primary_cleared(b_fact, a_fact)
+    return cleared_any
 
 
 def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
@@ -1412,6 +1557,10 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     owners = writer_sets(TREE_GEDCOMX_JSON, subject=skill_name)
     identity_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
     called = _tools_called(tool_calls)
+    # A proof-summary write that landed: the call alone is not enough, since a
+    # refused or no-op call is logged too.
+    summaries = lambda state: ((state or {}).get("research_json") or {}).get("proof_summaries")
+    claims_changed = _claims_changed(tool_calls) and summaries(before_state) != summaries(after_state)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -1431,7 +1580,17 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
                 after.get(section),
                 after_state.get("research_json"),
                 _corrected_assertion_ids(tool_calls),
+                claims_changed,
             )
+        ):
+            continue
+        # research_append clears `primary` on a Couple fact whose covering claim
+        # the call removed (Decision 34), and nothing else on this section.
+        if (
+            section == "relationships"
+            and "research_append" in (identity_tools.get(section) or set())
+            and "research_append" in called
+            and _explained_by_primary_clear(before.get(section), after.get(section), claims_changed)
         ):
             continue
         # extraction_append mints each `S` entry beside the `src_` it writes.
@@ -1650,15 +1809,54 @@ PROJECT_WRITER_TOOLS = {
 # appends its in-flight hand-off log entry then, and writes nothing otherwise.
 # Counted only when it carried one, so a pure URL build cannot vouch for a
 # hand edit made in the same run.
-CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+#
+# `record_search` joins them at issue #4527: with a projectPath it appends a nil
+# search's own log entry, and writes nothing without one. Conditional rather than
+# unconditional for the same reason — a no-project search cannot vouch for a hand
+# edit. It writes on a narrower condition still (only when the search found
+# nothing), but nil-ness is not visible in the call's args, and the projectPath
+# test is the one this guard can actually make.
+# `image_transcribe` joins them at issue #4721: in a project it logs its own page
+# read, keyed on the response for the same reason as record_search.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search", "image_transcribe"}
+
+#: Of the conditional writers, the ones whose write is decided by the RESPONSE,
+#: not the args, with the response keys that prove the write happened.
+#:
+#: `record_search` writes only on a nil (issue #4527), and nil-ness is not in its
+#: arguments. Keying it on `projectPath` instead would count EVERY search as a
+#: writer call — search-records and survey-surname pass `projectPath` on all of
+#: them — so `test_project_file_changes_route_through_writer_tools` would pass in
+#: any run of those suites, including the zero-writer hand-edit its own docstring
+#: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
+#: catch reads as coverage and is worse than none.
+#:
+#: `build_external_search_url` writes its in-flight entry unless the call carries
+#: `awaitingCapture: false`, and returns the entry's `logId` only when it wrote.
+#:
+#: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
+#: written, so it legitimizes no project-file change. Both keys survive into the
+#: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
+#: post hoc as it does live.
+RESPONSE_KEYED_PROJECT_WRITERS = {
+    "record_search": ("logId",),
+    "image_transcribe": ("logId",),
+    "build_external_search_url": ("logId",),
+}
 
 
 def _is_project_writer_call(call: dict) -> bool:
     name = (call.get("tool") or "").rsplit("__", 1)[-1]
     if name in PROJECT_WRITER_TOOLS:
         return True
+    if name not in CONDITIONAL_PROJECT_WRITER_TOOLS:
+        return False
+    keys = RESPONSE_KEYED_PROJECT_WRITERS.get(name)
+    if keys is not None:
+        response = call.get("response")
+        return isinstance(response, dict) and any(k in response for k in keys)
     args = call.get("args")
-    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
+    return isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(
@@ -2032,10 +2230,9 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         f"{len(calls)} call(s): "
         + ", ".join(c.get("tool", "?") for c in calls)
     )
-    # A failed spawn is recorded under the agent's name with `is_error`, and its
-    # runtime text ("Available agents: ...") names every owner (issue #3935).
-    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
-    reply = subject_reply_text(own_returns, text_response, test.get("skill") or "", test)
+    reply = subject_reply_text(
+        agent_returns, text_response, test.get("skill") or "", test, skip_failed_spawns=True
+    )
     if not owners:
         assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
         return

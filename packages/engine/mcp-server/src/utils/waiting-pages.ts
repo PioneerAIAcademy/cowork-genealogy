@@ -17,6 +17,10 @@ export interface WaitingPageIndexEntry {
   role: string;
   factType: string;
   value: string;
+  /** The assertion's date and place, when it has them, so a page that agrees is seen to.
+   *  A date equal to `value` is not repeated. */
+  date?: string;
+  place?: string;
 }
 
 /** A held record's source and the staged or logged page that shows it. */
@@ -85,20 +89,28 @@ export async function waitingPages(projectPath: string, research: any): Promise<
   }
 
   const out: WaitingPage[] = [];
-  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
   for (const s of sources) {
     const key = pageKey(s.image_ark);
     const ref = key === null ? undefined : oldestRead.get(key);
     if (!ref) continue;
-    const index = assertions
-      .filter((a) => a?.source_id === s.id && typeof a?.id === "string" && isLiveAssertion(a))
-      .map((a) => ({
-        assertionId: a.id as string,
-        role: String(a.record_role ?? ""),
-        factType: String(a.fact_type ?? ""),
-        value: String(a.value ?? ""),
-      }));
-    out.push({ sourceId: s.id, ref, index });
+    out.push({ sourceId: s.id, ref, index: sourceIndex(research, s.id).map(({ recordId: _r, ...e }) => e) });
   }
   return out;
+}
+
+/** A source's index: its live assertions, in array order. Shared with
+ *  `index-readings`, so a page's records read the same in both answers. */
+export function sourceIndex(research: any, sourceId: string): (WaitingPageIndexEntry & { recordId: string })[] {
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  return assertions
+    .filter((a) => a?.source_id === sourceId && typeof a?.id === "string" && isLiveAssertion(a))
+    .map((a) => ({
+      assertionId: a.id as string,
+      role: String(a.record_role ?? ""),
+      factType: String(a.fact_type ?? ""),
+      value: String(a.value ?? ""),
+      ...(typeof a.date === "string" && a.date !== "" && a.date !== a.value ? { date: a.date } : {}),
+      ...(typeof a.place === "string" && a.place !== "" ? { place: a.place } : {}),
+      recordId: String(a.record_id ?? ""),
+    }));
 }

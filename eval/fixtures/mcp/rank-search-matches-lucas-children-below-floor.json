@@ -1,0 +1,953 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Live ranking of the Lucas pool against Antonio Fernandes Lucas (GK89-82B). His own 1890 marriage scores 0.386; the records of his children's marriages score 0.0075, 0.0013, 0.00099 and 0.00099. The attachment call is simulated as failed: `attachmentsChecked: false` and no attachedTo* flags, which is hand-added to the live capture.",
+  "args": {
+    "subjectId": "~GK89-82B"
+  },
+  "response": {
+    "subjectId": "GK89-82B",
+    "scoredCount": 50,
+    "returnedCount": 50,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "attachmentsChecked": false,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 9,
+        "recordId": "ark:/61903/1:1:6BG7-FC2X",
+        "primaryId": "p_305261063714",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "birthDate": "1839",
+        "collectionTitle": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+        "recordArk": "ark:/61903/1:2:H4VM-KWF7",
+        "matchScore": 0.38637045,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Joanna de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 47,
+        "recordId": "ark:/61903/1:1:X91Y-14LV",
+        "primaryId": "p_307636359948",
+        "personName": "Antonio Da Silva de Lucas",
+        "sex": "Male",
+        "birthPlace": "São Roque, Funchal, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-38Y3",
+        "matchScore": 0.029488973,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Silva"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 11,
+        "recordId": "ark:/61903/1:1:6BG4-RPYF",
+        "primaryId": "p_305262966525",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+        "recordArk": "ark:/61903/1:2:H4V9-QC1V",
+        "matchScore": 0.028513005,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Roza de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 4,
+        "searchRank": 44,
+        "recordId": "ark:/61903/1:1:X911-S5RQ",
+        "primaryId": "p_307637266354",
+        "personName": "Anton Nio Fernandes Lucas",
+        "sex": "Male",
+        "birthPlace": "Santos Antonio",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZNSZ",
+        "matchScore": 0.01675573,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria França"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 5,
+        "searchRank": 12,
+        "recordId": "ark:/61903/1:1:XSMS-3BW3",
+        "primaryId": "p_307639726383",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "birthPlace": "concelho d o Funchal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-L22Q",
+        "matchScore": 0.007486074,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Joana Joana"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 6,
+        "searchRank": 8,
+        "recordId": "ark:/61903/1:1:X911-Y5JY",
+        "primaryId": "p_307637941137",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZCJK",
+        "matchScore": 0.0061712787,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Conceição"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 7,
+        "searchRank": 38,
+        "recordId": "ark:/61903/1:1:XSMM-78FN",
+        "primaryId": "p_307638145366",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "birthPlace": "Lobos, Piura, Peru",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-69TV",
+        "matchScore": 0.005311583,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria e Resi - Eliza Eliza"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 8,
+        "searchRank": 22,
+        "recordId": "ark:/61903/1:1:X911-TKFZ",
+        "primaryId": "p_307637909560",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-HFBB",
+        "matchScore": 0.0013161585,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Joana Lucas"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 9,
+        "searchRank": 23,
+        "recordId": "ark:/61903/1:1:XSMM-618W",
+        "primaryId": "p_307638377436",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-FKLN",
+        "matchScore": 0.0013161585,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Gomes"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 10,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:XSM9-SLF9",
+        "primaryId": "p_307638883351",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthPlace": "Funchal, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-2JXD",
+        "matchScore": 0.0012811885,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 11,
+        "searchRank": 14,
+        "recordId": "ark:/61903/1:1:X91B-LFB7",
+        "primaryId": "p_307636961345",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CDLT",
+        "matchScore": 0.0009942283,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Joana Joana"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 12,
+        "searchRank": 16,
+        "recordId": "ark:/61903/1:1:XSMM-MSC8",
+        "primaryId": "p_307638002081",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "birthPlace": "concelho d o Funchal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CLM7",
+        "matchScore": 0.000990902,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Joana Lucas"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 13,
+        "searchRank": 13,
+        "recordId": "ark:/61903/1:1:XSMM-9RYQ",
+        "primaryId": "p_307638050314",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZSDC",
+        "matchScore": 0.0006531273,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 14,
+        "searchRank": 20,
+        "recordId": "ark:/61903/1:1:XSMM-HMRD",
+        "primaryId": "p_307638216762",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZZFN",
+        "matchScore": 0.0006531273,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 15,
+        "searchRank": 25,
+        "recordId": "ark:/61903/1:1:X911-7X8Y",
+        "primaryId": "p_307637337957",
+        "personName": "António Florença Lucas",
+        "sex": "Male",
+        "birthPlace": "Calheta, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-6XW9",
+        "matchScore": 0.00031555572,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Paixao"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 16,
+        "searchRank": 27,
+        "recordId": "ark:/61903/1:1:X91B-L79V",
+        "primaryId": "p_307636951548",
+        "personName": "António Florença Lucas",
+        "sex": "Male",
+        "birthPlace": "Calheta, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-Z76H",
+        "matchScore": 0.00031555572,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 17,
+        "searchRank": 28,
+        "recordId": "ark:/61903/1:1:X91B-TQMR",
+        "primaryId": "p_307637085625",
+        "personName": "Antonio Florença Lucas",
+        "sex": "Male",
+        "birthPlace": "Calheta, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CC9R",
+        "matchScore": 0.00031555572,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Paitao"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 18,
+        "searchRank": 31,
+        "recordId": "ark:/61903/1:1:X91B-1CGF",
+        "primaryId": "p_307637171775",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthPlace": "sitio de \" Entre Caminhos da Combada",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CPDS",
+        "matchScore": 0.0002716307,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 19,
+        "searchRank": 41,
+        "recordId": "ark:/61903/1:1:X91B-YHZ9",
+        "primaryId": "p_307637116501",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "birthPlace": "Porto Gomes",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZH5W",
+        "matchScore": 0.00020605906,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Costa"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 20,
+        "searchRank": 43,
+        "recordId": "ark:/61903/1:1:X91B-PKTK",
+        "primaryId": "p_307637018899",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-HNHT",
+        "matchScore": 0.00019508322,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria da Cos ta , no estado S. Vieira"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 21,
+        "searchRank": 10,
+        "recordId": "ark:/61903/1:1:6BG7-WW3T",
+        "primaryId": "p_305260817516",
+        "personName": "Antonio Friz Lucas",
+        "sex": "Male",
+        "birthDate": "1871",
+        "collectionTitle": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+        "recordArk": "ark:/61903/1:2:H4VM-JKLS",
+        "matchScore": 0.00016975663,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Joze de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 22,
+        "searchRank": 33,
+        "recordId": "ark:/61903/1:1:X911-KWQ1",
+        "primaryId": "p_307637708549",
+        "personName": "Antonio de Lima Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-DPM2",
+        "matchScore": 0.00015758631,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 23,
+        "searchRank": 42,
+        "recordId": "ark:/61903/1:1:6BG4-VVW7",
+        "primaryId": "p_305262772385",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+        "recordArk": "ark:/61903/1:2:H4V9-Q94H",
+        "matchScore": 0.00015758631,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Souza"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 24,
+        "searchRank": 32,
+        "recordId": "ark:/61903/1:1:X911-9DTB",
+        "primaryId": "p_307637228608",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CZ6Y",
+        "matchScore": 0.00015147636,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Elisa de Quintal"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 25,
+        "searchRank": 7,
+        "recordId": "ark:/61903/1:1:X911-3QZT",
+        "primaryId": "p_307637274926",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthPlace": "Ponta do Sal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-846J",
+        "matchScore": 8.9238136e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 26,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:X91B-N68R",
+        "primaryId": "p_307636824055",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "birthDate": "1882",
+        "birthPlace": "São Martinho, Funchal, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-3ZT3",
+        "matchScore": 8.752511e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Herminia Gomes"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 27,
+        "searchRank": 21,
+        "recordId": "ark:/61903/1:1:X911-89X4",
+        "primaryId": "p_307637488327",
+        "personName": "Antonio Florenca Lucas",
+        "sex": "Male",
+        "birthPlace": "Calheta, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-HT9P",
+        "matchScore": 8.485877e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Paixao"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 28,
+        "searchRank": 30,
+        "recordId": "ark:/61903/1:1:XSMM-SR18",
+        "primaryId": "p_307638077381",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthPlace": "Ponta do Sol, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-ZNVW",
+        "matchScore": 8.191393e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 29,
+        "searchRank": 48,
+        "recordId": "ark:/61903/1:1:X9BX-LQ88",
+        "primaryId": "p_307601310941",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "birthDate": "1893",
+        "collectionTitle": "Brazil, São Paulo, Civil Registration, 1925-2023",
+        "recordArk": "ark:/61903/1:2:H4BQ-B9JB",
+        "matchScore": 7.482646e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Herminia Lucas"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 30,
+        "searchRank": 45,
+        "recordId": "ark:/61903/1:1:X9Y3-N29L",
+        "primaryId": "p_307567980051",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "birthPlace": "Portugal",
+        "collectionTitle": "Brazil, São Paulo, Civil Registration, 1925-2023",
+        "recordArk": "ark:/61903/1:2:H4YY-LKQC",
+        "matchScore": 6.9431866e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Herminia Gomes"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 31,
+        "searchRank": 24,
+        "recordId": "ark:/61903/1:1:X911-5NV2",
+        "primaryId": "p_307637852960",
+        "personName": "Antonio Frances Francisco Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-C99W",
+        "matchScore": 5.3958574e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 32,
+        "searchRank": 49,
+        "recordId": "ark:/61903/1:1:X91Q-3PCK",
+        "primaryId": "p_307617041989",
+        "personName": "Antonio Lucas de Azevedo",
+        "sex": "Male",
+        "collectionTitle": "Brazil, Rio de Janeiro, Civil Registration, 1804-2013",
+        "recordArk": "ark:/61903/1:2:H4BH-HTLN",
+        "matchScore": 4.1137362e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Cassiazeres Azevedo"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 33,
+        "searchRank": 6,
+        "recordId": "ark:/61903/1:1:X91B-W13L",
+        "primaryId": "p_307636568211",
+        "personName": "Antonio Fernandes Lucas",
+        "sex": "Male",
+        "birthDate": "1891",
+        "birthPlace": "Funchal, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-WQNN",
+        "matchScore": 4.0215236e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Antonia do Carmo"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 34,
+        "searchRank": 50,
+        "recordId": "ark:/61903/1:1:X9TT-KVY1",
+        "primaryId": "p_307562390039",
+        "personName": "Antonio Da Silva Lucas",
+        "sex": "Male",
+        "collectionTitle": "Brazil, São Paulo, Civil Registration, 1925-2023",
+        "recordArk": "ark:/61903/1:2:H4YT-GDPC",
+        "matchScore": 2.7165917e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Silva Lucas"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 35,
+        "searchRank": 34,
+        "recordId": "ark:/61903/1:1:X911-55JQ",
+        "primaryId": "p_307637860114",
+        "personName": "Antonio Frorinca Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CFND",
+        "matchScore": 1.5315221e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 36,
+        "searchRank": 39,
+        "recordId": "ark:/61903/1:1:XSMM-SGV1",
+        "primaryId": "p_307638074369",
+        "personName": "Antonio Florenca Lanca",
+        "sex": "Male",
+        "birthPlace": "Calleta Quadeira",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-FDLZ",
+        "matchScore": 1.4924555e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria da Paixão"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 37,
+        "searchRank": 40,
+        "recordId": "ark:/61903/1:1:XSM9-P94V",
+        "primaryId": "p_307639432128",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-L917",
+        "matchScore": 1.4710883e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Correa"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 38,
+        "searchRank": 35,
+        "recordId": "ark:/61903/1:1:X91T-DC8S",
+        "primaryId": "p_307635092432",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-C625",
+        "matchScore": 1.3725448e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Costa Jardim"
+          }
+        },
+        "role": "Father Of Bride"
+      },
+      {
+        "matchRank": 39,
+        "searchRank": 26,
+        "recordId": "ark:/61903/1:1:X911-QFZS",
+        "primaryId": "p_307637311802",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "birthPlace": "Ponta do Sol, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-8WXQ",
+        "matchScore": 1.2210712e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Costa"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 40,
+        "searchRank": 15,
+        "recordId": "ark:/61903/1:1:XSMM-S2G3",
+        "primaryId": "p_307638072663",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "birthPlace": "Madalena do Mar",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-FD69",
+        "matchScore": 1.1073063e-05,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Filomena Lucas"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 41,
+        "searchRank": 17,
+        "recordId": "ark:/61903/1:1:XSMM-V53Z",
+        "primaryId": "p_307638507700",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "birthPlace": "Calheta, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-N1VD",
+        "matchScore": 9.392182e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Filomena Lucas"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 42,
+        "searchRank": 46,
+        "recordId": "ark:/61903/1:1:X9B2-6B39",
+        "primaryId": "p_307605976291",
+        "personName": "Antonio Gomes Lucas",
+        "sex": "Male",
+        "birthDate": "1887",
+        "collectionTitle": "Brazil, São Paulo, Civil Registration, 1925-2023",
+        "recordArk": "ark:/61903/1:2:H4B7-J89C",
+        "matchScore": 9.38458e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Herminia Herminia"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 43,
+        "searchRank": 4,
+        "recordId": "ark:/61903/1:1:X911-5NVK",
+        "primaryId": "p_307637852959",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthPlace": "Pontado",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-C99W",
+        "matchScore": 9.265266e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Tecença de Lourça"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 44,
+        "searchRank": 37,
+        "recordId": "ark:/61903/1:1:XSM9-LF6V",
+        "primaryId": "p_307639390908",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "birthPlace": "Porto Moniz, Porto Moniz, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-6DQP",
+        "matchScore": 6.5784393e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Carna"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 45,
+        "searchRank": 5,
+        "recordId": "ark:/61903/1:1:X91B-ZL5Y",
+        "primaryId": "p_307636669647",
+        "personName": "Antonio Francisco Lucas",
+        "sex": "Male",
+        "birthDate": "1864",
+        "birthPlace": "Ponta do Sol, Ponta do Sol, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-4Q8W",
+        "matchScore": 5.8595383e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 46,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:X91B-RK4Y",
+        "primaryId": "p_307637072337",
+        "personName": "Antonio Lucas Cardoso Vicente",
+        "sex": "Male",
+        "birthPlace": "S. Vicente ↔ Guardo",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-CSPK",
+        "matchScore": 5.320205e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Gabriela Celeste Da Silva Martins"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 47,
+        "searchRank": 18,
+        "recordId": "ark:/61903/1:1:XSMM-F25C",
+        "primaryId": "p_307638423729",
+        "personName": "Antonio Da Silva Lucas",
+        "sex": "Male",
+        "birthDate": "1814",
+        "birthPlace": "São Vicente, São Vicente, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-J88N",
+        "matchScore": 3.4780194e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 48,
+        "searchRank": 29,
+        "recordId": "ark:/61903/1:1:6BGH-MX5C",
+        "primaryId": "p_305263093329",
+        "personName": "Antonio Rodrigues Lucas",
+        "sex": "Male",
+        "collectionTitle": "Portugal, Madeira, Catholic Church Records, 1044-1990",
+        "recordArk": "ark:/61903/1:2:H4V9-7HMQ",
+        "matchScore": 2.8455686e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria de Jesus"
+          }
+        },
+        "role": "Groom"
+      },
+      {
+        "matchRank": 49,
+        "searchRank": 36,
+        "recordId": "ark:/61903/1:1:XSMM-9FBR",
+        "primaryId": "p_307638041365",
+        "personName": "Antonio Da Silva Lucas",
+        "sex": "Male",
+        "birthPlace": "Estreito, Sobral, Ceará, Brazil",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-N7JT",
+        "matchScore": 2.1306932e-06,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Da Silva de Jesus"
+          }
+        },
+        "role": "Father Of Groom"
+      },
+      {
+        "matchRank": 50,
+        "searchRank": 19,
+        "recordId": "ark:/61903/1:1:X91B-YPBD",
+        "primaryId": "p_307637130552",
+        "personName": "Antonio Lucas Da Sama",
+        "sex": "Male",
+        "birthPlace": "Porto Santo, Madeira, Portugal",
+        "collectionTitle": "Portugal, Civil Records, 1437-2023",
+        "recordArk": "ark:/61903/1:2:H4BD-447C",
+        "matchScore": 3.2994632e-07,
+        "relativeTerms": {
+          "spouse": {
+            "status": "present",
+            "name": "Maria Antonia D' Amelas"
+          }
+        },
+        "role": "Groom"
+      }
+    ]
+  }
+}

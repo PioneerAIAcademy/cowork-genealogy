@@ -126,6 +126,21 @@ def test_relaying_the_next_step_sentence_fails():
              text="The next step is the first research question: the single fact we go after first.\n\n" + OFFER)
 
 
+@pytest.mark.parametrize("sentence", [
+    "The next step is the first research question.",
+    "It is the single fact we go after first.",
+])
+def test_either_half_of_the_next_step_sentence_fails(sentence):
+    with pytest.raises(AssertionError, match="next-step sentence"):
+        _run(["init-project", "search-records"], text=sentence + "\n\n" + OFFER)
+
+
+def test_the_routers_own_sentence_about_the_offered_step_passes():
+    _run(["init-project", "search-records"],
+         text="The project still needs its first research question, written from the objective, "
+              "before any records can be searched.\n\n" + OFFER)
+
+
 def test_no_offer_line_fails():
     with pytest.raises(AssertionError, match="offer"):
         _run(["init-project", "search-records"], text="Nothing new turned up for Patrick Flynn.")
@@ -134,3 +149,38 @@ def test_no_offer_line_fails():
 def test_a_test_without_the_tag_is_skipped():
     with pytest.raises(pytest.skip.Exception):
         _run(["init-project", "question-selection"], test={"skill": "research", "tags": ["routing"]})
+
+
+# --- #4381: an interpretive first message; the owner comes from deliverable: ---
+
+INTERPRETIVE = {"skill": "research",
+                "tags": ["routing", "routes-to:init-project", "bounded-after-init", "deliverable:historical-context"]}
+
+
+def test_init_project_then_historical_context_passes_with_no_subject_block():
+    _run(["init-project", "historical-context"], test=INTERPRETIVE, subject="none")
+
+
+def test_init_project_then_a_search_fails_under_a_historical_context_deliverable():
+    with pytest.raises(AssertionError, match="then historical-context, and nothing else"):
+        _run(["init-project", "search-records"], test=INTERPRETIVE)
+
+
+def test_historical_context_with_no_init_project_before_it_fails():
+    with pytest.raises(AssertionError, match="got \\['historical-context'\\]"):
+        _run(["historical-context"], test=INTERPRETIVE)
+
+
+def test_question_selection_before_historical_context_fails():
+    with pytest.raises(AssertionError, match="question-selection"):
+        _run(["init-project", "question-selection", "historical-context"], test=INTERPRETIVE)
+
+
+def test_historical_context_after_init_project_failed_fails():
+    with pytest.raises(AssertionError, match="went on to historical-context"):
+        _run(["init-project", "historical-context"], test=INTERPRETIVE, after={"research_json": None})
+
+
+def test_historical_context_without_an_offer_fails():
+    with pytest.raises(AssertionError, match="offer"):
+        _run(["init-project", "historical-context"], test=INTERPRETIVE, text="Here is the background.")

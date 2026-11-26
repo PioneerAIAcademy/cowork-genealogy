@@ -5,7 +5,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { imageSearchTool } from "../../src/tools/image-search.js";
+import { imageSearchTool, listGroupImageIds } from "../../src/tools/image-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -93,11 +93,9 @@ it("returns imageId values sorted ascending", async () => {
     })
   );
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "007621224_005_M99P-2TQ",
-  }, LOCAL);
+  const result = await listGroupImageIds("007621224_005_M99P-2TQ", LOCAL);
 
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004884748_02613",
     "004884748_02614",
     "004884748_02615",
@@ -127,15 +125,15 @@ it("throws when apid lookup returns non-OK", async () => {
   );
 });
 
-// Test 7 — empty response returns { imageIds: [] }
-it("returns empty imageIds for an empty {} response", async () => {
+// Test 7 — empty response returns a zero count and no ranges
+it("returns imageCount 0 for an empty {} response", async () => {
   mockFetch.mockResolvedValueOnce(okChildren({}));
 
   const result = await imageSearchTool({
     imageGroupNumber: "007621224_005_M99P-2TQ",
   }, LOCAL);
 
-  expect(result.imageIds).toEqual([]);
+  expect(result).toEqual({ imageCount: 0, imageIdRanges: [] });
 });
 
 // Test 8 — auth error propagates
@@ -198,7 +196,7 @@ it("sends correct headers on children/names call", async () => {
 // Observed live 2026-08-25 on group M9SW-1CG (Barsebäck, 004514823_003): the
 // endpoint returned its full 164 keys but sent `null` as the VALUE of one of
 // them, for image 004514823_00672. `Record<string, string>` is asserted, not
-// checked, so the null reached `imageIds` — and the real image vanished from
+// checked, so the null reached the id list — and the real image vanished from
 // the list, making that page unreachable for the rest of the run. Nine other
 // calls to the same group were clean, so this is upstream flakiness the tool
 // has to absorb rather than trust away.
@@ -222,12 +220,10 @@ it("drops non-string values instead of emitting them as image IDs", async () => 
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN));
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
-  expect(result.imageIds).not.toContain(null);
-  expect(result.imageIds.every((id) => typeof id === "string")).toBe(true);
+  expect(result).not.toContain(null);
+  expect(result.every((id) => typeof id === "string")).toBe(true);
 });
 
 // Test 13 — a defective response is re-requested once, recovering the lost image
@@ -236,12 +232,10 @@ it("re-requests once on a defective response and recovers the dropped image", as
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
     .mockResolvedValueOnce(okChildren(REPAIRED_CHILDREN));
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
   expect(mockFetch).toHaveBeenCalledTimes(2);
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004514823_00671",
     "004514823_00672",
     "004514823_00673",
@@ -263,11 +257,9 @@ it("returns the surviving IDs when the retry is also defective", async () => {
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN));
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004514823_00671",
     "004514823_00673",
   ]);
@@ -284,11 +276,9 @@ it("keeps the surviving IDs when the retry rejects", async () => {
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
     .mockRejectedValue(new Error("ECONNRESET"));
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004514823_00671",
     "004514823_00673",
   ]);
@@ -307,11 +297,9 @@ it("keeps the surviving IDs when the retry returns a server error", async () => 
       headers: new Headers(),
     });
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004514823_00671",
     "004514823_00673",
   ]);
@@ -337,11 +325,9 @@ it("does not let a clean but shorter retry displace more usable IDs", async () =
       })
     );
 
-  const result = await imageSearchTool({
-    imageGroupNumber: "004514823_003_M9SW-1CG",
-  }, LOCAL);
+  const result = await listGroupImageIds("004514823_003_M9SW-1CG", LOCAL);
 
-  expect(result.imageIds).toEqual([
+  expect(result).toEqual([
     "004514823_00671",
     "004514823_00672",
     "004514823_00673",
@@ -413,11 +399,10 @@ describe("image_search — item / itemImage", () => {
     serveFilm(filmGroups());
     const r = await imageSearchTool({ imageGroupNumber: "004528134", item: 5, itemImage: 10 }, LOCAL);
     expect(r.imageId).toBe("004528134_00632");
-    expect(r.imageIds).toHaveLength(22);
-    expect(r.imageIds[0]).toBe("004528134_00623");
+    expect(r.imageCount).toBe(22);
+    expect(r.imageIdRanges).toEqual([["004528134_00623", "004528134_00644"]]);
     // Group 5's metadata is refused, so its name is composed from the position.
     expect(r.imageGroupNumber).toBe("004528134_005_M92M-53P");
-    expect(r.imageGroupNumberFrom).toBe("position");
     expect(r.place).toBeNull();
   });
 
@@ -425,7 +410,6 @@ describe("image_search — item / itemImage", () => {
     serveFilm(filmGroups());
     const r = await imageSearchTool({ imageGroupNumber: "004528134", item: 4 }, LOCAL);
     expect(r.imageGroupNumber).toBe("004528134_004_G4");
-    expect(r.imageGroupNumberFrom).toBe("name");
     expect(r.place).toBe("Oude-Tonge");
     expect(r.imageId).toBeUndefined();
   });
@@ -438,7 +422,7 @@ describe("image_search — item / itemImage", () => {
     groups.push(...Array.from({ length: 10 }, (_, i) => ({ id: `LATE-${i}`, status: 500 })));
     serveFilm(groups);
     const r = await imageSearchTool({ imageGroupNumber: "004528134", item: 2 }, LOCAL);
-    expect(r.imageIds[0]).toBe("004528134_00390");
+    expect(r.imageIdRanges[0][0]).toBe("004528134_00390");
     const urls = mockFetch.mock.calls.map((c) => c[0] as string);
     expect(urls.some((u) => u.includes("LATE-"))).toBe(false);
   });
@@ -491,7 +475,11 @@ describe("image_search — item / itemImage", () => {
       imageSearchTool({ imageGroupNumber: "004528134", item: 5, itemImage: 10 }, LOCAL),
     ).rejects.toThrow(/item 5 of film 004528134 came back with 1 unreadable image entry/);
     const browse = await imageSearchTool({ imageGroupNumber: "004528134", item: 5 }, LOCAL);
-    expect(browse.imageIds).toHaveLength(21);
+    expect(browse.imageCount).toBe(21);
+    expect(browse.imageIdRanges).toEqual([
+      ["004528134_00623", "004528134_00627"],
+      ["004528134_00629", "004528134_00644"],
+    ]);
   });
 
   it("reports a request that runs out of time as the deadline, not as a bad group", async () => {
@@ -652,7 +640,7 @@ describe("image_search — item / itemImage", () => {
     const r = await callTool("image_search", { imageGroupNumber: "004528134", [key]: value });
     expect(r.isError).toBe(true);
     expect(r.text).toContain(
-      `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, or drop it to list the whole group.`,
+      `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, or drop it to get the whole group's image ranges.`,
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -682,5 +670,77 @@ describe("image_search — item / itemImage", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// ─── The answer is ranges, not every id (#4413) ─────────────────────────────
+
+describe("image_search — id ranges", () => {
+  const FILM = "004884748";
+  const idAt = (n: number, film = FILM) => `${film}_${String(n).padStart(5, "0")}`;
+  const serveIds = (ids: string[]) =>
+    mockFetch.mockResolvedValueOnce(okChildren(Object.fromEntries(ids.map((id, i) => [`TH-${i}`, id]))));
+  const browse = () => imageSearchTool({ imageGroupNumber: "004884748_001_M9AB-CDE" }, LOCAL);
+
+  it("answers a 6,295-image group in 100 characters or fewer", async () => {
+    serveIds(Array.from({ length: 6295 }, (_, i) => idAt(i + 1)));
+    const result = await browse();
+    expect(JSON.stringify(result).length).toBeLessThanOrEqual(100);
+    expect(result).toEqual({ imageCount: 6295, imageIdRanges: [[idAt(1), idAt(6295)]] });
+  });
+
+  it("cuts the worst case, every other page missing, at 500 pairs and says so", async () => {
+    serveIds(Array.from({ length: 6295 }, (_, i) => idAt(2 * i + 1)));
+    const result = await browse();
+    expect(JSON.stringify(result).length).toBeLessThanOrEqual(19_100);
+    expect(result.truncated).toBe(true);
+    expect(result.imageCount).toBe(6295);
+    expect(result.imageIdRanges).toHaveLength(500);
+    expect(result.imageIdRanges.every(([a, b]) => a === b)).toBe(true);
+    expect(result.imageIdRanges[499]).toEqual([idAt(999), idAt(999)]);
+  });
+
+  it("starts a new run at a gap and at a film-prefix change; a lone image is [id, id]", async () => {
+    serveIds([idAt(1), idAt(2), idAt(3), idAt(5), idAt(7), idAt(8), idAt(9, "004884749"), idAt(10, "004884749")]);
+    const result = await browse();
+    expect(result).toEqual({
+      imageCount: 8,
+      imageIdRanges: [
+        [idAt(1), idAt(3)],
+        [idAt(5), idAt(5)],
+        [idAt(7), idAt(8)],
+        [idAt(9, "004884749"), idAt(10, "004884749")],
+      ],
+    });
+  });
+
+  it("keeps an id that is not {9 digits}_{5 digits} as its own pair", async () => {
+    serveIds([idAt(1), `${FILM}_2`, idAt(3)]);
+    const result = await browse();
+    expect(result.imageIdRanges).toEqual([[idAt(1), idAt(1)], [idAt(3), idAt(3)], [`${FILM}_2`, `${FILM}_2`]]);
+  });
+
+  it("does not mark exactly 500 runs truncated, and marks 501", async () => {
+    serveIds(Array.from({ length: 500 }, (_, i) => idAt(2 * i + 1)));
+    const at = await browse();
+    expect(at.imageIdRanges).toHaveLength(500);
+    expect("truncated" in at).toBe(false);
+
+    serveIds(Array.from({ length: 501 }, (_, i) => idAt(2 * i + 1)));
+    const over = await browse();
+    expect(over.imageIdRanges).toHaveLength(500);
+    expect(over.truncated).toBe(true);
+    expect(over.imageCount).toBe(501);
+  });
+
+  it("answers an empty group with a zero count and no ranges", async () => {
+    mockFetch.mockResolvedValueOnce(okChildren({}));
+    expect(await browse()).toEqual({ imageCount: 0, imageIdRanges: [] });
+  });
+
+  it("returns exactly imageCount and imageIdRanges without item", async () => {
+    mockFetch.mockResolvedValueOnce(okChildren());
+    const result = await browse();
+    expect(Object.keys(result).sort()).toEqual(["imageCount", "imageIdRanges"]);
   });
 });

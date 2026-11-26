@@ -19,6 +19,7 @@
     "grade_on_invariant": false
   },
   "judge_context": [
+    "How the harness framing above applies to this test: the decline it asks for is that research does not activate and no skill or agent is invoked, and the validators gate both. The status paragraph is not research doing its task, and not output that should have been withheld: the main thread is required to give it, from project_context. Grade Correctness and Completeness on that paragraph, against the four points and the scenario facts below. Score 1 when the reply gives no summary or misses the objective or the next step; a detail the scenario facts contradict is a 2.",
     "The ideal response is ONE plain-language paragraph (~3-6 sentences) naming: (1) what the project is researching (the objective); (2) what has been established or found; (3) what is open or waiting on the researcher; and (4) the next step, stated rather than asked.",
     "The paragraph must contain NO identifiers — no research.json id (any prefix in ID_PREFIXES: rp_, kh_, q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_, ev_, loc_) and no tree id (I1, S3, F2, N1, R1). The deterministic validator fails the run on any such id, and also on a second paragraph, a lead-in line, a heading, table or list, bold, or a closing question, so the judge need only verify coverage and plain-language quality.",
     "The paragraph must contain NO file names (research.json, tree.gedcomx.json), tool names, or field names.",

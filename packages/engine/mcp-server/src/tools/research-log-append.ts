@@ -19,20 +19,11 @@
 
 import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-  isInsideProject,
-  assertInsideProject,
-  projectRelativeRef,
-} from "../utils/project-io.js";
+import { atomicWriteJson, readProjectJson, formatIssues, withProjectLock, isInsideProject, assertInsideProject, projectRelativeRef } from "../utils/project-io.js";
 import {
   checkStagedResults,
   consumeStagedResults,
@@ -49,6 +40,9 @@ import {
 import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { arkToBareId } from "../utils/ark.js";
+import { collectSourceRefs } from "../utils/tree-person.js";
+import { yearOf } from "../utils/tree-gap-detect.js";
 import { opensHandOff } from "../utils/awaiting-hand-offs.js";
 import {
   collectionKey,
@@ -89,7 +83,7 @@ function logWithoutPersistenceWarning(research: any): string | null {
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
   const positives = log.filter(
-    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool) && !isToolLoggedRead(e),
   ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
@@ -207,7 +201,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     .filter((id): id is string => typeof id === "string");
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils < NIL_ESCALATION_THRESHOLD) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
@@ -243,6 +237,21 @@ export const PLAN_RATIONALE_NOTE =
   "the other retries: this note does not end the search.";
 
 /**
+ * The note a tool returns when `planItemId` arrives with no `projectPath`.
+ * There is no project to write to, so nothing is logged and the plan item
+ * reaches no entry — a silent drop otherwise, since both tools answer normally.
+ *
+ * One wording for one mistake: `build_external_search_url` and `record_search`
+ * both make their write through this module, so the note they give for failing
+ * to reach it is the same string, not two that drift (issue #4527).
+ *
+ * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
+ * PLAN_ITEM_WITHOUT_PROJECT_NOTE to find both copies when editing either.
+ */
+export const PLAN_ITEM_WITHOUT_PROJECT_NOTE =
+  "'planItemId' has no effect without projectPath — nothing was logged";
+
+/**
  * The `planRationale` note for the plan items whose first nil this call logged,
  * one line per item, or null. Reads only research.json (ADR-0011). Silent for a
  * plan item that already had a nil, has found something, or has no rationale.
@@ -256,7 +265,7 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
   );
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
@@ -287,6 +296,18 @@ export interface ResearchLogAppendOp {
   notes?: string | null;
   externalSite?: ResearchLogAppendExternalSite | null;
   stagedResultsRef?: string | null;
+  /** INTERNAL. A tool that writes its own entry stamps its name here
+   *  (`record_search` on a nil search, issue #4527). It is what lets the dedupe
+   *  below tell a tool-written entry from an agent's hand-logged repeat of the
+   *  same query, so the repeat is logged as the fresh search it is rather than
+   *  swallowed.
+   *
+   *  It is off the MCP input schema, which keeps it off a top-level agent call:
+   *  `rejectUnknownArgs` refuses an argument the schema does not declare. That
+   *  is NOT true of a batch op — it checks top-level keys only and the `ops`
+   *  item schema admits extra keys — so the batch path strips it explicitly.
+   *  Do not restore the claim that no agent can set it without re-reading both. */
+  writtenBy?: string;
 }
 
 export interface ResearchLogAppendInput extends Partial<ResearchLogAppendOp> {
@@ -334,10 +355,7 @@ export type ResearchLogAppendResult =
       planRationale?: string;
       next?: string;
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
@@ -1584,16 +1602,180 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
   requirePre1880CensusHedge(op.notes, years, columnFrom);
 }
 
+/** A finite whole-number year bound from a staged query, or undefined. */
+function yearBound(value: unknown): number | undefined {
+  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * The residence or any-event year windows a staged `record_search` query sent.
+ * A window with one bound is open on the other side. Birth, death and marriage
+ * windows are never returned: a death search that brings back the subject's
+ * cited census was not looking for it (issue #4667).
+ */
+function residenceOrAnyWindows(query: Record<string, unknown>): Array<[number, number]> {
+  const windows: Array<[number, number]> = [];
+  for (const prefix of ["residenceYear", "anyYear"]) {
+    const from = yearBound(query[`${prefix}From`]);
+    const to = yearBound(query[`${prefix}To`]);
+    if (from === undefined && to === undefined) continue;
+    windows.push([from ?? -Infinity, to ?? Infinity]);
+  }
+  return windows;
+}
+
+/**
+ * Whether a staged query sent a birth, death or marriage year window. Such a
+ * search is for that vital event, so a cited row sharing its collection is not
+ * what it was for: one collection holds many record types and roles, and the
+ * committed e2e runs showed death and marriage searches pinned to a collection
+ * returning the subject's cited records in other roles (as Father, as Other,
+ * a death record on a marriage search), each rightly logged negative.
+ */
+function sentVitalEventWindow(query: Record<string, unknown>): boolean {
+  return ["birthYear", "deathYear", "marriageYear"].some(
+    (p) => yearBound(query[`${p}From`]) !== undefined || yearBound(query[`${p}To`]) !== undefined,
+  );
+}
+
+/**
+ * Whether a cited row sharing the query's collection is what the search was
+ * for. Not under a vital-event window, and not when the query named a
+ * `recordType` other than census: a death or marriage search pinned to a mixed
+ * collection is for that event, whatever years it sent.
+ */
+function collectionArmApplies(query: Record<string, unknown>): boolean {
+  if (sentVitalEventWindow(query)) return false;
+  const recordType = query.recordType;
+  if (recordType === undefined || recordType === null || recordType === "") return true;
+  return String(recordType).trim().toLowerCase() === "census";
+}
+
+/** One staged row that is a record the tree cites on the search's subject. */
+export interface CitedSubjectRow {
+  recordId: string;
+  subjectId: string;
+  sourceIds: string[];
+  /** The row is what the search was for: its collection, or a residence/any window holds one of its event years. */
+  forTheSearch: boolean;
+}
+
+/**
+ * The staged rows of a `record_search` that are records the project tree cites
+ * on the query's raw `subjectId` (person, fact or name level), each marked with
+ * whether it is what the search was for. Empty when the query names no
+ * subject, the subject is not a tree person, or none of its sources has an ARK
+ * url. Exported for `dev/measure-cited-record-negatives.ts`.
+ */
+export function citedSubjectRows(query: unknown, rows: unknown, tree: any): CitedSubjectRow[] {
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const q = query as Record<string, unknown>;
+  const subjectId = q.subjectId;
+  if (typeof subjectId !== "string" || subjectId === "") return [];
+  const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
+  const subject = persons.find((p) => p?.id === subjectId);
+  if (!subject) return [];
+
+  const sourceById = new Map<string, any>();
+  for (const s of Array.isArray(tree?.sources) ? tree.sources : []) {
+    if (typeof s?.id === "string") sourceById.set(s.id, s);
+  }
+  const citedByBareId = new Map<string, string[]>();
+  for (const ref of collectSourceRefs(subject)) {
+    const url = sourceById.get(ref)?.url;
+    if (typeof url !== "string" || url === "") continue;
+    const bare = arkToBareId(url);
+    if (bare === url.trim()) continue; // not an ARK: nothing a record id can equal
+    citedByBareId.set(bare, [...(citedByBareId.get(bare) ?? []), ref]);
+  }
+  if (citedByBareId.size === 0) return [];
+
+  const collectionId = collectionArmApplies(q) ? q.collectionId : undefined;
+  const windows = residenceOrAnyWindows(q);
+  const found: CitedSubjectRow[] = [];
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const r = row as { recordId?: unknown; collectionId?: unknown; events?: unknown } | null;
+    if (typeof r?.recordId !== "string") continue;
+    const sourceIds = citedByBareId.get(arkToBareId(r.recordId));
+    if (!sourceIds) continue;
+    const sameCollection =
+      collectionId !== undefined &&
+      collectionId !== null &&
+      collectionId !== "" &&
+      r.collectionId !== undefined &&
+      r.collectionId !== null &&
+      String(collectionId) === String(r.collectionId);
+    const inWindow =
+      windows.length > 0 &&
+      Array.isArray(r.events) &&
+      r.events.some((e: any) => {
+        const year = yearOf(typeof e?.date === "string" ? e.date : undefined);
+        return year !== null && windows.some(([from, to]) => year >= from && year <= to);
+      });
+    found.push({ recordId: r.recordId, subjectId, sourceIds, forTheSearch: sameCollection || inWindow });
+  }
+  return found;
+}
+
+/**
+ * The refusal for a `record_search` logged `negative` whose staged rows include
+ * a record the project tree already cites on the search's own subject, when
+ * that record is what the search was for (research-log-editor-spec.md, "a
+ * negative search whose rows include a record the tree cites on its subject").
+ * Returns null, allowing the op, unless every condition holds.
+ *
+ * Pure: it reads the envelope `preflightStagedRef` already read and path-checked.
+ * The subject is the staged query's raw `subjectId`, which `stripQueryPlumbing`
+ * deletes. It reads the project tree, never FamilySearch's `attachedToSubject`,
+ * which the staged sidecar does not carry (#1212). Every staged row is judged,
+ * not only the page the caller was shown: the record came back from the search
+ * either way, and the shown page cannot be rebuilt here (#4067).
+ */
+export function citedRecordNegativeError(
+  op: Pick<ResearchLogAppendOp, "tool" | "outcome">,
+  staged: { envelope: { payload?: unknown } } | undefined,
+  tree: any,
+): string | null {
+  // `error` is judged too: a search that staged rows ran, so `error` would carry the same false nil.
+  if (op.tool !== "record_search" || (op.outcome !== "negative" && op.outcome !== "error") || !staged) return null;
+  const payload = staged.envelope?.payload as { query?: unknown; results?: unknown } | undefined;
+  const hit = citedSubjectRows(payload?.query, payload?.results, tree).find((row) => row.forTheSearch);
+  if (!hit) return null;
+  const sources = hit.sourceIds.map((id) => `\`${id}\``).join(", ");
+  return (
+    `this search is logged \`${op.outcome}\`, but it returned \`${hit.recordId}\`, a record the ` +
+    `project tree already cites for its subject \`${hit.subjectId}\` (source ${sources}). It may ` +
+    `not be on the page you were shown: if you have not read it, read it with record_read on ` +
+    `\`${hit.recordId}\`. Log this search \`positive\` or \`partial\`, and report \`${hit.recordId}\` ` +
+    `in your answer as the record the project tree already cites for the subject. A surname or ` +
+    `given name indexed differently does not leave the record unfound.`
+  );
+}
+
 /**
  * The staging producers that echo their own inputs into the staged payload's
  * `query` (`query: echoQuery(input)`), keyed to the input properties of their
  * own schema. Only these have host-side ground truth for which filters a call
  * sent; the other producers stage no echoed inputs, so they are never judged.
  */
-const ECHOING_PRODUCER_INPUTS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
-  ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
-]);
+// Built on FIRST USE, not at module load. `record_search` imports
+// `researchLogAppend` to write its own nil entry (issue #4527), and this module
+// imports `record_search`'s schema — a cycle. Read at module scope, the schema
+// is still `undefined` while the cycle resolves and every importer of the tool
+// list dies with "Cannot read properties of undefined (reading 'inputSchema')".
+// Deferring the read to call time breaks the init-order dependency without a
+// dynamic import. Keep it lazy.
+let _echoingProducerInputs: ReadonlyMap<string, ReadonlySet<string>> | null = null;
+function echoingProducerInputs(): ReadonlyMap<string, ReadonlySet<string>> {
+  if (_echoingProducerInputs === null) {
+    _echoingProducerInputs = new Map([
+      ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
+      ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
+    ]);
+  }
+  return _echoingProducerInputs;
+}
 
 /**
  * What a producer actually sent, from its staged echo. `record_search` echoes
@@ -1611,7 +1793,7 @@ const SENT_FROM_ECHO: ReadonlyMap<string, (echo: Record<string, unknown>) => Rec
  * filter (`offset: 0` logged for a call that sent none is the default, not a
  * misstatement), so none is ever refused.
  */
-const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets"]);
+const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets", "planItemId", "note"]);
 
 /**
  * The filter keys an explicit log `query` claims that the staged search never
@@ -1627,7 +1809,7 @@ export function neverSentFilterClaims(
   query: unknown,
   stagedQuery: Record<string, unknown> | undefined,
 ): { key: string; value: unknown }[] {
-  const inputs = ECHOING_PRODUCER_INPUTS.get(producer);
+  const inputs = echoingProducerInputs().get(producer);
   if (!inputs || !stagedQuery) return [];
   if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
   const sent = SENT_FROM_ECHO.get(producer)?.(stagedQuery) ?? stagedQuery;
@@ -1806,6 +1988,9 @@ const sameNameFields = (a: Map<string, string>, b: Map<string, string>): boolean
   a.size === b.size && [...a].every(([k, v]) => b.get(k) === v);
 
 /** Keys the suggested unpinned retry leaves out: the pin itself, and paging. */
+// `planItemId` and `note` are NOT listed: `stripQueryPlumbing` already removes
+// both before the filter that reads this set, so listing them here would be
+// dead and would read as though this set were what covers them.
 const RETRY_DROPPED_KEYS: ReadonlySet<string> = new Set(["collectionId", "offset", "count"]);
 
 /**
@@ -1857,7 +2042,7 @@ export function pinnedNilRetryInvariants(
   // invented (`note`, `variants_also_tried`), which the retry must not repeat.
   // Paging is dropped too: a retry at the pinned search's `offset` would skip the
   // first unpinned results.
-  const inputs = ECHOING_PRODUCER_INPUTS.get("record_search")!;
+  const inputs = echoingProducerInputs().get("record_search")!;
   const retry = Object.fromEntries(
     Object.entries(stripQueryPlumbing(q) ?? {}).filter(
       ([k]) => !RETRY_DROPPED_KEYS.has(k) && inputs.has(k),
@@ -2040,12 +2225,155 @@ function fillStagedSearchCounts(
   }
 }
 
+const USER_PROVIDED_REMEDY =
+  "A reading no image tool made (the researcher's own, or one made with `Read` on an upload) is " +
+  'logged as `tool: "user_provided"`.';
+
+/** `query` keys that list page ids, or name a span of pages, in a browse entry. */
+const PAGE_KEYS = ["imageIds", "imageIdsExamined", "pagesRead", "imageRange", "imagesExamined", "imagesAttempted", "pagesAttempted"];
+
+const DGS_ID = /^\d+(?:_\d+)*$/;
+/** A bare ARK-style id (prefixes already dropped by `arkToBareId`): hyphen-joined letter-digit groups with a digit. */
+const ARK_STYLE_ID = /^(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+$/;
+
+/**
+ * A page id, normalized so one page in two spellings compares equal, or null:
+ * a finite number, a DGS-style id (`00033`, `004433380_00033`, each segment
+ * read as a number), or an ARK-style id of letter-digit groups joined by
+ * hyphens with a digit somewhere, in any ARK form `arkToBareId` reads (a bare
+ * id, `3:1:...`, `ark:/61903/3:1:...`, a resolver URL), upper-cased. Words,
+ * file names, upload paths and prose are never one.
+ */
+function pageId(x: unknown): string | null {
+  if (typeof x === "number") return Number.isFinite(x) ? String(x) : null;
+  if (typeof x !== "string") return null;
+  const t = x.trim();
+  if (DGS_ID.test(t)) return t.split("_").map(Number).join("_");
+  const bare = arkToBareId(t);
+  return ARK_STYLE_ID.test(bare) ? bare.toUpperCase() : null;
+}
+
+/**
+ * Whether one `query` value names two or more distinct page ids: a list of them
+ * (JSON text read as one), text whose comma- or semicolon-separated parts are
+ * all page ids, or a whole value that is a range `lo-hi` (hyphen or en dash) of
+ * two DGS-style ids, where `hi` has no `_` or has `lo`'s prefix, and `lo`'s last
+ * segment is below `hi`'s (`650-712`, `004433380_00033-00047`).
+ */
+function namesSeveralPages(value: unknown): boolean {
+  const v = coerceJsonArg(value);
+  const several = (items: unknown[]) => {
+    const ids = items.map(pageId);
+    return ids.length > 1 && ids.every((id) => id !== null) && new Set(ids).size > 1;
+  };
+  if (Array.isArray(v)) return several(v);
+  if (typeof v !== "string") return false;
+  if (several(v.split(/[,;]/).filter((x) => x.trim() !== ""))) return true;
+  const range = /^\s*(\d+(?:_\d+)*)\s*[-\u2013]\s*(\d+(?:_\d+)*)\s*$/.exec(v);
+  if (range === null) return false;
+  const lo = range[1].split("_").map(Number);
+  const hi = range[2].split("_").map(Number);
+  const prefixMatches = hi.length === 1 || hi.slice(0, -1).join("_") === lo.slice(0, -1).join("_");
+  return prefixMatches && lo[lo.length - 1] < hi[hi.length - 1];
+}
+
+/**
+ * Whether a logged `query` lists or spans several pages and names no `file`,
+ * the only entries `imageToolEntryRefusal` offers `image_search`
+ * (search-result-staging-spec.md §6.1). Structural on purpose: a guess from
+ * loose text or from which keys are absent offered it to single readings.
+ */
+function isBrowseQuery(q: Record<string, unknown> | null): boolean {
+  if (q === null || q.file != null) return false;
+  return PAGE_KEYS.some((k) => namesSeveralPages(q[k]));
+}
+
+/** The logged `query` as a plain object, read as `applyLogAppendOp` reads it, or null. */
+function queryObject(query: unknown): Record<string, unknown> | null {
+  const q = coerceJsonArg(query);
+  return q !== null && typeof q === "object" && !Array.isArray(q) ? (q as Record<string, unknown>) : null;
+}
+
+/**
+ * A logged `tool` read for comparison: trimmed, case-folded, hyphens as
+ * underscores, and any `mcp__` or `mcp__<server>__` prefix dropped, so the
+ * qualified name a model sees in its own tool list is the same tool. The entry
+ * is persisted as sent; an image entry in a variant spelling can carry no
+ * staged ref anyway (the staged file's tool is compared exactly). Exported for
+ * `dev/measure-image-log-entries.ts`.
+ */
+export function canonicalToolName(tool: unknown): string | undefined {
+  if (typeof tool !== "string") return undefined;
+  return tool.trim().toLowerCase().replace(/^mcp__(?:.+__)?/, "").replace(/-/g, "_");
+}
+
+/**
+ * The refusal for an image-tool entry no image call stands behind, or null
+ * (issue #4581). `image_transcribe` stages the page it reads whenever it has a
+ * project, so a genuine entry carries the ref that call returned; one without
+ * it is a reading no tool made, a browse summary, or a call made without
+ * `projectPath`. A failed call reads and stages nothing, so an `error` entry
+ * that examined nothing passes; an absent count is left to
+ * `preflightRequiredFields` to ask for. `image_read` stages nothing and leaves
+ * no trace that proves a call, so it is refused only where it cannot be
+ * genuine: it takes no `file`. The messages offer neither unchecked tool for a
+ * single-page reading, since a refused reading would come back relabelled under
+ * it; `image_search` is named only for an entry whose `query` stands for
+ * several pages (`isBrowseQuery`). Exported for
+ * `dev/measure-image-log-entries.ts`.
+ */
+export function imageToolEntryRefusal(
+  op: Pick<ResearchLogAppendOp, "tool" | "query" | "outcome" | "resultsExamined" | "stagedResultsRef">,
+): string | null {
+  const tool = canonicalToolName(op.tool);
+  if (tool === "image_transcribe" && typeof asNull(op.stagedResultsRef) !== "string") {
+    const examined = coerceJsonArg(op.resultsExamined);
+    const failedCall = op.outcome === "error";
+    if (failedCall && (examined === 0 || examined === undefined || examined === null)) return null;
+    const browse = isBrowseQuery(queryObject(op.query));
+    return (
+      "an `image_transcribe` entry needs the `stagedResultsRef` its call returned: without it the log " +
+      `cannot show the page was machine-read. ${USER_PROVIDED_REMEDY} A page \`image_transcribe\` read ` +
+      "is logged with the `staged.resultsRef` that call returned; if it returned none, call " +
+      "`image_transcribe` again with `projectPath` and pass the `staged.resultsRef` it returns." +
+      (browse
+        ? ' A browse across several pages, or one the image cap stopped, is logged as `tool: "image_search"`.'
+        : "") +
+      (failedCall ? ' A call that failed and read nothing is logged with `outcome: "error"` and `resultsExamined: 0`.' : "") +
+      (op.tool !== "image_transcribe" ? " Name the tool `image_transcribe`: the staged file records that name." : "")
+    );
+  }
+  if (tool === "image_read") {
+    const file = queryObject(op.query)?.file;
+    if (file === undefined || file === null) return null;
+    return (
+      "`image_read` takes no `file`, so an entry whose `query` names one records a reading of an upload " +
+      `that no image tool made. ${USER_PROVIDED_REMEDY} To machine-read the upload, call ` +
+      '`image_transcribe` with `projectPath` and that `file`, then log it as `tool: "image_transcribe"` ' +
+      "with the `staged.resultsRef` it returns."
+    );
+  }
+  return null;
+}
+
+/**
+ * Refuse an op `imageToolEntryRefusal` refuses. Runs before the other
+ * preflights, so a mislabelled op is not first asked to fill fields for an
+ * entry it must relabel. It needs no filled `tool`: it fires only with no
+ * staged ref, and `tool` is filled only from one.
+ */
+function preflightImageToolEntry(op: ResearchLogAppendOp): void {
+  const refusal = imageToolEntryRefusal(op);
+  if (refusal !== null) throw new LogAppendError(refusal);
+}
+
 /**
  * Fill an omitted `tool` from the staged envelope, then refuse once naming every
- * required field still missing. Runs first, so every later preflight sees the
- * filled `tool`. Without it an omitted `tool` reached the staging check as
- * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
- * to get past it lost the search's results (feedback issue #3069).
+ * required field still missing. Runs before every preflight but
+ * `preflightImageToolEntry`, so each later one sees the filled `tool`. Without
+ * it an omitted `tool` reached the staging check as `'undefined'` and read as a
+ * mismatch, and a caller that dropped the staged ref to get past it lost the
+ * search's results (feedback issue #3069).
  */
 async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
@@ -2180,9 +2508,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -2389,6 +2714,7 @@ async function applyLogAppendOp(
         }
       : null,
     results_ref: null,
+    ...(typeof op.writtenBy === "string" && op.writtenBy !== "" ? { written_by: op.writtenBy } : {}),
   };
   const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
   if (resultsAvailable !== undefined && resultsAvailable !== null) {
@@ -2485,10 +2811,8 @@ async function applyLogAppendOp(
     warnings.push(
       `${logId}: ${op.tool} reported ${resultsAvailableCoerced} available result(s) but ` +
         `retained none — no results/${logId}.json sidecar was written, and the raw ` +
-        `response is unrecoverable. Pass \`projectPath\` to ${op.tool} so it stages ` +
-        `its response, then hand the returned \`staged.resultsRef\` back here as ` +
-        `\`stagedResultsRef\`. Omit \`projectPath\` only for an exploratory search ` +
-        `you do not intend to log.`,
+        `response is unrecoverable. Hand the \`staged.resultsRef\` that ${op.tool} ` +
+        `returned back here as \`stagedResultsRef\`.`,
     );
   }
 
@@ -2594,27 +2918,123 @@ export async function researchLogAppend(
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId) ?? {};
       const differs: string[] = [];
       const sent = (v: unknown) => v !== undefined && v !== null && v !== "";
-      if (sent(op.tool) && op.tool !== prior.tool) differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      if (sent(op.tool) && canonicalToolName(op.tool) !== canonicalToolName(prior.tool)) {
+        differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      }
       if (sent(op.planItemId) && op.planItemId !== prior.plan_item_id) {
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      // Issue #4721. `image_transcribe` logs its own read, so a later hand-log
+      // of that page is the same read, whatever outcome or plan item it names.
+      // Refusing it would send the caller to read the page again — the double
+      // read the tool's write exists to end. Its staged file is consumed, so a
+      // note it adds cannot become an entry of its own; the warning carries it
+      // back rather than dropping it behind `ok: true`.
+      const toolWrote =
+        isToolLoggedRead(prior) &&
+        op.writtenBy === undefined &&
+        (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
+      if (toolWrote) {
+        const note = typeof op.notes === "string" ? op.notes.trim() : "";
+        const extra: string[] = [];
+        if (differs.length > 0) extra.push(`it was logged by image_transcribe itself, so this re-send's ${differs.join(", ")} was not applied`);
+        if (note !== "" && !String(prior.notes ?? "").includes(note)) extra.push(`this note was not stored: "${note}"`);
+        if (extra.length > 0) opWarnings.push(`${ref} is ${found.logId}: ${extra.join("; ")}.`);
+        return found;
+      }
       if (differs.length > 0) {
+        // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
+        // so a correction to a logged page needs a page of its own, not no ref.
+        const pageRead =
+          canonicalToolName(prior.tool) === "image_transcribe" &&
+          (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
         throw new LogAppendError(
           `stagedResultsRef '${ref}' is already logged as ${found.logId}, and this re-send differs in ` +
             `${differs.join(", ")}. The log is append-only: leave ${found.logId} as it is and append a ` +
-            "new entry, without the stagedResultsRef, whose notes state the correction.",
+            (pageRead
+              ? "new entry whose notes state the correction: call `image_transcribe` again with " +
+                "`projectPath` and log it with the new `staged.resultsRef` it returns."
+              : "new entry, without the stagedResultsRef, whose notes state the correction."),
         );
       }
       return found;
     };
+    // Issue #4527. `record_search` writes a nil search's entry itself, and Haiku
+    // may re-log it out of habit. `alreadyLogged` above cannot see that: it keys
+    // on `stagedResultsRef`, and a nil stages nothing.
+    //
+    // KEY: full query equality, plus the plan item. Deliberately NOT a looser key
+    // like plan-item-plus-nil-ness. A looser key swallows a genuinely different
+    // nil search on the same plan item, and a swallowed negative is the
+    // asymmetric error — the log is append-only and later reasoning leans hardest
+    // on negatives, while a duplicate entry is merely visible. The documented
+    // cost: when the agent's hand-typed query differs from the tool's by even one
+    // key, this misses and a second entry lands. That is the safe direction.
+    //
+    // Never applies to record_search's OWN write, which carries `writtenBy`; an
+    // agent's op never does. Without that guard the tool's second genuine nil on
+    // an identical query would be deduped against its own first one and lost.
+    // Either dedupe's hit. `viaNil` distinguishes the query/plan-item match
+    // below from `alreadyLogged`'s staged-ref match, so the warning can name
+    // the right one.
+    type DedupeHit = { logId: string; resultsRef: string | null; viaNil?: boolean };
+    const canonicalQuery = (q: unknown): string =>
+      JSON.stringify(Object.entries(stripQueryPlumbing(q) ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+    const alreadyWrittenNil = (op: ResearchLogAppendOp) => {
+      if (op.writtenBy !== undefined) return undefined;
+      if (op.tool !== "record_search") return undefined;
+      // A staged ref means `alreadyLogged` above owns this op. `asNull` maps
+      // only the literal string "null", so an ABSENT ref is `undefined` here,
+      // not null — test for a ref that was actually supplied.
+      const ref = asNull(op.stagedResultsRef);
+      if (typeof ref === "string" && ref !== "") return undefined;
+      if (!Array.isArray(research.log)) return undefined;
+      // Only a re-log of the SAME nil is a duplicate. An op claiming any other
+      // outcome, or examined rows, is a DIFFERENT search event on the same query
+      // — the retry that finally hit, which this log exists to record — so it
+      // falls through and is written. `alreadyLogged` refuses that divergence
+      // because a staged ref names one specific search; a query plus a plan item
+      // names a shape that is run repeatedly on purpose, so here the answer is
+      // to write, not to refuse. Swallowing it would file a positive under the
+      // earlier negative and leave research-exhaustiveness reading absence.
+      if (op.outcome !== undefined && op.outcome !== "negative") return undefined;
+      if (typeof op.resultsExamined === "number" && op.resultsExamined > 0) return undefined;
+      const wanted = canonicalQuery(op.query);
+      const pid = op.planItemId ?? null;
+      const prior = research.log.find(
+        (e: any) =>
+          e &&
+          e.written_by === "record_search" &&
+          e.tool === "record_search" &&
+          (e.plan_item_id ?? null) === pid &&
+          canonicalQuery(e.query) === wanted,
+      );
+      if (!prior || typeof prior.id !== "string") return undefined;
+      // The agent's `notes` are the post-search conclusion the tool's own entry
+      // cannot hold — the tool writes at the moment of the nil, before the agent
+      // knows the variants are exhausted. Dropping the op would discard that
+      // silently behind an `ok: true`, so a note the prior entry does not already
+      // carry falls through and lands as its own entry. A visible duplicate is
+      // the cheap error here; a lost exhaustion note is the expensive one.
+      const note = typeof op.notes === "string" ? op.notes.trim() : "";
+      if (note !== "" && !String(prior.notes ?? "").includes(note)) return undefined;
+      return { logId: prior.id, resultsRef: (prior.results_ref ?? null) as string | null, viaNil: true };
+    };
+
     const alreadyLoggedResult = (
-      found: { logId: string; resultsRef: string | null },
+      found: DedupeHit,
       field: string,
     ): ResearchLogAppendOpResult => {
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId);
       opWarnings.push(
-        `${field} was already logged as ${found.logId}; returned that entry and wrote nothing new for it.`,
+        // `field` names the parameter that matched. The nil dedupe matches on the
+        // query and plan item of an op that sent NO `stagedResultsRef` (a ref is
+        // a precondition of missing it), so naming that parameter there points
+        // the agent at a field it did not send and hides which dedupe fired.
+        found.viaNil
+          ? `record_search already logged this nil search as ${found.logId}; returned that entry and wrote nothing new for it.`
+          : `${field} was already logged as ${found.logId}; returned that entry and wrote nothing new for it.`,
       );
       return {
         logId: found.logId,
@@ -2636,25 +3056,40 @@ export async function researchLogAppend(
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      // `writtenBy` is internal provenance, and an agent must not be able to
+      // claim it. `rejectUnknownArgs` would refuse it at dispatch, but it reads
+      // TOP-LEVEL keys only and the `ops` item schema admits extra keys, so a
+      // batch op reaches here carrying whatever it likes. Strip it: a forged
+      // stamp both writes a false `written_by` into the audit trail and makes
+      // that entry a dedupe target, so the agent's own next genuine nil on the
+      // query is answered with it and never written — the swallowed negative
+      // the dedupe below is built to avoid. Every in-process writer uses the
+      // single form, so nothing legitimate sets it on an op.
+      for (const op of input.ops) {
+        if (op && typeof op === "object") delete (op as { writtenBy?: string }).writtenBy;
+      }
       const duplicate = duplicateStagedRefError(input.ops, projectPath);
       if (duplicate) return { ok: false, errors: [duplicate] };
       // Every op is checked before any refusal, so one retry can fix them all;
       // the batch still writes all or nothing.
-      const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
+      const logged = new Map<number, DedupeHit>();
       const stagedChecks = new Map<number, StagedCheck>();
       const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
-          const found = await alreadyLogged(input.ops[i]);
+          const found = (await alreadyLogged(input.ops[i])) ?? alreadyWrittenNil(input.ops[i]);
           if (found) {
             logged.set(i, found);
             continue;
           }
+          preflightImageToolEntry(input.ops[i]);
           await preflightRequiredFields(input.ops[i], projectPath);
           const staged = await preflightStagedRef(input.ops[i], projectPath);
           if (staged) stagedChecks.set(i, staged);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
+          const cited = citedRecordNegativeError(input.ops[i], staged, tree);
+          if (cited) throw new LogAppendError(cited);
           await checkCollection(input.ops[i]);
         } catch (e) {
           if (e instanceof LogAppendError) {
@@ -2738,16 +3173,22 @@ export async function researchLogAppend(
       notes: input.notes,
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
+      // Internal, never on the MCP schema: carried through so a tool writing its
+      // own entry is distinguishable from an agent's hand-log (issue #4527).
+      writtenBy: input.writtenBy,
     };
-    const found = await alreadyLogged(singleOp);
+    const found = (await alreadyLogged(singleOp)) ?? alreadyWrittenNil(singleOp);
     if (found) {
       const prior = alreadyLoggedResult(found, "stagedResultsRef");
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
     }
+    preflightImageToolEntry(singleOp);
     await preflightRequiredFields(singleOp, projectPath);
     const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
+    const singleCited = citedRecordNegativeError(singleOp, singleStaged, tree);
+    if (singleCited) throw new LogAppendError(singleCited);
     const singleNilRetry = await preflightFilteredNilRetry(
       [singleOp],
       research,
@@ -2762,6 +3203,33 @@ export async function researchLogAppend(
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
+    }
+
+    // Issue #4527, the lead's follow-on ruling: the TOOL writes a nil's
+    // after-the-result interpretation, so the agent writes none. Only
+    // `escalationDue` — no coverage or browse-only line (amended ruling).
+    //
+    // It has to happen HERE, and the ordering is the whole difficulty.
+    // `nilEscalationNote` reads `research.log.slice(priorLogLength)` — the entry
+    // being logged is part of its own trigger — so it cannot be computed before
+    // the append, and it is module-private, so record_search cannot pre-compute
+    // it either. After the append and before validate is the only window: the
+    // entry's `notes` must be final when the schema is checked and when the file
+    // is written. The agent's pre-search note comes first, the escalation after.
+    // Only for a tool's own write; a hand-logged entry keeps the agent's note.
+    if (typeof singleOp.writtenBy === "string" && singleOp.writtenBy !== "") {
+      try {
+        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
+        if (note) {
+          const entry = research.log[research.log.length - 1];
+          if (entry && typeof entry === "object") {
+            const existing = typeof entry.notes === "string" && entry.notes.trim() !== "" ? entry.notes.trim() : "";
+            entry.notes = existing ? `${existing} ${note}` : note;
+          }
+        }
+      } catch {
+        // no note
+      }
     }
 
     const validation = await validateIntroduced({ research: beforeResearch, tree }, { research, tree }, { projectPath });
@@ -2785,7 +3253,6 @@ export async function researchLogAppend(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }
@@ -2809,7 +3276,8 @@ export const researchLogAppendSchema = {
     "the search tool returned (when you called it with `projectPath`) as " +
     "`stagedResultsRef`; the host finalizes that staged file into the sidecar " +
     "without you re-serializing the payload. Omit `stagedResultsRef` for nil " +
-    "searches and external-site searches.\n" +
+    "searches and external-site searches; a page read with `image_transcribe` " +
+    "keeps its `staged.resultsRef` even when it found nothing.\n" +
     "\n" +
     "Returns a compact summary (logId, resultsRef, returnedCount, filesWritten) — " +
     "never the payload. On a validation failure nothing is written and " +
@@ -2905,7 +3373,9 @@ export const researchLogAppendSchema = {
         type: ["string", "null"],
         description:
           "The `staged.resultsRef` handle returned by record_search / fulltext_search " +
-          "(when called with projectPath). Omit/null for nil and external-site searches.",
+          "(when called with projectPath). Omit/null for nil and external-site searches. An " +
+          "`image_transcribe` entry needs the `staged.resultsRef` that call returned, even when the " +
+          "page held nothing you sought.",
       },
       ops: {
         type: "array",

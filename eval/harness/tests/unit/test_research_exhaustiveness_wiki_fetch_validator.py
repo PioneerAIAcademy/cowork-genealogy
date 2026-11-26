@@ -303,3 +303,42 @@ def test_d3c_is_graded_on_the_stop_it_writes():
     untagged = {"tags": [t for t in d3c["tags"] if t != "blocked-by-conflict"]}
     with pytest.raises(pytest.skip.Exception):
         check_stop(state(None), state("resources_spent"), untagged)
+
+
+def _ut_020_tags():
+    return json.loads(
+        (Path(__file__).resolve().parents[3] / "tests" / "unit"
+         / "research-exhaustiveness"
+         / "not-reached-user-declined-wrap-up.json").read_text(encoding="utf-8")
+    )["test"]
+
+
+def test_skips_a_wrap_up():
+    """Issue #4551: under `wrapUp: yes` the agent writes `resources_spent`
+    with `stop_criteria: null` and nothing else, so it owes no start date.
+    ut_020 failed here 3/3 while the judge scored every dimension 3. Reads the
+    real test file, so dropping its `wrap-up` tag fails here."""
+    calls = [_call("mcp__genealogy__project_context"),
+             _call("mcp__genealogy__research_query"),
+             _call("mcp__genealogy__research_append")]
+    with pytest.raises(pytest.skip.Exception):
+        check(calls, _ut_020_tags())
+
+
+def test_the_same_tags_without_wrap_up_still_owe_the_fetch():
+    """The other direction: ut_020 is exempt because it wraps up, not because
+    it is about `not_reached`. Its tags minus `wrap-up` — which ut_019, an
+    assess run on the same scenario, carries — must still fire. Three-way for
+    the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`."""
+    tags = {"tags": [t for t in _ut_020_tags()["tags"] if t != "wrap-up"]}
+    calls = [_call("mcp__genealogy__project_context"),
+             _call("mcp__genealogy__research_append")]
+    try:
+        check(calls, tags)
+    except pytest.skip.Exception:
+        pytest.fail("a run without `wrap-up` was exempted — the gate must key "
+                    "on the wrap-up tag, not on `not-reached`")
+    except AssertionError:
+        return
+    pytest.fail("the check did not fire on a run that owes the fetch")

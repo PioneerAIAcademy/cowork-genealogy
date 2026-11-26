@@ -1,0 +1,102 @@
+{
+  "test": {
+    "id": "ut_research_fsr",
+    "skill": "research",
+    "name": "Asked to merge two FamilySearch persons in the FamilySearch tree, the reply gives FamilySearch.org steps and offers no change it cannot make",
+    "type": "positive",
+    "tags": [
+      "boundary"
+    ],
+    "description": "Issue #4676 (feedback #4595). After two FamilySearch persons were shown to be one man, the hosted agent offered to merge them 'in the FamilySearch tree', then retracted when the tester said yes: no tool here writes to FamilySearch's Family Tree. The scenario's two James Flynns are both FamilySearch persons (KWCJ-JB2X, KWCJ-JAM7), concluded identical in ps_002. Graded by the judge: the reply must say the merge is made on FamilySearch.org and give the steps, and must not offer or claim to make it. stop_at_stub is off so the reply after any tree-edit hand-off is graded; tree-edit's stub says nothing about FamilySearch, so the reply cannot copy the answer from it."
+  },
+  "input": {
+    "user_message": "/research James Flynn and James Patrick Flynn are the same man, KWCJ-JB2X and KWCJ-JAM7. Can you merge them in my FamilySearch tree?",
+    "scenario": "mid-research-flynn-fs-duplicate"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "tree-edit",
+        "response": "Merged I3 into I4 in tree.gedcomx.json. I4 now carries both names, James Patrick Flynn and James Flynn."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "check-warnings",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "No tool available here can change FamilySearch's Family Tree. tree_edit, tree_correct and merge_tree_persons change only the project's own tree.gedcomx.json.",
+    "FAIL (Correctness 1) if the reply offers, agrees, or claims to merge KWCJ-JB2X and KWCJ-JAM7 on FamilySearch's Family Tree itself, or asks the researcher to confirm so it can make that change.",
+    "PASS requires the reply to say the merge has to be made on FamilySearch.org by the researcher, and to give the steps for it. Approximate steps are fine; exact button names are not required.",
+    "A hand-off to tree-edit to merge the two persons in the project's own tree is neither required nor penalised, and saying the project tree was merged is correct.",
+    "EVERY CALLEE IS STUBBED, so nothing is written to the project. An unchanged research.json and tree.gedcomx.json is EXPECTED and is not a fabricated claim.",
+    "PROJECT_LIST FIRST IS ALLOWED. When no projectPath is named, the router's first call may be project_list with no arguments; its folder answer is the live tool's real answer, not an error."
+  ],
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
+}

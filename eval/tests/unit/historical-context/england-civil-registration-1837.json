@@ -5,11 +5,19 @@
     "name": "England civil registration began 1837",
     "type": "positive",
     "description": "Tests whether the skill correctly explains that civil registration of births in England and Wales did not begin until 1 July 1837, so a birth certificate simply does not exist for ancestors born before that date. Also tests knowledge of alternative pre-1837 sources and awareness that early registration was incomplete.",
-    "tags": ["england", "civil-registration", "parish-records", "1837", "record-availability", "topical-fixture-required", "direct-arm"]
+    "tags": [
+      "england",
+      "civil-registration",
+      "parish-records",
+      "1837",
+      "record-availability",
+      "topical-fixture-required",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "My ancestor was born around 1820 in Dorset, England. I cannot find a birth certificate anywhere. Why not?",
-    "scenario": null
+    "delegation": "My ancestor was born around 1820 in Dorset, England. I cannot find a birth certificate anywhere. Why not?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "mcp_fixtures": [
     "wiki-read-england-civil-registration",
@@ -21,7 +29,9 @@
     "wiki-search-england-nonconformist-records",
     "wiki-search-any",
     "wiki-read-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-dorset-england",
+    "place-search-any"
   ],
   "judge_context": [
     "Must explain that civil registration of births, marriages, and deaths in England and Wales did not begin until 1 July 1837 — a birth certificate for someone born in 1820 simply does not exist",

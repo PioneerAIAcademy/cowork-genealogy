@@ -1,0 +1,44 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for \"England, United Kingdom\", 1750-1800, captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "standardPlace": "~England"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "United Kingdom",
+    "totalForPlace": 17,
+    "results": [
+      {
+        "id": "4324570",
+        "title": "United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005",
+        "dateRange": "1761-2005",
+        "personCount": 4212377
+      },
+      {
+        "id": "5000023",
+        "title": "United Kingdom, British India Office, Births and Baptisms, 1712-1965",
+        "dateRange": "1749-1960",
+        "personCount": 2051599
+      },
+      {
+        "id": "4231104",
+        "title": "United Kingdom, British Royal Navy Ships’ Musters, 1739-1861",
+        "dateRange": "1739-1861",
+        "personCount": 279822
+      },
+      {
+        "id": "1952868",
+        "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+        "dateRange": "1760-1913",
+        "personCount": 933550
+      },
+      {
+        "id": "1967749",
+        "title": "United Kingdom, Maritime Births, Marriages, and Deaths, 1787-1933",
+        "dateRange": "1787-1933",
+        "personCount": 66774
+      }
+    ]
+  }
+}

@@ -15,6 +15,7 @@ function-signature contract.
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
@@ -234,7 +235,7 @@ _HANDBACK_INIT_PROJECT = re.compile(r"Hand-back:\s*`?init-project\b", re.I)
 
 def test_no_project_hands_back_to_init_project(tool_calls, test, agent_returns=None, text_response=None):
     """Tag-gated on `no-project`. In a folder with no project the agent learns
-    so from `person_warnings`' own `no_project` answer (check-warnings holds no
+    so from `person_warnings`' refusal ("No project: ...") (check-warnings holds no
     file read), makes no other call, and hands back to init-project. It must
     never create the project itself."""
     if "no-project" not in test.get("tags", []):
@@ -247,8 +248,8 @@ def test_no_project_hands_back_to_init_project(tool_calls, test, agent_returns=N
         f"only person_warnings may be called in a folder with no project; got {names}"
     )
     answers = [c.get("response") or {} for c in tool_calls]
-    assert all(a.get("reason") == "no_project" for a in answers), (
-        f"person_warnings did not answer no_project: {answers}"
+    assert all("No project:" in json.dumps(a) for a in answers), (
+        f"person_warnings was not refused with the no-project refusal: {answers}"
     )
     reply = subject_reply_text(agent_returns, text_response, "check-warnings", test)
     assert _HANDBACK_INIT_PROJECT.search(reply), (

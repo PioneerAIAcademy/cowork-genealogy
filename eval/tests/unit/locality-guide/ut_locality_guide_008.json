@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_locality_guide_008",
     "skill": "locality-guide",
-    "name": "Locality guide for New York City, 1700s \u2014 colonial family records",
+    "name": "Locality guide for New York City, 1700s — colonial family records",
     "type": "positive",
     "description": "Verifies that the skill recognizes New York City was under British colonial rule in the 1700s and directs researchers to parish registers, land deeds, probate records, and colonial court records. Ensures jurisdiction-aware guidance by highlighting repositories such as church archives, local courthouses, and colonial administrative offices, while avoiding anachronistic references to statewide vital registration.",
     "tags": [
@@ -17,8 +17,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -40,10 +40,14 @@
     "place-search-all-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
     "Recognize New York was under British colonial rule in the 1700s; mention parish registers, land deeds, probate records, and colonial court records. Historical societies such as the New-York Historical Society hold significant colonial-era collections and should be mentioned as repositories. Avoid New York State Archives or statewide vital records (those came later).",
-    "volume_search returns one browse-only image group of Dutch Reformed Church registers (1700-1776, language 'nl', no name index). The skill should flag that the volume is written in Dutch and is not full-text or name searchable, so a researcher knows to expect manual page-by-page browsing of a non-English record."
-  ]
+    "locality_survey's volumes part returns one browse-only image group of Dutch Reformed Church registers (1700-1776, language 'nl', no name index). The skill should flag that the volume is written in Dutch and is not full-text or name searchable, so a researcher knows to expect manual page-by-page browsing of a non-English record.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }

@@ -70,6 +70,8 @@ const COMPONENTS = join(
  * grows past a dozen, the lint is asking the wrong question.
  */
 const NOT_RENDERED: Record<string, string> = {
+  "project.verify_request":
+    "Routing input, not a finding: the researcher's opening words asking to verify one conclusion, read by project_context to name the first question's forget. The objective already shows the researcher's goal.",
   "conflict.weighed_log_entry_ids":
     "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
   "source.image_ark":
@@ -102,6 +104,8 @@ const NOT_RENDERED: Record<string, string> = {
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
   "log_entry.staged_ref":
     "Host bookkeeping: the deleted results/.staging/ file the entry was finalized from, kept so research_log_append can answer a re-sent ref. It names nothing a reader can open.",
+  "log_entry.written_by":
+    "Host bookkeeping: which tool wrote the entry, so research_log_append can tell a tool-written nil from an agent's hand-logged repeat. A reader learns nothing from it that the entry's own tool and query do not already say.",
 };
 
 /**

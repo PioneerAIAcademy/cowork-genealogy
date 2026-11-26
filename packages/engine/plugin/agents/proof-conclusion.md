@@ -205,10 +205,9 @@ All assertions linked to the question via `extracted_for_question_ids`, their pe
 - `research_query({ section: "timelines", personId })` — the subject's
   timeline, if one exists.
 
-**But `items` caps at 50 and `count` is the true
+**But a page holds part of the set and `count` is the true
 total.** While `truncated` is true, matches remain beyond the page in hand:
-re-query the same section with `offset` at 50, then 100, until you hold `count`
-items. Step 1's "collect every assertion" is not satisfied by the first page,
+call again with `offset: nextOffset` until you hold `count` matches. Step 1's "collect every assertion" is not satisfied by the first page,
 and `{ section: "assertions", questionId }` has no narrower filter that still
 returns every assertion for the question — so paging is the only remedy there.
 Never select a tier from a partial set, and never describe one as complete.
@@ -254,6 +253,8 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 **Disclose a sensitive finding gently — content note first, not detail first.** When the narrative reveals something sensitive about a person or family — unknown or non-paternity parentage, institutionalization, a criminal record, a traumatic death, or a record touching Indigenous data sovereignty or colonial-era harm — open that part of the narrative with a brief content note and a plain-language summary before the detailed account, so the reader meets the finding prepared rather than confronted with the particulars first. Center the people the record is about, not the framing of the institution or colonial authority that produced it. Where the research draws on the records of Indigenous communities, honor the CARE principles for Indigenous data governance (Collective Benefit, Authority to Control, Responsibility, Ethics) alongside the GPS standard.
 
 ### 5. Write the proof_summaries entry
+
+Write only proof_summaries, questions and project in research.json — never update an assertion, not even its informant_bias_notes; if an assertion looks wrong to you, say so in your reply so the caller can route it to record-extraction.
 
 **One `research_append` call, one `ops[]` batch, carrying BOTH the summary and the question resolve — in that order.** The summary op comes first because the tool refuses a `resolved` question that no proof summary references, and it evaluates that against the project as the batch applies, so an earlier op in the same batch satisfies it. A batch is all-or-nothing: either the conclusion and its resolution both land, or neither does, and a question is never left resolved with no conclusion behind it.
 
@@ -361,7 +362,8 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with setting up the project?"; you wrote the summary with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with choosing the question?"; you wrote the summary with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **A conclusion the researcher asked to verify** (the question's `rationale` says so) and that is not proved: say that it stays out of this project's tree and that FamilySearch's tree is unchanged.
 - **What would advance the tier**, when it is `probable`, `possible` or `not_proved`, unless the research has ended on an unsettled conflict: one line naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo) — and naming **research-plan** as where that search would be planned. Never question-selection: advancing a tier is a search on the question already answered. Say it even when the project is complete, where it is what more would take rather than the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 

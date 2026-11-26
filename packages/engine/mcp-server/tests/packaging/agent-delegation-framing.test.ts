@@ -190,6 +190,23 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Added with the hook route on `sources` (issue #2475, row from issue #1874).
+  // The hook tells a denied main thread to invoke citation for a citation
+  // refinement, so the agent side pins that citation never creates a source.
+  "research -> citation": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "Refining an existing source's citation goes to `@plugin:citation`, which never creates a source.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Never creates a source entry - it refines one extraction already created, and declines when asked to create one.",
+      },
+    ],
+  },
+
   // The three rows /research routes by spawning the agent directly (#2075).
   // All three share one caller-side paragraph, because the failure they guard
   // against is the same one: on the direct route the agent's own body is not
@@ -315,7 +332,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -352,7 +369,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -385,7 +402,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "`project_context`'s `subject`, copied whole as a `subject:` JSON block, for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "caller",
@@ -479,6 +496,34 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Issue #4381: an interpretive ask is a bounded deliverable. The caller sends
+  // project_context's historicalContext prompt and the message and nothing else,
+  // so that clause is pinned beside the shared paragraph, with the relay rule for
+  // its overview.
+  "research -> historical-context": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "spawn the agent with `historicalContext.prompt`\nas given, the message copied verbatim after its last line `message:`, and nothing else.",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "From `@plugin:historical-context`, relay everything above its `### Search implications` heading instead.",
+      },
+      {
+        side: "agent",
+        excerpt: "Decide this from what is actually being asked for, not from how the delegation labels it.",
+      },
+    ],
+  },
+
   // Converted from a skill (issue #2122). Both callers spawn it when no project
   // exists; research's row shares the caller paragraph locality-guide pins.
   "research -> init-project": {
@@ -518,9 +563,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  // Added with the agent (issue #2029). Two spawns, because an agent returns
-  // once: triage, then the researcher's verdicts. The caller pin is the one
-  // that keeps a triage recommendation from being passed back as a verdict.
+  // Added with the agent (issue #2029). The agent decides hints itself; a second
+  // spawn carries only verdicts the researcher stated. The caller pin keeps the
+  // router from inventing one.
   // Added with the bounded-ask owners (issue #3526): each bounded deliverable is
   // handed straight to the agent that owns it, by one clause naming a destination.
   // The caller side is exempt for the same reason on each: the router names
@@ -565,7 +610,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     pins: [
       {
         side: "agent",
-        excerpt: "**Only merge when proof-conclusion confirms identity.**",
+        excerpt: "**A merge rests on an identity decision or the user's instruction.**",
       },
     ],
     exempt: {
@@ -584,11 +629,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Never pass a verdict the\nresearcher did not state — a triage recommendation is not one.",
+          "Never pass a verdict the researcher did\nnot state.",
       },
       {
         side: "agent",
-        excerpt: "**Verdicts are the researcher's.**",
+        excerpt: "**A delegation that pre-states a verdict**",
       },
     ],
   },
@@ -651,21 +696,16 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 //     would satisfy the quote check. Already true of every pin here, so it is a
 //     property of the mechanism rather than something this adds.
 //
-// THE `citation` ROWS ARE A DIFFERENT SHAPE, and worth reading before adding
-// more like them. `citation` (issue #2799) is the first agent whose name is
-// also an ordinary English word, and `namesAgent` tokenizes and matches any
-// token CONTAINING the name — so "citation", "citations" and "inline citation
-// of individual claims" all trip arm 2 in skills that have nothing to do with
-// the agent. Of the six below, only `record-extraction` means the agent
-// (boundary prose: "format citations (use citation)"); the other five are the
-// common noun. All six are bare-name mentions, so all six take `""` and
-// none can suppress a real delegation.
+// `citation` is an agent whose name is also an ordinary English word, and
+// `namesAgent` tokenizes and matches any token CONTAINING the name, so
+// "citation-before-analysis" trips arm 2 in research/SKILL.md. Its row went when
+// research began delegating to `@plugin:citation` (issue #2475, row from issue
+// #1874): that is now a real edge, and a row here would shadow it.
 //
 // The arm still earns its place for `gps-mentor` and `record-extractor`, whose names no one writes by accident. It does not
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
-  ["research -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
@@ -1121,6 +1161,7 @@ describe("agent delegation framing", () => {
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS, OWNED_FIELDS and OWNED_APPENDS; if the routing moved, follow it.",
     ).toEqual([
+      "citation",
       "evaluate-search-results",
       "gps-mentor",
       "person-evidence",

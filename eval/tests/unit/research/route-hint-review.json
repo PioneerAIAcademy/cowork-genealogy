@@ -4,11 +4,11 @@
     "skill": "research",
     "name": "Routes a hint-review request to the search-hints agent",
     "type": "positive",
-    "description": "The user asks /research to check the FamilySearch hints on Patrick Flynn (LZNY-BRF). A hint review is an entry point, not a downstream destination (research/SKILL.md, \"Hint review\"): the router spawns @plugin:search-hints with personId and projectPath, relays its triage, and stops for the researcher's verdicts. search-hints is stubbed with a realistic triage that ends in \"Awaiting verdicts\", so the test also pins that the router relays it and stops — one spawn, no log write — rather than spawning again with verdicts the researcher never stated (test_hint_review_stops_for_the_researchers_verdicts). e2e can never reach this route (person_record_matches is in BLOCKED_TREE_TOOLS), so this test is its only check (issue #2029). The message enters /research (\"keep researching … parentage\") and asks for the hint check inside it; a bare \"check the hints\" is matched by search-hints' own description and never reaches the router, which made the first paid run fail on activation (2026-10-05).",
+    "description": "The user asks /research to check the FamilySearch hints on Patrick Flynn (LZNY-BRF). A hint review is an entry point, not a downstream destination (research/SKILL.md, \"Hint review\"): the router spawns @plugin:search-hints with personId and projectPath, and search-hints decides each hint and logs its decisions. search-hints is stubbed with a realistic review whose decisions are already logged, so the test also pins that the router relays it once and ends the turn, with no second spawn and no log write of its own (test_hint_review_runs_once). e2e can never reach this route (person_record_matches is in BLOCKED_TREE_TOOLS), so this test is its only check (issue #2029). The message enters /research (\"keep researching … parentage\") and asks for the hint check inside it; a bare \"check the hints\" is matched by search-hints' own description and never reaches the router.",
     "tags": [
       "routing",
       "routes-to:search-hints",
-      "stops-for-verdicts"
+      "hint-review-once"
     ]
   },
   "input": {
@@ -21,7 +21,7 @@
     "stub_skills": [
       {
         "skill": "search-hints",
-        "response": "Hint ark:/61903/1:1:M70C: accept — 1870 United States Federal Census, confidence 3; Patrick Flynn, 25, born Ireland, in Thomas Flynn's household, Schuylkill.\nHint ark:/61903/1:1:M80C: accept — 1880 United States Federal Census, confidence 2; the index reads Glynn but the image reads Flynn, 35, coal miner, born Ireland.\nHint ark:/61903/1:1:MDEF: already linked by pe_005 — Pennsylvania Death Certificates, confidence 2; extracted as src_004, linked to I1 by pe_005.\nAwaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint\n\n---\n\nThree records FamilySearch suggests for Patrick were looked at. The 1870 census, which FamilySearch rates a moderate match, shows him at 25 in his father Thomas's household, and is recommended. The 1880 census, a weaker match on FamilySearch's scale, was indexed under the wrong surname, but the page itself reads Flynn and fits him, so it is recommended too. His 1908 death certificate is already part of this research.\n\nWhich of these suggestions would you like to accept, and which would you like to reject?"
+        "response": "Hint ark:/61903/1:1:M70C: accept → log_006 — 1870 United States Federal Census, confidence 3; Patrick Flynn, 25, born Ireland, in Thomas Flynn's household, Schuylkill.\nHint ark:/61903/1:1:M80C: accept → log_007 — 1880 United States Federal Census, confidence 2; the index reads Glynn but the image reads Flynn, 35, coal miner, born Ireland.\nHint ark:/61903/1:1:MDEF: already linked by pe_005 — Pennsylvania Death Certificates, confidence 2; extracted as src_004, linked to I1 by pe_005.\nAccepted for extraction: {ark:/61903/1:1:M70C, log_006}, {ark:/61903/1:1:M80C, log_007}\n\n---\n\nThree records FamilySearch suggests for Patrick were looked at. The 1870 census, which FamilySearch rates a moderate match, shows him at 25 in his father Thomas's household, and was accepted. The 1880 census, a weaker match on FamilySearch's scale, was indexed under the wrong surname, but the page itself reads Flynn and fits him, so it was accepted too. His 1908 death certificate is already part of this research.\n\nNext, the details of the two accepted records are added to the project."
       },
       {
         "skill": "question-selection",
@@ -64,9 +64,12 @@
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether @plugin:search-hints is the first hand-off. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
     "The delegation should carry personId (LZNY-BRF) and projectPath, and no accept/reject verdicts — none was stated by the researcher.",
-    "search-hints is stubbed with a triage return. The router should relay the researcher-facing part and stop for the researcher's verdicts. Spawning search-hints again, or deciding the hints itself, is wrong — a deterministic validator checks the spawn count and that no log entry was written.",
+    "search-hints is stubbed with a review whose decisions are already logged. The router should relay the researcher-facing part and end the turn, offering the next step. Spawning search-hints again, asking the researcher to decide the hints, or logging the hints itself is wrong — a deterministic validator checks the spawn count and that the router wrote no log entry.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee.",
-    "The reply must carry the meaning of search-hints' summary: the 1870 census is recommended, the 1880 census is recommended though indexed under the wrong surname, the 1908 death certificate is already part of the research, and the researcher is asked which hints to accept or reject. Rewording, reformatting and added text are acceptable (lead, 2026-11-03). A reply that drops one of these findings or states one differently fails Correctness or Completeness."
+    "The reply must carry the meaning of search-hints' summary: the 1870 census was accepted, the 1880 census was accepted though indexed under the wrong surname, and the 1908 death certificate is already part of the research. Rewording, reformatting and added text are acceptable (lead, 2026-11-03). A reply that drops one of these findings, states one differently, or asks the researcher to accept or reject the hints fails Correctness or Completeness."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
 }

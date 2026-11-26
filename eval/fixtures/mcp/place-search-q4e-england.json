@@ -1,0 +1,24 @@
+{
+  "tool": "place_search",
+  "description": "place_search for \"England, United Kingdom\", captured live 2026-11-15 with the engine's own tool function (issue #4516 locality-guide quirk tests). Listed before the catch-alls.",
+  "args": {
+    "placeName": "~England"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "England, United Kingdom",
+        "type": "Country",
+        "dateRange": "+1801/",
+        "latitude": 52.4379,
+        "longitude": -1.6496,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England&focusedId=267",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/England,_United Kingdom"
+      }
+    ],
+    "verdict": {
+      "standardPlace": "England, United Kingdom",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

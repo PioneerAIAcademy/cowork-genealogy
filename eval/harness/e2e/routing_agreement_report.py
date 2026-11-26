@@ -124,13 +124,31 @@ def next_step_unit(text: str) -> str:
 
 
 def next_steps(response_summary: str) -> list[str]:
-    """Each non-null nextStep in a project_context summary, as a unit."""
+    """Each non-null nextStep of ``questionStatuses`` in a project_context
+    summary, as a unit.
+
+    The summary may be truncated, so it is read by regex, not parsed. Only the
+    text from the ``"questionStatuses":`` key on is scanned: ``owedFindings``
+    (Decision 33) carries its own ``nextStep`` keys and comes before it in the
+    answer, so a scan of the whole summary would count an owed item as a
+    question's step. A summary with no ``questionStatuses`` key (one written
+    before owed findings existed) is scanned whole, as it always was. One cut
+    after ``owedFindings`` but before ``questionStatuses`` holds no question
+    step at all, so it yields none rather than scoring owed items as steps.
+    """
+    start = response_summary.find('"questionStatuses":')
+    if start != -1:
+        response_summary = response_summary[start:]
+    elif '"owedFindings":' in response_summary:
+        return []
     out = []
     for m in NEXT_STEP_RE.finditer(response_summary):
         if m.group(1) == "null":
             continue
         raw = json.loads(m.group(1))
-        if raw:
+        # project_context's top-level first-question nextStep is the router's, not a
+        # question's step; it names no single step to agree with.
+        if raw and not raw.startswith("For the research router only"):
             out.append(next_step_unit(raw))
     return out
 

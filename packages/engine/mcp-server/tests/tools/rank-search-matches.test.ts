@@ -262,6 +262,54 @@ describe("rank_search_matches", () => {
     expect(facts).toEqual([]);
   });
 
+  // A household record's spouse and children can only count when the subject's
+  // family is sent with them: alone, the right 1865 household in
+  // thomas-hanrahan-marriage scored under the floor and its page read as a real
+  // negative.
+  it("sends FamilySearch's matcher the enriched subject with their family", async () => {
+    await writeTree({
+      persons: [
+        { id: "I1", gender: "Male", names: [{ preferred: true, given: "Thomas", surname: "Hanrahan" }], facts: [{ type: "Birth", date: "1840", place: "Ireland" }] },
+        { id: "I2", gender: "Female", names: [{ preferred: true, given: "Johanna", surname: "Ryan" }] },
+        { id: "I3", gender: "Female", names: [{ preferred: true, given: "Mary", surname: "Hanrahan" }] },
+        { id: "I9", names: [{ preferred: true, given: "Unrelated", surname: "Person" }] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "I2" },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "I3" },
+        { id: "R3", type: "ParentChild", parent: "I2", child: "I3" },
+      ],
+      sources: [],
+    });
+    await writeResearch({
+      person_evidence: [{ id: "pe_001", person_id: "I1", assertion_id: "a_001" }],
+      assertions: [{ id: "a_001", fact_type: "residence", structured_value: { year: "1880", place: "Saratoga, New York" } }],
+    });
+    scorePairMock.mockResolvedValue(scoreResult(0.2));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+
+    const [, , sent, sentId] = scorePairMock.mock.calls[0] as any[];
+    expect(sentId).toBe("I1");
+    expect(sent.persons.map((p: any) => p.id)).toEqual(["I1", "I2", "I3"]);
+    expect(sent.relationships.map((r: any) => r.id).sort()).toEqual(["R1", "R2", "R3"]);
+    // the subject sent is the enriched one, not the bare tree person
+    expect(sent.persons[0].facts).toContainEqual({ type: "Residence", date: "1880", place: "Saratoga, New York" });
+  });
+
+  it("sends a subject the tree relates to no one alone", async () => {
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID }, LOCAL);
+
+    const sent = scorePairMock.mock.calls[0][2] as any;
+    expect(sent.persons.map((p: any) => p.id)).toEqual([SUBJECT_ID]);
+    expect(sent.relationships ?? []).toEqual([]);
+  });
+
   it("withholds the ranking when the subject has no dated or placed fact", async () => {
     await writeTree(starvedTree);
     scorePairMock.mockResolvedValue(scoreResult(0.001));
@@ -512,6 +560,71 @@ describe("rank_search_matches", () => {
       const vd = { persons: [juanita({ names: [{ preferred: true, given: "Anna", surname: "van Dyke" }] })], relationships: [], sources: [] };
       const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Van Buren", "Anna")], vd);
       expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Van Buren" });
+    });
+
+    describe("a particle spaced differently from the tree's", () => {
+      const withSurname = (surname: string) => ({
+        persons: [juanita({ names: [{ preferred: true, given: "Anna", surname }] })],
+        relationships: [],
+        sources: [],
+      });
+      const flagged = async (tree: string, record: string) =>
+        only(await rank([hit("ark:/61903/1:1:AAAA-AA1", record, "Anna")], withSurname(tree)));
+
+      it.each([
+        ["VanBuren", "Van Buren"],
+        ["Van Buren", "VanBuren"],
+        ["McWilliams", "Mc Williams"],
+        ["McAndrew", "Mc Andrew"],
+        ["Mc Andrew", "McAndrew"],
+        ["Vanderlinde", "Van der Linde"],
+        ["StClair", "St. Clair"],
+        ["De La Cruz", "Delacruz"],
+        ["McAndrew", "Mc Andrews"],
+        ["Vanderlinden", "Van der Linde"],
+        ["St.Clair", "St Claire"],
+        ["Van-Buren", "VanBuran"],
+        ["O'Brien", "O Brien"],
+        ["Van Der", "Vander"],
+        ["Le Roy", "LeRoy"],
+        ["Van Os", "Vanos"],
+      ])("does not flag %s vs %s", async (tree, record) => {
+        expect(await flagged(tree, record)).not.toHaveProperty("surnameNotOnSubject");
+      });
+
+      it.each([
+        ["Van Buren", "van Dyke"],
+        ["van Dyke", "Van Deusen"],
+        ["McWilliams", "Mc Lean"],
+        ["VanBuren", "Van Bergen"],
+      ])("still flags %s vs %s (joined tokens are not compared by Soundex)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["Linde, van der", "Berg, van der"],
+        ["Rosa, de la", "Cruz, de la"],
+        ["Linde, van der", "Vander"],
+      ])("still flags %s vs %s (a particle run after the last word is not a word)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it.each([
+        ["da Silva", "da Costa"],
+        ["dos Santos", "dos Reis"],
+        ["Garcia y Lopez", "Martinez y Ruiz"],
+        ["van 't Hof", "van 't Veer"],
+      ])("still flags %s vs %s (a shared word of three letters or fewer is not a match)", async (tree, record) => {
+        expect(await flagged(tree, record)).toMatchObject({ surnameNotOnSubject: true });
+      });
+
+      it("still matches a tree Van Buren against a record indexed Buren", async () => {
+        expect(await flagged("Van Buren", "Buren")).not.toHaveProperty("surnameNotOnSubject");
+      });
+
+      it("still matches O'Hare against OHare", async () => {
+        expect(await flagged("O'Hare", "OHare")).not.toHaveProperty("surnameNotOnSubject");
+      });
     });
 
     it("falls back to the last word of personName when the row has no gedcomx", async () => {
@@ -902,6 +1015,28 @@ describe("rank_search_matches", () => {
         expect(m).not.toHaveProperty("attachedToSubject");
         expect(m).not.toHaveProperty("attachedToOther");
       }
+      expect(out.attachmentsChecked).toBe(false);
+    });
+
+    it("sets attachmentsChecked: false when the attachments call fails, and leaves it off on success", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const ok = await rankWithAttachments(SUBJECT_ID);
+      expect(ok).not.toHaveProperty("attachmentsChecked");
+
+      const ref = await stage([candidate({ recordId: ATTACHED, primaryId: "p1" })]);
+      scorePairMock.mockResolvedValue(scoreResult(0.8));
+      sourceAttachmentsMock.mockRejectedValue(new Error("FamilySearch source-attachments API error: 500"));
+      const failed = await rankSearchMatches(
+        { projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID, checkAttachments: true },
+        LOCAL,
+      );
+      expect(failed.attachmentsChecked).toBe(false);
+    });
+
+    it("carries the active matcher's realNegative floor on the result", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const out = await rankWithAttachments(SUBJECT_ID);
+      expect(out.realNegativeFloor).toBe(0.01);
     });
 
     describe("when the attachments read fails (self-hosted beta E3)", () => {

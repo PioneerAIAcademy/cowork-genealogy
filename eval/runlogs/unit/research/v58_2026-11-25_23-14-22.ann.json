@@ -1,0 +1,342 @@
+{
+  "run_log": "v58_2026-11-25_23-14-22.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_si4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_si4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fl1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fl2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fl2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fl2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The agent should have declined to continue the research task and routed the request to research-exhaustiveness or question-selection. Instead, it analyzed the project status, identified an owed finding, and suggested writing a conclusion. This violated the expected routing behavior for the negative test."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response did not complete the required action of declining and routing to the appropriate skill. Instead, it provided an extended analysis and a suggested next step, which was outside the scope of this test."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly reported both readings and the death certificate name, but the opening phrase, \"the page reads Tyler Armistead,\" presents the machine transcription as though it were confirmed from the original image. It should have said, \"The machine transcription returned Tyler Armistead.\" This would follow the reading instructions more precisely."
+    },
+    {
+      "test_id": "ut_research_iv2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent made an unsupported claim that a new research question could not begin until the parentage question was wrapped up. It also described q_001 as concluded without distinguishing its stored status from its computed status. The response should have reported the project state accurately and avoided introducing restrictions not established by the tools."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The agent failed to recognize that an indexed census search should be routed to search-records. Instead, it reviewed the existing project, discussed attached sources and question statuses, and asked whether the user wanted another search. It should have declined to handle the request within the research skill and routed it appropriately."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The paragraph covers the main objective, findings, open issues, and next step, but omits the five additional attached sources that have not yet been evaluated."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response incorrectly implies that only the 1850 census and death certificate have assertions, when four sources actually carry 13 assertions. It also conflates the five assertions tied to the 1850 census question with the parentage question."
+    },
+    {
+      "test_id": "ut_research_si4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly identifies the exhausted 20-image cap and the need for a planning disposition. However, saying the first 20 images contained “no Coombs administration entry” risks implying a broader negative finding, even though 592 images remain unread. It should clarify that no entry was found in the images examined, not suggest that the estate record is absent."
+    },
+    {
+      "test_id": "ut_research_fl1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly reports that no results were found, but it omits the three spelling variants already searched on FamilySearch: Charles Renhard, Charls Renhard, and Charles Rennard. It should report those previous searches rather than leave the search history unclear."
+    },
+    {
+      "test_id": "ut_research_fl1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response explains the current project status but misses a required detail: the specific spellings used in the three earlier searches. Including them would give the researcher a complete picture of what has already been attempted."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response identifies relevant project issues but incorrectly claims the proof-conclusion step ran and presents an unsupported message as though it came from the delegated agent."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response reads the project state and provides the required continuation offer, but it does not actually invoke the required proof-conclusion sub-skill. Reporting that the step ran does not substitute for the missing hand-off."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response asks for the record identifier, which is a valid way to follow the new lead, but then frames the continuation around the existing identity question. It should more clearly offer to locate or extract the 1861 death record before returning to the broader question of whether the two women were the same person."
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The router correctly delegated the image reading and relayed the comparison table verbatim. However, the added commentary incorrectly describes the report as incomplete and suggests rereading the page, even though the stub's three-row table was the complete intended output. The router should have relayed the report without adding that interpretation."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The score of 1 is appropriate because the required routing action was entirely absent."
+    }
+  ]
+}

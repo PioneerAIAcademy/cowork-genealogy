@@ -1,3 +1,5 @@
+import type { ResearchData } from '@genealogy/schema'
+
 // Names and shapes shared with the viewer server in
 // packages/engine/mcp-server/viewer/. The two sides must match exactly.
 
@@ -25,11 +27,29 @@ export type ToolName = typeof SHOW_PROJECT | typeof READ_PROJECT_VIEW
 
 export type ToolInput = Record<string, unknown>
 
-/** The parts of research.json the M0 card reads. */
-export interface ResearchDocument {
-  project?: { title?: unknown }
-  sources?: Array<{ image_filename?: unknown }>
-  questions?: unknown[]
+/** research.json as stored: older projects lack fields, so every field may be absent. */
+export type ResearchDocument = Partial<ResearchData>
+
+export type QuestionState = 'framed' | 'planned' | 'searching' | 'evidence-gathered' | 'concluded' | 'critiqued'
+
+/** One question's state as the engine reads it (`questionStatus`). */
+export interface DerivedQuestion {
+  id: string
+  state: QuestionState
+  nextStep: string | null
+  openConflictIds: string[]
+  storedStatus: string | null
+  unregisteredDisagreements: Array<{ personId: string; fact: string; assertionIds: string[] }>
+  competingParentSets: Array<{ personId: string; parentIds: string[] }>
+}
+
+/** What only the engine computes (`deriveProject`). A stub server may send only `folderName`. */
+export interface Derived {
+  folderName?: string
+  questions?: DerivedQuestion[] | null
+  awaitingUser?: unknown[] | null
+  treeChanges?: unknown
+  evaluations?: Record<string, { body: unknown; craft: boolean }>
 }
 
 /** A tool result's `_meta` entry, or `read_project_view`'s `document` part. */
@@ -38,7 +58,7 @@ export interface ProjectDocument {
   tree?: unknown
   startingTree?: unknown
   collections?: unknown
-  derived?: { folderName?: string }
+  derived?: Derived
   echo?: ToolInput
   canary?: string
   pad?: string

@@ -1813,15 +1813,17 @@ def test_hand_edit_detector_passes_when_timeline_build_wrote():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
-def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
-    """`build_external_search_url` writes its hand-off log entry only when it
-    carries a projectPath, so only then may it account for a research.json change."""
+def test_hand_edit_detector_counts_the_url_builder_only_when_it_logged():
+    """`build_external_search_url` returns a `logId` only when it wrote its hand-off
+    entry (not with `awaitingCapture: false`), so only then may it account for a
+    research.json change."""
     with_path = _run_hand_edit_detector(
         research_changed=True,
         tool_calls=[
             {
                 "tool": "mcp__genealogy__build_external_search_url",
                 "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"},
+                "response": {"ok": True, "url": "https://www.findagrave.com/", "logId": "log_001"},
             }
         ],
     )
@@ -1831,11 +1833,64 @@ def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
         tool_calls=[
             {
                 "tool": "mcp__genealogy__build_external_search_url",
-                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}},
+                "args": {
+                    "site": "findagrave",
+                    "attributes": {"surname": "Flynn"},
+                    "projectPath": "/p",
+                    "awaitingCapture": False,
+                },
+                "response": {"ok": True, "url": "https://www.findagrave.com/"},
             }
         ],
     )
     assert without_path.passed is False
+
+
+def test_hand_edit_detector_counts_record_search_only_when_it_wrote_the_nil_log():
+    """`record_search` writes only on a nil (#4527), and nil-ness is in the
+    RESPONSE, not the args — so a `projectPath` alone must not account for a
+    research.json change.
+
+    search-records and survey-surname pass `projectPath` on every search, so
+    keying on it would make this detector pass in any run of those suites,
+    including the zero-writer hand-edit it exists to catch.
+    """
+    wrote = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 0, "results": [], "logId": "log_007"},
+            }
+        ],
+    )
+    assert wrote.passed is True, f"unexpected failure: {wrote.error}"
+
+    found_rows = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 12, "results": [{"recordId": "ark:/x"}]},
+            }
+        ],
+    )
+    assert found_rows.passed is False, "a search that returned rows wrote nothing"
+
+    # A refusal means the entry was NOT written, so it legitimizes nothing.
+    refused = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__record_search",
+                "args": {"surname": "Flynn", "projectPath": "/p"},
+                "response": {"totalMatches": 0, "results": [], "nilLogRefused": ["pinned"]},
+            }
+        ],
+    )
+    assert refused.passed is False, "a refused nil-log write wrote nothing"
 
 
 def test_hand_edit_detector_fails_on_change_with_zero_writer_calls():

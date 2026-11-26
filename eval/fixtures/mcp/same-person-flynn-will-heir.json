@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the will's 'my son Patrick Flynn' (a_004) against Patrick (I1). The will is full-text-sourced, so the record side is projected from its one assertion and carries no name: the score is near zero and says nothing about the match. Measured on 2026-11-15 with same_person's project arm on flynn-record-matching (FamilySearch matcher).",
+  "args": {
+    "assertionId": "a_004",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.00005003057,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "",
+      "role": "heir_1"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
+  }
+}

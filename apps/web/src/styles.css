@@ -1068,17 +1068,3 @@ button.chatTitle {
   background: var(--accent);
   color: var(--bg-primary);
 }
-
-/* A message the host sent for the researcher. Dimmed rather than restyled: it is
-   still their turn in their run, and a differently-coloured bubble would read as a
-   third speaker. */
-.msgAuto {
-  opacity: 0.82;
-}
-
-.msgAutoNote {
-  font-size: 11px;
-  color: var(--ink-soft);
-  text-align: right;
-  padding: 0 2px 2px;
-}

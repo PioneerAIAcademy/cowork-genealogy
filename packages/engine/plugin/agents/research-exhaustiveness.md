@@ -14,8 +14,8 @@ description: >-
   question-selection), to plan more searches (use research-plan), to write the
   proof conclusion (use proof-conclusion), or to resolve a conflict (use
   conflict-resolution).
-model: claude-sonnet-5
-effort: medium
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
@@ -213,15 +213,18 @@ decline names the blocking criterion and its assessment in `justification`.
   is closed instead, this is the DECLINE (§"The decline"), which writes the
   stop and offers the researcher the choice rather than picking for them. **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
-  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+  - A skipped item's recorded reason is **fact** when it says what happened
+    (`inaccessible`, `no_coverage`, `user_declined`,
+    `fallback_not_triggered`). Accept it as written. `answered` is a claim,
+    not a fact: test it against the seven criteria with that record
+    unsearched, and decline when one fails. Most
     skipped items carry no `skip_category`; its absence says nothing. A
     skipped **decisive** record still gates (below) unless its recorded reason
     is inaccessibility.
   - A present `skip_category` changes only two things: `premise_invalidated`
     means recommend `research-plan`; `inaccessible` makes the item eligible for
-    the exception below; `no_coverage` records the item in `not_reached` with
-    `kind: "skipped_plan_item"` and is treated as inaccessible for the exception
-    below, whose own conditions still decide.
+    the exception below; `no_coverage` is treated as inaccessible for the
+    exception below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -255,7 +258,8 @@ decline names the blocking criterion and its assessment in `justification`.
 ## The decline
 
 Every active-plan item is closed or waiting only on an upload, and a genuinely
-unsearched source remains. Also reached from a `premise_invalidated` verdict
+unsearched source remains. If the Step 1 `wiki_read` has not been called
+yet, call it now, before the write below. Also reached from a `premise_invalidated` verdict
 and the tentative-value (b) path. Write:
 
 - `stopped_because: "resources_spent"`, `stop_criteria: null`, `status` unchanged;
@@ -263,9 +267,9 @@ and the tentative-value (b) path. Write:
   the active one — after "Search more" a question has two plans by design;
 - `justification`: open with the verdict, `Overturn risk: low` or
   `Overturn risk: high — <sources>`;
-- `not_reached`: one `deferred` entry per unsearched source that was never
-  planned (film, image or URL in `description`), and one `handed_to_user` entry
-  per item waiting on an upload.
+- `not_reached`: built per §"Build `not_reached`", plus one `deferred` entry
+  per unsearched source that was never planned (film, image or URL in
+  `description`).
 
 Then recommend from the verdict:
 
@@ -278,9 +282,8 @@ Then recommend from the verdict:
 ## Wrap it up
 
 Reached with `wrapUp: yes`. Record the stop and nothing else — no routing, no
-recommendation. Write `resources_spent`, with `not_reached` carrying: the items
-dispose skipped as `skipped_plan_item`, items waiting on an upload as
-`handed_to_user`, and any never-planned gaps as `deferred`. A question with no
+recommendation. Write `resources_spent`, with `not_reached` built per
+§"Build `not_reached`", plus any never-planned gaps as `deferred`. A question with no
 plan and no assertions is a valid wrap-up: write the stop naming the searches
 not run. End with no "Continue with …?" line.
 
@@ -299,14 +302,21 @@ alongside the entries §3 names.
   id, never the later entry's; `wiki_title: null`; `description` names the
   site, the `url_generated`, and what the search was for.
 - **`paywalled`** — only a paywalled hit that was never handed to the user.
-- **`wiki_named_untouched`** — from a kept locality's `guide_markdown`. This
+- **`skipped_plan_item`** — one entry per item on this question's plans that is
+  `skipped` with `skip_category` `user_declined`, `no_coverage` or
+  `inaccessible`, unless the item already has a `handed_to_user` entry or, for
+  `inaccessible`, an entry under §3's exception; `log_entry_id: null`;
+  `wiki_title: null`; `description` names the item and its `skip_reason`.
+- **`wiki_named_untouched`** — from a kept locality's `record_types` rows, else
+  its `guide_markdown`. This
   needs the §1 `research_query` `section: "localities"` result; if that call
   has not been made, make it now — never conclude there is no guide without
-  it. Call `wiki_read` on the page only when `guide_markdown` is null; no
+  it. Call `wiki_read` on the page only when both are absent; no
   kept locality, no entries. One entry per record type that could hold this question's
   target fact, is named for the question's place and period, and was searched
   by no log entry on this question's plan items. On a stop-gate write list
-  only the types the guide places beyond reach of our tools — a reachable one
+  only the types the guide places beyond reach of our tools (a row's `access`
+  `microfilm`, `physical` or `lost`) — a reachable one
   is an unsearched gap (§3). On `resources_spent` or `blocked_by_conflict`
   list every such type. `wiki_title` is the page title: the path segment after
   `/wiki/` in that locality's `pages_read[].url` — never `pages_read[].section`.
@@ -322,8 +332,8 @@ writes atomically.
 `search_stop` in one call. Choose `stopped_because` based on why the search
 concluded: `question_answered` (convincing answer), `record_exhausted` (all
 sources searched), or `nothing_further_reachable` (some sources unreachable).
-`stop_criteria` is required for all gate values. Include `not_reached` entries
-for any source that could not be reached:
+`stop_criteria` is required for all gate values. Build `not_reached` per
+§"Build `not_reached`":
 
 ```
 research_append({
@@ -346,7 +356,7 @@ research_append({
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
       },
-      not_reached: []
+      not_reached: [<entries built per §"Build `not_reached`">]
     }
   }
 })
@@ -360,8 +370,9 @@ A `not_reached` entry for a hand-off the user never returned:
 
 **Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
 `status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
-`stop_criteria` must be `null` for non-gate values. Record in `not_reached`
-any sources that were identified but could not be reached:
+`stop_criteria` must be `null` for non-gate values. A `resources_spent` write
+follows the Step 1 `wiki_read`: if it has not been called, call it first. Build
+`not_reached` per §"Build `not_reached`":
 
 ```
 research_append({
@@ -423,7 +434,9 @@ the offending field — do not blindly retry the same payload.
   probate; marriage: the marriage record) — or the draft conclusion
   itself names a record as tier-advancing — do not declare until that
   record has been searched or the declaration explicitly justifies why
-  it is inaccessible. Where civil registration existed, the subject's
+  it is inaccessible. When the death certificate is recorded as sealed or destroyed and
+  the log holds the subject's obituary naming the parents, the death
+  certificate is not a gap. Where civil registration existed, the subject's
   own birth record outranks the death record for parentage. Where the
   jurisdiction's own registration began after that date, its absence is
   not a gap, and the baptism is what to gate on instead. If the `wiki_read` call
@@ -435,6 +448,9 @@ the offending field — do not blindly retry the same payload.
   **sealed by privacy law** (e.g. a recent birth certificate still inside
   its statutory embargo, heir-request only) counts as inaccessible: note the
   limitation and declare on the accessible evidence; do not gate on it.
+  The other decisive records for the question still gate: each is
+  searched, or skipped with a recorded reason that it is sealed, destroyed
+  or was never kept; one the project never mentions blocks the declaration.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary

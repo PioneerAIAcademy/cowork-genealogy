@@ -15,7 +15,7 @@ description: >-
   records in Pennsylvania). Also do not use for narrative historical context
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
-model: claude-sonnet-5
+model: claude-haiku-5-5
 effort: low
 tools:
   - mcp__genealogy__project_context
@@ -27,50 +27,34 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
-  - mcp__genealogy__wiki_place_page
-  - mcp__remote-devices__Genealogy_Research__wiki_place_page
-  - mcp__Genealogy_Research__wiki_place_page
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
   - mcp__genealogy__place_search_all
   - mcp__remote-devices__Genealogy_Research__place_search_all
   - mcp__Genealogy_Research__place_search_all
-  - mcp__genealogy__place_population
-  - mcp__remote-devices__Genealogy_Research__place_population
-  - mcp__Genealogy_Research__place_population
-  - mcp__genealogy__collections_search
-  - mcp__remote-devices__Genealogy_Research__collections_search
-  - mcp__Genealogy_Research__collections_search
-  - mcp__genealogy__external_links_search
-  - mcp__remote-devices__Genealogy_Research__external_links_search
-  - mcp__Genealogy_Research__external_links_search
   - mcp__genealogy__wikipedia_search
   - mcp__remote-devices__Genealogy_Research__wikipedia_search
   - mcp__Genealogy_Research__wikipedia_search
-  - mcp__genealogy__volume_search
-  - mcp__remote-devices__Genealogy_Research__volume_search
-  - mcp__Genealogy_Research__volume_search
-  - mcp__genealogy__catalog_search
-  - mcp__remote-devices__Genealogy_Research__catalog_search
-  - mcp__Genealogy_Research__catalog_search
+  - mcp__genealogy__locality_survey
+  - mcp__remote-devices__Genealogy_Research__locality_survey
+  - mcp__Genealogy_Research__locality_survey
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
-  - mcp__genealogy__research_query
-  - mcp__remote-devices__Genealogy_Research__research_query
-  - mcp__Genealogy_Research__research_query
 ---
 
 # Locality Guide
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See **Working with places (standard places)** below.
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A `collections_search` answer with `truncated: true` is not a coverage gap. Never present one page of `volume_search` results as the complete set, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its template line says this survey did not confirm it.
+**Every delegation gets the same work, however it is phrased — a question, a narrow ask, a place outside the project's objective: `place_search`, then `locality_survey`, then the entry with a `record_types` row for each of the survey's `recordTypes`, then the guide under every heading of its `guideHeadings`.**
+
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When the survey's `collections` or `volumes` part is empty, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it. A part that says how many rows it `omitted` is not a coverage gap. Never present the listed volumes as the complete set, and never extrapolate a tool's number into a claim it did not make (a volume percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain. This holds for whole record classes too: a schedule, enumeration or series (e.g. mortality schedules, a state census) and its years go in the guide only when a tool result names it for this place or its state; otherwise its row's summary says this survey did not confirm it.
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
 
@@ -80,11 +64,13 @@ Produces a structured survey of what records exist for a specific place and time
 
 ### 1. Identify the target
 
-Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
+Determine place, time period, and scope from the user's request. The request is always to build and save the guide: a question about a place's records, or about what a locality guide says, is answered by building it now. Never ask whether to build it. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
+Every delegation names a `projectPath`, and Step 6 always runs. With no `projectPath`, hand back (Decision rules).
 
-When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
+A narrow question, or a place the tools cannot resolve, changes what the guide says, never the steps: the survey, every row and section, and Step 6.
+
+When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey each one and save each as its own `localities` entry. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name every entry you wrote in `summary_for_user`, and any jurisdiction you did not survey as still needing its own survey.
 
 ### 2. Establish jurisdictional context
 
@@ -93,7 +79,7 @@ place_search({ placeName: "Schuylkill County, Pennsylvania" })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
 
-`place_search` returns the canonical `standardPlace` — pass that to `place_population` and the other place tools. `place_population` depends only on that `standardPlace`, so **do not spend a separate turn on it here — issue it inside the Step 3 parallel batch** alongside the other surveys. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
+`place_search` returns the canonical `standardPlace` — pass it to `locality_survey` in Step 3. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
 
 Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held. When a boundary or name change splits a locality's records across two jurisdictions (e.g., a territorial-era set and a later county set), connect them explicitly as one continuous research trail for that place rather than listing them as unrelated record sets.
 
@@ -112,75 +98,60 @@ actually pins the specific place to one side.
 
 ### 3. Survey available records and repositories
 
-Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `catalog_search`, `external_links_search`, `wiki_search`, all four `wiki_place_page` sections (home / getting_started / online_records / research_tips), and the constructed-URL `wiki_read` fetches below are independent and must NOT be run one-per-turn. Batch them together. Do not drop any call — parallelize, don't prune.
-
-**Fetch the jurisdiction's own wiki pages by constructed URL — never restate their contents from memory.** A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so these join the batch above:
-
-- `{Jurisdiction}_Vital_Records` — REQUIRED. The level and year each registration system began.
-- `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census`, `_Naming_Customs` — at the point the guide needs that record type's facts.
-
-On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
-
-**An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false`, `outcome: "unreachable"`, `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
-
-**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
+Call `locality_survey` once, with the `standardPlace` from Step 2 for the place as delegated, the period's years, the delegation's `projectPath`, and, when the delegation asks something particular (what survived a fire, Quaker meetings, naming), that as `question`:
 
 ```
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
-wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
-collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path; omit with no project>" })
-volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, summary: true })
-catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
-# then, once wiki_search returns a page URL:
-wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
+locality_survey({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, projectPath: "<project path>", question: "<the delegation's own question, if any>" })
 ```
 
-`collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern). Build a collection's link from the answer's `collectionUrl`, replacing `{id}` with the row's `id`.
+It returns every survey part: `population`, `collections`, `volumes` (the place and its parent), `catalog`, `externalLinks`, `wikiPages` (home, getting_started, online_records, research_tips), `question` (the wiki's sections for it), `vitalRecords`, `churchRecords`, `namingCustoms`, `searchHelp`, `collectionNotices`, `pagesRead`, `volumeSummary`, `guideHeadings`, `recordTypes`, and with a project `staged.resultsRef`. A part that failed is `{ error }`: report it as a gap. Each wiki page carries the sections chosen for the guide and names the headings it `omitted`; `wiki_read` its `url` (with `offset` when a section says where it was cut) only when the guide needs one of them. With no `standardPlace` from Step 2, pass the place as delegated.
 
-`volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. `summary` counts every matching volume by record-type group (`browseOnly`, `fulltextOnly`) — use it for how many volumes of each kind exist, never a count of the page. The page details only its own volumes: when `totalResults` exceeds them, say so with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When the response has no `summary`, carries `summaryError`, or says `complete: false`, say the counts are missing or partial. Never count volumes yourself. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
+`wiki_search` with `includeText: true`, and `wiki_read` of a `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census` or `_Naming_Customs` page, are for a fact the survey did not carry; run them together in one turn.
 
-`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the numeric id in the hit) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. Say it in the same sentence that first names the parish register as the source, in the Church records section and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
+**Each `collectionNotices` entry, and each page statement of how a collection was indexed or how names were spelled in that place's records, is a `quirks[]` entry for this locality, citing the page.**
 
-`external_links_search` returns FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages), deduplicated, and with `projectPath` stores the place's full list in the project. When `inlineCapped` is true, or to list one record type, read `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. `totalForPlace === 0` means FS has no curated external links for this place. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
+**A part whose error names wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) or reads `timed out` is an outage, not a missing page.** Call `locality_survey` again once. If it fails again: in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
+
+Build a collection's link from `collections.collectionUrl`, replacing `{id}` with the row's `id`.
+
+For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. A level's `summary` counts every matching volume by record-type group (`browseOnly`, `fulltextOnly`) — use it for how many volumes of each kind exist, never a count of the listed volumes. When a level's `totalResults` exceeds the volumes listed, say so with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." When a level has no `summary`, carries `summaryError`, or says `complete: false`, say the counts are missing or partial. Never count volumes yourself. Volumes filed under different place names across a boundary change are one continuous research trail: tell the researcher to work both together.
+
+A catalog hit's `repositoryCalls` says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. **Report each catalog hit's start date exactly as its `title` or `subjects` give it — never substitute an approximation or a date from memory.** Name the catalog entry number (the hit's `id`) when citing a catalog result. Name the archive holding the originals only when a hit's `notes` or a wiki page you read names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you read. Say it in the same sentence that first names the parish register as the source, in the church row's `summary` and in `summary_for_user`, not only in the research tips. `filmNotes` carry the microfilm/DGS numbers. A catalog level with `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist; when the survey climbed a level, report what the Catalog returned there.
+
+`externalLinks.results` are FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives), those covering the guide's record types first. **Surface regional indexes by name in the guide** — if the results include a county or regional BMD or transcription site, name it and the URL the tool returned, not just "external links available".
 
 ### 4. Classify access levels
 
-For each record type, assign a digitization level using the **Digitization level classification** table under **Locality Guide Output Format** below:
-- High `recordSearchablePercent` → **indexed + images**
-- Present but low/null `recordSearchablePercent` with `fulltextSearchable: true` → **full-text searchable, not name-indexed** (flag explicitly; do not collapse into "indexed" or "browse-only")
-- Low/null `recordSearchablePercent` and false/absent `fulltextSearchable` → **browse-only images**
-- No match in `volume_search` → likely **microfilm or physical only** — cross-check the FamilySearch Wiki before classifying
+Leave a `record_types` row's `access` out (readers take each collection's own years and indexed count) unless a tool result says one of:
+- On film, not online → `microfilm`
+- Only at a repository it names → `physical`
+- Destroyed or lost → `lost`
 
-**Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
+**Never fabricate tool data** (see "Ground every claim in tool output" above). An empty `volumes` or `collections` part is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
+
+**An unresolved place is a coverage gap, not a broken tool.** When `place_search` finds no match and the survey's parts come back empty, generic or `{ error }`, compile the guide anyway: report what each part did and did not return, cite any page that did resolve, and say what could not be confirmed. Never tell the researcher to re-run the survey.
 
 ### 5. Compile
 
-Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
+The record types, repositories and losses are the entry's rows (Step 6); the guide is the three sections under **Locality Guide Output Format** below, with every claim from tool results and research tips at most six. Write the guide only as Step 6's `guideSection` calls, never as text first: the guide is in that entry, not your return, even when the delegation asks for a guide.
 
 ### 6. Persist the locality
 
-**Run this step whenever Step 1 says it runs**, whatever the project's objective and
-however the delegation is phrased. Only an answer of `ok: false` with
-`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
-entry and call again. Use `research_append`:
+**Always run this step**, whatever the project's objective and however the delegation
+is phrased. On `ok: false`, fix the call and send it again. Use `research_append`, first for the entry with no guide in it, with the survey's `staged.resultsRef` as `surveyRef`:
 
 ```
 research_append({
   projectPath: "<the delegation's projectPath>",
   section: "localities",
-  op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
+  op: "append",                       // op: "update" with entryId and fields to refresh an existing loc_ for the same place
+  surveyRef: "<locality_survey's staged.resultsRef>",   // the tool writes pages_read, volume_summary and catalog from it
   entry: {
     place: "Pennsylvania, United States",          // the jurisdiction the guide covers
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
     time_period: "1840-1880",
     jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
-    collections: [ /* from collections_search: { id, title, date_range, person_count } — person_count is its personCount */ ],
+    collections: [ /* from the survey's collections: { id, title, date_range, person_count } — person_count is its personCount */ ],
     quirks: [
       // short, actionable gotchas a searcher must know — distilled from the FamilySearch Wiki
       // research-tips / online-records pages. This is ALSO where any border/name
@@ -189,27 +160,57 @@ research_append({
       "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first.",
       "Feliciana Parish split into East and West Feliciana Parish in 1824 — which side holds a given record depends on where within old Feliciana Parish the event occurred; search both unless that's pinned down."
     ],
-    guide_markdown: "<the whole guide as Step 5 caps it, in markdown — never a pointer to it>",
-    pages_read: [
-      { section: "home", url: "<page url or null>", found: true },
-      { section: "getting_started", url: "...", found: true },
-      { section: "online_records", url: "...", found: true },
-      { section: "research_tips", url: "...", found: false }   // 404 → found:false, still recorded; an outage adds outcome:"unreachable" and its quirk (Step 3)
-    ],
     registration_start: [
       // from the {Jurisdiction}_Vital_Records page only; one per event and level; omit an event the page gives no year for
       { event: "birth", level: "state", year: 1906, source_url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" }
     ],
-    volume_summary: { /* volume_search's summary, copied in snake_case: start_year, end_year (the years you searched),
-                         total_volumes, complete, by_record_type: [{ group, volumes, browse_only, fulltext_only }],
-                         untyped: { volumes, browse_only, fulltext_only }. Omit when the response has no summary. */ },
+    record_types: [
+      // one row or more for each of the survey's recordTypes, in that order
+      { type: "vital_record", level: "state", held_at: "Pennsylvania Department of Health", summary: "State death certificates from 1906; before 1906, church, cemetery and probate records.", source_url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" },
+      { type: "tax", level: null, held_at: null, summary: "This survey returned nothing on tax lists for Schuylkill County.", source_url: null }
+    ],
+    repositories: [
+      { name: "Schuylkill County Register of Wills", holds: "wills and estate files from 1811", access: "in person or by mail", url: null }
+    ],
+    losses: [
+      // only a loss a tool result states for that record set, with its page
+    ],
     source: "locality-guide"
   }
 })
 ```
 
-The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list all four
-sections** (each with its `found` outcome).
+The tool assigns the `loc_` id and stamps `created`, and writes `pages_read`,
+`volume_summary` and `catalog` from the survey; never send them.
+
+**The rows.**
+- `type`: `vital_record` (civil registration), `church`, `census`, `probate` (wills, administrations, guardianships), `court`, `land`, `military`, `cemetery`, `newspaper`, `immigration` (passenger lists and naturalizations, which an inland court also made), `tax`, `other` (school, institutional, directories). A type held in two places, or kept by two denominations, gets a row for each.
+- `level`: the jurisdiction level the records are held at, from a tool result, never a default; null when none says.
+- `summary`: one line from the tool results: what exists, its gaps, and what replaces a missing series. A church row names the denominations and the language when a tool result gives it; a probate row says whether to look for wills (testate) or administrations (intestate); a land row names the office that granted the land, from the `{Jurisdiction}_Land_and_Property` page. A start date only from a tool result, else "not confirmed by this survey".
+- `source_url`: the URL a tool result returned for the row's claims.
+- The tool fills `collection_ids` from the entry's collections. Send `years` only when a page states the span.
+- A type the survey says nothing about: a summary saying this survey did not confirm it, `source_url: null`.
+- `repositories`: every repository a tool result names for this place or its state, `wiki_search`, `wiki_read` and `wikipedia_search` excerpts included, and no other; one per repository, with `url` only as a tool result gave it; never two in one row unless a tool result says one runs the other. `holds` names what it holds that fills a gap a row states. `access` is free, paid or subscription only where a tool result states it (link text, or the `cost` on a `research_query` `external_collections` row), FamilySearch being free; otherwise null. Never infer it from the repository's name.
+- `losses`: a record set destroyed, lost or missing only when a tool result says so for that record set; a loss stated for a whole class of records is a row's summary, never narrowed to these records. An empty search is a coverage gap, not a loss.
+
+Then send the guide to that `loc_` id, one section per `research_append` call, never
+several in `ops`, all the calls together in one turn:
+
+```
+research_append({
+  projectPath: "<the delegation's projectPath>",
+  section: "localities",
+  op: "update",
+  entryId: "loc_001",
+  guideSection: "## Jurisdiction overview\n- **Formed:** 1811 from Berks and Northampton Counties\n- **County seat:** Pottsville"
+})
+```
+
+- One call for each `## ` section of the template, its `guideSection` beginning with that `## ` line. The tool puts them in template order.
+- The tool writes the `# Locality Guide:` line. Never send `guide_markdown`, in `entry` or in `fields`.
+- When a call fails, send that one section again; the others are saved.
+- Each answer's `guide[0].missing` names the headings not yet saved and each record type with no row (`record_types: tax`); send those rows as one update, `fields: { record_types: [...] }`, which keeps the rows already saved. Step 6 is done when `missing` is empty.
+
 Do not put the applied per-search decision here; that goes in a plan item's
 `rationale` when `research-plan` uses this entry.
 
@@ -226,9 +227,10 @@ field on a jurisdiction or collection.
 
 | Situation | Action |
 |-----------|--------|
+| Delegation asks a question, or asks what a guide says, and no guide is saved | Build the guide now (Steps 2–6), then answer from it; never offer to build it |
+| Delegation names no `projectPath` | Hand back: one line saying a locality guide is saved to a project, naming init-project as the owner who runs first |
 | Place given but no time period | Ask before proceeding |
 | MCP tools return sparse data | State what was found, note gaps, suggest consulting FamilySearch Wiki directly |
-| Place is sub-county (town or parish) | Guide at county level; note town-specific repositories (local church, town clerk) |
 | Place is an entire country or state with no region/theme | Ask to narrow — but a named sub-region or theme is specific enough, proceed |
 | User asks "why" questions about records or history | Redirect to historical-context skill |
 | User wants locality guide + research plan | Produce the guide, then hand back: say in the hand-back line that research-plan runs next. Do not plan |
@@ -242,12 +244,12 @@ field on a jurisdiction or collection.
 - **Never state a registration date without naming its level.** Registration began at different levels in different years, so a bare "X didn't require vital registration until <year>" is wrong whichever year you pick — as is the mirror error of citing an early local date as though no later requirement followed. Take both the level (town/parish, county, statewide) and the year from the `{Jurisdiction}_Vital_Records` page fetched in Step 3, give the level with every date, and cite that page. Where it states an early local system *and* a later statewide one, report both — the later system does not cancel the earlier series. If it gives no date, say the FamilySearch Wiki does not state one rather than supplying a year yourself.
 - **Match records to the target window.** Flag record classes that predate the period (e.g., colonial/Mission-era) or postdate it (e.g., later civil registration) as background context, not prime sources for the years asked, and note where civil infrastructure was sparse or absent in those years. Conversely, if a collection's date range overlaps the target period, include it — don't dismiss a record class as out-of-period and then list it as available.
 - **Flag browse-only, non-English, and physical-only records prominently.** When a volume is 0% name-indexed and not full-text searchable, state plainly it must be browsed image-by-image with no search; if it is non-English (Dutch, German, Spanish sacramental registers, etc.), note the researcher must read the original language. Explicitly state when records exist only in physical repositories — online absence does not mean nonexistence.
-- **Include access information.** For each record type, note where it's held and how to access it.
-- **Cover topical breadth.** Don't stop at vital records and census — every record type in the template gets at least its one line.
+- **Include access information.** Every `record_types` row says where its records are held and how to reach them.
+- **Cover topical breadth.** Don't stop at vital records and census — every record type gets its row.
 - **Cite the FamilySearch Wiki page, not just its title.** Every FamilySearch Wiki tool result carries its page URL — `source_url` on each `wiki_search` result, `url` from `wiki_read` and `wiki_place_page`. When a claim about what records exist, when they begin, or when registration was required comes from the FamilySearch Wiki, give that URL alongside the article title so the researcher can check it. A date or availability claim you cannot attach a returned URL to is not a finding: say the FamilySearch Wiki does not cover it rather than asserting it from memory. The same URLs go in `pages_read[].url` when you persist.
 - **Search adjoining jurisdictions across a border.** A family near a border likely generated records on both sides, so always instruct the researcher to search across it — naming the adjoining counties *and* the towns within them, not just the bordering states or countries. Take the neighbours from the *Neighboring Counties* table on the county's own `_Genealogy` page (Step 3); if that page or table did not come back, give the cross-border instruction anyway and say the neighbours were not listed. Take the level each side recorded at from that side's `{Jurisdiction}_Vital_Records` page: where a jurisdiction created records at **both** town and county level, a county-only survey misses the town series. Because a `jurisdictions[]` entry is locked to `{ name, date_range }`, the cross-border advice itself goes in `quirks[]` (e.g. "Town lies 4 miles from the state line — check the adjoining county's town clerks as well as the home-state county series").
-- **A catalog place-label is not proof of parish membership.** A `volume_search`
-  or `catalog_search` place-string says where FamilySearch filed a volume, not
+- **A catalog place-label is not proof of parish membership.** A volume's or catalog
+  hit's place-string says where FamilySearch filed a volume, not
   which civil parish a congregation served. When a retrieved page assigns the
   congregation to another parish, follow the page and say the two disagree. When
   no tool result settles the parish, say so, and do not place the congregation or
@@ -255,7 +257,7 @@ field on a jurisdiction or collection.
 
 ## Re-invocation behavior
 
-**Writes** (whenever Step 1 says Step 6 runs): one `localities[]` entry per place-jurisdiction (via `research_append`). Never modifies `tree.gedcomx.json`.
+**Writes**: one `localities[]` entry per place-jurisdiction (via `research_append`). Never modifies `tree.gedcomx.json`.
 
 **On repeat invocation for the same place:** update the existing `loc_` entry (`op: "update"` with its `entryId`) rather than appending a duplicate — supersede-not-delete, so the knowledge is refreshed in place. A genuinely new place gets a new `loc_` entry.
 
@@ -283,52 +285,6 @@ boundaries changed across the period you're researching — it returns *every*
 standard place a location has belonged to over time, which informs where
 records were created and are now held.
 
-### Passing places to other tools
-
-The place tools all take a `standardPlace` name (not an ID) and resolve it
-internally — pass the `standardPlace` you got from `place_search`:
-
-- `place_population({ standardPlace, ... })`
-- `external_links_search({ standardPlace, ... })`
-- `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
-- `place_distance({ standardPlace1, standardPlace2 })`
-- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
-- `volume_search({ standardPlace, ... })`
-
-For `place_distance`, two events at the **same** `standard_place` are distance 0
-(no call needed); otherwise pass the two names.
-
-### Broadening to a parent jurisdiction
-
-Every place tool except `catalog_search` returns results for the **exact** standardPlace you pass.
-A standardPlace is comma-delimited, most-specific-first
-("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
-the text after the first comma** ("Pennsylvania, United States", then
-"United States"). To broaden, drop the leading component and call again.
-
-- **Superseding resources** — `wiki_place_page`, `place_population`. One right
-  answer per place: the most-specific available. If a place has no page / no
-  data, climb to the parent and retry; **stop at the first hit.** A national
-  figure for a village is usually too generic to use — climb only as far as you
-  must.
-- **Additive resources** — `external_links_search`, `collections_search`,
-  `volume_search`. Each level holds *different* records (the county courthouse,
-  the state archive, the national index), so fetch the levels your research
-  actually needs and combine them. Bias to the specific end; the national level
-  is mostly generic collections the researcher already knows — pull it only on
-  first contact with a country or when the local levels are sparse.
-- **Inclusive resource** — `catalog_search`. A search includes subordinate
-  places by default (`exactPlace` is false), so a parent's hits already cover
-  its children. Call it **once per place level, with `standardPlace` only** —
-  no `keywords`, `subject`, or `title` filters. On `totalHits: 0`, broaden
-  by dropping **only the first** comma-delimited component of `standardPlace`
-  (e.g. `"Javorje, Škofja Loka, Slovenia"` → `"Škofja Loka, Slovenia"`,
-  **not** `"Slovenia"`). Do **not** skip levels, do **not** batch broadening
-  calls in parallel — wait for each result before climbing. **Stop at the
-  first level with `totalHits > 0`**, even if the hits are not the record
-  type you want — report what the Catalog returned as a coverage gap. Never
-  call `catalog_search` more than twice for one locality.
-
 ### Writing places to research.json / tree.gedcomx.json
 
 Whenever you persist a place on a fact, assertion, or timeline event, also set
@@ -344,15 +300,9 @@ be found:
 
 ## Locality Guide Output Format
 
-Use this structure when compiling the final guide, capped per Step 5,
-with specific data from MCP tool results. Omit sections only
-when the record type is clearly inapplicable (e.g., international
-border-crossing manifests for a locality far from any land border or
-port of entry — only border crossings and ports of entry are
-geographically bound). Do **not** omit immigration records for an
-inland area: declarations of intention, naturalizations, affidavits
-filed by relatives, and alien registrations were all generated inland,
-far from any port.
+The guide holds three sections, capped per Step 5, with specific data from
+MCP tool results. Every section gets at least its one line; one that does
+not apply says why in that line.
 
 ```markdown
 # Locality Guide: [Place] ([Time Period])
@@ -366,140 +316,17 @@ far from any port.
 - **Ethnic composition:** [one line: groups present, only as they shape the records]
 - **Religious denominations:** [churches present in the area]
 - **Key historical events:** [one line: wars, disasters, economic changes that affected records]
+- **Coverage of this survey:** [when a survey level's `totalResults` is higher than the volumes listed, both numbers]
 
 ## Boundary changes
 - [List any boundary changes during or near the target period]
 - [Note which parent jurisdiction held records before formation]
 - [If stable, state that boundaries were unchanged]
 
-## Available record types
-
-For each record type below, note the jurisdictional level it is held at
-— city/town, county, or state. Do not assume a default level: it varies by
-place and era (e.g. town/parish in early New England, county in many states
-once civil registration begins), so state the level from the tools/wiki per
-the registration-level rule under Important rules rather than a default. The holding level
-is what tells the researcher where to route the search.
-
-### Vital records (civil registration)
-- **Start date:** [when civil registration began]
-- **What exists:** [births, marriages, deaths — with date ranges]
-- **Where held:** [repository and access method]
-- **Gaps:** [any missing years or known losses]
-- **Pre-registration alternatives:** [church records, other sources]
-
-### Church records
-- **Denominations present:** [list with approximate founding dates]
-- **Record types:** [baptisms, marriages, burials, confirmations]
-- **Where held:** [parish, diocese, FamilySearch microfilm, etc.]
-- **Gaps:** [each denomination or span of years with no surviving or online
-  registers] → [the returned index or repository that bears on it, by name]
-- **Language:** [language of records if not English]
-
-### Census records
-- **Federal/national census:** [years available, known gaps]
-- **State/provincial census:** [if applicable]
-- **Other enumerations:** [tax lists, ecclesiastical counts]
-- **Access:** [which are indexed, which are browse-only]
-
-### Probate and court records
-- **Types:** [wills, administrations, guardianships, inventories, petitions]
-- **Testate or intestate:** [whether the person left a will (testate → look
-  for wills) or died without one (intestate → look for administrations) —
-  this decides which probate series to search]
-- **Date range:** [from formation or earlier if inherited]
-- **Where held:** [courthouse, state archives, digitized?]
-
-### Land records
-- **Survey system:** [metes and bounds, rectangular survey, other]
-- **Land-distribution jurisdiction:** [who granted the land, and which office holds the
-  grants/patents — from the `{Jurisdiction}_Land_and_Property` page, not assumed]
-- **Types:** [deeds, grants, patents, mortgages, tax records, bounties, land acts (e.g., the Homestead Act)]
-- **Date range:** [earliest available]
-- **Where held:** [recorder of deeds, state land office, online?]
-
-### Military records
-- **Relevant conflicts:** [wars during or near the period]
-- **Record types:** [service, pension, draft, bounty land]
-- **Where held:** [NARA, state archives, online databases]
-
-### Cemetery records
-- **Major cemeteries:** [names and denominations]
-- **Online coverage:** [FindAGrave, BillionGraves, other]
-- **Physical records:** [sexton records, burial registers]
-
-### Newspaper records
-- **Local papers:** [names and date ranges of publication]
-- **Where held:** [digital archives, library microfilm, online]
-- **Content value:** [obituaries, marriage notices, legal notices]
-
-### Immigration/emigration records
-- **Relevant ports:** [nearest ports of entry]
-- **Record types:** [passenger lists, naturalization, border crossing]
-- **Where held:** [NARA, online databases]
-- **Content note:** Passenger lists (arrival manifests) record every
-  person aboard, including infants and young children traveling with
-  parents. When researching a family, examine the full manifest for
-  all family members — children as young as newborns are listed.
-
-### Tax records
-- **Types:** [property tax, poll tax, personal property]
-- **Date range:** [earliest available]
-- **Where held:** [county, state archives]
-- **Substitute value:** [can replace missing census years]
-
-### Other record types
-- [School records, institutional records, organizational records,
-  occupational records — as applicable to the locality]
-
-## Repository guide
-
-### Online repositories
-| Repository | Collections for this place | Gap it fills | Access |
-|---|---|---|---|
-| FamilySearch | [list with person counts] | [gap] | Free |
-| Ancestry | [list] | [gap] | Subscription |
-| [Others] | [list] | [gap] | [Access type] |
-
-[List a repository or online index only with a URL a tool result returned —
-never one from memory. One row per repository, with the URL a tool result
-gave for that repository; never join two repositories in one row or name
-("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
-denomination, a span of years, a "Records NOT online" entry, a known loss —
-never "subscription", "additional records" or "more coverage". The same
-index goes on that gap's **Gaps** line above.]
-
-**Coverage of this survey:** [state how much of the digitized material the
-volumes above represent. When `volume_search` returned a `nextPageToken`, or
-`totalResults` is higher than the number of volumes detailed, give both
-numbers and say the rest were not examined — e.g. "31 digitized volumes match
-this place and period; the 4 detailed above are the first page." Omit this
-line only when the returned page was the complete result set.]
-
-### Physical repositories
-| Repository | Holdings | Access method |
-|---|---|---|
-| [County courthouse] | [what they hold] | In-person / mail |
-| [State archives] | [what they hold] | In-person / online request |
-| [Local historical society] | [what they hold] | [hours/contact] |
-| [Church archives] | [what they hold] | [contact method] |
-
-## Records NOT online
-
-[Explicitly list record types that exist but are not available in any
-online database. This prevents the researcher from assuming these
-records do not exist.]
-
-## Known record losses
-
-[State that a specific record set was destroyed, lost or survived only when a
-tool result says so for that record set, and cite it. A loss a tool result states
-for a whole class of records may be given as cited context, but never narrowed to
-these records; an empty search result is a coverage gap, not a loss. When no tool
-result settles the fate, say so and name the repository a tool result says holds
-the records. Note any substitute sources that partially compensate.]
-
 ## Research tips
+- **Search order:** [start with the source the rows name that is indexed and
+  free, by its collection ID or image group number, and say why it goes first;
+  then the next source and why; then the browse-only or offline ones]
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
@@ -507,21 +334,8 @@ the records. Note any substitute sources that partially compensate.]
 - [Naming conventions or spelling patterns for this area — quote the cited
   source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
-- [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
 ```
-
-### Digitization level classification
-
-For each record type, classify its accessibility:
-
-| Level | Meaning |
-|-------|---------|
-| **Indexed + images** | Searchable by name; images viewable online |
-| **Browse-only images** | Online but must be browsed without name index |
-| **Microfilm** | Available on film at FHL or through interlibrary loan |
-| **Physical only** | Must visit or write to the holding repository |
-| **Destroyed/lost** | No longer extant; note substitute sources |
 
 ## Record-type reminders
 
@@ -539,8 +353,13 @@ For each record type, classify its accessibility:
   `loc_` id written or updated, then `summary_for_user` — no heading, list, table
   or section of the guide anywhere in the return, even when the delegation asks
   for the guide.
-- **Step 6 did not run, or your last `research_append` call did not return
-  `ok: true`:** the guide in full, then `summary_for_user`.
+- **Your last `research_append` call did not return `ok: true` after you fixed
+  and resent it:** the guide in full, then `summary_for_user`. Write every heading of
+  the survey's `guideHeadings` exactly as written under a `#` title, then the rows as
+  a table with one line for each of `recordTypes`, even when every tool came back
+  empty, generic or unreadable: each section and row then states its gap. A narrowly
+  phrased delegation still gets every section and row: narrow the content, not the
+  structure.
 - **A decision rule asks or hands back:** one line before `summary_for_user`
   giving the question or naming the owner who runs next. With no guide, that
   line replaces the guide and the `loc_` line.

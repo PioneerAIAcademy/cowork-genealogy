@@ -109,12 +109,12 @@ so implementation doesn't re-litigate:
 | 4 | Who decides which persons merge | **The caller does.** merge_gedcomx "should be told which people to merge by taking a list of id-pairs to merge." Two modes (§ signature). |
 | 5 | `ark` conflict on a merged person | **Keep target's ark.** |
 | 6 | Integration shape (cross-doc vs in-tree) | **Whole-tree target + whole-tree candidate** (cross-document). Plus a same-document mode (candidate = null) for merging two persons already in the target. |
-| 7 | Conflicting facts — keep both or pick best | **Keep both, but mark one as primary/preferred.** Never throw names or facts away. *Additionally:* **merge equivalent** names/facts (one is a less-specific version of the other) and take the more-specific value. For **Birth/Death/Christening/Burial** mark the single best fact `primary`. |
+| 7 | Conflicting facts — keep both or pick best | **Keep both, but mark one as primary/preferred.** Never throw names or facts away. *Additionally:* **merge equivalent** names/facts (one is a less-specific version of the other) and take the more-specific value. A merge marks no fact `primary`: `primary` follows a claim (Decision 34 of `docs/plan/conclusion-tree.md`). It keeps each input's flag, and for **Birth/Death/Christening/Burial** never leaves two (the survivor's own keeps it). |
 
 Richard's clarification (confirmed by Dallan): SimplifiedGedcomX allows multiple
-facts of a type, even Birth/Death, with a `primary` marker. Identify the "best"
-fact as the **preferred (primary)** fact for Birth, Death, Christening, Burial
-(single-occurrence events). For other fact types, just merge equivalents.
+facts of a type, even Birth/Death, with a `primary` marker. Which one is primary
+is a conclusion, so the merge leaves it to a claim (Decision 34 of `docs/plan/conclusion-tree.md`); it only keeps
+one flag per single-occurrence vital type. For every type, merge equivalents.
 **Never discard unmerged names/facts.**
 
 **Amendment to #2 (2026-06-19, Dallan).** "Util only, no separate merge-gedcomx
@@ -293,7 +293,11 @@ Sequence inside each tool:
    asked for one; a scored link needs a `same_person` score recorded for the
    survivor. One difference from a direct write: a birth place the coordinate
    lookup does not resolve is not a contradiction here, so a slow lookup cannot
-   refuse a correct merge; a different country still is. Any finding writes
+   refuse a correct merge; a different country still is. The cap's attached-births
+   arm judges a moved link against the survivor's combined attachments, so a
+   merge that brings a contradicting attachment onto a person caps the links it
+   moves; it reads an unresolved place as near too, so it fires less here than
+   on a direct write, and the survivor's own links are not re-judged. Any finding writes
    nothing and returns `{ ok: false, errors }` with no `reason`, before the
    warning gate.
 
@@ -315,7 +319,27 @@ Sequence inside each tool:
    merge that introduces an unjustified genealogical warning writes nothing
    and returns `reason: "unjustified_warnings"` (§8); a warning that stood on a
    collapsed person before the merge is matched against its survivor, not read
-   as introduced.
+   as introduced. The merge also raises **claim warnings** (Decision 13 of
+   `docs/plan/conclusion-tree.md`, `src/validation/merge-claim-warnings.ts`),
+   justified the same way: research_append's claim rules 2 (one per slot), 9
+   (polarity) and 12 (proved identity) re-run on every summary before and
+   after the merge, and each finding present after and absent before is a
+   warning (collapsed ids rewritten to the survivor outside quoted claim labels
+   before comparing, and each run of person ids compared sorted, so a finding
+   standing on the collapsed person is not raised again); and an edge the merge
+   leaves joining a pair a `disproved` claim covers is one, unless a pre-merge
+   edge of the pair, through the collapse, was covered by a claim that still
+   covers it. A disproof naming a subtype covers only that subtype, untyped and
+   Biological reading as one; an untyped disproof covers the whole pair. Ids are `mergeClaim|<rule>|<summaryId>|<hash>` and
+   `mergeRuledOut|<relationshipId>`; each names the survivor its message
+   names, else the first. They fire only where a summary carries claims.
+   Separately, each merge pair no identity claim covers raises
+   `mergeIdentity|<survivor>|<collapsed>` (Decision 13 of `docs/plan/conclusion-tree.md`), which fires with no claims at
+   all: covered means a live affirmed `identity` claim at `probable` or better that
+   is either a `same_as` naming the pair with one live cited assertion linked to both
+   (a record that ties the two; two records each tied to one do not), or a record
+   identity naming one of them whose persona is tied to the other. The user's
+   instruction, quoted, is its justification.
 7. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
    (`research.json` is unchanged — see §10). `merge_tree_persons` writes **both**
    files **both-or-neither** (write both temps → rename both back-to-back). Note:
@@ -355,7 +379,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
     survivorId: string,
     namesMerged: number, namesKept: number,
     factsMerged: number, factsKept: number,
-    primarySet: string[],              // fact types given a new primary, e.g. ["Birth"]
+    primarySet: string[],              // vital fact types holding a carried-over primary after the merge (a merge sets none)
     genderConflictKeptSurvivor: boolean,
   }>,
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
@@ -433,8 +457,8 @@ survivor (survivor id is kept):
 - **Names** — union, then **merge equivalent names** and **keep all distinct
   names** (§7.1). Exactly one resulting name is marked `preferred`.
 - **Facts** — union (person facts), then **merge equivalent facts** and **keep
-  all distinct facts** (§7.2). For Birth/Death/Christening/Burial, mark the one
-  best fact `primary`.
+  all distinct facts** (§7.2). No fact is marked `primary`; at most one input
+  flag per Birth/Death/Christening/Burial survives.
 - **Person source refs** — union, remapped through the source id map (Mode 1),
   then deduped by `ref`+`page`, the same rule relationship refs follow. A
   carried (non-paired) candidate person keeps its remapped refs. Mode 2 folds
@@ -556,12 +580,10 @@ catalogued in §12.
   group's source refs. There are **no** "most-common" / "longest-display-text"
   tiebreaks — the width/length heuristics are the whole rule.
 - **Distinct** (non-equivalent) facts are **all kept**.
-- **Primary marking** (`mergeFacts`) — for `type ∈ {Birth, Death, Christening,
-  Burial}` (`VITAL_PRIMARY_TYPES`), after merging, clear any inherited `primary` in
-  that type's group and mark the single **most-complete** surviving fact
-  `primary: true` (`factMoreComplete`: narrower day range first, then longer place
-  chain). Other types get no primary from this pass — they keep an input `primary`
-  if one was set.
+- **No primary marking** (`mergeFacts`) (Decision 34 of `docs/plan/conclusion-tree.md`) — a merge never sets
+  `primary`. Each fact keeps an input flag; for `type ∈ {Birth, Death, Christening,
+  Burial}` (`VITAL_PRIMARY_TYPES`), when two surviving facts would both carry it,
+  the one with a flag from the survivor's own facts keeps it, else the first.
 
 ### 7.3 Gender
 Survivor's gender wins (§6.3). (MobMergeUtil uses majority vote across many
@@ -586,19 +608,19 @@ Tool-level (the rows above are the pure core's throws):
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` has no `tree.gedcomx.json`, or it is invalid JSON | clear input error before merging; write nothing |
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }`; write nothing. The user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. Applies to `merge_warnings` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. Applies to `merge_warnings` identically |
 | `merge_tree_persons` and `research.json` is missing/invalid — with `tree.gedcomx.json` present, i.e. a *broken* project | clear input error; write nothing |
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
 | `merge_tree_persons`: the collapsed person and its survivor each have a `hit_verdicts` row on one hit of one search, and the two differ in `verdict` or `new_vital_info` (`foldHitVerdictCollisions`, §5b.2 step 3) | write nothing; return `{ ok: false, errors }` with no `reason`, before validation. One line per pair of rows, `hit verdicts 'hv_001' on 'KWCB-111' (match, new_vital_info false) and 'hv_002' on 'I13' (not_a_match, new_vital_info false) judge hit 'ark:/61903/3:1:3Q9M-CSK3-ZSLR' of log_001 differently: this merge would make them two rows for one hit and person.`, then `Nothing was written. A merge leaves one verdict per hit and person, so it folds the two rows only when they give the same verdict and new_vital_info. Bring each listed pair into agreement, then merge again: have evaluate-search-results re-judge the hit against one row's person, and its research_append updates that row's verdict.` Two rows that agree are not refused: the collapsed person's is removed, with a warning `hit verdict 'hv_002' on 'I13' folded into 'hv_001' on 'KWCB-111': both judge hit '…' of log_001 match with new_vital_info false, so 'hv_001' and its rationale stand.` |
-| `merge_tree_persons`: a Couple or ParentChild relationship joins a pair's two members, in either order, in any project (`joinedPairRefusals`) | write nothing; return `{ ok: false, errors }` with no `reason` (§5b.2 step 5). One line per relationship, `relationship 'R1' (ParentChild) joins 'I50' and 'I51', a pair in this merge: merging them would turn it into a self-relationship and drop it, with its facts and sources.`, then `Two people a relationship joins are not one person. If they are, remove that relationship with tree_correct (operation 'remove', relationshipId) and merge again; otherwise do not merge.` |
+| `merge_tree_persons`: a Couple or ParentChild relationship joins a pair's two members, in either order, in any project (`joinedPairRefusals`) | write nothing; return `{ ok: false, errors }` with no `reason` (§5b.2 step 5). One line per relationship, `relationship 'R1' (ParentChild) joins 'I50' and 'I51', a pair in this merge: merging them would turn it into a self-relationship and drop it, with its facts and sources.`, then `Two people a relationship joins are not one person: do not merge them. Report the relationship. If it is itself wrong, that is a separate correction for the researcher to make from a record, not a step to clear this refusal.` |
 | `merge_tree_persons`: a pair would fold a FamilySearch-id or starting-tree person into one that is neither (`survivorOrderRefusals`) | as above. One line per pair, `pair ['I60', 'KWCB-333'] would fold 'KWCB-333', a FamilySearch or starting-tree person, into 'I60', which is neither.`, then `Write each listed pair the other way round, so the FamilySearch or starting-tree person survives.` |
 | `merge_tree_persons`: a pair member holds a `namesakes` row, and the namesake cap refuses a live probable or confident link of the other member judged as the row holder's (`mergeNamesakeRefusals`) | as above. One line per link, `person_evidence 'pe_001' on 'I7' would stand under the namesake row 'ns_001' of 'KWCB-111' after this merge: nothing in source 'src_001' ties assertion 'a_001' to 'KWCB-111'.` (naming only the rows that still cap the link: a row the age exemption of `research-append-tool-spec.md` §5 lifts for its record is left out) and the cap's reason clauses, plus `Do not lower it: 'I7' was created from this record.` when the other member was made from that source alone, or, when the cap would allow the link on the other member itself, `Do not lower it: on 'I20' it is tied by 'I20''s own relatives or earlier links, which 'I21' does not share in the tree.` Then one routing paragraph (`MERGE_LINK_ROUTING`): tie each listed record to the row holder, by adding the duplicate relative pair to the same merge or by recording the relationship first (`tree_edit` `add_relationship`); a link not marked "do not lower it" may instead be lowered to `speculative` by person-evidence, naming the namesake, and the facts and relationships listed from that record must then come off the other person too; if the record is the namesake's, do not merge |
 | `merge_tree_persons`: a pair member holds a `namesakes` row, and the merge would carry onto it a name, fact, person-level source or relationship of the other member citing a record that has a link to either member and no live probable or confident link to them that passes the cap (`mergeCarryRefusals`, `carryTriggerSources`) | as above. One line per item and research source, `fact 'F2' (Residence) on 'I7' cites 'S5' (research source 'src_005'), and no probable or confident link from that record to 'I7' or 'KWCB-111' passes the namesake cap ('pe_005' refused above). The merge would carry it onto 'KWCB-111', who has a recorded namesake.`; an item that folds into one of the row holder's reads `name 'John Smith' on 'I9' would fold into 'KWCB-111''s and add the citation 'S1' (research source 'src_001'), ...` and is judged only on the refs it adds. Each link reads `'pe_…' speculative`, `withdrawn`, `refused above` or `untied on '<row holder>'`. Then one routing paragraph per row holder: remove each listed fact or relationship from the other member with `tree_correct` `remove` (the row holder's own matching one stays); remove nothing from a record whose link says "do not lower it"; no tool removes a name or a person-level source, so for those tie the record to the row holder with person-evidence or do not merge |
 | `merge_tree_persons`: the merge would leave a live link on a pair `rejected_links` names, because it moves the link or the rejection onto the survivor (`mergeRejectedPairRefusals`) | as above. One line per pair, `person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, KWCB-111) after this merge: the researcher rejected that pair, and the merge would leave a live link on it. The link stands today on (a_011, I7).`, then `Nothing was written, and no justification overrides this. Ask the researcher whether each listed link's record is the person it stands on today. If they say it is not, have person-evidence record their rejection of that pair, which retires the link, then merge again. Otherwise do not merge.` |
 | `merge_tree_persons`: a link the merge moves onto a survivor fails a check a `research_append` update re-pointing it there would run (`mergeLinkCheckRefusals`): the contradiction cap, with an unresolved birth place read as near; the move rule; or the score gate's fabrication arm | as above. One line per finding, `person_evidence 'pe_001' would move from 'I7' to 'KWCB-111' in this merge: ` followed by that check's own message, then `Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written there directly would. Before merging again, fix each listed link where it stands: record the same_person score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record does not belong to the survivor, do not merge.` |
-| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). |
+| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). The claim warnings of §5b.2 item 6 ride the same refusal and are justified the same way. |
 
 ---
 
@@ -615,9 +637,11 @@ Tool-level (the rows above are the pure core's throws):
 - **Name equivalence** — `J Flynn` + `James Flynn` → one name `James Flynn`
   preferred; a genuinely different name kept as non-preferred.
 - **Fact equivalence (merge)** — `Birth 1900 / Utah` + `Birth 10 Jan 1900 /
-  Provo, Utah` → one Birth `10 Jan 1900 / Provo, Utah`, `primary: true`.
+  Provo, Utah` → one Birth `10 Jan 1900 / Provo, Utah`, no `primary` unless an
+  input carried it.
 - **Fact conflict (keep both)** — `Birth 1900 Utah` + `Birth 1888 Ohio` → both
-  kept, the better one marked `primary`.
+  kept, neither marked `primary`; when both inputs carried it, the survivor's keeps
+  it.
 - **Non-primary type** — two compatible Residence facts merge; two different
   Residence facts both kept, neither marked primary.
 - **Relationship dedup** — same ParentChild pair from both docs → one; collapse
@@ -651,8 +675,8 @@ Tool-level (wrappers over the pure core):
   shared `validateGedcomx` before any merge or write.
 - **Stale `merges`** — a survivor id not in the on-disk tree returns the staleness
   error and writes nothing.
-- **Return summary** — names/facts merged-vs-kept counts and `primarySet` match the
-  merged tree.
+- **Return summary** — names/facts merged-vs-kept counts and `primarySet` (the
+  vital types still holding a carried-over primary) match the merged tree.
 
 Pair and namesake checks (`tests/tools/merge-tree-persons.test.ts`; every refusal
 also asserts both files are byte-unchanged):
@@ -838,7 +862,7 @@ Deliberately simplified for v1 (note as limitations):
 - **Name matching** uses normalized subset + initials; we omit the Jaro-Winkler
   scorer and the `std_given.txt`/`std_surname.txt` lookup tables (nickname/
   spelling-variant maps) — exact/normalized compare for v1, extendable later.
-- **No "manufacture one best fact and drop the rest"** — we keep all facts and
-  only *mark* one primary, per §4 #7 ("never throw facts away").
+- **No "manufacture one best fact and drop the rest"** — we keep all facts, per
+  §4 #7 ("never throw facts away"), and mark none primary (Decision 34 of `docs/plan/conclusion-tree.md`).
 - **No father-surname inference** for surname-less children (`addFatherSurname*`)
   — too domain-specific for the first cut.

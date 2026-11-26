@@ -112,7 +112,7 @@ def _drive(tmp_path, monkeypatch, turns, completes=False, init=None, **kwargs):
     return made["client"]
 
 
-OFFER = "The report.\n\nContinue with linking the records?"
+OFFER = "The report.\n\nContinue with linking the records to people in this project?"
 
 
 def test_a_step_run_binds_no_stop_hook_and_records_no_nudge_counters(tmp_path, monkeypatch):
@@ -123,7 +123,7 @@ def test_a_step_run_binds_no_stop_hook_and_records_no_nudge_counters(tmp_path, m
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert "Stop" not in client.options.hooks, client.options.hooks
     assert "continue_nudges" not in client.usage
@@ -132,12 +132,12 @@ def test_a_step_run_binds_no_stop_hook_and_records_no_nudge_counters(tmp_path, m
 
 def test_a_dead_genealogy_server_aborts_a_step_run_at_init(tmp_path, monkeypatch):
     """`make agent-smoke`'s dead-stub arm runs `run_e2e` with no `--step-mode`, which
-    now means `job`, so the #941 init abort is reached through the persistent client."""
+    means `unattended`, so the #941 init abort is reached through the persistent client."""
     dead = SystemMessage(
         subtype="init",
         data={"session_id": "S1", "mcp_servers": [{"name": "genealogy", "status": "failed"}]},
     )
-    client = _drive(tmp_path, monkeypatch, [("research-plan", OFFER)], init=dead, step_mode="job")
+    client = _drive(tmp_path, monkeypatch, [("research-plan", OFFER)], init=dead, step_mode="unattended")
     assert client.result[3] == "mcp_unavailable", client.result[3:5]
 
 
@@ -164,7 +164,7 @@ def test_the_cost_cap_is_reported_and_does_not_stop_a_step_run(tmp_path, monkeyp
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert len(client.sent) == 3, client.sent
     assert client.result[3] == "cost_cap", client.result[3:5]
@@ -176,7 +176,7 @@ def test_the_turn_cap_still_stops_a_run_already_over_its_cost_cap(tmp_path, monk
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert len(client.sent) == 2, client.sent
     assert client.result[3] == "max_turns", client.result[3:5]
@@ -204,7 +204,7 @@ def test_an_error_after_the_cost_cap_is_recorded_as_an_error(tmp_path, monkeypat
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert client.result[3] == "error", client.result[3:5]
     assert "API Error: 500 overloaded" in (client.result[4] or ""), client.result[3:5]
@@ -218,7 +218,7 @@ def test_the_turn_cap_bounds_the_whole_run_not_one_step(tmp_path, monkeypatch):
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert len(client.sent) == 2, client.sent
     assert client.result[3] == "max_turns", client.result[3:5]
@@ -230,10 +230,10 @@ def test_the_host_replies_between_turns(tmp_path, monkeypatch):
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert len(client.sent) >= 2, client.sent
-    assert client.sent[1] == "Keep going.", client.sent
+    assert client.sent[1] == "/research --autonomous Continue.", client.sent
 
 
 def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):
@@ -246,7 +246,7 @@ def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):
         [("research-plan", OFFER),
          (["search-hints", "search-records", "search-records"], "Now dispatching both searches."),
          (None, "done.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert [r.get("continue_") for r in client.pretool_returns][-1] is False, \
         "the second parallel spawn no longer halts, so this proves nothing"
@@ -255,13 +255,13 @@ def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):
 
 def test_each_turn_records_the_step_it_opened_with(tmp_path, monkeypatch):
     """Read from the gate, not re-derived (ask 2). Asserted on the STEPS the run
-    recorded: with the stamp disabled every one is None, and `next_auto_reply`
+    recorded: with the stamp disabled every one is None, and `next_reply`
     then sees no (step, offer) pairs at all — so its repeat guard, which is what
     ends a link-and-assess cycle, can never fire."""
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert client.pretool_returns, "no PreToolUse call — the gate never saw a spawn"
     steps = [row.get("step") for row in client.usage.get("per_turn") or []]
@@ -271,7 +271,7 @@ def test_each_turn_records_the_step_it_opened_with(tmp_path, monkeypatch):
 def test_the_session_is_disconnected_exactly_once(tmp_path, monkeypatch):
     """Ask 3. With `live["client"] = step_client` disabled the disconnect can
     never run, and the CLI and its MCP server sit idle through the judge phase."""
-    client = _drive(tmp_path, monkeypatch, [(None, "Research complete.")], step_mode="job")
+    client = _drive(tmp_path, monkeypatch, [(None, "Research complete.")], step_mode="unattended")
     assert client.disconnects == 1, client.disconnects
 
 
@@ -281,13 +281,12 @@ ASK = "I found three men called John.\n\nWhich of them is yours?"
 def test_the_fixtures_question_is_answered_once_and_the_run_goes_on(tmp_path, monkeypatch):
     """Section F's other arm. A step that ends on a question for the researcher
     makes no offer, so the run used to end there with the fixture's own question
-    sitting on file. It is answered, and -- re-review 1 -- the turn that answer
-    opens runs as `job`, so the research CONTINUES rather than stopping dead one
-    step later."""
+    sitting on file. It is answered, and the turn that answer opens is answered
+    in turn, so the research CONTINUES rather than stopping dead one step later."""
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", ASK), ("person-evidence", OFFER), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert client.sent[1] == "Who were John's parents?", client.sent
     assert len(client.sent) >= 3, ("the answer bought one step and the run ended", client.sent)
@@ -300,7 +299,7 @@ def test_the_question_is_never_answered_twice(tmp_path, monkeypatch):
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", ASK), ("person-evidence", ASK), (None, "Research complete.")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert client.sent.count("Who were John's parents?") == 1, client.sent
 
@@ -314,7 +313,7 @@ def test_a_closing_courtesy_question_after_the_conclusion_is_not_answered(tmp_pa
         tmp_path, monkeypatch,
         [("research-plan", OFFER),
          ("proof-conclusion", "The proof stands.\n\nWould you like me to look for his parents next?")],
-        step_mode="job",
+        step_mode="unattended",
     )
     assert "Who were John's parents?" not in client.sent, client.sent
 
@@ -325,7 +324,7 @@ def test_a_question_on_a_completed_project_is_not_answered(tmp_path, monkeypatch
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", ASK)],
-        step_mode="job", completes=True,
+        step_mode="unattended", completes=True,
     )
     assert "Who were John's parents?" not in client.sent, client.sent
 

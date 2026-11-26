@@ -1,0 +1,60 @@
+{
+  "test": {
+    "id": "ut_research_np3",
+    "skill": "research",
+    "name": "Routes a no-project ask to re-index one census page against its FamilySearch index to search-images, without transcribing it inline",
+    "type": "positive",
+    "description": "Issue #4141. Empty folder; the tester's ask from feedback #4133, verbatim: re-index one named census image and compare it with the names FamilySearch already indexed on it. Before the fix, the 'A transcription you deliver yourself ... one named image, called without projectPath' sentence matched first, so the main thread transcribed the page and compared it itself, took the one fast OCR pass as truth, and blamed the index (Barry called a misreading of Berry; Mila Fuller called missing because the OCR read the line as Milo Hall). The fix sends a re-index to @plugin:search-images, which holds image_index (the page's own index list) and the rule to report a disagreement as a disagreement. test_routes_to_expected_skill checks the hand-off; test_no_inline_transcription_of_a_reindex checks the router never read the page itself.",
+    "tags": [
+      "routing",
+      "routes-to:search-images",
+      "person-less-project",
+      "no-inline-transcribe"
+    ]
+  },
+  "input": {
+    "user_message": "/research Reindex the names from this image of the 1830 U.S. federal census of Peru, Clinton County, New York: https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY1-B2G, then list in a table the names already indexed on FamilySearch for this census image, in the order they appear on the image, compared against the newly indexed names.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-images",
+        "response": "Page: 1830 US census, Peru, Clinton County, New York (3:1:33SQ-GYY1-B2G). Index read: 27 entries. Page read once. Logged: one entry in the project.\n---\n| Line | FamilySearch index | New reading | |\n|---|---|---|---|\n| 1 | Michael Barry | Michael Berry | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 2 | Mila Fuller | Milo Hall | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 3 | Aaph B Totman | Asaph B Totman | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |"
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. Whether @plugin:search-images is the first hand-off is asserted deterministically by test_routes_to_expected_skill, and that the router made no image_transcribe call of its own by test_no_inline_transcription_of_a_reindex. Do not grade either yourself.",
+    "The folder is empty and the message names no FamilySearch person ID. It asks to re-index one census image and compare it with FamilySearch's index of that image. That is search-images' job, even though it names one image: the router must not transcribe the page itself or compare it; it calls project_create with the message as objective and no personId first, and passes that projectPath to search-images.",
+    "search-images is stubbed: its spawn appears under the skills Claude invoked, but its returned text is not shown to you, and it was exactly: 'Page: 1830 US census, Peru, Clinton County, New York (3:1:33SQ-GYY1-B2G). Index read: 27 entries. Page read once. Logged: one entry in the project.\n---\n| Line | FamilySearch index | New reading | |\n|---|---|---|---|\n| 1 | Michael Barry | Michael Berry | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 2 | Mila Fuller | Milo Hall | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |\n| 3 | Aaph B Totman | Asaph B Totman | differ: check this line on the image (3:1:33SQ-GYY1-B2G) |'. Relaying the block after its final `---` verbatim is correct, not fabrication.",
+    "Mark the reply down if it rewrites the relayed table into verdicts: calling either reading an error, saying the index misread a name, saying a name is missing from the index, or stating a correction. The stub reports disagreements as disagreements, and the router must keep them that way.",
+    "Grade only the router's own work: that it delegated rather than answering inline or from memory, and that it relayed the block."
+  ],
+  "judge_reads_files": true
+}

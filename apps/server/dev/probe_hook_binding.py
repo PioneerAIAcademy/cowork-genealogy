@@ -116,6 +116,7 @@ key in $ANTHROPIC_API_KEY or eval/.env. Run it with `make hook-smoke`.
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import os
 import shutil
@@ -141,6 +142,7 @@ sys.path.insert(0, str(SERVER_DIR))
 SECTION = "proof_summaries"
 AGENT_ONLY_TOOL = "convert_calendar"
 READ_FILE = "research.json"
+RELAY_AGENT = "search-wikipedia"
 
 
 def api_key() -> str:
@@ -200,6 +202,34 @@ def expected_read_reason() -> str:
     return guard.READ_REASON.format(
         tool="Read", name=READ_FILE, route=guard.READ_ROUTES[READ_FILE]
     )
+
+
+def expected_relay_note() -> str:
+    """The relay hook's own note, read from the script the loader is meant to shell."""
+    spec = importlib.util.spec_from_file_location(
+        "_probe_relay", PLUGIN_DIR / "hooks" / "agent_relay_note.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.RELAY_NOTE
+
+
+def relay_preflight(plugin: Path) -> tuple[bool, str]:
+    """The relay script, run as hooks.json runs it, adds its note on a hosted plane."""
+    script = plugin / "hooks" / "agent_relay_note.py"
+    payload = json.dumps({"tool_name": "Agent", "tool_input": {}, "tool_response": {}})
+    env = {**os.environ, "GENEALOGY_HOSTED_PLANE": "1"}
+    try:
+        out = subprocess.run(
+            ["python3", str(script)], input=payload, capture_output=True, text=True,
+            encoding="utf-8", env=env, timeout=30,
+        )
+        got = json.loads(out.stdout or "{}").get("hookSpecificOutput", {}).get("additionalContext")
+    except Exception as exc:  # noqa: BLE001
+        return False, f"relay script did not run: {exc}"
+    if got != expected_relay_note():
+        return False, f"relay script did not add its note when run directly (got {got!r})"
+    return True, "relay script adds its note when run directly"
 
 
 def preflight(plugin: Path) -> tuple[bool, str]:
@@ -348,6 +378,17 @@ READ_QUERY = (
 )
 
 
+RELAY_QUERY = (
+    "Call the `Agent` tool exactly once, then stop. Call it with EXACTLY these "
+    "arguments and no others:\n\n"
+    '  {"subagent_type": "%s", "description": "probe", '
+    '"prompt": "Reply with the single word OK. Call no tool."}\n\n'
+    "Then output ONE line and nothing else:  PROBE_RESULT: DONE\n\n"
+    "Do not retry. Do not call any other tool. Do not ask for permission. Do not "
+    "explain. Do not do anything else."
+) % RELAY_AGENT
+
+
 QUERY = (
     "Call the `research_append` MCP tool exactly once, then stop.\n\n"
     "The genealogy tool schemas are deferred in this session, so if you do not "
@@ -405,11 +446,14 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
         calls: dict[str, dict] = {}
         results: dict[str, dict] = {}
         text_lines: list[str] = []
+        session_id = None
 
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
-            if case == "fork":
+            if case == "relay":
+                query = RELAY_QUERY
+            elif case == "fork":
                 query = FORK_QUERY
             elif case == "agent_only":
                 query = AGENT_ONLY_QUERY
@@ -434,9 +478,36 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
                         elif getattr(block, "text", None):
                             text_lines.append(block.text)
                 if isinstance(msg, ResultMessage):
+                    session_id = getattr(msg, "session_id", None)
                     break
         finally:
             await client.disconnect()
+
+        if case == "relay":
+            # No tool result carries a PostToolUse note: the CLI writes it into the
+            # session transcript as a hook_additional_context attachment. Read there,
+            # never off the model's prose.
+            spawned = any(c["name"] in ("Agent", "Task") and RELAY_AGENT in c["input"] for c in calls.values())
+            config = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+            transcripts = list((config / "projects").glob(f"*/{session_id}.jsonl")) if session_id else []
+            marker = json.dumps(reason[:60])[1:-1]
+            delivered = any(marker in t.read_text(encoding="utf-8") for t in transcripts)
+            if not spawned:
+                verdict = f"VOID (never spawned {RELAY_AGENT})"
+            elif not transcripts:
+                verdict = "VOID (no session transcript found)"
+            else:
+                verdict = "NOTE_DELIVERED" if delivered else "NO_NOTE"
+            return {
+                "case": case,
+                "arm": arm,
+                "hooks_present": hooks_present,
+                "verdict": verdict,
+                "probe_line": "",
+                "tool_calls": sorted({c["name"] for c in calls.values()}),
+                "guard_deny_text": [],
+                "final_text": " | ".join(t.strip().replace("\n", " ") for t in text_lines)[-600:],
+            }
 
     # The verdict is read off the structured tool_result, never off the model's
     # prose -- "I was blocked" in an assistant message is not evidence; the
@@ -525,8 +596,11 @@ async def main() -> None:
         "fork": expected_fork_reason(),
         "agent_only": expected_agent_only_reason(),
         "read": expected_read_reason(),
+        "relay": expected_relay_note(),
     }
     ok, detail = preflight(PLUGIN_DIR)
+    if ok:
+        ok, detail = relay_preflight(PLUGIN_DIR)
     print(f"preflight: {'PASS' if ok else 'FAIL'} - {detail}", flush=True)
     if not ok:
         sys.exit(
@@ -537,13 +611,21 @@ async def main() -> None:
         )
 
     rows = []
-    for case in ("owner", "fork", "agent_only", "read"):
+    for case in ("owner", "fork", "agent_only", "read", "relay"):
         for hooks_present in (True, False):
             label = f"{case}/{'a-hooks-present' if hooks_present else 'b-hooks-removed'}"
             print(f"... running {label}", flush=True)
             try:
-                rows.append(await asyncio.wait_for(
-                    run_arm(case, hooks_present, key, reasons[case]), timeout=300))
+                # A VOID arm made no call to read a verdict off: the main thread
+                # (Haiku 5.5 low since main-thread.json moved) sometimes does not
+                # make the one call the probe asks for. That says nothing about
+                # binding, so the arm runs again, up to three times in all.
+                for _attempt in range(3):
+                    row = await asyncio.wait_for(
+                        run_arm(case, hooks_present, key, reasons[case]), timeout=300)
+                    if not str(row["verdict"]).startswith("VOID"):
+                        break
+                rows.append(row)
             except Exception as exc:  # noqa: BLE001
                 rows.append({
                     "case": case,
@@ -573,6 +655,26 @@ async def main() -> None:
         "read": f"a built-in Read of {READ_FILE}",
     }
     failures = []
+    relay_a = next((r for r in rows if r["case"] == "relay" and r["hooks_present"]), {})
+    relay_b = next((r for r in rows if r["case"] == "relay" and not r["hooks_present"]), {})
+    if relay_b.get("verdict") != "NO_NOTE":
+        failures.append(
+            f"VOID (relay): arm B was {relay_b.get('verdict')!r}, not 'NO_NOTE'. With hooks/ "
+            "removed the note must not appear, or arm A's note is unattributed."
+        )
+    elif relay_a.get("verdict") == "NOTE_DELIVERED":
+        print(
+            "\nBOUND (relay): the hosted SDK loader read hooks.json, matched the Agent "
+            "return on PostToolUse, shelled agent_relay_note.py, and its note reached the "
+            "session -- and the same turn carried no note with hooks/ removed."
+        )
+    else:
+        failures.append(
+            f"NOT_BOUND (relay): arm A was {relay_a.get('verdict')!r}. The relay script adds "
+            "its note when run directly, so the loader is not binding its PostToolUse hook."
+            if relay_a.get("verdict") == "NO_NOTE"
+            else f"VOID (relay): arm A was {relay_a.get('verdict')!r}. Re-run it."
+        )
     for case in ("owner", "fork", "agent_only", "read"):
         arm_a = next((r for r in rows if r["case"] == case and r["hooks_present"]), {})
         arm_b = next((r for r in rows if r["case"] == case and not r["hooks_present"]), {})

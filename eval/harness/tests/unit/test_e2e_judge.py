@@ -177,9 +177,17 @@ def test_schema_has_no_enum_on_union_type():
 
 
 # --- the avoid-guard (deterministic §3.4.1 backstop) -------------------------
+#
+# Three branches (e2e/avoid_guard.py): a wrong-person finding (it lists the
+# rejected candidate's records) fails on provenance or on a new edge to the named
+# candidate; a fact finding fails on the avoided value anywhere; a
+# wrong-relationship finding fails on a new non-Step edge in the forbidden role.
+# Every branch subtracts what the starting tree already carried.
+
+_RECORD = "ark:/61903/1:1:AAAA-111"
 
 
-def _avoid_findings(required=True):
+def _wrong_person(records=(_RECORD,), required=True):
     return {
         "findings": [
             {
@@ -187,112 +195,368 @@ def _avoid_findings(required=True):
                 "type": "relationship",
                 "required": required,
                 "polarity": "avoid",
-                "description": "The agent should NOT conclude Robert Smith is the father.",
-                "details": {"target_person": {"name": "Robert Smith"}},
+                "description": "The agent should NOT conclude Robert Smith of the 1850 census is John's father.",
+                "details": {
+                    "subject_person": "John Smith (S1)",
+                    "relation": "father",
+                    "wrong_candidate": {"name": "Robert Smith", "note": "a different man", "records": list(records)},
+                },
             }
         ]
     }
 
 
-def _tree_with_robert_smith():
+def _wrong_relationship(**candidate):
     return {
-        "persons": [
+        "findings": [
             {
-                "id": "P1",
-                "living": False,
-                "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}],
+                "id": "f1",
+                "type": "relationship",
+                "required": True,
+                "polarity": "avoid",
+                "description": "The agent should NOT conclude Agnes Wardrop was John's mother.",
+                "details": {
+                    "subject_person": "John Smith (S1)",
+                    "relation": "mother",
+                    "wrong_candidate": {"name": "Agnes Wardrop", "note": "his stepmother", **candidate},
+                },
             }
-        ],
-        "relationships": [],
-        "sources": [],
+        ]
     }
 
 
-def test_avoid_guard_forces_false_when_the_avoided_claim_is_in_the_final_tree():
-    # The judge said "correctly avoided" (matched true, verdict pass), but the
-    # final tree still contains the avoided person — the guard overrides.
-    output = _valid_output()
-    out = apply_avoid_guard(
+def _fact_avoid():
+    return {
+        "findings": [
+            {
+                "id": "f1",
+                "type": "fact",
+                "required": True,
+                "polarity": "avoid",
+                "description": "The agent should NOT conclude John died 15 December 1854.",
+                "details": {
+                    "subject_person": "John Smith (S1)",
+                    "fact_type": "Death",
+                    "wrong_candidate": {"date": "15 December 1854", "note": "another man's burial"},
+                },
+            }
+        ]
+    }
+
+
+def _person(pid, given, surname, *, name_sources=(), facts=()):
+    name = {"id": f"N{pid}", "given": given, "surname": surname}
+    if name_sources:
+        name["sources"] = [{"ref": ref} for ref in name_sources]
+    return {"id": pid, "living": False, "names": [name], "facts": list(facts)}
+
+
+def _tree(*persons, relationships=(), sources=()):
+    return {"persons": list(persons), "relationships": list(relationships), "sources": list(sources)}
+
+
+def _subject():
+    return _person("S1", "John", "Smith")
+
+
+def _guard(output, findings, tree, *, research=None, starting_tree=None, starting_research=None):
+    return apply_avoid_guard(
         output,
-        expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
+        expected_findings=findings,
+        final_tree=tree,
+        final_research=research,
+        starting_tree=starting_tree if starting_tree is not None else _tree(_subject()),
+        starting_research=starting_research,
+        subject_person_ids={"S1"},
     )
+
+
+def test_a_wrong_person_avoid_fails_when_a_tree_object_cites_one_of_the_candidates_records():
+    # A minted candidate under a different spelling, linked to nobody: the name
+    # matcher passed this; provenance does not.
+    output = _valid_output()
+    tree = _tree(
+        _subject(),
+        _person("I1", "Bob", "Smyth", name_sources=["S9"]),
+        sources=[{"id": "S9", "title": "1850 census", "url": f"https://www.familysearch.org/{_RECORD}"}],
+    )
+    out = _guard(output, _wrong_person(), tree)
     assert out["per_finding"][0]["matched"] == "false"
-    assert "[avoid-guard]" in out["per_finding"][0]["notes"]
-    assert "P1" in out["per_finding"][0]["notes"]
     assert out["verdict"] == "fail"
     assert out["recall_required"] == 0.0
-    assert out["avoid_guard"]["forced_false"] == [
-        {"finding_id": "f1", "person_ids": ["P1"]}
-    ]
+    [forced] = out["avoid_guard"]["forced_false"]
+    assert forced["finding_id"] == "f1"
+    assert forced["branch"] == "wrong-person"
+    assert forced["person_ids"] == ["I1"]
+    assert "[avoid-guard]" in out["per_finding"][0]["notes"]
     # Downgrade happens on a copy; the judge's own output is untouched.
     assert output["per_finding"][0]["matched"] == "true"
     assert output["verdict"] == "pass"
 
 
-def test_avoid_guard_exempts_the_fixture_subject_from_the_match():
-    # Look-alike fixture: the avoided namesake shares the SUBJECT's name by
-    # construction (Robert Smith), and the subject legitimately stays in the
-    # tree. Passing the subject's id exempts it, so the guard does NOT force the
-    # finding to false — the judge's "correctly avoided" grade stands.
-    output = _valid_output()
-    tree = _tree_with_robert_smith()  # P1 = Robert Smith
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=tree,
-        subject_person_ids={"P1"},
-    )
-    assert out is output  # nothing forced → same object returned
-    assert out["per_finding"][0]["matched"] == "true"
-    assert out["verdict"] == "pass"
-
-
-def test_avoid_guard_still_catches_a_non_subject_over_claim():
-    # A genuine over-claim attaches a DIFFERENT person than the subject. The
-    # exemption must not shield that: a same-named person under another id is
-    # still forced to false.
-    output = _valid_output()
-    tree = {
-        "persons": [
-            {"id": "SUBJECT", "living": False,
-             "names": [{"id": "N0", "given": "Someone", "surname": "Else"}]},
-            {"id": "P1", "living": False,
-             "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}]},
-        ],
-        "relationships": [],
-        "sources": [],
+def test_a_wrong_person_avoid_fails_through_a_research_link_when_the_tree_cites_nothing():
+    # The run minted the candidate with no source on the tree person, and linked
+    # it in research.json (swarbrick-christening 07-22's shape).
+    tree = _tree(_subject(), _person("I1", "Robert", "Smith"))
+    research = {
+        "assertions": [{"id": "a_001", "record_id": _RECORD, "source_id": "src_001"}],
+        "sources": [{"id": "src_001"}],
+        "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1", "confidence": "probable"}],
     }
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=tree,
-        subject_person_ids={"SUBJECT"},
-    )
-    assert out["per_finding"][0]["matched"] == "false"
-    assert out["avoid_guard"]["forced_false"] == [
-        {"finding_id": "f1", "person_ids": ["P1"]}
-    ]
+    out = _guard(_valid_output(), _wrong_person(), tree, research=research)
+    assert out["avoid_guard"]["forced_false"][0]["person_ids"] == ["I1"]
 
 
-def test_avoid_guard_is_a_no_op_when_the_avoided_claim_is_absent():
+def test_a_speculative_link_to_the_candidates_record_does_not_count():
+    tree = _tree(_subject(), _person("I1", "Robert", "Smith"))
+    research = {
+        "assertions": [{"id": "a_001", "record_id": _RECORD, "source_id": "src_001"}],
+        "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1", "confidence": "speculative"}],
+    }
     output = _valid_output()
-    tree = {"persons": [{"id": "P1", "living": False,
-                         "names": [{"id": "N1", "given": "Jane", "surname": "Doe"}]}]}
-    assert apply_avoid_guard(
-        output, expected_findings=_avoid_findings(), final_tree=tree
-    ) is output
+    assert _guard(output, _wrong_person(), tree, research=research) is output
+
+
+def test_a_wrong_person_avoid_passes_when_no_tree_object_cites_the_candidates_records():
+    # A same-named person is present and cites another record: not the candidate.
+    tree = _tree(
+        _subject(),
+        _person("I1", "Robert", "Smith", name_sources=["S2"]),
+        sources=[{"id": "S2", "url": "https://www.familysearch.org/ark:/61903/1:1:BBBB-222"}],
+    )
+    output = _valid_output()
+    assert _guard(output, _wrong_person(), tree) is output
+
+
+def test_a_wrong_person_avoid_with_an_empty_list_still_fails_on_a_new_edge_to_the_candidate():
+    tree = _tree(
+        _subject(),
+        _person("I1", "Robert", "Smith"),
+        relationships=[{"id": "R1", "type": "ParentChild", "parent": "I1", "child": "S1"}],
+    )
+    out = _guard(_valid_output(), _wrong_person(records=()), tree)
+    assert out["avoid_guard"]["forced_false"][0]["branch"] == "wrong-person"
+
+
+def test_provenance_only_skips_the_edge_check_on_a_wrong_person_avoid():
+    findings = _wrong_person(records=())
+    findings["findings"][0]["details"]["wrong_candidate"]["provenance_only"] = True
+    tree = _tree(
+        _subject(),
+        _person("I1", "Robert", "Smith"),
+        relationships=[{"id": "R1", "type": "ParentChild", "parent": "I1", "child": "S1"}],
+    )
+    output = _valid_output()
+    assert _guard(output, findings, tree) is output
+
+
+def _agnes_as_mother(subtype=None):
+    rel = {"id": "R1", "type": "ParentChild", "parent": "I1", "child": "S1"}
+    if subtype is not None:
+        rel["subtype"] = subtype
+    return _tree(_subject(), _person("I1", "Agnes", "Wardrop"), relationships=[rel])
+
+
+@pytest.mark.parametrize("subtype", [None, "Biological", "biologcal"])
+def test_a_wrong_relationship_avoid_fails_on_a_biological_edge_in_the_forbidden_role(subtype):
+    out = _guard(_valid_output(), _wrong_relationship(), _agnes_as_mother(subtype))
+    [forced] = out["avoid_guard"]["forced_false"]
+    assert forced["branch"] == "wrong-relationship"
+    assert forced["person_ids"] == ["I1"]
+
+
+@pytest.mark.parametrize("subtype", ["Step", "step", "Adoptive", "Foster", "Guardian"])
+def test_a_wrong_relationship_avoid_passes_on_a_step_edge(subtype):
+    output = _valid_output()
+    assert _guard(output, _wrong_relationship(), _agnes_as_mother(subtype)) is output
+
+
+def test_a_wrong_relationship_avoid_passes_when_the_candidate_is_the_child_not_the_mother():
+    # Same two people, the subject in the other role: not the forbidden claim.
+    tree = _tree(
+        _subject(),
+        _person("I1", "Agnes", "Wardrop"),
+        relationships=[{"id": "R1", "type": "ParentChild", "parent": "S1", "child": "I1"}],
+    )
+    output = _valid_output()
+    assert _guard(output, _wrong_relationship(), tree) is output
+
+
+def test_any_new_fails_on_an_unknown_new_relative_and_passes_on_the_expected_answer():
+    findings = _wrong_relationship(any_new=True)
+    findings["findings"].append(
+        {
+            "id": "f2",
+            "type": "relationship",
+            "required": True,
+            "details": {"relation": "mother", "target_person": {"name": "Matea Pedersdatter"}},
+        }
+    )
+    expected = _tree(
+        _subject(),
+        _person("I1", "Matea", "Pedersdtr"),
+        relationships=[{"id": "R1", "type": "ParentChild", "parent": "I1", "child": "S1"}],
+    )
+    output = _valid_output()
+    assert _guard(output, findings, expected) is output
+
+    unknown = _tree(
+        _subject(),
+        _person("I2", "Kari", "Hole"),
+        relationships=[{"id": "R2", "type": "ParentChild", "parent": "I2", "child": "S1"}],
+    )
+    out = _guard(_valid_output(), findings, unknown)
+    assert out["avoid_guard"]["forced_false"][0]["person_ids"] == ["I2"]
+
+
+def test_any_new_does_not_fire_on_a_relative_the_starting_tree_already_holds():
+    tree = _tree(
+        _subject(),
+        _person("I1", "Rachel", "Wilkins"),
+        relationships=[{"id": "R1", "type": "Couple", "person1": "S1", "person2": "I1"}],
+    )
+    findings = _wrong_relationship(any_new=True)
+    findings["findings"][0]["details"]["relation"] = "spouse"
+    output = _valid_output()
+    assert _guard(output, findings, tree, starting_tree=tree) is output
+
+
+def test_any_new_fails_on_a_new_parent_who_shares_only_the_subjects_surname():
+    findings = _wrong_relationship(any_new=True)
+    findings["findings"].append(
+        {
+            "id": "f2",
+            "type": "relationship",
+            "required": True,
+            "details": {"relation": "father", "target_person": {"name": "Benjamin Christophersen (later Benjamin Smith)"}},
+        }
+    )
+    tree = _tree(
+        _subject(),
+        _person("I2", "Peder", "Smith"),
+        relationships=[{"id": "R2", "type": "ParentChild", "parent": "I2", "child": "S1"}],
+    )
+    out = _guard(_valid_output(), findings, tree)
+    assert out["avoid_guard"]["forced_false"][0]["person_ids"] == ["I2"]
+
+
+def test_a_starting_edge_the_run_retypes_to_biological_is_still_subtracted():
+    start = _agnes_as_mother()
+    final = _agnes_as_mother("Biological")
+    output = _valid_output()
+    assert _guard(output, _wrong_relationship(), final, starting_tree=start) is output
+
+
+@pytest.mark.parametrize("holder", ["S1", "I1"])
+def test_a_fact_avoid_fails_when_the_avoided_value_is_on_any_person_the_subject_included(holder):
+    death = {"id": "F1", "type": "Death", "date": "15 Dec 1854"}
+    persons = [_subject(), _person("I1", "Elisabetha", "Meininger")]
+    for p in persons:
+        if p["id"] == holder:
+            p["facts"] = [death]
+    out = _guard(_valid_output(), _fact_avoid(), _tree(*persons))
+    [forced] = out["avoid_guard"]["forced_false"]
+    assert forced["branch"] == "fact"
+    assert forced["person_ids"] == [holder]
+
+
+def test_a_fact_avoid_passes_on_another_date():
+    subject = _subject()
+    subject["facts"] = [{"id": "F1", "type": "Death", "date": "15 Jan 1857"}]
+    output = _valid_output()
+    assert _guard(output, _fact_avoid(), _tree(subject)) is output
+
+
+def test_a_year_only_avoided_value_binds_on_the_subject_not_on_a_relative():
+    # wasyl-kapach-birth f3's shape: a bare year is too common to hold against
+    # a relative a correct run fills in.
+    findings = _fact_avoid()
+    findings["findings"][0]["details"] = {"fact_type": "Birth", "wrong_value": "1883"}
+    wife = _person("I1", "Tekla", "Kapach", facts=[{"id": "F1", "type": "Birth", "date": "abt 1883"}])
+    output = _valid_output()
+    assert _guard(output, findings, _tree(_subject(), wife)) is output
+    subject = _subject()
+    subject["facts"] = [{"id": "F2", "type": "Birth", "date": "1883"}]
+    assert _guard(_valid_output(), findings, _tree(subject))["avoid_guard"]["forced_false"][0]["person_ids"] == ["S1"]
+
+
+def test_a_coarser_date_on_the_subject_counts_when_the_place_matches():
+    findings = _fact_avoid()
+    findings["findings"][0]["details"]["wrong_candidate"] = {"date": "24 August 1808", "place": "Laakirchen"}
+    for date, place, forced in (
+        ("Aug 1808", "Laakirchen, Gmunden, Austria", True),
+        ("1808", "Laakirchen", True),
+        ("1808", "Linz", False),
+        ("Sep 1808", "Laakirchen", False),
+    ):
+        subject = _subject()
+        subject["facts"] = [{"id": "F1", "type": "Death", "date": date, "place": place}]
+        out = _guard(_valid_output(), findings, _tree(subject))
+        assert ("avoid_guard" in out) is forced, (date, place)
+    relative = _person("I1", "Simon", "Heydocker", facts=[{"id": "F1", "type": "Death", "date": "1808", "place": "Laakirchen"}])
+    output = _valid_output()
+    assert _guard(output, findings, _tree(_subject(), relative)) is output
+
+
+def test_a_fact_avoid_reads_a_marriage_on_the_couple():
+    findings = _fact_avoid()
+    details = findings["findings"][0]["details"]
+    details["fact_type"] = "Marriage"
+    details["wrong_candidate"] = {"date": "1 February 1868"}
+    tree = _tree(
+        _subject(),
+        _person("I1", "Johanna", "Ryan"),
+        relationships=[
+            {
+                "id": "R1",
+                "type": "Couple",
+                "person1": "S1",
+                "person2": "I1",
+                "facts": [{"id": "F1", "type": "Marriage", "standard_date": "1 Feb 1868"}],
+            }
+        ],
+    )
+    out = _guard(_valid_output(), findings, tree)
+    assert sorted(out["avoid_guard"]["forced_false"][0]["person_ids"]) == ["I1", "S1"]
+
+
+def test_every_branch_passes_when_the_candidate_or_the_avoided_value_is_already_in_the_starting_tree():
+    cited = _tree(
+        _subject(),
+        _person("I1", "Bob", "Smyth", name_sources=["S9"]),
+        sources=[{"id": "S9", "url": f"https://www.familysearch.org/{_RECORD}"}],
+    )
+    subject = _subject()
+    subject["facts"] = [{"id": "F1", "type": "Death", "date": "15 Dec 1854"}]
+    valued = _tree(subject)
+    agnes = _agnes_as_mother()
+    for findings, tree in ((_wrong_person(), cited), (_fact_avoid(), valued), (_wrong_relationship(), agnes)):
+        output = _valid_output()
+        assert _guard(output, findings, tree, starting_tree=tree) is output
+        # The control: the same final tree against a bare starting tree is forced.
+        assert _guard(_valid_output(), findings, tree)["per_finding"][0]["matched"] == "false"
 
 
 def test_avoid_guard_ignores_recover_findings():
     # A recover finding SHOULD be in the final tree — its presence must not
-    # trip the guard even though the matcher would find it.
-    findings = _avoid_findings()
+    # trip the guard even though it names the same record.
+    findings = _wrong_person()
     del findings["findings"][0]["polarity"]
+    tree = _tree(
+        _subject(),
+        _person("I1", "Bob", "Smyth", name_sources=["S9"]),
+        sources=[{"id": "S9", "url": f"https://www.familysearch.org/{_RECORD}"}],
+    )
     output = _valid_output()
-    assert apply_avoid_guard(
-        output, expected_findings=findings, final_tree=_tree_with_robert_smith()
-    ) is output
+    assert _guard(output, findings, tree) is output
+
+
+def _cited_candidate():
+    return _tree(
+        _subject(),
+        _person("I1", "Bob", "Smyth", name_sources=["S9"]),
+        sources=[{"id": "S9", "url": f"https://www.familysearch.org/{_RECORD}"}],
+    )
 
 
 def test_avoid_guard_never_upgrades_the_verdict():
@@ -300,31 +564,20 @@ def test_avoid_guard_never_upgrades_the_verdict():
     # through unchanged — the guard can only tighten, never loosen.
     output = _valid_output(verdict="fail", recall_required=0.0, recall_total=0.0)
     output["per_finding"][0]["matched"] = "false"
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
-    )
-    assert out is output
+    assert _guard(output, _wrong_person(), _cited_candidate()) is output
 
 
 def test_avoid_guard_handles_a_skipped_judge():
     # verdict "skipped" produces judge_output == {} — the guard must pass it
     # through rather than inventing a grade.
-    assert apply_avoid_guard(
-        {}, expected_findings=_avoid_findings(), final_tree=_tree_with_robert_smith()
-    ) == {}
+    assert _guard({}, _wrong_person(), _cited_candidate()) == {}
 
 
 def test_avoid_guard_grades_a_finding_the_judge_never_graded():
     # Judge contract violation (per_finding missing the avoid finding): the
     # guard records the objective miss instead of letting it vanish.
     output = _valid_output(per_finding=[], verdict="pass", recall_required=1.0)
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
-    )
+    out = _guard(output, _wrong_person(), _cited_candidate())
     assert out["per_finding"][0]["finding_id"] == "f1"
     assert out["per_finding"][0]["matched"] == "false"
     assert out["verdict"] == "fail"

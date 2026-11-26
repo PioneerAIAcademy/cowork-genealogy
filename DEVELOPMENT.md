@@ -165,6 +165,11 @@ Example: adding a "list providers" feature.
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
+   - A tool only a connector caller sees stays out of `allToolSchemas` and the manifest:
+     its schema stays in its own file (`packages/engine/mcp-server/src/tools/project-view.ts`
+     is the example), `createServer` adds it for a connector principal, its
+     `dev/smoke-calls.ts` row carries `connectorOnly: true`, and the dispatch chain holds no
+     string literal of its name
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows
@@ -212,33 +217,14 @@ closed it was also invisible in the register `docs/architecture.md` points
 readers at.
 
 
-Implementing one task almost always turns up others — a stale doc, a missing
-test, a defect you're not fixing here. The rest of this section is about
-filing what you *defer* — it assumes you've already decided not to fix it now.
-Make that decision first, and default toward not deferring:
+Whether to file at all is decided by [`CLAUDE.md`](./CLAUDE.md) § "Work you
+find along the way": fix it in this PR, comment on the issue that already
+covers it, or drop it. A new issue is only for a bug that harms researchers'
+data or a missing guard that you cannot fix here, and a failing test is never
+one. This section covers how to file the few that qualify.
 
-**Fold it into the current PR unless there's a real reason not to.** A stray
-issue is easy to create and easy to forget; a PR that closes the gap it found
-needs nothing else to remember it. File a new issue instead of fixing it here
-only when at least one of these holds, and say which in the PR description:
-the fix needs a different reviewer or skill (a code fix found during fixture
-work, or vice versa); it depends on a decision only the lead can make and he
-is not reachable — a decision is a question, so if you can ask, ask; it's
-a different skill's eval slot and bundling it would force a second paid run;
-or it is too big for this PR — **and you have opened the call sites and
-counted**, and can say how many files and roughly how many lines. "It feels
-out of scope" is not a measurement, and asserting scope instead of measuring it
-is the usual way a foldable fix turns into an orphaned ticket.
-"I noticed it in passing" is not one of these — on its own it's a reason to
-fix it now, not to file it.
-
-**And if it's a nit, drop it.** A wording preference, a tidier structure, a
-test you'd like but nothing is broken without — say nothing and move on. A
-filed nit costs triage every morning for as long as it stays open, and the
-board is where it will stay. Not every gap you notice needs a record.
-
-For whatever you do decide to defer: **file each one as a GitHub issue in the
-same PR that defers it.** Ask Claude to do it; it is one command and needs no
+For one that qualifies: **file it as a GitHub issue in the same PR that
+defers it.** Ask Claude to do it; it is one command and needs no
 board access:
 
 ```sh
@@ -298,20 +284,18 @@ gh issue create --label developer|genealogist [--label icebox] \
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
-**Search once before you file, then stop.** Filing is the last resort in a
-four-step order: fix it in this PR; drop it if it's a nit; comment on an
-existing issue that covers it; file (with `--label icebox` when no decision sits
-behind it). The search is one command — `gh issue list --state open --search
+**Search once before you file, then stop.** A comment on an existing issue
+comes before a new one. The search is one command — `gh issue list --state open --search
 "<path or symbol>"`, plus a grep of the `**Touches:**` lines — because the
 overlap is usually at a line number, not a title, and a comment on the issue
 that already owns the file beats a second issue against it.
 
-**Filing prompts the lead.** `gh issue create` is gated by a `PreToolUse` hook
+**Filing prompts whoever runs the session.** `gh issue create` is gated by a `PreToolUse` hook
 (`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`,
 which Claude Code reads straight from the checkout — nothing to install) that
-stops the call and puts the four steps in front of him before anything is
-filed. It's a prompt, not a refusal —
-approving it files the issue. Answer it by saying which exemption applies.
+stops the call and puts the rule in front of whoever runs the session before
+anything is filed. It's a prompt, not a refusal — approving it files the issue.
+Answer it by saying which part of the filing step applies.
 It costs about 15 ms per Bash call and fails open, so a crash in the gate can
 never block a command you were entitled to run. `make hooks-test` proves it
 fires on the real shapes (including inside a compound command) and stays quiet
@@ -333,10 +317,10 @@ entry leaves when it becomes an issue" — never fired on its own. It reached 93
 lines and then 54 unassignable items touched by 54 separate PRs, and became a
 merge-conflict hotspot across concurrent worktrees.
 
-This section is the owner of these rules. [`CLAUDE.md`](./CLAUDE.md) keeps the
-four-step order, the exemptions that let you reach step 4, and the three rules
-whose failure is silent — never write to the board yourself, never start a queue
-file, and label a missing guard `nothing-checks`. It points here for the rest.
+[`CLAUDE.md`](./CLAUDE.md) owns the rule — when work leaves a PR as an issue —
+and the three rules whose failure is silent: never write to the board yourself,
+never start a queue file, and label a missing guard `nothing-checks`. This
+section owns the mechanics above.
 
 ## Dependency audits
 
@@ -763,9 +747,9 @@ uv run python run_tests.py --skill search-wikipedia           # run one skill's 
 uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
-Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}.json` (released),
-`v{N}_<ts>.json` (candidate), or `scratch_<ts>.json` (partial `--test`/`--tag` runs,
-gitignored). There is no `<model>` directory; the model is recorded in the run-log
+Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}_<ts>.json` (full-skill
+runs, committed; the newest 5 per skill are kept) or `scratch_<ts>.json` (partial
+`--test`/`--tag` runs, gitignored). There is no `<model>` directory; the model is recorded in the run-log
 JSON's `model` field. The harness has its own unit-test suite:
 
 ```bash
@@ -775,3 +759,15 @@ cd eval/harness && uv run pytest
 See [`eval/README.md`](./eval/README.md) for the full guide including
 prerequisites, useful flags, and Windows `.bat` shortcuts for
 non-technical users.
+
+**PRs that owe a single-ask panel run.** A PR that changes
+`packages/engine/plugin/skills/research/SKILL.md`, any agent's `description:`,
+`packages/engine/plugin/hooks/no_project_route.py` or
+`packages/engine/plugin/main-thread.json` runs `make e2e-single-ask` and pastes the
+printed block into the PR. Those files decide which unit answers a message, and the
+panel is how production routing is measured (`docs/specs/e2e-test-spec.md` §16). It
+is live and billed: each fixture's README records its cost
+(`grep -h Measured eval/tests/e2e-single-ask/*/README.md`). A KNOWN-FAIL line is a
+fixture whose `known_issue` names the open issue that owns it, and does not fail the
+run; a plain FAIL is new, and the PR says why. When the owning issue is fixed, remove
+the fixture's `known_issue`.

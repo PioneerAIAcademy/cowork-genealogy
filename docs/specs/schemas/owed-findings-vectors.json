@@ -1,0 +1,773 @@
+{
+ "$comment": "Owed findings vectors (docs/plan/conclusion-tree.md Decision 33). Read by packages/engine/mcp-server/tests/utils/owed-findings.test.ts. `expect` is the whole list, in order.",
+ "cases": [
+  {
+   "name": "an empty project owes nothing, frame included",
+   "research": {},
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": []
+  },
+  {
+   "name": "extract: a positive log entry on a question's plan item with no assertion, before conclude",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "open"
+     },
+     {
+      "id": "q_002",
+      "status": "open"
+     }
+    ],
+    "plans": [
+     {
+      "id": "pl_1",
+      "question_id": "q_001",
+      "items": [
+       {
+        "id": "pli_1"
+       }
+      ]
+     }
+    ],
+    "log": [
+     {
+      "id": "log_001",
+      "plan_item_id": "pli_1",
+      "outcome": "positive"
+     },
+     {
+      "id": "log_002",
+      "plan_item_id": "pli_1",
+      "outcome": "negative"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_002"
+      ]
+     }
+    ],
+    "person_evidence": [
+     {
+      "id": "pe_a_1",
+      "assertion_id": "a_1",
+      "person_id": "I1",
+      "confidence": "confident",
+      "superseded_by": null
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": [
+    {
+     "kind": "extract",
+     "ref": "log_001",
+     "blocksCompletion": false
+    },
+    {
+     "kind": "conclude",
+     "ref": "q_002",
+     "personIds": [
+      "I1"
+     ],
+     "blocksCompletion": true
+    }
+   ]
+  },
+  {
+    "name": "extract: a page image_transcribe logged itself is a read, not a find, so nothing is owed to extraction",
+    "research": {
+      "questions": [
+        {
+          "id": "q_001",
+          "status": "open"
+        },
+        {
+          "id": "q_002",
+          "status": "open"
+        }
+      ],
+      "plans": [
+        {
+          "id": "pl_1",
+          "question_id": "q_001",
+          "items": [
+            {
+              "id": "pli_1"
+            }
+          ]
+        }
+      ],
+      "log": [
+        {
+          "id": "log_001",
+          "plan_item_id": "pli_1",
+          "outcome": "positive",
+          "tool": "image_transcribe",
+          "written_by": "image_transcribe"
+        },
+        {
+          "id": "log_002",
+          "plan_item_id": "pli_1",
+          "outcome": "negative"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "a_1",
+          "record_id": "rec1",
+          "source_id": "src_1",
+          "record_role": "child",
+          "fact_type": "birth",
+          "value": "x",
+          "record_basis": "stated",
+          "extracted_for_question_ids": [
+            "q_002"
+          ]
+        }
+      ],
+      "person_evidence": [
+        {
+          "id": "pe_a_1",
+          "assertion_id": "a_1",
+          "person_id": "I1",
+          "confidence": "confident",
+          "superseded_by": null
+        }
+      ]
+    },
+    "tree": {
+      "persons": [
+        {
+          "id": "I1",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N1",
+              "given": "John",
+              "surname": "Abarca"
+            }
+          ],
+          "facts": [
+            {
+              "id": "F1",
+              "type": "Birth",
+              "date": "1879"
+            }
+          ]
+        },
+        {
+          "id": "I2",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N2",
+              "given": "Pedro",
+              "surname": "Abarca"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    "expect": [
+      {
+        "kind": "conclude",
+        "ref": "q_002",
+        "personIds": [
+          "I1"
+        ],
+        "blocksCompletion": true
+      }
+    ]
+  },
+  {
+   "name": "conclude does not fire once the question has a summary",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "open"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "not_proved"
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": []
+  },
+  {
+   "name": "hypothesis: supported with no related summary blocks; one with a related summary does not",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "open"
+     },
+     {
+      "id": "q_002",
+      "status": "open"
+     }
+    ],
+    "hypotheses": [
+     {
+      "id": "h_001",
+      "status": "supported",
+      "related_question_ids": [
+       "q_001"
+      ]
+     },
+     {
+      "id": "h_002",
+      "status": "supported",
+      "related_question_ids": [
+       "q_002"
+      ]
+     },
+     {
+      "id": "h_003",
+      "status": "active",
+      "related_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "not_proved"
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": [
+    {
+     "kind": "hypothesis",
+     "ref": "h_001",
+     "blocksCompletion": true
+    }
+   ]
+  },
+  {
+   "name": "encode: a likely claim with no tree object, routed to proof-conclusion; an encoded one owes nothing",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "resolved"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_1"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       },
+       {
+        "claim": "birth",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_1"
+        ],
+        "fact": {
+         "subject": "I1",
+         "fact_type": "Birth",
+         "date": "1879"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": [
+    {
+     "kind": "encode",
+     "ref": "ps_001/father",
+     "nextStep": "proof-conclusion — encode father",
+     "blocksCompletion": false
+    }
+   ]
+  },
+  {
+   "name": "raise and claims are advisory",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "open"
+     },
+     {
+      "id": "q_002",
+      "status": "open"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     },
+     {
+      "id": "a_2",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_002"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "possible",
+        "supporting_assertion_ids": [
+         "a_1"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       }
+      ]
+     },
+     {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable"
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": [
+    {
+     "kind": "raise",
+     "ref": "ps_001/father",
+     "blocksCompletion": false
+    },
+    {
+     "kind": "claims",
+     "ref": "ps_002",
+     "blocksCompletion": false
+    }
+   ]
+  },
+  {
+   "name": "frame: assertions exist and none is tied to a question",
+   "research": {
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": []
+     }
+    ]
+   },
+   "tree": {
+    "persons": [
+     {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N1",
+        "given": "John",
+        "surname": "Abarca"
+       }
+      ],
+      "facts": [
+       {
+        "id": "F1",
+        "type": "Birth",
+        "date": "1879"
+       }
+      ]
+     },
+     {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+       {
+        "id": "N2",
+        "given": "Pedro",
+        "surname": "Abarca"
+       }
+      ]
+     }
+    ],
+    "relationships": []
+   },
+   "expect": [
+    {
+     "kind": "frame",
+     "ref": "project",
+     "nextStep": "question-selection — no assertion is tied to any question"
+    }
+   ]
+  },
+  {
+   "name": "with no tree, encode is skipped",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "resolved"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "claims": [
+       {
+        "claim": "father",
+        "proof_tier": "probable",
+        "supporting_assertion_ids": [
+         "a_1"
+        ],
+        "relationship": {
+         "type": "ParentChild",
+         "parent": "I2",
+         "child": "I1"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "tree": null,
+   "expect": []
+  },
+  {
+   "name": "claims also fires for a disproved summary that states none, as claim rule 5 does",
+   "research": {
+    "questions": [
+     {
+      "id": "q_001",
+      "status": "resolved"
+     }
+    ],
+    "assertions": [
+     {
+      "id": "a_1",
+      "record_id": "rec1",
+      "source_id": "src_1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "x",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+       "q_001"
+      ]
+     }
+    ],
+    "proof_summaries": [
+     {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "disproved"
+     }
+    ]
+   },
+   "tree": null,
+   "expect": [
+    {
+     "kind": "claims",
+     "ref": "ps_001",
+     "blocksCompletion": false
+    }
+   ]
+  }
+ ]
+}

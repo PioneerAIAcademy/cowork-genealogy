@@ -441,12 +441,23 @@ UNLOGGED_SEARCHES_NOTE = (
     "search is deleted 24h after it ran."
 )
 
-#: Verbatim copy of NO_PROJECT_MESSAGE_READ in
-#: packages/engine/mcp-server/src/utils/project-io.ts: what image_transcribe answers
-#: a `file` read with no project (#4136).
-NO_PROJECT_MESSAGE_READ = (
-    "This folder is not a research project — there is no research.json here. "
-    "There is no project state to read — anything you are working on is standalone."
+#: Verbatim copy of NO_PROJECT_REFUSAL in packages/engine/mcp-server/src/utils/project-io.ts:
+#: what server.ts's gate answers any tool outside PROJECT_EXEMPT_TOOLS called with no
+#: project (issue #4686). tests/unit/test_mock_mcp.py pins the words.
+START_PROJECT_RULE = (
+    "Every activity needs a project. For an activity with no person in it (a page read, a record "
+    "set's names, a surname survey), call project_create with the researcher's request as "
+    "objective and no personId. For research on a named person, start init-project with the "
+    "FamilySearch person ID; with no ID, ask for it and create nothing."
+)
+NO_PROJECT_REFUSAL = f"No project: {START_PROJECT_RULE} Then pass its projectPath."
+
+#: A harness unit test of one handler's own behaviour turns the gate off; nothing else does.
+PROJECT_GATE_ENABLED = True
+
+#: Mirrors PROJECT_EXEMPT_TOOLS in src/utils/project-gate.ts: the tools that run with no project.
+PROJECT_EXEMPT_TOOLS = frozenset(
+    {"project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps"}
 )
 
 #: What production's no-project image_transcribe omits: it reads with projectPath
@@ -484,6 +495,28 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     return True
 
 
+def _fixture_states_zero_total(response: dict[str, Any]) -> bool:
+    """`_fixture_is_nil`, but the fixture must SAY its total is zero.
+
+    `_fixture_is_nil` treats a missing total as 0, which is looser than
+    production, whose `totalMatches` always comes from upstream as a number.
+    Everywhere else that divergence is absorbed downstream — the compiled
+    `surnameVariantHints` re-checks `totalMatches === 0` itself, so a total-less
+    fixture simply gets no hint. The nil-log write has no such re-check and is
+    not inert: it appends a real `written_by: "record_search"` entry to
+    research.json and hands back a `logId`. A fixture authored with `results: []`
+    and no total would make the harness grade the agent against a log entry
+    production's own gate would never have written, so that write requires the
+    stated zero.
+    """
+    if not _fixture_is_nil(response):
+        return False
+    return any(
+        isinstance(response.get(key), (int, float))
+        for key in ("totalMatches", "totalResults")
+    )
+
+
 def _format_unlogged_refs(refs: list[str]) -> str:
     shown = ", ".join(refs[:UNLOGGED_REFS_SHOWN])
     rest = len(refs) - UNLOGGED_REFS_SHOWN
@@ -494,6 +527,15 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
     "recorded: log it with `research_log_append`, `outcome: \"negative\"` — which "
     "records what the search returned, not that the record is absent — the exact "
     "parameters used, and no `stagedResultsRef`."
+)
+
+#: Verbatim copy of PLAN_ITEM_WITHOUT_PROJECT_NOTE in
+#: `packages/engine/mcp-server/src/tools/research-log-append.ts`. `record_search`
+#: returns it when `planItemId` arrives with no `projectPath` — the one key it
+#: adds on a projectless call, so the mock must add it there too or the suite
+#: grades the agent on a response production does not send (the #3054 rule).
+PLAN_ITEM_WITHOUT_PROJECT_NOTE = (
+    "'planItemId' has no effect without projectPath — nothing was logged"
 )
 
 
@@ -517,11 +559,14 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 # `searchAdvice` from the call's own arguments and the answer's counts, so no
 # fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+_UPLOAD_READ_PLAN_JS = _MCP_BUILD / "utils" / "upload-read-plan.js"
+# record_search writes a nil search's own log entry (issue #4527). The mock
+# performs that write through the SAME compiled code, as it already does for
+# staging — a Python restatement would grade the agent against a log entry
+# production never wrote.
+_RESEARCH_LOG_APPEND_JS = _MCP_BUILD / "tools" / "research-log-append.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
-
-_VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
-
 
 #: Compiled modules already warned about, so a missing build says so once per
 #: process rather than once per call. Keyed on the path, so a second module
@@ -573,13 +618,6 @@ def _unknown_args_module_present() -> bool:
     )
 
 
-def _volume_search_module_present() -> bool:
-    """A build predating #4414 serves every volume_search fixture unfiltered,
-    which reads as `omitSearchable` being silently ignored."""
-    return _compiled_module_present(
-        _VOLUME_SEARCH_JS,
-        "volume_search responses will NOT have omitSearchable applied",
-    )
 
 
 
@@ -638,7 +676,9 @@ def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
         return None
 
 
-def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]]):
+def _guard_unknown_args(
+    tool_name: str, handler, call_log: list[dict[str, Any]], workspace: Path | None = None
+):
     """Wrap `handler` so a non-parameter argument is refused before it runs.
 
     WHY AT REGISTRATION, NOT INSIDE THE HANDLER. `tools_by_name[name].handler(...)`
@@ -658,6 +698,17 @@ def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]])
 
     async def guarded(args, _name=tool_name, _handler=handler, _log=call_log):
         refusal = _reject_unknown_args(_name, args)
+        # The project gate runs after the argument check, as in server.ts: every tool
+        # outside PROJECT_EXEMPT_TOOLS refuses a call that names no project, or whose
+        # folder holds none. The model's own `projectPath` is what counts.
+        if (
+            refusal is None
+            and PROJECT_GATE_ENABLED
+            and _name not in PROJECT_EXEMPT_TOOLS
+            and workspace is not None
+            and not (isinstance(args, dict) and str(args.get("projectPath") or "").strip() and _is_project(workspace))
+        ):
+            refusal = NO_PROJECT_REFUSAL
         if refusal is None:
             return await _handler(args)
         response = {"error": refusal}
@@ -704,6 +755,114 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
+#: `FULLTEXT_ADVICE_KEYS` in `utils/fulltext-advice.ts`, in serialization order.
+FULLTEXT_ADVICE_KEYS: tuple[str, ...] = ("nameFieldRetry", "tooManyResults", "wordListRead")
+
+
+def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
+    """Production's own `researchLogAppend` for a nil `record_search` (#4527).
+
+    Returns the keys record_search puts before `results` — `logId` and friends on
+    success, `nilLogRefused` when the log tool refused. Empty when the build
+    predates it or node fails, with a warning: a harness fault must not read as
+    the tool declining to log.
+
+    `store=True` (the default) because this WRITES: under `--store pg` the prelude
+    is what binds the Postgres-backed store the rest of the run uses.
+    """
+    if not _compiled_module_present(
+        _RESEARCH_LOG_APPEND_JS, "a nil record_search will leave no log entry"
+    ):
+        return {}
+    script = (
+        f"import {{ researchLogAppend }} from '{_node_module_url(_RESEARCH_LOG_APPEND_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await researchLogAppend(input);"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    payload = {
+        "projectPath": args.get("projectPath"),
+        "tool": "record_search",
+        # The call's OWN arguments, minus plumbing — the whole point of the
+        # change. `stripQueryPlumbing` drops projectPath/subjectId/planItemId/note.
+        "query": {
+            k: v
+            for k, v in args.items()
+            if k not in ("projectPath", "subjectId", "planItemId", "note")
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "planItemId": args.get("planItemId"),
+        # Trimmed, and whitespace-only is absent — what record-search.ts writes
+        # (`input.note.trim() !== "" ? input.note.trim() : null`). Passing it
+        # through raw made the harness and production write different `notes`
+        # for the same call, so a validator or judge read a value production
+        # never produces.
+        "notes": (args.get("note").strip() or None) if isinstance(args.get("note"), str) else None,
+        "writtenBy": "record_search",
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not write its nil log entry ({exc})", stacklevel=2)
+        return {}
+    if not logged.get("ok"):
+        return {"nilLogRefused": logged.get("errors") or []}
+    out: dict[str, Any] = {"logId": logged.get("logId")}
+    for key in ("planRationale", "escalationDue"):
+        if logged.get(key):
+            out[key] = logged[key]
+    warn = (logged.get("validation") or {}).get("warnings") or []
+    if warn:
+        out["validationWarnings"] = warn
+    return out
+
+
+def _hosted_upload_read_plan(response: dict[str, Any]) -> dict[str, Any]:
+    """`response` with production's read plan for a HOSTED project's uploads.
+
+    The compiled `project_context` ran on the file store, where no `uploadUrl` is
+    served, so it answered `uploadsAre: "files"` with no `readWith` on any row.
+    This mock adds the hosted `uploadUrl` afterwards, so the plan is recomputed by
+    the same exported function production runs (`uploadReadPlan`), never a Python
+    copy. Unchanged when there are no uploads, the build predates the function,
+    or node fails (with a warning: a harness fault must not look like the model
+    picking the wrong reader)."""
+    rows = response.get("uploads")
+    if not isinstance(rows, list) or not rows:
+        return response
+    if not _compiled_module_present(_UPLOAD_READ_PLAN_JS, "hosted project_context uploads will say they are files"):
+        return response
+    script = (
+        f"import {{ uploadReadPlan }} from '{_node_module_url(_UPLOAD_READ_PLAN_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const rows = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(uploadReadPlan(rows, true)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(rows), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        plan = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock project_context could not compute the hosted upload read plan ({exc})", stacklevel=2)
+        return response
+    out: dict[str, Any] = {}
+    for key, value in response.items():
+        if key == "uploadsAre":
+            continue
+        if key == "uploads":
+            out["uploads"] = plan["uploads"]
+            out["uploadsAre"] = plan["uploadsAre"]
+        else:
+            out[key] = value
+    return out
+
+
 def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
     """Production's `searchAdvice` for a `record_search` call, as (key, value)
     pairs in the order production serializes them before `results`. Empty when
@@ -732,33 +891,33 @@ def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple
         return []
 
 
-def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
-    """Production's `omitSearchable` post-processing (#4414), applied to a
-    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
-    its own computed page — before `fitToBudget`.
+def _call_compiled_pure(
+    module: str, export: str, args: list[Any], *, consequence: str, fallback: Any
+) -> Any:
+    """`export(...args)` from the compiled `<_MCP_BUILD>/<module>`, for a pure
+    function of its arguments: no network, no file I/O, no store, so DEFAULT
+    timeout and no store prelude, same reasoning as `_reject_unknown_args`.
 
-    Calls the COMPILED `filterSearchableVolumes` (`build/tools/volume-search.js`),
-    never a Python restatement: the omission rule (two searchability signals, a
-    labelling tie-break, the concept-id fallback) is tool behaviour, and a
-    second copy is a second thing to drift (CLAUDE.md, "Code reuse"). A node
-    failure serves the fixture unfiltered, with a warning — a harness fault
-    must not read as the flag having been exercised.
+    The shared bridge for a canned fixture that production would have passed
+    through a pure exported function (CLAUDE.md, "Code reuse"): the rule runs
+    out of the build, never as a Python restatement. `module` resolves against
+    `_MCP_BUILD` at call time. Returns `fallback`, with a warning naming
+    `consequence`, when the build lacks the module or node fails — a harness
+    fault must not read as the model behaving.
     """
-    if not _volume_search_module_present():
-        return response
+    js = _MCP_BUILD / module
+    if not _compiled_module_present(js, consequence):
+        return fallback
     script = (
-        f"import {{ filterSearchableVolumes }} from '{_node_module_url(_VOLUME_SEARCH_JS)}';"
+        f"import {{ {export} }} from '{_node_module_url(js)}';"
         " import { readFileSync } from 'node:fs';"
-        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " process.stdout.write(JSON.stringify(filterSearchableVolumes(input)));"
+        " const args = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({export}(...args)));"
     )
     try:
-        # DEFAULT, not LONG, and store=False: `filterSearchableVolumes` is a
-        # pure function over the response object -- no network, no file I/O,
-        # no store, same reasoning as `_reject_unknown_args`.
         proc = _run_node_eval(
             script,
-            json.dumps(response),
+            json.dumps(args),
             timeout=NODE_EVAL_TIMEOUT_DEFAULT,
             store=False,
         )
@@ -766,11 +925,52 @@ def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
         return json.loads(proc.stdout)
     except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
-        warnings.warn(
-            f"mock volume_search could not apply omitSearchable ({e}); the fixture was served unfiltered.",
-            stacklevel=2,
-        )
-        return response
+        warnings.warn(f"compiled {export} failed in node ({e}); {consequence}", stacklevel=3)
+        return fallback
+
+
+def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
+    """Production's `omitSearchable` post-processing (#4414), applied to a
+    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
+    its own computed page — before `fitToBudget` — through the compiled
+    `filterSearchableVolumes`. A build predating #4414, or a node failure,
+    serves the fixture unfiltered, with a warning."""
+    return _call_compiled_pure(
+        "tools/volume-search.js",
+        "filterSearchableVolumes",
+        [response],
+        consequence="volume_search responses will NOT have omitSearchable applied",
+        fallback=response,
+    )
+
+
+def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[str, Any]:
+    """Production's wiki_search answer (#4417) from a canned fixture in the
+    server's shape: references by default, cleaned and capped text with
+    `includeText`, through the compiled `compactWikiSearchAnswer`, keyed on the
+    call's own `includeText` exactly as the tool reads it (`=== true`). Fails
+    OPEN: no build, or a node failure, serves the fixture unchanged with a
+    warning."""
+    return _call_compiled_pure(
+        "tools/wiki-search.js",
+        "compactWikiSearchAnswer",
+        [response, include_text is True],
+        consequence="wiki_search fixtures are served unchanged, with chunk_text and rank",
+        fallback=response,
+    )
+
+
+def _attach_film_for_year(response: dict[str, Any], film_year: Any) -> dict[str, Any]:
+    """Production's `filmForYear` (#4721) on a canned `catalog_search` answer,
+    through the compiled `attachFilmForYear`. Fails OPEN: no build, or a node
+    failure, serves the fixture unchanged with a warning."""
+    return _call_compiled_pure(
+        "tools/catalog-search.js",
+        "attachFilmForYear",
+        [response, film_year],
+        consequence="catalog_search fixtures are served without filmForYear",
+        fallback=response,
+    )
 
 
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
@@ -839,9 +1039,14 @@ def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[s
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
-) -> tuple[bool, dict[str, Any] | None]:
+) -> tuple[bool, dict[str, Any] | None, list[str], list[str]]:
     """Write the attestation a real `same_person` call would have written, and
-    work out whom the call is about.
+    work out whom the call is about, which of the record person's birth
+    disputes a settled conflict set aside (production's `settledConflicts`,
+    from the compiled `settledBirthDisputes`, for the assertion's own party),
+    and which warnings the link would introduce (production's
+    `warningsIfLinked`, from the compiled function of that name, for the party
+    that was scored).
 
     `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
     compiled tool never executes here and `recordMatchScore` never runs. That
@@ -874,16 +1079,17 @@ def _record_match_score(
         and `recordMatchScore` no-ops when persona id and role are both empty,
         so both cases simply write nothing and the caller stays silent.
 
-    Returns `(attested, parties)`: whether an attestation was written, and the
-    `recordPersona`/`treePerson` the documents give for this call (None when
-    there are none, or the tree could not be read: that costs the overlay only,
-    never the attestation). Never raises: a harness that fails the run over its
+    Returns `(attested, parties, settled, link_warnings)`: whether an attestation
+    was written, the `recordPersona`/`treePerson` the documents give for this call
+    (None when there are none, or the tree could not be read: that costs the
+    overlay only, never the attestation), the `settledConflicts` sentences and
+    the `warningsIfLinked` sentences. Never raises: a harness that fails the run over its
     own bookkeeping is worse than one that does not attest, and the writer-side
     gate failing loudly is the signal we want.
     """
     score = response.get("score")
     if not isinstance(score, (int, float)):
-        return False, None
+        return False, None, [], []
     assertion_id = args.get("assertionId")
     tree_person_id = args.get("treePersonId")
     if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
@@ -892,13 +1098,17 @@ def _record_match_score(
         # absent assertion, so the write would not happen anyway (confirmed by
         # mutation: removing this changes no test). It is an early-out that
         # avoids spawning a node process per two-document call.
-        return False, None
+        return False, None, [], []
 
     sp_js = _MCP_BUILD / "tools" / "same-person.js"
     ms_js = _MCP_BUILD / "utils" / "match-scores.js"
     pio_js = _MCP_BUILD / "utils" / "project-io.js"
-    if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
-        return False, None
+    ra_js = _MCP_BUILD / "utils" / "settled-birth-disputes.js"
+    mf_js = _MCP_BUILD / "utils" / "persona-copy.js"
+    if not (
+        sp_js.exists() and ms_js.exists() and pio_js.exists() and ra_js.exists() and mf_js.exists()
+    ):
+        return False, None, [], []
 
     _url = _node_module_url
 
@@ -919,27 +1129,49 @@ def _record_match_score(
         f"import {{ buildRecordedScore, describeScoredPair }} from '{_url(sp_js)}';"
         f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
         f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
+        f"import * as ra from '{_url(ra_js)}';"
+        f"import * as mf from '{_url(mf_js)}';"
         "let raw='';for await (const c of process.stdin) raw+=c;"
         "const i=JSON.parse(raw);"
         "const research=await readProjectJson(i.projectPath,'research.json');"
+        # Production's `ownParty` test: the settled disputes are the scored
+        # assertion's own record person's, never a second party's.
+        "const scored=(research.assertions ?? []).find((a) => a.id===i.assertionId);"
+        "const own=scored && (i.role==null || i.role===scored.record_role)"
+        "  && (i.recordPersonaId==null || i.recordPersonaId===scored.record_persona_id);"
+        "let settled=[];"
+        "try { if (own && typeof ra.settledBirthDisputes==='function') {"
+        "  const t=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
+        "  settled=ra.settledBirthDisputes(research,t,i.assertionId,i.treePersonId); } } catch {}"
         "const rec=buildRecordedScore(research,i.assertionId,i.treePersonId,"
         "  i.role ?? undefined,i.result,i.recordPersonaId ?? undefined);"
         "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
         "  await recordMatchScore(i.projectPath,rec); });"
         "let parties=null;"
+        "let linkWarnings=[];"
+        # The warnings are for the persona production scored: `recordPersona.role`,
+        # else the role asked for, else the assertion's own.
         "try { const tree=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
         "  parties=describeScoredPair(research,tree,i.assertionId,i.treePersonId,"
-        "    i.role ?? undefined,i.recordPersonaId ?? undefined); } catch {}"
-        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties}));"
+        "    i.role ?? undefined,i.recordPersonaId ?? undefined);"
+        "  if (scored && typeof mf.warningsIfLinked==='function') {"
+        "    let starting=null;"
+        "    try { starting=await readProjectJson(i.projectPath,'starting-tree.gedcomx.json'); } catch {}"
+        "    linkWarnings=mf.warningsIfLinked(research,tree,scored.record_id,"
+        "      parties?.recordPersona?.role ?? i.role ?? scored.record_role,i.treePersonId,starting); }"
+        "} catch {}"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties, settled, linkWarnings}));"
     )
     try:
         proc = _run_node_eval(
             script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
         )
         if proc.returncode != 0:
-            return False, None
+            return False, None, [], []
         out = json.loads(proc.stdout or "{}")
-        return bool(out.get("wrote")), out.get("parties")
+        settled = [s for s in out.get("settled") or [] if isinstance(s, str)]
+        link_warnings = [s for s in out.get("linkWarnings") or [] if isinstance(s, str)]
+        return bool(out.get("wrote")), out.get("parties"), settled, link_warnings
     except subprocess.TimeoutExpired:
         # Never raises, by contract -- but a swallowed timeout is indistinguishable
         # from "no score", and the writer-side gate turns that into a refusal of a
@@ -950,9 +1182,9 @@ def _record_match_score(
             f"for assertion {assertion_id}; the link will be refused as unattested",
             stacklevel=2,
         )
-        return False, None
+        return False, None, [], []
     except Exception:
-        return False, None
+        return False, None, [], []
 
 
 def _overlay_parties(
@@ -1271,13 +1503,15 @@ def _stage_image_transcribe(
     `image_transcribe`; the element's `id` is the `capture:<basename>` of a
     `file`, else the image the caller named. The layout cleanup, staging, the
     digest and the strip all run in ONE node process, through the compiled
-    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest` and
-    `compactImageTranscribeAnswer`, so each has one definition. A staging throw
+    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest`,
+    `compactImageTranscribeAnswer` and `attachIndexReadings` (#4578), so each has
+    one definition. A staging throw
     keeps the text inline with `staged: null` and `stagingError`, as production
     does; a node failure returns the same shape, with a warning.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    readings_js = _MCP_BUILD / "utils" / "index-readings.js"
     # Production folds record_read's `imageArk` into `ark` (foldImageArkInput):
     # a blank `ark` counts as absent, and a blank alias is ignored.
     alias, ark = args.get("imageArk"), args.get("ark")
@@ -1312,11 +1546,12 @@ def _stage_image_transcribe(
         warnings.warn(f"mock image_transcribe could not be staged ({why})", stacklevel=3)
         return {**response, "staged": None, "stagingError": f"mock: staging the canned page failed ({why})"}
 
-    if not (stager_js.exists() and compactor_js.exists()):
+    if not (stager_js.exists() and compactor_js.exists() and readings_js.exists()):
         return _unstaged(f"no engine build at {_MCP_BUILD}")
 
     script = (
         f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
+        f" import {{ attachIndexReadings }} from '{_node_module_url(readings_js)}';"
         f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER},"
         f" {_IMAGE_TRANSCRIBE_DIGEST} }} from '{_node_module_url(compactor_js)}';"
         " import { readFileSync } from 'node:fs';"
@@ -1331,6 +1566,7 @@ def _stage_image_transcribe(
         " ...(stagingError !== undefined ? { stagingError } : {}),"
         f" digest: {_IMAGE_TRANSCRIBE_DIGEST}(el.id, el.transcription) }};"
         f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " await attachIndexReadings(input.projectPath, out, input.pageArk);"
         " process.stdout.write(JSON.stringify(out));"
     )
     input_obj = {
@@ -1338,6 +1574,8 @@ def _stage_image_transcribe(
         "element": element,
         "query": query,
         "response": response,
+        # Production joins the index on the ark it read; a `file` names no page.
+        "pageArk": None if isinstance(args.get("file"), str) else args.get("ark"),
     }
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
@@ -1347,46 +1585,53 @@ def _stage_image_transcribe(
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
             return _unstaged("the node script returned no `staged` key")
-        return parsed
     except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
         return _unstaged(f"{type(exc).__name__}: {exc}")
+    staged = parsed.get("staged")
+    if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str):
+        parsed.update(_write_page_log(input_obj["projectPath"], args, response, staged["resultsRef"]))
+    return parsed
 
 
-def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
-    """A canned `image_transcribe` page as production answers with no project
-    (#4136): nothing staged or saved, the text cleaned and bounded, and
-    `metadata` and `nameExpansion` dropped, through the compiled
-    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
-    returns the page with only the project keys removed, with a warning.
-    """
-    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
-    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+_IMAGE_TRANSCRIBE_JS = _MCP_BUILD / "tools" / "image-transcribe-mcp.js"
 
-    def _fallback(why: str) -> dict[str, Any]:
-        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
-        return inline
 
-    if not compactor_js.exists():
-        return _fallback(f"no engine build at {_MCP_BUILD}")
+def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str, Any], ref: str) -> dict[str, Any]:
+    """The log entry `image_transcribe` writes for its own staged read (#4721),
+    through production's compiled `logOwnRead` (its outcome, its retry without a
+    refused plan item), so the entry is production's field for field. `{"logId"}` on success, `{"logRefused"}` when
+    the log tool refused; empty, with a warning, when the build is absent or node
+    fails — a harness fault must not read as the tool declining to log."""
+    if not (
+        _compiled_module_present(_RESEARCH_LOG_APPEND_JS, "an image_transcribe read will leave no log entry")
+        and _compiled_module_present(_IMAGE_TRANSCRIBE_JS, "an image_transcribe read will leave no log entry")
+    ):
+        return {}
     script = (
-        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
-        f" from '{_node_module_url(compactor_js)}';"
+        f"import {{ logOwnRead }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
         " import { readFileSync } from 'node:fs';"
-        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
-        " if (typeof out.transcription === 'string')"
-        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
-        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
-        " process.stdout.write(JSON.stringify(out));"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await logOwnRead({ projectPath: i.projectPath, planItemId: i.planItemId ?? null,"
+        " ...(i.lookingFor ? { lookingFor: i.lookingFor } : {}) },"
+        " { staged: { resultsRef: i.ref, returnedCount: 1 }, ...i.read });"
+        " process.stdout.write(JSON.stringify(r));"
     )
+    payload = {
+        "projectPath": project_path,
+        "ref": ref,
+        "planItemId": args.get("planItemId"),
+        "lookingFor": args.get("lookingFor") if isinstance(args.get("lookingFor"), str) else None,
+        "read": {k: response[k] for k in ("found", "truncated") if response.get(k) is not None},
+    }
     try:
-        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
-        out = proc.stdout.strip()
-        if proc.returncode != 0 or not out:
-            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
-        parsed = json.loads(out)
-        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
-    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
-        return _fallback(f"{type(exc).__name__}: {exc}")
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock image_transcribe could not write its log entry ({exc})", stacklevel=2)
+        return {}
+    return {k: logged[k] for k in ("logId", "logRefused") if logged.get(k) is not None}
 
 
 def _unlogged_staged_handles(
@@ -1548,6 +1793,42 @@ def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
         return parsed
     except Exception as e:
         _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _label_collection_rows(response: dict[str, Any]) -> dict[str, Any]:
+    """Mark each canned `collections_search` row browse-only where production
+    would, from the COMPILED `collectionAvailability` (a name-searchable row
+    carries no `availability`, as in production). A fixture row carries no
+    image count, so the person count alone decides, as for a stored row with no
+    label. A row that already has one keeps it. On a harness fault the response
+    goes back unlabelled, with a warning."""
+    js = _MCP_BUILD / "utils" / "collection-availability.js"
+    if not js.exists():
+        warnings.warn(f"mock collections_search rows unlabelled: no engine build at {js}", stacklevel=2)
+        return response
+    url = _node_module_url(js)
+    script = (
+        f"import {{ collectionAvailability }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " for (const row of r.results ?? []) {"
+        "   if (row && typeof row === 'object' && row.availability === undefined) {"
+        "     if (collectionAvailability(row.personCount, row.imageCount) === 'browse-only') row.availability = 'browse-only';"
+        "   }"
+        " }"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock collections_search rows unlabelled: node exited {proc.returncode}", stacklevel=2)
+            return response
+        parsed = json.loads(out)
+        return parsed if isinstance(parsed, dict) else response
+    except Exception as e:
+        warnings.warn(f"mock collections_search rows unlabelled: {type(e).__name__}: {e}", stacklevel=2)
         return response
 
 
@@ -1816,8 +2097,14 @@ def create_mock_server(
                 and _workspace is not None
                 and "error" not in response
             ):
-                entry["attested"], parties = _record_match_score(_workspace, args, response)
+                entry["attested"], parties, settled, link_warnings = _record_match_score(
+                    _workspace, args, response
+                )
                 response = _overlay_parties(response, parties)
+                if settled:
+                    response = {**response, "settledConflicts": settled}
+                if link_warnings:
+                    response = {**response, "warningsIfLinked": link_warnings}
 
             # Production's external_links_search stores the place's full list in
             # external-collections.json whenever it is given a projectPath (#2995).
@@ -1831,6 +2118,14 @@ def create_mock_server(
                 response = _store_external_collections(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
+
+            # Production's collections_search labels every row's availability.
+            if (
+                _name == "collections_search"
+                and "error" not in response
+                and isinstance(response.get("results"), list)
+            ):
+                response = _label_collection_rows(response)
 
             # Production's person_read answers, and stages, the model-facing trim
             # of the full read (#4384). A fixture holds the full read, which
@@ -1879,6 +2174,26 @@ def create_mock_server(
                 and args.get("omitSearchable")
             ):
                 response = _filter_searchable_volumes(response)
+
+            # Production's wiki_search returns references unless the call asks for
+            # text (#4417); the fixture carries the server's answer, so the compiled
+            # compactor shapes it, keyed on the call's own `includeText`.
+            if (
+                _name == "wiki_search"
+                and isinstance(response, dict)
+                and "error" not in response
+            ):
+                response = _compact_wiki_search(response, args.get("includeText"))
+
+            # Production's catalog_search adds `filmForYear` to each hit when the
+            # call names a `filmYear`; the compiled function adds it here.
+            if (
+                _name == "catalog_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("filmYear") is not None
+            ):
+                response = _attach_film_for_year(response, args.get("filmYear"))
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
@@ -2018,19 +2333,8 @@ def create_mock_server(
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
-            # With no project (no projectPath, or a folder holding neither project
-            # file) production reads with projectPath removed and returns the
-            # page inline, staging nothing (#4136); a `file` still needs one.
-            _no_project_read = _name == "image_transcribe" and (
-                not args.get("projectPath") or (_workspace is not None and not _is_project(_workspace))
-            )
-            # Production answers a `file` with no project before reading anything,
-            # so no fixture has to match it.
-            if _no_project_read and args.get("file") is not None:
-                response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
-            elif _no_project_read and "error" not in response:
-                response = _inline_image_transcribe(response)
-            elif (
+            # Every read has a project (issue #4686), so there is no unsaved read.
+            if (
                 _name == "image_transcribe"
                 and _workspace is not None
                 and "error" not in response
@@ -2105,7 +2409,7 @@ def create_mock_server(
                 and "error" not in response
                 and args.get("projectPath")
             ):
-                _notes: dict[str, str] = {}
+                _notes: dict[str, Any] = {}
                 if _unlogged_staged:
                     _notes["unloggedSearches"] = UNLOGGED_SEARCHES_NOTE.replace(
                         "{n}", str(len(_unlogged_staged))
@@ -2113,8 +2417,16 @@ def create_mock_server(
                         "{refs}",
                         _format_unlogged_refs([h.get("ref", "") for h in _unlogged_staged]),
                     )
-                if _fixture_is_nil(response):
+                # fulltext_search only. record_search writes a nil's log entry
+                # itself (issue #4527) and no longer asks the agent to, so the
+                # note would tell the model to make a call the engine removed.
+                if _name == "fulltext_search" and _fixture_is_nil(response):
                     _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
+                # ...and record_search performs that write here, through the same
+                # compiled code production runs, so the suite grades the agent on
+                # the entry production would actually have written.
+                if _name == "record_search" and _fixture_states_zero_total(response):
+                    _notes.update(_write_nil_log(args))
                 if _notes:
                     reordered = {}
                     for _key, _value in response.items():
@@ -2129,6 +2441,46 @@ def create_mock_server(
             if _name == "record_search" and isinstance(response, dict) and "error" not in response:
                 for _advice_key, _advice in _search_advice(dict(args), response):
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
+
+            # `fulltext_search`'s advice, from the same compiled function the tool
+            # runs. Gated here on the totals and the spelling it can fire on, so
+            # most calls spawn no node process.
+            if _name == "fulltext_search" and isinstance(response, dict) and "error" not in response:
+                _total = response.get("totalResults", 0)
+                _spelled = any(
+                    isinstance(args.get(_k), str) and not args[_k].isascii()
+                    for _k in ("keywords", "name")
+                )
+                if _spelled or (isinstance(_total, (int, float)) and (_total == 0 or _total > 500)):
+                    _ft_advice = _call_compiled_pure(
+                        "utils/fulltext-advice.js",
+                        "fulltextAdvice",
+                        [dict(args), _total],
+                        consequence="fulltext_search responses will carry no search advice",
+                        fallback={},
+                    )
+                    for _advice_key in FULLTEXT_ADVICE_KEYS:
+                        if _ft_advice.get(_advice_key):
+                            response = _place_before_results(
+                                {**response, _advice_key: _ft_advice[_advice_key]}, _advice_key
+                            )
+
+            # Production answers a projectless `planItemId` with a note rather
+            # than dropping it (issue #4527), and that is the one branch the
+            # `projectPath` gate above cannot reach. Without it a projectless
+            # search in a suite is graded against a response production does not
+            # send — the same divergence #3054 fixed for `surnameVariantHints`.
+            if (
+                _name == "record_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and not str(args.get("projectPath") or "").strip()
+                and args.get("planItemId") is not None
+            ):
+                response = _place_before_results(
+                    {**response, "planItemIdIgnored": PLAN_ITEM_WITHOUT_PROJECT_NOTE},
+                    "planItemIdIgnored",
+                )
 
             # Production serializes surnameVariantHints immediately before
             # `results`, after the pre-`results` notes and the advice above —
@@ -2157,7 +2509,7 @@ def create_mock_server(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )
         decorated = tool(tool_name, description, input_schema)(
-            _guard_unknown_args(tool_name, handler, call_log)
+            _guard_unknown_args(tool_name, handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2191,7 +2543,7 @@ def create_mock_server(
             or _PERMISSIVE_SCHEMA
         )
         decorated = tool(live_tool_name, description, input_schema)(
-            _guard_unknown_args(live_tool_name, live_handler, call_log)
+            _guard_unknown_args(live_tool_name, live_handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2208,7 +2560,7 @@ def create_mock_server(
             "person_quality",
             tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
             (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
-        )(_guard_unknown_args("person_quality", pq_handler, call_log))
+        )(_guard_unknown_args("person_quality", pq_handler, call_log, workspace))
     )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
@@ -2242,11 +2594,10 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "project_list": ("project-list.js", "projectList"),
 }
 
-#: Compiled tools whose `projectPath` is optional and changes what the call
-#: does: given one, `build_external_search_url` also writes the in-flight
-#: hand-off log entry. Production never supplies it on the model's behalf, so
-#: injecting it here would make every run write an entry the agent never asked
-#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: Compiled tools whose `projectPath` the harness never adds for the model:
+#: given one, `build_external_search_url` also writes the in-flight hand-off
+#: log entry (unless `awaitingCapture: false`), and the project gate refuses a
+#: call without one. Injecting it here would hide that refusal. These get the `person_quality` treatment: a projectPath the agent sent
 #: is rebased onto the workspace, and none is added.
 _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
@@ -2292,6 +2643,8 @@ def _make_live_handler(
         return _make_evaluation_append_handler(workspace, call_log)
     if tool_name == "timeline_build":
         return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
+    if tool_name == "locality_survey":
+        return _make_locality_survey_handler(workspace, call_log, manifest or {})
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
@@ -2801,6 +3154,13 @@ def _make_compiled_tool_handler(
                 call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
+            # Production passes the bound project's links (`projectLinks`) so the
+            # capture steps name the upload page; a hosted test's link is the one
+            # its project_context serves.
+            if tool_name == "build_external_search_url":
+                hosted_links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+                upload_url = (hosted_links or {}).get("uploadUrl")
+                call_args += ", " + json.dumps({"uploadUrl": upload_url} if upload_url else {})
 
             # A tool that resolves places gets the test's own answers and no
             # network: the table is installed in the resolver module the tool
@@ -2851,7 +3211,7 @@ def _make_compiled_tool_handler(
                 # Production spreads `uploadUrl` onto every answer that read the project,
                 # and returns an `ok: false` one before it.
                 if links["uploadUrl"] and response.get("ok") is True:
-                    response = {**response, "uploadUrl": links["uploadUrl"]}
+                    response = {**_hosted_upload_read_plan(response), "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",
@@ -3005,6 +3365,232 @@ def _make_extraction_append_handler(
             }
         )
         return _tool_envelope("extraction_append", response)
+
+    return handler
+
+
+#: The survey's wiki sub-calls: a page the test serves no fixture for is a missing page.
+_SURVEY_WIKI_TOOLS = frozenset({"wiki_place_page", "wiki_read"})
+#: `COLLECTION_PAGE_LINK` in utils/wiki-page-fetch.ts: a wiki page's links to collection pages.
+_COLLECTION_PAGE_LINK = re.compile(
+    r"https://www\.familysearch\.org/en/wiki/([^\s()\"#?]+?_-_FamilySearch_Historical_Records)(?=[\s()\"#?]|$)"
+)
+_WIKI_BASE = "https://www.familysearch.org/en/wiki/"
+#: `WIKI_LINK` and `SEARCH_HELP_TITLE` in tools/wiki-place-page.ts: a titled wiki link, and
+#: the titles that make it the page on searching a place's records.
+_TITLED_WIKI_LINK = re.compile(r"\]\(https://www\.familysearch\.org/en/wiki/([^)\s\"]+)\s+\"([^\"]+)\"\)")
+_SEARCH_HELP_TITLE = re.compile(r"\b(search results|search tips|searching)\b", re.IGNORECASE)
+
+
+def _survey_search_help(manifest: dict[str, Any], answers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The search-tips page each research-tips answer links (production's `searchHelpLink`),
+    answered from the test's own `wiki_read` fixtures, as extra planned answers."""
+    extra = []
+    for a in answers:
+        if a["tool"] != "wiki_place_page" or a["args"].get("section") != "research_tips":
+            continue
+        value = (a.get("answer") or {}).get("value")
+        content = value.get("content") if isinstance(value, dict) else None
+        if not isinstance(content, str):
+            continue
+        for slug_, title in _TITLED_WIKI_LINK.findall(content):
+            if _SEARCH_HELP_TITLE.search(title):
+                url = _WIKI_BASE + slug_
+                answer, matched = _survey_answer(manifest, "wiki_read", {"url": url})
+                extra.append({"tool": "wiki_read", "args": {"url": url}, "answer": answer, "matched": matched})
+                break
+    return extra
+
+
+def _survey_collection_pages(manifest: dict[str, Any], answers: list[dict[str, Any]]) -> dict[str, str]:
+    """The collection pages the survey's wiki pages link, answered from the test's own
+    `wiki_read` fixtures (never the bare catch-all), keyed by slug, so the compiled survey
+    reads their Legacy notices as production's `collectionNoticesFor` does."""
+    from urllib.parse import unquote
+
+    pages: dict[str, str] = {}
+    for a in answers:
+        value = (a.get("answer") or {}).get("value")
+        content = value.get("content") if isinstance(value, dict) else None
+        if not isinstance(content, str):
+            continue
+        for match in _COLLECTION_PAGE_LINK.finditer(content):
+            slug_ = unquote(match.group(1))
+            if slug_ in pages:
+                continue
+            answer, matched = _survey_answer(manifest, "wiki_read", {"url": _WIKI_BASE + slug_})
+            page = answer.get("value")
+            if isinstance(page, dict) and isinstance(page.get("content"), str):
+                pages[slug_] = page["content"]
+    return pages
+
+
+def _survey_answer(manifest: dict[str, Any], tool_name: str, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """One planned `locality_survey` sub-call answered from the test's own per-tool
+    fixtures, as `{"value": ...}`, `{"missing": True}` (a page that does not exist)
+    or `{"error": ...}`, with the fixture that answered it (or why none did).
+
+    A by-url `wiki_read` matched only by a bare `"~"` catch-all is a missing page, so a
+    vital-records ladder climbs past `{State}_Vital_Records` to the test's own
+    `_Civil_Registration` fixture. A wiki call with no fixture is a missing page; a data
+    call with none is an error the survey reports as a gap."""
+    bucket = manifest.get(tool_name) or {}
+    hit = None
+    for predicate, resp, src in bucket.get("predicated") or []:
+        if matches(predicate, args):
+            hit = (predicate, resp, src)
+            break
+    if hit is None:
+        if tool_name in _SURVEY_WIKI_TOOLS:
+            return {"missing": True}, "fixture_not_found"
+        return {"error": f"No fixture matched call to {tool_name}."}, "fixture_not_found"
+    predicate, resp, src = hit
+    if tool_name == "wiki_read" and predicate == {"url": "~"}:
+        return {"missing": True}, f"{src} (catch-all read as no page)"
+    if not isinstance(resp, dict) or "error" in resp:
+        if tool_name in _SURVEY_WIKI_TOOLS:
+            return {"missing": True}, src
+        message = resp.get("message") or resp.get("error") if isinstance(resp, dict) else "error"
+        return {"error": str(message)}, src
+    if tool_name in _SURVEY_WIKI_TOOLS:
+        if not isinstance(resp.get("content"), str):
+            return {"missing": True}, src
+        page = {"url": resp.get("url") or args.get("url"), "content": resp["content"]}
+        if resp.get("collectionNotices"):
+            page["collectionNotices"] = resp["collectionNotices"]
+        return {"value": page}, src
+    if tool_name == "external_links_search":
+        stored = (bucket.get("stored_rows") or {}).get(src)
+        rows = stored if stored is not None else [
+            {"url": r.get("url"), "linkText": r.get("linkText", "")}
+            for r in resp.get("results") or []
+            if isinstance(r, dict) and isinstance(r.get("url"), str)
+        ]
+        return {"value": {"rows": rows}}, src
+    return {"value": resp}, src
+
+
+def _make_locality_survey_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+):
+    """The live `locality_survey`, its sub-calls answered from the test's own per-tool
+    fixtures (`place_population`, `collections_search`, `volume_search`,
+    `catalog_search`, `external_links_search`, `wiki_place_page`, `wiki_read`), so no
+    test needs a fixture of its own for it.
+
+    The compiled `surveyCallPlan` lists every sub-call the survey could make, climbs
+    included; each is answered by `_survey_answer`; the compiled `runLocalitySurvey`
+    then runs with deps serving that map, so the ladders, the deadline, the ranking and
+    the fit are production's. With a `projectPath` the agent sent, the workspace's
+    `external-collections.json` is written and the answer staged by the compiled
+    store and stager. Logged once: `response` is the answer the agent got,
+    `survey_parts` each sub-call with the fixture that answered it.
+    """
+    survey_js = _MCP_BUILD / "tools" / "locality-survey.js"
+    store_js = _MCP_BUILD / "utils" / "external-collections-store.js"
+    staging_js = _MCP_BUILD / "utils" / "results-staging.js"
+    fetch_js = _MCP_BUILD / "utils" / "wiki-page-fetch.js"
+
+    async def handler(args, _ws=workspace):
+        input_obj = dict(args) if isinstance(args, dict) else {}
+        if "projectPath" in input_obj and _ws is not None:
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+        parts: list[dict[str, Any]] = []
+        if not survey_js.exists():
+            response: dict[str, Any] = {"error": f"locality_survey: build not found: {survey_js}"}
+        else:
+            try:
+                plan_script = (
+                    f"import {{ surveyCallPlan }} from '{_node_module_url(survey_js)}';"
+                    " import { readFileSync } from 'node:fs';"
+                    " process.stdout.write(JSON.stringify(surveyCallPlan(JSON.parse(readFileSync(0, 'utf-8')))));"
+                )
+                proc = _run_node_eval(plan_script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                plan = json.loads(proc.stdout) if proc.stdout.strip() else []
+                answers = []
+                for call in plan:
+                    answer, matched = _survey_answer(manifest, call["tool"], call["args"])
+                    answers.append({"tool": call["tool"], "args": call["args"], "answer": answer})
+                    parts.append({"tool": call["tool"], "args": call["args"], "matched": matched})
+                for extra in _survey_search_help(manifest, answers):
+                    parts.append({"tool": "wiki_read", "args": extra["args"], "matched": extra.pop("matched")})
+                    answers.append(extra)
+                run_script = (
+                    f"import {{ runLocalitySurvey }} from '{_node_module_url(survey_js)}';"
+                    f" import {{ dedupeCollections, recordExternalCollections }} from '{_node_module_url(store_js)}';"
+                    f" import {{ stageSearchResults }} from '{_node_module_url(staging_js)}';"
+                    f" import {{ collectionPageSlugs, legacyNotice, FS_WIKI_BASE }} from '{_node_module_url(fetch_js)}';"
+                    " import { readFileSync } from 'node:fs';"
+                    " const p = JSON.parse(readFileSync(0, 'utf-8'));"
+                    " const key = (tool, a) => tool + JSON.stringify(Object.keys(a).sort().map((k) => [k, a[k]]));"
+                    " const map = new Map(p.answers.map((a) => [key(a.tool, a.args), a.answer]));"
+                    " const get = (tool, a) => { const r = map.get(key(tool, a));"
+                    "   if (!r) throw new Error(`no planned answer for ${tool} ${JSON.stringify(a)}`);"
+                    "   if (r.error) throw new Error(r.error); return r.missing ? null : r.value; };"
+                    " const noticed = (v) => { if (!v || (v.collectionNotices && v.collectionNotices.length)) return v;"
+                    "   const notices = collectionPageSlugs(v.content).slice(0, 10).flatMap((s) => {"
+                    "     const c = p.collectionPages[s]; const n = c ? legacyNotice(c) : null;"
+                    "     return n ? [{ title: s.replace(/_/g, ' '), url: `${FS_WIKI_BASE}/${s}`, notice: n }] : []; });"
+                    "   return notices.length ? { ...v, collectionNotices: notices } : v; };"
+                    " const pp = p.input.projectPath;"
+                    " const deps = {"
+                    "   population: async (a) => get('place_population', a),"
+                    "   collections: async (a) => get('collections_search', a),"
+                    "   volumes: async (a) => get('volume_search', a),"
+                    "   catalog: async (a) => get('catalog_search', a),"
+                    "   linkRows: async (place) => ({ rows: dedupeCollections("
+                    "     get('external_links_search', { standardPlace: place }).rows.filter((r) => typeof r.url === 'string'), place) }),"
+                    "   placePage: async (place, section) => noticed(get('wiki_place_page', { standardPlace: place, section })),"
+                    "   page: async (url) => noticed(get('wiki_read', { url })),"
+                    "   search: async (query) => get('wiki_search', { query, includeText: true }),"
+                    "   placeType: async () => null,"
+                    "   ...(pp ? {"
+                    "     recordLinks: async (place, rows, tooLarge) => {"
+                    "       await recordExternalCollections(pp, place, rows, tooLarge ? { tooLarge: true } : {}); },"
+                    "     stage: async (answer) => (await stageSearchResults({ projectPath: pp, tool: 'locality_survey',"
+                    "       response: { query: { standardPlace: answer.place, ...(answer.period ?? {}) }, results: [answer] } }))?.resultsRef ?? null,"
+                    "   } : {}),"
+                    " };"
+                    " process.stdout.write(JSON.stringify(await runLocalitySurvey(p.input, deps)));"
+                )
+                proc = _run_node_eval(
+                    run_script,
+                    json.dumps({
+                        "input": input_obj,
+                        "answers": answers,
+                        "collectionPages": _survey_collection_pages(manifest, answers),
+                    }),
+                    timeout=NODE_EVAL_TIMEOUT_LONG,
+                )
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    message = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    m = re.search(r"Error: ([^\n]+)", message)
+                    response = {"error": m.group(1) if m else f"locality_survey: {message}"}
+            except Exception as e:
+                response = {"error": f"locality_survey: {e}"}
+        misses = [p_ for p_ in parts if p_["matched"] == "fixture_not_found" and p_["tool"] not in _SURVEY_WIKI_TOOLS]
+        if misses:
+            warnings.warn(
+                "locality_survey sub-calls no fixture answered (add an mcp_fixture): "
+                + "; ".join(f"{m['tool']} {json.dumps(m['args'], ensure_ascii=False)}" for m in misses),
+                stacklevel=2,
+            )
+        call_log.append(
+            {
+                "tool": "mcp__genealogy__locality_survey",
+                "args": dict(args) if isinstance(args, dict) else args,
+                "expected_args": None,
+                "matched": {"kind": "live", "index": None},
+                "response_fixture": "live:locality_survey",
+                "response": response,
+                "survey_parts": parts,
+            }
+        )
+        return _tool_envelope("locality_survey", response)
 
     return handler
 

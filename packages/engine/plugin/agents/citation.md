@@ -149,8 +149,10 @@ delegation gave; with none, skip the steps that need a project. Prioritize:
   Explained patterns
 - Sources the user specifically asks about
 
-For the GedcomX `author` and `title` of a source, call
-`tree_query({ projectPath })` and read its `sources`.
+For the GedcomX `author` and `title` of the sources you refine, call
+`tree_query({ projectPath, personIds: subjectPersonIds, sourceIds })`, where
+`subjectPersonIds` comes from `project_context` and `sourceIds` lists each source's
+`gedcomx_source_description_id`, and read its `sources`.
 
 ### 2. Refine citation_detail
 
@@ -534,6 +536,10 @@ the researcher found nothing matching that profile —
 it does NOT mean [COUNTY] was the search scope. Do not infer a
 multi-step or narrower search from geographic context in the notes;
 the query field is the authoritative source for search parameters.
+
+`who` is the creator of the record set that was searched — the U.S. Census
+Bureau for a census year the log names — never the platform; the platform
+goes in `where`.
 
 Do not invent a second search or additional negative outcome not
 described in the log. Do not infer scope or jurisdiction beyond what

@@ -29,7 +29,8 @@
     "record-read-driscoll-1851-census-index",
     "record-read-driscoll-1861-census",
     "source-attachments-driscoll",
-    "person-quality-driscoll-detail"
+    "person-quality-driscoll-detail",
+    "source-screen-driscoll-no-attachments"
   ],
   "judge_context": [
     "Should call person_read to enumerate what is attached, then record_read each source that carries a record ARK",

@@ -10,9 +10,11 @@
  * per-request principal reached it; `bearer` — those tools must succeed.
  *
  * `assertCoverage` is the completeness guard: every advertised tool is either a
- * step in this plan or a named exclusion, and every named exclusion is advertised.
+ * step in this plan or a named exclusion, every named exclusion is advertised, and
+ * a connector-only tool is advertised to the connector and to nobody else.
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { PROJECT_EXEMPT_TOOLS } from "../src/utils/project-gate.js";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, posix } from "node:path";
@@ -36,6 +38,10 @@ export interface CallResult {
   /** Parsed JSON of the text content, or `{ raw }` when it is not JSON. */
   body: any;
   text: string;
+  /** The result's `_meta`: where `show_project` carries the documents. */
+  meta?: Record<string, any>;
+  /** The result's `structuredContent`: where `read_project_view` carries them. */
+  structured?: Record<string, any>;
 }
 
 export type CallFn = (tool: string, args: Record<string, unknown>) => Promise<CallResult>;
@@ -72,6 +78,8 @@ export interface SmokeStep {
   offline?: boolean;
   /** Reaches FamilySearch with the caller's token (every `tokenStep`). */
   familySearch?: boolean;
+  /** A tool only the connector door has: `runPlan` runs it for no other caller. */
+  connectorOnly?: true;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
   /** Runs before the call: the seed, or a host-side fixture write (which skips
    *  itself when `hostProjectDir` is null). */
@@ -90,6 +98,7 @@ const STAGED_REF = "results/.staging/smoke.json";
 // later validate_research_schema row as an orphan sidecar.
 const FULLTEXT_REF = "results/.staging/smoke-fulltext.json";
 const FULLTEXT_HIT = { id: "ark:/61903/3:1:TEST-0001", textDocument: "Smoke full-text transcript." };
+const OBJECTIVE = "Does this transport reach every tool?";
 
 const SEED_TREE = {
   persons: [
@@ -227,6 +236,12 @@ async function writeHostFixture(ctx: SmokeCtx, ref: string, body: unknown): Prom
   await writeFile(file, JSON.stringify(body), "utf-8");
 }
 
+/** The seeded project's research and tree (`seedDocuments`), as a view tool sends them. */
+const carriesProject = (document: any): boolean =>
+  document?.research?.project?.objective === OBJECTIVE &&
+  Array.isArray(document?.tree?.persons) &&
+  document.tree.persons.some((p: any) => p?.id === "P1");
+
 function keyMissing(res: CallResult): Expectation {
   const ok = res.isError && carries(res, OPENROUTER_API_KEY_MISSING_MESSAGE);
   return { ok, detail: ok ? "isError with OPENROUTER_API_KEY_MISSING_MESSAGE" : brief(res) };
@@ -306,11 +321,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   {
     tool: "project_create",
-    label: "project_create (no personId)",
+    label: "project_create (blank personId)",
     offline: true,
-    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a create with no person refused?" }),
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a blank personId refused?", personId: " " }),
     expect: (res) => ({
-      ok: res.body?.ok === false && carries(res, "personId is required"),
+      ok: res.body?.ok === false && carries(res, "personId is blank"),
       detail: brief(res, 300),
     }),
   },
@@ -324,6 +339,35 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       ok: res.body?.ok === false && carries(res, "project_create never overwrites"),
       detail: brief(res, 300),
     }),
+  },
+  {
+    // Here because the row above seeds the project, owned by the connector user on
+    // the connector path, and these two rows read it.
+    tool: "show_project",
+    offline: true,
+    connectorOnly: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, show: "latest" }),
+    expect: (res, ctx) => {
+      const entry = res.meta?.["genealogy/project"];
+      const ok = !res.isError && carriesProject(entry) && entry?.echo?.projectPath === ctx.projectPath;
+      return {
+        ok,
+        detail: ok ? "research and tree in _meta, projectPath echoed" : `_meta keys [${Object.keys(entry ?? {})}]: ${brief(res)}`,
+      };
+    },
+  },
+  {
+    tool: "read_project_view",
+    offline: true,
+    connectorOnly: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, part: "document" }),
+    expect: (res) => {
+      const ok = !res.isError && carriesProject(res.structured);
+      return {
+        ok,
+        detail: ok ? "research and tree in structuredContent" : `structuredContent keys [${Object.keys(res.structured ?? {})}]: ${brief(res)}`,
+      };
+    },
   },
   {
     tool: "validate_research_schema",
@@ -573,6 +617,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // P1 carries no indexed attachment, so this reaches an empty screen: the
+    // transport and the reads, not the checks (Vitest covers those).
+    tool: "source_screen",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
     // transport and the read, not the event logic (Vitest covers that).
     tool: "timeline_build",
@@ -610,10 +662,38 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     },
   },
   {
+    // No identity claim covers P1 and P2, so the merge is refused until justified
+    // (Decision 13 of docs/plan/conclusion-tree.md).
     tool: "merge_tree_persons",
+    label: "merge_tree_persons (refused: no identity claim)",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath, merges: [["P1", "P2"]] }),
-    expect: okTrue,
+    expect: (res) => ({
+      ok: res.body?.ok === false && res.body?.reason === "unjustified_warnings",
+      detail: brief(res),
+    }),
+    after: (res, ctx) => {
+      ctx.values.mergeWarningIds = (res.body?.warnings ?? []).map((w: any) => w?.warningId).filter(Boolean);
+    },
+  },
+  {
+    tool: "merge_tree_persons",
+    label: "merge_tree_persons (justified)",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      merges: [["P1", "P2"]],
+      warningJustifications: ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).map((warningId) => ({
+        warningId,
+        justification: "The user instructed this merge.",
+      })),
+    }),
+    // With no warning ids the refused step above already failed; say so here
+    // rather than report the re-merge's unrelated error.
+    expect: (res, ctx) =>
+      ((ctx.values.mergeWarningIds as string[] | undefined) ?? []).length === 0
+        ? { ok: false, detail: "skipped: the refused merge above returned no warning ids to justify" }
+        : okTrue(res),
   },
   {
     tool: "tree_forget",
@@ -665,7 +745,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "build_external_search_url",
     offline: true,
-    args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
+    args: () => ({ site: "findagrave", baseUrl: "https://www.findagrave.com/memorial/search", attributes: { surname: "Smoke" } }),
     expect: okTrue,
   },
   {
@@ -695,6 +775,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   tokenStep("collections_search", { standardPlace: "England" }),
   tokenStep("source_attachments", { uris: ["ark:/61903/1:1:QVS9-DHDB"] }),
   tokenStep("image_search", { imageGroupNumber: "004884748" }),
+  // The one shape measured to answer (issue #4632): the Peru page with its cc.
+  tokenStep("image_index", { imageId: "ark:/61903/3:1:33SQ-GYY1-B2G", collectionId: "1803958" }),
   tokenStep("volume_search", { standardPlace: "England" }),
   tokenStep("same_person", {
     gedcomx1: { persons: [{ id: "A" }] },
@@ -765,6 +847,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     count: 3,
     hydrate: 2,
   }),
+  // The other path: one entry by its id, which makes no search and no place call.
+  { ...tokenStep("catalog_search", { catalogId: "koha:36984" }), label: "catalog_search (catalogId)" },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
@@ -809,6 +893,18 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     }),
   },
   {
+    tool: "locality_survey",
+    args: (ctx) => ({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1850, endYear: 1880, projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok:
+        !res.isError &&
+        Array.isArray(res.body?.pagesRead) &&
+        res.body.pagesRead.length === 4 &&
+        typeof res.body?.staged?.resultsRef === "string",
+      detail: brief(res),
+    }),
+  },
+  {
     tool: "research_query",
     label: "research_query (external_collections)",
     args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
@@ -818,14 +914,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
 
 // ─── Completeness guard ──────────────────────────────────────────────────────
 
-/** Every advertised tool is a step or a named exclusion; every exclusion is advertised. */
-export function assertCoverage(advertisedNames: readonly string[]): string[] {
+/**
+ * Every advertised tool is a step or a named exclusion; every exclusion is advertised.
+ * `connector` says the list came through the connector door: a connector-only tool must
+ * be on that list and on no other.
+ */
+export function assertCoverage(advertisedNames: readonly string[], { connector }: { connector: boolean }): string[] {
   const advertised = new Set(advertisedNames);
-  const planned = new Set(CALL_PLAN.map((s) => s.tool));
+  const connectorOnly = new Set(CALL_PLAN.filter((s) => s.connectorOnly).map((s) => s.tool));
+  const planned = new Set(CALL_PLAN.filter((s) => connector || !s.connectorOnly).map((s) => s.tool));
   const excluded = new Set(Object.keys(EXCLUDED_TOOLS));
   const problems: string[] = [];
   for (const name of advertised) {
-    if (!planned.has(name) && !excluded.has(name)) {
+    if (!connector && connectorOnly.has(name)) {
+      problems.push(`connector-only tool '${name}' is advertised outside the connector`);
+    } else if (!planned.has(name) && !excluded.has(name)) {
       problems.push(`advertised tool '${name}' is neither called by the plan nor a named exclusion`);
     }
   }
@@ -834,7 +937,12 @@ export function assertCoverage(advertisedNames: readonly string[]): string[] {
     if (planned.has(name)) problems.push(`excluded tool '${name}' is also a step in the plan`);
   }
   for (const name of planned) {
-    if (!advertised.has(name)) problems.push(`plan step '${name}' names a tool that is not advertised`);
+    if (advertised.has(name)) continue;
+    problems.push(
+      connectorOnly.has(name)
+        ? `connector-only tool '${name}' is not advertised to the connector`
+        : `plan step '${name}' names a tool that is not advertised`,
+    );
   }
   return problems;
 }
@@ -854,9 +962,16 @@ export interface RunPlanResult {
   failures: string[];
 }
 
+/** Every tool but six requires a project, so a row that names none gets the smoke's own,
+ *  which the driver seeds in the rows that open the plan. */
+function withProject(tool: string, args: Record<string, unknown>, ctx: SmokeCtx): Record<string, unknown> {
+  if (PROJECT_EXEMPT_TOOLS.has(tool) || "projectPath" in args) return args;
+  return { ...args, projectPath: ctx.projectPath };
+}
+
 /** Execute the plan in order, one report line per call; returns the failing labels. */
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
-  const steps = opts.offlineOnly ? CALL_PLAN.filter((s) => s.offline) : CALL_PLAN;
+  const steps = CALL_PLAN.filter((s) => (!opts.offlineOnly || s.offline) && (ctx.connector || !s.connectorOnly));
   const failures: string[] = [];
   let skipped = 0;
   for (const step of steps) {
@@ -873,7 +988,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     let verdict: Expectation;
     try {
       if (step.before) await step.before(ctx);
-      const res = await call(step.tool, step.args(ctx));
+      const res = await call(step.tool, withProject(step.tool, step.args(ctx), ctx));
       verdict = step.expect(res, ctx);
       step.after?.(res, ctx);
     } catch (error) {
@@ -913,7 +1028,13 @@ export async function callViaClient(
   } catch {
     body = { raw: text };
   }
-  return { isError: res.isError === true, body, text };
+  return {
+    isError: res.isError === true,
+    body,
+    text,
+    meta: res._meta,
+    structured: res.structuredContent as CallResult["structured"],
+  };
 }
 
 // ─── Environment ─────────────────────────────────────────────────────────────

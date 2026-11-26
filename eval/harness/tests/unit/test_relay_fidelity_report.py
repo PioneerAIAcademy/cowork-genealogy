@@ -10,7 +10,7 @@ The corpus is frozen because the live one moves: the issue's own figures could
 not be reproduced days later, and a live baseline cannot tell a corpus change
 from a miscomputation -- which is the failure this report exists to catch.
 
-Hand-counted, from `fixtures/relay_fidelity/runlogs/alpha/v10.json`:
+Hand-counted, from `fixtures/relay_fidelity/runlogs/alpha/v10_2026-01-01_12-00-00.json`:
 
   direct   ut_fx_direct  conforming, tail, exact      (relay adds a preamble)
            ut_fx_norm    conforming, tail, normalized (emphasis + smart quotes
@@ -141,13 +141,13 @@ def test_an_orphan_test_is_counted_and_its_returns_excluded():
 
 
 def test_the_canonical_selector_beats_a_filename_sort():
-    """`sorted()` picks v9 over v10, and a candidate over a release.
+    """`sorted()` picks v9 over v10, though v10 is the higher version.
 
     The decoys are empty, so a wrong pick also zeroes every count -- the
     selector is proven by the resolved filename AND by the numbers.
     """
     alpha, _ = counts()
-    assert alpha["log"] == "v10.json"
+    assert alpha["log"] == "v10_2026-01-01_12-00-00.json"
     assert alpha["direct"]["conforming"] == 7
 
 

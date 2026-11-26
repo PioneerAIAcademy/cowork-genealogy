@@ -26,7 +26,6 @@ from test_search_records import (  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
-UNIT_TESTS = REPO_ROOT / "eval/tests/unit/search-records"
 
 
 def scenario_state(name):
@@ -40,8 +39,6 @@ def scenario_state(name):
     }
 
 
-def spec(filename):
-    return json.loads((UNIT_TESTS / filename).read_text(encoding="utf-8"))["test"]
 
 
 def rs(args, response=None):
@@ -50,7 +47,10 @@ def rs(args, response=None):
 
 # --- unproven-surname-search (ut_search_records_d33) ---------------------
 
-D33 = spec("unproven-married-surname-search.json")
+# PR #4613 deleted the test file and inlined its block here; issue #4699 restores
+# the file and points this back at it, so the two copies cannot drift again.
+D33_PATH = REPO_ROOT / "eval/tests/unit/search-records/unproven-married-surname-search.json"
+D33 = json.loads(D33_PATH.read_text(encoding="utf-8"))["test"]
 
 
 @pytest.fixture

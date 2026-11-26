@@ -30,20 +30,15 @@
 // incompatible date/place OR a different value coexist as separate facts. A
 // competing value of a single-valued/vital type (VITAL_PRIMARY_TYPES) is surfaced
 // in conflicts_surfaced; multi-valued types (Occupation, Residence, Census, …)
-// coexist silently. materialize_facts NEVER sets `primary`/`preferred` — only
-// proof-conclusion does — and never writes relationships or `conflicts` entries.
+// coexist silently. materialize_facts NEVER sets `primary`/`preferred` — a writer
+// sets `primary` only on a fact a probable claim covers (Decision 34) — and never
+// writes relationships or `conflicts` entries.
 //
 // The write tail (sanitizeTree → read research → apply → validateIntroduced →
 // atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
 // SINGLE-FILE tree write (atomicWriteJson, never atomicWriteBoth).
 
-import type {
-  SimplifiedGedcomX,
-  SimplifiedPerson,
-  SimplifiedFact,
-  SimplifiedName,
-  SimplifiedSourceReference,
-} from "../types/gedcomx.js";
+import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import type {
   MaterializeFactsInput,
   MaterializeFactsOp,
@@ -51,9 +46,16 @@ import type {
   MaterializeFactsNamedPartyOp,
   MaterializeFactsOpResult,
   MaterializeFactsResult,
-  ConflictSurfaced,
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import {
+  MaterializeFactsError,
+  copyPersonaFacts,
+  sameName,
+  normNamePart,
+  resolveSourceRef,
+  upsertName,
+} from "../utils/persona-copy.js";
 import { checkWarningGate } from "./tree-edit.js";
 import {
   blankAddedPerson,
@@ -66,25 +68,12 @@ import {
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { nextId } from "../utils/gedcomx-ids.js";
-import { factsEquivalent, VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import {
-  resolveSourceRef as resolveSourceRefShared,
-  isRelationshipEstablishing,
-} from "../utils/source-ref-resolver.js";
+import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { findRecordedScore, readMatchScores, type MatchScoreFile } from "../utils/match-scores.js";
-import { placeTextKey } from "../utils/place-verdict.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 import {
@@ -93,13 +82,9 @@ import {
   EVENT_TREE_TYPES,
   GENDER_TYPES,
   NAME_TYPES,
-  SKIP_TYPES,
-  isCoupleEventFactType,
   isTwoParty,
   assertionFactAttr,
   assertionTreeFactType,
-  candAsFact,
-  factCandidate,
   factText,
   materializesToPersonFact,
   nameParts,
@@ -113,7 +98,7 @@ import {
 // `same_person`'s project-relative arm can project a record persona with the
 // same rules.
 
-class MaterializeFactsError extends Error {}
+// MaterializeFactsError and the copy itself live in utils/persona-copy.ts.
 
 /** What every op of one call shares: the baseline's person ids; the tree as it
  *  stood before the call, which the namesake requirement reads relatives from so
@@ -197,109 +182,12 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new MaterializeFactsError(e instanceof Error ? e.message : String(e));
   }
 }
 
 const str = factText;
 
-/** Normalize a comparison key for a name part (case/space-insensitive). */
-function normNamePart(v: string | undefined): string {
-  return (v ?? "").trim().toLowerCase();
-}
-
-/** A readable descriptor of a coexisting competing fact (value, or date/place). */
-function factDescriptor(fact: SimplifiedFact): string {
-  const v = str(fact.value);
-  if (v) return v;
-  const parts = [str(fact.date), str(fact.standard_place) ?? str(fact.place)].filter(Boolean);
-  return parts.length ? parts.join(", ") : (fact.id ?? "(fact)");
-}
-
-// ─── provenance resolution (§4.2 step 2 — error, never null) ──────────────────
-
-/**
- * Resolve an assertion's source-ref (the provenance-chain walk itself lives in
- * `utils/source-ref-resolver.ts`, shared with `tree_edit`'s add_relationship
- * `sourceAssertionId` — tree-materialization-spec §8), wrapped so a missing
- * hop surfaces as this tool's own error class. A missing tree S-entry is an
- * upstream research_append gate failure to surface, not to paper over with null.
- */
-function resolveSourceRef(
-  assertion: any,
-  research: any,
-  tree: SimplifiedGedcomX,
-): SimplifiedSourceReference {
-  try {
-    return resolveSourceRefShared(assertion, research, tree);
-  } catch (e) {
-    throw new MaterializeFactsError((e as Error).message);
-  }
-}
-
-/** Union `ref` into `node.sources` (dedup on ref + page). Returns true when a
- *  new ref was actually attached. */
-function unionRef(
-  node: { sources?: SimplifiedSourceReference[] },
-  ref: SimplifiedSourceReference,
-): boolean {
-  node.sources ??= [];
-  const key = `${ref.ref ?? ""}|${ref.page ?? ""}`;
-  for (const r of node.sources) {
-    if (`${r.ref ?? ""}|${r.page ?? ""}` === key) return false;
-  }
-  node.sources.push({ ...ref });
-  return true;
-}
-
-/** A name assertion's `structured_value.type` -> the tree's name type. Only a
- *  document's own words map; anything else, and no type at all, mints none —
- *  never a default (issue #4378, Richard 2026-11-12). */
-const TREE_NAME_TYPE: Readonly<Record<string, string | undefined>> = Object.assign(Object.create(null), {
-  birth: "BirthName",
-  married: "MarriedName",
-  nickname: "Nickname",
-  also_known_as: "AlsoKnownAs",
-});
-
-/** Upsert one SOURCED name onto a person: union the ref onto an equivalent
- *  existing name, else mint a new one carrying it. Name equivalence is
- *  case/space-insensitive on given + surname, which is what makes a re-run a
- *  no-op rather than a duplicate.
- *
- *  Shared by both arms — the persona arm's `name` assertions and the
- *  named-party arm (§4.6) — because the two had the same block character for
- *  character, and a second copy is how the two drift. NEVER sets `preferred`:
- *  concluding a preferred name is proof-conclusion's job (§4.2). */
-
-function upsertName(
-  tree: SimplifiedGedcomX,
-  person: SimplifiedPerson,
-  given: string,
-  surname: string,
-  ref: SimplifiedSourceReference,
-  /** Name type to record. OMITTED when undefined, which is legal (the tree
-   *  schema requires only id/given/surname) and is what most of the corpus
-   *  does. Omitting is a smaller claim than asserting the wrong one. */
-  nameType?: string,
-): { namesAdded: number; refsAttached: number } {
-  person.names ??= [];
-  const match = person.names.find(
-    (n) =>
-      normNamePart(n.given) === normNamePart(given) &&
-      normNamePart(n.surname) === normNamePart(surname),
-  );
-  if (match) {
-    return { namesAdded: 0, refsAttached: unionRef(match, ref) ? 1 : 0 };
-  }
-  const name: SimplifiedName = { id: nextId(tree, "N"), given, surname, sources: [ref] };
-  if (nameType !== undefined) name.type = nameType;
-  person.names.push(name);
-  return { namesAdded: 1, refsAttached: 1 };
-}
 
 
 
@@ -380,152 +268,7 @@ function applyMaterializeOp(
     tree.persons = [...(tree.persons ?? []), person];
   }
 
-  // Snapshot pre-existing node ids so enrich (vs. add) counts are honest and a
-  // re-run is a no-op. Scoped to THIS op — in a batch, an earlier op's writes
-  // to this same person are already on `person.facts` and correctly count as
-  // pre-existing for this op, exactly as if they'd arrived in an earlier,
-  // separate call.
-  const preFactIds = preExistingFactIds ?? new Set((person.facts ?? []).map((f) => f.id));
-  const createdFactIds = new Set<string>();
-  const enrichedFactIds = new Set<string>();
-  let namesAdded = 0;
-  let refsAttached = 0;
-  const doubted = doubtedPlaces(research, recordId);
-
-  for (const a of assertions) {
-    const rawType = String(a.fact_type ?? "").toLowerCase();
-
-    // Purely-argumentative / negative evidence is not a positive tree fact
-    // (spec §7.1 (4)) — it stays a research.json assertion feeding the argument;
-    // only its conclusion materializes, via proof-conclusion.
-    if (recordBasisOf(a) === "absent") continue;
-
-    if (GENDER_TYPES.has(rawType)) {
-      // Gender sets the scalar, not a fact/name (no ref); never overwrite a
-      // resolved Male/Female with a conflicting one — only fill Unknown/absent.
-      const g = normGender(a.value);
-      if (g && (person.gender === undefined || person.gender === "Unknown")) {
-        person.gender = g;
-      }
-      continue;
-    }
-
-    if (NAME_TYPES.has(rawType)) {
-      const ref = resolveSourceRef(a, research, tree);
-      const { given, surname, type } = nameParts(a);
-      const n = upsertName(tree, person, given, surname, ref, type ? TREE_NAME_TYPE[type] : undefined);
-      namesAdded += n.namesAdded;
-      refsAttached += n.refsAttached;
-      continue;
-    }
-
-    // SKIP_TYPES matches the raw lowercased string; the couple-event check
-    // folds separators too, because one event arrives spelled several ways and
-    // only `marriage` was ever listed. A couple event belongs on the Couple
-    // relationship via tree_edit, never on a person.
-    if (SKIP_TYPES.has(rawType) || isCoupleEventFactType(rawType)) continue;
-
-    // A value-bearing / event fact. Resolve provenance first (§4.2 step 2:
-    // error, never null), then upsert by fact identity.
-    const ref = resolveSourceRef(a, research, tree);
-    const cand = factCandidate(a);
-    if (cand.place !== undefined && doubted.has(placeTextKey(cand.place))) delete cand.standard_place;
-    const candFact = candAsFact(cand);
-    person.facts ??= [];
-    const match = person.facts.find(
-      (f) => factsEquivalent(f, candFact) && str(f.value) === cand.value,
-    );
-
-    if (match) {
-      // Same fact — corroboration. Fill any attribute the existing fact lacks
-      // (never remove, never upgrade a set field) and union the ref. NEVER set
-      // `primary`.
-      let fieldChanged = false;
-      if (str(match.date) === undefined && cand.date !== undefined) {
-        match.date = cand.date;
-        fieldChanged = true;
-      }
-      if (str(match.place) === undefined && cand.place !== undefined) {
-        match.place = cand.place;
-        fieldChanged = true;
-      }
-      if (
-        str(match.standard_place) === undefined &&
-        cand.standard_place !== undefined &&
-        placeTextKey(match.place ?? "") === placeTextKey(cand.place ?? "")
-      ) {
-        match.standard_place = cand.standard_place;
-        fieldChanged = true;
-      }
-      if (str(match.value) === undefined && cand.value !== undefined) {
-        match.value = cand.value;
-        fieldChanged = true;
-      }
-      const refAdded = unionRef(match, ref);
-      if (refAdded) refsAttached++;
-      // Only a fact that existed BEFORE this op counts as "enriched"; a
-      // corroboration of a fact minted earlier in the same op is not.
-      if (match.id !== undefined && preFactIds.has(match.id) && (fieldChanged || refAdded)) {
-        enrichedFactIds.add(match.id);
-      }
-    } else {
-      // Coexist — a competing or new fact. Mint it with its ref. NEVER set
-      // `primary`.
-      const fact: SimplifiedFact = { id: nextId(tree, "F"), type: cand.type };
-      if (cand.date !== undefined) fact.date = cand.date;
-      if (cand.place !== undefined) fact.place = cand.place;
-      if (cand.standard_place !== undefined) fact.standard_place = cand.standard_place;
-      if (cand.value !== undefined) fact.value = cand.value;
-      // The backlink (#2472). MINT ONLY — deliberately not set on the
-      // corroboration branch above, and never filled in when absent there.
-      // `factsEquivalent` is a loose DEDUPE predicate (an absent date or place
-      // counts as compatible, and a place chain that is a prefix of the other
-      // counts as compatible), not an identity one, so a fill-when-absent rule
-      // would attach a backlink to a hand-entered `tree_edit add_fact`
-      // conclusion and a later assertion update would then silently rewrite it.
-      // The field means "this fact was minted from this assertion"; it is set
-      // once and never inferred. See tree-materialization-spec.md section 4.4.
-      if (typeof a.id === "string" && a.id !== "") fact.assertion_id = a.id;
-      fact.sources = [ref];
-      person.facts.push(fact);
-      createdFactIds.add(fact.id!);
-      refsAttached++;
-    }
-  }
-
-  // A newly-minted person MUST end up with a name (the tree schema requires it,
-  // and a create-or-enrich person is never nameless in practice).
-  if (created && (person.names ?? []).length === 0) {
-    throw new MaterializeFactsError(
-      `cannot mint person '${targetId}' — the persona has no name assertion to build a name from`,
-    );
-  }
-
-  // ── Conflict surfacing — single-valued/vital types only (§4.4 / Cluster F) ──
-  // A vital type now holding ≥2 coexisting facts, at least one authored this
-  // op, is a surfaced conflict. Multi-valued types (Occupation, Residence,
-  // Census, …) are never in VITAL_PRIMARY_TYPES, so they coexist silently.
-  const conflicts_surfaced: ConflictSurfaced[] = [];
-  for (const type of VITAL_PRIMARY_TYPES) {
-    const ofType = (person.facts ?? []).filter((f) => f.type === type);
-    if (ofType.length >= 2 && ofType.some((f) => f.id !== undefined && createdFactIds.has(f.id))) {
-      conflicts_surfaced.push({
-        personId: targetId,
-        factType: type,
-        values: ofType.map(factDescriptor),
-      });
-    }
-  }
-
-  return {
-    personId: targetId,
-    created,
-    factsAdded: createdFactIds.size,
-    factsEnriched: enrichedFactIds.size,
-    namesAdded,
-    refsAttached,
-    conflicts_surfaced,
-  };
+  return copyPersonaFacts(tree, research, person, assertions, recordId, targetId, created, preExistingFactIds);
 }
 
 /** True when an op selects the named-party arm (§4.6). Discriminated by
@@ -1036,7 +779,10 @@ function linkGate(
 
 /** Where a person minted from record `recordId` came from. `thisParty`: a fact
  *  backlinked to one of the party's one-party assertions, a live `probable` or
- *  `confident` link from one, or a name equal to one of the party's names.
+ *  `confident` link from one, or a name that is one of the party's names
+ *  (`sameName`). A given-only party name that only abbreviates a fuller name
+ *  does not count: "Mary" the mother is not the "Mary Phipps" stub minted for
+ *  her daughter.
  *  `other`: the first other role of the record whose one-party assertion a fact
  *  is backlinked to or such a link comes from; names do not count there, since
  *  two people on one record can share a name. A `speculative` link is a
@@ -1061,11 +807,10 @@ function partyTrace(
     const link = links.find((e) => ids.has(e.assertion_id));
     return link ? { assertionId: String(link.assertion_id), evidence: `link '${link.id}'` } : null;
   };
-  const key = (n: { given?: string; surname?: string }) => `${normNamePart(n.given)}\u0000${normNamePart(n.surname)}`;
-  const partyNames = new Set(party.names.map(key).filter((k) => k !== "\u0000"));
+  const partyNames = party.names.filter((pn) => normNamePart(pn.given) !== "" || normNamePart(pn.surname) !== "");
   const thisParty =
     traced(onePartyAssertionIds(research, recordId, party.isThisRole)) !== null ||
-    (person?.names ?? []).some((n) => partyNames.has(key(n)));
+    (person?.names ?? []).some((n) => partyNames.some((pn) => sameName(n, pn.given, pn.surname)));
   const hit = traced(onePartyAssertionIds(research, recordId, (role) => !party.isThisRole(role)));
   if (hit === null) return { thisParty, other: null };
   const role = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find(
@@ -1524,6 +1269,7 @@ function requireLinkToExistingPerson(
   if (refusal !== null) throw new MaterializeFactsError(refusal);
 }
 
+
 // ─── the tool ─────────────────────────────────────────────────────────────────
 
 export async function materializeFacts(
@@ -1692,7 +1438,6 @@ export async function materializeFacts(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }
@@ -1743,7 +1488,7 @@ export const materializeFactsSchema = {
     "Christening, Burial) is reported in conflicts_surfaced for conflict-resolution; " +
     "multi-valued types (Occupation, Residence, Census, …) coexist silently.\n" +
     "\n" +
-    "materialize_facts NEVER sets primary/preferred (only proof-conclusion does), " +
+    "materialize_facts NEVER sets primary/preferred (primary marks a value a proof-summary claim concludes), " +
     "never resolves conflicts, never writes relationships (use tree_edit " +
     "add_relationship), never writes research.json, and silently skips `marriage` " +
     "assertions (a Couple-relationship event — never a correct person-level fact; " +
@@ -1930,15 +1675,3 @@ export const materializeFactsSchema = {
   },
 };
 
-/** The place texts (`placeTextKey`) a record's assertions give two or more
- *  different standard places: the record disagrees with itself about them, so
- *  none of those standard places is copied onto the tree. */
-function doubtedPlaces(research: any, recordId: unknown): Set<string> {
-  const byText = new Map<string, Set<string>>();
-  for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (!isLiveAssertion(a) || a.record_id !== recordId || typeof a.place !== "string" || str(a.standard_place) === undefined) continue;
-    const key = placeTextKey(a.place);
-    byText.set(key, (byText.get(key) ?? new Set<string>()).add(a.standard_place));
-  }
-  return new Set([...byText].filter(([, values]) => values.size > 1).map(([key]) => key));
-}

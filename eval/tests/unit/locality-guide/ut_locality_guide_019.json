@@ -2,7 +2,7 @@
   "test": {
     "id": "ut_locality_guide_019",
     "skill": "locality-guide",
-    "name": "Locality guide for Massachusetts, 1600s \u2014 Puritan settlement records",
+    "name": "Locality guide for Massachusetts, 1600s — Puritan settlement records",
     "type": "positive",
     "description": "Checks if the skill recognizes Massachusetts under early colonial Puritan rule and directs researchers to church registers, town meeting records, and land grants.",
     "tags": [
@@ -15,8 +15,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Massachusetts during the early 1600s Puritan settlements. What records or repositories would help trace families?",
-    "scenario": null,
+    "delegation": "I'm researching ancestors in Massachusetts during the early 1600s Puritan settlements. What records or repositories would help trace families?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
   "execution": {
@@ -40,9 +40,14 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "volume-search-massachusetts-colonial",
-    "catalog-search-empty"
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title"
   ],
   "judge_context": [
-    "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s."
-  ]
+    "Must mention Puritan colonial context. Must highlight church registers, town records, and land grants. Must not suggest statewide vital registration for the 1600s.",
+    "The collections-search-massachusetts fixture returns personCount values 3456789, 1234567, 987654, 345678 and 567890. A guide that reports these counts is quoting the tool result, not inventing figures; do not dock it for them.",
+    "The guide is the saved localities entry: its guide_markdown and its record_types, repositories, losses and catalog rows; grade them together. When research_append refuses the place as not in FamilySearch's place standard, the guide is the return instead."
+  ],
+  "judge_reads_files": true
 }

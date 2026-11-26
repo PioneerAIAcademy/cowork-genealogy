@@ -4,7 +4,7 @@ Same reason as `test_conflict_resolution_validator.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
 `make harness-test`, and a validator's real pass/fail set would otherwise
 appear only inside a paid per-skill run — which is exactly how the two defects
-below reached a released run log.
+below reached a committed run log.
 
 **Both defects are replayed from the run log that exposed them**, not from
 invented text. On `v1_2026-09-08_14-22-00.json` the two shipped tests that had
@@ -68,6 +68,23 @@ _no_detach = _VALIDATOR.test_index_discrepancy_does_not_recommend_detaching
 from harness.skill_runner import subject_reply_text  # noqa: E402
 
 _REPO = Path(__file__).resolve().parents[4]
+
+
+def _committed_source_evaluation_logs() -> list[str]:
+    """Every committed source-evaluation run log, plus the two kept as fixtures:
+    `v1.json` and `v2.json` hold 16 of the 53 index-discrepancy runs and the only
+    false positives a wrong scope rule produces."""
+    logs = sorted(
+        p
+        for pattern in (
+            "eval/runlogs/unit/source-evaluation/v*.json",
+            "eval/harness/tests/fixtures/runlogs/source-evaluation/v*.json",
+        )
+        for p in glob.glob(str(_REPO / pattern))
+        if not p.endswith(".ann.json")
+    )
+    assert sum("/fixtures/" in p for p in logs) == 2, "the replay must read the two fixture logs"
+    return logs
 _PROTECTED = "Minnesota Death Index"
 _TEST = {
     "tags": ["index-discrepancy"],
@@ -382,24 +399,7 @@ def test_both_guards_pass_on_every_committed_positive_run():
     agree with the corpus. A future widening that breaks a real reply fails
     here rather than inside the next paid run.
     """
-    # `v1_*` skipped `v1.json` and `v2.json` — 16 of the 53 index-discrepancy
-    # runs, and the two that carry the only false positives a wrong scope rule
-    # produces. A replay that cannot see a third of the corpus is how a clean
-    # number survives a broken guard.
-    logs = sorted(
-        p for p in glob.glob(
-            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
-        )
-        if not p.endswith(".ann.json")
-    )
-    assert logs, "no committed source-evaluation run logs found"
-    # Pin the glob: `v1_*` would skip every released `v<N>.json`, and this
-    # replay's only other assertion is that it read SOMETHING, so the narrowing
-    # would pass silently. Verified: passes on `v*.json` (finds v1, v2), fails
-    # on `v1_*.json` (finds none).
-    assert any("_" not in Path(q).stem for q in logs), (
-        "the replay must read the released v<N>.json logs"
-    )
+    logs = _committed_source_evaluation_logs()
     checked = 0
     # Pin the field, the other half of the same regression: if `reply` goes back
     # to `output["text_response"]`, every replayed reply becomes identical to it
@@ -1348,13 +1348,7 @@ _EXPECTED_CONDITIONAL_DETACH_TESTS = {
 
 
 def test_the_conditional_detach_guard_fires_on_exactly_the_known_corpus_cases():
-    logs = sorted(
-        p for p in glob.glob(
-            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
-        )
-        if not p.endswith(".ann.json")
-    )
-    assert logs, "no committed source-evaluation run logs found"
+    logs = _committed_source_evaluation_logs()
     fired: set[str] = set()
     replayed = 0
     for path in logs:
@@ -1673,11 +1667,7 @@ def test_finding_links_skips_untagged_and_negative_tests():
 def test_finding_links_on_every_committed_x6b_return():
     """Real replies: one committed without links fails, and passes once every
     finding gets its `Link:` line; one committed with links passes as is."""
-    logs = sorted(
-        p for p in glob.glob(str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json"))
-        if not p.endswith(".ann.json")
-    )
-    assert any("_" not in Path(q).stem for q in logs), "the replay must read the released v<N>.json logs"
+    logs = _committed_source_evaluation_logs()
     checked = 0
     for path in logs:
         log = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -2385,3 +2375,76 @@ def test_a_denial_before_the_conflict_word_still_clears_it():
         "The 1850 census birth year is consistent with the profile's birth date, so there is no conflict."
         + _TAIL_CONFLICT
     )
+
+
+# --- a stated name variant is not an index error (issue #4584) ---------------
+
+_variant_check = _VALIDATOR.test_name_variant_not_called_index_error
+_VARIANT_TEST = {
+    "tags": ["name-variant"],
+    "type": "positive",
+    "variant_names": ["Orfey", "Orphy"],
+}
+
+# The live reply's own shape, from feedback #4507: the name in one sentence,
+# the mechanism and the remedy in the next ones.
+_VARIANT_LIVE = (
+    'The 1850 census indexes her as "Orfey Wheaton". This is almost certainly a '
+    "transcription misread of cursive handwriting. **Action:** submit an index "
+    "correction through FamilySearch."
+)
+
+
+@pytest.mark.parametrize("reply", [
+    _VARIANT_LIVE,
+    "Orfey is not a variant — submit an index correction.",
+    "Orfey is no doubt a transcription error.",
+    "Orfey is without a doubt a misread.",
+    "1. Orphy Wheaton, 1865 census — indexing error. Next: re-read the page "
+    "and correct the index.",
+    "Orfey: likely an indexing mistake.",
+    "Orfey looks like an indexer's mistake. Submit a correction on FamilySearch.",
+])
+def test_variant_called_an_error_fails(reply):
+    with pytest.raises(AssertionError, match="(?i)orfey|orphy"):
+        _variant_check(reply, _VARIANT_TEST)
+
+
+@pytest.mark.parametrize("reply", [
+    "Orfey is a variant the record states; no index correction is needed.",
+    "Orfey is how the 1850 census spells her name. Do not submit an index correction for Orfey.",
+    "Orphy does not need an index correction.",
+    "Orfey is not an indexing error.",
+    "Orphy is a spelling of Orpha the record states, rather than an index error.",
+    "Orfey is not an indexing error or a transcription error.",
+    "Orfey is a spelling the record states. It is not a transcription error or a "
+    "misreading of the handwriting.",
+    "Orfey is neither a misread nor an index error.",
+    "Orfey is not an index error, so do not submit a correction.",
+    # A correct report: the variant in one passage, a real correction for a
+    # different source in another.
+    "Name forms the records state: Orfey (1850 census), Orphy (1865 census).\n\n"
+    "1. Michigan, Deaths — indexing error. The indexed death year 1897 "
+    "disagrees with 1896. Next: re-read the original page and correct the index.",
+    # The same, as list items: each bullet is its own passage.
+    "- Orphy: the name as recorded, a variant.\n"
+    "- Death year 1854: likely mis-keyed; correct the index.",
+])
+def test_variant_reported_as_a_variant_passes(reply):
+    _variant_check(reply, _VARIANT_TEST)
+
+
+def test_variant_guard_grades_the_agents_return_not_the_relay():
+    returns = [{"subagent_type": "source-evaluation", "text": _VARIANT_LIVE}]
+    with pytest.raises(AssertionError):
+        _variant_check("Orfey is a variant; nothing to correct.", _VARIANT_TEST, returns)
+
+
+def test_variant_guard_without_names_fails_rather_than_skipping():
+    with pytest.raises(AssertionError, match="variant_names"):
+        _variant_check("anything", {"tags": ["name-variant"], "type": "positive"})
+
+
+def test_variant_guard_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        _variant_check(_VARIANT_LIVE, {"type": "positive", "variant_names": ["Orfey"]})

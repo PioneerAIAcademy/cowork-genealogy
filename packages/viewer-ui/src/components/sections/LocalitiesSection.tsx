@@ -117,6 +117,10 @@ export default function LocalitiesSection(): React.JSX.Element {
         const collections = loc.collections ?? []
         const quirks = loc.quirks ?? []
         const registration = loc.registration_start ?? []
+        const recordTypes = loc.record_types ?? []
+        const repositories = loc.repositories ?? []
+        const losses = loc.losses ?? []
+        const catalog = loc.catalog ?? []
         const subtitle = [loc.for_place, loc.time_period].filter(Boolean).join(' · ')
 
         return (
@@ -180,10 +184,102 @@ export default function LocalitiesSection(): React.JSX.Element {
                       <span className={styles.itemName}>
                         {r.event}: {r.year}
                       </span>
-                      <span className={styles.itemDetail}>{r.level} level</span>
+                      <span className={styles.itemDetail}>
+                        {r.level} level{r.note ? ` (${r.note})` : ''}
+                      </span>
                       <span className={styles.itemDetail}>
                         <Linkify text={r.source_url} />
                       </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {recordTypes.length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Record types</div>
+                <ul className={styles.list}>
+                  {recordTypes.map((r, i) => (
+                    <li key={i} className={styles.listItem}>
+                      <span className={styles.itemName}>
+                        {r.type}
+                        {r.years ? `, ${r.years}` : ''}: {r.access}
+                      </span>
+                      {(r.held_at || r.level) && (
+                        <span className={styles.itemDetail}>
+                          {[r.held_at, r.level && `${r.level} level`].filter(Boolean).join(' · ')}
+                        </span>
+                      )}
+                      {r.collection_ids && r.collection_ids.length > 0 && (
+                        <span className={styles.itemDetail}>collections {r.collection_ids.join(', ')}</span>
+                      )}
+                      <span className={styles.itemDetail}>
+                        <Linkify text={r.summary} />
+                      </span>
+                      {r.source_url && (
+                        <span className={styles.itemDetail}>
+                          <Linkify text={r.source_url} />
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {repositories.length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Repositories</div>
+                <ul className={styles.list}>
+                  {repositories.map((r, i) => (
+                    <li key={i} className={styles.listItem}>
+                      <span className={styles.itemName}>{r.name}</span>
+                      {r.holds && <span className={styles.itemDetail}>{r.holds}</span>}
+                      {r.access && <span className={styles.itemDetail}>{r.access}</span>}
+                      {r.url && (
+                        <span className={styles.itemDetail}>
+                          <Linkify text={r.url} />
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {losses.length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Record losses</div>
+                <ul className={styles.list}>
+                  {losses.map((l, i) => (
+                    <li key={i} className={styles.listItem}>
+                      <span className={styles.itemName}>
+                        {l.record_set}
+                        {l.years ? `, ${l.years}` : ''}
+                      </span>
+                      <span className={styles.itemDetail}>
+                        <Linkify text={l.source_url} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {catalog.length > 0 && (
+              <div className={styles.block}>
+                <div className={styles.blockLabel}>Catalog</div>
+                <ul className={styles.list}>
+                  {catalog.map((c, i) => (
+                    <li key={c.id ?? i} className={styles.listItem}>
+                      <span className={styles.itemName}>{c.title}</span>
+                      {c.place && <span className={styles.itemDetail}>{c.place}</span>}
+                      {c.repository_calls && c.repository_calls.length > 0 && (
+                        <span className={styles.itemDetail}>{c.repository_calls.join(', ')}</span>
+                      )}
+                      {c.film_count != null && <span className={styles.itemDetail}>{count(c.film_count)} films</span>}
+                      {c.id && <span className={styles.itemDetail}>{c.id}</span>}
                     </li>
                   ))}
                 </ul>
