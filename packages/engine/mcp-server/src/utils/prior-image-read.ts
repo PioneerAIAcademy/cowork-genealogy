@@ -2,7 +2,7 @@
 // instead of fetching and reading the page again
 // (docs/specs/image-transcribe-tool-spec.md, "A page already read").
 
-import { fileExists, readProjectJson } from "./project-io.js";
+import { readProjectJson } from "./project-io.js";
 import { sidecarReader } from "./results-staging.js";
 import type { StagedTranscription } from "../types/image-transcribe.js";
 
@@ -18,9 +18,9 @@ export interface PriorImageRead {
  * `id` is the staged element's id (`StagedTranscription.id`). `sameInput` is
  * asked about each image_transcribe log entry's `query` first, so only an entry
  * that could be this page has its sidecar read. A truncated reading is never
- * returned: a fresh read may reach the rest of the page. A reading whose
- * retained scan (`image_ref`) is gone is not returned either, so an answer never
- * names a scan the project no longer holds.
+ * returned: a fresh read may reach the rest of the page. Whether the reading's
+ * retained scan (`image_ref`) is still in the project is the caller's check
+ * (`refreshSourceImage`).
  *
  * Never throws: an unreadable log or sidecar is no earlier reading.
  */
@@ -55,7 +55,6 @@ export async function priorImageRead(
     if (!element || typeof element !== "object" || element.id !== id) continue;
     if (element.truncated === true) continue;
     if (typeof element.transcription !== "string" || element.transcription === "") continue;
-    if (typeof element.image_ref === "string" && !(await fileExists(projectPath, element.image_ref))) continue;
     return { logId: entry.id, element };
   }
   return null;

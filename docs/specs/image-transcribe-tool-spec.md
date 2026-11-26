@@ -857,8 +857,8 @@ fetch the page and does not run the OCR. It returns that reading, and the answer
   ARK and its page URL with `i=`/`cc=`) is read afresh: a bare waypoint ARK can name a
   different image than its full URL does (§5.3).
 - **Never reused:** a truncated reading, since a fresh read may reach the rest of the page;
-  a reading whose retained scan (`image_ref`) is no longer in the project, so `imageRef`
-  never names a missing file; a `file` whose size or content type differs from the stored
+  a reading whose retained scan (`image_ref`) is no longer in the project or cannot be
+  rewritten, so `imageRef` never names a missing file; a `file` whose size or content type differs from the stored
   reading's, which is a replaced upload; and a read the tool never logged (§5.5.1), so
   `person_read`'s and `source_screen`'s own reads are not a source for it.
 - **What still runs:** the found check, against this call's `lookingFor`, over the stored
@@ -868,7 +868,8 @@ fetch the page and does not run the OCR. It returns that reading, and the answer
   again under this call's `query`, with the earlier read's `model`, `content_type`,
   `size_bytes`, `image_ref` and place, and the tool logs it under this call's `planItemId`
   with this call's outcome (§5.5.1). A second look at a page for another person is its own
-  log entry.
+  log entry. The retained scan is rewritten (`refreshSourceImage`), so the image GC's TTL
+  (§8.5) restarts as it does on a fresh read.
 - **The image cap (§5.8) is not consulted:** nothing is fetched, and the cap counts
   distinct images.
 

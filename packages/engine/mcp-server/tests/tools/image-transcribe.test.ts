@@ -1,6 +1,6 @@
 import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile, mkdir, writeFile, readdir } from "fs/promises";
+import { mkdtemp, rm, readFile, mkdir, writeFile, readdir, utimes } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -53,6 +53,7 @@ import {
 import { imageTranscribeMcpTool, imageTranscribeToolSchema } from "../../src/tools/image-transcribe-mcp.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import {
+  gcUnreferencedImages,
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
@@ -2321,6 +2322,19 @@ describe("imageTranscribeMcpTool — a page the project already read is not read
     expect(second).not.toHaveProperty("reusedFrom");
     expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(2);
     expect(second.imageRef).toBe(first.imageRef);
+  });
+
+  it("rewrites the scan it hands back, so the image cleanup counts its age from the reuse", async () => {
+    fileStoreOnly("the scan is aged with utimes, which only the file store reads");
+    mockOpenRouterOk("page");
+    const first = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    const dayAgo = (Date.now() - 25 * 60 * 60 * 1000) / 1000;
+    await utimes(join(dir, first.imageRef!), dayAgo, dayAgo);
+
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second.reusedFrom).toBe(first.logId);
+    await gcUnreferencedImages(dir, new Set());
+    expect((await readdir(join(dir, "images"))).map((f) => `images/${f}`)).toEqual([second.imageRef]);
   });
 
   it("does not reuse a read the tool never logged", async () => {

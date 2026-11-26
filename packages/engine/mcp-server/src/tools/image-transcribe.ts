@@ -12,6 +12,7 @@ import { imageViewerUrl } from "../utils/ark.js";
 import { imageGroupPlace } from "../utils/image-group.js";
 import {
   saveSourceImage,
+  refreshSourceImage,
   recordImageReadCap,
   projectScope,
 } from "../utils/image-store.js";
@@ -327,6 +328,12 @@ async function imageTranscribeToolInner(
           q.memoryArtifactUrl === label ||
           (input.memoryArtifactUrl !== undefined && q.memoryArtifactUrl === input.memoryArtifactUrl),
       );
+      // The scan a reused reading names is rewritten, so the image GC's TTL
+      // restarts as it does on a fresh read. A scan that is gone, or cannot be
+      // rewritten, means a fresh read: `imageRef` never names a missing file.
+      if (reused?.element.image_ref && !(await refreshSourceImage(input.projectPath, reused.element.image_ref))) {
+        reused = null;
+      }
     }
 
     if (reused) {
@@ -438,7 +445,7 @@ async function imageTranscribeToolInner(
   // research_append GCs images no source ends up citing.
   let imageRef: string | undefined;
   if (reused) {
-    // The scan the earlier read retained, which `priorImageRead` saw still there.
+    // The scan the earlier read retained, rewritten above.
     imageRef = reused.element.image_ref;
   } else if (input.projectPath && input.file === undefined) {
     // A `file` input is already retained at its own path inside the project; a
