@@ -2101,13 +2101,12 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # candidate (full skill run)
-eval/runlogs/unit/<skill-name>/v{N}.json                        # released
+eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # full skill run, committed
 ```
 
 The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
-The scheme (released, candidate, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`.
+The scheme (committed `v{N}_<ts>` run logs, of which the harness keeps the newest 5 per skill, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`; `eval/CLAUDE.md` "Run log naming" describes it.
 
 **Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
@@ -2344,11 +2343,11 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
   **The size trade, both halves.** Omitting plain predicate matches is the
   saving; retaining `live` is the cost, and `live` is the majority — as of
   2026-08-26, 4,399 of 7,796 recorded calls against 3,381 predicate. **Re-measure
-  before requoting:** retention keeps only the newest 5 candidates per skill, so
+  before requoting:** retention keeps only the newest 5 run logs per skill, so
   the corpus churns under these numbers — this same count read 7,718 on 08-24 and
   7,773 earlier on 08-26. There is no per-field cap here,
   unlike `builtin_tool_calls`' 200-char argument cut or the e2e capture strip.
-  What bounds growth instead is unit retention: the newest 5 candidates per skill
+  What bounds growth instead is unit retention: the newest 5 run logs per skill
   (`prune_old_candidates`), which caps the corpus regardless of per-log size.
   State that when quoting a size figure — the largest committed run log is
   1.8 MB, and this field grows it.

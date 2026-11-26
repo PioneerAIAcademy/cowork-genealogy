@@ -89,6 +89,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `questions` | `questionId` | `id` | exact |
 | | `status` | `status` | exact |
 | `plans` | `questionId` | `question_id` | exact |
+| | `planItemId` | `items[].id`: the plan holding that item | plan item |
 | | `status` | `status` | exact |
 | `log` | `planItemId` | `plan_item_id` | exact |
 | | `questionId` | `plan_item_id` ∈ the item ids of every plan whose `question_id` is the value | via plan |

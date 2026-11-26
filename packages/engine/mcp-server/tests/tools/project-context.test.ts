@@ -590,7 +590,7 @@ describe("project_context", () => {
           "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
-          "unregisteredDisagreementCount", "uploads",
+          "unregisteredDisagreementCount", "uploads", "uploadsAre",
         ].sort(),
       );
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
@@ -615,6 +615,7 @@ describe("project_context", () => {
       expect(keys(r.awaitingUser?.[0])).toEqual(["logId", "performed", "planItemId", "site", "urlGenerated"]);
       expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_001"] }]);
       expect(keys(r.uploads?.[0])).toEqual(["hasText", "name", "uploaded"]);
+      expect(r.uploadsAre).toBe("files");
       expect(emptyPaths(r)).toEqual([]);
       expect(JSON.stringify(r)).not.toMatch(/sourceRefs|pagesRead/);
     });
@@ -1237,6 +1238,7 @@ describe("project_context uploads", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect("uploads" in r).toBe(false);
+    expect("uploadsAre" in r).toBe(false);
   });
 
   it("orders newest first, ties by name", async () => {
@@ -1304,6 +1306,28 @@ describe("project_context and project_create links", () => {
     });
     expect(r.uploadUrl).toBe("https://beta.example/upload/p-42");
     expect("projectUrl" in r).toBe(false);
+  });
+
+  it("says uploads are stored, and how to read each, when it serves an uploadUrl; files when it does not", async () => {
+    const withUploads = async (config: Record<string, unknown>) => {
+      const store = new ScopedFsStore(root, "p-42");
+      await runWithProjectStore(store, async () => {
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/census.pdf", new Uint8Array([1]));
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/census.pdf.txt", new Uint8Array([1]));
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/page.png", new Uint8Array([1]));
+      });
+      return contextUnder(store, config);
+    };
+    const hosted = await withUploads({ webPublicUrl: "https://beta.example", uploadsEnabled: true });
+    expect(hosted.uploadsAre).toBe("stored");
+    const byName = Object.fromEntries((hosted.uploads ?? []).map((u) => [u.name, [u.readWith, u.ref]]));
+    expect(byName).toEqual({
+      "census.pdf": ["sidecar_read", "uploads/census.pdf.txt"],
+      "page.png": ["image_transcribe", undefined],
+    });
+    const off = await withUploads({ webPublicUrl: "https://beta.example", uploadsEnabled: false });
+    expect(off.uploadsAre).toBe("files");
+    expect((off.uploads ?? []).every((u) => !("readWith" in u))).toBe(true);
   });
 
   it("returns no link while uploads are off", async () => {

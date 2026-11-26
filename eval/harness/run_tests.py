@@ -95,8 +95,7 @@ from harness.versioning import (
 
 
 def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
-    """The newest released-or-candidate run log for a skill that was
-    ANNOTATED, or None.
+    """The newest committed run log for a skill that was ANNOTATED, or None.
 
     A run log with no sibling `.ann.json` is one nobody reviewed. Taking its
     cursor would mark its 5 sampled tests covered and rotate straight past them
@@ -109,12 +108,6 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
     Sorts by `classify()`'s (version, timestamp), NOT by filename: a
     lexicographic sort puts `v9` after `v10` (issue #1629). Latent today with
     every suite at v1, and cheap to avoid here.
-
-    A RELEASED `v{N}.json` has `timestamp=None` and must sort **last** within its
-    version — it supersedes every candidate of that version. Release renames
-    `v{N}_<ts>.json` in place and leaves the earlier candidates behind (pruning
-    keeps 5), so treating None as `""` would let a superseded candidate outrank
-    the blessed release and hand the next run a stale cursor.
     """
     if not skill_runlog_dir.is_dir():
         return None
@@ -123,13 +116,11 @@ def _newest_releasable_runlog(skill_runlog_dir: Path) -> dict | None:
         if not p.name.endswith(".json") or p.name.endswith(".ann.json"):
             continue
         c = classify(p.name)
-        if c.kind not in ("released", "candidate") or c.version is None:
+        if c.kind != "candidate" or c.version is None:
             continue
         if not (skill_runlog_dir / ann_filename_for(p.name)).exists():
             continue  # nobody reviewed it — its cursor is not evidence
-        # A released log has timestamp=None and must sort LAST within its
-        # version — it supersedes every candidate of that version.
-        dated.append(((c.version, c.timestamp or "￿"), p))
+        dated.append(((c.version, c.timestamp or ""), p))
     if not dated:
         return None
     newest = max(dated, key=lambda pair: pair[0])[1]
@@ -1121,7 +1112,6 @@ def main(argv: list[str] | None = None) -> int:
                 log = build_run_log(
                     skill=skill,
                     version=None,
-                    released=False,
                     releasable=False,
                     invocation=mode,
                     timestamp=invocation_timestamp,
@@ -1540,7 +1530,6 @@ def main(argv: list[str] | None = None) -> int:
         log = build_run_log(
             skill=skill,
             version=version,
-            released=False,
             releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,

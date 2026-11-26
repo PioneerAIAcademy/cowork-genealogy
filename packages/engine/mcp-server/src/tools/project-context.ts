@@ -35,6 +35,7 @@ import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { waitingPages, type WaitingPage } from "../utils/waiting-pages.js";
 import { projectLinks } from "../utils/project-links.js";
+import { uploadReadPlan, type UploadRow } from "../utils/upload-read-plan.js";
 import { connectorSignInUrl } from "../auth/config.js";
 import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -280,14 +281,10 @@ async function exhaustedGroupsWithPlanItems(
   return groups.map((g) => ({ ...g, planItemIds: byGroup.get(g.imageGroup) ?? [] }));
 }
 
-/** One file the user uploaded to the project through the web tier. */
-export interface ProjectContextUpload {
-  name: string;
-  /** ISO time the store recorded for the upload. */
-  uploaded: string;
-  /** Whether the upload's text layer (`uploads/<name>.txt`) exists. */
-  hasText: boolean;
-}
+/** One file the user uploaded to the project: `name`, `uploaded` (the ISO time the
+ *  store recorded) and `hasText` (whether its text layer `uploads/<name>.txt`
+ *  exists), plus, on a stored project, the tool that reads it. */
+export type ProjectContextUpload = UploadRow;
 
 /** The project's uploads, newest first, ties by name. An entry `X.txt` whose `X` is
  *  also an entry is X's text layer, not an upload; a lone `notes.txt` is an upload.
@@ -448,6 +445,9 @@ export type ProjectContextResult =
       unregisteredDisagreementCount: number;
       /** The files the user uploaded through the web tier. */
       uploads?: ProjectContextUpload[];
+      /** Present with uploads: "files" (in the project folder) or "stored" (read
+       *  through the tools, each row saying which). */
+      uploadsAre?: "files" | "stored";
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
       /** The web tier's FamilySearch sign-in page, only for a connector caller
@@ -798,7 +798,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
-    uploads,
+    ...uploadReadPlan(uploads, typeof links.uploadUrl === "string"),
     ...links,
     ...(signInUrl ? { signInUrl } : {}),
   }) as Extract<ProjectContextResult, { ok: true }>;
@@ -960,7 +960,9 @@ export const projectContextSchema = {
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
     "a problem. uploads [{name, uploaded, hasText}] lists the files the " +
-    "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
+    "user uploaded, newest first; hasText says a text layer exists. uploadsAre says how to " +
+    "read them: \"files\" are files in the project folder; \"stored\" ones are read with the " +
+    "tool each row names in readWith (ref is the sidecar_read ref). uploadUrl, when present, " +
     "is the page where the user uploads a file; give it to the user when they want to add a " +
     "document. signInUrl, when present, means the user's FamilySearch session has ended: " +
     "give them that link to sign in again, then continue. Writes nothing.",

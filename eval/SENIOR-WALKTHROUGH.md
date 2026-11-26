@@ -1,6 +1,6 @@
-# Senior Genealogist Walkthrough — reviewing a PR + releasing
+# Senior Genealogist Walkthrough — reviewing a PR
 
-> Reviewing a PR end-to-end: read the diff, compare against last released, agree-or-dispute the junior's corrections via PR comments, then release the candidate as the new canonical version. ~10–20 minutes per PR depending on size.
+> Reviewing a PR end-to-end: read the diff, compare against the previous run log, agree-or-dispute the junior's corrections via PR comments, then approve. ~10–20 minutes per PR depending on size.
 >
 > Keep this file open during your first few reviews — every step is referenced here.
 
@@ -104,7 +104,7 @@ Skim the diff for:
 - **Rubric changes** (`eval/tests/unit/<skill>/rubric.md`) — only if the junior had to change grading dimensions to capture something new.
 - **Scenario / fixture changes** — usually rare on a per-skill PR. If present, did they affect tests in other skills?
 
-The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json`, the run log the PR adds (else the latest) is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
+The CI `check-runlogs` action has already verified: the run log the PR adds (else the latest) is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
 
 ## 3. Launch the CRUD UI
 
@@ -130,7 +130,7 @@ Then open <http://localhost:3000/results>. Find the skill the PR touches.
 
 ## 4. Read the junior's annotations
 
-Click into their latest candidate run log (the highest `v{N}_<ts>.json`). The detail page shows every test with:
+Click into their latest run log (the newest `v{N}_<ts>.json`). The detail page shows every test with:
 
 - The full trace (input, scenario state, tool calls + fixture responses, output).
 - Each dimension's LLM score, the judge's rationale, the junior's correction, and the junior's comment if they disagreed.
@@ -154,12 +154,12 @@ Paste it into a GitHub PR comment, add your own reasoning ("I'd actually go with
 
 > **Why so lightweight?** Most PRs in steady state have a handful of dispute points at most. A heavyweight review UI would mostly be unused. PR comments are where the discussion needs to live anyway (so the rubric author + other seniors can chime in), so we send disagreements straight there.
 
-## 5. Compare against the last released version
+## 5. Compare against the previous run log
 
 Open `/results/compare`. Pick the skill. The defaults are:
 
-- **Recent**: the latest candidate (the one being released).
-- **Previous**: the latest released `v{N-1}.json`.
+- **Recent**: the newest run log (the one the PR adds).
+- **Previous**: the run log before it.
 
 You'll see:
 
@@ -168,57 +168,26 @@ You'll see:
 - **Per-test rows.** Each test's score on both sides + delta. Edited tests show a gray "edited — excluded" badge.
 - **What changed panel.** A file-level diff of the two snapshots — exactly which skill files, tests, scenarios, or fixtures moved between the two versions. The 📋 button on a dimension still works from this view if you spot something while comparing.
 
-## 6. Decide: release or push back
+## 6. Decide: approve or push back
 
 **Push back:** Comment on the PR with your specific objections. The junior addresses them and re-pushes; CI re-runs; you come back here. Three rounds is the comfortable ceiling — if you're on round 4, escalate to the senior engineer; something else is going on.
 
-**Release:** Open the latest candidate again in the UI. Click **Release v{N}**. The button is disabled until annotations are complete; the CI check requires the same, so if you got this far it should be enabled.
-
-That rename happens locally: `v{N}_<ts>.json` → `v{N}.json` and the matching `.ann.json`. The UI navigates to the new released run log automatically.
-
-## 7. Commit the release rename
-
-> ⚠️ **Never push directly to `main`.** You should still be on the junior's PR branch from section 1 — that's where the release commit needs to land so CI re-runs against it. If you ever see `git push origin main` (or `git push -u origin main`) in your terminal, or "Push to main" in GitHub Desktop, **stop** and check which branch you're on: in the terminal run `git branch` (the active branch has a `*`); in GitHub Desktop look at the "Current branch" dropdown at the top. Pushes to `main` are blocked by GitHub anyway, but it's a sign you've drifted off the PR branch and the release won't be attached to the PR.
-
-The UI doesn't touch git. Commit + push the rename yourself.
-
-**GitHub Desktop:** the left panel shows the renamed files. Tick the boxes. Summary: `<skill>: release v{N}`. Click "Commit to <branch>" → "Push origin".
-
-**Terminal:**
-
-```bash
-git status
-# you'll see something like:
-#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18_10-30-00.json -> eval/runlogs/unit/<skill>/v3.json
-#   renamed:    eval/runlogs/unit/<skill>/v3_2026-05-18_10-30-00.ann.json -> eval/runlogs/unit/<skill>/v3.ann.json
-#   modified:   eval/runlogs/unit/<skill>/v3.json   (released: false → true)
-#   modified:   eval/runlogs/unit/<skill>/v3.ann.json (run_log filename updated)
-
-git add eval/runlogs/unit/<skill>/
-git commit -m "<skill>: release v{N}"
-git push
-```
-
-The CI re-runs and rule 1 now sees one newly-added-or-renamed `v{N}.json` — that's the allowed maximum, so it stays green.
-
-## 8. Approve the PR
+**Approve:**
 
 **Browser:** open the PR on GitHub → "Files changed" tab → click "Review changes" → "Approve" → "Submit review".
 
 **Terminal:**
 
 ```bash
-gh pr review --approve --body "Release v{N} of <skill>."
+gh pr review --approve --body "Reviewed <skill> run log and annotations."
 ```
 
 The project owner merges. Done.
 
 ## When something's wrong
 
-- **The release button is greyed out** — annotations aren't complete. Re-check the header counter. If it's complete but the button is still disabled, refresh the page (the active-state recompute is per request and can lag a save).
 - **Compare shows an unexpected regression** — open the trace on the regressed test before jumping to "this PR is bad." Sometimes the model just happens to pick a different (still valid) approach, the judge marks one wrong, and the corrected scores would actually agree. If the regression is real, push back on the PR with the specific test ID and the trace excerpt.
-- **The judge prompt changed since the last release** — you'll see a "judge prompt changed since this run" warning in the active badge. This is a warn-only signal. The numbers in the run log were scored against an older judge; a re-run would likely produce slightly different scores. Use your judgment — if the corrected scores look reasonable to you on inspection, release; if you're not sure, ask the junior to re-run.
-- **You want to release a candidate that isn't the latest.** Activate the older candidate first (overwrites repo files from its snapshot, including SKILL.md frontmatter and the `model:` field). Then release that one. The newer candidate is still on disk and can be deleted (or kept as history) from its detail page.
+- **The judge prompt changed since the run** — you'll see a "judge prompt changed since this run" warning in the active badge. This is a warn-only signal. The numbers in the run log were scored against an older judge; a re-run would likely produce slightly different scores. Use your judgment — if the corrected scores look reasonable to you on inspection, approve; if you're not sure, ask the junior to re-run.
 
 ## Cadence
 
@@ -232,4 +201,4 @@ Per `docs/per-pr-review-workflow.md`: target 1 business day from PR open to seni
 
 ## Files you'll touch
 
-Only one: the run-log + annotation rename that the Release button produces, which you commit + push. Nothing else.
+None, apart from an in-line fix to a plainly mechanical correction (above). Your review lives in PR comments and the approval.
