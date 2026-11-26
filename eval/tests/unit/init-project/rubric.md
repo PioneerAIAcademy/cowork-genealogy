@@ -55,7 +55,7 @@ length is not graded here: objectives are meant to be broad, so an 8-word
 objective is fine. Only a genuinely restated full-sentence title (the whole
 objective copied into the title field) is a weakness.
 
-The report describes the import only (lead ruling, 2026-10-08): no gaps, errors, research targets or advice. Errors are check-warnings', gaps and the first research question are question-selection's. Do not mark a reply down for leaving them out; mark it down for adding them.
+The report describes the import only (lead ruling, 2026-10-08): no gaps, errors, research targets or advice. It does give the subject's birth and death as the tree gives them and each relative by name and relationship (issue #4791); a reply that leaves those out is incomplete. Errors are check-warnings', gaps and the first research question are question-selection's. Do not mark a reply down for leaving them out; mark it down for adding them.
 
 - **pass:** `project` block complete and sensible; all required sections
   present (empty arrays where nothing was gathered); the written

@@ -44,7 +44,7 @@ import { projectContext } from "../../src/tools/project-context.js";
 import { treeQuery } from "../../src/tools/tree-query.js";
 import { researchQuery } from "../../src/tools/research-query.js";
 import { sidecarRead } from "../../src/tools/sidecar-read.js";
-import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe-mcp.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";

@@ -30,6 +30,28 @@ import pytest
 # --- Both files exist after init ---------------------------------------
 
 
+_VERIFY_REQUEST_PREFIX = "verify-request:"
+
+
+def test_verify_request_recorded(after_state, test):
+    """Tag-gated (``verify-request:<word>``). A first message asking to verify one
+    particular relationship, fact or source stores it, in the user's words, as
+    ``project.verify_request``, which holds ``<word>``; ``verify-request:none`` means
+    the message named nothing to verify and no ``verify_request`` is written (#4791)."""
+    tags = [t for t in (test.get("tags") or []) if t.startswith(_VERIFY_REQUEST_PREFIX)]
+    if not tags:
+        pytest.skip("not a verify-request test")
+    want = tags[0][len(_VERIFY_REQUEST_PREFIX):]
+    project = ((after_state or {}).get("research_json") or {}).get("project") or {}
+    got = project.get("verify_request")
+    if want == "none":
+        assert got is None, f"no verify request was made, but verify_request is {got!r}"
+        return
+    assert isinstance(got, str) and want.casefold() in got.casefold(), (
+        f"verify_request should hold the user's request naming {want!r}; got {got!r}"
+    )
+
+
 def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even

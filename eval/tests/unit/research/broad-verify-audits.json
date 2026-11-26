@@ -1,0 +1,74 @@
+{
+  "test": {
+    "id": "ut_research_bv1",
+    "skill": "research",
+    "name": "A broad verify request audits the sources and checks the warnings, removes nothing, and offers each finding as a new project",
+    "type": "positive",
+    "description": "Issue #4791 (lead, 2026-11-24): a verify request that names no particular relationship, fact or source does not clear the tree, and is its project's whole work. The router runs the attached-records baseline, source-evaluation, then check-warnings in the same turn, relays both, and gives each finding as its own next project, started from the same person ID with the narrow request. No tree_forget, no question, and no \"Continue with …?\" line. Both agents are stubbed with known findings.",
+    "tags": [
+      "routing",
+      "routes-to:source-evaluation",
+      "broad-verify-audits"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered `choosing the question`. Check whether his facts and relationships are right.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 900,
+    "stub_skills": [
+      {
+        "skill": "source-evaluation",
+        "response": "Audit of 4 attached sources.\n---\nThree of Christian's four attached sources fit him. The 1900 census entry gives a birth year of 1875, which does not fit his 1852 birth on the tree."
+      },
+      {
+        "skill": "check-warnings",
+        "response": "1 warning.\n---\nThe tree shows a residence for Christian in 1910, after the death date it gives him."
+      },
+      {
+        "skill": "forget-and-rederive",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The two hand-offs, the absence of any removal or question, and the absence of a \"Continue with …?\" line are checked by test_broad_verify_audits_and_removes_nothing. Do not re-grade them.",
+    "Grade the reply on relaying both findings (the 1900 census birth year that does not fit, and the 1910 residence after his death) and giving each as its own next project: start a new project from Christian P. Hole's FamilySearch person ID (KD96-TV2) and answer its setup step with the narrow request, such as \"Verify his birth date.\". A reply that offers to verify a finding in this project, or asks which to verify first here, fails that.",
+    "The attached-records baseline (extraction_append with personId) may run before the audit; it is not a failure.",
+    "ROUTING IS NOT YOURS TO GRADE. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

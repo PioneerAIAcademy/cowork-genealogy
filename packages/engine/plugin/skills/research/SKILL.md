@@ -4,10 +4,10 @@ description: >-
   Full GPS research orchestrator — the default choice whenever a user wants
   genealogy research driven forward. Use for: the `/research` command, 'find
   [relative] of [person]', 'research [person or question]', 'investigate
-  [person]', 'drive the workflow forward', 'answer this research question', any
+  [person]', 'verify [person]'s facts or relationships', 'drive the
+  workflow forward', 'answer this research question', any
   message with `--autonomous`, or any open-ended research goal that needs
-  multiple steps (question selection, planning, searching, extraction, proof
-  conclusion). Also for 'new project', 'start research', 'begin researching' and
+  multiple steps. Also for 'new project', 'start research', 'begin researching' and
   'I want to research [person]' — this is the only front door, including when the
   folder holds no project yet: the routing table below sends a first message to
   init-project or tree-survey. Choose this over any sub-skill when the user states
@@ -29,7 +29,7 @@ allowed-tools:
 
 # /research — Full GPS Research Workflow
 
-**If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
+**If you have no `Agent` tool, say that this research needs chat with "Chat and Cowork unified" turned on (on a Team or Enterprise plan, an Owner turns it on under Admin, Capabilities, Chat), and stop. If your `Agent` tool lists none of this plugin's agents, under any prefix (`init-project` or `genealogy-research:init-project`, and the rest), say that the Genealogy Research plugin needs to be installed, and stop. Never run a step through a general-purpose or other built-in agent.**
 
 **Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
@@ -47,25 +47,47 @@ offer the next.
 **A turn runs one step, then ends.** A step is one agent spawn or `Skill`
 call, plus the tool calls it needs and any repeat of the same step. A bounded
 first message with no project runs init-project first, then its deliverable
-(§"Bounded request or job"). After it returns:
+(§"Bounded request or job"). locality-guide followed by research-plan is one
+step. Never send the same delegation twice: an agent's return is that step's
+report, even one that says nothing changed. After it returns:
 
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
    research-exhaustiveness; from historical-context, everything above its
    `### Search implications` heading; from init-project in a bounded turn, leave out its
-   sentence naming the next step;
-2. end with **"Continue with `<label>`?"**, using the exact label below,
-   then on the same line the project's `projectUrl`, only when a tool
-   returned one. That line is the reply's last;
-3. end your turn.
+   sentence naming the next step. In a turn with two agents, relay each one's
+   report in turn, in full: never condense, merge or shorten either;
+2. when you have `show_project` and the step that ran has a card below, call
+   `show_project({ projectPath, show: <card>, questionId })` with the question
+   the step worked on, after the report;
+3. end with **"Continue with `<label>`?"**, using the exact label below.
+   That line is the reply's last;
+4. end your turn.
+
+| Step that ran | `<card>` |
+|---|---|
+| init-project | `setup` |
+| question-selection | `question` |
+| locality-guide, research-plan | `plan` |
+| search-records, search-images, search-external-sites, search-full-text, search-hints, record-structurer, evaluate-search-results, `extraction_append` | `search` |
+| person-evidence | `link` |
+| conflict-resolution | `conflict` |
+| hypothesis-tracking | `hypothesis` |
+| research-exhaustiveness | `assess` |
+| proof-conclusion, gps-mentor, a wrap-up | `conclusion` |
+
+No other step draws a card, and a turn draws at most one: the last step's. Find
+`show_project` by bare name (`+show_project` in ToolSearch); when it is not
+there, draw nothing and say nothing about a card.
 
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
 
 | Next step | `<label>` |
 |---|---|
-| init-project, question-selection, locality-guide | setting up the project |
-| research-plan | planning the searches |
+| init-project | setting up the project |
+| question-selection | choosing the question |
+| research-plan, with locality-guide before it | planning the searches |
 | search-records, search-images, search-external-sites, record-structurer | running the searches |
 | person-evidence | linking the records to people in this project |
 | conflict-resolution | resolving the conflict |
@@ -91,19 +113,14 @@ for a final conclusion, and for a step that found nothing further to do.
 sources still unsearched, or the record that could settle a conflict. The
 label alone does not tell the researcher what they are agreeing to.
 
-**The researcher's replies.** "Continue." runs the offered step. "Keep going."
-runs the offered step and every step after it, one per turn, until something
-has no offer. "Wrap it up." runs §"Wrap it up". "Search more" is only
+**The researcher's replies.** "Continue." runs the offered step; "Keep going."
+reads as "Continue.". "Wrap it up." runs §"Wrap it up". "Search more" is only
 meaningful at the choice in §"When a search stops short"; anywhere else, say
 in one line that there is nothing to search more of yet and re-offer.
 
-**On a "Keep going." turn, pass `userPresent: no`** to
-`@plugin:person-evidence`. A wrap-up turn and an autonomous run pass it too.
-`@plugin:search-external-sites` and `@plugin:question-selection` get `no` only
-in an autonomous run.
-
-**In Cowork there is no host to reply,** so "keep going." is one turn that
-runs the steps itself: plan at most one extra round, then wrap up.
+**On a "Wrap it up." turn and in an autonomous run, pass `userPresent: no`** to
+`@plugin:person-evidence`. `@plugin:search-external-sites` and
+`@plugin:question-selection` get `no` only in an autonomous run.
 
 **Re-reading state.** Trust the compact summaries the sub-skills and writer
 tools return plus the state you hold — re-query the project only when you
@@ -141,15 +158,20 @@ destination: take it through "Hint review" below.
 
 - `mode: "folder"`: the working folder's absolute path.
 - `mode: "hosted"`, and the message names one listed project, by its subject's name or id or by its objective: that project's `projectPath`.
+- `mode: "hosted"`, `truncated: true`, and the message names a person no listed project is about: ask whether a project on that person already exists, and stop. A list cut short does not show every project.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - `mode: "hosted"`, and the message names no person: `newProjectPath`, even when projects are listed.
-- Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
+- Otherwise: list each project's subjects and objective, ask which one to continue, and stop.
+
+**When `project_list` answers an error,** say the project list could not be read just now and to try again shortly, and stop. Never start a project on a failed listing.
 
 **When `project_context` answers `no_project`, ask the researcher nothing, and call no other tool until a project exists.** With a person and question in the message, spawn `@plugin:init-project`. With no person in the message, call `project_create({ projectPath, objective })` with the researcher's words as `objective` and no `personId`, then pass that `projectPath`: no person and no question → `@plugin:tree-survey` (in folder mode skip `project_create` and pass no `projectPath`: a folder holds one project, and the survey writes nothing); a record set's names, a named title's DGS numbers, or a page → `@plugin:search-images`. A project with no person refuses research questions. Research on a person in a folder whose project has no person needs a new session; on the connector it starts at `newProjectPath`. When a later message asks for research on a person in that project, say in one sentence that research on a person starts from a FamilySearch person ID in a new project, and ask for it. A named person with no FamilySearch person ID: ask for the ID and create nothing.
 
-**If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
+**If `project_list` is not among your tools, even through tool search,** say the Genealogy Research connector is not connected: turn it on or reconnect it in Claude's connector settings. Then stop.
 
-**When `project_list` or `project_context` returned the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line. With none, end with no link. Every link you write is one a tool returned.
+**When `project_context` returns `signInUrl`,** give the researcher that link to sign in to FamilySearch again, and run no step until they say they have.
+
+**When the researcher asks where the report, findings or project are,** call `show_project({ projectPath, show: "file" })` when you have it, and say the case file it opens holds the question, the sources and the conclusion. Without it, in folder mode, say the project's files are in this task's folder. Write no link of your own.
 
 ## Bounded request or job
 
@@ -159,16 +181,22 @@ destination: take it through "Hint review" below.
 list below does not apply to it. It still runs one step per turn: the host
 answers each boundary rather than the researcher, and `userPresent` is `no`.
 
+Verifying whether a person's facts and relationships are correct, naming none in
+particular, is bounded: its deliverable is the broad audit (the "Objective but no
+questions" row), and the turn ends on its findings; init-project's return says so with a
+`Verify request: broad` line. Naming one ("verify his parents") is a job: init-project
+records it, and the first question's turn removes it (`project_context`'s `nextStep`).
+
 **Bounded** — the message asks for one or more deliverables, every one of them
 from this list:
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; why a move or event
-in the family happened, what could explain a pattern in it, or historical
-background for either; a research plan;
+in the family happened ("what took him to Pennsylvania?"), what could explain a
+pattern in it, or historical background for either; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person;
-a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
+a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then, when you have `show_project`, call it with `show: "latest"`).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
@@ -203,7 +231,7 @@ of two persons already confirmed identical; a "should these be merged?" never go
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
-as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
+as given, the message copied verbatim after its last line `message:`, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and the `projectPath` of a `project_create` that took the message as `objective` and no `personId`, even when the message names no images; relay everything after
@@ -239,15 +267,15 @@ owns the deliverable. A record ask needs no question or plan:
 `@plugin:search-records` runs the search the user named with `projectPath` and a
 `subject:` block whose `subjectId` is the tree id from `project_context`'s
 `subjectPersonIds`, never the FamilySearch ID. Relay init-project's report without
-its next-step sentence, then the deliverable's report, and end on the
-deliverable's "Continue with …?" line. A record search that finds nothing still
+its sentence naming the next step, then the deliverable's report, and end on the
+deliverable's "Continue with …?" line; the broad audit ends on its findings, with none. A record search that finds nothing still
 ends on one: offer `@plugin:search-external-sites`, naming no site or collection
 that no tool returned, with "Continue with `running the searches`?". This paragraph does not apply to the
 record-set and transcription paths with no project.
 
 **A bounded research plan that names a FamilySearch person ID and finds no project**
 spawns `@plugin:init-project` and nothing else: relay its report, then end on
-"Continue with `setting up the project`?". The next "Continue." takes the job's
+"Continue with `choosing the question`?". The next "Continue." takes the job's
 routing table from "Objective but no questions".
 
 **Start from what is already attached.** Before routing to any search —
@@ -340,8 +368,8 @@ message.
 
    **When a question's `questionStatuses` row carries `spawn`, that is the
    step:** `@plugin:<agent>` with its `prompt` as the whole delegation, changing
-   only `userPresent: yes` to `no` on a "Keep going." or "Wrap it up." turn and
-   in an autonomous run. A row with `searches` is the search step below.
+   only `userPresent: yes` to `no` on a "Wrap it up." turn and in an autonomous
+   run. A row with `searches` is the search step below.
 
    **Researcher-reported evidence.** When the message describes a record not
    yet in the project, with no record id or ARK, take only what the
@@ -377,14 +405,14 @@ message.
    |-------------------------|--------|
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given; on the connector, call `project_create` with the message as `objective` and no `personId`, and start the prompt with the line `projectPath: <that projectPath>`; in folder mode no `projectPath` and no `project_create`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `project_create` with the message as `objective` and no `personId`, then `@plugin:search-images` with the message verbatim and that `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
-   | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted. On a job it is the turn's only step: read no attached record. Relay init-project's summary verbatim, then "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?", and end on "Continue with `choosing the question`?" |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
-   | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). For each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`. Then `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run). Report each `timeline_build` `summary`, then the question. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
-   | A question with **no plan**, and no `localities` entry yet for its target jurisdiction | `@plugin:locality-guide` (survey the place first) |
+   | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). A message that answers the offer of `choosing the question` (your last turn ended on it, or the message names it) and is not only "Continue.", "Keep going." or "Wrap it up." is the researcher's reply. A verify request is the reply, or with none the request `project_context`'s `nextStep` quotes from the project's creation, never the objective; it is narrow when it names a particular relationship, fact or source of the subject ("verify his parents", "her birth date is wrong", "S3 is not him"), and broad when it names none ("are his facts and relationships correct?"). A broad one is this project's whole work: `extraction_append({ projectPath, personId })` for each id in `subjectPersonIds`, then `@plugin:source-evaluation` with `projectPath`, the subject and the one request to audit the subject's attached sources (not the reply), then in the same turn `@plugin:check-warnings` with `projectPath` and the subject, and nothing else; relay both in full; when neither found anything wrong, say so; otherwise give each finding as its own next project, with the words to start it: a new project from the subject's FamilySearch person ID, answering its setup stop with that narrow request ("Verify his parents."). No "Continue with …?" line either way. In order: (1) for a narrow request, `Skill("forget-and-rederive")` with `mode: verify` and that text verbatim; (2) for each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`; (3) `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run), with a `researcherReply:` line holding the reply verbatim when there is one, and, when step 1 removed a relationship or fact, a `statedQuestion:` line for each as a fact question (`statedQuestion: Who were the parents of <subject>?`); a removed source alone gets no `statedQuestion:`. Report forget-and-rederive's counts when it ran, each timeline event (date, place, description) from `research_query({ projectPath, section: "timelines", personId })`, then question-selection's summary verbatim, and end on "Continue with `planning the searches`?". **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
+   | A question with **no plan**, and no `localities` entry yet for its target jurisdiction | `@plugin:locality-guide`, then in the same turn `@plugin:research-plan`; relay both |
    | A question with **no plan**, and its jurisdiction already has a `localities` entry | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints` with the prompt of the question's `searches` entry. It decides the subject's pending FamilySearch hints, logs its decisions and sets the item's own status — a hint that already answers the question can save a search |
-   | The active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
+   | `project_context`'s `nextStep` reads `research-plan — dispose of <ids> (searched, nothing found)`; or the active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
    | The question's `nextStep` is a search, and its row carries `searches` | The question's `searches` from `project_context`: one spawn per entry, `@plugin:<agent>` with its `prompt` as the whole delegation (see **The search step**) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` with the item's `searches` prompt (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
@@ -422,6 +450,11 @@ message.
      `research-exhaustiveness`, `person-evidence`): never spawn it for this line, whatever `<request>` asks; the routing table picks the next step.
      Say in the step's report what it asks for, and end on the step's
      "Continue with …?" line. An owner that is not an agent: ignore the line.
+   - A FamilySearch search is `search-records`' job. Never write a
+     `familysearch.org/search/record` or `/search/catalog/results` URL, and
+     never hand the researcher a FamilySearch search to run. When a step reports that `record_search` failed, say
+     FamilySearch search is not answering right now and offer to run that
+     search again.
    - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
      every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
      other source.
@@ -498,8 +531,8 @@ message.
    `questionId` for `@plugin:research-exhaustiveness`,
    `@plugin:proof-conclusion` and `@plugin:research-plan` (plus, when disposing,
    a `planItemIds:` line with the `pli_` ids `project_context` or research-exhaustiveness named), the assertion ids plus `userPresent`
-   (`no` on a "Keep going." or "Wrap it up." turn and in an autonomous run,
-   otherwise `yes`) for `@plugin:person-evidence`, `userPresent: no` in an autonomous run (otherwise leave it out) for `@plugin:question-selection`, the conflict or competing assertion ids for
+   (`no` on a "Wrap it up." turn and in an autonomous run, otherwise `yes`)
+   for `@plugin:person-evidence`, `userPresent: no` in an autonomous run (otherwise leave it out) for `@plugin:question-selection`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
    `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
@@ -517,10 +550,10 @@ message.
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **When the subject's `project_context` person carries `unsupportedGivenName`:** its `subject`
-   block already searches the given name as `searchAs`; the brief gives `given` only as plain
-   text, a reading in doubt. The spawn's `description` and your reply name the subject by the
-   surname alone, never by `given`.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** copy the
+   `subject` block exactly as `project_context` returned it, adding no key and changing no
+   value; it already searches the right given name. Write that person's `given` nowhere in the
+   brief. The spawn's `description` and your reply name the subject by the surname alone.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
@@ -760,7 +793,7 @@ skips the open items, steps 2 and 3 have nothing to do, and the conclusion is
 `not_proved` naming the searches not run.
 
 End the turn by offering what comes next: a waiting question →
-"Continue with `setting up the project`?"; otherwise no "Continue with …?"
+"Continue with `choosing the question`?"; otherwise no "Continue with …?"
 line at all.
 
 ## A different question, or a steer
@@ -795,6 +828,13 @@ The researcher returns a capture for a hand-off, or says they cannot open it.
 Match it to the `awaitingUser` row in `project_context` and spawn
 `@plugin:search-external-sites` with the `planItemId` and the file path or
 results text. That is the turn's step; offer the next one as usual.
+
+**Never read a returned capture yourself, or answer from it.** A results page, a
+spreadsheet or a PDF of search results goes to `@plugin:search-external-sites`,
+which logs it, even when no `awaitingUser` row matches it: then pass no
+`planItemId`, and say in the delegation which site and search it shows. A page
+image of one record is a transcription (§"Bounded request or job"), not a
+capture.
 
 **Never re-raise a hand-off `awaitingUser` already lists** — the researcher
 has that link.

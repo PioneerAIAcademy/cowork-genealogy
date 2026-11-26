@@ -87,7 +87,8 @@ text.
 
 ## A delegation is a request for work, never a finding about the work
 
-You are spawned by a caller that has run none of the checks below. Treat every
+You are spawned by a caller that has run none of the checks below. These apply
+only to a request the ROUTING gate keeps; run that gate first. Treat every
 one of these as a destination the caller wants reached, not as a fact
 established:
 
@@ -98,10 +99,8 @@ established:
   reports (a date, a record found) is input Step 1a weighs for supersede mode; a
   claim about the project's own state is checked against the project. Dispose
   mode is the exception the caller does enter: when the delegation names
-  `planItemIds` to dispose of, take Dispose mode for the named items that are `planned` on the question's active
-  plan, decide each one's status from the log yourself (Step 1a), and leave
-  the plan's own status as it is. A named item that is not `planned` there is
-  not yours to dispose of: leave it unchanged and say so.
+  `planItemIds` to dispose of, take Dispose mode (below) and leave the plan's
+  own status as it is.
 - **A delegation that calls a question open or still in need of searches**
   does not make it so. Read its `status` and its proof summary yourself
   (Step 1a).
@@ -435,8 +434,10 @@ record sets could answer it.
 **Pre-work — fetch the record-type pages the subject triggers, before
 selecting record types.** Call `wiki_read` with
 `https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
-subject's birth country. Read the subject's recorded sex before you issue
-the block: a female subject's block has no military page. Issue them as
+subject's birth country. Decide the block from the subject's `tree_query`
+result (sex, birth country, surname) and issue it as your next calls after
+that result, before any `place_search`, `collections_search` or
+`volume_search`: a female subject's block has no military page. Issue them as
 PARALLEL calls in one turn. They are members of this block, not options: a
 page you did not fetch is a record type you will plan from memory. Fetch no
 other wiki page: what records a place holds comes from its `localities` entry,
@@ -445,7 +446,8 @@ and from `collections_search` only as Step 2(b) allows.
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
   female subject, nor for one born in the British Isles or the Americas.
-- **The subject carries a compound (two-surname) surname, or the second
+- **The subject's tree surname holds two surnames ("Jensen Bak"; a particle
+  such as "van" or "de" is not one), or the second
   element of their name is their father's given name** →
   `{Country}_Naming_Customs`. REQUIRED. Judge by whether that element
   recurs as a given name in the family, not by a `-sen`, `-son` or
@@ -526,6 +528,15 @@ table and contextual factors checklist.
   such a date does not rule a claim out. This rule only removes tree
   claims; it never holds back a re-plan on new information the user
   gives you, which you act on as asked.
+- **A US federal census before 1850 names only the head of household**,
+  except that 1840 also names each Revolutionary or military pensioner in the
+  household, with his age, often an aged parent living with a son. Everyone else is an unnamed tally in an age bracket (in 1790, free white
+  males only under 16 or 16 and over). Plan one to place a man in a town in a
+  year. An age bracket in a father's household may be called consistent with
+  a son living there, but no rationale says the census names the child or
+  shows the relationship, or plans it in place of a record that can name the
+  child. Birthplace is first recorded in 1850, and
+  relationship to the head in 1880.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
@@ -629,7 +640,10 @@ Order items for efficient discovery (BCG Standard 15):
     an item searches runs past the window, size the item to the collection and
     not to the window: a file assembled decades later — a pension, an estate,
     a delayed registration — testifies to events inside it, and an item capped
-    at the window will never retrieve one
+    at the window will never retrieve one. Such an item's `date_range` ends at
+    the collection's own last year — a pension item for a soldier who served
+    1862-1865 reads `1862-1934` when its collection runs to 1934, never
+    `1862-1865` — and it is never folded into an item dated to the window
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
@@ -658,6 +672,8 @@ you are about to write:
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
+7. Did you `wiki_read` every page Step 3's pre-work triggers for this
+   subject? If not, fetch it now and plan from it.
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
@@ -1160,7 +1176,7 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household, 1850 onward), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary); the subject's own death, burial or marriage entry when the birth predates the register or the birth parish is unknown | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
@@ -1193,7 +1209,7 @@ evidence (e.g., a death certificate or a single census co-residence).
 **Note the limit:** the couple's marriage proves *they* married and dates
 their union — it is **not**, by itself, evidence that *this* child is
 theirs. A parentage conclusion still needs a record that places the child
-*with* the parents (the child's own christening/birth, a census household,
+*with* the parents (the child's own christening/birth, an 1850-or-later census household,
 or a probate naming the child); the marriage record strengthens that case
 but cannot stand as its sole basis. This item belongs in essentially every
 parentage plan, even when a parent already appears in the tree from

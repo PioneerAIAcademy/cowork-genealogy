@@ -146,7 +146,9 @@ def next_steps(response_summary: str) -> list[str]:
         if m.group(1) == "null":
             continue
         raw = json.loads(m.group(1))
-        if raw:
+        # project_context's top-level first-question nextStep is the router's, not a
+        # question's step; it names no single step to agree with.
+        if raw and not raw.startswith("For the research router only"):
             out.append(next_step_unit(raw))
     return out
 

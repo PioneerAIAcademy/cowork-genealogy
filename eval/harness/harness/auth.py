@@ -198,6 +198,10 @@ def env_for_sdk(auth: AuthConfig, *, tool_search: bool = True) -> dict[str, str]
     `CLAUDE_CODE_FORK_SUBAGENT=0` matches the hosted agent (`real_agent._sdk_env`):
     no `subagent_type: "fork"`, which the SDK offers by default from CLI 2.1.302.
 
+    `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` matches it too: auto-memory off, so a
+    harness run never writes a memory file under the developer's own
+    `~/.claude/projects/`. `"1"` is OFF; a falsy value means `forced_on`.
+
     An inherited `CLAUDE_CODE_EFFORT_LEVEL` raises: it outranks main-thread.json and
     every agent's own `effort:`, so the run would grade levels nothing ships with.
     """
@@ -210,6 +214,10 @@ def env_for_sdk(auth: AuthConfig, *, tool_search: bool = True) -> dict[str, str]
     env = {
         "ENABLE_TOOL_SEARCH": "true" if tool_search else "false",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
     }
     if auth.skill_runner_mode == "api_key" and auth.api_key:
         env["ANTHROPIC_API_KEY"] = auth.api_key

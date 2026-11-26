@@ -9,7 +9,8 @@
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
-import { classifyProjectPath } from "../utils/project-io.js";
+import { classifyProjectPath, readProjectJson } from "../utils/project-io.js";
+import type { ProjectLinks } from "../utils/project-links.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -93,7 +94,16 @@ export interface BuildExternalSearchUrlInput {
 export type AccessClassification = "free" | "free_bot_protected" | "subscription";
 
 export type BuildExternalSearchUrlResult =
-  | { ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification }
+  | {
+      ok: true;
+      url: string;
+      handoffLine: string;
+      summaryStart: string;
+      /** What else the researcher's part must hold. */
+      alsoInSummary: string;
+      notes: string[];
+      access: AccessClassification;
+    }
   | { ok: false; reason: "unsupported_site"; errors: string[]; supportedSites: string[] }
   | { ok: false; reason: "base_url_required"; errors: string[] }
   | { ok: false; reason: "invalid_base_url"; errors: string[] }
@@ -109,13 +119,55 @@ export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlI
   // for a site-wide build (no `baseUrl`) inside a project, which is refused
   // until that place or one containing it is stored (issue #4410).
   standardPlace?: string;
+  // `false` when nothing is awaiting a capture (results already in hand, a
+  // search the researcher reports, an unattended run): build and check, write
+  // no in-flight entry. Default `true`. Every call carries a project
+  // (server.ts's gate), so this, not an omitted projectPath, is how a build
+  // says nothing is awaiting a capture.
+  awaitingCapture?: boolean;
+  // Required with `awaitingCapture: false`: which of the three cases this is.
+  notAwaitedBecause?: NotAwaitedReason;
+  // Not advertised (unknown-args.ts ACCEPTED_ALIASES): the delegation's own
+  // field, which Haiku passes through. "no" (or false) reads as
+  // `awaitingCapture: false, notAwaitedBecause: "no_user_present"` unless
+  // `awaitingCapture: true` is sent; any other value changes nothing.
+  userPresent?: unknown;
 }
 
+export const NOT_AWAITED_REASONS = ["results_in_hand", "researcher_reports_result", "no_user_present"] as const;
+export type NotAwaitedReason = (typeof NOT_AWAITED_REASONS)[number];
+// A link the researcher is about to open and capture IS awaited. On Haiku the
+// bare flag was passed on such hand-offs (2 of 10 on a browse site), which left
+// them unlogged, so the caller has to say which case it is.
+export const NOT_AWAITED_REASON_REQUIRED =
+  "awaitingCapture: false needs notAwaitedBecause, one of: results_in_hand (the results page is " +
+  "already in the delegation or an upload), researcher_reports_result (the researcher ran the search " +
+  "and is telling you what it showed), no_user_present (the delegation says nobody is there to open the link). A link the researcher will " +
+  "open and capture is none of these: leave awaitingCapture out, and the tool logs the hand-off.";
+
+export const NOT_AWAITING_CAPTURE_NOTE =
+  "No in-flight entry written: log this search yourself with research_log_append.";
+export const PLAN_ITEM_NOT_AWAITING_NOTE =
+  "planItemId was not recorded, because no entry was written: pass it on your own research_log_append call.";
+
 export type BuildExternalSearchUrlToolResult =
-  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string })
+  | ({
+      ok: true;
+      url: string;
+      handoffLine: string;
+      summaryStart: string;
+      alsoInSummary: string;
+      notes: string[];
+      access: AccessClassification;
+      logId?: string;
+      captureSteps?: string;
+    })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
   | { ok: false; reason: "place_not_fetched"; errors: string[] }
-  | { ok: false; reason: "log_write_failed"; errors: string[] };
+  | { ok: false; reason: "log_write_failed"; errors: string[] }
+  | { ok: false; reason: "invalid_awaiting_capture"; errors: string[] }
+  | { ok: false; reason: "not_awaited_reason_required"; errors: string[] }
+  | { ok: false; reason: "unknown_plan_item"; errors: string[] };
 
 // ─── Value validators (spec §3.7) ────────────────────────────────────────────
 //
@@ -730,12 +782,25 @@ const BROWSE_SITE_ROOT_STEPS: Partial<Record<ExternalSearchSite, string>> = {
   archion:
     "type the town into the place search on this page (\"Ortsname eingeben…\", then \"Jetzt nach Ort " +
     "suchen\"), then confirm the parish from the archive / Dekanat / parish path shown under each " +
-    "register — or pass the parish page from the wiki or locality guide as baseUrl to link straight to it",
+    "register",
   matricula:
     "open the place search (Suchen → Ortssuche, https://data.matricula-online.eu/de/suchen/), type the " +
-    "town as Ort, then confirm the diocese in the parish result before opening it — or pass the parish " +
-    "page from the wiki or locality guide as baseUrl to link straight to it",
+    "town as Ort, then confirm the diocese in the parish result before opening it",
 };
+// For the agent only: what FamilySearch itself holds was told to the caller and
+// left out of the researcher's part (the same-collection sentence in 2 of 3
+// tries of one committed test, the film in about 3 of 23 runs, on Haiku).
+export const FS_HOLDINGS_REMINDER =
+  "If collections_search returned this same collection, the sentence saying FamilySearch holds it too " +
+  "is written in the researcher's part, below summaryStart. A caller line saying so does not replace it.";
+export const BROWSE_SITE_FILM_REMINDER =
+  FS_HOLDINGS_REMINDER +
+  " The same goes for a FamilySearch film of this register that catalog_search kept: its " +
+  "`filmForYear.line`, word for word (`FamilySearch has filmed this register: ...`). A film number is " +
+  "what the researcher asks a FamilySearch Center for, so it is never left out.";
+// For the agent only: how to skip the route next time.
+const BROWSE_SITE_ROOT_AGENT_TAIL =
+  " — or pass the parish page from the wiki or locality guide as baseUrl to link straight to it";
 
 function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
@@ -1510,7 +1575,9 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   const siteNote = SITE_NOTES[site];
   if (siteNote) notes.push(siteNote);
   if (BROWSE_SITES.has(site) && (!baseUrl || isBrowseSiteRoot(site, baseUrl))) {
-    notes.push(`no parish URL supplied — this is ${site}'s site root; ${BROWSE_SITE_ROOT_STEPS[site]}`);
+    notes.push(
+      `no parish URL supplied — this is ${site}'s site root; ${BROWSE_SITE_ROOT_STEPS[site]}${BROWSE_SITE_ROOT_AGENT_TAIL}`,
+    );
   }
 
   // `locale` applies only to the site-wide fallback — a curated `baseUrl`
@@ -1534,17 +1601,59 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     notes.push("baseUrl uses http:, which the desktop viewer does not open — prefer the https form of this link");
   }
 
-  return { ok: true, url, handoffLine: handoffLineFor(url), notes, access: SITE_ACCESS[site] };
+  // A browse site's root is no use without the route to the parish, so the
+  // line the agent pastes carries it: a route left in `notes` was retold from
+  // memory or dropped (ut_search_external_sites_mcc, 2 of 10 on Haiku).
+  const route =
+    BROWSE_SITES.has(site) && (!baseUrl || isBrowseSiteRoot(site, baseUrl)) ? BROWSE_SITE_ROOT_STEPS[site] : undefined;
+  const handoffLine = handoffLineFor(url, route);
+  return {
+    ok: true,
+    url,
+    handoffLine,
+    summaryStart: summaryStartFor(handoffLine),
+    alsoInSummary: BROWSE_SITES.has(site) ? BROWSE_SITE_FILM_REMINDER : FS_HOLDINGS_REMINDER,
+    notes,
+    access: SITE_ACCESS[site],
+  };
 }
 
 // The hand-off as the researcher reads it, built here from the same `url` the
 // tool logs, so the agent pastes it rather than retyping a long URL — the
 // retyped copy is what drifted from the logged one (spec §6).
-export function handoffLineFor(url: string): string {
-  return `Open this search:\n${url}`;
+export function handoffLineFor(url: string, route?: string): string {
+  const line = `Open this search:\n${url}`;
+  return route === undefined ? line : `${line}\nFrom there, ${route}.`;
+}
+
+// The first lines of search-external-sites' researcher part: the dividing
+// line and the hand-off under it, pasted as one piece, so the link cannot land
+// above a divider the agent drew itself (6 of 81 runs on Haiku).
+export function summaryStartFor(handoffLine: string): string {
+  return `---\n${handoffLine}`;
 }
 
 // ─── The tool: build, then log the hand-off (spec §6) ─────────────────────────
+
+/** Why a `planItemId` is refused, or `undefined`: no plan in the project holds
+ *  an item with that id. An invented id (`pli_none`, seen on Haiku) was written
+ *  to the log as a reference to nothing. An unreadable research.json is left to
+ *  the log write, which reports it. */
+async function unknownPlanItemError(projectPath: string, planItemId: unknown): Promise<string | undefined> {
+  let research: any;
+  try {
+    research = await readProjectJson(projectPath, "research.json");
+  } catch {
+    return undefined;
+  }
+  const plans = Array.isArray(research?.plans) ? research.plans : [];
+  const held = plans.some((p: any) => Array.isArray(p?.items) && p.items.some((i: any) => i?.id === planItemId));
+  if (held) return undefined;
+  return (
+    `planItemId ${JSON.stringify(planItemId)} is not an item of any plan in this project. ` +
+    "Leave planItemId out for a search no plan item covers, or pass the id of the plan item this search executes."
+  );
+}
 
 /** Why a collection-specific `baseUrl` is refused, or `undefined`. With a project
  *  in hand the collection must be one FamilySearch curated for some place, stored
@@ -1605,11 +1714,26 @@ async function placeNotFetchedError(projectPath: string, standardPlace: unknown)
 // so `project_context`'s `awaitingUser` sees every URL handed to the user.
 export async function buildExternalSearchUrlTool(
   input: BuildExternalSearchUrlToolInput,
+  links: ProjectLinks = {},
 ): Promise<BuildExternalSearchUrlToolResult> {
+  const noUser = (input?.userPresent === "no" || input?.userPresent === false) && input?.awaitingCapture !== true;
+  const awaitingCapture = noUser ? false : input?.awaitingCapture;
+  const notAwaitedBecause = noUser ? (input?.notAwaitedBecause ?? "no_user_present") : input?.notAwaitedBecause;
+  if (awaitingCapture !== undefined && awaitingCapture !== null && typeof awaitingCapture !== "boolean") {
+    return {
+      ok: false,
+      reason: "invalid_awaiting_capture",
+      errors: [`awaitingCapture must be true or false, got ${JSON.stringify(awaitingCapture)}.`],
+    };
+  }
+  if (awaitingCapture === false && !NOT_AWAITED_REASONS.includes(notAwaitedBecause as NotAwaitedReason)) {
+    return { ok: false, reason: "not_awaited_reason_required", errors: [NOT_AWAITED_REASON_REQUIRED] };
+  }
   const result = buildExternalSearchUrl(input);
   if (!result.ok) return result;
   const projectPath = input?.projectPath;
-  const planItemId = input?.planItemId;
+  // The text "null" is the absent id (research_log_append reads it the same way).
+  const planItemId = input?.planItemId === "null" || input?.planItemId === "" ? null : input?.planItemId;
   if (projectPath === undefined || projectPath === null || projectPath === "") {
     if (planItemId !== undefined && planItemId !== null) {
       result.notes.push(PLAN_ITEM_WITHOUT_PROJECT_NOTE);
@@ -1625,6 +1749,18 @@ export async function buildExternalSearchUrlTool(
     // Site-wide on every site, the archion/matricula root fallback included.
     const refusal = await placeNotFetchedError(projectPath, input.standardPlace);
     if (refusal) return { ok: false, reason: "place_not_fetched", errors: [refusal] };
+  }
+
+  // Any other shape (a `q_` id, free text) is research_log_append's refusal.
+  if (typeof planItemId === "string" && planItemId.startsWith("pli_")) {
+    const refusal = await unknownPlanItemError(projectPath, planItemId);
+    if (refusal) return { ok: false, reason: "unknown_plan_item", errors: [refusal] };
+  }
+
+  if (awaitingCapture === false) {
+    result.notes.push(NOT_AWAITING_CAPTURE_NOTE);
+    if (planItemId !== undefined && planItemId !== null) result.notes.push(PLAN_ITEM_NOT_AWAITING_NOTE);
+    return { ...result, captureSteps: captureSteps(links.uploadUrl) };
   }
 
   const attributes = coerceJsonArg(input.attributes);
@@ -1655,7 +1791,18 @@ export async function buildExternalSearchUrlTool(
   }
   const notes = [...result.notes, ...logged.validation.warnings];
   if (logged.escalationDue) notes.push(logged.escalationDue);
-  return { ...result, notes, logId: logged.logId };
+  return { ...result, notes, logId: logged.logId, captureSteps: captureSteps(links.uploadUrl) };
+}
+
+/** The researcher's capture steps for a hand-off awaiting a capture, written here
+ *  so a caller pastes them rather than composing them. The upload place is the
+ *  project's upload page when the web tier serves one, else "here". */
+export function captureSteps(uploadUrl: string | undefined): string {
+  const where = uploadUrl ? `at ${uploadUrl}` : "here";
+  return (
+    "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+    `Ctrl+P (Windows), choose Save as PDF, and upload it ${where}. Log in first if the page asks.`
+  );
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -1680,10 +1827,15 @@ export const buildExternalSearchUrlSchema = {
     "classifies the site as `free`, `free_bot_protected`, or `subscription` — " +
     "read it from here, not from memory, when telling the user what access " +
     "the search needs. `handoffLine` is the finished hand-off line for the " +
-    "researcher, carrying the same URL: paste it whole and never retype the URL. " +
-    "Given `projectPath`, it also appends the search's " +
+    "researcher, carrying the same URL (and, for a browse site's root, the route to the parish): " +
+    "paste it whole and never retype the URL. " +
+    "`summaryStart` is for search-external-sites only: a `---` line with `handoffLine` under it, " +
+    "the first lines of its researcher part. Other callers ignore it. " +
+    "It also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
     "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "Inside a project it returns `captureSteps`, the researcher's capture steps, to paste word for word. " +
+    "With `awaitingCapture: false` it writes no entry and returns no `logId`. " +
     "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +
     "refused (`place_not_fetched`) until external_links_search has looked up that place " +
     "or one containing it. " +
@@ -1696,7 +1848,9 @@ export const buildExternalSearchUrlSchema = {
         // A spread, so a caller mutating a returned array can never rewrite
         // the advertised enum.
         enum: [...SUPPORTED_SITES],
-        description: "Which site to build a search URL for.",
+        description:
+          "Which site to build a search URL for. A newspaper archive not in this list (GenealogyBank, " +
+          "NewspaperArchive, a library's own): digital_newspaper_archive, with that archive's search page as `baseUrl`.",
       },
       baseUrl: {
         type: "string",
@@ -1716,13 +1870,29 @@ export const buildExternalSearchUrlSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute project-folder path. When given, the tool logs the URL as an in-flight " +
-          "hand-off awaiting the researcher's capture and returns its `logId`. Omit it when " +
-          "the results are already in hand and nothing is awaiting a capture.",
+          "Absolute project-folder path. The tool logs the URL as an in-flight " +
+          "hand-off awaiting the researcher's capture and returns its `logId`, unless " +
+          "`awaitingCapture` is false.",
+      },
+      awaitingCapture: {
+        type: "boolean",
+        description:
+          "Pass false when nothing is awaiting a capture: the results are already in hand, the " +
+          "researcher is reporting a search they ran, or nobody is present to capture. The tool " +
+          "then writes no in-flight entry; log the search yourself. Default true. Never false for a " +
+          "link the researcher will open and capture.",
+      },
+      notAwaitedBecause: {
+        type: "string",
+        enum: [...NOT_AWAITED_REASONS],
+        description:
+          "Required with `awaitingCapture: false`: results_in_hand (the results page is already in the " +
+          "delegation or an upload), researcher_reports_result (the researcher ran the search and reports " +
+          "what it showed), no_user_present (the delegation says nobody is there to open the link).",
       },
       planItemId: {
-        type: "string",
-        description: "The `pli_` plan item this search executes, recorded on the logged hand-off.",
+        type: ["string", "null"],
+        description: "The `pli_` plan item this search executes, recorded on the logged hand-off, or null for an ad-hoc search.",
       },
       standardPlace: {
         type: "string",

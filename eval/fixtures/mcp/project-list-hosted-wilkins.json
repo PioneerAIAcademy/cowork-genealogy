@@ -1,0 +1,24 @@
+{
+  "tool": "project_list",
+  "description": "Hosted listing for a signed-in user with one project, on the death of Elijah Wilkins of Muhlenberg County, Kentucky (the wilkins-first-plan scenario's objective and subject), plus a fresh path for a new project.",
+  "args": {},
+  "response": {
+    "mode": "hosted",
+    "projects": [
+      {
+        "projectPath": "/proj_5b7e2c9a41d3f806",
+        "objective": "Using Kentucky death certificates, determine the date and place of death of Elijah Wilkins of Muhlenberg County, Kentucky (born c. 1814), and what information confirms his identity",
+        "subjects": [
+          {
+            "id": "I1",
+            "name": "Elijah Wilkins"
+          }
+        ],
+        "status": "active",
+        "updated": "2026-07-15"
+      }
+    ],
+    "newProjectPath": "/proj_e04a6d2b9c7f1358",
+    "message": "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath."
+  }
+}

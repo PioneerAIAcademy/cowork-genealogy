@@ -1,0 +1,11 @@
+{
+  "tool": "record_read",
+  "description": "Any record_read while FamilySearch is not answering: the error record-read.ts throws when fetchWithRetry exhausts its budget and returns the last 504 response, marked is_error because src/server.ts returns {error} with isError: true. Registers record_read for ut_research_fl2 (issue #4777), which runs search-records live; with every record_search timing out there is no record to read. Pairs with record-search-timeout-any-surname and record-search-timeout-any-country.",
+  "args": {
+    "recordId": "~"
+  },
+  "is_error": true,
+  "response": {
+    "error": "FamilySearch recapi error: 504"
+  }
+}

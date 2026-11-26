@@ -20,6 +20,9 @@ family against the record's roster.
   **S2**). Catherine has **no death fact**, so nothing in the tree explains her
   being absent from a household George heads in 1860.
 
+`starting-tree.gedcomx.json` — the same persons; every one pre-existed this
+research (the baseline `project_create` writes in production).
+
 `research.json` — one 1860-census source (`src_001` → tree source **S1**) whose
 seven assertions describe George's household:
 

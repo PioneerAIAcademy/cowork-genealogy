@@ -180,6 +180,7 @@ describe('the next step in words', () => {
     ['search-hints — pli_003', "Review FamilySearch's record hints."],
     ['search-records', "Search FamilySearch's records."],
     ['research-plan', 'Plan the searches.'],
+    ['locality-guide, then research-plan', 'Plan the searches.'],
     ['person-evidence — none of this question\'s 4 assertions is linked', 'Link what the records say to the people they are about.'],
     ['hypothesis-tracking — competing parent sets: I3', 'Weigh the competing sets of parents.'],
     ['hypothesis-tracking — unlinked kin: Nora Stowers, Lois E. Stowers', 'Set out how these people might be related before relying on it.']

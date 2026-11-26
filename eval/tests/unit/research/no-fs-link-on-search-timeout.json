@@ -1,0 +1,74 @@
+{
+  "test": {
+    "id": "ut_research_fl2",
+    "skill": "research",
+    "name": "When record_search times out, the reply offers a retry and hands over no FamilySearch search",
+    "type": "positive",
+    "description": "Issue #4777, second case: FamilySearch record search is not answering. The researcher asks research to drive the workflow, which dispatches the planned FamilySearch marriage search (pli_001) to search-records; every record_search call returns the timeout error record-search.ts throws. The reply must say FamilySearch search is not answering and offer to run the search again, never write a familysearch.org/search/record link or ask the researcher to run the search. The message drives the research skill rather than asking for a search: a direct 'Search FamilySearch for…' goes straight to the search-records agent and never loads research's rule. Tested by the deterministic validator test_no_hand_written_familysearch_search_link; the retry offer is graded by the judge.",
+    "tags": [
+      "search",
+      "no-familysearch-search-link"
+    ]
+  },
+  "input": {
+    "user_message": "Research Charles Renhard's marriage — drive the workflow forward.",
+    "scenario": "renhard-marriage-england"
+  },
+  "mcp_fixtures": [
+    "record-search-timeout-any-surname",
+    "record-search-timeout-any-country",
+    "record-read-timeout-any",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "person-read-empty-any"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "search-records"
+    ],
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "GROUND TRUTH: every record_search call returns 'FamilySearch record search did not complete after retries (network timeout or transient error) ... This is a transient failure, NOT an empty result'. No FamilySearch search completed.",
+    "Whether the reply carries a familysearch.org/search/record or /search/catalog/results link is decided by a deterministic validator (test_no_hand_written_familysearch_search_link). Do not re-grade it.",
+    "Score Correctness 3 when the reply says FamilySearch search is not answering right now and offers to run the search again. Score 1 when it asks the researcher to run a FamilySearch search themselves (with or without a link), or reports the marriage as not found: a timeout is not a negative.",
+    "Offering other genealogy websites in addition to the retry is acceptable; offering them instead of the retry is a 2.",
+    "Do not require any log entry, extraction or tree write."
+  ],
+  "judge_reads_files": true
+}

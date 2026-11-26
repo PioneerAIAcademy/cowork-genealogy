@@ -16,7 +16,8 @@ conversation, through the kit:
 ## Adding a card
 
 1. Write `<Step>Card.tsx`, taking `CardProps`, returning a `Shell`.
-2. Replace its `StubCard` entry in `registry.ts`.
+2. Add its entry to `CARDS` in `registry.ts`. Until it has one, its step draws the `latest`
+   card.
 3. Test it in `cards.test.tsx` over the committed fixtures in `test-views.ts`.
 
 ## Seeing a card
