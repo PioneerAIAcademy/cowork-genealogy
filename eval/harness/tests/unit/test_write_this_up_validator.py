@@ -163,6 +163,7 @@ def test_a_craft_only_report_that_says_no_review_passes():
 @pytest.mark.parametrize("said", [
     "Reviewer verdict: none. The only review on file is a style critique of the write-up.",
     "The only saved review is a craft critique of the wording, so it does not count as a GPS review.",
+    "Reviewer's verdict: none qualifies. The one review on file covers the writing style, not the research.",
 ])
 def test_a_craft_only_report_may_word_the_missing_review_its_own_way(said):
     text = CRAFT_REPORT.replace("No review has been requested on this proof.", said)
