@@ -43,7 +43,7 @@
   it passing the token it received on to an upstream API (modelcontextprotocol.io, specification
   2025-11-25, "Authorization"). Every FamilySearch tool today sends the bearer it was given to
   `api.familysearch.org`.
-- **An issuer under the alias path works for Claude Code** (FS112 `oidc-probe`, a stub with no
+- **An issuer under the alias path works for Claude Code and the claude.ai connector** (FS112 `oidc-probe`, a stub with no
   store or secrets, fs-eng/search-agent-tools #172/#173, 2026-11-26, n=1). An alias strips the
   prefix and never routes the host root, so the stub's issuer was the alias URL itself. For such an
   issuer the MCP spec's discovery order (2025-11-25, "Authorization") tries two host-root URLs, then
@@ -53,14 +53,18 @@
   `<issuer>/.well-known/openid-configuration` (twice) and never the other, then sign in with its
   Client ID Metadata Document and a loopback redirect (`/token` carried `resource` = the alias's
   `/mcp`), then send `server/discover` (protocol `2026-07-28`) and, refused, `initialize` on
-  `2025-11-25`, then call tools. The claude.ai connector client is a
-  different client and is **not measured**: the org account used blocks adding any connector,
-  custom or shipped in a plugin. If it passes too, the beta's tiers can run under an alias once
+  `2025-11-25`, then call tools. **The claude.ai connector also
+  connects** (the lead's personal account, claude.ai custom connector at default settings,
+  2026-11-26, n=1): the add dialog reported "Sign in now: Detected" and "Use Claude's published
+  identity (CIMD): Detected", it connected first try, listed the three tools, and `probe_echo`
+  answered. Which of the two metadata documents it read is in FS112 Splunk (requests from
+  `160.79.104.0/21`), not yet read. So the beta's tiers can run under an alias once
   `oauth_issuer()` (`apps/server/proto/web/auth.py`) accepts a path, the web tier serves its
-  metadata at `/.well-known/openid-configuration` as well as `METADATA_PATH`
-  (`apps/server/proto/web/connector_auth.py`), and `isServerUrl` (`scripts/package-plugin.mjs`)
-  accepts a path; the tools tier's `resourceMetadataUrl()` already appends to the issuer. If not,
-  the host must be our own `CloudFront Distribution v1_0` (handoff F18).
+  metadata at the path-suffixed URL the connector reads (`/.well-known/openid-configuration` for
+  Claude Code; `METADATA_PATH` in `apps/server/proto/web/connector_auth.py` serves only
+  `oauth-authorization-server`), and `isServerUrl` (`scripts/package-plugin.mjs`) accepts a path;
+  the tools tier's `resourceMetadataUrl()` already appends to the issuer. No CloudFront
+  distribution (handoff F18) is needed for the connector.
 - **A long tool call must stream through the alias** (same probe, Claude Code with a 600 s tool
   timeout, n=1 each). A silent JSON answer completed at 40 s and got CloudFront's 504 at 60 s. An
   SSE answer with an MCP `notifications/progress` every 15 s completed at 60, 120 and 200 s; every
@@ -68,7 +72,12 @@
   Code's log), the alias's idle cut (F11). SSE comment lines every 15 s with no progress token
   carried 120 s too, and five 60 s streams ran at once (curl from the VPN). So the tools tier's
   `enableJsonResponse: true` (`src/http-server.ts`) has to give way to SSE with progress at most
-  every 15 s for `project_create` (~55 s) and `image_transcribe` (up to 180 s). The stub sent
+  every 15 s for `project_create` (~55 s) and `image_transcribe` (up to 180 s). The claude.ai
+  connector agrees (same account and date, one call each): silent calls of 25, 35, 38 and 42 s
+  completed and 45 s got "Bad Gateway"; streams with progress every 15 s (180 s) and 30 s (90 s)
+  completed and every 60 s lost the connection; a 300 s stream with progress every 15 s ended at
+  Claude's own 230 s per-call limit, which progress does not extend (`self-hosted-mcp-beta.md`,
+  P0.2 item 4). The stub sent
   `X-Accel-Buffering: no`; whether Beanstalk's nginx buffers a stream without it was not tested.
 
 ## The gate: issue #3529
