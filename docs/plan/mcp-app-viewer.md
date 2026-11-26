@@ -2,8 +2,8 @@
 
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
 an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). M1's
-cards and M3's case file are built and on main. Still to do: their first live run on the
-deployed server; M2's step cards other than the link card (question, plan, conflict,
+cards and M3's case file are built and on main. Still to do: a live research run on the
+deployed server that draws the step cards; M2's step cards other than the link card (question, plan, conflict,
 hypothesis and assess: issues #4857 to #4861); and M3's demo script and recording. The
 router lines are in `skills/research/SKILL.md`.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
@@ -56,8 +56,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
     ARK, a tree person id or a familysearch.org URL, the reader sees a named
     link, never the identifier.
 11. **This folds into the remote connector.** There is one connector, named exactly
-    `Genealogy Research`, with real FamilySearch sign-in. `Genealogy Viewer` retires
-    once the fold works.
+    `Genealogy Research`, with real FamilySearch sign-in.
 12. **Cards replace the browser viewer for the beta.** Nothing is deleted: the Fly
     alpha, the handoff's chat and Electron stay through the demo, with fixes only.
 13. **The server is self-hosted,** with Postgres and MinIO and no AWS. It carries the
@@ -777,8 +776,7 @@ The two tools and the page move onto the tool server, behind the door.
 claude.ai chat and in Desktop Chat, signed in through `Genealogy Research` with FamilySearch,
 on a project created from a real person id; and a page `image_transcribe` saved loaded on
 the card through `/img?t=` from MinIO. Image reading needs a per-account key on the beta
-(`make malachi-openrouter`). `Genealogy Viewer` can retire.
-**Not yet:** the rename to `Genealogy Research` is not built.
+(`make malachi-openrouter`).
 
 - **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
   connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and
@@ -830,7 +828,7 @@ the card through `/img?t=` from MinIO. Image reading needs a per-account key on 
 **Done when:** a card draws in claude.ai chat and Desktop Chat, signed in
 through `Genealogy Research`, on a seeded project; the worker's and the `.mcpb`'s tool lists hold neither tool; and
 a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 and
-#3997 as well as #3991. `Genealogy Viewer` then retires.
+#3997 as well as #3991.
 
 ### Interface with remote-server
 
