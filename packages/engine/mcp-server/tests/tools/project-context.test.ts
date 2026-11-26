@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { FIRST_QUESTION_NEXT_STEP, firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -118,6 +118,53 @@ describe("project_context", () => {
       },
       { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", assertionCount: 0 },
     ]);
+  });
+
+  it.each([
+    ["a subject and no question", { subject_person_ids: ["I1"], status: "active" }, undefined, true],
+    ["an empty questions list", { subject_person_ids: ["I1"], status: "active" }, [], true],
+    ["a question already", { subject_person_ids: ["I1"], status: "active" }, [{ id: "q_001", question: "Q?", status: "open" }], false],
+    ["no subject", { status: "active" }, undefined, false],
+    ["a completed project", { subject_person_ids: ["I1"], status: "completed" }, undefined, false],
+  ])("names the first question's steps as a top-level nextStep only on %s (#4791)", async (_label, project, questions, shown) => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Verify his parents.", created: "2026-01-01", updated: "2026-01-01", ...project },
+        ...(questions ? { questions } : {}),
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    if (shown) {
+      expect(r.nextStep).toBe(FIRST_QUESTION_NEXT_STEP);
+      expect(r.nextStep).not.toMatch(/objective/);
+      expect(r.nextStep).toMatch(/Skill\("forget-and-rederive"\) with mode: verify/);
+      expect(r.nextStep).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+      expect(r.nextStep).toMatch(/^For the research router only; an agent it spawned ignores this/);
+      expect(r.nextStep).toMatch(/Not on a bounded request/);
+      expect(r.nextStep).toMatch(/not in the turn that created the project/);
+    } else {
+      expect(r.nextStep).toBeUndefined();
+    }
+  });
+
+  it("quotes the opening verify request in the first question's nextStep (#4791)", async () => {
+    await writeProject(
+      {
+        project: {
+          id: "rp_001", objective: "Verify his parents.", status: "active", created: "2026-01-01",
+          updated: "2026-01-01", subject_person_ids: ["I1"], verify_request: "Verify his parents.",
+        },
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.nextStep).toBe(firstQuestionNextStep("Verify his parents."));
+    expect(r.nextStep).toContain('The researcher asked, when the project was created: "Verify his parents."');
+    expect(r.nextStep).toMatch(/First Skill\("forget-and-rederive"\) with mode: verify/);
+    expect(firstQuestionNextStep(undefined)).toBe(FIRST_QUESTION_NEXT_STEP);
   });
 
   it("gives each person its one-hop family from the tree's edges (#2537)", async () => {
@@ -543,7 +590,7 @@ describe("project_context", () => {
           "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
-          "unregisteredDisagreementCount", "uploads",
+          "unregisteredDisagreementCount", "uploads", "uploadsAre",
         ].sort(),
       );
       expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
@@ -568,6 +615,7 @@ describe("project_context", () => {
       expect(keys(r.awaitingUser?.[0])).toEqual(["logId", "performed", "planItemId", "site", "urlGenerated"]);
       expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_001"] }]);
       expect(keys(r.uploads?.[0])).toEqual(["hasText", "name", "uploaded"]);
+      expect(r.uploadsAre).toBe("files");
       expect(emptyPaths(r)).toEqual([]);
       expect(JSON.stringify(r)).not.toMatch(/sourceRefs|pagesRead/);
     });
@@ -1190,6 +1238,7 @@ describe("project_context uploads", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect("uploads" in r).toBe(false);
+    expect("uploadsAre" in r).toBe(false);
   });
 
   it("orders newest first, ties by name", async () => {
@@ -1257,6 +1306,28 @@ describe("project_context and project_create links", () => {
     });
     expect(r.uploadUrl).toBe("https://beta.example/upload/p-42");
     expect("projectUrl" in r).toBe(false);
+  });
+
+  it("says uploads are stored, and how to read each, when it serves an uploadUrl; files when it does not", async () => {
+    const withUploads = async (config: Record<string, unknown>) => {
+      const store = new ScopedFsStore(root, "p-42");
+      await runWithProjectStore(store, async () => {
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/census.pdf", new Uint8Array([1]));
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/census.pdf.txt", new Uint8Array([1]));
+        await getProjectStore().writeBytes(SCOPED_ANCHOR, "uploads/page.png", new Uint8Array([1]));
+      });
+      return contextUnder(store, config);
+    };
+    const hosted = await withUploads({ webPublicUrl: "https://beta.example", uploadsEnabled: true });
+    expect(hosted.uploadsAre).toBe("stored");
+    const byName = Object.fromEntries((hosted.uploads ?? []).map((u) => [u.name, [u.readWith, u.ref]]));
+    expect(byName).toEqual({
+      "census.pdf": ["sidecar_read", "uploads/census.pdf.txt"],
+      "page.png": ["image_transcribe", undefined],
+    });
+    const off = await withUploads({ webPublicUrl: "https://beta.example", uploadsEnabled: false });
+    expect(off.uploadsAre).toBe("files");
+    expect((off.uploads ?? []).every((u) => !("readWith" in u))).toBe(true);
   });
 
   it("returns no link while uploads are off", async () => {
@@ -1409,6 +1480,7 @@ describe("project_context owed findings and status (issue #3032 Stage 1b)", () =
         "- Thomas Smith (I2, parent): no dated or placed facts",
         "- Ann Lee (I3, spouse): Death 1901, Ohio",
         "- Tom Smith (I4, child): Birth 1880, Ohio",
+        "message:",
       ].join("\n"),
     });
   });
@@ -1610,7 +1682,7 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
 
   it("carries no searches when the next step is not a search", async () => {
     const row = await contextFor([]);
-    expect(row.nextStep).toBe("research-plan");
+    expect(row.nextStep).toBe("locality-guide, then research-plan");
     expect(row.searches).toBeUndefined();
   });
 });

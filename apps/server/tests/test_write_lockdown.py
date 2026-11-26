@@ -196,8 +196,9 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     # lockdown would let every raw write onto research.json through with this test green.
     registered = [h for m in matchers for h in m.hooks]
     # A third since #3542 lead 1: the completion halt's status read, scoped to delegations,
-    # which never denies (the verdicts below hold it to that).
-    assert len(registered) == 3
+    # which never denies (the verdicts below hold it to that). A fourth since #4791: the step
+    # boundary, scoped to the step tools, which has no opinion on a Write.
+    assert len(registered) == 4
     verdicts = [
         asyncio.run(h({"tool_name": "Write",
                        "tool_input": {"file_path": str(tmp_path / "research.json")}}, None, None))
@@ -212,11 +213,13 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     # unanswered callback took down `ToolSearch` too (issue #1915). The counter beside it
     # is deliberately unscoped and is exempt from that reasoning: it is a dict increment
     # with no I/O, no await, and no way to go unanswered.
-    assert [m.matcher for m in matchers] == [None, real_agent._PRETOOL_MATCHER, real_agent._DELEGATION_MATCHER]
+    assert [m.matcher for m in matchers] == [
+        None, real_agent._PRETOOL_MATCHER, real_agent._STEP_MATCHER, real_agent._DELEGATION_MATCHER,
+    ]
     deny_matchers = [m for m in matchers if real_agent._pretool_hook in m.hooks]
     assert len(deny_matchers) == 1 and deny_matchers[0].matcher == real_agent._PRETOOL_MATCHER
     # Explicitly set, so the effective bound is not whichever CLI default applies.
-    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S] * 3
+    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S] * 4
     assert 0 < real_agent._PRETOOL_TIMEOUT_S <= 60
 
 

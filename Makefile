@@ -400,6 +400,23 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-auto-memory
+probe-auto-memory: $(ENGINE_BUILD) ## Live probe: does CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 actually stop a memory write? (issue #4778; 2 short sessions)
+	# test_auto_memory_off.py proves the CLI offers no memory block; this runs
+	# the real agent twice and proves no memory file lands.
+	#
+	# Control arm is "0" (forced_on), not unset: per the bundled CLI's Nm()/Z8(),
+	# a falsy value returns before swt() and the autoMemoryEnabled setting, so it
+	# is the stronger control and it tests the polarity live.
+	#
+	# An EMPTY control arm is reported VOID, not PASS: the model must choose to
+	# persist a memory, so an empty control and a working fix look identical.
+	# Both arms redirect HOME and CLAUDE_CONFIG_DIR into a tempdir, and the probe
+	# fails if the operator's own ~/.claude/projects changed.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_auto_memory.py
+
 .PHONY: probe-agent-nesting
 probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
 	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
@@ -1109,7 +1126,7 @@ malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 80
 	$(MALACHI) up
 
 .PHONY: malachi-check
-malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+malachi-check: ## Health, routes, deployed sha, disk, and tool calls signed in as the env file's CHECK_EMAIL: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
 	$(MALACHI) check
 
 .PHONY: malachi-logs
@@ -1709,7 +1726,7 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
 	# thread's busiest moment. Removes reports whose run log was pruned (same
 	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
-	# rewrites them (needed after a log is rehashed or released under a new name).
+	# rewrites them (needed after a log is rehashed).
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 

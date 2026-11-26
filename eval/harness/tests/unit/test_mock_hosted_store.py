@@ -80,6 +80,33 @@ def test_a_listed_path_with_an_upload_link_carries_it(tmp_path):
     assert response.get("projectUrl") == LISTED["projectUrl"]
 
 
+def _with_uploads(tmp_path):
+    uploads = tmp_path / "uploads"
+    uploads.mkdir()
+    for name in ("census.pdf", "census.pdf.txt", "page.png", "notes.txt"):
+        (uploads / name).write_text("x", encoding="utf-8")
+
+
+def test_a_hosted_project_says_its_uploads_are_stored_and_how_to_read_each(tmp_path):
+    """The compiled tool ran on the file store and answered "files"; the mock adds
+    the hosted link afterwards and must restate the read plan to match it."""
+    _with_uploads(tmp_path)
+    response = _call(tmp_path, _hosted_with(uploadUrl=UPLOAD_URL), LISTED["projectPath"])
+    assert response.get("uploadsAre") == "stored"
+    assert {u["name"]: (u.get("readWith"), u.get("ref")) for u in response["uploads"]} == {
+        "census.pdf": ("sidecar_read", "uploads/census.pdf.txt"),
+        "page.png": ("image_transcribe", None),
+        "notes.txt": ("sidecar_read", "uploads/notes.txt"),
+    }
+
+
+def test_a_project_with_no_upload_link_says_its_uploads_are_files(tmp_path):
+    _with_uploads(tmp_path)
+    response = _call(tmp_path, _hosted(), LISTED["projectPath"])
+    assert response.get("uploadsAre") == "files"
+    assert all("readWith" not in u for u in response["uploads"])
+
+
 def test_a_listed_path_with_no_upload_link_carries_none(tmp_path):
     response = _call(tmp_path, _hosted(), LISTED["projectPath"])
     assert response.get("ok") is True

@@ -328,15 +328,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--step-mode",
-        choices=("step", "job"),
-        default="job",
+        choices=("unattended", "step"),
+        default="unattended",
         help=(
             "Step mode (docs/specs/research-step-mode-spec.md section F): one persistent "
-            "session, one step per turn, each boundary answered by the host's own "
-            "next_auto_reply. `job` (the default) opens as a \"Keep going\" run, "
-            "which is what a fixture that should reach a proof wants; `step` runs "
-            "one step and stops. A stall ends the run rather than resuming it. "
-            "Recorded in the runlog's usage block as `step_mode`."
+            "session, one step per turn. `unattended` (the default) answers each "
+            "boundary as a researcher would (\"Continue.\", \"Wrap it up.\" at the "
+            "choice), which is what a fixture that should reach a proof wants; "
+            "`step` runs one turn and stops. A stall ends the run rather than "
+            "resuming it. Recorded in the runlog's usage block as `step_mode`."
         ),
     )
     parser.add_argument(
@@ -368,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=(
             "Answer \"Wrap it up.\" after the named step instead of what "
-            "next_auto_reply chose, which exercises B2's link-then-conclude path "
+            "the simulated researcher chose, which exercises B2's link-then-conclude path "
             "(section F's separate arm). The step is a bare agent name, e.g. "
             "search-records. Needs --step-mode; the run ends after that reply, "
             "because the turn it opens reads `wrapup`."
@@ -376,15 +376,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    # Three shapes used to exit 0 having done nothing, and record
-    # `usage.wrap_up_after` as if the arm had run: no --step-mode (before `job`
-    # became the default), --step-mode step (where `next_auto_reply` never replies, so there is nothing to swap),
-    # and a step name the gate never records -- a misspelling, or a GROUP key
-    # like `search` rather than the member `search-records`. A bought run that
-    # measures nothing is the failure worth refusing loudly.
-    if args.wrap_up_after and args.step_mode != "job":
-        print("--wrap-up-after needs --step-mode job: only a job turn gets a host "
-              "reply, so under any other mode there is nothing to override.",
+    # Two shapes used to exit 0 having done nothing, and record
+    # `usage.wrap_up_after` as if the arm had run: --step-mode step (one turn, so
+    # no reply to swap), and a step name the gate never records -- a misspelling,
+    # or a GROUP key like `search` rather than the member `search-records`. A
+    # bought run that measures nothing is the failure worth refusing loudly.
+    if args.wrap_up_after and args.step_mode != "unattended":
+        print("--wrap-up-after needs --step-mode unattended: only an unattended "
+              "run replies, so under any other mode there is nothing to override.",
               file=sys.stderr)
         return 2
     if args.wrap_up_after:

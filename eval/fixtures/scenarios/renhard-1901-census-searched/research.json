@@ -1,0 +1,122 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find whom Charles Renhard (b. about 1866, Germany) married, and when",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-25",
+    "updated": "2026-11-25"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was in Charles Renhard's household in the 1901 census, and does it name his wife?",
+      "rationale": "He was living in Liverpool by 1901; a household there with a wife would name her and narrow the marriage search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-11-25",
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-25",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Liverpool, Lancashire, England",
+          "date_range": "1901",
+          "repository": "FamilySearch",
+          "rationale": "The 1901 England and Wales census is indexed on FamilySearch; his household there would name a wife.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-24T10:01:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Renhard",
+        "givenName": "Charles",
+        "recordCountry": "England",
+        "residencePlace": "Liverpool, Lancashire, England",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "1901 England and Wales census: no Charles Renhard in Liverpool.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-24T10:02:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Renhard",
+        "givenName": "Charls",
+        "recordCountry": "England",
+        "residencePlace": "Liverpool, Lancashire, England",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Given-name variant Charls: nothing for him.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-24T10:03:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rennard",
+        "givenName": "Charles",
+        "recordCountry": "England",
+        "residencePlace": "Liverpool, Lancashire, England",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Surname variant Rennard: nothing for him.",
+      "external_site": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

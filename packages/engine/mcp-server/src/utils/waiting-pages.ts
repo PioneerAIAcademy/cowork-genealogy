@@ -17,6 +17,10 @@ export interface WaitingPageIndexEntry {
   role: string;
   factType: string;
   value: string;
+  /** The assertion's date and place, when it has them, so a page that agrees is seen to.
+   *  A date equal to `value` is not repeated. */
+  date?: string;
+  place?: string;
 }
 
 /** A held record's source and the staged or logged page that shows it. */
@@ -105,6 +109,8 @@ export function sourceIndex(research: any, sourceId: string): (WaitingPageIndexE
       role: String(a.record_role ?? ""),
       factType: String(a.fact_type ?? ""),
       value: String(a.value ?? ""),
+      ...(typeof a.date === "string" && a.date !== "" && a.date !== a.value ? { date: a.date } : {}),
+      ...(typeof a.place === "string" && a.place !== "" ? { place: a.place } : {}),
       recordId: String(a.record_id ?? ""),
     }));
 }

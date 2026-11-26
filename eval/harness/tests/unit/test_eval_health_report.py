@@ -69,17 +69,6 @@ def test_window_keeps_the_newest_logs(tmp_path, capsys):
     assert "BELOW THE BAR (1)" in capsys.readouterr().out
 
 
-def test_released_log_without_a_filename_timestamp_and_a_duplicate(tmp_path):
-    """A released `v2.json` carries no timestamp in its name, and the same run can
-    sit beside its candidate: order by the envelope and count it once."""
-    _plant(tmp_path, "skill-a", ["pass"] * 5)
-    _plant(tmp_path, "skill-a", ["fail"], start=5, name="v2.json")
-    _plant(tmp_path, "skill-a", ["fail"], start=5, name="v2_2026-10-01_05-00-00.json")
-    logs = ehr.load_logs(tmp_path / "skill-a")
-    assert len(logs) == 6
-    assert logs[-1]["tests"][0]["runs"][0]["outcome"] == "fail"
-
-
 def test_logs_order_by_envelope_timestamp_not_filename(tmp_path):
     """`v10.json` sorts before `v2_…` by name but is the newest run."""
     _plant(tmp_path, "skill-a", ["pass"] * 5, name=None)

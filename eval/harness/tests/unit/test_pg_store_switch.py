@@ -90,7 +90,7 @@ def test_a_pg_run_is_never_releasable():
 
 def test_envelope_records_pg_and_writes_under_unit_pg(tmp_path):
     log = build_run_log(
-        skill="skill-a", version=None, released=False, releasable=False,
+        skill="skill-a", version=None, releasable=False,
         invocation="skill", timestamp="2026-10-12_10-30-00", harness_version="0.2.0",
         model="claude-sonnet-4-6", judge_prompt_hash="b" * 64, snapshot={},
         tests=[_make_entry()], store="pg",
@@ -106,7 +106,7 @@ def test_envelope_omits_store_on_the_file_store_and_rejects_other_values():
     import jsonschema
 
     log = build_run_log(
-        skill="skill-a", version=None, released=False, releasable=False,
+        skill="skill-a", version=None, releasable=False,
         invocation="skill", timestamp="2026-10-12_10-30-00", harness_version="0.2.0",
         model="claude-sonnet-4-6", judge_prompt_hash="b" * 64, snapshot={},
         tests=[_make_entry()],

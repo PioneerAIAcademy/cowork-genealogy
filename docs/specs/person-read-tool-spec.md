@@ -1112,8 +1112,12 @@ are not dropped.
 
 - `fetchRelativeSources(personIds, principal, deadline)` — one `/persons/{pid}/sources`
   read per relative, concurrency-bounded, each bounded by `min(cap, budget left)`.
-  Returns RAW descriptions plus `skipped[]`; the caller shapes them through
-  `shapeSources`, because the simplified form carries fields the tree schema forbids.
+  Returns RAW descriptions plus `skipped[]` and `idsBy` (each person read → the ids of
+  its descriptions, for `project_create`'s `fillRelativeSources`); the caller shapes them
+  through `shapeDescriptions` (`shapeSources`), because the simplified form carries fields
+  the tree schema forbids. Under `readPerson`'s `relativeSourcesFirst` (set only by
+  `project_create`) memory transcription waits for this read and the edges' to settle;
+  `readPerson` returns the skipped PIDs as `relativeSourcesSkipped`.
 - `fetchSourceDescriptions(descriptionIds, principal, deadline)` — one
   `/platform/sources/descriptions/{id}` read per distinct id, for the refs on relationships.
   The same concurrency, per-read cap and shared deadline, and the same return shape, with

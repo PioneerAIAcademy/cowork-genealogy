@@ -406,15 +406,11 @@ independent. Do not re-propose merging them. What this pass owes the table is th
 have sat, and which skills are already stale.
 
 Take "Idle days" and "Already stale?" from `runlog_state.py`, which reads each
-suite's **newest** releasable run log by timestamp, candidates included:
+suite's **newest** releasable run log by timestamp:
 
 ```sh
 cd eval/harness && uv run python ../../.claude/skills/audit-board/runlog_state.py
 ```
-
-A suite whose newer candidate is active while its released log is stale is
-`promote` in the script's output: it owes a promotion in the CRUD UI, not a paid
-run.
 
 Order matters within a queue: some issues are gated on a free harness-side change
 that should land first so the authoring only happens once. #1108 before #995 is

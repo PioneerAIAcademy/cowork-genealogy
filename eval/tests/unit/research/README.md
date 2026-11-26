@@ -123,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,12 +137,9 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states: for `pe7` it says
-`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
-assertion from an unlinked one, and for `si3` it says `search-records`, because
-browse-only is stated only in the plan item's rationale. The router passed both 3
-of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
-on `main`).
+advisory is still wrong on one of these states: for `si3` it says `search-records`,
+because browse-only is stated only in the plan item's rationale. The router passes
+it 3 of 3 regardless.
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
@@ -320,13 +317,38 @@ suite's snapshot**, so an init-project body edit now owes a research run.
 `ut_research_b4p` (`bounded-plan-first-message-stops-after-setup.json`) is the
 one bounded deliverable that does not run in the setup turn: a research plan with a
 FamilySearch ID and no project runs init-project alone and ends on "Continue with
-`setting up the project`?", so the researcher confirms the question before anything
+`choosing the question`?", so the researcher confirms the question before anything
 is planned (lead, 2026-11-10; feedback #4237 drifted at question-selection). It is
 deterministic through the `bounded-plan-after-init` tag and
 `test_bounded_plan_first_message_stops_after_init_project`, which reads the
 hand-off list, that the project exists with no question or plan, and that the offer
 names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
 because on a plan ask the next step is the first research question.
+
+Issue #4791's three stops before a job searches each have a deterministic test:
+`ut_research_js1` (`job-setup-stops-after-init.json`, tag `setup-stop`) runs
+init-project alone and asks what to verify or research; `ut_research_vr1`
+(`verify-reply-forgets-then-selects.json`, `verify-forget-then-select`) runs
+forget-and-rederive's verify mode with `cleanSlate`, the baseline and then
+question-selection with a `statedQuestion:` line; `ut_research_sr1`
+(`setup-reply-reaches-question-selection.json`, `qs-reply-carries:`) hands the
+reply to question-selection as `researcherReply:`; `ut_research_pl2` and
+`ut_research_pr2` (`plan-turn-…`, `plan-turn-locality-then-plan`,
+`relays-both-plan-summaries`) run locality-guide then research-plan in one turn
+and relay both summaries in full; `ut_research_nm1`
+(`name-without-pid-asks-for-id.json`, `no-name-search`) makes no `person_search`
+call for a person named with no FamilySearch ID; `ut_research_vf1`
+(`verify-first-message-audits.json`, `broad-verify-audits`) sends a first message asking
+to verify a person's facts and relationships, and gets setup then the broad audit in one turn;
+`ut_research_vq1` (`verify-request-forgets-on-continue.json`) runs the narrow verify
+from the opening request init-project recorded, on a bare "Continue.";
+`ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
+source-evaluation then check-warnings for a broad verify, removes nothing and offers
+each finding as a new project; and
+`ut_research_rp1` (`relays-proof-conclusion-without-a-summary.json`,
+`relays-only:`) adds nothing after proof-conclusion's relayed report. The
+validators are pinned in
+`eval/harness/tests/unit/test_research_setup_stops_validators.py`.
 
 `ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`
 (`bounded-interpretive-first-message.json`) cover the interpretive ask (issue #4381).
@@ -454,6 +476,29 @@ spawn of each named agent. The stub reply reaches the router as an agent return 
 canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
 line. The validator checks the spawn, not that the report names a cross-group owner or
 ends on "Continue with …?"; the judge reads that part.
+
+## No hand-written FamilySearch links (issue #4777)
+
+`ut_research_fl1` (`no-fs-link-for-searched-census.json`) runs on
+`renhard-1901-census-searched`, whose log already holds three nil 1901-census searches,
+with `search-records` stubbed; the researcher asks to check the 1901 census.
+`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) asks research to drive the workflow on
+`renhard-marriage-england`, so it dispatches the planned search to `search-records`, which runs
+against `record_search` fixtures that all return the timeout error. Its message names no
+search: "Search FamilySearch for …" went straight to the `search-records` agent on both
+runs, research never loaded, and the positive test failed on activation. Both carry
+`no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
+fails on any `familysearch.org/search/record` or `/search/catalog/results` link in the
+reply. A film viewer (`/search/film/`) or collection (`/search/collection/`) link is one
+`image_read`, `image_transcribe` or `collections_search` returns, and passes.
+
+Decided (Richard, 2026-11-25): the main thread never writes that link and never hands
+the researcher a FamilySearch search to run; a failed `record_search` is reported and
+offered again. The link in feedback #4743 was malformed (`collection_id` is not a
+parameter FamilySearch reads; the filter is `f.collectionId`) and was for a search
+already run three times. A tool-built `webSearchUrl` on `record_search` was considered
+and not chosen, since it adds a response field; it rests on issue #4707 fixing the
+search timeouts themselves, and can be revisited if they persist after that lands.
 
 ## Attached records (issue #3516)
 

@@ -895,6 +895,7 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
 # tag -> (callee, field, value pattern) lines its spawn prompt must carry.
 _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-user-present-yes": (("person-evidence", "userPresent", r"yes"),),
     "delegates-user-present-no-external": (("search-external-sites", "userPresent", r"no"),),
     "delegates-qs-user-present-no": (("question-selection", "userPresent", r"no"),),
     "delegates-wrap-up": (
@@ -906,10 +907,10 @@ _SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
 
 
 def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
-    """Tag-gated (``delegates-user-present-no``,
+    """Tag-gated (``delegates-user-present-no``, ``delegates-user-present-yes``,
     ``delegates-user-present-no-external``, ``delegates-qs-user-present-no``,
     ``delegates-wrap-up``). The fields research/SKILL.md's spawn rule passes on a
-    "Keep going." or "Wrap it up." turn, or in an autonomous run, sit in the spawn prompt, which the judge cannot see, so they are
+    "Wrap it up." turn, in an autonomous run, or on an ordinary step turn, sit in the spawn prompt, which the judge cannot see, so they are
     read from the hook records. A field is matched as ``name: value`` on any
     line, case-insensitively, with optional backticks around either side."""
     rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]
@@ -1669,6 +1670,18 @@ def test_reply_never_names_the_subject_by_the_disputed_reading(test, text_respon
     )
 
 
+# init-project's own closing paragraph (agents/init-project.md, "Present to the
+# user"): "The next step is choosing the first research question: the single fact
+# we go after first.", then "What do you want to verify or research? ...". Matched
+# on its wording, not on the phrase "first research question", which the router may
+# use in its own sentence explaining the step it offers.
+_INIT_PROJECT_NEXT_STEP = re.compile(
+    r"next step is (?:choosing )?the first research question|single fact we go after"
+    r"|what do you want to verify or research",
+    re.I,
+)
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
 ):
@@ -1714,7 +1727,7 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
         if denial in (r.get("text") or "")
     ]
     assert not denied, f"the step boundary denied {denied} in the turn that created the project"
-    assert "first research question" not in (text_response or ""), (
+    assert not _INIT_PROJECT_NEXT_STEP.search(text_response or ""), (
         "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
     )
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
@@ -1728,7 +1741,7 @@ def test_bounded_plan_first_message_stops_after_init_project(
 ):
     """Tag-gated (``bounded-plan-after-init``). A bounded research-plan ask with a
     PID and no project runs init-project and nothing else, then ends on "Continue
-    with `setting up the project`?" (issue #2813, lead 2026-11-10): the researcher
+    with `choosing the question`?" (issue #2813, lead 2026-11-10): the researcher
     confirms the question before anything is planned, because question-selection
     is where feedback #4237 drifted. The project exists with no question or plan.
     Unlike the record ask, the reply may keep init-project's next-step sentence:
@@ -1752,10 +1765,251 @@ def test_bounded_plan_first_message_stops_after_init_project(
     assert not written, f"the turn that created the project wrote {written}"
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
     offered = load_step_boundary().offered_step(text_response)
-    assert offered == "setup", (
-        f"the reply must end on \"Continue with `setting up the project`?\"; "
+    assert offered == "question", (
+        f"the reply must end on \"Continue with `choosing the question`?\"; "
         f"it offers {offered!r}: {lines[-1:]}"
     )
+
+
+def _handed_after_router(test, skills_invoked, builtin_tool_calls) -> list[str]:
+    """The router's hand-offs in call order, the skill under test left out."""
+    from harness.skill_runner import handoffs
+
+    skill_under_test = test.get("skill")
+    return [n for n in handoffs(skills_invoked, builtin_tool_calls) if n != skill_under_test]
+
+
+def _mcp_named(calls, name: str) -> list[tuple[int, dict]]:
+    return [
+        (i, c) for i, c in enumerate(calls or [])
+        if isinstance(c, dict) and bare_tool_name(str(c.get("tool") or "")) == name
+    ]
+
+
+_SETUP_STOP_TAG = "setup-stop"
+_VERIFY_ASK = re.compile(r"what\s+do\s+you\s+want\s+to\s+verify\s+or\s+research", re.IGNORECASE)
+_SOURCE_LINE = re.compile(r"^\W*S\d+\W*:\s*\S", re.MULTILINE)
+
+
+def test_job_setup_stops_after_init_project(
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, text_response, test
+):
+    """Tag-gated (``setup-stop``). A job's first message with a FamilySearch ID and
+    no project runs init-project alone (issue #4791, stop 1): no attached record is
+    read, the subject's sources are listed as ``S<n>: <title>`` (init-project's
+    report, from ``project_create``'s ``subjectSources``), the reply asks what to
+    verify or research, and it ends on "Continue with `choosing the question`?"."""
+    from harness.skill_runner import load_step_boundary
+
+    if _SETUP_STOP_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_SETUP_STOP_TAG} test")
+    taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
+    assert taken == ["init-project"], f"the setup turn hands off to init-project alone; got {taken}"
+    calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
+    read = sorted({
+        bare_tool_name(str(c.get("tool") or "")) for c in calls
+        if bare_tool_name(str(c.get("tool") or "")) in ("extraction_append", "timeline_build", "record_read")
+    })
+    assert not read, f"the setup turn read attached records: {read}"
+    text = (text_response or "").replace("`", "")
+    assert len(_SOURCE_LINE.findall(text)) >= 2, "the reply lists no sources as `S<n>: <title>`"
+    assert _VERIFY_ASK.search(text), "the reply does not ask what the researcher wants to verify or research"
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered == "question", f"the reply must end on \"Continue with `choosing the question`?\"; it offers {offered!r}"
+
+
+_VERIFY_TAG = "verify-forget-then-select"
+
+
+def test_verify_reply_forgets_then_selects(
+    skills_invoked, builtin_tool_calls, tool_calls, before_state, test
+):
+    """Tag-gated (``verify-forget-then-select``). A reply to the setup stop that asks
+    to verify the subject's parents runs forget-and-rederive in verify mode, whose
+    one ``tree_forget`` sends ``parents-of`` on the subject with ``cleanSlate: true``
+    and no dry run; then the baseline ``extraction_append({ personId })``; then
+    question-selection with a ``statedQuestion:`` line about the parents (#4791)."""
+    if _VERIFY_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_VERIFY_TAG} test")
+    taken = _handed_after_router(test, skills_invoked, builtin_tool_calls)
+    for callee in ("forget-and-rederive", "question-selection"):
+        assert callee in taken, f"no hand-off to {callee}; got {taken}"
+    assert taken.index("forget-and-rederive") < taken.index("question-selection"), taken
+    skill_args = [
+        str((c.get("args") or {}))
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Skill" and "agent_id" not in c and "forget-and-rederive" in str(c.get("args") or {})
+    ]
+    assert any(re.search(r"\bverify\b", a, re.IGNORECASE) for a in skill_args), (
+        f"the forget-and-rederive call does not name verify mode: {skill_args}"
+    )
+
+    subjects = set((before_state.get("research_json") or {}).get("project", {}).get("subject_person_ids") or [])
+    forgets = _mcp_named(tool_calls, "tree_forget")
+    assert forgets, "no tree_forget call"
+    assert not [c for _, c in forgets if (c.get("args") or {}).get("dryRun") is True], "verify mode makes no dry run"
+    applied = [
+        i for i, c in forgets
+        if (c.get("args") or {}).get("cleanSlate") is True
+        and any(
+            isinstance(sel, dict) and sel.get("selector") == "parents-of" and sel.get("personId") in subjects
+            for sel in (c.get("args") or {}).get("forget") or []
+        )
+    ]
+    assert applied, (
+        f"no tree_forget sent parents-of on the subject {sorted(subjects)} with cleanSlate: true; "
+        f"got {[c.get('args') for _, c in forgets]}"
+    )
+    extracts = [i for i, c in _mcp_named(tool_calls, "extraction_append") if (c.get("args") or {}).get("personId")]
+    assert extracts and min(extracts) > applied[0], "the baseline extraction_append({ personId }) must follow the forget"
+    prompts = _spawn_prompts(builtin_tool_calls, "question-selection")
+    stated = re.compile(r"statedQuestion[`*\"']*\s*:[^\n]*\bparents?\b", re.IGNORECASE)
+    assert any(stated.search(p) for p in prompts), "the question-selection spawn has no statedQuestion: line about the parents"
+
+
+_REPLY_CARRIES_PREFIX = "qs-reply-carries:"
+
+
+def test_question_selection_carries_the_researcher_reply(test, builtin_tool_calls):
+    """Tag-gated (``qs-reply-carries:<words>``). The question-selection spawn has a
+    ``researcherReply:`` line holding the researcher's words (#4791)."""
+    words = _one_tag_value(test, _REPLY_CARRIES_PREFIX)
+    if not words:
+        pytest.skip("not a researcher-reply test")
+    prompts = _spawn_prompts(builtin_tool_calls, "question-selection")
+    assert prompts, "no question-selection spawn"
+    norm = lambda t: re.sub(r"\s+", " ", t).casefold()
+    line = re.compile(r"researcherReply[`*\"']*\s*:(?P<rest>.*(?:\n(?![A-Za-z_]+\s*:).*)*)", re.IGNORECASE)
+    replies = [m.group("rest") for p in prompts for m in line.finditer(p)]
+    assert any(norm(words) in norm(r) for r in replies), (
+        f"no researcherReply: line carries {words!r}; got {replies}"
+    )
+
+
+_PLAN_TURN_TAG = "plan-turn-locality-then-plan"
+
+
+def test_plan_turn_runs_locality_guide_then_research_plan(skills_invoked, builtin_tool_calls, test):
+    """Tag-gated (``plan-turn-locality-then-plan``). A question with no plan and an
+    unsurveyed place gets locality-guide, then research-plan, in one turn (#4791,
+    stop 3), and nothing after them."""
+    if _PLAN_TURN_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_PLAN_TURN_TAG} test")
+    taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
+    assert taken == ["locality-guide", "research-plan"], (
+        f"the plan turn runs locality-guide then research-plan and nothing else; got {taken}"
+    )
+
+
+_RELAYS_BOTH_TAG = "relays-both-plan-summaries"
+
+
+def _stub_summary(test: dict, callee: str) -> str:
+    for stub in (test.get("execution") or {}).get("stub_skills") or []:
+        if isinstance(stub, dict) and stub.get("skill") == callee:
+            return str(stub.get("response") or "").rsplit("\n---\n", 1)[-1].strip()
+    return ""
+
+
+def test_plan_turn_relays_both_summaries(test, text_response):
+    """Tag-gated (``relays-both-plan-summaries``). The reply carries locality-guide's
+    summary and research-plan's, each verbatim after its final ``---``, and ends on
+    "Continue with `running the searches`?" (#4791)."""
+    from harness.skill_runner import load_step_boundary
+
+    if _RELAYS_BOTH_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_RELAYS_BOTH_TAG} test")
+    norm = lambda t: re.sub(r"\s+", " ", (t or "").replace("*", "").replace("`", "")).strip().casefold()
+    reply = norm(text_response)
+    for callee in ("locality-guide", "research-plan"):
+        summary = _stub_summary(test, callee)
+        assert summary, f"the test stubs no {callee} summary after a final ---"
+        assert norm(summary) in reply, f"the reply does not relay {callee}'s summary verbatim"
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered == "search", f"the reply must end on \"Continue with `running the searches`?\"; it offers {offered!r}"
+
+
+_RELAYS_ONLY_PREFIX = "relays-only:"
+_RESEARCH_ID_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+\b"
+)
+
+
+def test_reply_adds_nothing_after_the_relay(test, text_response):
+    """Tag-gated (``relays-only:<callee>``). The reply relays the stubbed callee's
+    summary verbatim and adds nothing after it but the turn's closing "Continue
+    with …?" line, and from the relay on names no research.json id (#4791, feedback
+    #4761: a summary of the router's own after proof-conclusion's, leaking "(ps_001)")."""
+    from harness.skill_runner import load_step_boundary
+
+    callee = _one_tag_value(test, _RELAYS_ONLY_PREFIX)
+    if not callee:
+        pytest.skip("not a relays-only test")
+    summary = _stub_summary(test, callee)
+    assert summary, f"the test stubs no {callee} summary after a final ---"
+    norm = lambda t: re.sub(r"\s+", " ", (t or "").replace("*", "").replace("`", "")).strip()
+    reply = norm(text_response)
+    at = reply.casefold().find(norm(summary).casefold())
+    assert at >= 0, f"the reply does not relay {callee}'s summary verbatim"
+    boundary = load_step_boundary()
+    last = norm([line for line in summary.splitlines() if line.strip()][-1]).casefold()
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    ends = [i for i, line in enumerate(lines) if last in norm(line).casefold()]
+    after = lines[ends[-1] + 1:] if ends else []
+    extra = [line for line in after if boundary.offered_step(line) is None and not re.match(r"^<?https?://\S+>?$", line)]
+    assert not extra, f"the reply adds its own text after {callee}'s summary: {extra}"
+    ids = sorted(set(_RESEARCH_ID_RE.findall(reply[at:])))
+    assert not ids, f"the relay or what follows it names research.json ids: {ids}"
+
+
+_BROAD_VERIFY_TAG = "broad-verify-audits"
+
+
+def test_broad_verify_audits_and_removes_nothing(
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, text_response, test
+):
+    """Tag-gated (``broad-verify-audits``). A verify request naming no particular
+    relationship, fact or source is its project's whole work: source-evaluation,
+    then check-warnings, and nothing else (after init-project, when it is the first
+    message); no tree_forget; and no "Continue with …?" line, since each finding is
+    offered as a new project (#4791)."""
+    from harness.skill_runner import load_step_boundary
+
+    if _BROAD_VERIFY_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_BROAD_VERIFY_TAG} test")
+    taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
+    audit = taken[1:] if taken[:1] == ["init-project"] else taken
+    assert audit == ["source-evaluation", "check-warnings"], (
+        "a broad verify runs source-evaluation then check-warnings and nothing else, after "
+        f"init-project on a first message; got {taken}"
+    )
+    calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
+    forgot = [c for c in calls if bare_tool_name(str(c.get("tool") or "")) == "tree_forget"]
+    assert not forgot, "a broad verify removes nothing: tree_forget was called"
+    offered = load_step_boundary().offered_step(text_response)
+    assert offered is None, f"a broad verify ends with no \"Continue with …?\" line; it offers {offered!r}"
+
+
+_NO_NAME_SEARCH_TAG = "no-name-search"
+
+
+def test_no_project_from_a_name_search(
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, after_state, test, text_response
+):
+    """Tag-gated (``no-name-search``). A first message naming a person with no
+    FamilySearch ID makes no ``person_search`` call, attempted or served, creates no
+    project, and asks for the ID: through init-project alone, or in the router's own
+    reply with no hand-off (#4791)."""
+    if _NO_NAME_SEARCH_TAG not in test.get("tags", []):
+        pytest.skip(f"not a {_NO_NAME_SEARCH_TAG} test")
+    calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
+    searched = [c for c in calls if bare_tool_name(str(c.get("tool") or "")) == "person_search"]
+    assert not searched, f"person_search was called: {[c.get('args') for c in searched]}"
+    taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
+    assert taken in ([], ["init-project"]), f"a name with no ID goes to init-project alone or nowhere; got {taken}"
+    assert after_state.get("research_json") is None, "a project was created without a FamilySearch ID"
+    if not taken:
+        assert re.search(r"\b(?:person )?ID\b", text_response or ""), "the reply does not ask for the FamilySearch person ID"
 
 
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
@@ -2637,4 +2891,29 @@ def test_no_inline_transcription_of_a_reindex(tool_calls, test):
     assert not inline, (
         f"the router transcribed the page itself ({len(inline)} image_transcribe call(s)); "
         "a re-index goes to search-images with the message verbatim"
+    )
+
+
+# A FamilySearch search link written by hand: a record or catalog search, with or
+# without a scheme, a "www." or a language segment ("/en/"). A film viewer or
+# collection link under /search/ is one our tools return, and passes.
+_FS_SEARCH_LINK = re.compile(
+    r"familysearch\.org/(?:[a-z]{2}/)?search/(?:record|catalog/results)\b", re.I
+)
+
+
+def test_no_hand_written_familysearch_search_link(test, text_response):
+    """Tag-gated (``no-familysearch-search-link``): issue #4777. A FamilySearch
+    search is search-records' job; the reply never carries a
+    ``familysearch.org/search/record`` or ``/search/catalog/results`` URL for the
+    researcher to run, whether the search was already run or ``record_search``
+    failed. Film viewer and collection links, which tools return, pass."""
+    if "no-familysearch-search-link" not in (test.get("tags") or []):
+        pytest.skip("not a no-familysearch-search-link test")
+    found = _FS_SEARCH_LINK.search(text_response or "")
+    assert found is None, (
+        "the reply hands the researcher a FamilySearch search link "
+        f"({found.group(0) if found else ''}…); a FamilySearch search is "
+        "search-records' job, and a failed one is offered again, not handed over "
+        "(issue #4777)"
     )

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_question_selection_sq1",
+    "skill": "question-selection",
+    "name": "A statedQuestion line is written first, with no which-first ask, on a two-fact objective",
+    "type": "positive",
+    "description": "Issue #4791, stop 2. The objective holds two independent facts (where Patrick Flynn is buried, and whom he married) and the researcher is present, which on its own makes the agent ask which fact first (ut_question_selection_tf1). The delegation carries `statedQuestion: Where was Patrick Flynn buried?`, the question the researcher asked to verify: it is written, its rationale says the researcher asked to verify it, and nothing asks which first.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "question-selection-one-new-question",
+      "rationale-records:verif",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nstatedQuestion: Where was Patrick Flynn buried?\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-two-fact-objective"
+  },
+  "judge_context": [
+    "One question is written and its rationale records that the researcher asked to verify it; both are checked deterministically (test_question_selection_one_new_question, test_new_question_follows_the_researchers_reply). Do not re-grade them.",
+    "The question must be the burial question the delegation stated, with identifying detail allowed. A marriage question, or one joining both facts, fails.",
+    "Asking the researcher which fact to research first is the failure this test exists for: the statedQuestion line already says which. Naming the spouse fact as still to come is fine."
+  ]
+}

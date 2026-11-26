@@ -44,7 +44,7 @@ function buildMinimalRunLog() {
     }],
   };
   return {
-    schema_version: 3, skill: SKILL, version: 1, released: false,
+    schema_version: 3, skill: SKILL, version: 1,
     releasable: true, invocation: 'skill',
     timestamp: '2025-01-01T00:00:00Z', harness_version: '0.2.0',
     model: 'claude-sonnet-4-6', judge_prompt_hash: 'b'.repeat(64),

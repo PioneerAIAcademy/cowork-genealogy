@@ -28,6 +28,18 @@ export interface CatalogSearchInput {
   count?: number;
   /** Item calls to make. Default 10, max 25 — see the spec's Design section. */
   hydrate?: number;
+  /** The year the caller needs a film for. Filters nothing: each hit gets
+   *  `filmForYear`, the film note covering it and a finished line to relay. */
+  filmYear?: number;
+}
+
+/** The film note of a hit whose text covers `filmYear`, and the line naming it. */
+export interface CatalogFilmForYear {
+  filmNumber?: string;
+  imageGroupNumber?: string;
+  text?: string;
+  /** Relay word for word: names the register, the film and where it can be viewed. */
+  line: string;
 }
 
 /** One reel or digitization of an item: one entry per reel, however many film
@@ -82,6 +94,8 @@ export interface CatalogHit {
    *  listed and a way to get the rest that can work for this hit. */
   filmNotesHint?: string;
   availableOnline?: boolean;
+  /** Present with `filmYear` when one of this hit's film notes covers that year. */
+  filmForYear?: CatalogFilmForYear;
   /** FamilySearch Digital Library URL for a digitized book. Surfaced only; no
    *  tool here reaches the service behind it. */
   digitalLibraryUrl?: string;

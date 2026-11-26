@@ -36,9 +36,9 @@ import { localitySurveyTool } from "./tools/locality-survey.js";
 import type { LocalitySurveyInput } from "./types/locality-survey.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
-import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "./tools/image-transcribe-mcp.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
-import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { ImageTranscribeInput, ImageTranscribeToolResponse } from "./types/image-transcribe.js";
 import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchToolResponse } from "./types/record-search.js";
@@ -105,9 +105,10 @@ import {
   buildExternalSearchUrlTool,
   type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
+import { projectLinks } from "./utils/project-links.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
-import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
+import { treeForgetTool, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
   researchAppendFromCaller,
   type ResearchAppendInput,
@@ -464,10 +465,9 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
-        const result = await imageTranscribeMcpTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }],
-        };
+        // A document writer since issue #4721 (it logs its own read).
+        const result: ImageTranscribeToolResponse & OkFalseResult = await imageTranscribeMcpTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -838,7 +838,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "build_external_search_url") {
       try {
         const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
-        const result = await buildExternalSearchUrlTool(args);
+        const result = await buildExternalSearchUrlTool(args, await projectLinks(principal));
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -868,7 +868,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "tree_forget") {
       try {
         const args = request.params.arguments as unknown as TreeForgetInput;
-        const result = await treeForget(args);
+        const result = await treeForgetTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

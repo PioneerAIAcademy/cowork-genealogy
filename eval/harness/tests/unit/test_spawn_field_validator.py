@@ -1,5 +1,5 @@
-"""`test_spawn_carries_its_step_mode_fields` — the fields a "Keep going." or
-"Wrap it up." turn passes in a spawn prompt.
+"""`test_spawn_carries_its_step_mode_fields` — the fields a "Wrap it up." turn
+or an autonomous run passes in a spawn prompt.
 
 Both directions: the fields pass in the spellings a router writes, and a spawn
 missing one, carrying the wrong value, or not happening at all fails. The

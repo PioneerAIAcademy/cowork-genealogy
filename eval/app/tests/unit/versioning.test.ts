@@ -2,11 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { annFilenameFor, classify, classifyAnn, sortNewestFirst } from '../../lib/versioning';
 
 describe('classify', () => {
-  it('recognizes released files', () => {
-    expect(classify('v3.json')).toEqual({ kind: 'released', version: 3, timestamp: null });
-    expect(classify('v12.json')).toEqual({ kind: 'released', version: 12, timestamp: null });
-  });
-
   it('recognizes candidate files', () => {
     expect(classify('v3_2026-05-18_10-30-00.json')).toEqual({
       kind: 'candidate',
@@ -25,11 +20,12 @@ describe('classify', () => {
 
   it('returns other for unrecognized filenames', () => {
     expect(classify('foo.json').kind).toBe('other');
+    expect(classify('v3.json').kind).toBe('other');
     expect(classify('v3.ann.json').kind).toBe('other');
   });
 
   it('classifyAnn handles annotation filenames', () => {
-    expect(classifyAnn('v3.ann.json').kind).toBe('released');
+    expect(classifyAnn('v3.ann.json').kind).toBe('other');
     expect(classifyAnn('v3_2026-05-18_10-30-00.ann.json').kind).toBe('candidate');
     expect(classifyAnn('scratch_2026-05-18_10-30-00.ann.json').kind).toBe('scratch');
   });
@@ -47,15 +43,13 @@ describe('annFilenameFor', () => {
 });
 
 describe('sortNewestFirst', () => {
-  it('puts released ahead of candidate, candidate ahead of scratch', () => {
+  it('puts candidate ahead of scratch', () => {
     const files = [
       'scratch_2030-01-01_00-00-00.json',
       'v2_2026-05-19_00-00-00.json',
-      'v1.json',
     ];
     files.sort(sortNewestFirst);
     expect(files).toEqual([
-      'v1.json',
       'v2_2026-05-19_00-00-00.json',
       'scratch_2030-01-01_00-00-00.json',
     ]);

@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { readFileSync } from "node:fs";
 
-import { treeForget, RESTORE_FILE } from "../../src/tools/tree-forget.js";
+import { treeForget, treeForgetTool, RESTORE_FILE, CLEAN_SLATE_NEXT_STEP, CLEAN_SLATE_UNSAID } from "../../src/tools/tree-forget.js";
 
 const minimalResearch = {
   project: {
@@ -1231,6 +1232,183 @@ describe("tree_forget", () => {
     expect(r.removed.persons).toBe(1);
     expect(r.removed.sources).toBe(1);
     expect(JSON.stringify(await readTree())).not.toContain('"S9"');
+  });
+
+  // ─── #4791: cleanSlate ───────────────────────────────────────────────────────
+
+  /** Subject I1 with parents I2/I3, a sibling I4 married to I9, a grandparent
+   *  I7, a spouse I5 and a child I6. S1 is cited only on the ParentChild link
+   *  R1; S2, a household census, on both I2 and I1; S3, a transcribed memory a
+   *  research.json source row holds, on I2 and I1; S4 only on I1; S5 only on
+   *  the sibling's marriage R9. */
+  const cleanSlateFamily = () => {
+    const tree: any = family();
+    tree.persons.push(
+      { id: "I7", gender: "Male", names: [{ id: "N7", given: "Thomas", surname: "Ryan", preferred: true }] },
+      { id: "I9", gender: "Male", names: [{ id: "N9", given: "James", surname: "Burke", preferred: true }] },
+    );
+    tree.relationships.push(
+      { id: "R8", type: "ParentChild", parent: "I7", child: "I2" },
+      { id: "R9", type: "Couple", person1: "I4", person2: "I9", sources: [{ ref: "S5" }] },
+    );
+    tree.sources = ["S1", "S2", "S3", "S4", "S5"].map((id) => ({ id, title: `Title ${id}` }));
+    const byId = Object.fromEntries(tree.persons.map((p: any) => [p.id, p]));
+    tree.relationships.find((r: any) => r.id === "R1").sources = [{ ref: "S1" }];
+    byId.I2.sources = [{ ref: "S2" }, { ref: "S3" }];
+    byId.I1.sources = [{ ref: "S2" }, { ref: "S3" }, { ref: "S4" }];
+    return tree;
+  };
+
+  const memoryRow = {
+    id: "src_001",
+    gedcomx_source_description_id: "S3",
+    citation: "Memory",
+    citation_detail: { who: "", what: "", when_created: "", when_accessed: "", where: "", where_within: "" },
+    source_classification: "original",
+    repository: "FamilySearch",
+    access_date: "2026-01-01",
+  };
+  const subjectResearch = (subjects: string[] | null = ["I1"]) => ({
+    ...minimalResearch,
+    project: { ...minimalResearch.project, subject_person_ids: subjects },
+    sources: [memoryRow],
+  });
+  const cited = (tree: any): string[] => [...JSON.stringify(tree).matchAll(/"ref":"(S\d+)"/g)].map((m) => m[1]);
+
+  it("refuses a writing call that leaves cleanSlate unsaid, and writes nothing (#4791)", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const before = await readTree();
+    const refused = await treeForgetTool({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }] });
+    expect(refused).toEqual({ ok: false, errors: [CLEAN_SLATE_UNSAID] });
+    expect(await readTree()).toEqual(before);
+  });
+
+  it.each([
+    ["a dry run with cleanSlate unsaid", { dryRun: true }],
+    ["a practice run saying cleanSlate: false", { cleanSlate: false }],
+    ["a verify saying cleanSlate: true", { cleanSlate: true }],
+  ])("lets through %s", async (_label, extra) => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const r = await treeForgetTool({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }], ...extra });
+    expect(r.ok).toBe(true);
+  });
+
+  it.each(["tree-forget-vogt-parents-cleanslate-unsaid", "tree-forget-flynn-death-cleanslate-unsaid"])(
+    "keeps the unit fixture %s's refusal the engine's own",
+    (name) => {
+      const fixture = JSON.parse(
+        readFileSync(join(__dirname, `../../../../../eval/fixtures/mcp/${name}.json`), "utf-8"),
+      );
+      expect(fixture.response).toEqual({ ok: false, errors: [CLEAN_SLATE_UNSAID] });
+    },
+  );
+
+  it("names the router's next steps only on a written cleanSlate forget", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const dry = await treeForget({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }], cleanSlate: true, dryRun: true });
+    expect(dry.ok && dry.nextStep).toBeFalsy();
+    const plain = await treeForget({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }] });
+    expect(plain.ok).toBe(true);
+    expect(plain.ok && plain.nextStep).toBeFalsy();
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/then spawn\s+question-selection/);
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/^Not done yet: do not reply now/);
+  });
+
+  it("cleanSlate parents-of takes the cut-off family and every source cited on what went", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+      cleanSlate: true,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.valid).toBe(true);
+
+    const tree = await readTree();
+    expect(tree.persons.map((p: any) => p.id).sort()).toEqual(["I1", "I5", "I6"]);
+    expect(tree.relationships.map((x: any) => x.id).sort()).toEqual(["R6", "R7"]);
+    expect(tree.sources.map((s: any) => s.id).sort()).toEqual(["S3", "S4"]);
+    expect(cited(tree).sort()).toEqual(["S3", "S4"]);
+    expect(r.removed).toEqual({
+      persons: 5,
+      relationships: 7,
+      relationshipsCascaded: 5,
+      factsByType: {},
+      sources: 3,
+    });
+    expect(r.sourcesKept).toBe(1);
+    expect(r.nextStep).toBe(CLEAN_SLATE_NEXT_STEP);
+  });
+
+  it("cleanSlate keeps a person who was unconnected before the call", async () => {
+    const tree = cleanSlateFamily();
+    tree.persons.push({ id: "I8", gender: "Female", names: [{ id: "N8", given: "Ann", surname: "Kelly", preferred: true }] });
+    await writeProject(tree, subjectResearch());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+      cleanSlate: true,
+    });
+    expect(r.ok).toBe(true);
+    const ids = (await readTree()).persons.map((p: any) => p.id);
+    expect(ids).toContain("I8");
+    expect(ids).not.toContain("I4");
+  });
+
+  it.each([
+    ["empty", []],
+    ["null", null],
+    ["not a tree person", ["I99"]],
+  ] as const)("cleanSlate with %s subject_person_ids is refused and writes nothing", async (_label, subjects) => {
+    await writeProject(cleanSlateFamily(), subjectResearch(subjects as string[] | null));
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+      cleanSlate: true,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/cleanSlate needs a subject/);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+    expect(await exists(RESTORE_FILE)).toBe(false);
+  });
+
+  it("cleanSlate keeps a source selector's memory source and counts it", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S3" }],
+      cleanSlate: true,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.sources).toBe(0);
+    expect(r.sourcesKept).toBe(1);
+    expect((await readTree()).sources.map((s: any) => s.id)).toContain("S3");
+  });
+
+  it("without cleanSlate parents-of behaves as before: cut-off persons and their sources stay", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed).toEqual({
+      persons: 2,
+      relationships: 6,
+      relationshipsCascaded: 4,
+      factsByType: {},
+      sources: 0,
+    });
+    expect(r.sourcesKept).toBe(0);
+    const tree = await readTree();
+    expect(tree.persons.map((p: any) => p.id).sort()).toEqual(["I1", "I4", "I5", "I6", "I7", "I9"]);
+    expect(tree.sources.map((s: any) => s.id)).toEqual(["S1", "S2", "S3", "S4", "S5"]);
   });
 
   // ─── redaction ─────────────────────────────────────────────────────────────

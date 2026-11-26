@@ -37,12 +37,14 @@
     "wikipedia-search-molly-maguires",
     "wikipedia-search-philadelphia-immigration",
     "wikipedia-search-naturalization-act-1906",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-schuylkill-county-pennsylvania",
+    "place-search-any"
   ],
   "judge_context": [
     "Should ground the context in Patrick's actual timeline (Irish-born ~1845, in PA by 1850, died 1908) — not produce generic 19th-century context",
     "Should suggest specific record classes that follow from the context — e.g., Castle Garden / Ellis Island immigration records (immigration triggered by famine), naturalization records (likely filed in adulthood), mine-worker rosters",
     "If the response mentions passenger lists or arrival manifests, it should note that U.S. manifests from 1820 onward name every passenger individually — including infants and young children — so the researcher pulls the full manifest page for the whole family group. Grade only what the response actually states: do not deduct for omitting edge-case caveats, and do not infer a prohibited implication (that children 'may not be listed') the text does not actually make",
-    "Should use Patrick's 1908 death date to open additional late-life record classes: death records, obituaries, and late pension files"
+    "Should use Patrick's 1908 death date to open additional late-life record classes, such as death records and obituaries. The scenario records no military service, so pension files are not required; naming them as worth checking is also correct."
   ]
 }

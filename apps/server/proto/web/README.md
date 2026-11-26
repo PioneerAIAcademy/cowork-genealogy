@@ -70,7 +70,9 @@ U2 in `docs/plan/familysearch-handoff.md`.
   served at its path), `GENEALOGY_SIGNIN_CALLS_PER_MINUTE` (unset: no sign-in budget; at
   least 2, since a sign-in takes the code exchange and the identity read), `OAUTH_ISSUER`
   (unset: no connector authorization server; set: it must equal `PUBLIC_URL`, which must
-  have no path, with FamilySearch sign-in on and the chat off) (see the
+  have no path, with FamilySearch sign-in on and the chat off), `OPENROUTER_SEED_AT_CONNECT`
+  (unset or `false`: nobody is seeded; `true`: a user the connector's consent creates gets
+  `OPENROUTER_SEED_KEY`, encrypted, on their row, and an empty key refuses to start) (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty

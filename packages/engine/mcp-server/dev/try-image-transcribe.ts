@@ -20,7 +20,7 @@
  */
 
 import { LOCAL } from "../src/auth/principal.js";
-import { imageTranscribeMcpTool } from "../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../src/tools/image-transcribe-mcp.js";
 import { sidecarRead } from "../src/tools/sidecar-read.js";
 import { isMemoryArtifactUrl } from "../src/utils/fs-image-fetch.js";
 import { memoryPageId } from "../src/utils/memories.js";
