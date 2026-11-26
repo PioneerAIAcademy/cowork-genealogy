@@ -79,8 +79,10 @@ a call with no project. Claude draws an `isError` result as a red error box in f
 user, and a refusal is the tools working. The result's first key is `refused`, a note
 saying nothing was written and to fix the call and send it again; the body follows
 unchanged (`connectorToolResult`, `src/tool-result.ts`). A failure a tool raises (a
-timeout, an unreachable service, an ended FamilySearch session) is still `isError`, and
-the worker path keeps the mark on both.
+timeout, an unreachable service, an ended FamilySearch session) is still `isError`. A
+failure a tool returns as `{ ok: false }` is not: `project_create` returns a failed
+FamilySearch read that way, so the note claims only that nothing was written. The worker
+path keeps the mark on all of them.
 
 Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
 E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the

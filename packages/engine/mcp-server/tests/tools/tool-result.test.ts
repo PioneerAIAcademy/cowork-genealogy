@@ -36,7 +36,17 @@ describe("connectorToolResult — a refusal is not an error in front of a chat u
     expect(connectorToolResult(noProject)).toBe(noProject);
   });
 
-  it("goes by the tag, never the shape: a failure that reads like a refusal stays an error", () => {
+  it("says nothing a returned fault would make false", () => {
+    // A tool may return a fault as ok:false: project_create returns a failed FamilySearch
+    // read as its refusal, a 5xx included. The note cannot tell that from a broken rule,
+    // so it must not call the cause a rule or say that nothing is broken.
+    const fault = { ok: false, errors: ["FamilySearch API error 503: Service Unavailable"] };
+    const body = JSON.parse(text(connectorToolResult(writerToolResult(fault))));
+    expect(body.errors).toEqual(fault.errors);
+    expect(body.refused).not.toMatch(/broken|rule/i);
+  });
+
+  it("goes by the tag on the envelope, never by its text: a thrown error and an untagged ok:false stay errors", () => {
     // What a catch arm builds for a thrown error, and a hand-built ok:false no tool tagged.
     const thrown = { content: [{ type: "text" as const, text: JSON.stringify({ error: "FamilySearch did not answer" }) }], isError: true };
     const lookalike = { content: [{ type: "text" as const, text: JSON.stringify({ ok: false, errors: ["x"] }) }], isError: true };

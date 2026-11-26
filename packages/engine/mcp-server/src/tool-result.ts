@@ -137,12 +137,19 @@ export function writerToolResult(result: OkFalseResult): McpToolResult {
 }
 
 /**
- * The envelopes that are REFUSALS: the call broke a rule, the tool did nothing,
- * and the remedy is the caller's (reword the note, drop the stray argument,
- * start a project). Tagged where the refusal is made rather than recognised by
- * shape afterwards, so a failure that happens to carry `ok: false` in its text
- * is never taken for one. A thrown error is not tagged: the catch arms cannot
- * tell a rule from a fault (a timeout, a FamilySearch 5xx, an ended session).
+ * The envelopes a connector caller gets as REFUSALS: the tool did nothing and
+ * said why. Three makers tag one: `writerToolResult`, for any `ok: false` a
+ * listed tool RETURNS, and the dispatcher's unknown-argument and no-project
+ * guards. The tag rides on the envelope and is never read back out of its text,
+ * so a thrown error's `{ error }` and an `ok: false` that is a tool's answer
+ * (`merge_warnings`) are never taken for one.
+ *
+ * A returned `ok: false` is usually a rule the call broke (reword the note,
+ * check the id, sign in again), but a tool may return a fault the same way.
+ * `project_create` returns every failed FamilySearch read as its refusal, a 5xx
+ * as much as a mistyped id (`project-create-tool-spec.md`, "Refusals"), and
+ * several tools return a failed project read so. Nothing here can tell the two
+ * apart, so the note below claims only what holds for both: nothing was written.
  */
 const refusals = new WeakSet<object>();
 
@@ -153,7 +160,7 @@ export function markRefusal<T extends object>(envelope: T): T {
 
 /** The first key of a connector caller's refusal, so the model reads it before the errors. */
 export const CONNECTOR_REFUSAL_NOTE =
-  "Refused, and nothing was written or changed. A rule was not met; nothing is broken. " +
+  "Refused, and nothing was written or changed. " +
   "Fix what the message below names and send the call again.";
 
 /**
