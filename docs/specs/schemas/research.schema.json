@@ -626,7 +626,7 @@
         },
         "written_by": {
           "type": "string",
-          "description": "The tool that wrote this entry itself, rather than an agent logging it by hand. Set to \"record_search\" when record_search wrote a nil search's entry. Lets research_log_append tell a tool-written nil from an agent's hand-logged repeat of the same query, so the repeat is not deduped away."
+          "description": "The tool that wrote this entry itself, rather than an agent logging it by hand. Set to \"record_search\" when record_search wrote a nil search's entry, and to \"image_transcribe\" on every page that tool read in a project. Lets research_log_append tell a tool-written nil from an agent's hand-logged repeat of the same query, so the repeat is not deduped away, and answer a hand-log of a page the tool already logged with that entry."
         },
         "results_available": {
           "anyOf": [

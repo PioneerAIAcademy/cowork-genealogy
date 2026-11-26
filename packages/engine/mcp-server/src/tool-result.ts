@@ -76,6 +76,10 @@ export const OK_FALSE_IS_FAILURE = [
   // `writerToolResult` changes nothing now and surfaces a failure correctly if
   // it ever gains one. A search WITH results still stages and is agent-logged.
   "record_search",
+  // Issue #4721: every staged read in a project writes its own log entry
+  // (`written_by: "image_transcribe"`), so the tool is a document writer. A
+  // refused write keeps the read and reports `logRefused`; no `ok: false` today.
+  "image_transcribe",
   "research_query",
   "project_context",
   "tree_query",
