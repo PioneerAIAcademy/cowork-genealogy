@@ -1425,8 +1425,58 @@ describe("research_query — fields no caller reads are left out", () => {
     for (const args of [{}, { questionId: "q_001" }, { planItemId: "pli_005" }]) {
       const r = await researchQuery({ projectPath: dir, section: "log", ...args });
       if (!r.ok) throw new Error(r.errors.join(" "));
-      expect(r.items).toEqual([unstaged, bare]);
+      expect(r.items).toEqual([{ ...unstaged, assertion_count: 0 }, { ...bare, assertion_count: 0 }]);
     }
+  });
+
+  describe("log: assertion_count (issue #1157)", () => {
+    const REC = "ark:/61903/1:1:ABCD-123";
+    const log = [
+      { id: "log_001", tool: "record_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_002", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordId: "ABCD-123" } },
+      { id: "log_003", tool: "record_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_004", tool: "image_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_005", tool: "image_transcribe", outcome: "positive", plan_item_id: "pli_005", written_by: "image_transcribe" },
+      { id: "log_006", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordIds: [REC, "ZZZZ-999"] } },
+    ];
+    const assertions = [
+      // Extracted under log_001; its record is the one log_002 and log_006 read.
+      { id: "a_001", log_entry_id: "log_001", record_id: REC },
+      { id: "a_002", log_entry_id: "log_001", record_id: REC },
+      // A re-extraction retired this one: it no longer counts toward log_003.
+      { id: "a_003", log_entry_id: "log_003", record_id: "ark:/61903/1:1:QQQQ-111", superseded_by: "a_004" },
+    ];
+    const counts = (items: any[]) => Object.fromEntries(items.map((e) => [e.id, e.assertion_count]));
+
+    it("counts live assertions by log id or by a record the entry read, and none for a listing or a tool-logged page", async () => {
+      await writeResearch({ plans: PLANS, log, assertions });
+      for (const args of [{}, { questionId: "q_001" }, { planItemId: "pli_005" }]) {
+        const r = await researchQuery({ projectPath: dir, section: "log", ...args });
+        if (!r.ok) throw new Error(r.errors.join(" "));
+        expect(counts(r.items)).toEqual({
+          log_001: 2, log_002: 2, log_003: 0, log_004: undefined, log_005: undefined, log_006: 2,
+        });
+        expect(r.items.filter((e: any) => !("assertion_count" in e)).map((e: any) => e.id)).toEqual(["log_004", "log_005"]);
+      }
+    });
+
+    it("an assertion matching an entry two ways counts once", async () => {
+      await writeResearch({
+        plans: PLANS,
+        log: [{ id: "log_001", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordId: REC } }],
+        assertions: [{ id: "a_001", log_entry_id: "log_001", record_id: REC }],
+      });
+      const r = await researchQuery({ projectPath: dir, section: "log" });
+      if (!r.ok) throw new Error(r.errors.join(" "));
+      expect(counts(r.items)).toEqual({ log_001: 1 });
+    });
+
+    it("is in the answer only, never in research.json", async () => {
+      await writeResearch({ plans: PLANS, log, assertions });
+      await researchQuery({ projectPath: dir, section: "log" });
+      const stored = JSON.parse(readFileSync(join(dir, "research.json"), "utf-8"));
+      expect(stored.log).toEqual(log);
+    });
   });
 
   it("person_evidence orderBy review: reviewReasons covers the returned page's links only", async () => {

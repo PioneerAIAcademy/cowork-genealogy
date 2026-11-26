@@ -34,6 +34,7 @@ import { unregisteredDisagreements, type UnregisteredDisagreement } from "../uti
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { logAssertionCounter } from "../utils/log-assertion-count.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
 import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
@@ -572,11 +573,23 @@ export function flattenAssertionGroups(items: unknown[], questionId?: string): u
 }
 
 /** The page's items as the tool returns them. A log entry's `staged_ref` is
- *  research_log_append's own bookkeeping, read from research.json directly.
+ *  research_log_append's own bookkeeping, read from research.json directly; it
+ *  gains `assertion_count` (issue #1157) where its tool can yield one.
  *  Assertions come back grouped by persona (`groupAssertions`). */
-function projectItems(section: ResearchQuerySection, items: any[], questionId?: string): any[] {
+function projectItems(
+  section: ResearchQuerySection,
+  items: any[],
+  questionId: string | undefined,
+  count: (entry: any) => number | undefined,
+): any[] {
   if (section === "plans") return items.map(withoutInactiveRationale);
-  if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
+  if (section === "log") {
+    return items.map((entry) => {
+      const served = without(entry, "staged_ref");
+      const n = count(entry);
+      return n === undefined || !served || typeof served !== "object" ? served : { ...served, assertion_count: n };
+    });
+  }
   if (section === "assertions") return groupAssertions(items, questionId);
   return items;
 }
@@ -1011,12 +1024,13 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       section === "person_evidence" ? await unlinkedPartiesTree(projectPath, ordered) : null;
 
     const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
+    const assertionCount = section === "log" ? logAssertionCounter(research) : () => undefined;
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
       const page: OkPage = {
         ok: true as const,
         section,
         count: ordered.length,
-        items: projectItems(section, ordered.slice(start, end), questionId),
+        items: projectItems(section, ordered.slice(start, end), questionId, assertionCount),
         truncated: end < ordered.length,
       };
       if (page.truncated) page.nextOffset = end;
@@ -1099,7 +1113,11 @@ export const researchQuerySchema = {
     "that is not active (superseded or completed) carries no `rationale`, except " +
     "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
-    "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
+    "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`, " +
+    "and gains `assertion_count`: the live assertions extracted under it or from a " +
+    "record its query named. A `positive` entry at 0 found something nothing was " +
+    "extracted from. Absent for a listing tool (collections, catalog, volumes, " +
+    "images) and for a page `image_transcribe` logged itself.\n" +
     "\n" +
     "`assertions` items are grouped by persona: each run of consecutive assertions " +
     "sharing `record_id`, `record_persona_id`, `record_role`, `source_id` and " +

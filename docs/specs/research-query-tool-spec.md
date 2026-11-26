@@ -281,6 +281,29 @@ active, as in `question-state.ts`. Every other field of an item is as stored,
 `staged_ref`. Both are left out of the answer only, never out of
 `research.json`.
 
+**One field is added: a `log` entry's `assertion_count`.** It is
+the number of live assertions (no `superseded_by`) that came from the entry:
+those whose `log_entry_id` is its id, or whose `record_id` is a record its
+`query` named in `recordId` or `recordIds`, compared as bare ARK ids. The
+second clause counts a record that was read under one entry and extracted under
+a sibling. An assertion that matches both ways counts once. It is absent, not
+0, on an entry whose tool cannot yield an assertion (`external_links_search`,
+`collections_search`, `catalog_search`, `volume_search`, `image_search`) and on
+a page `image_transcribe` logged itself, which records a read rather than a
+find (`isToolLoggedRead`, as `owedFindings` treats it). Computed in
+`utils/log-assertion-count.ts`, in the answer only. A `positive` entry at 0 is
+a search that found something no assertion was extracted from. Before this,
+nothing joined a log entry to its assertions: `research_query`'s `assertions`
+section has no `logEntryId` filter, and `owedFindings`' `extract` item works at
+question grain, so it goes silent once a question has any assertion.
+`make replay-collapse`'s oracle leaves the field out of its comparison
+(`DERIVED_LOG_FIELDS`), since `research.json` does not hold it.
+
+Measured 2026-11-26 over the 172 completed e2e runs' `.final-research.json`:
+306 `positive` entries come out at 0, in 83 runs, and 58 of 164 questions whose
+`search_stop.stopped_because` is a stop-gate value (35%) cite at least one of
+them in `log_entry_ids`, 177 citations in all.
+
 **A list call also returns `countById`:** for every requested id, zeros
 included, the number of matching items, counted over the whole match set — not
 the page — so it is identical on every page. `countById[id]` equals the `count`
