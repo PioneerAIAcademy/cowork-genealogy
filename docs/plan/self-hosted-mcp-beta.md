@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, signed in live on `malachi` since 13 November), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; it passed on `malachi` on 26 November with a session that had ended on its own), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, S2's block and delete targets, W4's plain pages (issue #4001), E5's fit for a connector (issue #3996), the MCP App's fold, first cards and case file, and PR #4863's four: ranking for a connector caller, tool calls signed in at the end of `make malachi-check`, a build id that names the commit, and image reading seeded at first connect. `malachi` runs main as of 26 November with the edge on. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, signed in live on `malachi` since 13 November), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E3's sign-in link and wording (issue #3995; it passed on `malachi` on 26 November with a session that had ended on its own), E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, S2's block and delete targets, W4's plain pages (issue #4001), E5's fit for a connector (issue #3996), the MCP App's fold, first cards and case file, PR #4863's four (ranking for a connector caller, tool calls signed in at the end of `make malachi-check`, a build id that names the commit, and image reading seeded at first connect), G6's card lines (issue #4297; a card drew at a stop reached through the research skill on `malachi` on 26 November), and a refusal as an ordinary result for a connector caller (PR #4869; seen with no red box in claude.ai on 26 November). `malachi` runs main as of 26 November with the edge on. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -14,7 +14,7 @@
 - The lead's two agents build the remote server and the MCP App. The team builds the rest from issues. Richard reviews every change to the handoff's code. Each change is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says.
 - The lead does what needs his accounts, his server or GeneFun: FamilySearch's approval (P0.1), the sign-in redirect (P0.4), the live sittings, the policies (L1), every decision and the final deletion.
 
-## Decisions (lead, 2026-10-25 to 2026-11-12)
+## Decisions (lead, 2026-10-25 to 2026-11-26)
 
 | Topic | Decision |
 |---|---|
@@ -25,7 +25,7 @@
 | Schema | The handoff's numbered files in `apps/server/proto/sql/`, plus new numbered files for the beta's tables. One schema for both. |
 | Sign-in | Claude's sign-in server lives in the web tier, on the Python MCP SDK's handlers, and shares one FamilySearch callback with browser sign-in. |
 | Re-sign-in | Users sign in again when their FamilySearch session ends. Nothing refreshes a FamilySearch token on the server. |
-| Tokens | One long connector token lifetime with no refresh token (lead, 2026-11-12). Sitting 2 held one for about 4 days. 30 days proposed; the length is the lead's call. |
+| Tokens | One long connector token lifetime with no refresh token (lead, 2026-11-12). Sitting 2 held one for about 4 days. It lasts 30 days (lead, 2026-11-26). |
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
 | Testing and deploys | One server and no test server. Everyone tests their own branch in their own Claude account first: skills, agents and hooks through their own plugin on the connector, tools through the branch's `.mcpb` in a Cowork task with a folder, cards in `make viewer`'s tab. What exists only on the connector is first tried on this server, so only the lead deploys, backs up first, undoes a bad deploy by redeploying the previous commit, and deploys nothing during the demo or its rehearsals. A test server comes when an hour's breakage would hurt users the lead cannot message. Recipes: `DEVELOPMENT.md`, "Testing a change before it reaches anyone". |
@@ -260,7 +260,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`; `beta-block-user ACCOUNT=` and `beta-delete-user ACCOUNT= CODE= [CONFIRM=yes]`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
-**D2 Monitoring (issue #4867).** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The check already ends with tool calls signed in as one user (`CHECK_EMAIL`). The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
+**D2 Monitoring (issue #4867).** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The check already ends with tool calls signed in as one user (`CHECK_EMAIL`). The per-call log line ties a call to a user. `make malachi-backup` runs by hand, before each deploy, and nothing schedules it. The limited beta does not need scheduled backups (lead, 2026-11-26); issue #4881, in the icebox, holds them for the move off `malachi`.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
@@ -269,6 +269,9 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 **D4 Onboarding page.**
 1. Install the plugin once from the Plugins page. It follows the Claude account.
 2. On the plugin's Connectors tab, connect `Genealogy Research` and sign in. That one connection covers claude.ai, Desktop and the phone, though the phone shows no plugin, so whether research runs there is not measured.
+3. In Claude's settings, open Connectors, then `Genealogy Research`, and set its tools to "Always allow" (lead, 2026-11-26). Chosen at a prompt in Desktop Chat it is not saved.
+
+The signed-out page gives these three steps, then its own sign-in link: connecting from Claude creates the account, so the page's sign-in is not a step.
 
 The page also says:
 - **Where research runs,** from the Surface decision.
@@ -280,7 +283,7 @@ The page also says:
 - **Feedback:** where to email it, with the conversation pasted in.
 - **Team and Enterprise plans:** an Owner makes the plugin available, which brings the connector with it. Not measured on an organization account.
 
-**L1 Policies.** A short privacy policy and terms, published by GeneFun, Inc. at `/privacy` and `/terms`, accepted on the consent page.
+**L1 Policies (issue #4880, in the icebox until the lead has the text).** A short privacy policy and terms, published by GeneFun, Inc. at `/privacy` and `/terms`, accepted on the consent page.
 
 The privacy policy covers:
 - what is collected, and why;
@@ -303,7 +306,7 @@ A public text or unit test drawn from a report names no account id or anyone who
 
 The first invited user waits for all of these.
 
-1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12).
+1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12). W2 had its `/security-review` before merge; E2, E3 and W4 are issue #4879, in the icebox until the first invited user is near.
 2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
    1. install the plugin, connect it from its Connectors tab and sign in;
    2. research a person, and see the cards and case file, then run the project-first check below;
@@ -323,7 +326,7 @@ The first invited user waits for all of these.
    - **the second and third,** the returning-user case and recorded separately, get a first `project_list` reply listing the earlier projects, and the model still starts a new project for the new person.
 
    A run that answers inline goes to the lead, naming the message and which case it was.
-3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. Whether D4 tells users to set it on the page is the lead's call.
+3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26).
 4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
 5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
 
@@ -355,12 +358,14 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | E3 Sign-in link and wording | issue #3995 | remote-server agent | Merged; passed on `malachi` 26 Nov |
 | D2 Monitoring | issue #4867 | team | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The fold, the first cards and the case file are on main and drew on `malachi` 26 Nov. The question card and the four step cards are issues #4857 to #4861 |
-| G6 The router PR | issue #4297 | MCP App agent | Before launch |
+| G6 The router PR | issue #4297 | MCP App agent | Merged (PR #4872); a card drew at a research stop on `malachi` 26 Nov |
 | W4 Plain pages (D4) | issue #4001 | team | Done |
 | E5 Fit for a connector | issue #3996 | team | Done |
 | E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Done |
-| Refusals are not errors in chat | PR #4869, then issue #4865 | remote-server agent, then team | Before invited users |
+| Refusals are not errors in chat | PR #4869, then issue #4865 | remote-server agent, then team | PR #4869 merged and seen live 26 Nov; issue #4865 before invited users |
+| Security reviews of E2, E3 and W4 | issue #4879 | team, senior | Icebox until the first invited user is near |
+| L1 Policy text | issue #4880 | the lead supplies it | Icebox until then |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 
@@ -375,7 +380,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 | Sun 8 Nov | Sitting 1 |
 | Thu 12 Nov | Sitting 2. A long token with no refresh, and one install, are decided; the length is the lead's call, and E3 follows from the results |
 | 13 Nov | E2 and E3 merged; the stack up on `malachi` with the edge on, running the MCP App's fold. Nobody has signed in yet |
-| 26 Nov | Main deployed to `malachi`. A card and the case file drew in claude.ai, a session that had ended was signed in again from the link, and a ranked record search ran |
+| 26 Nov | Main deployed to `malachi`. A card and the case file drew in claude.ai, a session that had ended was signed in again from the link, and a ranked record search ran. Later that day a refusal showed with no red box and the model corrected the call, and a step run through the research skill drew its card |
 | By 1 Dec | Policy text and plain pages |
 | Before the demo | The MCP App's M1, M2 and M3, with the new case file, then one pinned commit, schemas frozen, approvals warmed, and timed rehearsals |
 | When it is ready | The demo, which has no date |
