@@ -43,6 +43,25 @@
   it passing the token it received on to an upstream API (modelcontextprotocol.io, specification
   2025-11-25, "Authorization"). Every FamilySearch tool today sends the bearer it was given to
   `api.familysearch.org`.
+- **An issuer under the alias path works for Claude Code** (FS112 `oidc-probe`, a stub with no
+  store or secrets, fs-eng/search-agent-tools #172/#173, 2026-11-26, n=1). An alias strips the
+  prefix and never routes the host root, so the stub's issuer was the alias URL itself and its
+  metadata was served at `<issuer>/.well-known/openid-configuration`, the MCP spec's last discovery
+  fallback and the only one that reaches the origin. Claude Code discovered it, signed in with its
+  Client ID Metadata Document and a loopback redirect, and called tools. The claude.ai connector
+  client is a different client and is **not measured**: Richard's Claude org blocks adding any
+  connector, custom or shipped in a plugin. If it passes too, the beta's tiers can run under an alias
+  once `oauth_issuer()` (`apps/server/proto/web/auth.py`) accepts a path and
+  `isServerUrl` (`scripts/package-plugin.mjs`) accepts one; if not, the host must be our own
+  `CloudFront Distribution v1_0` (handoff F18).
+- **A long tool call must stream through the alias** (same probe, Claude Code with a 600 s tool
+  timeout, n=1 each). A silent JSON answer completed at 40 s and got CloudFront's 504 at 60 s. An
+  SSE answer with an MCP `notifications/progress` every 15 s completed at 60, 120 and 200 s; every
+  40 s it completed, every 50 s it dropped. SSE comment lines every 15 s with no progress token
+  carried 120 s too, and five 60 s streams ran at once (curl from the VPN). So the tools tier's
+  `enableJsonResponse: true` (`src/http-server.ts`) has to give way to SSE with progress at most
+  every 15 s for `project_create` (~55 s) and `image_transcribe` (up to 180 s), with
+  `X-Accel-Buffering: no` past Beanstalk's nginx.
 
 ## The gate: issue #3529
 
