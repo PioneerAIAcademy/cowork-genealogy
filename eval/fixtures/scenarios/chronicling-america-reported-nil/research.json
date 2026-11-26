@@ -1,0 +1,91 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find an obituary or death notice for Abner Hollis (d. 1874, Warren County, Ohio)",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-18",
+    "updated": "2026-11-18"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did an Ohio newspaper print an obituary or death notice for Abner Hollis in 1874 or 1875?",
+      "rationale": "A death notice would give his death date and may name his widow, children and place of burial.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-18",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "newspaper",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1874-1875",
+          "repository": "Chronicling America",
+          "rationale": "Chronicling America is free and holds digitised Ohio newspapers for the 1870s.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-18T15:00:00.000Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Abner",
+        "surname": "Hollis",
+        "searchStartYear": 1874,
+        "searchEndYear": 1875,
+        "usState": "Ohio"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Researcher reported no results on Chronicling America for Abner Hollis, Ohio, 1874-1875. Unconfirmed pending a capture.",
+      "external_site": {
+        "site": "chronicling_america",
+        "url_generated": "https://www.loc.gov/collections/chronicling-america/?dl=page&q=Abner+Hollis&dates=1874%2F1875&fa=location_state:ohio",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

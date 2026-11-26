@@ -707,7 +707,9 @@ Architecturally:
   is live in the unit harness; a drift lint there fails if you don't. Exclude a
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
-  rejected, is the only such tool today.
+  rejected, is the only such tool today. A connector caller is the one exception to
+  the mark: its copy of a refusal carries a `refused` note and no `isError`
+  (`connectorToolResult`), because a chat host draws `isError` as a red error box.
 - **If your tool reads the project files** — list `projectPath` in `required`
   (it is added for you in `src/tool-schemas.ts` unless the tool is one of the
   six in `src/utils/project-gate.ts`): `server.ts` refuses a call with no

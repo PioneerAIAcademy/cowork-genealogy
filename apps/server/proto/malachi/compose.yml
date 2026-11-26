@@ -96,7 +96,8 @@ services:
   # WEB_DIST_DIR: the image bakes web-dist, so only an explicit blank serves no SPA.
   # OPENSSL_armcap: the cryptography wheel needs it in a VM on Apple silicon; x86 ignores it.
   # OPENROUTER_LINKING_ENABLED: a linked key reaches image_transcribe, so here only
-  # `make malachi-openrouter` puts one on a user's row.
+  # `make malachi-openrouter` puts one on a user's row, or, with
+  # OPENROUTER_SEED_AT_CONNECT true, the connector's consent does for a user it creates.
   web:
     build:
       context: ../../../..
@@ -112,6 +113,8 @@ services:
       FAMILYSEARCH_WEB_ENABLED: "true"
       UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
       OPENROUTER_LINKING_ENABLED: "false"
+      OPENROUTER_SEED_AT_CONNECT: ${OPENROUTER_SEED_AT_CONNECT:-}
+      OPENROUTER_SEED_KEY: ${OPENROUTER_SEED_KEY:-}
       FS_REDIRECT_URI: ${FS_REDIRECT_URI:-}
       GENEALOGY_SIGNIN_CALLS_PER_MINUTE: ${GENEALOGY_SIGNIN_CALLS_PER_MINUTE:-}
       WEB_DIST_DIR: ""
@@ -145,6 +148,10 @@ services:
     build:
       context: ../../../..
       dockerfile: apps/server/proto/tools/Dockerfile
+      # The build id the tools report, so a tester can say which commit they hit.
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+        GIT_DIRTY: ${GIT_DIRTY:-}
     restart: unless-stopped
     logging: *logging
     mem_limit: 2g
