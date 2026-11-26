@@ -179,7 +179,8 @@ async def test_a_busy_admission_lock_answers_503_and_writes_nothing(fs_on):
     _fake_fs(fs_on, email="new@example.org")
     store = FakeStore()
 
-    async def upsert_user(email, familysearch_id, *, max_users=None, create=True, accept_terms=False):
+    async def upsert_user(email, familysearch_id, *, max_users=None, create=True, accept_terms=False,
+                          openrouter_key_enc=None):
         raise AdmissionBusy(email)
 
     store.upsert_user = upsert_user

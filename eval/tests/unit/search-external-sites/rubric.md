@@ -51,7 +51,7 @@ This dimension grades a turn that **generates** a search. When the turn instead 
 
 ## Log entry
 
-Did the research-log entry for the search get written — at URL-generation time, and for nil results? The in-flight entry is written by `build_external_search_url` itself when the agent passes `projectPath`; a builder-written entry is the agent's entry, not a missing one.
+Did the research-log entry for the search get written — at URL-generation time, and for nil results? The in-flight entry is written by `build_external_search_url` itself unless the agent passes `awaitingCapture: false`; a builder-written entry is the agent's entry, not a missing one.
 
 **This dimension covers both records of what happened: the `log[]` entry and the plan item's `status`.** A capture-required search is not finished until the capture arrives — handing over a URL is not a search. Status applies only when the turn names or unambiguously targets a plan item; when the search matches no plan item (`plan_item_id` null), no status may be written and the restraint is what is graded.
 

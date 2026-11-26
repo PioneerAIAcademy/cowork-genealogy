@@ -194,7 +194,10 @@ is a key this rule can drop:
     name: string,
     uploaded: string,                    // ISO, from the store's mtime
     hasText: boolean,                    // uploads/<name>.txt exists
+    readWith?: "sidecar_read" | "image_transcribe",  // stored projects only — §2.7
+    ref?: string,                        // with readWith "sidecar_read": the ref to pass
   }],
+  uploadsAre?: "files" | "stored",       // how the uploads are read; absent when none — §2.7
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
   signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
@@ -347,6 +350,10 @@ artifact is what every downstream check joins on.
 | `evidence-gathered` | an assertion lists it in `extracted_for_question_ids` |
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
+
+A `framed` question's `nextStep` is `research-plan`, or `locality-guide, then
+research-plan` while the project has no `localities` entry at all: the plan
+step opens with the locality survey.
 
 `critiqued` is reached only when the user asked for a gps-mentor review — the
 mentor is not on the default `/research` path — so it records that a critique
@@ -711,6 +718,16 @@ sources as tree `S2…` and points the person's, names' and facts' refs at them
 attached on FamilySearch afterwards is not in the tree. A record asked for that
 is already listed is not searched for (ut_research_021).
 
+A top-level `nextStep` (`FIRST_QUESTION_NEXT_STEP`) is present on a project with a
+subject, no question and a status other than `completed`. It names the steps that
+write the first question: `Skill("forget-and-rederive")` in verify mode first when
+the researcher's reply (never the objective) disputes a particular
+relationship, fact or source of the subject; then `extraction_append` and
+`timeline_build` for each subject; then question-selection. It says that a bounded
+request and the turn that created the project are not that turn. Why a tool says
+it: on Haiku 5.5 low the router read "no questions" and went straight to
+question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
@@ -721,7 +738,7 @@ and the `nextStep` text:
 
 - person-evidence: `assertionIds:` every live assertion of the question (the
   rung fires only when none is linked) and `userPresent: yes`, which the router
-  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+  turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict;
 - hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
@@ -900,9 +917,23 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 ### 2.7 `uploads`, `uploadUrl` — the self-hosted beta's web tier
 
 ```typescript
-uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean,
+             readWith?: "sidecar_read" | "image_transcribe", ref?: string }]
+uploadsAre?: "files" | "stored"
 uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
+
+`uploadsAre` says how the uploads are read, so no agent works it out from
+`uploadUrl`, `hasText` and the file name. It is present whenever `uploads` is:
+`"stored"` when the answer carries an `uploadUrl`, `"files"` otherwise. On a
+`"stored"` project each row names its reader: `readWith: "sidecar_read"` with
+`ref: "uploads/<name>.txt"` when `hasText` is true, `"sidecar_read"` with
+`ref: "uploads/<name>"` for a lone `.txt` upload, and `"image_transcribe"` for
+anything else. On a `"files"` project the rows carry neither field: the uploads
+are files in the project folder, and its callers do not agree on one reader for
+an image (search-external-sites reads the file, translation transcribes it).
+One function, `uploadReadPlan` (`src/utils/upload-read-plan.ts`), computes all
+of it, and the eval mock runs the same function after it adds `uploadUrl`.
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
 entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it

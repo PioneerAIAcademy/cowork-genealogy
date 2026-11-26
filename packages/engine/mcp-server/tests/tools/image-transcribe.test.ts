@@ -1,6 +1,6 @@
 import { LOCAL, connectorPrincipal } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile, mkdir, writeFile, readdir } from "fs/promises";
+import { mkdtemp, rm, readFile, mkdir, writeFile, readdir, utimes } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -53,6 +53,7 @@ import {
 import { imageTranscribeMcpTool, imageTranscribeToolSchema } from "../../src/tools/image-transcribe-mcp.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import {
+  gcUnreferencedImages,
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
@@ -2222,5 +2223,141 @@ describe("imageTranscribeMcpTool — logs its own read (#4721)", () => {
     expect(r.staged).toBeTruthy();
     expect(r.logRefused?.length).toBeGreaterThan(0);
     expect(r).not.toHaveProperty("logId");
+  });
+});
+
+describe("imageTranscribeMcpTool — a page the project already read is not read again", () => {
+  let dir: string;
+  const IMAGE = "004884748_02613";
+  const log = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8")).log as any[];
+  const stored = async (logId: string) =>
+    JSON.parse(await readFile(join(dir, "results", `${logId}.json`), "utf8")).payload.results[0];
+  beforeEach(async () => {
+    dir = await makeProject();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("returns the stored reading: one fetch, one OCR, and the found check run afresh", async () => {
+    mockOpenRouterOk("Johann Schreck, farmer");
+    mockOpenRouterOk("FOUND");
+    const first = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir, lookingFor: "Schreck" }, LOCAL);
+    mockOpenRouterOk("NOT FOUND");
+    const second = await imageTranscribeMcpTool(
+      { imageId: IMAGE, projectPath: dir, lookingFor: "Miller", planItemId: "pli_004" },
+      LOCAL,
+    );
+
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(1);
+    expect(runOcrSpy).toHaveBeenCalledTimes(1);
+    expect(first).not.toHaveProperty("reusedFrom");
+    expect(second.reusedFrom).toBe(first.logId);
+    expect(second.found).toBe("NOT FOUND");
+    expect(second.imageRef).toBe(first.imageRef);
+    expect(second.digest).toEqual(first.digest);
+
+    const entries = await log();
+    expect(entries).toHaveLength(2);
+    expect(entries[1]).toMatchObject({ id: second.logId, plan_item_id: "pli_004", outcome: "negative" });
+    const [a, b] = [await stored(first.logId!), await stored(second.logId!)];
+    expect(b.transcription).toBe(a.transcription);
+    expect(b).toMatchObject({ id: IMAGE, found: "NOT FOUND", model: a.model, size_bytes: a.size_bytes });
+  });
+
+  it("asks no model anything when nothing is looked for, and needs no key", async () => {
+    mockOpenRouterOk("a whole page");
+    await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    getOpenRouterApiKeyMock.mockRejectedValue(new Error("no key"));
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second.reusedFrom).toBeTruthy();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the place the first read looked up, without asking again", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    mockOpenRouterOk("a whole page");
+    await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(imageGroupPlaceMock).toHaveBeenCalledTimes(1);
+    expect((await stored(second.logId!)).source.place).toBe("Trumbull, Ohio, United States");
+  });
+
+  it("reads a different image", async () => {
+    mockOpenRouterOk("page one");
+    await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    mockOpenRouterOk("page two");
+    const other = await imageTranscribeMcpTool({ imageId: "004884748_02614", projectPath: dir }, LOCAL);
+    expect(other).not.toHaveProperty("reusedFrom");
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads the same page under another spelling, since only the identifier as given is matched", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeMcpTool({ ark: "ark:/61903/3:1:S3HY-6WS9-MSB", projectPath: dir }, LOCAL);
+    mockOpenRouterOk("page");
+    const other = await imageTranscribeMcpTool(
+      { ark: "https://www.familysearch.org/ark:/61903/3:1:S3HY-6WS9-MSB?i=4&cc=1727033", projectPath: dir },
+      LOCAL,
+    );
+    expect(other).not.toHaveProperty("reusedFrom");
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads a truncated page again", async () => {
+    mockOpenRouterOk("half a page", "length");
+    await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    mockOpenRouterOk("the whole page");
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second).not.toHaveProperty("reusedFrom");
+    expect(runOcrSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads again when the retained scan is gone, so imageRef never names a missing file", async () => {
+    mockOpenRouterOk("page");
+    const first = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    await rm(join(dir, first.imageRef!));
+    mockOpenRouterOk("page");
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second).not.toHaveProperty("reusedFrom");
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(2);
+    expect(second.imageRef).toBe(first.imageRef);
+  });
+
+  it("rewrites the scan it hands back, so the image cleanup counts its age from the reuse", async () => {
+    fileStoreOnly("the scan is aged with utimes, which only the file store reads");
+    mockOpenRouterOk("page");
+    const first = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    const dayAgo = (Date.now() - 25 * 60 * 60 * 1000) / 1000;
+    await utimes(join(dir, first.imageRef!), dayAgo, dayAgo);
+
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second.reusedFrom).toBe(first.logId);
+    await gcUnreferencedImages(dir, new Set());
+    expect((await readdir(join(dir, "images"))).map((f) => `images/${f}`)).toEqual([second.imageRef]);
+  });
+
+  it("does not reuse a read the tool never logged", async () => {
+    mockOpenRouterOk("page");
+    await imageTranscribeTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    mockOpenRouterOk("page");
+    const second = await imageTranscribeMcpTool({ imageId: IMAGE, projectPath: dir }, LOCAL);
+    expect(second).not.toHaveProperty("reusedFrom");
+    expect(runOcrSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("reuses an upload's reading until the file is replaced", async () => {
+    await writeFile(join(dir, "uploads", "will.jpg"), JPEG);
+    mockOpenRouterOk("the will");
+    await imageTranscribeMcpTool({ file: "uploads/will.jpg", projectPath: dir }, LOCAL);
+    const again = await imageTranscribeMcpTool({ file: "uploads/will.jpg", projectPath: dir }, LOCAL);
+    expect(again.reusedFrom).toBeTruthy();
+    expect(runOcrSpy).toHaveBeenCalledTimes(1);
+
+    await writeFile(join(dir, "uploads", "will.jpg"), Buffer.concat([JPEG, Buffer.from([0, 0, 0])]));
+    mockOpenRouterOk("another will");
+    const replaced = await imageTranscribeMcpTool({ file: "uploads/will.jpg", projectPath: dir }, LOCAL);
+    expect(replaced).not.toHaveProperty("reusedFrom");
+    expect(runOcrSpy).toHaveBeenCalledTimes(2);
   });
 });

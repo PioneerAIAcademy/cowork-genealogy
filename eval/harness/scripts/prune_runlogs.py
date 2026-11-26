@@ -300,7 +300,7 @@ def cmd_prune_unit(root: Path, *, keep: int, dry_run: bool) -> int:
     """Backfill the keep-newest-K rule across every skill dir.
 
     The harness prunes on write from now on, so this only has to catch up the
-    backlog the manual tier never cleared: 312 candidates, 0 released.
+    backlog from before it did.
     """
     if not root.is_dir():
         print(f"no unit runlog root at {root}")

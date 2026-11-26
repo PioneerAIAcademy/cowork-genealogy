@@ -843,6 +843,41 @@ it again. The tool's write beat filling a tool-written null
 `research/SKILL.md`, because ADR-0011 puts a rule decidable from the call alone at the
 write boundary.
 
+### 5.5.2 A page already read — the stored reading is returned
+
+In a project, a call for a page the project already holds a complete reading of does not
+fetch the page and does not run the OCR. It returns that reading, and the answer carries
+`reusedFrom`, the log entry that holds it (`priorImageRead`, `src/utils/prior-image-read.ts`).
+
+- **What counts as already read:** the newest `log[]` entry with `tool: "image_transcribe"`
+  and a `results_ref` whose sidecar element has this call's id and is not `truncated`. The
+  id is the identifier as given (`imageId`, `ark`, a memory's resolved artifact url) or
+  `capture:<basename>` for a `file`.
+- **Only the identifier as given is matched.** The same page under another spelling (a bare
+  ARK and its page URL with `i=`/`cc=`) is read afresh: a bare waypoint ARK can name a
+  different image than its full URL does (§5.3).
+- **Never reused:** a truncated reading, since a fresh read may reach the rest of the page;
+  a reading whose retained scan (`image_ref`) is no longer in the project or cannot be
+  rewritten, so `imageRef` never names a missing file; a `file` whose size or content type differs from the stored
+  reading's, which is a replaced upload; and a read the tool never logged (§5.5.1), so
+  `person_read`'s and `source_screen`'s own reads are not a source for it.
+- **What still runs:** the found check, against this call's `lookingFor`, over the stored
+  text. With no `lookingFor` no model is called, and an `imageId`, `ark` or memory read then
+  needs no OpenRouter key; a `file` read still resolves the key before it reads the file.
+- **What the answer and the log look like:** as a fresh read's. The stored text is staged
+  again under this call's `query`, with the earlier read's `model`, `content_type`,
+  `size_bytes`, `image_ref` and place, and the tool logs it under this call's `planItemId`
+  with this call's outcome (§5.5.1). A second look at a page for another person is its own
+  log entry. The retained scan is rewritten (`refreshSourceImage`), so the image GC's TTL
+  (§8.5) restarts as it does on a fresh read.
+- **The image cap (§5.8) is not consulted:** nothing is fetched, and the cap counts
+  distinct images.
+
+Why (lead, 2026-11-26): in 15 tester sessions 30 of 214 reads repeated an image already
+read in the session, and one census page read five times came back as five different
+texts. A second machine reading of one page confirms nothing (`READING_NOTE`,
+`src/utils/index-readings.ts`), so the project keeps one.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
@@ -858,7 +893,7 @@ write boundary.
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
 | `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
 | A Memories page lookup answers **401 to the bearer retry** | `rejectedTokenMessage(principal)`, as for an image fetch: the hosted reconnect instruction, or `login` on the desktop |
-| A Memories page lookup returns any other non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` followed by `MEMORY_LOOKUP_FAILED_GUIDANCE`: open the page URL in a browser to confirm the memory exists and is visible; this tool cannot read a private memory, and reconnecting or logging in again will not change that; otherwise transcribe by another route. It does not send the agent to `login`: the bearer was already tried, and that advice matched the prototype's `REAUTH_HITS` (`apps/server/proto/turn.py`) |
+| A Memories page lookup returns any other non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` followed by `MEMORY_LOOKUP_FAILED_GUIDANCE`: ask the user to open the page URL in their own browser to confirm the memory exists and is visible to them; this tool cannot read a private memory, and reconnecting or logging in again will not change that; the model does not open the page in a browser itself, because nothing read that way is saved to the project. It does not send the agent to `login`: the bearer was already tried, and that advice matched the prototype's `REAUTH_HITS` (`apps/server/proto/turn.py`) |
 | A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
 | No OpenRouter key configured | LLM-instruction error directing the user to set the key in the extension's settings in Claude Desktop or as `openRouterApiKey` in `~/.familysearch-mcp/config.json` (§6.4). The tool never accepts an API key as a parameter. |
 | FS image fetch **401** on a fetch that sent a bearer | `rejectedTokenMessage(principal)`: the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`), or `REJECTED_TOKEN_MESSAGE` (call `login`) on the desktop. A 401 here is a rejected token, not a restricted image: restricted images answer 403, and no committed image fetch has answered 401 — `grep -rhoE "image fetch failed: 40[0-9]" eval/runlogs | sort | uniq -c` gave 403 ×46, 400 ×10, 404 ×2, 401 ×0 (2026-10-27). A memory artifact's fetch sends no bearer, so its 401 takes the non-2xx row below. If the request fell back to the bare resolver URL and that also failed, this primary 401 is reported, not the fallback's status. |

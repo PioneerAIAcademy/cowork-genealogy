@@ -110,6 +110,10 @@ export interface ImageTranscribeToolResponse {
   /** In a project, always: the transcription is one machine reading, to be
    *  shown beside the index, never over it (issue #4578). */
   readingNote?: string;
+  /** Present when the page was not read again: the project already held a
+   *  complete reading of it, logged under this entry, and that text is what this
+   *  answer stages. `found` is still checked afresh against `lookingFor`. */
+  reusedFrom?: string;
   /** The log entry the tool wrote for this read (issue #4721), present when a
    *  staged read was logged. */
   logId?: string;

@@ -16,7 +16,7 @@ from harness.auth import AuthConfig
 from harness.mock_mcp import create_mock_server
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-V2_LOG = REPO_ROOT / "eval/runlogs/unit/source-evaluation/v2.json"
+V2_LOG = REPO_ROOT / "eval/harness/tests/fixtures/runlogs/source-evaluation/v2.json"
 
 
 @pytest.fixture(autouse=True)

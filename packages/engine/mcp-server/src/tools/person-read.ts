@@ -301,6 +301,9 @@ export interface PersonReadOutcome {
    *  (lead, 2026-08-21); it exists for `project_create`, which classifies the
    *  memory sources it writes. */
   memoryKinds: Record<string, MemoryKind>;
+  /** The relatives (FamilySearch PIDs) whose attached sources could not be read, so
+   *  `project_create` can name them and read them later. Empty when none were skipped. */
+  relativeSourcesSkipped?: string[];
 }
 
 /**
@@ -311,6 +314,12 @@ export interface PersonReadOutcome {
  *
  * `opts.deadline` is the read's wall-clock budget; it defaults to
  * `OCR_PHASE_BUDGET_MS` from now, the budget `person_read` has always used.
+ *
+ * `opts.relativeSourcesFirst`: memory transcription starts only once the relatives'
+ * and the edges' source reads have settled, so OCR spends only what they leave of the
+ * budget. `project_create` sets it: a relative's sources are structure there (a record
+ * attached to two people is one source cited on both), and an untranscribed memory
+ * already has a read-later path.
  */
 export async function readPerson(
   personId: string,
@@ -322,6 +331,7 @@ export async function readPerson(
     memoryText?: boolean;
     /** `true`: read only the descriptions cited on edges that name the subject. */
     subjectEdgeSourcesOnly?: boolean;
+    relativeSourcesFirst?: boolean;
   },
   principal: Principal,
 ): Promise<PersonReadOutcome> {
@@ -406,6 +416,9 @@ export async function readPerson(
       deadline,
       projectPath,
       memoryText,
+      opts.relativeSourcesFirst
+        ? Promise.all([relativesPending, edgeDescriptionsPending])
+        : undefined,
     ));
   }
 
@@ -413,14 +426,17 @@ export async function readPerson(
   // person-level and relationship-level ref whose target is not already in `sources[]`,
   // so merging after it would fetch every description and throw them away, all tests
   // still green.
+  const relativesFetched = await relativesPending;
+  let relativeSourcesSkipped = relativesFetched.skipped;
   try {
     result.sources = applyRelativeSources(
       result,
-      await relativesPending,
+      relativesFetched,
       resolvedId,
       relativeIds.length,
     );
   } catch (err) {
+    relativeSourcesSkipped = relativeIds;
     process.stderr.write(
       `person_read: relative sources failed for ${resolvedId}, ` +
         `returning tree sources only: ${String(err)}\n`,
@@ -440,7 +456,7 @@ export async function readPerson(
   }
 
   keepResolvableSourceRefs(result);
-  return { result, resolvedId, memoryKinds };
+  return { result, resolvedId, memoryKinds, relativeSourcesSkipped };
 }
 
 /**
@@ -677,6 +693,8 @@ async function mergeMemories(
   deadline: number,
   projectPath?: string,
   memoryText = true,
+  /** Transcription waits for this to settle (`relativeSourcesFirst`). Never rejects. */
+  transcribeAfter?: Promise<unknown>,
 ): Promise<{ sources: TreeSource[]; kinds: Record<string, MemoryKind> }> {
   try {
     // allSettled, NOT all. Both of these go through fetchWithRetry, which
@@ -704,6 +722,7 @@ async function mergeMemories(
     // sampled). An id-keyed dedupe could never fire, so it is not written.
     const memorySources = kept.map(toTreeSource);
     if (memoryText) {
+      if (transcribeAfter) await transcribeAfter;
       await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
     }
     const kinds: Record<string, MemoryKind> = {};
@@ -803,14 +822,20 @@ function mergeDescriptions(
   if (descriptions.length === 0) return sources;
 
   const have = new Set(sources.map((s) => s.id));
-  const shaped = shapeSources(
-    descriptions.map((d) => simplifySourceDescription(d)),
-    descriptions as FSSourceDescription[],
-  );
+  const shaped = shapeDescriptions(descriptions);
   // A source attached to BOTH the subject and a relative is the common case for a
   // marriage record, and the subject's copy is already in `sources[]`.
   const added = shaped.filter((d) => !have.has(d.id));
   return added.length > 0 ? [...sources, ...added] : sources;
+}
+
+/** Fetched descriptions as `sources[]` entries: the one shaping `mergeDescriptions` and
+ *  `project_create`'s `fillRelativeSources` share. `SD_*` metadata entries are dropped. */
+export function shapeDescriptions(descriptions: GedcomXSourceDescription[]): TreeSource[] {
+  return shapeSources(
+    descriptions.map((d) => simplifySourceDescription(d)),
+    descriptions as FSSourceDescription[],
+  );
 }
 
 /**
