@@ -353,6 +353,7 @@ async function externalCollectionCounts(
 export function firstQuestionNextStep(objective: string | undefined): string {
   const quoted = objective ? ` ("${objective}")` : "";
   return (
+    "For the research router only; an agent it spawned ignores this and does its own task. " +
     "No question yet. Not on a bounded request, which gets only what it asked for, and not in the turn " +
     "that created the project, which ends on init-project's report. " +
     "When the researcher's reply, or with no reply (\"Continue.\") the objective" + quoted + ", " +

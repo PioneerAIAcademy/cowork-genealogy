@@ -129,10 +129,10 @@ export interface TreeForgetRemoved {
 
 /** A clean-slate forget's `nextStep`: the research router's verify step goes on (#4791). */
 export const CLEAN_SLATE_NEXT_STEP =
-  "This was the research router's verify step; the turn goes on. For each id in subjectPersonIds, " +
-  "extraction_append({ projectPath, personId }) and timeline_build({ projectPath, personId }); then " +
-  "question-selection with the researcher's reply as researcherReply: and a statedQuestion: line for " +
-  "each relationship or fact removed.";
+  "Not done yet: do not reply now. Call these yourself, in this turn: for each id in subjectPersonIds, " +
+  "extraction_append({ projectPath, personId }) and timeline_build({ projectPath, personId }); then spawn " +
+  "question-selection with the researcher's reply as researcherReply: and a statedQuestion: line for each " +
+  "relationship or fact removed. Reply once question-selection returns.";
 
 /** The refusal of a writing call that leaves `cleanSlate` unsaid (#4791). */
 export const CLEAN_SLATE_UNSAID =

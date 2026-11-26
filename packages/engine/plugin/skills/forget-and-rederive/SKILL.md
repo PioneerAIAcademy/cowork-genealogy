@@ -81,10 +81,13 @@ this mode.
    the project and that their doubt goes to the research question. Then one
    line: undoing this means a new project from the same person ID.
 4. The second half below holds: do not look the removed people up again.
-5. Return to the router. Step 4 is the router's, so spawn nothing.
+5. Do not reply yet. Call `tree_forget`'s `nextStep` yourself, now: `extraction_append` and
+   `timeline_build` for each subject, then spawn question-selection. Reply once it returns, with
+   step 3's counts first.
 
-On `{ ok: false, errors }`, nothing was written: Step 3's error notes apply.
-Relay the error and stop.
+On `{ ok: false, errors }`, nothing was written. An error asking for
+`cleanSlate`: send the call again with `cleanSlate: true`. Any other: Step 3's
+error notes apply; relay the error and stop.
 
 ## The two halves — both are required
 

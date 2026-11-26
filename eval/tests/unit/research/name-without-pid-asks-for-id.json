@@ -4,10 +4,9 @@
     "skill": "research",
     "name": "A person named with no FamilySearch ID gets a request for the ID, never a name search",
     "type": "positive",
-    "description": "Issue #4791. A project starts only from a FamilySearch person ID. A first message naming a person with no ID goes to init-project, which creates nothing and asks for the ID; the router relays that and makes no person_search call (a main-thread person_search is denied by the plugin hook, MAIN_THREAD_DENIED).",
+    "description": "Issue #4791. A project starts only from a FamilySearch person ID. A first message naming a person with no ID creates nothing and asks for the ID, either through init-project or in the router's own reply; it makes no person_search call (a main-thread person_search is denied by the plugin hook, MAIN_THREAD_DENIED).",
     "tags": [
       "routing",
-      "routes-to:init-project",
       "no-name-search"
     ]
   },

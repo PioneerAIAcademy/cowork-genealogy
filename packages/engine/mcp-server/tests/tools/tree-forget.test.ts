@@ -1311,7 +1311,8 @@ describe("tree_forget", () => {
     expect(plain.ok).toBe(true);
     expect(plain.ok && plain.nextStep).toBeFalsy();
     expect(CLEAN_SLATE_NEXT_STEP).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
-    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/then question-selection/);
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/then spawn\s+question-selection/);
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/^Not done yet: do not reply now/);
   });
 
   it("cleanSlate parents-of takes the cut-off family and every source cited on what went", async () => {

@@ -192,7 +192,7 @@ covers is the next question; only Step 1b stops the project.
 the exception in Step 1b applies to it. Write it as the question, first, even
 when the objective holds several facts, and do not ask which first. With several
 lines, write the first and name the rest as the questions that follow. Its
-`rationale` says the researcher asked to verify it.
+`rationale` begins "The researcher asked to verify this."
 
 **A `researcherReply:` line** is the researcher's own answer to what they want
 verified or researched, what is wrong and what they hold. Use it to frame the

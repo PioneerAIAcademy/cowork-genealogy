@@ -1875,19 +1875,22 @@ _NO_NAME_SEARCH_TAG = "no-name-search"
 
 
 def test_no_project_from_a_name_search(
-    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, after_state, test
+    skills_invoked, builtin_tool_calls, tool_calls, attempted_mcp_calls, after_state, test, text_response
 ):
     """Tag-gated (``no-name-search``). A first message naming a person with no
-    FamilySearch ID makes no ``person_search`` call, attempted or served, hands off
-    to init-project alone, and creates no project (#4791)."""
+    FamilySearch ID makes no ``person_search`` call, attempted or served, creates no
+    project, and asks for the ID: through init-project alone, or in the router's own
+    reply with no hand-off (#4791)."""
     if _NO_NAME_SEARCH_TAG not in test.get("tags", []):
         pytest.skip(f"not a {_NO_NAME_SEARCH_TAG} test")
     calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
     searched = [c for c in calls if bare_tool_name(str(c.get("tool") or "")) == "person_search"]
     assert not searched, f"person_search was called: {[c.get('args') for c in searched]}"
     taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
-    assert taken == ["init-project"], f"a name with no ID goes to init-project alone; got {taken}"
+    assert taken in ([], ["init-project"]), f"a name with no ID goes to init-project alone or nowhere; got {taken}"
     assert after_state.get("research_json") is None, "a project was created without a FamilySearch ID"
+    if not taken:
+        assert re.search(r"\b(?:person )?ID\b", text_response or ""), "the reply does not ask for the FamilySearch person ID"
 
 
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"

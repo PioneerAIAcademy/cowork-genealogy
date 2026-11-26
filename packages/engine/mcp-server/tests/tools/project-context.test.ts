@@ -141,6 +141,7 @@ describe("project_context", () => {
       expect(r.nextStep).toContain('the objective ("Verify his parents.")');
       expect(r.nextStep).toMatch(/Skill\("forget-and-rederive"\) with mode: verify/);
       expect(r.nextStep).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+      expect(r.nextStep).toMatch(/^For the research router only; an agent it spawned ignores this/);
       expect(r.nextStep).toMatch(/Not on a bounded request/);
       expect(r.nextStep).toMatch(/not in the turn that created the project/);
     } else {

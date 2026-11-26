@@ -205,10 +205,10 @@ def test_relays_both_passes_and_fails():
 NAME = {"skill": "research", "tags": ["no-name-search"]}
 
 
-def _name(calls=(), attempted=(), names=("init-project",), after=None):
+def _name(calls=(), attempted=(), names=("init-project",), after=None, reply="Send me his FamilySearch person ID."):
     no_name_search(skills_invoked=["research"], builtin_tool_calls=[_spawn(n) for n in names],
                    tool_calls=list(calls), attempted_mcp_calls=list(attempted),
-                   after_state=after or {"research_json": None}, test=NAME)
+                   after_state=after or {"research_json": None}, test=NAME, text_response=reply)
 
 
 def test_no_name_search_passes_and_fails():
@@ -221,6 +221,10 @@ def test_no_name_search_passes_and_fails():
         _name(after={"research_json": {"project": {}}})
     with pytest.raises(AssertionError, match="init-project alone"):
         _name(names=("tree-survey",))
+    # The router may ask for the ID itself, with no hand-off, so long as it asks.
+    _name(names=())
+    with pytest.raises(AssertionError, match="does not ask for the FamilySearch person ID"):
+        _name(names=(), reply="I could not find him.")
 
 
 # ── relays-only ─────────────────────────────────────────────────────────────
