@@ -355,12 +355,14 @@ export function memoryPageId(url: string): string | null {
 
 /** Appended to a failed Memories lookup. It must not send the agent to login:
  *  the bearer was already tried, and the text would match REAUTH_HITS
- *  (apps/server/proto/turn.py), which counts as an auth failure. */
+ *  (apps/server/proto/turn.py), which counts as an auth failure. The browser is
+ *  the user's to open, not the model's: a page the model reads through one is
+ *  never saved to the project. */
 export const MEMORY_LOOKUP_FAILED_GUIDANCE =
-  "Open the page URL in a browser to confirm the memory exists and is visible " +
-  "to you. This tool cannot read a private memory, and reconnecting or logging " +
-  "in again will not change that. Otherwise transcribe the page's image by " +
-  "another route.";
+  "Ask the user to open the page URL in their own browser to confirm the memory " +
+  "exists and is visible to them. This tool cannot read a private memory, and " +
+  "reconnecting or logging in again will not change that. Do not open the page " +
+  "in a browser yourself: nothing read that way is saved to the project.";
 
 /**
  * Resolve a memory id to its artifact's direct bytes URL.

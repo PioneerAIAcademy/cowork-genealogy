@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Death date and place extracted as assertions (a_007, a_019) but never written to the tree; question left open, no proof summary.",
+    "f2": "Burial place extracted as an assertion (a_021, no date) but never written to the tree."
+  },
+  "findings_hash": "f3612c5c5d21403deecc7426a0ad3daa9d4233e7a164cc37b63a5c0ce934771e",
+  "blind_bundle_digest": "747161140021b055dc158772dabf75ba381cff7a931ad530b840b6fa6f8b7291"
+}

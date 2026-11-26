@@ -57,16 +57,23 @@ async def test_signed_out_is_the_onboarding_and_holds_no_account_data(monkeypatc
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
 
 
-def test_connector_link_names_the_server_and_points_at_the_hosts_mcp():
-    """The edge serves /mcp at the host root, so a PUBLIC_URL path prefix is dropped."""
-    url = pages.connector_link("https://beta.example/gr/")
-    parts = urlsplit(url)
-    assert (parts.scheme, parts.netloc, parts.path) == ("https", "claude.ai", "/customize/connectors")
-    assert parse_qs(parts.query) == {
-        "modal": ["add-custom-connector"],
-        "connectorName": ["Genealogy Research"],
-        "connectorUrl": ["https://beta.example/mcp"],
-    }
+async def test_the_setup_steps_are_one_install_then_connect_then_always_allow():
+    """The plan's D4, in order: the plugin brings the connector, so nothing is added by hand
+    (no prefilled add-connector link), and Always allow is set on the connector's page, where
+    it is saved (lead, 2026-11-26)."""
+    text = (await _home(FakeStore(), user=None)).text
+    steps = text[text.index("<ol>"):text.index("</ol>")]
+    order = [steps.index("Install the plugin"), steps.index("Connectors tab"), steps.index("Always allow")]
+    assert order == sorted(order) and steps.count("<li>") == 3
+    assert "add-custom-connector" not in text and "Add the custom connector" not in text
+    assert "auth/" not in steps, "this page's own sign-in is not a setup step: connecting creates the account"
+
+
+async def test_only_the_feedback_address_is_still_a_placeholder():
+    text = (await _home(FakeStore(), user=None)).text
+    assert text.count("Placeholder") == 1 and "Placeholder: the feedback address" in text
+    assert "ordinary chat at claude.ai or in Claude Desktop" in text
+    assert 'say "continue"' in text and "Reconnect a connector" in text
 
 
 @pytest.mark.parametrize(("fs", "dev", "expect", "absent"), [
@@ -74,7 +81,7 @@ def test_connector_link_names_the_server_and_points_at_the_hosts_mcp():
     (False, "true", "auth/dev-login", "auth/familysearch/login"),
     (False, "false", "Sign-in is not configured", "auth/"),
 ])
-async def test_signed_out_step_two_follows_the_sign_in_that_is_on(monkeypatch, fs, dev, expect, absent):
+async def test_signed_out_sign_in_line_follows_the_sign_in_that_is_on(monkeypatch, fs, dev, expect, absent):
     monkeypatch.setenv("DEV_LOGIN", dev)
     if fs:
         monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
@@ -84,6 +91,7 @@ async def test_signed_out_step_two_follows_the_sign_in_that_is_on(monkeypatch, f
     r = await _home(FakeStore(), user=None)
     assert r.status_code == 200
     assert expect in r.text and absent not in r.text
+    assert r.text.index("</ol>") < r.text.index(expect), "under the setup steps, never one of them"
 
 
 # ── signed in ───────────────────────────────────────────────────────────────────
@@ -108,7 +116,7 @@ async def test_signed_in_keeps_the_setup_steps_on_the_page():
     "sign out to see them": once sign-out ends the connector's tokens too, that undoes step 1."""
     r = await _home(FakeStore())
     assert "<summary>Setup steps</summary>" in r.text and "Get started" not in r.text
-    assert "Add the custom connector in Claude" in r.text and "Install the plugin once" in r.text
+    assert "Install the plugin" in r.text and "Always allow" in r.text
     assert "Sign out to see" not in r.text
 
 

@@ -143,6 +143,12 @@ describe("getMatcherSettings", () => {
     expect(err?.message).toMatch(/Do not ask the user to paste a key into the chat\.$/);
   });
 
+  it("is FamilySearch's matcher when the key is present with no value", async () => {
+    // What a config built in code carries when the deployment names no service.
+    const principal = bearerPrincipal("token", { matcher: undefined, matcherUrl: undefined, matcherApiKey: undefined });
+    await expect(getMatcherSettings(principal)).resolves.toEqual({ backend: "familysearch" });
+  });
+
   it("reads a bearer principal's own config, never config.json", async () => {
     const principal = bearerPrincipal("token", {
       matcher: "service",
