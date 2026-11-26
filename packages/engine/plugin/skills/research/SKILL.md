@@ -29,7 +29,7 @@ allowed-tools:
 
 # /research — Full GPS Research Workflow
 
-**If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
+**If you have no `Agent` tool, say that this research needs chat with "Chat and Cowork unified" turned on (on a Team or Enterprise plan, an Owner turns it on under Admin, Capabilities, Chat), and stop. If your `Agent` tool lists none of this plugin's agents, under any prefix (`init-project` or `genealogy-research:init-project`, and the rest), say that the Genealogy Research plugin needs to be installed, and stop. Never run a step through a general-purpose or other built-in agent.**
 
 **Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
@@ -48,7 +48,8 @@ offer the next.
 call, plus the tool calls it needs and any repeat of the same step. A bounded
 first message with no project runs init-project first, then its deliverable
 (§"Bounded request or job"). locality-guide followed by research-plan is one
-step. After it returns:
+step. Never send the same delegation twice: an agent's return is that step's
+report, even one that says nothing changed. After it returns:
 
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
@@ -56,10 +57,28 @@ step. After it returns:
    `### Search implications` heading; from init-project in a bounded turn, leave out its
    sentence naming the next step. In a turn with two agents, relay each one's
    report in turn, in full: never condense, merge or shorten either;
-2. end with **"Continue with `<label>`?"**, using the exact label below,
-   then on the same line the project's `projectUrl`, only when a tool
-   returned one. That line is the reply's last;
-3. end your turn.
+2. when you have `show_project` and the step that ran has a card below, call
+   `show_project({ projectPath, show: <card>, questionId })` with the question
+   the step worked on, after the report;
+3. end with **"Continue with `<label>`?"**, using the exact label below.
+   That line is the reply's last;
+4. end your turn.
+
+| Step that ran | `<card>` |
+|---|---|
+| init-project | `setup` |
+| question-selection | `question` |
+| locality-guide, research-plan | `plan` |
+| search-records, search-images, search-external-sites, search-full-text, search-hints, record-structurer, evaluate-search-results, `extraction_append` | `search` |
+| person-evidence | `link` |
+| conflict-resolution | `conflict` |
+| hypothesis-tracking | `hypothesis` |
+| research-exhaustiveness | `assess` |
+| proof-conclusion, gps-mentor, a wrap-up | `conclusion` |
+
+No other step draws a card, and a turn draws at most one: the last step's. Find
+`show_project` by bare name (`+show_project` in ToolSearch); when it is not
+there, draw nothing and say nothing about a card.
 
 Nothing runs after that line. Do not start the next step, and do not promise
 one in prose you then act on.
@@ -139,15 +158,20 @@ destination: take it through "Hint review" below.
 
 - `mode: "folder"`: the working folder's absolute path.
 - `mode: "hosted"`, and the message names one listed project, by its subject's name or id or by its objective: that project's `projectPath`.
+- `mode: "hosted"`, `truncated: true`, and the message names a person no listed project is about: ask whether a project on that person already exists, and stop. A list cut short does not show every project.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - `mode: "hosted"`, and the message names no person: `newProjectPath`, even when projects are listed.
-- Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
+- Otherwise: list each project's subjects and objective, ask which one to continue, and stop.
+
+**When `project_list` answers an error,** say the project list could not be read just now and to try again shortly, and stop. Never start a project on a failed listing.
 
 **When `project_context` answers `no_project`, ask the researcher nothing, and call no other tool until a project exists.** With a person and question in the message, spawn `@plugin:init-project`. With no person in the message, call `project_create({ projectPath, objective })` with the researcher's words as `objective` and no `personId`, then pass that `projectPath`: no person and no question → `@plugin:tree-survey` (in folder mode skip `project_create` and pass no `projectPath`: a folder holds one project, and the survey writes nothing); a record set's names, a named title's DGS numbers, or a page → `@plugin:search-images`. A project with no person refuses research questions. Research on a person in a folder whose project has no person needs a new session; on the connector it starts at `newProjectPath`. When a later message asks for research on a person in that project, say in one sentence that research on a person starts from a FamilySearch person ID in a new project, and ask for it. A named person with no FamilySearch person ID: ask for the ID and create nothing.
 
-**If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
+**If `project_list` is not among your tools, even through tool search,** say the Genealogy Research connector is not connected: turn it on or reconnect it in Claude's connector settings. Then stop.
 
-**When `project_list` or `project_context` returned the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line. With none, end with no link. Every link you write is one a tool returned.
+**When `project_context` returns `signInUrl`,** give the researcher that link to sign in to FamilySearch again, and run no step until they say they have.
+
+**When the researcher asks where the report, findings or project are,** call `show_project({ projectPath, show: "file" })` when you have it, and say the case file it opens holds the question, the sources and the conclusion. Without it, in folder mode, say the project's files are in this task's folder. Write no link of your own.
 
 ## Bounded request or job
 
@@ -172,7 +196,7 @@ in the family happened ("what took him to Pennsylvania?"), what could explain a
 pattern in it, or historical background for either; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person;
-a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
+a timeline for a person; where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then, when you have `show_project`, call it with `show: "latest"`).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
@@ -804,6 +828,13 @@ The researcher returns a capture for a hand-off, or says they cannot open it.
 Match it to the `awaitingUser` row in `project_context` and spawn
 `@plugin:search-external-sites` with the `planItemId` and the file path or
 results text. That is the turn's step; offer the next one as usual.
+
+**Never read a returned capture yourself, or answer from it.** A results page, a
+spreadsheet or a PDF of search results goes to `@plugin:search-external-sites`,
+which logs it, even when no `awaitingUser` row matches it: then pass no
+`planItemId`, and say in the delegation which site and search it shows. A page
+image of one record is a transcription (§"Bounded request or job"), not a
+capture.
 
 **Never re-raise a hand-off `awaitingUser` already lists** — the researcher
 has that link.
