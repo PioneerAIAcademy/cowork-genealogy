@@ -1035,12 +1035,29 @@ def test_main_exits_1_on_a_failure_with_no_known_issue(monkeypatch, tmp_path, ca
     assert "2 fixtures: 0 pass, 1 known fail, 1 fail or ungraded" in out
 
 
-def test_every_committed_known_issue_is_named_in_its_readme():
-    marked = 0
-    for d in fixture_dirs(DEFAULT_SINGLE_ASK_FIXTURES, None):
+def _unnamed_known_issues(root: Path) -> list[str]:
+    """Each fixture under `root` whose README does not name its known_issue ("Issue #N owns it")."""
+    unnamed = []
+    for d in fixture_dirs(root, None):
         _, spec = load_single_ask_fixture(d)
-        if spec.known_issue:
-            marked += 1
-            readme = (d / "README.md").read_text(encoding="utf-8")
-            assert f"Issue {spec.known_issue} owns it" in readme, d.name
-    assert marked, "no committed fixture carries known_issue"
+        if spec.known_issue and f"Issue {spec.known_issue} owns it" not in (d / "README.md").read_text(
+            encoding="utf-8"
+        ):
+            unnamed.append(d.name)
+    return unnamed
+
+
+def test_every_committed_known_issue_is_named_in_its_readme():
+    assert _unnamed_known_issues(DEFAULT_SINGLE_ASK_FIXTURES) == []
+
+
+def test_the_readme_check_flags_a_known_issue_its_readme_does_not_name(tmp_path):
+    # The panel may carry no known_issue at all, so the committed check can pass on none;
+    # this keeps the check itself able to fail.
+    named = _write(tmp_path, id="named", known_issue="#2813")
+    (named / "README.md").write_text("Issue #2813 owns it.\n", encoding="utf-8")
+    unnamed = _write(tmp_path, id="unnamed", known_issue="#2813")
+    (unnamed / "README.md").write_text("Owned elsewhere.\n", encoding="utf-8")
+    plain = _write(tmp_path, id="plain")
+    (plain / "README.md").write_text("No known issue.\n", encoding="utf-8")
+    assert _unnamed_known_issues(tmp_path) == ["unnamed"]

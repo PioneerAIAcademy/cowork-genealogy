@@ -21,7 +21,19 @@ Not graded: whether the 1875 velación is reported as the marriage (printed as `
 
 ## Expected result today
 
-PASS. Measured 2026-11-16 in the eight-fixture panel run:
+PASS. Re-measured 2026-11-26 on the Haiku 5.5 low main thread, once `project_context` returned
+`boundedRequest` with its closing-offer clause:
+
+```
+PASS marriage-victoriana-vasquez  expected=search-records  first=search-records  save=ok  stop=clean
+    units: research > init-project > search-records  extraction_append=0
+```
+
+On `main` 84e94e6c9 without the field it stopped after init-project the same day (FAIL on `owner` and
+`save`), and on `main` 202730796 it ran `question-selection` after init-project. A run with the field but
+without the clause ended on a plain question and failed `ends_on_offer`.
+
+Measured 2026-11-16 in the eight-fixture panel run:
 
 ```
 PASS marriage-victoriana-vasquez  expected=search-records  first=search-records  save=ok  stop=clean

@@ -2822,7 +2822,9 @@ autonomous fixtures, **or neither**: a fixture with neither runs in an empty
 folder, the shape of most first messages. The loader refuses a fixture with one
 and not the other (partial seeding is an authoring mistake). An empty-folder
 fixture with a FamilySearch person ID lists `init-project` in `setup_units`; one
-with no ID expects `init-project` to ask for it and create nothing. Its save
+with no ID expects the ID to be asked for and nothing created, by `init-project` or by the
+main thread itself, which `project_context`'s no-project answer tells to ask (`expected_owner`
+`[null, "init-project"]`). Its save
 cannot be `sources` when init-project runs: `project_create` imports the person's
 Memories as sources, so a new source shows nothing about the deliverable
 (the loader refuses a `sources` save on any empty-folder fixture). There is no `expected-findings.json` and no judge.
