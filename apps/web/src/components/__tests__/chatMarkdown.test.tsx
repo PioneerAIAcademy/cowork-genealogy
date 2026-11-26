@@ -81,6 +81,16 @@ const noProjectComponents = {
         typeof child === 'string' ? <SchemaIdText text={child} onOpen={undefined} /> : child
       )}
     </li>
+  ),
+  code: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+    <code>{typeof children === 'string' ? <SchemaIdText text={children} /> : children}</code>
+  ),
+  strong: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+    <strong>
+      {React.Children.map(children, (child) =>
+        typeof child === 'string' ? <SchemaIdText text={child} onOpen={undefined} /> : child
+      )}
+    </strong>
   )
 }
 
@@ -142,6 +152,19 @@ describe('FamilySearch source links in a reply, no project open (#4582)', () => 
     expect(links).toHaveLength(1)
     expect(links[0].textContent).toBe('the record')
     expect(links[0].getAttribute('href')).toBe(`${FS}ark:/61903/3:1:ABCD-1`)
+  })
+
+  it('links an ARK written inside backticks (the model does this ~half the time)', () => {
+    const container = renderReply('Image: `ark:/61903/3:1:ABCD-1`.')
+    const links = within(container).getAllByRole('link')
+    expect(links).toHaveLength(1)
+    expect(links[0].getAttribute('href')).toBe(`${FS}ark:/61903/3:1:ABCD-1`)
+  })
+
+  it('links an ARK written in bold', () => {
+    const container = renderReply('Source: **ark:/61903/3:1:ABCD-2**')
+    const link = within(container).getByRole('link')
+    expect(link.getAttribute('href')).toBe(`${FS}ark:/61903/3:1:ABCD-2`)
   })
 
   it('does not link a bare person ID', () => {

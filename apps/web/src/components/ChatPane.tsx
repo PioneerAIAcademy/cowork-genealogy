@@ -312,6 +312,31 @@ export default function ChatPane({
             )
           )}
         </li>
+      ),
+      // The model writes ARKs in backticks about as often as bare, so an id in code or
+      // bold must linkify too (#4582). Code gets no `onOpen`: a schema id in a code span
+      // is literal, so only FamilySearch references (which need no project) link there.
+      code: ({
+        children,
+        className
+      }: {
+        children?: React.ReactNode
+        className?: string
+      }): React.JSX.Element => (
+        <code className={className}>
+          {typeof children === 'string' ? <SchemaIdText text={children} /> : children}
+        </code>
+      ),
+      strong: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <strong>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </strong>
       )
     }),
     [openSchemaId, hasSchemaId]
