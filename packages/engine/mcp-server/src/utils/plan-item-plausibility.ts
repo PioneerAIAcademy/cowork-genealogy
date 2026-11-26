@@ -385,3 +385,26 @@ export function planItemFlags(
 
   return flags;
 }
+
+/** The refusal for a hints-review plan item whose `record_type` is not `fs_hints`,
+ *  or `undefined` (#4828). `agentFor` routes by `record_type`, so the item that
+ *  says "Review pending FamilySearch hints on <PID>" but carries `other` or
+ *  `church` goes to a record-search agent and the pending hints are never read.
+ *
+ *  Anchored to the START of `rationale`, the shape research-plan prescribes: a
+ *  rationale that mentions hints mid-sentence is an ordinary item. Refuses rather
+ *  than rewriting `record_type`: the logged bad items also carry a jurisdiction, a
+ *  date range and record-search prose, so a silent rewrite would hide that the
+ *  agent merged two items. */
+export function hintsReviewRecordTypeError(item: PlanItemLike & { rationale?: unknown }): string | undefined {
+  const rationale = typeof item?.rationale === "string" ? item.rationale : "";
+  if (!/^\s*Review pending FamilySearch hints on/i.test(rationale)) return undefined;
+  if (item?.record_type === "fs_hints") return undefined;
+  const shown = typeof item?.record_type === "string" ? `'${item.record_type}'` : "none";
+  return (
+    `rationale starts 'Review pending FamilySearch hints on', but record_type is ${shown}. ` +
+    `The router sends an item to the hints reviewer only when record_type is 'fs_hints', so these hints ` +
+    `would never be reviewed: set record_type: "fs_hints" on this item, and write any record search ` +
+    `it also describes as a separate item.`
+  );
+}

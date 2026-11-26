@@ -85,7 +85,7 @@ You are invoked with a delegation message naming the search:
 Read what you need from the project yourself — do not expect the caller to have
 gathered it.
 
-Each invocation does one of three things, and returns:
+Each invocation does one of four things, and returns:
 
 1. **Hand-off** — a search to launch. Steps 1–4 below: the URL is built and
    logged, the plan item goes to `in_progress`, and you return the URL with the
@@ -106,6 +106,17 @@ Each invocation does one of three things, and returns:
    with `awaitingCapture: false, notAwaitedBecause: "researcher_reports_result"`) — never write a URL yourself — then log the result
    now (step 6) with that URL — `captureReceived: false`, `captureFilename:
    null` — and give the capture steps (step 4) so a capture can later confirm it.
+   A page the researcher says failed (timed out, did not load) is logged
+   `outcome: "error"`; give the link to try again.
+4. **Correction** — the researcher says an earlier report or capture was wrong
+   (it was a timeout, the page never loaded, the result was misread). Call
+   `research_query({ projectPath, section: "log" })` and find that entry. Log one
+   new entry whose `externalSite.urlGenerated` and `query` are copied from it, with
+   the corrected `outcome` and `notes` naming its `log_` id; do not call
+   `build_external_search_url`. The earlier entry stays as it is. The reply says the
+   earlier entry is superseded by the new one; never say the log cannot be changed.
+   A page that failed is `outcome: "error"`. The researcher's part starts with a `---`
+   line, then the copied link to try again, then the superseded sentence.
 
 You cannot wait for the researcher inside an invocation. What happens next — a
 capture, a choice of record — arrives as a later invocation.
@@ -129,7 +140,7 @@ established:
   right destination IS completing the delegation.
 
 Never report a result you did not read from a capture, or a URL you did not get
-from `build_external_search_url`.
+from `build_external_search_url` or copy from the log entry you are correcting.
 
 ## ROUTING — run this FIRST, before any tool call
 
@@ -207,9 +218,8 @@ Repeat for each external-site plan item.
 When the researcher asked for this search themselves (`userPresent: yes`), hand
 them the URL; the capture comes back in a later triage invocation. Otherwise nobody is sitting there to click a
 link, capture a PDF, or upload it while you work — so the click-capture-analyze
-loop above **cannot complete** mid-run. Do
-**not** present a URL and wait for a capture, and do **not** end your turn to ask
-for one: that stalls the run (the orchestrator's rule is that only
+loop above **cannot complete** mid-run. Present the URL as a lead, but do **not**
+wait for a capture, and do **not** end your turn to ask for one: that stalls the run (the orchestrator's rule is that only
 `project.status == "completed"`, a logged blocker, or something only the user can
 supply ends it).
 
@@ -234,8 +244,11 @@ Instead, for each capture-required external-site plan item:
    owns item structure; an executing skill may only update the `status` of an
    item that already exists, and inventing one to close puts a search in the
    plan that was never planned.
-5. **Return to the caller** — do not wait. The tool's `summaryStart`, pasted
-   whole, starts the researcher's part, so the researcher can run it later.
+5. **Return to the caller** — do not wait. The reply has the one `---` line:
+   the tool's `summaryStart`, pasted whole, starts the researcher's part. Below it,
+   what the record would settle, and one sentence saying the search was saved for
+   the researcher to run later. No click, print, save or upload steps, and no
+   `captureSteps`, anywhere in the reply.
 
 ## Before you search
 
@@ -625,6 +638,9 @@ which this is not. The outcomes:
   defer the log entry while you wait for the capture.
 - **No access** (subscription/login wall the user can't pass) →
   `outcome: "error"` with the reason; suggest the fallback plan item.
+- **Page failed** (the researcher says it timed out or did not load) →
+  `outcome: "error"`, never `negative`: a failed page proves nothing. Give the
+  link to try again.
 
 Before calling a site exhausted on zero results, try at least two
 variations (name variant, broader place, dropped parameter) — log each as
@@ -652,6 +668,7 @@ not mark it `completed` for handing over a URL.
 | Capture arrived unusable (login page, truncated) | `in_progress` |
 | Upload could not be read (transcription refused), no log entry | unchanged |
 | User *reports* a nil, no capture | `in_progress` |
+| User reports the page failed, or corrects a report to a failed page | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped`, `skip_category: "user_declined"`, their reason in `skip_reason` |
 | Site inaccessible, user has not decided | `in_progress` |
 | User declines the item itself (a courthouse visit, a search they don't want) | `skipped`, `skip_category: "user_declined"`, their words in `skip_reason` |
@@ -684,6 +701,7 @@ the natural next move in your return:
 |---------|----------|
 | PDF shows a login page | "Please log in to [site], then click the link again" |
 | PDF cuts off results (lazy loading) | "Scroll to the bottom and back to the top before printing to PDF" |
+| Find a Grave capture shows only the site header (logo, divider line), no results | Find a Grave's no-results page, not a failed or truncated one. Triage it as zero results, log `outcome: "negative"` with `captureReceived: true` and the upload's name, set the plan item `completed`, and do not ask for a resave or recapture |
 | PDF missing images/thumbnails | "Record images may not print — screenshot the document viewer separately" |
 | PDF links aren't clickable | Construct record URLs from visible record IDs/database names instead of extracted links |
 | User can't access the site | Log `outcome: "error"` with the access limitation. Ask whether to skip the site: on their yes, `skipped` with `skip_category: "user_declined"` and their reason in `skip_reason`; otherwise `in_progress` (step 7). Offer the fallback plan item if one exists |
@@ -1082,7 +1100,9 @@ plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which website or
    archive was searched for whom, and what came of it — in plain words. A
-   hand-off carries its content here, in full (Step 4's list), and, when
+   hand-off carries its content here, in full (Step 4's list; with `userPresent:
+   no`, without its capture steps, plus one sentence that the search was saved
+   to run later), and, when
    `collections_search` found the same collection FamilySearch holds, one
    sentence saying so and that it can be searched instead, and step 2b's
    `filmForYear.line`, word for word, when it kept a filmed copy. If nothing was

@@ -456,6 +456,21 @@ describe("project_create", () => {
     expect(await exists("tree.gedcomx.json")).toBe(false);
   });
 
+  it.each([
+    ["a person FamilySearch does not hold", "Person KWCJ-RN4 not found in the FamilySearch Family Tree."],
+    ["an ended session", "Your FamilySearch session has ended. Call the login tool to authenticate."],
+    ["FamilySearch failing", "FamilySearch tree API error: 503"],
+  ])("returns a failed read (%s) as the create's refusal, in the read's own words, and writes NEITHER file", async (_label, message) => {
+    const r = await runProjectCreate(
+      { projectPath: dir, objective: "Identify the parents of Patrick Flynn", personId: "KWCJ-RN4" } as never,
+      { readPerson: async () => { throw new Error(message); } },
+      LOCAL,
+    );
+    expect(r).toEqual({ ok: false, errors: [message] });
+    expect(await exists("research.json")).toBe(false);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
   it("accepts a subject person that IS in the read", async () => {
     const r = await projectCreate({
       projectPath: dir,
