@@ -14458,7 +14458,13 @@ export async function researchAppend(
     const removalWarnings: string[] = [];
     let removedPersons = false;
     if (closesLastOpenQuestion(beforeResearch, research)) {
-      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
+      const writtenSummaryIds = new Set(applied.filter((a) => a.section === "proof_summaries").map((a) => a.entryId));
+      const unanchored = unanchoredMintedPersonIds(
+        tree,
+        research,
+        (id) => pidOrStartingPerson(id, prep.startingPersonIds),
+        writtenSummaryIds,
+      );
       if (unanchored.length > 0) {
         removalWarnings.push(unanchoredRemovalMessage(removeUnanchoredPersons(tree, research, unanchored)));
         removedPersons = true;
