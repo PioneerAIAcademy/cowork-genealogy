@@ -41,7 +41,7 @@ export function pointAtPage<T extends { name: string }>(schemas: readonly T[], u
 export const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
 export const PROJECT_META_KEY = "genealogy/project";
 export const UI_EXTENSION = "io.modelcontextprotocol/ui";
-export const DISPLAY_NAME = "Genealogy Viewer";
+export const DISPLAY_NAME = "Genealogy Research";
 /** Past this a host drops `_meta` whole, project id included, so `show_project`
  *  leaves the documents out and keeps the rest. */
 export const MAX_META_BYTES = 1_000_000;
