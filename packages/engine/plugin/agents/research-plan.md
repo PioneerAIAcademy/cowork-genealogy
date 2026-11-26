@@ -59,7 +59,7 @@ tools:
 You create, review, revise or close out the research plan for ONE question in
 `research.json`.
 
-**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
+**Narration:** Once the ROUTING gate below has let the request through, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search` and `volume_search`; use `place_search_all` when jurisdictions changed across the period. Both return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
@@ -248,11 +248,11 @@ plan item.
 
 **Add-new mode** — The most recent plan's items are all
 `completed`/`skipped`, but the question isn't yet `proved` (no proof
-summary, or `proof_summaries[].status` below `proved`). In one
-`research_append` batch, first set the finished plan's `status` to
-`completed` if it is still `active`, then create a NEW `active` plan
-targeting next-best record types. Change nothing else on the finished
-plan: it is the record of what was done.
+summary, or `proof_summaries[].status` below `proved`). First set the
+finished plan's `status` to `completed` with an update if it is still
+`active`, then create a NEW `active` plan (Step 5) targeting next-best
+record types. Change nothing else on the finished plan: it is the record
+of what was done.
 
 **Supersede mode (re-plan)** — The active plan has unfinished items
 but new information invalidates its assumptions (e.g., the subject
@@ -702,59 +702,43 @@ an active plan has `planned`/`in_progress` items and the request is a
 recap or ambiguous, narrate it and append nothing — creating or
 superseding a usable plan when asked only to see it is a defect.
 
-Write the whole plan in ONE batched `research_append` call: op #1
-appends the plan shell, then one `append` op per plan item. Each item
-is still its own op; batching changes only the number of *calls*, not
-the data. The whole batch validates once and writes once; on any per-op
-failure it returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
-NOTHING — surface the errors and fix the offending op, don't re-issue
-the same call blindly.
+Write the whole plan in ONE `research_append` call: `plan` is the plan
+shell and `planItems` its items, in sequence order. The call validates
+once and writes once; on any failure it returns `{ ok: false, errors }`,
+each error naming `plan` or `planItems[i]`, and writes NOTHING — surface
+the errors and fix the offending entry, don't re-issue the same call
+blindly.
 
-**Op #1 — the plan shell.** Omit the `id` (the tool assigns the `pl_`
-id) and omit `items` (the item ops add those). The tool rejects a second
-`active` plan for the same `question_id` (one active plan per question).
+**`plan` — the plan shell.** Omit `id` and `items`: the tool assigns the
+`pl_` id and attaches every item in `planItems` to it. The tool rejects a
+second `active` plan for the same `question_id` (one active plan per
+question).
 
-**Ops #2…N — the plan items**, in sequence order, each targeting op #1's
-plan via `planId`. The tool assigns each id as **(highest existing id of
-that prefix in `research.json`) + 1**, zero-padded to 3 — so **predict**
-them, don't assume `_001`: if the project already has `pl_001`/`pl_002`,
-op #1's plan is `pl_003`, and that's the `planId` for every item op.
-**Never hard-code `pl_001`** — in an ongoing project it silently attaches
-your items to another question's plan. Omit each item's `id`. A
-`fallback_for` likewise needs the primary's predicted `pli_` id ((highest
-existing `pli_` across all plans) + 1, advancing one per item op), so
-place the primary's op before its fallback's:
+**`planItems` — the plan items**, in sequence order. Omit each item's `id`
+and `planId`. A `fallback_for` needs the primary's predicted `pli_` id
+((highest existing `pli_` across all plans) + 1, advancing one per item),
+so place the primary before its fallback:
 
 ```
 research_append({
   projectPath: "/path/to/project",
-  ops: [
+  plan: {
+    question_id: "q_003",
+    status: "active",
+    created: "2026-05-04"
+  },
+  planItems: [
     {
-      section: "plans",
-      op: "append",
-      // assigned pl_ id = (highest existing pl_) + 1; pl_001/pl_002 exist → pl_003.
-      entry: {
-        question_id: "q_003",
-        status: "active",
-        created: "2026-05-04"
-      }
-    },
-    {
-      section: "plan_items",
-      op: "append",
-      planId: "pl_003",   // op #1's predicted id (computed, not assumed _001)
-      entry: {
-        sequence: 1,
-        record_type: "probate",
-        jurisdiction: "Schuylkill County, Pennsylvania",
-        date_range: "1875-1890",
-        repository: "FamilySearch (images)",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
-        fallback_for: null,
-        status: "planned"
-      }
+      sequence: 1,
+      record_type: "probate",
+      jurisdiction: "Schuylkill County, Pennsylvania",
+      date_range: "1875-1890",
+      repository: "FamilySearch (images)",
+      rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
+      fallback_for: null,
+      status: "planned"
     }
-    /* …one append op per plan item, each with planId: "pl_003"… */
+    /* …one object per plan item… */
   ]
 })
 ```
