@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { questionStatus, questionStates } from "../../src/utils/question-state.js";
 import { ATTACHMENT_LINK_RATIONALE, countsForProofGate, isAttachmentLink } from "../../src/utils/tree-person.js";
@@ -649,7 +649,7 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     expect(s.unregisteredDisagreements).toEqual([
       { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2", "a_3"] },
     ]);
-    expect(s.nextStep).toMatch(/^conflict-resolution — unregistered disagreement: I2 birth place/);
+    expect(s.nextStep).toMatch(/^conflict-resolution — unregistered disagreement: an unnamed person's birth place \(a_1, a_2, a_3\)/);
   });
 
   it("a birth's place and a birthplace assertion compare as one fact", () => {
@@ -848,7 +848,7 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
   it("a subject with four parents and no hypotheses is the next step", () => {
     const s = questionStatus(withSubject(), question(), tree);
     expect(s.competingParentSets).toEqual([{ personId: "I1", parentIds: ["I2", "I3", "I4", "I5"] }]);
-    expect(s.nextStep).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+    expect(s.nextStep).toMatch(/^hypothesis-tracking — competing parent sets: an unnamed person \(an unnamed person, /);
   });
 
   it("two hypotheses related to the question clear it", () => {
@@ -1015,7 +1015,7 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     const s = load(SIBLINGS);
     s.tree.relationships = ["I5", "I6", "I7"].map((parent) => ({ type: "ParentChild", parent, child: "I1" }));
     s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_001", person_id: "I1" });
-    expect(step(s.research, s.tree)).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+    expect(step(s.research, s.tree)).toMatch(/^hypothesis-tracking — competing parent sets: Elizabeth Stouer \(an unnamed person, /);
     const c = load(SIBLINGS);
     c.research.conflicts = [{ id: "c_001", status: "unresolved", competing_assertion_ids: ["a_001", "a_005"] }];
     expect(step(c.research, c.tree)).toMatch(/^conflict-resolution/);
@@ -1026,7 +1026,7 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     expect(step(s.research, s.tree)).not.toMatch(/\b[FINRS]\d+\b/);
     s.tree.persons.find((p: any) => p.id === "I3").names = [];
     expect(step(s.research, s.tree)).toBe(
-      "hypothesis-tracking — unlinked kin: Nora Stowers, a person with no name in the tree",
+      "hypothesis-tracking — unlinked kin: Nora Stowers, an unnamed person",
     );
   });
 });
@@ -1666,5 +1666,24 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
       person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
     });
     expect(questionStatus(d, question(), tree).nextStep ?? "").not.toMatch(/^proof-conclusion — hypothesis/);
+  });
+});
+
+/** Issue #4669: the main thread repeats `nextStep` to the researcher, so no
+ *  scenario's next step may name a tree id. The spawns carry the ids. */
+describe("questionStatus — no next step names a tree id", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const scenarios = readdirSync(SCENARIOS).filter(
+    (d) => existsSync(join(SCENARIOS, d, "research.json")) && existsSync(join(SCENARIOS, d, "tree.gedcomx.json")),
+  );
+
+  it("covers the scenarios that reach a person-naming step", () => {
+    expect(scenarios.length).toBeGreaterThan(50);
+  });
+
+  it.each(scenarios)("%s", (scenario) => {
+    const read = (f: string): any => JSON.parse(readFileSync(join(SCENARIOS, scenario, f), "utf-8"));
+    const steps = questionStates(read("research.json"), read("tree.gedcomx.json")).map((q) => q.nextStep ?? "");
+    for (const step of steps) expect(step).not.toMatch(/\b[FINRS]\d+\b/);
   });
 });

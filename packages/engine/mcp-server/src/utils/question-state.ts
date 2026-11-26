@@ -383,7 +383,7 @@ export function subjectUnreached(
 /** Tree persons by preferred name, for a step the researcher is shown. */
 function personNames(tree: any, ids: readonly string[]): string {
   const byId = new Map(arr(tree?.persons).map((p) => [p?.id, p]));
-  return ids.map((id) => preferredDisplayName(byId.get(id)) ?? "a person with no name in the tree").join(", ");
+  return ids.map((id) => preferredDisplayName(byId.get(id)) ?? "an unnamed person").join(", ");
 }
 
 /** Tree persons linked to this question's assertions whom nothing ties to a
@@ -850,7 +850,11 @@ export function registeredPairConflictIds(research: any, pair: AttachedBirthPair
  *  matters: told to open a conflict, an orchestrator asked for John's pair to be
  *  registered again while c_002 sat unweighed (thomas-hanrahan-marriage,
  *  2026-11-18 14:12). */
-export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], research: any): string {
+export function attachedBirthPairsAction(
+  pairs: readonly AttachedBirthPair[],
+  research: any,
+  name: (personId: string) => string = (id) => id,
+): string {
   const registered = new Set<string>();
   const unregistered: string[] = [];
   for (const pair of pairs) {
@@ -863,15 +867,18 @@ export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], re
     parts.push(`weigh ${[...registered].sort().join(", ")} (registered, not yet analysed)`);
   }
   if (unregistered.length > 0) {
-    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.join(", ")}`);
+    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.map(name).join(", ")}`);
   }
   return parts.join("; ");
 }
 
 /** The pairs as one clause: the identity rung's text and the proof gate's. */
-export function describeAttachedBirthPairs(pairs: readonly AttachedBirthPair[]): string {
+export function describeAttachedBirthPairs(
+  pairs: readonly AttachedBirthPair[],
+  name: (personId: string) => string = (id) => id,
+): string {
   return pairs
-    .map(({ personId, a, b }) => `${personId}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
+    .map(({ personId, a, b }) => `${name(personId)}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
     .join("; ");
 }
 
@@ -969,9 +976,10 @@ export function questionStatus(
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
     // weighed each pair: a rung below one that names proof-conclusion would loop.
+    const name = (id: string): string => personNames(tree, [id]);
     nextStep =
-      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs)} cannot both ` +
-      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research)}, blocking ${qid}`;
+      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs, name)} cannot both ` +
+      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research, name)}, blocking ${qid}`;
   } else if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
     // written one with `shortfall: "conflict"`, at the tier the evidence reaches,
@@ -1018,11 +1026,11 @@ export function questionStatus(
     // `conflicts[]` cannot be what routes there — the evidence has to.
     nextStep =
       "conflict-resolution — unregistered disagreement: " +
-      disagreements.map((d) => `${d.personId} ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
+      disagreements.map((d) => `${personNames(tree, [d.personId])}'s ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
   } else if (parentSets.length > 0) {
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
-      parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
+      parentSets.map((p) => `${personNames(tree, [p.personId])} (${personNames(tree, p.parentIds)})`).join("; ");
   } else if (kin.length > 0) {
     nextStep = `hypothesis-tracking — unlinked kin: ${personNames(tree, kin)}`;
   } else if (unreached) {

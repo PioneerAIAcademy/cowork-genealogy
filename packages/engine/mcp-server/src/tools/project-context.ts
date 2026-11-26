@@ -684,7 +684,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
         ? searchDelegations(input.projectPath, research, tree, questionById.get(id), exhaustedItemIds, subjectUnsupported)
         : [];
-    const spawn = stepSpawn(input.projectPath, research, status, tree);
+    const spawn = stepSpawn(input.projectPath, research, status, tree, attachedBirthPairs.get(id) ?? []);
     return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches, ...(spawn ? { spawn } : {}) }, [
       "nextStep",
     ]) as ProjectContextQuestionStatus;

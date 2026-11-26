@@ -380,7 +380,9 @@ weighed them (an analysed identity conflict naming either record through any
 assertion of the same record party, or an analysed
 fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
 attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
-blocking <q>`, whether or not the question is resolved. `<action>` names the
+blocking <q>`, whether or not the question is resolved. `<p>` is the person's
+preferred name, never their id; the spawn carries the ids on a `personIds:` line
+(§2.2.2). `<action>` names the
 conflict already registered for a pair (an identity conflict naming either record,
 or a fact conflict naming both, not yet analysed) as `weigh <c> (registered, not yet
 analysed)`, and asks for `open a conflict_type 'identity' conflict naming the two
@@ -590,9 +592,11 @@ different mothers; two same-named mothers).
 
 **Unlinked kin** also needs the tree, and adds no field: only
 `nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person names>`,
-each person's preferred name or "a person with no name in the tree". The step names
-no id, because the main thread repeats it to the researcher; the ids
-go only in the spawn's `personIds:` line (§2.2.2). It
+each person's preferred name or "an unnamed person". No person-naming step names
+a tree id, because the main thread repeats `nextStep` to the researcher: the
+identity, unregistered-disagreement (`<name>'s <fact> (<assertion ids>)`),
+competing-parent-sets (`<name> (<parent names>)`), unlinked-kin and
+unreached-subject steps all name people, and the ids go in the spawn (§2.2.2). It
 fires on an unresolved question that no `hypotheses` entry lists in
 `related_question_ids`, for each tree person linked by live `person_evidence` to
 one of its assertions who has no `ParentChild` or `Couple` path, of any length or
@@ -754,7 +758,8 @@ and the `nextStep` text:
   rung fires only when none is linked) and `userPresent: yes`, which the router
   turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
-  disagreement, or `conflictIds:` for an open conflict;
+  disagreement, or `conflictIds:` for an open conflict; for the identity step, a
+  `personIds:` line with the tree ids of the people whose births are paired;
 - hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set, and for unlinked kin a `personIds:` line with their tree ids.
 
 research-plan gets none: its rung does not know whether the question's

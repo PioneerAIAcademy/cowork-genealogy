@@ -413,7 +413,10 @@ describe("project_context routes the identity question before a proof (#4444)", 
       const r: any = await projectContext({ projectPath: dir }, LOCAL);
       const step = r.questionStatuses.find((s: any) => s.id === "q_001").nextStep as string;
       expect(step).toMatch(/^conflict-resolution — identity/);
-      expect(step).toContain("M8R7-2TR");
+      expect(step).toContain("John Hanrahan's attached births");
+      expect(step).not.toContain("M8R7-2TR");
+      const spawn = r.questionStatuses.find((s: any) => s.id === "q_001").spawn;
+      expect(spawn.prompt).toMatch(/^personIds: .*M8R7-2TR/m);
       expect(step).toContain("a_052");
       expect(step).toContain("a_074");
     } finally {
@@ -427,7 +430,7 @@ describe("project_context routes the identity question before a proof (#4444)", 
       const r: any = await projectContext({ projectPath: dir }, LOCAL);
       const step = r.questionStatuses.find((s: any) => s.id === "q_001").nextStep as string;
       expect(step).toMatch(/^conflict-resolution — identity/);
-      expect(step).toContain("M8R7-2TR");
+      expect(step).toContain("John Hanrahan's attached births");
       expect(step).toContain("weigh c_002");
       expect(step).not.toContain("open a conflict_type 'identity' conflict");
     } finally {
@@ -481,7 +484,8 @@ describe("project_context routes the identity question before a proof (#4444)", 
       const r: any = await projectContext({ projectPath: dir }, LOCAL);
       const step = r.questionStatuses.find((s: any) => s.id === "q_001").nextStep as string;
       expect(step).toMatch(/^conflict-resolution — identity/);
-      expect(step).toContain("93RB-RTD");
+      expect(step).toContain("Mary Hanrahan's attached births");
+      expect(step).not.toContain("93RB-RTD");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

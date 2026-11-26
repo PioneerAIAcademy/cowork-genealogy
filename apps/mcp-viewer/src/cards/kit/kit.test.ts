@@ -182,7 +182,7 @@ describe('the next step in words', () => {
     ['research-plan', 'Plan the searches.'],
     ['locality-guide, then research-plan', 'Plan the searches.'],
     ['person-evidence — none of this question\'s 4 assertions is linked', 'Link what the records say to the people they are about.'],
-    ['hypothesis-tracking — competing parent sets: I3', 'Weigh the competing sets of parents.'],
+    ['hypothesis-tracking — competing parent sets: Elizabeth Stouer (Mary Doe, Ann Roe, Jane Poe)', 'Weigh the competing sets of parents.'],
     ['hypothesis-tracking — unlinked kin: Nora Stowers, Lois E. Stowers', 'Set out how these people might be related before relying on it.']
   ])('%j', (nextStep, words) => {
     expect(nextStepWords(nextStep)).toBe(words)
