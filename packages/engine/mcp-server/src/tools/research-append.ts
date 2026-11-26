@@ -25,6 +25,7 @@ import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/pa
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import {
   compoundJurisdictionError,
+  hintsReviewRecordTypeError,
   outsideSiteJurisdictionError,
   planItemFlags,
   planWindowFlag,
@@ -8081,6 +8082,18 @@ function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly 
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
+/** A hints-review item carries `record_type: "fs_hints"` (`hintsReviewRecordTypeError`,
+ *  #4828). Checked on an append and on a change to `rationale` or `record_type`
+ *  only, so an item written before the rule stays editable by a status change. */
+function hintsReviewRuleInputsChanged(stored: any, next: any): boolean {
+  return stored?.rationale !== next?.rationale || stored?.record_type !== next?.record_type;
+}
+
+function hintsReviewRecordTypeInvariants(item: any): string[] {
+  const error = hintsReviewRecordTypeError(item ?? {});
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -10555,6 +10568,9 @@ function applyOne(
         if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
           invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
         }
+        if (item && hintsReviewRuleInputsChanged(storedItem, item)) {
+          invariantErrors.push(...hintsReviewRecordTypeInvariants(item));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         invariantErrors.push(...planItemVoidSearchInvariants(item, research, fulltextSearchable));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -10649,6 +10665,9 @@ function applyOne(
     }
     if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
       invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
+    }
+    if (op.op === "append" || hintsReviewRuleInputsChanged(storedItem, resultEntry)) {
+      invariantErrors.push(...hintsReviewRecordTypeInvariants(resultEntry));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(

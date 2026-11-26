@@ -2563,9 +2563,91 @@ def create_mock_server(
         )(_guard_unknown_args("person_quality", pq_handler, call_log, workspace))
     )
 
+    # show_project: production adds it for a connector caller only, so only a hosted
+    # test advertises it.
+    hosted_paths = _hosted_store(manifest or {})
+    show_schema = _load_show_project_schema() if hosted_paths is not None else None
+    if show_schema is not None and hosted_paths is not None:
+        tools.append(
+            tool("show_project", show_schema["description"], show_schema["inputSchema"])(
+                _make_show_project_handler(show_schema["inputSchema"], set(hosted_paths), call_log)
+            )
+        )
+
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
     return server, call_log, tools_by_name
+
+
+_show_project_schema_cache: dict[str, Any] | None = None
+
+
+def _load_show_project_schema() -> dict[str, Any] | None:
+    """`show_project`'s description and input schema from the compiled
+    `connectorProjectViewSchemas` (`build/tools/project-view.js`), or None when the
+    build cannot be read. Cached once it loads."""
+    global _show_project_schema_cache
+    if _show_project_schema_cache is not None:
+        return _show_project_schema_cache
+    module = _MCP_BUILD / "tools" / "project-view.js"
+    script = (
+        f"import {{ connectorProjectViewSchemas }} from '{_node_module_url(module)}';"
+        " const s = connectorProjectViewSchemas.find((x) => x.name === 'show_project');"
+        " process.stdout.write(JSON.stringify(s ? { description: s.description, inputSchema: s.inputSchema } : null));"
+    )
+    try:
+        loaded = json.loads(_run_node_eval(script, store=False).stdout or "null")
+    except Exception:
+        return None
+    if isinstance(loaded, dict) and isinstance(loaded.get("inputSchema"), dict):
+        _show_project_schema_cache = loaded
+        return loaded
+    return None
+
+
+_PICK_FROM_PROJECT_LIST = "Call project_list and pass one of its projectPath values."
+
+
+def show_project_answer(schema: dict[str, Any], args: dict[str, Any], paths: set[str]) -> tuple[str, bool]:
+    """`showProject`'s text and whether it is an error, for the checks it makes before
+    it draws (`src/tools/project-view.ts`, `connectorProjectView`): an unknown argument,
+    `show` and `page` outside their lists, an id argument that is not a string, and a
+    `projectPath` that is missing or not one the hosted store answers for."""
+    props = schema.get("properties") or {}
+    unknown = [k for k in args if k not in props]
+    if unknown:
+        return f"show_project has no argument {', '.join(unknown)}. It takes: {', '.join(props)}.", True
+    for name in ("show", "page"):
+        allowed = (props.get(name) or {}).get("enum") or []
+        if (name == "show" or name in args) and args.get(name) not in allowed:
+            return f"{name} must be one of: {', '.join(allowed)}.", True
+    for name in ("questionId", "logId", "personId", "planItemId", "sourceId"):
+        if name in args and not isinstance(args[name], str):
+            return f"{name} must be a string.", True
+    if "projectPath" not in args:
+        return f"This call named no project. {_PICK_FROM_PROJECT_LIST}", True
+    if args["projectPath"] not in paths:
+        return f"No project is saved at this projectPath. {_PICK_FROM_PROJECT_LIST}", True
+    return f"The researcher sees the {args['show']} card; do not restate it.", False
+
+
+def _make_show_project_handler(schema: dict[str, Any], paths: set[str], call_log: list[dict[str, Any]]):
+    async def handler(args: dict[str, Any]) -> dict[str, Any]:
+        text, is_error = show_project_answer(schema, dict(args), paths)
+        call_log.append({
+            "tool": "mcp__genealogy__show_project",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:show_project",
+            "response": {"text": text, "isError": is_error},
+        })
+        envelope: dict[str, Any] = {"content": [{"type": "text", "text": text}]}
+        if is_error:
+            envelope["is_error"] = True
+        return envelope
+
+    return handler
 
 
 #: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
@@ -2655,17 +2737,14 @@ def _make_live_handler(
 
 
 def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] | None:
-    """The paths a hosted store answers for, each with its `projectUrl` and `uploadUrl`
-    (either may be None), when the test serves a hosted `project_list` answer; None for
-    every other test.
+    """The paths a hosted store answers for, each with its `uploadUrl` (or None), when
+    the test serves a hosted `project_list` answer; None for every other test.
 
     A hosted store has no folder: it is bound to the projects it lists, refuses any
     other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
     `project_context` carries the bound project's `uploadUrl` (`utils/project-links.ts`).
     The file store this harness runs does neither, so a hosted test emulates both,
-    taking each link from the listed project. `projectUrl` is the harness's own:
-    production's `project_context` no longer returns one, and it is kept for the
-    research suite's hosted tests.
+    taking the link from the listed project.
     """
     paths: dict[str, dict[str, str | None]] = {}
     for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
@@ -2673,12 +2752,9 @@ def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] 
             continue
         for project in listing.get("projects") or []:
             if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
-                paths[project["projectPath"]] = {
-                    "projectUrl": project.get("projectUrl"),
-                    "uploadUrl": project.get("uploadUrl"),
-                }
+                paths[project["projectPath"]] = {"uploadUrl": project.get("uploadUrl")}
         if isinstance(listing.get("newProjectPath"), str):
-            paths.setdefault(listing["newProjectPath"], {"projectUrl": None, "uploadUrl": None})
+            paths.setdefault(listing["newProjectPath"], {"uploadUrl": None})
     return paths or None
 
 
@@ -3206,8 +3282,6 @@ def _make_compiled_tool_handler(
                 }
             links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
             if tool_name == "project_context" and links and isinstance(response, dict):
-                if links["projectUrl"] and response.get("objective"):
-                    response = {**response, "projectUrl": links["projectUrl"]}
                 # Production spreads `uploadUrl` onto every answer that read the project,
                 # and returns an `ok: false` one before it.
                 if links["uploadUrl"] and response.get("ok") is True:
