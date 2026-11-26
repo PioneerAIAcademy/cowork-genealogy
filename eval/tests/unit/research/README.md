@@ -95,8 +95,10 @@ at `newProjectPath` or not at all, and nowhere else. The mock serves every proje
 the test's one workspace, so each test's scenario is the project its route
 should open. In `ut_research_hnp`, `ut_research_hsp` and `ut_research_hts` it
 behaves as a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the
-listing does not name is refused, and `project_context` at a listed project
-carries its `projectUrl`.
+listing does not name is refused, and `show_project`, which the connector alone
+offers, is served. `draws-card:<card>` gates `test_draws_the_steps_card`: one
+`show_project` call, with that card, at the project the router read
+(`ut_research_hsp` draws `question` after question-selection).
 
 ## Reads project state first (issue #3766)
 

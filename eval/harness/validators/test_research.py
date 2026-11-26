@@ -1221,16 +1221,15 @@ def test_no_project_reads_no_wrong_project_path(test, tool_calls, builtin_tool_c
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
 
-def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_tool_calls, text_response):
+def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_tool_calls):
     """Tag-gated (``uses-listed-project``). The message names the one listed
-    project's subject, so the router reads that project, the first hand-off names
-    its ``projectPath``, and the reply that ends the turn ends with its
-    ``projectUrl``."""
+    project's subject, so the router reads that project and the first hand-off
+    names its ``projectPath``."""
     if "uses-listed-project" not in (test.get("tags") or []):
         pytest.skip("not a listed-project test")
     projects = _hosted_listing(tool_calls).get("projects") or []
     assert len(projects) == 1, f"expected a hosted project_list answer listing one project; got {projects}"
-    path, url = projects[0].get("projectPath"), projects[0].get("projectUrl")
+    path = projects[0].get("projectPath")
     read_paths = _project_context_paths(tool_calls)
     assert path in read_paths, f"project_context was never called with the listed projectPath {path!r}: {read_paths}"
     callee = _expected_skill(test)
@@ -1238,8 +1237,26 @@ def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_to
     assert handoff is not None and path in handoff, (
         f"the '{callee}' hand-off must name {path!r}; got {(handoff or '')[:300]}"
     )
-    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
-    assert lines and url in lines[-1], f"the reply that ends the turn must end with {url!r}; its last line: {lines[-1:]}"
+
+
+def test_draws_the_steps_card(test, tool_calls):
+    """Tag-gated (``draws-card:<card>``). research/SKILL.md, "One step per turn":
+    after a step's report the router calls ``show_project`` once, with the card
+    its table names for that step, at the project it read. The harness serves
+    ``show_project`` on a hosted test only, as the connector does."""
+    wanted = [t.split(":", 1)[1] for t in test.get("tags") or [] if t.startswith("draws-card:")]
+    if not wanted:
+        pytest.skip("not a card test")
+    calls = [c for c in tool_calls or [] if bare_tool_name(str(c.get("tool") or "")) == "show_project"]
+    assert len(calls) == 1, f"expected one show_project call; got {[c.get('args') for c in calls]}"
+    args = calls[0].get("args") or {}
+    assert args.get("show") == wanted[0], f"show_project drew {args.get('show')!r}; this step's card is {wanted[0]!r}"
+    read_paths = [p for p in _project_context_paths(tool_calls) if p]
+    assert args.get("projectPath") in read_paths, (
+        f"show_project named {args.get('projectPath')!r}, not the project the router read: {read_paths}"
+    )
+    response = calls[0].get("response") or {}
+    assert not response.get("isError"), f"show_project refused the call: {response.get('text')}"
 
 
 def test_bounded_transcription_is_delivered_in_place(

@@ -2,7 +2,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 import { cardView } from '../cards/kit/view'
 import { CardLine, Shell } from '../cards/kit/Shell'
 import { compareFindings, compareLine } from '../file/compare-model'
-import { CARDS, cardKind } from '../cards/registry'
+import { cardFor, cardKind } from '../cards/registry'
 import { fullscreenOffered } from '../display-mode'
 import type { Session } from '../session'
 import { NewCaseFile } from '../file/NewCaseFile'
@@ -38,7 +38,7 @@ export function Viewer({ session }: { session: Session }) {
       ]
     : []
   const kind = cardKind(input.show, view)
-  const Card = CARDS[kind]
+  const Card = cardFor(kind)
   // Compare's count goes under the conclusion card, and under whatever `latest` draws.
   const line =
     found && (kind === 'conclusion' || input.show === 'latest') ? (

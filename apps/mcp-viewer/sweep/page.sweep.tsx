@@ -3,7 +3,8 @@ import { join } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it } from 'vitest'
 import { cardView } from '../src/cards/kit/view'
-import { CARDS, cardKind } from '../src/cards/registry'
+import { CARDS, cardFor, cardKind } from '../src/cards/registry'
+import { ConclusionCard } from '../src/cards/ConclusionCard'
 import type { ProjectDocument } from '../src/contract'
 import { leftoverIds } from '../src/rules/id-check'
 import { Prose } from '../src/rules/Prose'
@@ -115,7 +116,7 @@ it('every card and every narrative renders with no id left, every known pid link
         cards++
         try {
           const view = cardView(document, { show, questionId })
-          const Card = CARDS[cardKind(show, view)]
+          const Card = cardFor(cardKind(show, view))
           check(where, render(<Card view={view} />).text)
         } catch (error) {
           problems.push(`${where}: threw ${error instanceof Error ? error.message : String(error)}`)
@@ -125,7 +126,7 @@ it('every card and every narrative renders with no id left, every known pid link
     const conclusion = render(
       (() => {
         const view = cardView(document, { show: 'conclusion' })
-        return <CARDS.conclusion view={view} />
+        return <ConclusionCard view={view} />
       })()
     ).text
     if (REVIEWED.includes(name) && !conclusion.includes("A reviewer's verdict")) problems.push(`${name}: no reviewer shown`)
@@ -148,7 +149,7 @@ it('the link card reads as expected on the named end states', () => {
       continue
     }
     const view = cardView(state.document, { show: 'link', questionId: want.questionId })
-    const Card = CARDS[cardKind('link', view)]
+    const Card = cardFor(cardKind('link', view))
     host.innerHTML = renderToStaticMarkup(<Card view={view} />)
     const text = (host.textContent ?? '').replace(/\s+/g, ' ')
     if (!want.text.test(text)) problems.push(`${want.project} ${want.questionId}: no ${want.text} (${want.why}) | ${text.slice(0, 300)}`)
@@ -157,7 +158,7 @@ it('the link card reads as expected on the named end states', () => {
   for (const { name, document } of states) {
     for (const question of document.research?.questions ?? []) {
       const view = cardView(document, { show: 'link', questionId: question.id })
-      const Card = CARDS[cardKind('link', view)]
+      const Card = cardFor(cardKind('link', view))
       host.innerHTML = renderToStaticMarkup(<Card view={view} />)
       for (const li of host.querySelectorAll('ul.people li')) {
         named++

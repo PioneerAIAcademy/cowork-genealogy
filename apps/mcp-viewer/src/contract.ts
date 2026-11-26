@@ -10,6 +10,7 @@ export const CONNECTOR_NAME = 'Genealogy Viewer'
 
 export const SHOW_VALUES = [
   'setup',
+  'question',
   'plan',
   'search',
   'link',
