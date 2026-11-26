@@ -207,6 +207,10 @@ describe("extraction_append: documents", () => {
       expect(await roleOf("capture:census-1860-flynn", "Thomas Flynn")).toBe("head_of_household");
     });
 
+    it("refuses a census of exactly two persons sent with no household", () => {
+      expect(named(validateStructuredDocument(page([], 2)))).toEqual(["p1 (Thomas Flynn), p2 (Bridget Flynn)"]);
+    });
+
     it("accepts a one-person census with no household", async () => {
       const r = await run([{ recordId: "capture:census-1860-one-line", document: page([], 1) }]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
