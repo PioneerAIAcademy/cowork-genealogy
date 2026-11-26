@@ -14463,7 +14463,8 @@ export async function researchAppend(
     // A plan short of its question's date window (issue #2424). Judged once per
     // question on the call's end state, so op order in a batch cannot matter, and
     // only on an op that can change coverage — a search agent's status-only item
-    // update leaves the span alone and must not re-warn on every search.
+    // update leaves the span alone and must not re-warn on every search. The
+    // census-years note also reads record_type and jurisdiction.
     const endPlans: any[] = Array.isArray(research?.plans) ? research.plans : [];
     const planQuestion = (planId: unknown) => endPlans.find((p) => p?.id === planId)?.question_id;
     const windowQuestionIds = new Set<string>();
@@ -14474,7 +14475,9 @@ export async function researchAppend(
         else if (o.fields && "items" in o.fields) qid = planQuestion(o.entryId);
       } else if (o.section === "plan_items") {
         const f = o.op === "append" ? null : (o.fields ?? {});
-        if (!f || "date_range" in f || f.status === "skipped") qid = planQuestion(o.planId);
+        if (!f || "date_range" in f || "record_type" in f || "jurisdiction" in f || f.status === "skipped") {
+          qid = planQuestion(o.planId);
+        }
       }
       if (typeof qid === "string") windowQuestionIds.add(qid);
     }

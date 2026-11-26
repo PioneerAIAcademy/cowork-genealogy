@@ -15,8 +15,8 @@ description: >-
   already found (extraction_append, or the record-structurer agent), or, after
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
-model: claude-sonnet-5-5
-effort: medium
+model: claude-haiku-5-5
+effort: low
 tools:
 
   - mcp__genealogy__collections_search
@@ -579,18 +579,7 @@ table and contextual factors checklist.
   item's `rationale` which register start date put the baptism out of
   reach. A plan whose items all share one `record_type` is not broad,
   however many items it has.
-- **When the question asks about a fact the records state differently** —
-  the question text says so, two or more assertions give the fact
-  differently, or the index entry for the record omits it — plan every
-  census and vital record of the subject's lifetime, including every census after the
-  record's year until the subject's death or the census at which she would
-  be 100 (skip 1890), and a death record. For each
-  census, plan one item that finds the subject through identifiers not in
-  dispute (a birth range re-derived from every census age, birthplace,
-  place, race, occupation, marital status) and one that searches through
-  each household member. Plan a death-record item with no surname filter.
-  An item may search a wildcard spanning every reading found; never key an
-  item on one reading alone.
+- If the asked fact is disputed, plan a census item for every census in the question's date_window (skip 1890) and a death record; plan_write names any census year you leave out.
 - Include the FAN cluster (relatives, neighbors, associates) **when their
   records may contain evidence about the question's subject** — purpose is the
   test, not the relative's presence in the tree. An item whose deliverable is a
@@ -667,7 +656,7 @@ sit inside this range while still failing the self-check below.
 
 **Breadth self-check — run this before writing the plan, not after the
 user asks "was anything missed?"** Answer Appendix A's
-Standard 17 five self-check questions, plus a sixth, a seventh and an eighth, against the plan
+Standard 17 five self-check questions, plus a sixth and a seventh, against the plan
 you are about to write:
 1. Sufficient breadth of record types (not just census/vital)? When the
    target question's `question_kind` is `enumerative`, does the plan cover
@@ -686,12 +675,7 @@ you are about to write:
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
-7. Disputed fact: if the Step 3 disputed-fact rule applies, write out
-   the census years after the record's year until
-   the subject would be 100 (skip 1890), for example "born 1848, record
-   1880 → 1900, 1910, 1920, 1930, 1940", and plan a census item whose
-   date_range covers each.
-8. Did you `wiki_read` every page Step 3's pre-work triggers for this
+7. Did you `wiki_read` every page Step 3's pre-work triggers for this
    subject? If not, fetch it now and plan from it.
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
@@ -828,9 +812,6 @@ superseded: it is `completed`, by Termination below or in Add-new mode.
    superseding a plan with unfinished items, **carry forward every
    `planned` item the new information does not invalidate**: an item left
    behind on the superseded plan is never executed again.
-   A new reading of a fact the records state differently is new
-   information: supersede the plan, carry forward its planned items, and
-   add searches that use the new reading.
 
 Never modify a superseded plan — it is part of the audit trail. Status
 transitions (`planned → in_progress → completed`) on existing items are
