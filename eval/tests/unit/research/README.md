@@ -340,8 +340,6 @@ and relay both summaries in full; `ut_research_nm1`
 call for a person named with no FamilySearch ID; `ut_research_vf1`
 (`verify-first-message-is-a-job.json`, `setup-stop`) sends a first message asking
 to verify a person's facts and relationships to research, not source-evaluation;
-`ut_research_vo1` (`verify-objective-forgets-on-continue.json`) runs the narrow
-verify from an objective that disputes the parents on a bare "Continue.";
 `ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
 source-evaluation then check-warnings for a broad verify, removes nothing and offers
 each finding as a new project; and

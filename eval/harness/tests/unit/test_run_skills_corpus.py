@@ -2,7 +2,7 @@
 call its skill's SKILL.md makes.
 
 `compute_allowed_tools` raises at RUN time on one that does not, which aborts the test
-inside a paid suite (#4791: ut_research_vr1 and vo1, after the router's wording named
+inside a paid suite (#4791: ut_research_vr1, after the router's wording named
 the call without the `Skill("…")` literal). This catches it offline.
 """
 

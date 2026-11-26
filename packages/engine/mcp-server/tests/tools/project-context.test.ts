@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { FIRST_QUESTION_NEXT_STEP, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -137,8 +137,8 @@ describe("project_context", () => {
     const r = await projectContext({ projectPath: dir }, LOCAL);
     if (!r.ok) throw new Error(r.errors.join("; "));
     if (shown) {
-      expect(r.nextStep).toBe(firstQuestionNextStep("Verify his parents."));
-      expect(r.nextStep).toContain('the objective ("Verify his parents.")');
+      expect(r.nextStep).toBe(FIRST_QUESTION_NEXT_STEP);
+      expect(r.nextStep).not.toMatch(/objective/);
       expect(r.nextStep).toMatch(/Skill\("forget-and-rederive"\) with mode: verify/);
       expect(r.nextStep).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
       expect(r.nextStep).toMatch(/^For the research router only; an agent it spawned ignores this/);
