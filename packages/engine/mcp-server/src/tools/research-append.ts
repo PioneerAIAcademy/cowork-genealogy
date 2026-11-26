@@ -15476,15 +15476,9 @@ export const researchAppendSchema = {
     "instead of re-sending the whole field.\n" +
     "\n" +
     "To apply several mutations in one call, pass an `ops` array (each op is " +
-    "`{ section, op, entryId?, edits?, planId?, ...fields }`: the entry's fields on an " +
-    "append, or the changed fields on an update, sit directly on the op beside " +
-    "`section` and `op`; `entry`/`fields` wrappers are also accepted). Batches are " +
+    "`{ section, op, entry?/entryId?/fields?/edits?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
-    "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.\n" +
-    "\n" +
-    "To create a new research plan, pass `plan` (the plans entry) and `planItems` " +
-    "(its items in sequence order) instead of `ops`. One all-or-nothing write: the " +
-    "tool assigns the plan id and attaches every item to it.",
+    "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
     type: "object" as const,
     properties: {
