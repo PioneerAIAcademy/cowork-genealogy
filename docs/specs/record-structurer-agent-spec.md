@@ -65,6 +65,9 @@ and flagging it; Sonnet 5 read all six correctly. No cheaper setting was tried
 further, since a cheaper one cannot read better than the setting that already
 failed. Cost: about $0.36 per six-document run against $0.11.
 
+**Moved (2026-11-05): `claude-haiku-5-5` at `effort: low`**, in the lead's
+2026-10-21 helper sweep. The frontmatter holds the current setting.
+
 ## 3. What the agent does
 
 Aim for three turns per batch: read all, write all, return.
