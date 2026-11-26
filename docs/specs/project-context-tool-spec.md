@@ -747,9 +747,11 @@ answer and on the `no_project` answer, addressed to the router as the `nextStep`
 above is. It says what a bounded request is by example: one record (a birth,
 marriage, death or census entry, or when or where one event happened), a
 transcription, a letter, a review of attached sources. Its owning agent runs in the
-same turn, after init-project in a folder with no project, search-records for a
-record; the reply ends on that agent's "Continue with …?" line; and that turn never
-runs question-selection. A children or siblings ask starts from what is attached:
+same turn, after init-project in a folder with no project, and that turn never runs
+question-selection. For a record the agent is search-records, and the turn ends on its
+"Continue with …?" offer; the closing-offer clause names only that case, since a
+general one made the router add text after a final conclusion it must relay bare
+(`ut_research_rp1`). A children or siblings ask starts from what is attached:
 before any search the router reads each census in `attachedSources` that has a
 `recordId` with `record_read`, names the household, and hands search-records the
 rest. A requested record that
