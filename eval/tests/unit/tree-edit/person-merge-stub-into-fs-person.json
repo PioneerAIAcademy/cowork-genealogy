@@ -16,7 +16,7 @@
   },
   "input": {
     "delegation": "merge data from I3 into I4 — but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates — no proof specifies which to drop). Do NOT delete I3 yet — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.\n\nprojectPath: <workspace>",
-    "scenario": "mid-research-flynn-merge-pending"
+    "scenario": "mid-research-flynn-merge-concluded"
   },
   "mcp_fixtures": [
     "place-search-ireland",

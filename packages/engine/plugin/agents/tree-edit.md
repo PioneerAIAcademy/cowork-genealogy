@@ -18,7 +18,7 @@ description: >-
   record (extraction — sourced facts materialize onto tree
   persons via person-evidence, then proof-conclusion sets the concluded
   value).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -59,7 +59,6 @@ tools:
 **Narration:** Call `project_context({ projectPath, include: ["status"] })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Claims:** that call's `status` rows give each tree fact and edge the `claim` covering it (`summaryId`, `claim`, `tier`) and any `subtypeLabel`. When it returns no `claimKinds`, set `primary` on a value a proof summary at `probable` or better concludes, and merge on such a summary's identity conclusion.
-
 **Places:** When resolving or writing places, follow Appendix C — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
 Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc corrections** (fixing typos, updating dates, adding facts not from the formal pipeline) and **person merging** (combining two GedcomX persons confirmed identical by proof-conclusion, with full referential integrity across both project files).
@@ -119,7 +118,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
-To list record matches, call `person_record_matches({ id: "KWCJ-RN4", minConfidence: 1 })`; the default floor of 2 leaves out confidence 1. Pass `status` only to narrow to what the user asked for: `["accepted"]` when only attached records were asked for, `["accepted", "pending"]` when pending ones were asked for too. With no `status` it returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
+To list record matches, call `person_record_matches({ id: "KWCJ-RN4" })`. Pass `status` only to narrow to what the user asked for: `["accepted"]` when only attached records were asked for, `["accepted", "pending"]` when pending ones were asked for too. With no `status` it returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
 When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; a merge needs proof-conclusion's identity decision or the user's instruction.
 
@@ -318,6 +317,8 @@ The dividing line is whether the record states the relationship, not
 how confident you are about it.
 
 #### Guardianship shortly after a remarriage
+
+Your reply names both readings, the step reading first as the more likely because the remarriage explains the timing, then the uncle-by-marriage reading as unresolved.
 
 A man appointed guardian of children who bear a **different surname**,
 shortly after marrying a woman connected to that surname, is most often
