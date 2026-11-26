@@ -8,8 +8,7 @@ note and the foreground rewrite from here; the worker already imports from this 
 without a second implementation.
 
 Neither plane vetoes a stop. Step mode ends each turn at its boundary on purpose, and
-"Keep going" is the host's reply rather than a veto (docs/specs/research-step-mode-spec.md,
-section A2 and Phase 2).
+only the researcher's reply starts the next step (docs/specs/research-step-mode-spec.md).
 
 Pure stdlib and no I/O beyond ``read_research_json``, so ``test_continue_policy_parity.py``
 can lift the predicates into a clean namespace without importing ``claude_agent_sdk``.
@@ -93,9 +92,10 @@ SOURCES_GUIDANCE = (
 ROUTING_GUIDANCE = (
     "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
     "what it returns. Researching, investigating or finding a person, a relative or a record, "
-    "or carrying the research on, goes to the research skill, with or without a project; any "
-    "other request, such as one about a place's history or a person's data problems, goes to "
-    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "verifying whether a person's facts or relationships are correct, or carrying the "
+    "research on, goes to the research skill, with or without a project; any other request, "
+    "such as one about a place's history or a person's data problems, goes to the agent whose "
+    "description covers it. Do not answer it yourself from your own knowledge "
     "or from the project's state. A question about where the project stands you answer from "
     "project_context."
 )

@@ -164,6 +164,10 @@
         },
         "title": {
           "type": "string"
+        },
+        "verify_request": {
+          "type": "string",
+          "description": "The researcher's own words, from the message that started the project, asking to verify a particular relationship, fact or source of the subject or saying one is wrong. Written by project_create from init-project; the first question's turn removes it as a clean slate before choosing the question."
         }
       }
     },

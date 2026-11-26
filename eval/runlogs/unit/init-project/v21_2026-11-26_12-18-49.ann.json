@@ -1,72 +1,8 @@
 {
-  "run_log": "v16_2026-10-08_13-16-10.json",
-  "annotator": "solomonbaidoo54@gmail.com",
+  "run_log": "v21_2026-11-26_12-18-49.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "No known holdings were volunteered, so this dimension does not apply and no holdings survey or population was required."
-    },
-    {
       "test_id": "ut_init_project_k8d",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -123,15 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_k8d",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "No known holdings were involved, and the skill correctly skipped the holdings survey with known_holdings appropriately left empty."
-    },
-    {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,15 +67,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "investigate partials later"
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -163,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
@@ -171,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -179,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
+      "test_id": "ut_init_project_008",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -187,15 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "No known holdings were involved, so the holdings survey was correctly skipped and this dimension does not apply."
-    },
-    {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -219,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -227,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
@@ -235,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -243,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
+      "test_id": "ut_init_project_014",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -251,15 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -267,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -283,7 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -291,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
@@ -299,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -307,7 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_012",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -315,12 +227,116 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_010",
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "No known holdings were involved, so the survey was not required or performed and this dimension does not apply."
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_j4n",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

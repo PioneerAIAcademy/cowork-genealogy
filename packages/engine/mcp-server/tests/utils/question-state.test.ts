@@ -32,9 +32,14 @@ const doc = (extra: Record<string, unknown> = {}) => ({
 
 describe("questionStatus — the state ladder", () => {
   it("framed: a question with no plan", () => {
-    const s = questionStatus(doc(), question());
+    const s = questionStatus(doc({ localities: [{ id: "loc_001" }] }), question());
     expect(s.state).toBe("framed");
     expect(s.nextStep).toBe("research-plan");
+  });
+
+  it("framed with no place surveyed yet: the plan step opens with locality-guide", () => {
+    expect(questionStatus(doc(), question()).nextStep).toBe("locality-guide, then research-plan");
+    expect(questionStatus(doc({ localities: [] }), question()).nextStep).toBe("locality-guide, then research-plan");
   });
 
   it("planned: a plan exists for this question", () => {
@@ -563,7 +568,7 @@ describe("questionStatus — a question with no linked assertion routes to perso
   });
 
   it("a question with no assertions yet is not affected", () => {
-    expect(questionStatus(doc(), question()).nextStep).toBe("research-plan");
+    expect(questionStatus(doc({ localities: [{ id: "loc_001" }] }), question()).nextStep).toBe("research-plan");
   });
 });
 

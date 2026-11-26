@@ -349,6 +349,19 @@ def test_an_agent_only_deny_is_the_shipped_hooks_text():
     assert "@plugin:question-selection" in reason
 
 
+def test_person_search_is_denied_on_the_main_thread_with_the_hooks_reason():
+    """MAIN_THREAD_DENIED, the shipped hook's map, imported (#4791)."""
+    assert context_policy.MAIN_THREAD_DENIED is _guard.MAIN_THREAD_DENIED
+    out = context_policy.main_thread_denial(_main("mcp__genealogy__person_search"))
+    assert out is not None and "stopReason" not in out
+    reason = out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert reason == _guard.MAIN_THREAD_DENIED["person_search"]
+    assert "FamilySearch person ID" in reason
+    assert context_policy.main_thread_denial(_sub("mcp__genealogy__person_search")) is None
+    assert context_policy.main_thread_denial(_main("mcp__genealogy__record_search")) is None
+
+
 def test_an_agent_only_tool_is_denied_on_main_and_allowed_in_an_agent():
     assert subagent_only_violation(_main("mcp__genealogy__census_children_gap")) == (
         "census_children_gap"

@@ -352,3 +352,166 @@ def test_build_hooks_publishes_the_counter_to_the_turn_boundary(tmp_path, monkey
     assert agent._hook_counter["turn_tool_calls"] == 0
 
 
+# ── the step boundary (decision 25): one step per turn on the web app ───────────
+
+
+def _load_boundary():
+    from app.agent.plugin_lib import load_step_boundary
+
+    return load_step_boundary()
+
+
+def _step_hook(hooks: dict):
+    """The PreToolUse callback bound to the step tools -- the one that holds the gate."""
+    (matcher,) = [m for m in hooks["PreToolUse"] if m.kw["matcher"] == real_agent._STEP_MATCHER]
+    return matcher.kw["hooks"][0]
+
+
+def _turn(tmp_path, text):
+    """A session whose turn has begun on `text`: the stand-in agent and the step hook."""
+    _write(tmp_path, "active")
+    agent = _Turns()
+    hooks = real_agent._build_hooks(FakeMatcher, tmp_path, agent)
+    agent._begin_turn_hook_state(text)
+    return agent, _step_hook(hooks)
+
+
+def _spawn(name, **extra):
+    return {"tool_name": "Agent", "tool_input": {"subagent_type": name, "prompt": "go"}, **extra}
+
+
+def _denied(out) -> bool:
+    return out.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
+
+
+def test_the_step_matcher_is_every_tool_that_can_start_a_step():
+    """A skill such as question-selection is a step, so a matcher on the delegation tools
+    alone would let a Skill call through ungated."""
+    boundary = _load_boundary()
+    assert real_agent._STEP_MATCHER == "^(" + "|".join(sorted(boundary.STEP_TOOLS)) + ")$"
+
+
+@pytest.mark.parametrize("text", ["Which question should we work on?", "Continue.", "Keep going."])
+def test_a_turn_opened_by_question_selection_denies_the_plan_then_halts(tmp_path, text):
+    """The first out-of-group step is denied with the instruction to report and end the
+    turn; a second attempt ends the turn and denies the call it stops. "Keep going." is a
+    step turn like any other."""
+    agent, hook = _turn(tmp_path, text)
+    assert agent._hook_counter["step_gate"].mode == "step"
+    assert _call(hook, _spawn("question-selection")) == {}
+
+    first = _call(hook, _spawn("genealogy-research:research-plan"))
+    assert _denied(first), first
+    assert "continue" not in first, "the first crossing is a deny, not a halt"
+
+    second = _call(hook, _spawn("research-plan"))
+    assert second.get("continue") is False, second
+    assert _denied(second), "a halt also denies the call it stops"
+    assert second["stopReason"] == second["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def test_a_skill_call_is_gated_too(tmp_path):
+    _agent, hook = _turn(tmp_path, "Continue.")
+    assert _call(hook, {"tool_name": "Skill", "tool_input": {"skill": "question-selection"}}) == {}
+    assert _denied(_call(hook, {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}))
+
+
+def test_a_subagent_call_is_never_gated(tmp_path):
+    """Work inside a step is that step running. `agent_id` by membership, as `count_only`
+    reads it: a present-but-None id is still a subagent."""
+    _agent, hook = _turn(tmp_path, "Keep going.")
+    assert _call(hook, _spawn("question-selection")) == {}
+    for agent_id in ("sub-1", None, ""):
+        assert _call(hook, _spawn("research-plan", agent_id=agent_id)) == {}, agent_id
+    # None of those counted: the main thread's first crossing is still a deny.
+    out = _call(hook, _spawn("research-plan"))
+    assert _denied(out) and "continue" not in out
+
+
+def test_each_turn_gets_its_own_gate(tmp_path):
+    """The hooks dict lives for the session; the gate must not."""
+    agent, hook = _turn(tmp_path, "Continue.")
+    assert _call(hook, _spawn("question-selection")) == {}
+    agent._begin_turn_hook_state("Continue.")
+    assert _call(hook, _spawn("research-plan")) == {}, "a new turn may open with any step"
+
+
+class _GatedClient:
+    """Drives the step hook as the CLI would during a turn, then ends the turn."""
+
+    def __init__(self, hooks, spawns, *, last_text=None, during_query=False):
+        self.hooks, self.spawns, self.last_text = hooks, spawns, last_text
+        self.during_query = during_query
+        self.results: list[dict] = []
+
+    async def _fire(self):
+        hook = _step_hook(self.hooks)
+        for name in self.spawns:
+            self.results.append(await hook(_spawn(name), "tid", None))
+
+    async def query(self, _text):
+        if self.during_query:
+            await self._fire()
+
+    async def receive_response(self):
+        from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+
+        if not self.during_query:
+            await self._fire()
+        if self.last_text is not None:
+            yield AssistantMessage(content=[TextBlock(text=self.last_text)], model="m",
+                                   parent_tool_use_id=None)
+        yield ResultMessage(subtype="success", duration_ms=1, duration_api_ms=1,
+                            is_error=False, num_turns=1, session_id="s1")
+
+
+def _real_turn(tmp_path, text, spawns, **kw):
+    """One turn through the real `handle_turn`, with the session's real hooks."""
+    from _fakes import attach, turn_events
+
+    agent = real_agent.RealAgent(tmp_path)
+    hooks = real_agent._build_hooks(FakeMatcher, tmp_path, agent)
+    client = attach(agent, _GatedClient(hooks, spawns, **kw))
+    return asyncio.run(turn_events(agent, text)), client
+
+
+def _texts(events):
+    return [e["text"] for e in events if e["kind"] == "text"]
+
+
+def test_a_halted_turn_with_no_offer_ends_on_the_halts_offer(tmp_path):
+    """`stopReason` never reaches the browser on this plane, so a halted turn would end
+    on no offer and the researcher would get no buttons."""
+    events, client = _real_turn(tmp_path, "Keep going.",
+                                ["question-selection", "research-plan", "research-plan"],
+                                last_text="I chose the question.")
+    assert client.results[-1].get("continue") is False
+    offer = _load_boundary().offer_line("plan")
+    assert offer and _texts(events) == ["I chose the question.", offer]
+    kinds = [e["kind"] for e in events]
+    assert kinds.index("usage") > max(i for i, k in enumerate(kinds) if k == "text")
+
+
+def test_a_halted_turn_that_already_offers_adds_nothing(tmp_path):
+    offered = "Done.\nContinue with planning the searches?"
+    events, _client = _real_turn(tmp_path, "Continue.",
+                                 ["question-selection", "research-plan", "research-plan"],
+                                 last_text=offered)
+    assert _texts(events) == [offered]
+
+
+def test_a_turn_that_was_only_denied_adds_no_offer(tmp_path):
+    events, _client = _real_turn(tmp_path, "Continue.", ["question-selection", "research-plan"],
+                                 last_text="I chose the question.")
+    assert _texts(events) == ["I chose the question."]
+
+
+def test_the_gate_is_in_place_before_the_turns_query(tmp_path):
+    """The hook callbacks are answered off the transport's read loop, so a call can land
+    while `query()` is still in flight; it must meet this turn's gate, not none."""
+    _events, client = _real_turn(tmp_path, "Continue.", ["question-selection", "research-plan"],
+                                 during_query=True)
+    assert client.results[0] == {}
+    assert _denied(client.results[1]), client.results
+
+

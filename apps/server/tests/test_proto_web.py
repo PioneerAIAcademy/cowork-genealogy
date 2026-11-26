@@ -35,7 +35,7 @@ PROTO = Path(__file__).resolve().parents[1] / "proto"
 sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
-import turn_message  # noqa: E402  (the shared claim and banner SQL, as the web image imports it)
+import turn_message  # noqa: E402  (the shared claim SQL, as the web image imports it)
 from web import app, auth  # noqa: E402  (queue_body: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
@@ -445,16 +445,11 @@ def test_row_to_wire_user_msg_and_agent_kinds():
     assert row_to_wire(stub)["event"] == {"turn_id": "t1", "receive_count": 1, "kind": "turn_done"}
 
 
-def test_row_to_wire_passes_the_host_reply_flag_through():
-    """The worker writes the host's "Keep going" reply as a user_msg with `auto: true`,
-    and ChatPane marks the bubble and sets `busy` off that flag. Dropped here, the
-    browser renders the host's reply as something the researcher typed."""
-    auto = EventRow(4, "user_msg", {"text": "Keep going.", "turn_id": "t2", "auto": True}, T0)
-    assert row_to_wire(auto) == {"type": "user_msg", "text": "Keep going.", "turn_id": "t2", "seq": 4, "auto": True}
-    # Only `true` marks it: a falsy or non-boolean value is an ordinary message.
-    for value in (False, "true", 1, None):
-        row = EventRow(5, "user_msg", {"text": "x", "turn_id": "t3", "auto": value}, T0)
-        assert "auto" not in row_to_wire(row), value
+def test_row_to_wire_sends_a_user_msg_as_text_turn_and_seq_only():
+    """#4791: no plane sends a reply for the researcher, so a user_msg frame carries no
+    `auto` flag, even replaying a row the retired automatic reply wrote."""
+    row = EventRow(4, "user_msg", {"text": "Keep going.", "turn_id": "t2", "auto": True}, T0)
+    assert row_to_wire(row) == {"type": "user_msg", "text": "Keep going.", "turn_id": "t2", "seq": 4}
 
 
 def test_row_to_wire_kind_wins_over_a_payload_kind():
@@ -848,7 +843,7 @@ def test_the_rescue_claim_is_the_workers_own_statement():
         pathlib.Path(__file__).resolve().parents[1] / "proto" / "worker" / "worker.py"
     ).read_text(encoding="utf-8")
     claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
-    # Section A2 moved the statement into `turn_message.CLAIM_HELD_SQL`, which both tiers
+    # The statement is `turn_message.CLAIM_HELD_SQL`, which both tiers
     # import, so "the same statement" is now literally one string. Pin that both run it,
     # and that it still has the shape the race tests rely on.
     assert "turn_message.CLAIM_HELD_SQL" in claim, "the worker no longer runs the shared claim"
@@ -989,8 +984,7 @@ async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
     store._connect = fake_connect  # type: ignore[method-assign]
 
     assert await store.has_queued("sess_1") is True  # RecordingConn.fetchone answers truthy
-    # The SSE banner leaves host replies out (section A2); `admit_message` keeps them.
-    assert conn.sql and conn.sql[-1] == " ".join(turn_message.HAS_TYPED_QUEUED_SQL.split())
+    assert conn.sql and conn.sql[-1] == " ".join(app.HAS_QUEUED_SQL.split())
     # ...and the PARAMS, not just the statement. Both queries carry the held-row sentinel
     # as a bind, so a test that checked only the SQL string let `("sess_1", "nope")`
     # through -- which silently answers "nothing is held" forever, and on turn_active
