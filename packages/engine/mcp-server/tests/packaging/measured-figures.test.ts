@@ -315,15 +315,15 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
     1490,
     {
-      reason: "the calls not replayable (response stripped): the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived. In record-search-tool-spec-v2.md the same number is, by coincidence, the logged record_search ops the candidate-exclusion replay could not pair with their search (dev/measure-candidate-exclusions.ts, a corpus replay with no probe verdict; re-run the script to check it)",
-      scope: ["docs/specs/research-log-editor-spec.md", "docs/specs/record-search-tool-spec-v2.md"],
+      reason: "the calls not replayable (response stripped): the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],
   [
     1283,
     {
-      reason: "the replayable ops naming a plan item: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived. In record-search-tool-spec-v2.md the same number is, by coincidence, the logged record_search ops the candidate-exclusion replay could not pair with their search (dev/measure-candidate-exclusions.ts, a corpus replay with no probe verdict; re-run the script to check it)",
-      scope: ["docs/specs/research-log-editor-spec.md", "docs/specs/record-search-tool-spec-v2.md"],
+      reason: "the replayable ops naming a plan item: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
     },
   ],
   [
