@@ -515,9 +515,13 @@ names no search — and any `in_progress` item (not `fs_hints`) whose own log en
 are all `negative`. search-records leaves an item `in_progress` after a search that
 found nothing, for re-planning; picking it again re-ran the same searches turn after
 turn (kenneth-quass-death, 2026-11-26: one item nine times). The same picker names the
-search for a conflict that wants new evidence, so once those searches are spent that
-question too reports `research-exhaustiveness, then proof-conclusion`, and
-research-exhaustiveness does not count such an item as blocking. A repository naming FamilySearch, or none at all, reports `search-records`.
+search for a conflict that wants new evidence. Once nothing is left to search, a
+question holding such items reports `research-plan — dispose of <ids> (searched,
+nothing found), then research-exhaustiveness and proof-conclusion`: research-plan's
+Dispose mode closes each as `completed`, because every gate reads `in_progress` as
+unfinished work (the declaration, `hasOpenWork`, the unsettled-conflict ending, the
+new-question gate). With none left it reports `research-exhaustiveness, then
+proof-conclusion` (lead, 2026-11-26). A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.

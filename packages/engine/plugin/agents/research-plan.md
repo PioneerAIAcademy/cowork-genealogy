@@ -99,9 +99,9 @@ established:
   reports (a date, a record found) is input Step 1a weighs for supersede mode; a
   claim about the project's own state is checked against the project. Dispose
   mode is the exception the caller does enter: when the delegation names
-  `planItemIds` to dispose of, take Dispose mode for the named items that are `planned` on the question's active
+  `planItemIds` to dispose of, take Dispose mode for the named items that are `planned` or `in_progress` on the question's active
   plan, decide each one's status from the log yourself (Step 1a), and leave
-  the plan's own status as it is. A named item that is not `planned` there is
+  the plan's own status as it is. A named item that is neither there is
   not yours to dispose of: leave it unchanged and say so.
 - **A delegation that calls a question open or still in need of searches**
   does not make it so. Read its `status` and its proof summary yourself

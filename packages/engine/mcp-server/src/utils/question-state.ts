@@ -139,8 +139,23 @@ function nextUnexecutedItem(research: any, plans: any[]): any | null {
   return items[0] ?? null;
 }
 
+/** The step once nothing is left to search. Items searched with nothing found
+ *  are still `in_progress`, and every gate reads that as unfinished work: the
+ *  declaration, `hasOpenWork`, the unsettled-conflict ending and the new-question
+ *  gate. So research-plan's Dispose mode closes them first (it completes a search
+ *  that ran, even when it found nothing), and only then does the question go to
+ *  research-exhaustiveness and proof-conclusion (lead, 2026-11-26). */
+function searchSpentStep(research: any, plans: any[]): string {
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const ids = [...searchedOutItemIds(research, plans)].filter((id) => !waitingOnUpload.has(id)).sort();
+  return ids.length > 0
+    ? `research-plan — dispose of ${ids.join(", ")} (searched, nothing found), then ` +
+        "research-exhaustiveness and proof-conclusion"
+    : "research-exhaustiveness, then proof-conclusion";
+}
+
 /** `in_progress` items already searched with nothing found: every entry they own
- *  is `negative` (research-exhaustiveness.md states the same rule). search-records leaves such an item `in_progress`
+ *  is `negative`. search-records leaves such an item `in_progress`
  *  for re-planning, so it is executed, not due again; picking it re-ran the same
  *  searches turn after turn and the question never reached a conclusion
  *  (kenneth-quass-death, 2026-11-26: one item searched 9 times). A `fs_hints`
@@ -982,7 +997,7 @@ export function questionStatus(
         ? searchStepFor(item)
         // Every open item is waiting on an upload or was searched with nothing
         // found: the conflict's evidence search is over (lead, 2026-11-26).
-        : "research-exhaustiveness, then proof-conclusion";
+        : searchSpentStep(research, plans);
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -1078,8 +1093,7 @@ export function questionStatus(
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
     const item = nextUnexecutedItem(research, plans);
-    if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
-    else nextStep = searchStepFor(item);
+    nextStep = item ? searchStepFor(item) : searchSpentStep(research, plans);
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

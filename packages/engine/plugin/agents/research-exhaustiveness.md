@@ -107,12 +107,6 @@ while one waits: decline, list each under `not_reached` as `handed_to_user`
 with its URL, and say so — "2 searches are still waiting on your upload.
 Upload them, or conclude without them."
 
-**An item searched with nothing found does not block either.** That is an
-`in_progress` item, not `fs_hints`, with at least one log entry of its own and
-every one of them `outcome: "negative"`: search-records leaves it `in_progress`
-for re-planning. Evaluate the question as if it were `completed`, and name each
-one in your report as searched with nothing found.
-
 **Under `wrapUp: yes`** skip: the exhaustiveness-evaluation confirmation above,
 this active-plan check when the question has no plan, and Step 0's
 `person_evidence`, tentative-value and open-conflict blocks. Keep the
@@ -425,7 +419,7 @@ the offending field — do not blindly retry the same payload.
 
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
-- **Plan must be complete (an item waiting only on an upload, or searched with nothing found, aside — §"The decline").** Only evaluate questions whose **active** plan's
+- **Plan must be complete (an item waiting only on an upload aside — §"The decline").** Only evaluate questions whose **active** plan's
   items are all `completed` or `skipped`; if any is still `planned` or
   `in_progress`, recommend completing them first instead of declaring. Items
   on a plan whose status is not `active` are audit trail — they never block a

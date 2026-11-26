@@ -1519,7 +1519,7 @@ describe("questionStatus — an item searched with nothing found is not searched
   const searched = (id: string, ...outcomes: string[]) =>
     outcomes.map((outcome, n) => ({ id: `log_${id}_${n}`, plan_item_id: id, tool: "record_search", outcome }));
 
-  it("a conflict whose evidence searches all came back empty goes to exhaustiveness, then the conclusion", () => {
+  it("a conflict whose evidence searches all came back empty disposes of them, then goes to exhaustiveness", () => {
     // kenneth-quass-death, 2026-11-26: pli_004 was searched nine times because the
     // conflict arm kept naming the in_progress item search-records leaves after a nil.
     const d = doc({
@@ -1530,7 +1530,11 @@ describe("questionStatus — an item searched with nothing found is not searched
       log: [...searched("pli_4", "negative", "negative"), ...searched("pli_6", "negative")],
       conflicts: [conflict],
     });
-    expect(questionStatus(d, question()).nextStep).toBe("research-exhaustiveness, then proof-conclusion");
+    // Disposed first: an in_progress item holds the declaration, hasOpenWork, the
+    // unsettled-conflict ending and the new-question gate.
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "research-plan — dispose of pli_4, pli_6 (searched, nothing found), then research-exhaustiveness and proof-conclusion",
+    );
   });
 
   it("names the next item still to search, past one searched with nothing found", () => {
@@ -1563,9 +1567,19 @@ describe("questionStatus — an item searched with nothing found is not searched
     expect(questionStatus(d, question()).nextStep).toBe("search-hints — pli_h");
   });
 
-  it("with no conflict, a question whose only item was searched with nothing found goes to exhaustiveness", () => {
+  it("with no conflict, a question whose only item was searched with nothing found disposes of it first", () => {
     const d = doc({
       plans: plans([{ id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative"),
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "research-plan — dispose of pli_4 (searched, nothing found), then research-exhaustiveness and proof-conclusion",
+    );
+  });
+
+  it("once the searched-out items are disposed of, the question goes to exhaustiveness", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "completed", sequence: 4, repository: "FamilySearch" }]),
       log: searched("pli_4", "negative"),
     });
     expect(questionStatus(d, question()).nextStep).toBe("research-exhaustiveness, then proof-conclusion");
