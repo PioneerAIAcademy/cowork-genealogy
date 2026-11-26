@@ -172,7 +172,7 @@ describe('the artifact host', () => {
 
     expect(use).toHaveBeenCalledWith('mcp')
     expect(callTool.mock.calls).toEqual([
-      ['Genealogy Viewer', READ_PROJECT_VIEW, { part: 'document' }, { cache: false }]
+      ['Genealogy Research', READ_PROJECT_VIEW, { part: 'document' }, { cache: false }]
     ])
     expect(session.getState().load.snapshot).toEqual(READ_DOCUMENT)
     expect(session.getState().load.source).toBe('read_project_view call')
@@ -290,7 +290,7 @@ describe('one failure shape from all three hosts', () => {
 
   it('the artifact host turns a plain McpError rejection into a ToolCallError carrying its code', async () => {
     const { host } = artifactHost(() =>
-      Promise.reject({ code: 'server_not_connected', server: 'Genealogy Viewer', message: 'Add the connector.' })
+      Promise.reject({ code: 'server_not_connected', server: 'Genealogy Research', message: 'Add the connector.' })
     )
     await host.connect(NO_LISTENERS)
     const failure = await failureOf(host.call(READ_PROJECT_VIEW, {}))

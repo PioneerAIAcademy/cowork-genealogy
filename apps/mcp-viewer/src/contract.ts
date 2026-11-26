@@ -6,7 +6,7 @@ import type { ResearchData } from '@genealogy/schema'
 export const SHOW_PROJECT = 'show_project'
 export const READ_PROJECT_VIEW = 'read_project_view'
 export const PROJECT_META_KEY = 'genealogy/project'
-export const CONNECTOR_NAME = 'Genealogy Viewer'
+export const CONNECTOR_NAME = 'Genealogy Research'
 
 export const SHOW_VALUES = [
   'setup',
