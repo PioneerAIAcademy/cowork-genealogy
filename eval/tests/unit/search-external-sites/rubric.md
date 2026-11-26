@@ -4,6 +4,10 @@ Grading dimensions for search-external-sites unit tests. Evaluated by the LLM ju
 
 **Kinds of turn.** Most turns **generate** a search (build a pre-filled URL, instruct the capture workflow, log it). Some turns **record a search the user already ran** — a nil-result report ("I searched X, zero results"). And some turns **generate the search and receive its results in the same turn**, because the results-page content is already present in the conversation: those still build and log the URL, but the capture instructions do not apply and triage runs immediately (see Capture guidance and Result triage below). On a nil-result-report turn there is no new search to generate, so the URL-generation, Capture-guidance, and Tool-selection dimensions grade the *logging* task: the agent correctly logs the negative result (site, place, date, coverage limits) and may nudge for a confirming capture of the empty results screen. Do **not** mark these dimensions partial/fail on a nil-result-report turn for "no freshly built URL," "no full capture-workflow instructions," or "didn't call place_search/external_links_search" — none of those apply when the user already performed the search. Grade what the nil-report turn requires, not the search-generation flow.
 
+**A correction turn** — the researcher says an earlier report or capture was wrong ("that search actually timed out") — is graded the same way. The search's URL is already in the log, so `research_query` (section `log`) plus one `research_log_append` is the complete, correct tool use: the new entry copies the earlier entry's `url_generated`, carries the corrected outcome, and names the earlier `log_` id in its notes. Not calling `build_external_search_url`, `place_search` or `external_links_search` is a **pass** on URL generation and Tool selection. A rebuilt URL that differs from the logged one supersedes nothing and is a **fail** on Log entry.
+
+**A turn with no user present** (`userPresent: no`, an autonomous run) is a search-generation turn that cannot wait for a capture. The agent builds the URL and logs the search as deferred. The reply's `---` line starts the researcher's part, which gives the link, what the record would settle, and one sentence saying the search was saved for the researcher to run later.
+
 ## URL generation
 
 Did the agent generate a correctly pre-filled search URL for the target site (Ancestry, MyHeritage, etc.)? The URL should include the search parameters from the plan item.
@@ -24,6 +28,10 @@ Did the agent generate a correctly pre-filled search URL for the target site (An
 Did the agent provide clear instructions for the click-capture workflow? The user needs to know what to look for and how to return results.
 
 **Unless the results are already in the turn.** When the page content for the generated URL is already present in the conversation, no capture is outstanding and capture instructions are **not** required — proceeding straight to triage is the correct behavior and a **pass** on this dimension. Asking for a PDF anyway, or telling the user a capture is still owed, is a **fail**: it sends them back to a workflow they have already completed.
+
+**Unless no user is present.** On a `userPresent: no` turn nobody can capture, so the link, what the record would settle, and a sentence saying the search was saved to run later is a **pass**. A full click/print/upload procedure on a run that did not wait is a **partial**. Ending the turn to wait for a capture, or asking for one, is a **fail**.
+
+**A Find a Grave capture showing only the site header** (logo and divider line, no results) is Find a Grave's no-results page, a complete capture. Asking the researcher to resave, recapture or re-upload it is a **fail**: a second capture would show the same header. Suggesting a different search is fine.
 
 - **pass:** Instructions name what records the user should look for, how to save them (PDF download, copy-paste), and how to return the capture — or, with the content already in the turn, the agent correctly proceeds without them.
 - **partial:** Instructions exist but are generic ("save anything that looks relevant") without naming specific result types or saving steps.
@@ -52,6 +60,8 @@ This dimension grades a turn that **generates** a search. When the turn instead 
 ## Log entry
 
 Did the research-log entry for the search get written — at URL-generation time, and for nil results? The in-flight entry is written by `build_external_search_url` itself unless the agent passes `awaitingCapture: false`; a builder-written entry is the agent's entry, not a missing one.
+
+Three entries that look like exceptions are correct. **A deferral on a `userPresent: no` run** is logged `outcome: "negative"`, `capture_received: false`, `results_examined: 0`, with notes saying it was deferred for want of a capture. That is the correct entry, not a misleading nil. It writes no `in_progress` status: an existing plan item goes to `skipped`, and an ad-hoc search writes none. **A header-only Find a Grave capture** is a captured nil: `negative`, `capture_received: true`, plan item `completed`. Logging it `error` or leaving the item open for a recapture is a **fail**. **A page the researcher says failed** (timed out, did not load) is `error`, never `negative`, and the plan item stays `in_progress`. A correction of an earlier report is a new entry for the same `url_generated` naming the entry it corrects, never an edit of the old one.
 
 **This dimension covers both records of what happened: the `log[]` entry and the plan item's `status`.** A capture-required search is not finished until the capture arrives — handing over a URL is not a search. Status applies only when the turn names or unambiguously targets a plan item; when the search matches no plan item (`plan_item_id` null), no status may be written and the restraint is what is graded.
 

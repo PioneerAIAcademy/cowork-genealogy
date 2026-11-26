@@ -76,8 +76,12 @@ def _parsed(result: Any) -> dict[str, Any]:
 
 def line(name: str, result: Any, detail: str) -> tuple[bool, str]:
     """One call's verdict. A tool error fails the check whatever it says: these three tools
-    answer a signed-in user without FamilySearch, so none has a refusal that is normal."""
-    if result.isError:
+    answer a signed-in user without FamilySearch, so none has a refusal that is normal.
+    A refusal fails it too. A connector caller's refusal carries no error mark
+    (`connectorToolResult`, src/tool-result.ts): it is a `refused` note over the body, so
+    the mark alone would pass a call that did nothing."""
+    body = _parsed(result)
+    if result.isError or "refused" in body or body.get("ok") is False:
         return False, f"signed in: {name} answered an error: {_text(result)[:300]}"
     return True, f"signed in: {name} {detail}"
 
