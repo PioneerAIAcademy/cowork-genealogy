@@ -646,8 +646,8 @@ the same compiled `candidateExclusionRefusal` and logs a refused call as
 the mock, so the namesake rule needs no mirror.
 
 **Corpus refusal measurement (ADR-0011).** Measured on 2026-11-26 over the run
-logs and scenarios at `46e26c861` (503 run-log files, 238 scenarios, main merged
-after #4823), with the no-`subjectId`, same-role parent, own-entry role and
+logs and scenarios at `46e26c861` (503 run-log files, 238 scenarios),
+with the no-`subjectId`, same-role parent, own-entry role and
 own-entry release rules in place, by `npx tsx dev/measure-candidate-exclusions.ts
 --list` (from `packages/engine/mcp-server`), which runs `excludedCandidates` and
 `namesakeCandidateRefusals` on a temporary project rebuilt for each call: the
@@ -662,7 +662,7 @@ logged by then.
   candidate and widening the range by its years leaves the search the run
   needed. (At `9531a7ac7` it was 2 of 738; the other, a `ut_search_records_020`
   Job Purnell search after a logged Job baptised in 1821, was in a run log
-  main's #4811 replaced with a run that does not make that call.)
+  later replaced by a run that does not make that call.)
 - **Calls with no `subjectId`.** Of 785 calls with a `projectPath` and a birth
   range but no `subjectId`, it refuses **0**.
 - **Namesake rows.** Of 86 `namesakes` appends and updates, it refuses **7**.
