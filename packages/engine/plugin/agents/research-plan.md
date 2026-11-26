@@ -585,6 +585,16 @@ table and contextual factors checklist.
   relative's *own* missing facts serves a different objective. **On a parentage,
   identity or undated-event question at least one FAN item is required** — see
   Step 4, item 6.
+- **A person in a record or household who is not yet identified.** The
+  candidates are the parents and siblings of the head and of the spouse, and
+  also step-parents and step-siblings (a parent's other spouse and that
+  spouse's children), in-laws, and a relative living under a married or
+  earlier surname. Plan them as Step 4's first items say. A specific
+  detail on the original page (birthplace, age) that contradicts a candidate
+  counts against that candidate; plan no item that assumes it is an error.
+  These are record items, never a relative's `person_read`: the tools table's
+  `person_read` row governs, whatever a tool description says about reading a
+  relative's profile.
 - Consider occupation-specific, institutional, and organizational
   records when relevant to the subject's life.
 - Cover both FamilySearch and external/paid repositories (Ancestry,
@@ -596,6 +606,8 @@ table and contextual factors checklist.
 ### 4. Sequence the plan items
 
 **On an identity, parentage, birth, death or marriage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** A birth question asks a birth, baptism or christening date or place; a death question a death or burial date or place; a marriage question when or where the person married. Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, none on a question asking who the spouse was, none on an enumerative question (children, siblings), and none on any other question.
+
+**When the delegation asks who a person in a record or household is and they are not yet identified, the first items are the relatives' marriages.** Call `tree_query` for the household's head and spouse. For each parent of the head and each parent of the spouse who is in the project tree, emit one item with `record_type: "marriage"`, searching that parent's other marriages: its `date_range` runs from the known spouse's death or last appearance to that parent's death or the household's record, whichever is earlier, or, for a parent who died before the known spouse, covers the years before their known marriage. Where the project tree holds none of the spouse's parents, emit an item for the spouse's own marriage or birth record that names them. Each `rationale` names the candidate the item could produce (a step-parent, a step-sibling, an in-law). These items come first, right after the hints item above when there is one, ahead of the ordering rules below: every census or other search for the household comes after them.
 
 Order items for efficient discovery (BCG Standard 15):
 

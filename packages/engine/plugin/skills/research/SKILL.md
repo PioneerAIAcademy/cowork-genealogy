@@ -779,8 +779,12 @@ you check the 1850 census?" is a plan item: spawn `@plugin:research-plan` in
 its edit or add-new mode, at any boundary. The same holds for work that used
 to open a helper question — a conflict that needs new evidence, a FAN pivot,
 an objective-level sub-question. All three are plan items on the current
-question. A direct request for a record ("Find her in the 1910 census") is not
-a steer: it is a bounded ask, and `@plugin:search-records` runs it now.
+question. So is "who is this person in the record/household?" for someone with
+no candidate in the project tree: spawn `@plugin:research-plan` in its add-new
+or edit mode on the current question, as for a FAN pivot, never
+`@plugin:question-selection` or `@plugin:person-evidence`. A direct request for
+a record ("Find her in the 1910 census") is not a steer: it is a bounded ask,
+and `@plugin:search-records` runs it now.
 
 When a steer opens this turn's search step and the previous turn offered
 `linking the records to people in this project`, the sentence before this
@@ -813,7 +817,10 @@ has that link.
 The researcher asks something rather than answering the offer — "why that
 census?", "who is this person again?". Answer it from what you hold, spawn
 **no** agent, and end with the **same** "Continue with …?" line the last turn
-offered. The turn ran no step, so nothing moves.
+offered. The turn ran no step, so nothing moves. "Who is this person again?"
+asks about someone the project already holds; asking who a person in a record
+or household is who has no candidate in the project tree is not this: it is a
+steer (§"A different question, or a steer").
 
 ## When to stop
 
@@ -858,6 +865,9 @@ a verdict:
   to find it;
 - **never declare the question answered on a name match.** A name is not
   an identification;
+- a specific detail on the original page (birthplace, age) that contradicts a
+  candidate counts against that candidate; never call it an enumerator error
+  to make the candidate fit;
 - end with an offer to **research it further** — never an offer to extract,
   attach, or link. Those are writes, and `search-records` forbids offering one
   on an unsettled identity. Offer the investigation, not the write.

@@ -1,0 +1,96 @@
+{
+  "test": {
+    "id": "ut_research_veq",
+    "skill": "research",
+    "name": "Routes 'who is this person in the household?' to research-plan as a steer, with no kinship guess",
+    "type": "positive",
+    "description": "Mined from issue #4670 (the Phipps feedback session). The researcher asks who an unidentified older member of the 1860 household is. In the session the router answered in conversation, offering the spouse's mother or an unrecorded sister from surname and age, and never planned the records that found a stepmother. Asking who an unidentified person in a record or household is, is a steer on the current question: the router spawns research-plan in add-new mode on q_001 and offers no kinship reading of its own.",
+    "tags": [
+      "routing",
+      "routes-to:research-plan",
+      "from-cowork",
+      "phipps-1860-household-member"
+    ]
+  },
+  "input": {
+    "user_message": "/research Who would the Harriet Phillips be, in the 1860 census household?",
+    "scenario": "phipps-1860-household-member"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The first hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records; do not grade which callee was reached, or in what order, from the transcript.",
+    "Asking who an unidentified person in a record or household is, is a steer on the current question, not a question between steps the router answers itself and not a new question. The delegation to research-plan is add-new or edit work on the current question q_001; a delegation that asks for a new question, or a hand-off to question-selection, is a defect.",
+    "Fail the router's own narration if it offers a kinship reading of the person from shared surname and age (a mother-in-law, an older sister, a cousin, a boarder), ranks such readings, or calls one the most likely. Naming what the plan will look for is fine; naming who she probably is, is not.",
+    "Fail it too if it explains away a specific detail in the record (an age or birthplace) as an enumerator or indexing error.",
+    "Every callee is stubbed and returns a denial telling the router to stop. The spawn is invisible to you, and test_routes_to_expected_skill already asserts it happened, so a reply saying the work was handed off is true even though no plan was written. Grade the router's state derivation, its honesty about what it delegated and did not do, and whether its narration stayed free of a kinship guess."
+  ],
+  "judge_reads_files": true,
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ]
+}

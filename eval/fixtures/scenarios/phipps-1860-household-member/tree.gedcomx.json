@@ -1,0 +1,3569 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:LTQD-HM6",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Benjamin Fairbanks",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "30 January 1816",
+          "standard_date": "30 Jan 1816",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "16 August 1893",
+          "standard_date": "16 Aug 1893",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Burial",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S5"
+        },
+        {
+          "ref": "S6"
+        },
+        {
+          "ref": "S7"
+        },
+        {
+          "ref": "S8"
+        },
+        {
+          "ref": "S9"
+        },
+        {
+          "ref": "S10"
+        },
+        {
+          "ref": "S11"
+        },
+        {
+          "ref": "S12"
+        },
+        {
+          "ref": "S13"
+        },
+        {
+          "ref": "S14"
+        },
+        {
+          "ref": "S15"
+        },
+        {
+          "ref": "S16"
+        },
+        {
+          "ref": "S17"
+        },
+        {
+          "ref": "S18"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:LQRZ-FVX",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "given": "Peyton Randolph",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N3",
+          "given": "Payton R.",
+          "surname": "Phipps",
+          "type": "BirthName"
+        },
+        {
+          "id": "N4",
+          "given": "Payton Randolph",
+          "surname": "Phipps",
+          "type": "BirthName"
+        },
+        {
+          "id": "N5",
+          "given": "Peyton R.",
+          "surname": "Phipps",
+          "type": "BirthName"
+        },
+        {
+          "id": "N6",
+          "given": "Peyton Randolph",
+          "surname": "Phipps",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "29 July 1789",
+          "standard_date": "29 Jul 1789",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Death",
+          "date": "2 February 1843",
+          "standard_date": "2 Feb 1843",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Burial",
+          "date": "1843",
+          "standard_date": "1843",
+          "place": "New Boston Cemetery, North Windham, Windham, Windham, Connecticut, United States",
+          "standard_place": "North Windham, Windham, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S19"
+        },
+        {
+          "ref": "S20"
+        },
+        {
+          "ref": "S21"
+        },
+        {
+          "ref": "S22"
+        },
+        {
+          "ref": "S23"
+        },
+        {
+          "ref": "S24"
+        },
+        {
+          "ref": "S25"
+        },
+        {
+          "ref": "S26"
+        },
+        {
+          "ref": "S27"
+        },
+        {
+          "ref": "S28"
+        },
+        {
+          "ref": "S29"
+        },
+        {
+          "ref": "S30"
+        },
+        {
+          "ref": "S31"
+        },
+        {
+          "ref": "S32"
+        },
+        {
+          "ref": "S33"
+        },
+        {
+          "ref": "S34"
+        },
+        {
+          "ref": "S35"
+        },
+        {
+          "ref": "S36"
+        },
+        {
+          "ref": "S37"
+        },
+        {
+          "ref": "S38"
+        },
+        {
+          "ref": "S39"
+        },
+        {
+          "ref": "S40"
+        },
+        {
+          "ref": "S41"
+        },
+        {
+          "ref": "S42"
+        },
+        {
+          "ref": "S43"
+        },
+        {
+          "ref": "S44"
+        },
+        {
+          "ref": "S45"
+        },
+        {
+          "ref": "S46"
+        },
+        {
+          "ref": "S47"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:L5CG-LSZ",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "given": "George Fairbanks",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Birth",
+          "date": "1867",
+          "standard_date": "1867",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Thompson township, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Orange, Franklin, Massachusetts, United States",
+          "standard_place": "Orange, Franklin, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Worcester Ward 9, Worcester, Massachusetts, United States",
+          "standard_place": "Worcester, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Death",
+          "date": "1927",
+          "standard_date": "1927",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Burial",
+          "date": "1927",
+          "standard_date": "1927",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States of America",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S48"
+        },
+        {
+          "ref": "S49"
+        },
+        {
+          "ref": "S50"
+        },
+        {
+          "ref": "S51"
+        },
+        {
+          "ref": "S52"
+        },
+        {
+          "ref": "S53"
+        },
+        {
+          "ref": "S54"
+        },
+        {
+          "ref": "S55"
+        },
+        {
+          "ref": "S56"
+        },
+        {
+          "ref": "S57"
+        },
+        {
+          "ref": "S58"
+        },
+        {
+          "ref": "S59"
+        },
+        {
+          "ref": "S60"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:94Z5-N1F",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary L",
+          "surname": "Childs",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N9",
+          "given": "Mary L.",
+          "surname": "Child",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Birth",
+          "date": "6 January 1828",
+          "standard_date": "6 Jan 1828",
+          "place": "Woodstock, Windham, Connecticut, United States",
+          "standard_place": "Woodstock, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F25",
+          "type": "Death",
+          "date": "23 March 1893",
+          "standard_date": "23 Mar 1893",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Burial",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S61"
+        },
+        {
+          "ref": "S62"
+        },
+        {
+          "ref": "S63"
+        },
+        {
+          "ref": "S64"
+        },
+        {
+          "ref": "S65"
+        },
+        {
+          "ref": "S66"
+        },
+        {
+          "ref": "S67"
+        },
+        {
+          "ref": "S68"
+        },
+        {
+          "ref": "S69"
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "ark": "ark:/61903/4:1:96NY-3PT",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N10",
+          "given": "Charles Patton",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N11",
+          "given": "Charles P",
+          "surname": "Phipps",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F27",
+          "type": "Birth",
+          "date": "24 April 1862",
+          "standard_date": "24 Apr 1862",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F29",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F31",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Sturbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Sturbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F32",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F33",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F34",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "value": "Same House as in 1940",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F35",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Southbridge, Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F36",
+          "type": "Death",
+          "date": "4 August 1943",
+          "standard_date": "4 Aug 1943",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F37",
+          "type": "Burial",
+          "date": "August 1943",
+          "standard_date": "Aug 1943",
+          "place": "Southbridge, Oak Ridge Cemetery, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S70"
+        },
+        {
+          "ref": "S71"
+        },
+        {
+          "ref": "S72"
+        },
+        {
+          "ref": "S73"
+        },
+        {
+          "ref": "S74"
+        },
+        {
+          "ref": "S75"
+        },
+        {
+          "ref": "S76"
+        },
+        {
+          "ref": "S77"
+        },
+        {
+          "ref": "S78"
+        },
+        {
+          "ref": "S79"
+        },
+        {
+          "ref": "S80"
+        },
+        {
+          "ref": "S81"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "ark": "ark:/61903/4:1:KNSW-567",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Clarisa",
+          "surname": "Davis",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N13",
+          "given": "Clarissa",
+          "surname": "",
+          "type": "BirthName"
+        },
+        {
+          "id": "N14",
+          "given": "Clarissa",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "N15",
+          "given": "Clericey ( Clarrisa)",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "N16",
+          "given": "Clericey",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F38",
+          "type": "Birth",
+          "date": "2 January 1792",
+          "standard_date": "2 Jan 1792",
+          "place": "Dudley, Worcester, Massachusetts, United States",
+          "standard_place": "Dudley, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F39",
+          "type": "Burial",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F40",
+          "type": "Death",
+          "date": "20 August 1830",
+          "standard_date": "20 Aug 1830",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S82"
+        },
+        {
+          "ref": "S83"
+        },
+        {
+          "ref": "S84"
+        },
+        {
+          "ref": "S85"
+        },
+        {
+          "ref": "S86"
+        },
+        {
+          "ref": "S87"
+        },
+        {
+          "ref": "S88"
+        },
+        {
+          "ref": "S89"
+        },
+        {
+          "ref": "S90"
+        },
+        {
+          "ref": "S91"
+        },
+        {
+          "ref": "S92"
+        },
+        {
+          "ref": "S93"
+        },
+        {
+          "ref": "S94"
+        },
+        {
+          "ref": "S95"
+        },
+        {
+          "ref": "S96"
+        },
+        {
+          "ref": "S97"
+        },
+        {
+          "ref": "S98"
+        },
+        {
+          "ref": "S99"
+        },
+        {
+          "ref": "S100"
+        },
+        {
+          "ref": "S101"
+        },
+        {
+          "ref": "S102"
+        },
+        {
+          "ref": "S103"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "ark": "ark:/61903/4:1:LHSH-N7N",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N17",
+          "given": "Clarissa Davis",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N18",
+          "given": "Clarary",
+          "surname": "Freeman",
+          "type": "BirthName"
+        },
+        {
+          "id": "N19",
+          "given": "Clarissa Davis Phipps",
+          "surname": "Freeman",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F41",
+          "type": "Birth",
+          "date": "22 October 1814",
+          "standard_date": "22 Oct 1814",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F42",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "Westborough, Westborough, Worcester, Massachusetts, United States",
+          "standard_place": "Westborough, Westborough, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F43",
+          "type": "Burial",
+          "date": "1867",
+          "standard_date": "1867",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F44",
+          "type": "Death",
+          "date": "20 November 1867",
+          "standard_date": "20 Nov 1867",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S104"
+        },
+        {
+          "ref": "S105"
+        },
+        {
+          "ref": "S106"
+        },
+        {
+          "ref": "S107"
+        },
+        {
+          "ref": "S108"
+        },
+        {
+          "ref": "S109"
+        },
+        {
+          "ref": "S110"
+        },
+        {
+          "ref": "S111"
+        },
+        {
+          "ref": "S112"
+        },
+        {
+          "ref": "S113"
+        },
+        {
+          "ref": "S114"
+        },
+        {
+          "ref": "S115"
+        },
+        {
+          "ref": "S116"
+        },
+        {
+          "ref": "S117"
+        },
+        {
+          "ref": "S118"
+        },
+        {
+          "ref": "S119"
+        },
+        {
+          "ref": "S120"
+        },
+        {
+          "ref": "S121"
+        },
+        {
+          "ref": "S122"
+        },
+        {
+          "ref": "S123"
+        },
+        {
+          "ref": "S124"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "ark": "ark:/61903/4:1:K8BJ-Z36",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N20",
+          "given": "Edward Davis",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F45",
+          "type": "Birth",
+          "date": "26Jun1817",
+          "standard_date": "26 Jun 1817",
+          "place": "of Medway, Norfolk, Mass.",
+          "standard_place": "Medway, Norfolk, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F46",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Woodstock, Windham, Connecticut, United States",
+          "standard_place": "Woodstock, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F47",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Chicopee, Hampden, Massachusetts, United States",
+          "standard_place": "Chicopee, Hampden, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F48",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Hartford, Hartford, Connecticut, United States",
+          "standard_place": "Hartford, Hartford, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F49",
+          "type": "Death",
+          "date": "1898",
+          "standard_date": "1898",
+          "place": "Windham co., Connecticut",
+          "standard_place": "Windham, Connecticut Colony, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F50",
+          "type": "Burial",
+          "place": "East Woodstock Cemetery, Woodstock, Windham, Connecticut, United States",
+          "standard_place": "East Woodstock Cemetery, Woodstock, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F51",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S125"
+        },
+        {
+          "ref": "S126"
+        },
+        {
+          "ref": "S127"
+        },
+        {
+          "ref": "S128"
+        },
+        {
+          "ref": "S129"
+        },
+        {
+          "ref": "S130"
+        },
+        {
+          "ref": "S131"
+        },
+        {
+          "ref": "S132"
+        },
+        {
+          "ref": "S133"
+        },
+        {
+          "ref": "S134"
+        },
+        {
+          "ref": "S135"
+        },
+        {
+          "ref": "S136"
+        },
+        {
+          "ref": "S137"
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "ark": "ark:/61903/4:1:K811-TBX",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Lucretia Healy",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N22",
+          "given": "Lucretia",
+          "surname": "Phipps",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F52",
+          "type": "Birth",
+          "date": "25 June 1819",
+          "standard_date": "25 Jun 1819",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F53",
+          "type": "Death",
+          "date": "2 December 1844",
+          "standard_date": "2 Dec 1844",
+          "place": "Webster, Worcester, Massachusetts, United States",
+          "standard_place": "Webster, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F54",
+          "type": "Burial",
+          "place": "Thompson, Windham, Connecticut, United States of America",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S138"
+        },
+        {
+          "ref": "S139"
+        },
+        {
+          "ref": "S140"
+        },
+        {
+          "ref": "S141"
+        },
+        {
+          "ref": "S142"
+        },
+        {
+          "ref": "S143"
+        },
+        {
+          "ref": "S144"
+        },
+        {
+          "ref": "S145"
+        },
+        {
+          "ref": "S146"
+        },
+        {
+          "ref": "S147"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "ark": "ark:/61903/4:1:L78F-BRW",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N23",
+          "given": "Abigail Davis",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N24",
+          "given": "Abigail D.",
+          "surname": "Phipps",
+          "type": "BirthName"
+        },
+        {
+          "id": "N25",
+          "given": "Abigail Davis",
+          "surname": "",
+          "type": "BirthName"
+        },
+        {
+          "id": "N26",
+          "given": "Abigail",
+          "surname": "Davis Phipps",
+          "type": "BirthName"
+        },
+        {
+          "id": "N27",
+          "given": "Abigail",
+          "surname": "Phipps",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F55",
+          "type": "Birth",
+          "date": "5 June 1820",
+          "standard_date": "5 Jun 1820",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F56",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F57",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F58",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F59",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Worcester, Worcester, Massachusetts, United States",
+          "standard_place": "Worcester, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F60",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F61",
+          "type": "Residence",
+          "date": "05 Nov 1887",
+          "standard_date": "5 Nov 1887",
+          "place": "Southbridge,",
+          "standard_place": "Southbridge, Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F62",
+          "type": "Death",
+          "date": "5 November 1887",
+          "standard_date": "5 Nov 1887",
+          "place": "Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F63",
+          "type": "Burial",
+          "place": "Oak Ridge Cemetery, Southbridge, Worcester, Massachusetts, United States",
+          "standard_place": "Oak Ridge Cemetery, Southbridge, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F64",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S148"
+        },
+        {
+          "ref": "S149"
+        },
+        {
+          "ref": "S150"
+        },
+        {
+          "ref": "S151"
+        },
+        {
+          "ref": "S152"
+        },
+        {
+          "ref": "S153"
+        },
+        {
+          "ref": "S154"
+        },
+        {
+          "ref": "S155"
+        },
+        {
+          "ref": "S156"
+        },
+        {
+          "ref": "S157"
+        },
+        {
+          "ref": "S158"
+        },
+        {
+          "ref": "S159"
+        },
+        {
+          "ref": "S160"
+        },
+        {
+          "ref": "S161"
+        },
+        {
+          "ref": "S162"
+        },
+        {
+          "ref": "S163"
+        },
+        {
+          "ref": "S164"
+        },
+        {
+          "ref": "S165"
+        },
+        {
+          "ref": "S166"
+        },
+        {
+          "ref": "S167"
+        },
+        {
+          "ref": "S168"
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "ark": "ark:/61903/4:1:KCRG-8M5",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N28",
+          "given": "William Randolph",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F65",
+          "type": "Birth",
+          "date": "Aug 25, 1821",
+          "standard_date": "25 Aug 1821",
+          "place": "Connecticut",
+          "standard_place": "Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F66",
+          "type": "Death",
+          "date": "Aug. 26, 1913",
+          "standard_date": "26 Aug 1913",
+          "place": "New Castle, Lawrence, Pennsylvania",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F67",
+          "type": "Burial",
+          "place": "Greenwood Cemetery, New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "Greenwood Cemetery, New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F68",
+          "type": "Occupation",
+          "place": "New Castle, Lawrence, Pennsylvania",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "value": "Photographer",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S169"
+        },
+        {
+          "ref": "S170"
+        },
+        {
+          "ref": "S171"
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "ark": "ark:/61903/4:1:94WL-32F",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N29",
+          "given": "Lydia Rebecca",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F69",
+          "type": "Birth",
+          "date": "6Sep1824",
+          "standard_date": "6 Sep 1824",
+          "place": "Thomson, Wndhm, Cnnc",
+          "standard_place": "Windham, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F70",
+          "type": "Death",
+          "date": "9Mar1826",
+          "standard_date": "9 Mar 1826",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "ark": "ark:/61903/4:1:K835-34K",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N30",
+          "given": "Zeruiah",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N31",
+          "given": "Leruiah",
+          "surname": "Phipps",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F71",
+          "type": "Birth",
+          "date": "3 May 1826",
+          "standard_date": "3 May 1826",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F72",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F73",
+          "type": "Death",
+          "date": "11 June 1898",
+          "standard_date": "11 Jun 1898",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F74",
+          "type": "Burial",
+          "date": "June 1898",
+          "standard_date": "Jun 1898",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S172"
+        },
+        {
+          "ref": "S173"
+        },
+        {
+          "ref": "S174"
+        },
+        {
+          "ref": "S175"
+        }
+      ]
+    },
+    {
+      "id": "I14",
+      "ark": "ark:/61903/4:1:LKTZ-78F",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N32",
+          "given": "Albigence Waldo",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N33",
+          "given": "A. W.",
+          "surname": "Phipps",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F75",
+          "type": "Birth",
+          "date": "26 April 1827",
+          "standard_date": "26 Apr 1827",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F76",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F77",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F78",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F79",
+          "type": "Death",
+          "date": "Dec. 2, 1903",
+          "standard_date": "2 Dec 1903",
+          "place": "New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F80",
+          "type": "Burial",
+          "date": "12 December 1903",
+          "standard_date": "12 Dec 1903",
+          "place": "Greenwood Cemetery, New Castle, Lawrence, Pennsylvania, United States",
+          "standard_place": "Greenwood Cemetery, New Castle, Lawrence, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F81",
+          "type": "LifeSketch",
+          "value": "According to his obituary, A.W. was a descendant of Sir William Phipps, a celebrated Englishman.\n\nHis father was Paton Randolph Phipps and a soldier of the War of 1812. His grandfather served in the revolutionary war.\nHe grew up in a family of eight children.\n\nA.W. Phipps was a celebrated pioneer of photography and had a gallery for 50 years. His brother William came to study under him.\n\nHis first wife was Sarah Wood, daughter of Dr. John Wood and a granddaughter of Rev. Wick. A.W. and Sarah had two children - Clara survived.\n\nA.W. later married Lizzie Devlin and they had a daughter, Harriet who became the wife of Rev. J.Q.A McDowell. \n\n2nd namesake for Albigence Waldo, surgeon with the Continental Army, a founder of the Medical Society of Windham County, Connecticut. 1st namesake born in 1823 & died age 1.5 years old.",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S176"
+        },
+        {
+          "ref": "S177"
+        },
+        {
+          "ref": "S178"
+        },
+        {
+          "ref": "S179"
+        },
+        {
+          "ref": "S180"
+        },
+        {
+          "ref": "S181"
+        },
+        {
+          "ref": "S182"
+        }
+      ]
+    },
+    {
+      "id": "I15",
+      "ark": "ark:/61903/4:1:94WL-3LB",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N34",
+          "given": "Samuel Healy",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F82",
+          "type": "Birth",
+          "date": "22 September 1829",
+          "standard_date": "22 Sep 1829",
+          "place": "Windham, Connecticut, United States",
+          "standard_place": "Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F83",
+          "type": "Death",
+          "date": "14 January 1830",
+          "standard_date": "14 Jan 1830",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F84",
+          "type": "Burial",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S183"
+        },
+        {
+          "ref": "S184"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I4",
+      "facts": [
+        {
+          "id": "F85",
+          "type": "Marriage",
+          "date": "24 March 1849",
+          "standard_date": "24 Mar 1849",
+          "place": "Webster, Worcester, Massachusetts, United States",
+          "standard_place": "Webster, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I6",
+      "facts": [
+        {
+          "id": "F86",
+          "type": "Marriage",
+          "date": "26 May 1813",
+          "standard_date": "26 May 1813",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S185"
+        },
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S185"
+        },
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I14",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I14",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I15",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I15",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from Benjamin Fairbanks Phipps, LTQD-HM6)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 18 November 2026), read from the page of Benjamin Fairbanks Phipps (LTQD-HM6).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "Benjamin Fairbanks, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVQB : Wed Oct 14 22:54:33 UTC 2026), Benjamin Fairbanks, 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVQB"
+    },
+    {
+      "id": "S3",
+      "title": "1860 Federal Census, Agriculture Schedule",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QHJ-1QDY-S9ZM-4"
+    },
+    {
+      "id": "S4",
+      "title": "Benj Phillips, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Benj Phillips, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHR9-JWT"
+    },
+    {
+      "id": "S5",
+      "title": "1850 Federal Census, Agriculture Schedule",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QHJ-DQDV-Z5VF?view=explore"
+    },
+    {
+      "id": "S6",
+      "title": "Biography in _History of Windham County, Connecticut: With Illustrations_",
+      "citation": "Richard M. Bayles, _History of Windham County, Connecticut: With Illustrations_ (New York: W.W. Preston & Co., 1889), 743-4; digital images, _FamilySearch_ (www.familysearch.org/library/books/idviewer/504578/818), images 818-820.",
+      "url": "http://www.familysearch.org/library/books/idviewer/504578/818"
+    },
+    {
+      "id": "S7",
+      "title": "Benjamin J Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B65 : Wed Jan 15 16:21:28 UTC 2025), Benjamin J Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68Y-B65"
+    },
+    {
+      "id": "S8",
+      "title": "Benjamin F Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7K5P : Fri Oct 02 22:10:00 UTC 2026), Benjamin F Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7K5P"
+    },
+    {
+      "id": "S9",
+      "title": "Benjamin Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N8P : Mon Oct 13 21:07:25 UTC 2025), Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N8P"
+    },
+    {
+      "id": "S10",
+      "title": "Benjamin F. Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-229 : Wed Oct 14 21:35:41 UTC 2026), Benjamin F. Phipps, 16 Aug 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-229"
+    },
+    {
+      "id": "S11",
+      "title": "Benjamin F. Phipps, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+      "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7XP-R2N : Sun Mar 10 07:28:53 UTC 2024), Benjamin F. Phipps, 16 August 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7XP-R2N"
+    },
+    {
+      "id": "S12",
+      "title": "Benjamin F. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SVM : Wed Mar 06 19:27:29 UTC 2024), Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SVM"
+    },
+    {
+      "id": "S13",
+      "title": "Benjamin F. Phipps, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-355 : Tue Jul 07 18:25:35 UTC 2026), Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-355"
+    },
+    {
+      "id": "S14",
+      "title": "Benjamin Fairbanks Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4YS : Wed Oct 14 22:32:40 UTC 2026), Benjamin Fairbanks Phipps, 30 January 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4YS"
+    },
+    {
+      "id": "S15",
+      "title": "Benj. F. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2X8 : Thu May 23 00:41:19 UTC 2024), Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2X8"
+    },
+    {
+      "id": "S16",
+      "title": "Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND : Wed Sep 09 14:17:27 UTC 2026), Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VND"
+    },
+    {
+      "id": "S17",
+      "title": "Benjamin F. Phipps in entry for George Fairbanks Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4CJ-PYD : Fri Jul 25 11:36:28 UTC 2025), Benjamin F. Phipps in entry for George Fairbanks Phipps, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4CJ-PYD"
+    },
+    {
+      "id": "S18",
+      "title": "Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K3L : Wed May 22 23:54:32 UTC 2024), Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K3L"
+    },
+    {
+      "id": "S19",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV7N : Wed Oct 14 21:58:56 UTC 2026), Payton R in entry for Edward Davis, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV7N"
+    },
+    {
+      "id": "S20",
+      "title": "Peyton R., \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LXZ : Wed Oct 14 22:40:59 UTC 2026), Peyton R. in entry for Harriet Davis Phipps, 5 Nov 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LXZ"
+    },
+    {
+      "id": "S21",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVWQ : Wed Oct 14 23:18:48 UTC 2026), Payton R in entry for Lucretia, 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVWQ"
+    },
+    {
+      "id": "S22",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP78 : Wed Oct 14 22:45:56 UTC 2026), Payton R in entry for Albigence Walas, 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP78"
+    },
+    {
+      "id": "S23",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DPQ7 : Wed Oct 14 23:18:41 UTC 2026), Payton R in entry for William Rendolph, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DPQ7"
+    },
+    {
+      "id": "S24",
+      "title": "Payton R Phipps, \"United States, Census, 1830\"",
+      "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGL-WH4 : Fri Mar 08 00:50:55 UTC 2024), Payton R Phipps, 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XHGL-WH4"
+    },
+    {
+      "id": "S25",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV79 : Wed Oct 14 22:54:33 UTC 2026), Payton R in entry for Benjamin Fairbanks, 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV79"
+    },
+    {
+      "id": "S26",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV31 : Wed Oct 14 22:47:52 UTC 2026), Payton R in entry for Clarissa, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV31"
+    },
+    {
+      "id": "S27",
+      "title": "Payton R, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP3F : Wed Oct 14 21:59:30 UTC 2026), Payton R in entry for Abigail Davis, 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP3F"
+    },
+    {
+      "id": "S28",
+      "title": "Payton Randolph, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-CJT2 : Wed Oct 14 22:09:02 UTC 2026), Payton Randolph, 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-CJT2"
+    },
+    {
+      "id": "S29",
+      "title": "Captain Peyton, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LZ2 : Wed Oct 14 21:42:57 UTC 2026), Captain Peyton in entry for Samuel Phipps, 14 Jan 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LZ2"
+    },
+    {
+      "id": "S30",
+      "title": "Payton R. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2XD : Thu May 23 00:41:19 UTC 2024), Payton R. Phipps in entry for Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2XD"
+    },
+    {
+      "id": "S31",
+      "title": "Adolphus, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW33-JY1 : Wed May 22 23:12:33 UTC 2024), Adolphus in entry for Abagail B. Phipps Lyon, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NW33-JY1"
+    },
+    {
+      "id": "S32",
+      "title": "Peyton R. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SV9 : Wed Mar 06 19:27:29 UTC 2024), Peyton R. Phipps in entry for Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SV9"
+    },
+    {
+      "id": "S33",
+      "title": "Peyton R Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7KR3 : Thu Oct 01 21:48:17 UTC 2026), Peyton R Phipps, 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7KR3"
+    },
+    {
+      "id": "S34",
+      "title": "Peyton R. Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LD9 : Wed Oct 14 22:46:11 UTC 2026), Peyton R. Phipps, 2 Feb 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LD9"
+    },
+    {
+      "id": "S35",
+      "title": "Peyton R. Phipps, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+      "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7XP-T3R : Sun Mar 10 10:27:36 UTC 2024), Peyton R. Phipps, 2 February 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7XP-T3R"
+    },
+    {
+      "id": "S36",
+      "title": "Peyton R. Phipps, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-35R : Tue Jul 07 18:25:35 UTC 2026), Peyton R. Phipps in entry for Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-35R"
+    },
+    {
+      "id": "S37",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4TY : Wed Oct 14 21:31:50 UTC 2026), Payton R. Phipps in entry for William Randolph Phipps, 24 August 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4TY"
+    },
+    {
+      "id": "S38",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NHY : Wed Oct 14 21:28:26 UTC 2026), Payton R. Phipps in entry for Abigail Davis Phipps, 5 June 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NHY"
+    },
+    {
+      "id": "S39",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-N2Q : Wed Oct 14 22:27:56 UTC 2026), Payton R. Phipps in entry for Lucretia Phipps, 25 June 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-N2Q"
+    },
+    {
+      "id": "S40",
+      "title": "Peyton Randolph Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4YP : Wed Oct 14 22:21:48 UTC 2026), Peyton Randolph Phipps, 29 July 1789.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4YP"
+    },
+    {
+      "id": "S41",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4B3 : Wed Oct 14 22:48:12 UTC 2026), Payton R. Phipps in entry for Albigence Waldo Phipps, 26 April 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4B3"
+    },
+    {
+      "id": "S42",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NLQ : Wed Oct 14 21:30:12 UTC 2026), Payton R. Phipps in entry for Zeruiah Phipps, 3 May 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NLQ"
+    },
+    {
+      "id": "S43",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-41M : Wed Oct 14 21:33:05 UTC 2026), Payton R. Phipps in entry for Edward Davis Phipps, 26 June 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-41M"
+    },
+    {
+      "id": "S44",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NL9 : Wed Oct 14 22:34:54 UTC 2026), Payton R. Phipps in entry for Clarissa Phipps, 22 October 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NL9"
+    },
+    {
+      "id": "S45",
+      "title": "Payton R. Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4Y3 : Wed Oct 14 22:32:40 UTC 2026), Payton R. Phipps in entry for Benjamin Fairbanks Phipps, 30 January 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4Y3"
+    },
+    {
+      "id": "S46",
+      "title": "Payton R. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC4Z-DXX : Tue Oct 20 15:18:52 UTC 2026), Payton R. Phipps, 25 Oct 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC4Z-DXX"
+    },
+    {
+      "id": "S47",
+      "title": "Payton Randolph Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC4Z-DXV : Tue Oct 20 15:20:22 UTC 2026), Payton Randolph Phipps, 26 May 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC4Z-DXV"
+    },
+    {
+      "id": "S48",
+      "title": "George F, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLGR-2BN9 : Thu May 23 03:45:23 UTC 2024), George F in entry for Henry Rice and Roma Lois Phipps, 3 Jan 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLGR-2BN9"
+    },
+    {
+      "id": "S49",
+      "title": "Geo T Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N8T : Mon Oct 13 21:07:25 UTC 2025), Geo T Phipps in entry for Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N8T"
+    },
+    {
+      "id": "S50",
+      "title": "George F, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLGT-1MSR : Thu May 23 03:43:13 UTC 2024), George F in entry for Merle Barnes Phipps and Gladys Halstead Cressey, 23 Jul 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLGT-1MSR"
+    },
+    {
+      "id": "S51",
+      "title": "George Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLGT-VGLH : Thu May 23 03:42:59 UTC 2024), George Phipps in entry for Merle Barnes Phipps and Gladys Halstead Cressey, 23 Jul 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLGT-VGLH"
+    },
+    {
+      "id": "S52",
+      "title": "George Phipps in household of Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNF : Wed Sep 09 14:17:27 UTC 2026), George Phipps in entry for Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VNF"
+    },
+    {
+      "id": "S53",
+      "title": "George F. Phipps, \"Connecticut Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-L93 : Wed Oct 14 21:46:14 UTC 2026), George F. Phipps, 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-L93"
+    },
+    {
+      "id": "S54",
+      "title": "George F Phipps, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7K5R : Fri Oct 02 03:45:13 UTC 2026), George F Phipps, 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7K5R"
+    },
+    {
+      "id": "S55",
+      "title": "George F Phipps, \"United States Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M97V-XM2 : Sun Jan 19 00:30:57 UTC 2025), George F Phipps, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M97V-XM2"
+    },
+    {
+      "id": "S56",
+      "title": "George F Phipps in entry for Merle Barnes Phipps, \"United States, GenealogyBank Obituaries, 1980-2014\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVRP-K669 : Mon Jan 20 19:07:10 UTC 2025), George F Phipps in entry for Merle Barnes Phipps, 08 Jun 1989.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVRP-K669"
+    },
+    {
+      "id": "S57",
+      "title": "George Phipps, \"United States Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M2J2-PHY : Wed Nov 04 01:25:11 UTC 2026), George Phipps, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M2J2-PHY"
+    },
+    {
+      "id": "S58",
+      "title": "George F Phipps, \"United States Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFS7-M5D : Mon Oct 12 12:53:16 UTC 2026), George F Phipps, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFS7-M5D"
+    },
+    {
+      "id": "S59",
+      "title": "George Fairbanks Phipps, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4CJ-PY8 : Fri Jul 25 11:36:28 UTC 2025), George Fairbanks Phipps, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4CJ-PY8"
+    },
+    {
+      "id": "S60",
+      "title": "George F. Phipps, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K32 : Wed May 22 23:54:32 UTC 2024), George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K32"
+    },
+    {
+      "id": "S61",
+      "title": "Mary S Phillips, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWY : Mon Jul 08 04:23:14 UTC 2024), Mary S Phillips in entry for Benj Phillips, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHR9-JWY"
+    },
+    {
+      "id": "S62",
+      "title": "Mary L Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6R : Wed Jan 15 16:21:28 UTC 2025), Mary L Phipps in entry for Benjamin J Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68Y-B6R"
+    },
+    {
+      "id": "S63",
+      "title": "Mary Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N85 : Mon Oct 13 21:07:25 UTC 2025), Mary Phipps in entry for Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N85"
+    },
+    {
+      "id": "S64",
+      "title": "Mary L. Child, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2XX : Thu May 23 00:41:19 UTC 2024), Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2XX"
+    },
+    {
+      "id": "S65",
+      "title": "Mary L. Child, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SJY : Wed Mar 06 19:27:29 UTC 2024), Mary L. Child in entry for Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SJY"
+    },
+    {
+      "id": "S66",
+      "title": "Mary Phipps in household of Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VN6 : Wed Sep 09 14:17:27 UTC 2026), Mary Phipps in entry for Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VN6"
+    },
+    {
+      "id": "S67",
+      "title": "Mary L. Childs in entry for George Fairbanks Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4CJ-PY6 : Fri Jul 25 11:36:28 UTC 2025), Mary L. Childs in entry for George Fairbanks Phipps, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4CJ-PY6"
+    },
+    {
+      "id": "S68",
+      "title": "Mary L. Child in entry for George F. Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K3G : Wed May 22 23:54:32 UTC 2024), Mary L. Child in entry for George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K3G"
+    },
+    {
+      "id": "S69",
+      "title": "Mary L. Child, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-35L : Tue Jul 07 18:25:35 UTC 2026), Mary L. Child in entry for Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-35L"
+    },
+    {
+      "id": "S70",
+      "title": "Charles Patton Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVLH-YV5C : Sun Oct 04 00:29:41 UTC 2026), Charles Patton Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVLH-YV5C"
+    },
+    {
+      "id": "S71",
+      "title": "Charles P, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:23YD-HVJ : Sat Jul 26 10:58:34 UTC 2025), Charles P in entry for John Francis Morrissey and Maude Gladys Phipps, 29 January 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:23YD-HVJ"
+    },
+    {
+      "id": "S72",
+      "title": "Chas. P. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4VF-QBR : Sun Mar 10 05:02:00 UTC 2024), Chas. P. Phipps in entry for Maud Phipps, 26 April 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4VF-QBR"
+    },
+    {
+      "id": "S73",
+      "title": "Chas. P. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDN-XFM : Thu May 23 02:54:38 UTC 2024), Chas. P. Phipps in entry for Maud Phipps, 26 Apr 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDN-XFM"
+    },
+    {
+      "id": "S74",
+      "title": "Charles P Phipps, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MF95-4F7 : Mon Oct 12 11:17:11 UTC 2026), Charles P Phipps, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MF95-4F7"
+    },
+    {
+      "id": "S75",
+      "title": "Charles P Phipps, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K4JC-889 : Tue Jan 14 15:19:34 UTC 2025), Charles P Phipps, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K4JC-889"
+    },
+    {
+      "id": "S76",
+      "title": "Charles P Phipps, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XQTW-YP5 : Sat Oct 31 20:35:47 UTC 2026), Charles P Phipps, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XQTW-YP5"
+    },
+    {
+      "id": "S77",
+      "title": "Charles P Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N8R : Mon Oct 13 21:07:25 UTC 2025), Charles P Phipps in entry for Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N8R"
+    },
+    {
+      "id": "S78",
+      "title": "Charles Phipps in household of Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VNX : Wed Sep 09 14:17:27 UTC 2026), Charles Phipps in entry for Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VNX"
+    },
+    {
+      "id": "S79",
+      "title": "Charle P Phips, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9BW-ZV1 : Tue Oct 21 05:01:31 UTC 2025), Charle P Phips, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M9BW-ZV1"
+    },
+    {
+      "id": "S80",
+      "title": "Charles P Phipps, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M22G-MLL : Wed Nov 04 05:27:28 UTC 2026), Charles P Phipps, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M22G-MLL"
+    },
+    {
+      "id": "S81",
+      "title": "Chas. P. Phipps, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDF-4YN : Thu Oct 15 19:15:33 UTC 2026), Chas. P. Phipps in entry for Maud Phipps, 26 April 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDF-4YN"
+    },
+    {
+      "id": "S82",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV7V : Wed Oct 14 21:58:56 UTC 2026), Phipps in entry for Edward Davis, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV7V"
+    },
+    {
+      "id": "S83",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVW7 : Wed Oct 14 23:18:48 UTC 2026), Phipps in entry for Lucretia, 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVW7"
+    },
+    {
+      "id": "S84",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP7X : Wed Oct 14 22:45:56 UTC 2026), Phipps in entry for Albigence Walas, 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP7X"
+    },
+    {
+      "id": "S85",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DPQC : Wed Oct 14 23:18:41 UTC 2026), Phipps in entry for William Rendolph, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DPQC"
+    },
+    {
+      "id": "S86",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV7S : Wed Oct 14 22:54:33 UTC 2026), Phipps in entry for Benjamin Fairbanks, 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV7S"
+    },
+    {
+      "id": "S87",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVQ9 : Wed Oct 14 22:47:52 UTC 2026), Phipps in entry for Clarissa, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVQ9"
+    },
+    {
+      "id": "S88",
+      "title": "Clarissa, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWKZ-DLD : Wed May 22 22:19:00 UTC 2024), Clarissa in entry for Clarissa P. Greeman, 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWKZ-DLD"
+    },
+    {
+      "id": "S89",
+      "title": "Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP3K : Wed Oct 14 21:59:30 UTC 2026), Phipps in entry for Abigail Davis, 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP3K"
+    },
+    {
+      "id": "S90",
+      "title": "Clarisa, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LZL : Wed Oct 14 21:42:57 UTC 2026), Clarisa in entry for Samuel Phipps, 14 Jan 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LZL"
+    },
+    {
+      "id": "S91",
+      "title": "Clarissa Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2X6 : Thu May 23 00:41:19 UTC 2024), Clarissa Phipps in entry for Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2X6"
+    },
+    {
+      "id": "S92",
+      "title": "Clarissa Phipps, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-35T : Tue Jul 07 18:25:35 UTC 2026), Clarissa Phipps in entry for Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-35T"
+    },
+    {
+      "id": "S93",
+      "title": "Clarissa Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SVS : Wed Mar 06 19:27:29 UTC 2024), Clarissa Phipps in entry for Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SVS"
+    },
+    {
+      "id": "S94",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NHB : Wed Oct 14 21:28:26 UTC 2026), Clarissa in entry for Abigail Davis Phipps, 5 June 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NHB"
+    },
+    {
+      "id": "S95",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-N27 : Wed Oct 14 22:27:56 UTC 2026), Clarissa in entry for Lucretia Phipps, 25 June 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-N27"
+    },
+    {
+      "id": "S96",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4BQ : Wed Oct 14 22:48:12 UTC 2026), Clarissa in entry for Albigence Waldo Phipps, 26 April 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4BQ"
+    },
+    {
+      "id": "S97",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NL7 : Wed Oct 14 21:30:12 UTC 2026), Clarissa in entry for Zeruiah Phipps, 3 May 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NL7"
+    },
+    {
+      "id": "S98",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-419 : Wed Oct 14 21:33:05 UTC 2026), Clarissa in entry for Edward Davis Phipps, 26 June 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-419"
+    },
+    {
+      "id": "S99",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NLS : Wed Oct 14 22:34:54 UTC 2026), Clarissa in entry for Clarissa Phipps, 22 October 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NLS"
+    },
+    {
+      "id": "S100",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4YQ : Wed Oct 14 22:32:40 UTC 2026), Clarissa in entry for Benjamin Fairbanks Phipps, 30 January 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4YQ"
+    },
+    {
+      "id": "S101",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4TB : Wed Oct 14 21:31:50 UTC 2026), Clarissa in entry for William Randolph Phipps, 24 August 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4TB"
+    },
+    {
+      "id": "S102",
+      "title": "Clarisa Davis, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC4Z-DXJ : Tue Oct 20 15:20:22 UTC 2026), Clarisa Davis in entry for Payton Randolph Phipps, 26 May 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC4Z-DXJ"
+    },
+    {
+      "id": "S103",
+      "title": "Clericey Davis, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC2J-SYX : Thu Oct 15 20:55:32 UTC 2026), Clericey Davis, 2 January 1792.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC2J-SYX"
+    },
+    {
+      "id": "S104",
+      "title": "C D Freeman, \"Massachusetts, State Census, 1855\"",
+      "citation": "\"Massachusetts, State Census, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQ4N-3NT : Tue Sep 15 19:49:38 UTC 2026), C D Freeman in entry for Rufus Freeman, 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQ4N-3NT"
+    },
+    {
+      "id": "S105",
+      "title": "Clarary Freeman, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDX-J5G : Thu Oct 15 18:20:47 UTC 2026), Clarary Freeman in entry for Clarary Freeman, 3 Apr 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDX-J5G"
+    },
+    {
+      "id": "S106",
+      "title": "Clarissa D., \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDX-VV1 : Thu Oct 15 19:55:04 UTC 2026), Clarissa D. in entry for Harriet E. Freeman, 18 October 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDX-VV1"
+    },
+    {
+      "id": "S107",
+      "title": "Clarissa, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV3Y : Wed Oct 14 22:47:52 UTC 2026), Clarissa, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV3Y"
+    },
+    {
+      "id": "S108",
+      "title": "Clarissa P. Greeman, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWKZ-DLZ : Wed May 22 22:19:00 UTC 2024), Clarissa P. Greeman, 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWKZ-DLZ"
+    },
+    {
+      "id": "S109",
+      "title": "Clarissa D Freeman, \"Connecticut, Deaths, 1640-1955\"",
+      "citation": "\"Connecticut, Deaths, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7ZB-TZV : Sun Jan 12 14:39:56 UTC 2025), Clarissa D Freeman, 20 November 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7ZB-TZV"
+    },
+    {
+      "id": "S110",
+      "title": "Clarary Freeman, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4VH-M42 : Sat Mar 09 03:19:32 UTC 2024), Clarary Freeman in entry for Clarary Freeman, 3 April 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4VH-M42"
+    },
+    {
+      "id": "S111",
+      "title": "Clarissa D., \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4VH-QY7 : Sat Mar 09 09:04:25 UTC 2024), Clarissa D. in entry for Harriet E. Freeman, 18 October 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4VH-QY7"
+    },
+    {
+      "id": "S112",
+      "title": "Clarissa D. Freeman, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-2JR : Wed Oct 14 22:58:08 UTC 2026), Clarissa D. Freeman, 20 Nov 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-2JR"
+    },
+    {
+      "id": "S113",
+      "title": "Clarissa Davis Phipps Freeman, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7K25 : Sun Oct 04 12:53:57 UTC 2026), Clarissa Davis Phipps Freeman.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7K25"
+    },
+    {
+      "id": "S114",
+      "title": "Clarissa D. Freeman, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXCD-1JL : Thu May 23 01:37:29 UTC 2024), Clarissa D. Freeman in entry for Harriet E. Freeman, 18 Oct 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXCD-1JL"
+    },
+    {
+      "id": "S115",
+      "title": "Clarissa Freeman, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4VH-37J : Sun Mar 10 04:18:05 UTC 2024), Clarissa Freeman in entry for Edward D. Freeman, 1 August 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4VH-37J"
+    },
+    {
+      "id": "S116",
+      "title": "Clarissa Freeman, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXWY-3Z3 : Thu May 23 02:26:49 UTC 2024), Clarissa Freeman in entry for Edward D. Freeman, 1 Aug 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXWY-3Z3"
+    },
+    {
+      "id": "S117",
+      "title": "Clarissa Phipps, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7R-TM7M : Sun Mar 10 13:24:21 UTC 2024), Clarissa Phipps in entry for Rufus Freeman, 21 January 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7R-TM7M"
+    },
+    {
+      "id": "S118",
+      "title": "Clarica Freemon, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZCQ-9R7 : Mon Jul 08 10:21:06 UTC 2024), Clarica Freemon in entry for Rufus Freemon, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZCQ-9R7"
+    },
+    {
+      "id": "S119",
+      "title": "Clarissa Freeman, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD9W-V3D : Tue Oct 21 12:34:18 UTC 2025), Clarissa Freeman in entry for Rufus Freeman, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD9W-V3D"
+    },
+    {
+      "id": "S120",
+      "title": "Clarary Freeman, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4VH-M4P : Sat Mar 09 03:19:33 UTC 2024), Clarary Freeman in entry for Albro Freeman, 22 April 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4VH-M4P"
+    },
+    {
+      "id": "S121",
+      "title": "Clarisy, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWHK-52C : Wed May 22 21:26:52 UTC 2024), Clarisy in entry for Albro E. Freeman, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWHK-52C"
+    },
+    {
+      "id": "S122",
+      "title": "Clarissa Phipp, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4W2-BJ7 : Wed May 22 23:19:56 UTC 2024), Clarissa Phipp in entry for Albro Freeman and Betsey Converse, 9 Oct 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4W2-BJ7"
+    },
+    {
+      "id": "S123",
+      "title": "Clarissa Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NLM : Wed Oct 14 22:34:54 UTC 2026), Clarissa Phipps, 22 October 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NLM"
+    },
+    {
+      "id": "S124",
+      "title": "Clarisa D. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC4Z-MQR : Tue Oct 20 15:16:12 UTC 2026), Clarisa D. Phipps in entry for Rufus A. Freeman, 7 Jan 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC4Z-MQR"
+    },
+    {
+      "id": "S125",
+      "title": "Edward Davis, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WV7X : Wed Oct 14 21:58:56 UTC 2026), Edward Davis, 1814.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WV7X"
+    },
+    {
+      "id": "S126",
+      "title": "Edward D Phipps, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZCK-PN8 : Mon Jul 08 09:43:49 UTC 2024), Edward D Phipps, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZCK-PN8"
+    },
+    {
+      "id": "S127",
+      "title": "Edward D. Phipps, \"Connecticut, Deaths, 1640-1955\"",
+      "citation": "\"Connecticut, Deaths, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V9-14D : Wed Sep 02 17:50:10 UTC 2026), Edward D. Phipps, 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V9-14D"
+    },
+    {
+      "id": "S128",
+      "title": "Edward D Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68B-YNF : Sun Jan 19 11:55:43 UTC 2025), Edward D Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68B-YNF"
+    },
+    {
+      "id": "S129",
+      "title": "Edward Davis Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKV-2R77 : Thu Oct 01 22:42:28 UTC 2026), Edward Davis Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKV-2R77"
+    },
+    {
+      "id": "S130",
+      "title": "Edw D Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-6W1P : Wed Oct 14 22:52:10 UTC 2026), Edw D Phipps in entry for Henry E Phipps, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-6W1P"
+    },
+    {
+      "id": "S131",
+      "title": "Edward E Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GWP-JQ4G : Fri Jan 02 05:30:53 UTC 2026), Edward E Phipps in entry for Fanny Elizabeth Phipps, 22 Jan 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GWP-JQ4G"
+    },
+    {
+      "id": "S132",
+      "title": "Edward D., \"Connecticut, Deaths, 1640-1955\"",
+      "citation": "\"Connecticut, Deaths, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V9-14X : Wed Sep 02 17:50:11 UTC 2026), Edward D. in entry for Elizabeth L. Henry Phipps, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V9-14X"
+    },
+    {
+      "id": "S133",
+      "title": "Edward Davis, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DDZP : Wed Oct 14 22:49:41 UTC 2026), Edward Davis in entry for Henry Edward, 1847.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DDZP"
+    },
+    {
+      "id": "S134",
+      "title": "Edward D Phipps, \"Connecticut, Vital Records, Prior to 1850\"",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSB-VKBN : Fri Aug 07 12:53:51 UTC 2026), Edward D Phipps in entry for Elizabeth L Henry, 1 January 1845.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSB-VKBN"
+    },
+    {
+      "id": "S135",
+      "title": "Edward D Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFCF-YVL : Wed Sep 09 14:11:10 UTC 2026), Edward D. Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFCF-YVL"
+    },
+    {
+      "id": "S136",
+      "title": "Edward Davis Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-C4T : Wed Oct 14 21:31:15 UTC 2026), Edward Davis Phipps in entry for Henry Edward Phipps, 31 August 1847.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-C4T"
+    },
+    {
+      "id": "S137",
+      "title": "Edward Davis Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4B1 : Wed Oct 14 21:33:05 UTC 2026), Edward Davis Phipps, 26 June 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4B1"
+    },
+    {
+      "id": "S138",
+      "title": "Lucretia, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVW3 : Wed Oct 14 23:18:48 UTC 2026), Lucretia, 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVW3"
+    },
+    {
+      "id": "S139",
+      "title": "Lucretia Healy Phipps Marcy, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVZ-5Y3C : Fri Oct 02 22:07:40 UTC 2026), Lucretia Healy Phipps Marcy.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVZ-5Y3C"
+    },
+    {
+      "id": "S140",
+      "title": "Lucretiah Marcy, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+      "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7DJ-8J9 : Fri Oct 02 18:38:53 UTC 2026), Lucretiah Marcy, 2 December 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7DJ-8J9"
+    },
+    {
+      "id": "S141",
+      "title": "Lucretiah Marcy, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LXD : Wed Oct 14 22:59:07 UTC 2026), Lucretiah Marcy, 2 Dec 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LXD"
+    },
+    {
+      "id": "S142",
+      "title": "Lucretia M. Thipp, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWY5-TH5 : Thu May 23 00:50:03 UTC 2024), Lucretia M. Thipp in entry for Edward Rock and Sarah L. Marcy, 31 Oct 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWY5-TH5"
+    },
+    {
+      "id": "S143",
+      "title": "Lucretia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N75S-LJK : Thu Jan 16 05:06:36 UTC 2025), Lucretia in entry for Sarah L. Rock Marcy, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N75S-LJK"
+    },
+    {
+      "id": "S144",
+      "title": "Lucretia, \"Massachusetts, Deaths and Burials, 1795-1910\"",
+      "citation": "\"Massachusetts, Deaths and Burials, 1795-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHNN-44G : Thu Oct 15 21:38:11 UTC 2026), Lucretia in entry for Sarah L Marcy Rock, 1 Dec 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHNN-44G"
+    },
+    {
+      "id": "S145",
+      "title": "Lucretia Marcy, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWY5-PLB : Wed May 22 23:18:10 UTC 2024), Lucretia Marcy in entry for Edward Rock and Sarah L. Marcy, 31 Oct 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWY5-PLB"
+    },
+    {
+      "id": "S146",
+      "title": "Lucretia Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-N23 : Wed Oct 14 22:27:56 UTC 2026), Lucretia Phipps, 25 June 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-N23"
+    },
+    {
+      "id": "S147",
+      "title": "Lucretia H., \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC2X-3LR : Thu Oct 15 20:48:04 UTC 2026), Lucretia H. in entry for Sarah Lucretia Marcy, 18 February 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC2X-3LR"
+    },
+    {
+      "id": "S148",
+      "title": "Abigail L Lyon, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD9Z-2ZP : Tue Oct 21 05:54:38 UTC 2025), Abigail L Lyon in entry for Liberty A Lyon, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD9Z-2ZP"
+    },
+    {
+      "id": "S149",
+      "title": "Abigail Lyon, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDQ6-BJ2 : Tue Oct 28 13:47:20 UTC 2025), Abigail Lyon in entry for Liberty Lyon, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDQ6-BJ2"
+    },
+    {
+      "id": "S150",
+      "title": "Abigail Davis, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP3D : Wed Oct 14 21:59:30 UTC 2026), Abigail Davis, 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP3D"
+    },
+    {
+      "id": "S151",
+      "title": "Abigail Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZFJ-TVYF : Thu May 23 03:51:27 UTC 2024), Abigail Phipps in entry for Abbie Phippps Olney, 14 May 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZFJ-TVYF"
+    },
+    {
+      "id": "S152",
+      "title": "Abigal D Lyon, \"Massachusetts, State Census, 1865\"",
+      "citation": "\"Massachusetts, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQH1-N3T : Wed Jan 15 17:53:25 UTC 2025), Abigal D Lyon in entry for Liberty A Lyon, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQH1-N3T"
+    },
+    {
+      "id": "S153",
+      "title": "Abigal Lyon, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28D-RKT1 : Sat Jul 26 02:34:18 UTC 2025), Abigal Lyon in entry for Stanley F Newell and Jennie F Lyon, 9 November 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28D-RKT1"
+    },
+    {
+      "id": "S154",
+      "title": "Abagail A Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28D-RLJS : Fri Jul 25 03:21:32 UTC 2025), Abagail A Phipps in entry for Joseph M Olney and Abbie P Lyon, 1 January 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28D-RLJS"
+    },
+    {
+      "id": "S155",
+      "title": "Abigail B Lyon, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZH1-FJ1 : Mon Jul 08 10:19:01 UTC 2024), Abigail B Lyon in entry for Liberty A Lyon, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZH1-FJ1"
+    },
+    {
+      "id": "S156",
+      "title": "Abigail D. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DZXJ-TTN2 : Thu Jan 16 11:38:14 UTC 2025), Abigail D. Phipps in entry for George A. Lyon, 20 Oct 1868.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DZXJ-TTN2"
+    },
+    {
+      "id": "S157",
+      "title": "Abagail D., \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDT-JLF : Thu Oct 15 20:15:11 UTC 2026), Abagail D. in entry for Jenny F. Lyon, 1 Sep 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDT-JLF"
+    },
+    {
+      "id": "S158",
+      "title": "A. Lyon, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7RC-TXF : Wed May 22 21:14:20 UTC 2024), A. Lyon in entry for James M. Lyon, 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7RC-TXF"
+    },
+    {
+      "id": "S159",
+      "title": "Abagail B. Phipps Lyon, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW33-JYB : Wed May 22 23:12:33 UTC 2024), Abagail B. Phipps Lyon, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NW33-JYB"
+    },
+    {
+      "id": "S160",
+      "title": "Abigail Davis Phipps Lyon, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGQ-3GHB : Sun Oct 04 12:54:07 UTC 2026), Abigail Davis Phipps Lyon.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGQ-3GHB"
+    },
+    {
+      "id": "S161",
+      "title": "Abigail D. Lyon, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHF7-WBH : Wed Sep 09 09:31:00 UTC 2026), Abigail D. Lyon in entry for Liberty A. Lyon, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHF7-WBH"
+    },
+    {
+      "id": "S162",
+      "title": "Abagail D., \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDT-T6Y : Sat Jul 26 03:28:57 UTC 2025), Abagail D. in entry for Jenny F. Lyon, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDT-T6Y"
+    },
+    {
+      "id": "S163",
+      "title": "Abigal, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHV1-WHJ : Tue Jan 21 09:36:16 UTC 2025), Abigal in entry for Stanley F. Newele, 9 Nov 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHV1-WHJ"
+    },
+    {
+      "id": "S164",
+      "title": "Abigal, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWBD-885 : Thu May 23 00:53:57 UTC 2024), Abigal in entry for Stanley F. Newell and Jennie F. Lyon, 9 Nov 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWBD-885"
+    },
+    {
+      "id": "S165",
+      "title": "Abagail D., \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDT-T65 : Fri Jul 25 17:51:27 UTC 2025), Abagail D. in entry for Abby P. Lyon, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDT-T65"
+    },
+    {
+      "id": "S166",
+      "title": "Abagail A. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHV1-WXC : Wed Jan 22 11:48:50 UTC 2025), Abagail A. Phipps in entry for Joseph M. Olney, 1 Jan 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHV1-WXC"
+    },
+    {
+      "id": "S167",
+      "title": "Abigail D. Lyon, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXCP-W6T : Wed May 22 23:45:16 UTC 2024), Abigail D. Lyon in entry for George Allen Lyon, 7 Jun 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXCP-W6T"
+    },
+    {
+      "id": "S168",
+      "title": "Abigail Davis Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NHT : Wed Oct 14 21:28:26 UTC 2026), Abigail Davis Phipps, 5 June 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NHT"
+    },
+    {
+      "id": "S169",
+      "title": "William Rendolph, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DPQM : Wed Oct 14 23:18:41 UTC 2026), William Rendolph, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DPQM"
+    },
+    {
+      "id": "S170",
+      "title": "William Randolph Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S3-3SMM : Sat Oct 03 15:13:58 UTC 2026), William Randolph Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S3-3SMM"
+    },
+    {
+      "id": "S171",
+      "title": "William Randolph Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4TT : Wed Oct 14 21:31:50 UTC 2026), William Randolph Phipps, 24 August 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4TT"
+    },
+    {
+      "id": "S172",
+      "title": "Zevuiah Phipps, \"Massachusetts, State Census, 1865\"",
+      "citation": "\"Massachusetts, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQCM-N82 : Fri Jan 17 15:46:03 UTC 2025), Zevuiah Phipps in entry for Clarissa Freeman, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQCM-N82"
+    },
+    {
+      "id": "S173",
+      "title": "Zerniah Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6Y : Wed Jan 15 16:21:28 UTC 2025), Zerniah Phipps in entry for Benjamin J Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68Y-B6Y"
+    },
+    {
+      "id": "S174",
+      "title": "Zeruiah Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVZ-5Y3D : Fri Oct 02 21:42:10 UTC 2026), Zeruiah Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVZ-5Y3D"
+    },
+    {
+      "id": "S175",
+      "title": "Zeruiah Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7WW-NL3 : Wed Oct 14 21:30:12 UTC 2026), Zeruiah Phipps, 3 May 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7WW-NL3"
+    },
+    {
+      "id": "S176",
+      "title": "Albigence Walas, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-DP7C : Wed Oct 14 22:45:56 UTC 2026), Albigence Walas, 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-DP7C"
+    },
+    {
+      "id": "S177",
+      "title": "A W Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZPK-965 : Sat Oct 18 08:25:05 UTC 2025), A W Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZPK-965"
+    },
+    {
+      "id": "S178",
+      "title": "A. Phipps, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWNM-VXF : Wed Sep 09 04:53:45 UTC 2026), A. Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWNM-VXF"
+    },
+    {
+      "id": "S179",
+      "title": "A W Phipps, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX57-PPG : Mon Jul 08 21:26:15 UTC 2024), A W Phipps, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MX57-PPG"
+    },
+    {
+      "id": "S180",
+      "title": "Albigence Waldo Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4BS : Wed Oct 14 22:48:12 UTC 2026), Albigence Waldo Phipps, 26 April 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4BS"
+    },
+    {
+      "id": "S181",
+      "title": "Albigence Waldo Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S3-39BD : Fri Oct 02 18:26:45 UTC 2026), Albigence Waldo Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S3-39BD"
+    },
+    {
+      "id": "S182",
+      "title": "Obituary",
+      "citation": "Newspapers.com",
+      "url": "https://www.newspapers.com/clip/3430327/phipps_awobit_new_castle_weekly/"
+    },
+    {
+      "id": "S183",
+      "title": "Samuel Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7KR7 : Sat Oct 03 00:34:27 UTC 2026), Samuel Phipps, 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7KR7"
+    },
+    {
+      "id": "S184",
+      "title": "Samuel Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-LZK : Wed Oct 14 21:42:57 UTC 2026), Samuel Phipps, 14 Jan 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-LZK"
+    },
+    {
+      "id": "S185",
+      "title": "Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K3L : Wed May 22 23:54:32 UTC 2024), Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K3L"
+    }
+  ]
+}

@@ -1,0 +1,4186 @@
+{
+  "log_id": "log_017",
+  "tool": "record_search",
+  "retrieved": "2026-11-18T21:48:03.857Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "surname": "Phillips",
+      "fatherGivenName": "Benjamin",
+      "motherGivenName": "Mary",
+      "birthYearFrom": 1849,
+      "birthYearTo": 1866,
+      "recordCountry": "United States",
+      "projectPath": "/project"
+    },
+    "totalMatches": 2431970,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:FHM1-L8Z",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Frances Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "4 June 1854",
+        "birthPlace": "Boston, Suffolk, Massachusetts, United States",
+        "collectionId": "2061550",
+        "collectionTitle": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2061550",
+        "recordTitle": "Entry for Frances Phillips, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+        "recordArk": "ark:/61903/1:2:M69N-86V",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11130202240",
+              "ark": "ark:/61903/1:1:FHM1-L8Z",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Frances"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "4 June 1854",
+                  "standard_date": "4 Jun 1854",
+                  "place": "Boston, Suffolk, Massachusetts, United States",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11130202241",
+              "ark": "ark:/61903/1:1:FHM1-L88",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11130202242",
+              "ark": "ark:/61903/1:1:FHM1-L8D",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11130202241",
+              "child": "p_11130202240"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11130202241",
+              "person2": "p_11130202242"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11130202242",
+              "child": "p_11130202240"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_317152308",
+              "resource_type": "Record",
+              "title": "Entry for Frances Phillips, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+              "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHM1-L8Z : Sun Mar 10 12:32:54 UTC 2024), Entry for Frances Phillips and Benjamin Phillips, 4 June 1854.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M69N-86V",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "4 June 1854",
+                "record_type": "Vital",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_2061550",
+              "resource_type": "Collection",
+              "title": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2061550",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1627/2001",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G979-78R",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "1851",
+                "record_type": "Birth",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-SF4",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Births, from 0018 to 9999",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0018-01-01T00:00:00Z/+9999-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11130202240",
+              "resource_type": "Person",
+              "url": "#p_11130202240"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229284",
+              "name": "Boston, Suffolk, Massachusetts, United States",
+              "latitude": 42.3605,
+              "longitude": -71.0591
+            }
+          ]
+        },
+        "primaryId": "p_11130202240",
+        "batchNumber": "I01924-3",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q29L-253P",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Lutetia Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "17 June 1850",
+        "birthPlace": "Chelsea, Suffolk, Massachusetts, United States",
+        "collectionId": "2061550",
+        "collectionTitle": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2061550",
+        "recordTitle": "Entry for Lutetia Phillips, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+        "recordArk": "ark:/61903/1:2:Q21L-BK71",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102101871713",
+              "ark": "ark:/61903/1:1:Q29L-253P",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lutetia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "17 June 1850",
+                  "standard_date": "17 Jun 1850",
+                  "place": "Chelsea, Suffolk, Massachusetts, United States",
+                  "standard_place": "Chelsea, Suffolk, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102101871714",
+              "ark": "ark:/61903/1:1:Q29L-2535",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102101871715",
+              "ark": "ark:/61903/1:1:Q29L-253R",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102101871714",
+              "person2": "p_102101871715"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102101871715",
+              "child": "p_102101871713"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102101871714",
+              "child": "p_102101871713"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102782483279",
+              "resource_type": "Record",
+              "title": "Entry for Lutetia Phillips, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+              "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29L-253P : Fri Mar 08 18:35:18 UTC 2024), Entry for Lutetia Phillips and Benjamin Phillips, 17 June 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q21L-BK71",
+              "coverage": {
+                "place_rep_id": "4229286",
+                "date_range": "17 June 1850",
+                "record_type": "Vital",
+                "standard_place": "Chelsea, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_2061550",
+              "resource_type": "Collection",
+              "title": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2061550",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1627/2001",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DRLS-73W",
+              "coverage": {
+                "place_rep_id": "4229286",
+                "date_range": "1776–1849",
+                "record_type": "Death",
+                "standard_place": "Chelsea, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "src_p_p_102101871713",
+              "resource_type": "Person",
+              "url": "#p_102101871713"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229286",
+              "name": "Chelsea, Suffolk, Massachusetts, United States",
+              "latitude": 42.3926,
+              "longitude": -71.033
+            }
+          ]
+        },
+        "primaryId": "p_102101871713",
+        "batchNumber": "I10765-1",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FXZ8-VK2",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Emily R Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "14 November 1866",
+        "birthPlace": "Marblehead, Essex, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Emily R Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDBT-Q8S",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11283613790",
+              "ark": "ark:/61903/1:1:FXZ8-VK2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Emily R"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "14 Nov 1866",
+                  "standard_date": "14 Nov 1866",
+                  "place": "Marblehead, Essex, Massachusetts, United States",
+                  "standard_place": "Marblehead, Essex, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11283613788",
+              "ark": "ark:/61903/1:1:FXZ8-VKV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11283613789",
+              "ark": "ark:/61903/1:1:FXZ8-VKK",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Trefry",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11283613789",
+              "child": "p_11283613790"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11283613788",
+              "person2": "p_11283613789"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11283613788",
+              "child": "p_11283613790"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_314985932",
+              "resource_type": "Record",
+              "title": "Entry for Emily R Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZ8-VK2 : Wed May 22 22:02:05 UTC 2024), Entry for Emily R Phillips and Benjamin, 14 Nov 1866.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDBT-Q8S",
+              "coverage": {
+                "place_rep_id": "4228601",
+                "date_range": "14 Nov 1866",
+                "record_type": "Death",
+                "standard_place": "Marblehead, Essex, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6PMW-SS",
+              "coverage": {
+                "place_rep_id": "395409",
+                "date_range": "1865-1866",
+                "record_type": "Birth"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-SF4",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Births, from 0018 to 9999",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0018-01-01T00:00:00Z/+9999-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11283613790",
+              "resource_type": "Person",
+              "url": "#p_11283613790"
+            }
+          ],
+          "places": [
+            {
+              "id": "4228601",
+              "name": "Marblehead, Essex, Massachusetts, United States",
+              "latitude": 42.50417,
+              "longitude": -70.866669
+            }
+          ]
+        },
+        "primaryId": "p_11283613790",
+        "batchNumber": "I10077-6",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Trefry"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FXCS-B6H",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Lutetia Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "17 July 1850",
+        "birthPlace": "Chelsea, Suffolk, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Lutetia Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDBJ-NNK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11282569598",
+              "ark": "ark:/61903/1:1:FXCS-B6H",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lutetia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "17 Jul 1850",
+                  "standard_date": "17 Jul 1850",
+                  "place": "Chelsea, Suffolk, Massachusetts, United States",
+                  "standard_place": "Chelsea, Suffolk, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11282569596",
+              "ark": "ark:/61903/1:1:FXCS-B6W",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11282569597",
+              "ark": "ark:/61903/1:1:FXCS-B64",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11282569597",
+              "child": "p_11282569598"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11282569596",
+              "child": "p_11282569598"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11282569596",
+              "person2": "p_11282569597"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_314753899",
+              "resource_type": "Record",
+              "title": "Entry for Lutetia Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXCS-B6H : Wed May 22 21:50:09 UTC 2024), Entry for Lutetia Phillips and Benjamin, 17 Jul 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDBJ-NNK",
+              "coverage": {
+                "place_rep_id": "4229286",
+                "date_range": "17 Jul 1850",
+                "record_type": "Death",
+                "standard_place": "Chelsea, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6PM9-G28",
+              "coverage": {
+                "place_rep_id": "395415",
+                "date_range": "1850-1851",
+                "record_type": "Birth"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-SF4",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Births, from 0018 to 9999",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0018-01-01T00:00:00Z/+9999-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11282569598",
+              "resource_type": "Person",
+              "url": "#p_11282569598"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229286",
+              "name": "Chelsea, Suffolk, Massachusetts, United States",
+              "latitude": 42.3926,
+              "longitude": -71.033
+            }
+          ]
+        },
+        "primaryId": "p_11282569598",
+        "batchNumber": "I02944-4",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FXWQ-4GZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Frances Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "4 June 1854",
+        "birthPlace": "Boston, Suffolk, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Frances Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:SMC2-DC2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11280174970",
+              "ark": "ark:/61903/1:1:FXWQ-4GZ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Frances"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "4 Jun 1854",
+                  "standard_date": "4 Jun 1854",
+                  "place": "Boston, Suffolk, Massachusetts, United States",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11280174968",
+              "ark": "ark:/61903/1:1:FXWQ-4GH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11280174969",
+              "ark": "ark:/61903/1:1:FXWQ-4GC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11280174968",
+              "person2": "p_11280174969"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11280174969",
+              "child": "p_11280174970"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11280174968",
+              "child": "p_11280174970"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1465841090",
+              "resource_type": "Record",
+              "title": "Entry for Frances Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXWQ-4GZ : Thu May 23 01:25:10 UTC 2024), Entry for Frances Phillips and Benjamin, 4 Jun 1854.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:SMC2-DC2",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "4 Jun 1854",
+                "record_type": "Death",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-XHB7-DYB",
+              "coverage": {
+                "place_rep_id": "3666",
+                "date_range": "1855",
+                "record_type": "Birth"
+              }
+            },
+            {
+              "id": "src_p_p_11280174970",
+              "resource_type": "Person",
+              "url": "#p_11280174970"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229284",
+              "name": "Boston, Suffolk, Massachusetts, United States",
+              "latitude": 42.3605,
+              "longitude": -71.0591
+            }
+          ]
+        },
+        "primaryId": "p_11280174970",
+        "batchNumber": "I10134-0",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FZQ6-5YG",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Caroline Phillips",
+        "score": 7.0318,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "9 February 1862",
+        "birthPlace": "Hanover Township, Morris, New Jersey, United States",
+        "collectionId": "1675383",
+        "collectionTitle": "New Jersey, Births and Christenings, 1660-1980",
+        "collectionUrl": "https://familysearch.org/collections/1675383",
+        "recordTitle": "Entry for Caroline Phillips, \"New Jersey, Births and Christenings, 1660-1980\"",
+        "recordArk": "ark:/61903/1:2:MB9G-S9W",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11181613432",
+              "ark": "ark:/61903/1:1:FZQ6-5YG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Caroline",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "9 Feb 1862",
+                  "standard_date": "9 Feb 1862",
+                  "place": "Hanover, Morris, New Jersey, United States",
+                  "standard_place": "Hanover Township, Morris, New Jersey, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11181613433",
+              "ark": "ark:/61903/1:1:FZQ6-5YP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Phillips"
+                }
+              ]
+            },
+            {
+              "id": "p_11181613434",
+              "ark": "ark:/61903/1:1:FZQ6-5Y5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11181613433",
+              "person2": "p_11181613434"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11181613433",
+              "child": "p_11181613432"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11181613434",
+              "child": "p_11181613432"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1675383",
+              "resource_type": "Collection",
+              "title": "New Jersey, Births and Christenings, 1660-1980",
+              "url": "https://familysearch.org/collections/1675383",
+              "coverage": {
+                "place_rep_id": "356",
+                "date_range": "1660/1980",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_681805836",
+              "resource_type": "Record",
+              "title": "Entry for Caroline Phillips, \"New Jersey, Births and Christenings, 1660-1980\"",
+              "citation": "\"New Jersey, Births and Christenings, 1660-1980,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:MB9G-S9W : 18 January 2020), Entry for Caroline Phillips, ; citing Hanover, Morris, New Jersey, United States, reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:MB9G-S9W",
+              "coverage": {
+                "place_rep_id": "4589096",
+                "date_range": "9 Feb 1862",
+                "record_type": "Vital",
+                "standard_place": "Hanover Township, Morris, New Jersey, United States"
+              }
+            },
+            {
+              "id": "src_p_p_11181613432",
+              "resource_type": "Person",
+              "url": "#p_11181613432"
+            }
+          ],
+          "places": [
+            {
+              "id": "4589096",
+              "name": "Hanover Township, Morris, New Jersey, United States",
+              "latitude": 40.8167,
+              "longitude": -74.425
+            }
+          ]
+        },
+        "primaryId": "p_11181613432",
+        "batchNumber": "C51222-1",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:F1PR-6XH",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Archibald Ruthsford Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1853",
+        "deathDate": "1 November 1930",
+        "deathPlace": "Ritchie, West Virginia, United States",
+        "collectionId": "1417434",
+        "collectionTitle": "West Virginia, Deaths, 1804-1999",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417434",
+        "recordTitle": "Entry for Archibald Ruthsford Phillips, \"West Virginia, Deaths, 1804-1999\"",
+        "recordArk": "ark:/61903/1:2:97DX-3T1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11659017128",
+              "ark": "ark:/61903/1:1:F1PR-6XH",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Archibald Ruthsford",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "01 Nov 1930",
+                  "standard_date": "1 Nov 1930",
+                  "place": "Ritchie, West Virginia",
+                  "standard_place": "Ritchie, West Virginia, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11659017129",
+              "ark": "ark:/61903/1:1:F1PR-6XC",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin P.",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11659017130",
+              "ark": "ark:/61903/1:1:F1PR-6XZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Du-Ns"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11659017131",
+              "ark": "ark:/61903/1:1:F1PR-6X8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isa May",
+                  "surname": "Stonestreet"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11659017129",
+              "child": "p_11659017128"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11659017129",
+              "person2": "p_11659017130"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11659017130",
+              "child": "p_11659017128"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11659017128",
+              "person2": "p_11659017131"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_860601509",
+              "resource_type": "Record",
+              "title": "Entry for Archibald Ruthsford Phillips, \"West Virginia, Deaths, 1804-1999\"",
+              "citation": "\"West Virginia, Deaths, 1804-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F1PR-6XH : Fri Jul 25 12:51:38 UTC 2025), Entry for Archibald Ruthsford Phillips and Benjamin P. Phillips, 01 Nov 1930.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:97DX-3T1",
+              "coverage": {
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1417434",
+              "resource_type": "Collection",
+              "title": "West Virginia, Deaths, 1804-1999",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417434",
+              "coverage": {
+                "place_rep_id": "345",
+                "date_range": "1804/1999",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "http://www.wvculture.org/vrr/va_view2.aspx?FilmNumber=1953610&ImageNumber=1138"
+            },
+            {
+              "id": "src_p_p_11659017128",
+              "resource_type": "Person",
+              "url": "#p_11659017128"
+            }
+          ],
+          "places": [
+            {
+              "id": "393637",
+              "name": "Ritchie, West Virginia, United States",
+              "latitude": 39.16667,
+              "longitude": -81.08333
+            }
+          ]
+        },
+        "primaryId": "p_11659017128",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin P. Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Ann Du-Ns"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FHG3-KMV",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Jan 1891",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Lewis C. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1866",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6JK-X9G",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11147318118",
+              "ark": "ark:/61903/1:1:FHG3-KMV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lewis C."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147318119",
+              "ark": "ark:/61903/1:1:FHG3-KMK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin E."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147318120",
+              "ark": "ark:/61903/1:1:FHG3-KM2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary Ann"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147318115",
+              "ark": "ark:/61903/1:1:FHG3-KMF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Morgan",
+                  "given": "Mary M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147318116",
+              "ark": "ark:/61903/1:1:FHG3-KMN",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Michael"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147318117",
+              "ark": "ark:/61903/1:1:FHG3-KMJ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelley",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11147318120",
+              "child": "p_11147318118"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11147318119",
+              "person2": "p_11147318120"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147318119",
+              "child": "p_11147318118"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11147318118",
+              "person2": "p_11147318115",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "13 Jan 1891",
+                  "standard_date": "13 Jan 1891",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147318116",
+              "child": "p_11147318115"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147318117",
+              "child": "p_11147318115"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_330195652",
+              "resource_type": "Record",
+              "title": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHG3-KMV : Wed May 22 23:52:31 UTC 2024), Entry for Lewis C. Phillips and Benjamin E., 13 Jan 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6JK-X9G",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "13 Jan 1891",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9XF-XBQR",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "1871-1900",
+                "record_type": "DeathRegister",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "src_p_p_11147318118",
+              "resource_type": "Person",
+              "url": "#p_11147318118"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_11147318118",
+        "batchNumber": "I01446-6",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin E."
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Ann Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FHG3-56F",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "11 Nov 1884",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1861",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Hiram Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6JK-62Z",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11147323005",
+              "ark": "ark:/61903/1:1:FHG3-56F",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147323006",
+              "ark": "ark:/61903/1:1:FHG3-56N",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147323007",
+              "ark": "ark:/61903/1:1:FHG3-56J",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Wilson"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147323002",
+              "ark": "ark:/61903/1:1:FHG3-56D",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Annie",
+                  "surname": "Mc Phail"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147323003",
+              "ark": "ark:/61903/1:1:FHG3-566",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Daniel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147323004",
+              "ark": "ark:/61903/1:1:FHG3-56X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mc Donald"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11147323006",
+              "child": "p_11147323005"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11147323006",
+              "person2": "p_11147323007"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147323007",
+              "child": "p_11147323005"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147323004",
+              "child": "p_11147323002"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11147323005",
+              "person2": "p_11147323002",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "11 Nov 1884",
+                  "standard_date": "11 Nov 1884",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147323003",
+              "child": "p_11147323002"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_330195310",
+              "resource_type": "Record",
+              "title": "Entry for Hiram Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHG3-56F : Thu May 23 01:11:13 UTC 2024), Entry for Hiram Phillips and Benjamin, 11 Nov 1884.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6JK-62Z",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "11 Nov 1884",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89XF-X144",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "1871-1900",
+                "record_type": "DeathRegister",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "src_p_p_11147323005",
+              "resource_type": "Person",
+              "url": "#p_11147323005"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_11147323005",
+        "batchNumber": "I01446-6",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FH1F-P4X",
+        "events": [
+          {
+            "type": "MarriageNotice",
+            "date": "10 Nov 1884",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1861",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Hiram Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6JK-4Y1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11153315924",
+              "ark": "ark:/61903/1:1:FH1F-P4X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861"
+                }
+              ]
+            },
+            {
+              "id": "p_11153315925",
+              "ark": "ark:/61903/1:1:FH1F-P4F",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Benjamin"
+                }
+              ]
+            },
+            {
+              "id": "p_11153315926",
+              "ark": "ark:/61903/1:1:FH1F-P4N",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary A."
+                }
+              ]
+            },
+            {
+              "id": "p_11153315921",
+              "ark": "ark:/61903/1:1:FH1F-P48",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Annie",
+                  "surname": "McPhail"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862"
+                }
+              ]
+            },
+            {
+              "id": "p_11153315922",
+              "ark": "ark:/61903/1:1:FH1F-P4D",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "McPhail",
+                  "given": "Daniel"
+                }
+              ]
+            },
+            {
+              "id": "p_11153315923",
+              "ark": "ark:/61903/1:1:FH1F-P46",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "McDonald"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11153315923",
+              "child": "p_11153315921"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11153315924",
+              "person2": "p_11153315921",
+              "facts": [
+                {
+                  "type": "MarriageNotice",
+                  "primary": true,
+                  "date": "10 Nov 1884",
+                  "standard_date": "10 Nov 1884",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153315922",
+              "child": "p_11153315921"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153315926",
+              "child": "p_11153315924"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153315925",
+              "child": "p_11153315924"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11153315925",
+              "person2": "p_11153315926"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_330190139",
+              "resource_type": "Record",
+              "title": "Entry for Hiram Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH1F-P4X : Fri Jul 25 01:41:51 UTC 2025), Entry for Hiram Phillips and Benjamin Phillips, 10 Nov 1884.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6JK-4Y1",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "10 Nov 1884",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11153315924",
+              "resource_type": "Person",
+              "url": "#p_11153315924"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_11153315924",
+        "batchNumber": "I01079-5",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary A. Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWS6-R3J",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Margree C. B."
+          },
+          {
+            "type": "Residence",
+            "place": "Brookline, Mass"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Occupation",
+            "value": "Carpenter"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram I. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1863",
+        "birthPlace": "Margree, C. B.",
+        "deathDate": "25 March 1891",
+        "deathPlace": "Brookline, Norfolk, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Hiram I. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDYF-1XN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11811793607",
+              "ark": "ark:/61903/1:1:NWS6-R3J",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hiram I."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "place": "Margree C. B."
+                },
+                {
+                  "type": "Residence",
+                  "place": "Brookline, Mass",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "25 Mar 1891",
+                  "standard_date": "25 Mar 1891",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1863",
+                  "standard_date": "1863",
+                  "place": "Margree, C. B.",
+                  "standard_place": "C. B., Tazewell, Virginia, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Carpenter"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11811793608",
+              "ark": "ark:/61903/1:1:NWS6-R3V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin E."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Cape Breton",
+                  "standard_place": "Île-Royale, Acadia, New France"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11811793609",
+              "ark": "ark:/61903/1:1:NWS6-R3K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Nova Scotia",
+                  "standard_place": "Nova Scotia, Canada"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11811793609",
+              "child": "p_11811793607"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11811793608",
+              "person2": "p_11811793609"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11811793608",
+              "child": "p_11811793607"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_313901536",
+              "resource_type": "Record",
+              "title": "Entry for Hiram I. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWS6-R3J : Wed May 22 21:03:03 UTC 2024), Entry for Hiram I. Phillips and Benjamin E., 25 Mar 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDYF-1XN",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "25 Mar 1891",
+                "record_type": "Death",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-68L3-9YP",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1891",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M924-YMZ",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Deaths, from 0196 to 2026",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0196-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11811793607",
+              "resource_type": "Person",
+              "url": "#p_11811793607"
+            }
+          ],
+          "places": [
+            {
+              "id": "13739128",
+              "name": "Île-Royale, Acadia, New France",
+              "latitude": 45.6294,
+              "longitude": -61.2457
+            },
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            },
+            {
+              "id": "5794",
+              "name": "Nova Scotia, Canada",
+              "latitude": 45,
+              "longitude": -63
+            }
+          ]
+        },
+        "primaryId": "p_11811793607",
+        "batchNumber": "B06820-9",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin E."
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary A. Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7PM-SZG",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Gardner, Mass."
+          },
+          {
+            "type": "Residence",
+            "place": "Gardner, Mass."
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Stella S. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1866",
+        "birthPlace": "Gardner, Worcester, Massachusetts, United States",
+        "deathDate": "1885",
+        "deathPlace": "Gardner, Worcester, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Stella S. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDYW-SWL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11804132122",
+              "ark": "ark:/61903/1:1:N7PM-SZG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Stella S."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "place": "Gardner, Mass.",
+                  "standard_place": "Gardner, Worcester, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "Gardner,",
+                  "standard_place": "Gardner, Worcester, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1885",
+                  "standard_date": "1885",
+                  "place": "Gardner, Worcester, Massachusetts, United States",
+                  "standard_place": "Gardner, Worcester, Massachusetts, United States"
+                },
+                {
+                  "type": "Residence",
+                  "place": "Gardner, Mass.",
+                  "standard_place": "Gardner, Worcester, Massachusetts, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11804132123",
+              "ark": "ark:/61903/1:1:N7PM-SZP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benj. F."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Hubbardston",
+                  "standard_place": "Hubbardston, Worcester, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11804132124",
+              "ark": "ark:/61903/1:1:N7PM-SZ5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Hub...",
+                  "standard_place": "Hub, Parmer, Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11804132123",
+              "child": "p_11804132122"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11804132124",
+              "child": "p_11804132122"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11804132123",
+              "person2": "p_11804132124"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_313634001",
+              "resource_type": "Record",
+              "title": "Entry for Stella S. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7PM-SZG : Wed May 22 23:08:08 UTC 2024), Entry for Stella S. Phillips and Benj. F., 1885.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDYW-SWL",
+              "coverage": {
+                "place_rep_id": "4228930",
+                "date_range": "1885",
+                "record_type": "Death",
+                "standard_place": "Gardner, Worcester, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DTD3-5H3",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1885",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M924-YMZ",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Deaths, from 0196 to 2026",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0196-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11804132122",
+              "resource_type": "Person",
+              "url": "#p_11804132122"
+            }
+          ],
+          "places": [
+            {
+              "id": "4228930",
+              "name": "Gardner, Worcester, Massachusetts, United States",
+              "latitude": 42.575,
+              "longitude": -71.99583
+            },
+            {
+              "id": "4228991",
+              "name": "Hubbardston, Worcester, Massachusetts, United States",
+              "latitude": 42.4749,
+              "longitude": -72.0063
+            },
+            {
+              "id": "5965746",
+              "name": "Hub, Parmer, Texas, United States",
+              "latitude": 34.5255,
+              "longitude": -102.7279
+            }
+          ]
+        },
+        "primaryId": "p_11804132122",
+        "batchNumber": "B06794-8",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benj. F."
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary A."
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FHLG-NPG",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 Jan 1891",
+            "place": "Boston, Suffolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Lewis C. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1866",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6V2-9Y5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11147019112",
+              "ark": "ark:/61903/1:1:FHLG-NPG",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lewis C."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147019113",
+              "ark": "ark:/61903/1:1:FHLG-NPP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin E."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147019114",
+              "ark": "ark:/61903/1:1:FHLG-NP5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147019109",
+              "ark": "ark:/61903/1:1:FHLG-NPK",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Morgan",
+                  "given": "Mary M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147019110",
+              "ark": "ark:/61903/1:1:FHLG-NP2",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Michael"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11147019111",
+              "ark": "ark:/61903/1:1:FHLG-NPL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11147019113",
+              "person2": "p_11147019114"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147019114",
+              "child": "p_11147019112"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147019110",
+              "child": "p_11147019109"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11147019112",
+              "person2": "p_11147019109",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "13 Jan 1891",
+                  "standard_date": "13 Jan 1891",
+                  "place": "Boston, Suffolk, Massachusetts, United States",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147019113",
+              "child": "p_11147019112"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11147019111",
+              "child": "p_11147019109"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_331021734",
+              "resource_type": "Record",
+              "title": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHLG-NPG : Thu May 23 00:10:05 UTC 2024), Entry for Lewis C. Phillips and Benjamin E., 13 Jan 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6V2-9Y5",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "13 Jan 1891",
+                "record_type": "Marriage",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99QB-7QRK",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "1884–1895",
+                "record_type": "Marriage",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-S36",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Marriages, from 0021 to 6 September 2021",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0021-01-01T00:00:00Z/+2021-09-06T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11147019112",
+              "resource_type": "Person",
+              "url": "#p_11147019112"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229284",
+              "name": "Boston, Suffolk, Massachusetts, United States",
+              "latitude": 42.3605,
+              "longitude": -71.0591
+            }
+          ]
+        },
+        "primaryId": "p_11147019112",
+        "batchNumber": "I01381-9",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin E."
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary A."
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q28D-5FDR",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "13 January 1891",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Lewis C Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1866",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Lewis C Phillips and Mary M Morgan, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:QLWS-YSBR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102337681885",
+              "ark": "ark:/61903/1:1:Q28D-5FDR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lewis C"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ]
+            },
+            {
+              "id": "p_102337681923",
+              "ark": "ark:/61903/1:1:Q28D-5FX3",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary M",
+                  "surname": "Morgan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868"
+                }
+              ]
+            },
+            {
+              "id": "p_102337681895",
+              "ark": "ark:/61903/1:1:Q28D-5F67",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin E"
+                }
+              ]
+            },
+            {
+              "id": "p_102337681911",
+              "ark": "ark:/61903/1:1:Q28D-5F6L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Wilson"
+                }
+              ]
+            },
+            {
+              "id": "p_102337681934",
+              "ark": "ark:/61903/1:1:Q28D-5FXX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Michael"
+                }
+              ]
+            },
+            {
+              "id": "p_102337681944",
+              "ark": "ark:/61903/1:1:Q28D-5FX5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelley",
+                  "given": "Mary"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_102337681911",
+              "child": "p_102337681885"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102337681895",
+              "person2": "p_102337681911"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337681934",
+              "child": "p_102337681923"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337681895",
+              "child": "p_102337681885"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102337681885",
+              "person2": "p_102337681923",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "13 January 1891",
+                  "standard_date": "13 Jan 1891",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337681944",
+              "child": "p_102337681923"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102937151665",
+              "resource_type": "Record",
+              "title": "Entry for Lewis C Phillips and Mary M Morgan, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28D-5FDR : Sat Jul 26 03:37:26 UTC 2025), Entry for Lewis C Phillips and Mary M Morgan, 13 January 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWS-YSBR",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "13 January 1891",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_102337681885",
+              "resource_type": "Person",
+              "url": "#p_102337681885"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_102337681885",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin E"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Ann Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWVN-LMK",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Residence",
+            "place": "South Adams, Mass."
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1866",
+        "birthPlace": "South Adams, Berkshire, Massachusetts, United States",
+        "deathDate": "1866",
+        "deathPlace": "South Adams, Berkshire, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDTD-FR6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11824830919",
+              "ark": "ark:/61903/1:1:NWVN-LMK",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "South Adams, Mass.",
+                  "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+                },
+                {
+                  "type": "Residence",
+                  "place": "South Adams, Mass.",
+                  "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "South Adams, Berkshire, Massachusetts, United States",
+                  "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11824830920",
+              "ark": "ark:/61903/1:1:NWVN-LM2",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "South Adams, Mass.",
+                  "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11824830921",
+              "ark": "ark:/61903/1:1:NWVN-LML",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "South Adams, Mass.",
+                  "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11824830921",
+              "child": "p_11824830919"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11824830920",
+              "child": "p_11824830919"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11824830920",
+              "person2": "p_11824830921"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_312998263",
+              "resource_type": "Record",
+              "title": "Entry for Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWVN-LMK : Wed May 22 22:15:16 UTC 2024), Entry for Phillips and Benjamin, 1866.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDTD-FR6",
+              "coverage": {
+                "place_rep_id": "8081067",
+                "date_range": "1866",
+                "record_type": "Death",
+                "standard_place": "South Adams, Berkshire, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DZBS-9HB",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1866",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M924-YMZ",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Deaths, from 0196 to 2026",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0196-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11824830919",
+              "resource_type": "Person",
+              "url": "#p_11824830919"
+            }
+          ],
+          "places": [
+            {
+              "id": "8081067",
+              "name": "South Adams, Berkshire, Massachusetts, United States",
+              "latitude": 42.63333,
+              "longitude": -73.13333
+            }
+          ]
+        },
+        "primaryId": "p_11824830919",
+        "batchNumber": "B06720-7",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:N4SH-C8G",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "17 Dec 1890",
+            "place": "Boston, Suffolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "May Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1857",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Joseph A. Songster and May Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6N7-4LV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11835944452",
+              "ark": "ark:/61903/1:1:N4SH-C8G",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "May"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11835944449",
+              "ark": "ark:/61903/1:1:N4SH-C8K",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Songster",
+                  "given": "Joseph A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11835944453",
+              "ark": "ark:/61903/1:1:N4SH-C8P",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11835944454",
+              "ark": "ark:/61903/1:1:N4SH-C85",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Woodside",
+                  "given": "Mary S."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11835944450",
+              "ark": "ark:/61903/1:1:N4SH-C82",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isaac"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11835944451",
+              "ark": "ark:/61903/1:1:N4SH-C8L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11835944453",
+              "person2": "p_11835944454"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11835944453",
+              "child": "p_11835944452"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11835944451",
+              "child": "p_11835944449"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11835944450",
+              "child": "p_11835944449"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11835944449",
+              "person2": "p_11835944452",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "17 Dec 1890",
+                  "standard_date": "17 Dec 1890",
+                  "place": "Boston, Suffolk, Massachusetts, United States",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11835944454",
+              "child": "p_11835944452"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_329001948",
+              "resource_type": "Record",
+              "title": "Entry for Joseph A. Songster and May Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4SH-C8K : Wed May 22 23:02:21 UTC 2024), Entry for Joseph A. Songster and May Phillips, 17 Dec 1890.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6N7-4LV",
+              "coverage": {
+                "place_rep_id": "4229284",
+                "date_range": "17 Dec 1890",
+                "record_type": "Marriage",
+                "standard_place": "Boston, Suffolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-65S9-2YC",
+              "coverage": {
+                "place_rep_id": "395415",
+                "date_range": "1890",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-S36",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Marriages, from 0021 to 6 September 2021",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0021-01-01T00:00:00Z/+2021-09-06T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11835944452",
+              "resource_type": "Person",
+              "url": "#p_11835944452"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229284",
+              "name": "Boston, Suffolk, Massachusetts, United States",
+              "latitude": 42.3605,
+              "longitude": -71.0591
+            }
+          ]
+        },
+        "primaryId": "p_11835944452",
+        "batchNumber": "M01844-2",
+        "role": "Bride",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary S. Woodside"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q28D-5Q6N",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "11 November 1884",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1861",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Hiram Phillips and Annie McPhail, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:QLWS-YMKJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102337672006",
+              "ark": "ark:/61903/1:1:Q28D-5Q6N",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861"
+                }
+              ]
+            },
+            {
+              "id": "p_102337672077",
+              "ark": "ark:/61903/1:1:Q28D-5QFY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "McPhail",
+                  "given": "Annie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862"
+                }
+              ]
+            },
+            {
+              "id": "p_102337672026",
+              "ark": "ark:/61903/1:1:Q28D-5QXW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ]
+            },
+            {
+              "id": "p_102337672043",
+              "ark": "ark:/61903/1:1:Q28D-5QXP",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary"
+                }
+              ]
+            },
+            {
+              "id": "p_102337672086",
+              "ark": "ark:/61903/1:1:Q28D-5QNW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Daniel"
+                }
+              ]
+            },
+            {
+              "id": "p_102337672094",
+              "ark": "ark:/61903/1:1:Q28D-5QNX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "McDonald"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102337672006",
+              "person2": "p_102337672077",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "11 November 1884",
+                  "standard_date": "11 Nov 1884",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337672094",
+              "child": "p_102337672077"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337672086",
+              "child": "p_102337672077"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102337672026",
+              "person2": "p_102337672043"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337672043",
+              "child": "p_102337672006"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102337672026",
+              "child": "p_102337672006"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102937149587",
+              "resource_type": "Record",
+              "title": "Entry for Hiram Phillips and Annie McPhail, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28D-5Q6N : Sat Jul 26 00:28:03 UTC 2025), Entry for Hiram Phillips and Annie McPhail, 11 November 1884.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWS-YMKJ",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "11 November 1884",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_102337672006",
+              "resource_type": "Person",
+              "url": "#p_102337672006"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_102337672006",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:NWBJ-3YX",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Marriage",
+            "date": "11 Nov 1884",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1861",
+        "birthPlace": "Cape Breton, Nova Scotia, Canada",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Hiram Phillips and Annie McPhail, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6N8-FJQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11832942524",
+              "ark": "ark:/61903/1:1:NWBJ-3YX",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861",
+                  "place": "Cape Breton, Nova Scotia, Canada",
+                  "standard_place": "Cape Breton, Nova Scotia, Canada"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11832942527",
+              "ark": "ark:/61903/1:1:NWBJ-3YJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "McPhail",
+                  "given": "Annie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Cape Breton, Nova Scotia, Canada",
+                  "standard_place": "Cape Breton, Nova Scotia, Canada"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11832942525",
+              "ark": "ark:/61903/1:1:NWBJ-3YF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11832942526",
+              "ark": "ark:/61903/1:1:NWBJ-3YN",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary A."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11832942528",
+              "ark": "ark:/61903/1:1:NWBJ-3YV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Daniel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11832942525",
+              "person2": "p_11832942526"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11832942526",
+              "child": "p_11832942524"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11832942528",
+              "child": "p_11832942527"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11832942525",
+              "child": "p_11832942524"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11832942524",
+              "person2": "p_11832942527",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "11 Nov 1884",
+                  "standard_date": "11 Nov 1884",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_329171014",
+              "resource_type": "Record",
+              "title": "Entry for Hiram Phillips and Annie McPhail, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWBJ-3YX : Wed May 22 23:10:10 UTC 2024), Entry for Hiram Phillips and Annie McPhail, 11 Nov 1884.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6N8-FJQ",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "11 Nov 1884",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-XMMW-HH",
+              "coverage": {
+                "place_rep_id": "395415",
+                "date_range": "1884-1885",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-S36",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Marriages, from 0021 to 6 September 2021",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0021-01-01T00:00:00Z/+2021-09-06T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11832942524",
+              "resource_type": "Person",
+              "url": "#p_11832942524"
+            }
+          ],
+          "places": [
+            {
+              "id": "3050790",
+              "name": "Cape Breton, Nova Scotia, Canada",
+              "latitude": 46.0104,
+              "longitude": -60.2632
+            },
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_11832942524",
+        "batchNumber": "M01421-4",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary A. Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FH1N-ZXS",
+        "events": [
+          {
+            "type": "MarriageNotice",
+            "date": "12 Jan 1891",
+            "place": "Brookline, Norfolk, Massachusetts, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Lewis C. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1856",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:M6JK-41K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11153331422",
+              "ark": "ark:/61903/1:1:FH1N-ZXS",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lewis C."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856"
+                }
+              ]
+            },
+            {
+              "id": "p_11153331423",
+              "ark": "ark:/61903/1:1:FH1N-ZX3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Benjamin E."
+                }
+              ]
+            },
+            {
+              "id": "p_11153331424",
+              "ark": "ark:/61903/1:1:FH1N-ZXQ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary Ann"
+                }
+              ]
+            },
+            {
+              "id": "p_11153331419",
+              "ark": "ark:/61903/1:1:FH1N-Z61",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Morgan",
+                  "given": "Mary M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858"
+                }
+              ]
+            },
+            {
+              "id": "p_11153331420",
+              "ark": "ark:/61903/1:1:FH1N-ZXM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Morgan",
+                  "given": "Michael"
+                }
+              ]
+            },
+            {
+              "id": "p_11153331421",
+              "ark": "ark:/61903/1:1:FH1N-ZX9",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelley",
+                  "given": "Mary"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11153331421",
+              "child": "p_11153331419"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153331424",
+              "child": "p_11153331422"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11153331423",
+              "person2": "p_11153331424"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153331423",
+              "child": "p_11153331422"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11153331422",
+              "person2": "p_11153331419",
+              "facts": [
+                {
+                  "type": "MarriageNotice",
+                  "primary": true,
+                  "date": "12 Jan 1891",
+                  "standard_date": "12 Jan 1891",
+                  "place": "Brookline, Norfolk, Massachusetts, United States",
+                  "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11153331420",
+              "child": "p_11153331419"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_330190189",
+              "resource_type": "Record",
+              "title": "Entry for Lewis C. Phillips, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH1N-ZXS : Fri Jul 25 02:01:31 UTC 2025), Entry for Lewis C. Phillips and Benjamin E. Phillips, 12 Jan 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M6JK-41K",
+              "coverage": {
+                "place_rep_id": "4229414",
+                "date_range": "12 Jan 1891",
+                "record_type": "Marriage",
+                "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11153331422",
+              "resource_type": "Person",
+              "url": "#p_11153331422"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229414",
+              "name": "Brookline, Norfolk, Massachusetts, United States",
+              "latitude": 42.33333,
+              "longitude": -71.13333
+            }
+          ]
+        },
+        "primaryId": "p_11153331422",
+        "batchNumber": "I01079-5",
+        "role": "Groom",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin E. Phillips"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Ann Wilson"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:FLCJ-X33",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1936",
+            "place": "Chocorua, Tamworth, Carroll, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Nellie B. Phillips",
+        "score": 6.9218,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1865",
+        "collectionId": "1520640",
+        "collectionTitle": "New Hampshire, Marriage Records, 1637-1947",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1520640",
+        "recordTitle": "Entry for Arthur R. C. Drake and Nellie B. Phillips, \"New Hampshire, Marriage Records, 1637-1947\"",
+        "recordArk": "ark:/61903/1:2:9JNG-PJL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11453061693",
+              "ark": "ark:/61903/1:1:FLCJ-X33",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nellie B.",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1865",
+                  "standard_date": "1865"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11453061690",
+              "ark": "ark:/61903/1:1:FLCJ-X3M",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Arthur R. C.",
+                  "surname": "Drake"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11453061694",
+              "ark": "ark:/61903/1:1:FLCJ-X3Q",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Bickford"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11453061695",
+              "ark": "ark:/61903/1:1:FLCJ-X37",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Robertson"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11453061691",
+              "ark": "ark:/61903/1:1:FLCJ-X39",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Dearborn T.",
+                  "surname": "Drake"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11453061692",
+              "ark": "ark:/61903/1:1:FLCJ-X3S",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Clapp"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11453061694",
+              "child": "p_11453061693"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11453061694",
+              "person2": "p_11453061695"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11453061690",
+              "person2": "p_11453061693",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "1936",
+                  "standard_date": "1936",
+                  "place": "Chocorua, Tamworth, Carroll, New Hampshire, United States",
+                  "standard_place": "Chocorua, Tamworth, Carroll, New Hampshire, United States"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11453061692",
+              "child": "p_11453061690"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11453061691",
+              "child": "p_11453061690"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11453061695",
+              "child": "p_11453061693"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1155675231",
+              "resource_type": "Record",
+              "title": "Entry for Arthur R. C. Drake and Nellie B. Phillips, \"New Hampshire, Marriage Records, 1637-1947\"",
+              "citation": "\"New Hampshire, Marriage Records, 1637-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLCJ-X3M : Sat Mar 09 15:11:11 UTC 2024), Entry for Arthur R. C. Drake and Nellie B. Phillips, 1936.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9JNG-PJL",
+              "coverage": {
+                "place_rep_id": "8450857",
+                "date_range": "1936",
+                "record_type": "Marriage",
+                "standard_place": "Chocorua, Tamworth, Carroll, New Hampshire, United States"
+              }
+            },
+            {
+              "id": "sd_c_1520640",
+              "resource_type": "Collection",
+              "title": "New Hampshire, Marriage Records, 1637-1947",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1520640",
+              "coverage": {
+                "place_rep_id": "359",
+                "date_range": "1637/1947",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DBB7-RGH",
+              "coverage": {
+                "place_rep_id": "359",
+                "date_range": "title:1901-1937",
+                "record_type": "DeathCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M92C-9TB",
+              "resource_type": "auto",
+              "title": "United States, New Hampshire, Deaths, from 1500 to 2026",
+              "coverage": {
+                "place_rep_id": "359",
+                "date_range": "+1500-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11453061693",
+              "resource_type": "Person",
+              "url": "#p_11453061693"
+            }
+          ],
+          "places": [
+            {
+              "id": "8450857",
+              "name": "Chocorua, Tamworth, Carroll, New Hampshire, United States",
+              "latitude": 43.8789,
+              "longitude": -71.2203
+            }
+          ]
+        },
+        "primaryId": "p_11453061693",
+        "batchNumber": "I09273-1",
+        "role": "Bride",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Benjamin Bickford"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mary Robertson"
+          }
+        }
+      }
+    ]
+  }
+}

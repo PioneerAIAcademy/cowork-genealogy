@@ -1,0 +1,4534 @@
+{
+  "log_id": "log_014",
+  "tool": "record_search",
+  "retrieved": "2026-11-18T21:47:37.455Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "surname": "Phipps",
+      "givenName": "Mary",
+      "residenceYearFrom": 1860,
+      "residenceYearTo": 1860,
+      "residencePlace": "Thompson, Windham, Connecticut, United States",
+      "projectPath": "/project"
+    },
+    "totalMatches": 21729,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "placeExpansion": {
+      "searches": [
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "totalMatches": 21729,
+          "returned": 20
+        },
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 408,
+          "returned": 20
+        },
+        {
+          "places": {
+            "residencePlace": "Nashaway, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 408,
+          "returned": 20
+        }
+      ],
+      "mergedCount": 20,
+      "note": "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MHR9-JQB",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary E Phelps",
+        "score": 4.71288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1848",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Ebenezer Phelps, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-9QR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214692448",
+              "ark": "ark:/61903/1:1:MHR9-JQB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692445",
+              "ark": "ark:/61903/1:1:MHR9-JQR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ebenezer",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1809",
+                  "standard_date": "1809",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692446",
+              "ark": "ark:/61903/1:1:MHR9-JQT",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1814",
+                  "standard_date": "1814",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692447",
+              "ark": "ark:/61903/1:1:MHR9-JQY",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry K",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169237045",
+              "resource_type": "Record",
+              "title": "Household of Ebenezer Phelps, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JQR : Mon Jul 08 04:23:14 UTC 2024), Entry for Ebenezer Phelps and Mary A Phelps, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-9QR",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9NM2",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214692448",
+              "resource_type": "Person",
+              "url": "#p_214692448"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_214692448",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHR9-JQT",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary A Phelps",
+        "score": 4.71288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1814",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Ebenezer Phelps, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-9QR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214692446",
+              "ark": "ark:/61903/1:1:MHR9-JQT",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1814",
+                  "standard_date": "1814",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692445",
+              "ark": "ark:/61903/1:1:MHR9-JQR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ebenezer",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1809",
+                  "standard_date": "1809",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692447",
+              "ark": "ark:/61903/1:1:MHR9-JQY",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry K",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692448",
+              "ark": "ark:/61903/1:1:MHR9-JQB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169237045",
+              "resource_type": "Record",
+              "title": "Household of Ebenezer Phelps, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JQR : Mon Jul 08 04:23:14 UTC 2024), Entry for Ebenezer Phelps and Mary A Phelps, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-9QR",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9NM2",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214692446",
+              "resource_type": "Person",
+              "url": "#p_214692446"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_214692446",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHR9-JWY",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary S Phillips",
+        "score": 4.71288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1828",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Benj Phillips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-9ZW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214692507",
+              "ark": "ark:/61903/1:1:MHR9-JWY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary S",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692506",
+              "ark": "ark:/61903/1:1:MHR9-JWT",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benj",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692508",
+              "ark": "ark:/61903/1:1:MHR9-JWB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harriet",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169237206",
+              "resource_type": "Record",
+              "title": "Household of Benj Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Entry for Benj Phillips and Mary S Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-9ZW",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9NSP",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214692507",
+              "resource_type": "Person",
+              "url": "#p_214692507"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_214692507",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F7XP-T3K",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Thompson, Connecticut"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary L. Phipps",
+        "score": 4.5236,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1828",
+        "deathDate": "23 March 1893",
+        "deathPlace": "Connecticut, United States",
+        "collectionId": "2658554",
+        "collectionTitle": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2658554",
+        "recordTitle": "Entry for Mary L. Phipps, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+        "recordArk": "ark:/61903/1:2:MDJH-DT4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11068484509",
+              "ark": "ark:/61903/1:1:F7XP-T3K",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Mary L."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828"
+                },
+                {
+                  "type": "Burial",
+                  "place": "Thompson, Connecticut",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "23 March 1893",
+                  "standard_date": "23 Mar 1893",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_305597587",
+              "resource_type": "Record",
+              "title": "Entry for Mary L. Phipps, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+              "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7XP-T3K : Sat Mar 09 04:33:33 UTC 2024), Entry for Mary L. Phipps, 23 March 1893.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDJH-DT4",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "23 March 1893",
+                "record_type": "Vital",
+                "standard_place": "Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_2658554",
+              "resource_type": "Collection",
+              "title": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2658554",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1640/1955",
+                "record_type": "Vital",
+                "standard_place": "Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9FR-LCKK",
+              "coverage": {
+                "place_rep_id": "393803",
+                "date_range": "Jan 27, 1950",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-7TN",
+              "resource_type": "auto",
+              "title": "United States, Connecticut, Births, from 0018 to 2007",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "+0018-01-01T00:00:00Z/+2007-12-31T23:59:59Z",
+                "standard_place": "Connecticut, United States"
+              }
+            },
+            {
+              "id": "src_p_p_11068484509",
+              "resource_type": "Person",
+              "url": "#p_11068484509"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_11068484509",
+        "batchNumber": "B03451-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F7WW-NHV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary H Phipps",
+        "score": 4.5236,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "27 November 1831",
+        "birthPlace": "Thompson, Windham, Connecticut, United States",
+        "collectionId": "1674736",
+        "collectionTitle": "Connecticut, Births and Christenings, 1649-1906",
+        "collectionUrl": "https://familysearch.org/collections/1674736",
+        "recordTitle": "Entry for Mary H Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+        "recordArk": "ark:/61903/1:2:MGR4-ZKP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11061536658",
+              "ark": "ark:/61903/1:1:F7WW-NHV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary H",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "27 Nov 1831",
+                  "standard_date": "27 Nov 1831",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11061536659",
+              "ark": "ark:/61903/1:1:F7WW-NHK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jason",
+                  "surname": "Phipps"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11061536659",
+              "child": "p_11061536658"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674736",
+              "resource_type": "Collection",
+              "title": "Connecticut, Births and Christenings, 1649-1906",
+              "url": "https://familysearch.org/collections/1674736",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1649/1906",
+                "record_type": "Birth"
+              }
+            },
+            {
+              "id": "src_r_555048593",
+              "resource_type": "Record",
+              "title": "Entry for Mary H Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+              "citation": "\"Connecticut, Births and Christenings, 1649-1906,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:MGR4-ZKP : 7 January 2020), Entry for Mary H Phipps, ; citing ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:MGR4-ZKP",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "27 Nov 1831",
+                "record_type": "Birth",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "src_p_p_11061536658",
+              "resource_type": "Person",
+              "url": "#p_11061536658"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_11061536658",
+        "batchNumber": "7450358",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPMQ-4LNH",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary E Phipps",
+        "score": 4.5236,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1828",
+        "deathDate": "22 March 1893",
+        "deathPlace": "Thompson, Windham, Connecticut, United States",
+        "collectionId": "2448940",
+        "collectionTitle": "Connecticut, Marriages, 1640-1939",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2448940",
+        "recordTitle": "Entry for Mary E Phipps, \"Connecticut, Marriages, 1640-1939\"",
+        "recordArk": "ark:/61903/1:2:QRJ6-34RG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104250448388",
+              "ark": "ark:/61903/1:1:QPMQ-4LNH",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Mary E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "22 March 1893",
+                  "standard_date": "22 Mar 1893",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104250448395",
+              "ark": "ark:/61903/1:1:QPMQ-4LNF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chold",
+                  "given": "Charles"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104250404009",
+              "ark": "ark:/61903/1:1:QPMQ-WSW1",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chold",
+                  "given": "Emily"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104250448395",
+              "person2": "p_104250404009"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104250404009",
+              "child": "p_104250448388"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104250448395",
+              "child": "p_104250448388"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106128718072",
+              "resource_type": "Record",
+              "title": "Entry for Mary E Phipps, \"Connecticut, Marriages, 1640-1939\"",
+              "citation": "\"Connecticut, Marriages, 1640-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMQ-4LNH : Fri Jul 31 21:14:25 UTC 2026), Entry for Mary E Phipps and Charles Chold, 22 March 1893.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRJ6-34RG",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "22 March 1893",
+                "record_type": "Marriage",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_2448940",
+              "resource_type": "Collection",
+              "title": "Connecticut, Marriages, 1640-1939",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2448940",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1640/1939",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BT-8W54-M",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "+1869-01-01T00:00:00Z/+1902-12-31T23:59:59Z",
+                "record_type": "DeathRegister",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "src_p_p_104250448388",
+              "resource_type": "Person",
+              "url": "#p_104250448388"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_104250448388",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVKY-7KR9",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1893",
+            "place": "Thompson, Windham, Connecticut, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary L Phipps",
+        "score": 4.5236,
+        "confidence": 4,
+        "deathDate": "23 March 1893",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Mary L Phipps, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q2S3-77F9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101085722851",
+              "ark": "ark:/61903/1:1:QVKY-7KR9",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Mary L"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "23 March 1893",
+                  "standard_date": "23 Mar 1893"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "1893",
+                  "standard_date": "1893",
+                  "place": "Thompson, Windham, Connecticut, United States of America",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102111169951",
+              "resource_type": "Record",
+              "title": "Entry for Mary L Phipps, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7KR9 : Fri Oct 02 22:10:00 UTC 2026), Entry for Mary L Phipps, 1893.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2S3-77F9",
+              "coverage": {
+                "place_rep_id": "10803689",
+                "date_range": "23 March 1893",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2221801",
+              "resource_type": "Collection",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1500/2013",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=55921763"
+            },
+            {
+              "id": "src_p_p_101085722851",
+              "resource_type": "Person",
+              "url": "#p_101085722851"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_101085722851",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F7V7-22S",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary L. Phipps",
+        "score": 4.5236,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1828",
+        "deathDate": "23 March 1893",
+        "deathPlace": "Thompson, Windham, Connecticut, United States",
+        "collectionId": "1674748",
+        "collectionTitle": "Connecticut, Deaths and Burials, 1772-1934",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674748",
+        "recordTitle": "Entry for Mary L. Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+        "recordArk": "ark:/61903/1:2:MDVJ-W84",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11071233602",
+              "ark": "ark:/61903/1:1:F7V7-22S",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary L.",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "23 Mar 1893",
+                  "standard_date": "23 Mar 1893",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11071233603",
+              "ark": "ark:/61903/1:1:F7V7-223",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin F."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11071233602",
+              "person2": "p_11071233603"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674748",
+              "resource_type": "Collection",
+              "title": "Connecticut, Deaths and Burials, 1772-1934",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674748",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1772/1934",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "src_r_306644737",
+              "resource_type": "Record",
+              "title": "Entry for Mary L. Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+              "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:MDVJ-W84 : 8 October 2026), Entry for Mary L. Phipps, 1893.",
+              "url": "https://familysearch.org/ark:/61903/1:2:MDVJ-W84",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "23 Mar 1893",
+                "record_type": "Vital",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QS7-L9F5-31XX?cc=1674748"
+            },
+            {
+              "id": "src_p_p_11071233602",
+              "resource_type": "Person",
+              "url": "#p_11071233602"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_11071233602",
+        "batchNumber": "B03797-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPWT-Y4SD",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "28 May 1822",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Ann G Phipps",
+        "score": 4.5136,
+        "confidence": 4,
+        "collectionId": "2843390",
+        "collectionTitle": "Connecticut, Vital Records, Prior to 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2843390",
+        "recordTitle": "Entry for Thomas Ormsby, \"Connecticut, Vital Records, Prior to 1850\"",
+        "recordArk": "ark:/61903/1:2:QRLG-5S3T",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104414595372",
+              "ark": "ark:/61903/1:1:QPWT-Y4SD",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Ann G",
+                  "surname": "Phipps"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104414595371",
+              "ark": "ark:/61903/1:1:QPWT-Y4S8",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ormsby",
+                  "given": "Thomas"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104414595370",
+              "ark": "ark:/61903/1:1:QPWT-Y4SZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Dow",
+                  "given": "Daniel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104414595371",
+              "person2": "p_104414595372",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "28 May 1822",
+                  "standard_date": "28 May 1822",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106233769916",
+              "resource_type": "Record",
+              "title": "Entry for Thomas Ormsby, \"Connecticut, Vital Records, Prior to 1850\"",
+              "citation": "\"Connecticut, Vital Records, Prior to 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPWT-Y4S8 : Sun Mar 10 07:56:42 UTC 2024), Entry for Thomas Ormsby and Daniel Dow, 28 May 1822.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRLG-5S3T",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "28 May 1822",
+                "record_type": "Marriage",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_2843390",
+              "resource_type": "Collection",
+              "title": "Connecticut, Vital Records, Prior to 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2843390",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1710/1850",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS5X-4ZP2-8",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1850",
+                "record_type": "Court"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-Y2D",
+              "resource_type": "auto",
+              "title": "United States, Connecticut, Legal, from 1600 to 2010",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "+1600-01-01T00:00:00Z/+2010-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104414595372",
+              "resource_type": "Person",
+              "url": "#p_104414595372"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_104414595372",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPMQ-68VD",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Phipps",
+        "score": 4.5136,
+        "confidence": 4,
+        "sex": "Female",
+        "collectionId": "2448940",
+        "collectionTitle": "Connecticut, Marriages, 1640-1939",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2448940",
+        "recordTitle": "Entry for Benjamin F Phipps, \"Connecticut, Marriages, 1640-1939\"",
+        "recordArk": "ark:/61903/1:2:QRJD-KS5C",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104250601452",
+              "ark": "ark:/61903/1:1:QPMQ-68VD",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Phipps"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104250601442",
+              "ark": "ark:/61903/1:1:QPMQ-68VS",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin F",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1817",
+                  "standard_date": "1817"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "16 August 1893",
+                  "standard_date": "16 Aug 1893",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104250601446",
+              "ark": "ark:/61903/1:1:QPMQ-68VW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Payton",
+                  "surname": "Phipps"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104250601446",
+              "child": "p_104250601442"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104250601452",
+              "child": "p_104250601442"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104250601446",
+              "person2": "p_104250601452"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106128335529",
+              "resource_type": "Record",
+              "title": "Entry for Benjamin F Phipps, \"Connecticut, Marriages, 1640-1939\"",
+              "citation": "\"Connecticut, Marriages, 1640-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMQ-68VS : Fri Jul 31 20:57:49 UTC 2026), Entry for Benjamin F Phipps and Payton Phipps, 16 August 1893.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRJD-KS5C",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "16 August 1893",
+                "record_type": "Marriage",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_2448940",
+              "resource_type": "Collection",
+              "title": "Connecticut, Marriages, 1640-1939",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2448940",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1640/1939",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BT-8W5W-T",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "+1869-01-01T00:00:00Z/+1902-12-31T23:59:59Z",
+                "record_type": "DeathRegister",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "src_p_p_104250601452",
+              "resource_type": "Person",
+              "url": "#p_104250601452"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_104250601452",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N7RS-Y23",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Phipps",
+        "score": 4.4136,
+        "confidence": 4,
+        "sex": "Female",
+        "birthPlace": "Dudley, Worcester, Massachusetts, United States",
+        "collectionId": "1928860",
+        "collectionTitle": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+        "recordTitle": "Entry for Rebecca Adams Buxton, \"Massachusetts, State Vital Records, 1638-1927\"",
+        "recordArk": "ark:/61903/1:2:MDTP-BJ1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11805828903",
+              "ark": "ark:/61903/1:1:N7RS-Y23",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Dudley, Mass.",
+                  "standard_place": "Dudley, Worcester, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11805828901",
+              "ark": "ark:/61903/1:1:N7RS-Y29",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Adams Buxton",
+                  "given": "Rebecca"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "2 Sep 1876",
+                  "standard_date": "2 Sep 1876",
+                  "place": "Brookfield, Worcester, Massachusetts, United States",
+                  "standard_place": "Brookfield, Worcester, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1792",
+                  "standard_date": "1792",
+                  "place": "Thompson, Ct.",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11805828902",
+              "ark": "ark:/61903/1:1:N7RS-Y2S",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Jason"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Thompson, Ct.",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11805828903",
+              "child": "p_11805828901"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11805828902",
+              "child": "p_11805828901"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11805828902",
+              "person2": "p_11805828903"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_313306739",
+              "resource_type": "Record",
+              "title": "Entry for Rebecca Adams Buxton, \"Massachusetts, State Vital Records, 1638-1927\"",
+              "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7RS-Y29 : Wed May 22 22:40:23 UTC 2024), Entry for Rebecca Adams Buxton and Jason Phipps, 2 Sep 1876.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MDTP-BJ1",
+              "coverage": {
+                "place_rep_id": "4228977",
+                "date_range": "2 Sep 1876",
+                "record_type": "Death",
+                "standard_place": "Brookfield, Worcester, Massachusetts, United States"
+              }
+            },
+            {
+              "id": "sd_c_1928860",
+              "resource_type": "Collection",
+              "title": "Massachusetts, State Vital Records, 1638-1927",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1928860",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1638/1927",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6SN9-Y6T",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "1876",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_auto_M924-YMZ",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Deaths, from 0196 to 2026",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+0196-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11805828903",
+              "resource_type": "Person",
+              "url": "#p_11805828903"
+            }
+          ],
+          "places": [
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            },
+            {
+              "id": "4228977",
+              "name": "Brookfield, Worcester, Massachusetts, United States",
+              "latitude": 42.2172,
+              "longitude": -72.1046
+            },
+            {
+              "id": "4228983",
+              "name": "Dudley, Worcester, Massachusetts, United States",
+              "latitude": 42.0435,
+              "longitude": -71.9279
+            }
+          ]
+        },
+        "primaryId": "p_11805828903",
+        "batchNumber": "B06743-1",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-SXH",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Voluntown, Windham, Connecticut, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Phillips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1806",
+        "birthPlace": "Rhode Island, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Harry G Phillips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-NJJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214706228",
+              "ark": "ark:/61903/1:1:MHRS-SXH",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "R I",
+                  "standard_place": "Rhode Island, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706227",
+              "ark": "ark:/61903/1:1:MHRS-SX4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harry G",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1805",
+                  "standard_date": "1805",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169250927",
+              "resource_type": "Record",
+              "title": "Household of Harry G Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-SX4 : Mon Jul 08 04:23:21 UTC 2024), Entry for Harry G Phillips and Mary Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-NJJ",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBV-961M",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214706228",
+              "resource_type": "Person",
+              "url": "#p_214706228"
+            }
+          ],
+          "places": [
+            {
+              "id": "11864547",
+              "name": "Voluntown, Windham, Connecticut, United States",
+              "latitude": 41.5733,
+              "longitude": -71.8688
+            },
+            {
+              "id": "341",
+              "name": "Rhode Island, United States",
+              "latitude": 41.7,
+              "longitude": -71.5
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_214706228",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRM-FNR",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Plainfield, Windham, Connecticut, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary F Phillips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1846",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Charles Phillips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBT-13C",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214664005",
+              "ark": "ark:/61903/1:1:MHRM-FNR",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Mary F"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1846",
+                  "standard_date": "1846",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214663499",
+              "ark": "ark:/61903/1:1:MHRM-X11",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Charles"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1805",
+                  "standard_date": "1805",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214663500",
+              "ark": "ark:/61903/1:1:MHRM-FMM",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hannah J"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214663501",
+              "ark": "ark:/61903/1:1:MHRM-FM9",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Moffat",
+                  "given": "Betsy M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1832",
+                  "standard_date": "1832",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664002",
+              "ark": "ark:/61903/1:1:MHRM-FNG",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Moffat",
+                  "given": "Adelbert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664003",
+              "ark": "ark:/61903/1:1:MHRM-FNP",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Bartley H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664004",
+              "ark": "ark:/61903/1:1:MHRM-FN5",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Eliza K"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1844",
+                  "standard_date": "1844",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664006",
+              "ark": "ark:/61903/1:1:MHRM-FNT",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "George A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664007",
+              "ark": "ark:/61903/1:1:MHRM-FNY",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Darius"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1851",
+                  "standard_date": "1851",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214664008",
+              "ark": "ark:/61903/1:1:MHRM-FNB",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Byron A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169208199",
+              "resource_type": "Record",
+              "title": "Household of Charles Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRM-X11 : Mon Jul 08 04:22:58 UTC 2024), Entry for Charles Phillips and Hannah J Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBT-13C",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBG-2NQ",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214664005",
+              "resource_type": "Person",
+              "url": "#p_214664005"
+            }
+          ],
+          "places": [
+            {
+              "id": "341",
+              "name": "Rhode Island, United States",
+              "latitude": 41.7,
+              "longitude": -71.5
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779547",
+              "name": "Plainfield, Windham, Connecticut, United States",
+              "latitude": 41.7006,
+              "longitude": -71.8953
+            }
+          ]
+        },
+        "primaryId": "p_214664005",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRM-93H",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Brooklyn, Windham, Connecticut, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary A Phillips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1818",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of George A Phillips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBT-X1Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214650998",
+              "ark": "ark:/61903/1:1:MHRM-93H",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Mary A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1818",
+                  "standard_date": "1818",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Brooklyn, Windham, Connecticut, United States",
+                  "standard_place": "Brooklyn, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214650997",
+              "ark": "ark:/61903/1:1:MHRM-934",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "George A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Brooklyn, Windham, Connecticut, United States",
+                  "standard_place": "Brooklyn, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214650999",
+              "ark": "ark:/61903/1:1:MHRM-93C",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "George L"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Brooklyn, Windham, Connecticut, United States",
+                  "standard_place": "Brooklyn, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1846",
+                  "standard_date": "1846",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214651000",
+              "ark": "ark:/61903/1:1:MHRM-93Z",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "William E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Brooklyn, Windham, Connecticut, United States",
+                  "standard_place": "Brooklyn, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169195497",
+              "resource_type": "Record",
+              "title": "Household of George A Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRM-934 : Mon Jul 08 04:26:04 UTC 2024), Entry for George A Phillips and Mary A Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBT-X1Y",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBG-L37",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214650998",
+              "resource_type": "Person",
+              "url": "#p_214650998"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779618",
+              "name": "Brooklyn, Windham, Connecticut, United States",
+              "latitude": 41.7878,
+              "longitude": -71.9561
+            }
+          ]
+        },
+        "primaryId": "p_214650998",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-Z33",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Woodstock, Windham, Connecticut, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary S Phelps",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1845",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of William Phelps, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-5WZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214713093",
+              "ark": "ark:/61903/1:1:MHRS-Z33",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Mary S"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713090",
+              "ark": "ark:/61903/1:1:MHRS-Z3M",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "William"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1809",
+                  "standard_date": "1809",
+                  "place": "Mass",
+                  "standard_place": "Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713091",
+              "ark": "ark:/61903/1:1:MHRS-Z39",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Clarissa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713092",
+              "ark": "ark:/61903/1:1:MHRS-Z3S",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Lucy M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1838",
+                  "standard_date": "1838",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713094",
+              "ark": "ark:/61903/1:1:MHRS-Z3Q",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Sarah E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1849",
+                  "standard_date": "1849",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713095",
+              "ark": "ark:/61903/1:1:MHRS-Z37",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "James H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Mass",
+                  "standard_place": "Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214713096",
+              "ark": "ark:/61903/1:1:MHRS-Z3W",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Webber",
+                  "given": "Hannah"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1788",
+                  "standard_date": "1788",
+                  "place": "Mass",
+                  "standard_place": "Massachusetts, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169257790",
+              "resource_type": "Record",
+              "title": "Household of William Phelps, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-Z3M : Mon Jul 08 04:22:50 UTC 2024), Entry for William Phelps and Clarissa Phelps, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-5WZ",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBV-96NS",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214713093",
+              "resource_type": "Person",
+              "url": "#p_214713093"
+            }
+          ],
+          "places": [
+            {
+              "id": "12268092",
+              "name": "Woodstock, Windham, Connecticut, United States",
+              "latitude": 41.9667,
+              "longitude": -72.0167
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "371",
+              "name": "Massachusetts, United States",
+              "latitude": 42.25,
+              "longitude": -71.5
+            }
+          ]
+        },
+        "primaryId": "p_214713093",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-SPX",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Voluntown, Windham, Connecticut, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary J Philips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1845",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Jabez T Philips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-JMS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214706504",
+              "ark": "ark:/61903/1:1:MHRS-SPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Mary J"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706502",
+              "ark": "ark:/61903/1:1:MHRS-SPD",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Jabez T"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706503",
+              "ark": "ark:/61903/1:1:MHRS-SP6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Hannah"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "R I",
+                  "standard_place": "Rhode Island, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706505",
+              "ark": "ark:/61903/1:1:MHRS-SPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Palmer H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706506",
+              "ark": "ark:/61903/1:1:MHRS-SPN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Almira"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706507",
+              "ark": "ark:/61903/1:1:MHRS-SPJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philips",
+                  "given": "Phebe A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214706508",
+              "ark": "ark:/61903/1:1:MHRS-SPV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Larkin",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Voluntown, Windham, Connecticut, United States",
+                  "standard_place": "Voluntown, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "R I",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169251302",
+              "resource_type": "Record",
+              "title": "Household of Jabez T Philips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-SPD : Mon Jul 08 04:26:45 UTC 2024), Entry for Jabez T Philips and Hannah Philips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-JMS",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9FX4",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214706504",
+              "resource_type": "Person",
+              "url": "#p_214706504"
+            }
+          ],
+          "places": [
+            {
+              "id": "11864547",
+              "name": "Voluntown, Windham, Connecticut, United States",
+              "latitude": 41.5733,
+              "longitude": -71.8688
+            },
+            {
+              "id": "341",
+              "name": "Rhode Island, United States",
+              "latitude": 41.7,
+              "longitude": -71.5
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_214706504",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-K36",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Woodstock, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary A Philipps",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1833",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of John Philipps, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWB1-S29",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214721203",
+              "ark": "ark:/61903/1:1:MHRS-K36",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214720701",
+              "ark": "ark:/61903/1:1:MHRS-VNL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1807",
+                  "standard_date": "1807",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214721202",
+              "ark": "ark:/61903/1:1:MHRS-K3D",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harriet",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1803",
+                  "standard_date": "1803",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214721204",
+              "ark": "ark:/61903/1:1:MHRS-K3X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William W",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169265401",
+              "resource_type": "Record",
+              "title": "Household of John Philipps, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-VNL : Mon Jul 08 04:22:54 UTC 2024), Entry for John Philipps and Harriet Philipps, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWB1-S29",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBV-9XJB",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214721203",
+              "resource_type": "Person",
+              "url": "#p_214721203"
+            }
+          ],
+          "places": [
+            {
+              "id": "12268092",
+              "name": "Woodstock, Windham, Connecticut, United States",
+              "latitude": 41.9667,
+              "longitude": -72.0167
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_214721203",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-41F",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Woodstock, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Philipps",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1853",
+        "birthPlace": "England, United Kingdom",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of George Philipps, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-LTS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214711185",
+              "ark": "ark:/61903/1:1:MHRS-41F",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "England",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214711182",
+              "ark": "ark:/61903/1:1:MHRS-41D",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1811",
+                  "standard_date": "1811",
+                  "place": "England",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214711183",
+              "ark": "ark:/61903/1:1:MHRS-416",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rachel",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1811",
+                  "standard_date": "1811",
+                  "place": "England",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214711184",
+              "ark": "ark:/61903/1:1:MHRS-41X",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Emma J",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1851",
+                  "standard_date": "1851",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214711186",
+              "ark": "ark:/61903/1:1:MHRS-41N",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856",
+                  "place": "England",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214711187",
+              "ark": "ark:/61903/1:1:MHRS-41J",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Eliza A",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169255682",
+              "resource_type": "Record",
+              "title": "Household of George Philipps, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-41D : Mon Jul 08 04:25:43 UTC 2024), Entry for George Philipps and Rachel Philipps, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-LTS",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9F66",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214711185",
+              "resource_type": "Person",
+              "url": "#p_214711185"
+            }
+          ],
+          "places": [
+            {
+              "id": "12268092",
+              "name": "Woodstock, Windham, Connecticut, United States",
+              "latitude": 41.9667,
+              "longitude": -72.0167
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_214711185",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRM-NBG",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Plainfield, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary E Phillips",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1841",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Palmer G Phillips, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBY-MRH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214665262",
+              "ark": "ark:/61903/1:1:MHRM-NBG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214665258",
+              "ark": "ark:/61903/1:1:MHRM-NBV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Palmer G",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1797",
+                  "standard_date": "1797",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214665259",
+              "ark": "ark:/61903/1:1:MHRM-NBK",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Betsey M",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214665260",
+              "ark": "ark:/61903/1:1:MHRM-NB2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Abby W",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1831",
+                  "standard_date": "1831",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214665261",
+              "ark": "ark:/61903/1:1:MHRM-NBL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1834",
+                  "standard_date": "1834",
+                  "place": "Rhode Island",
+                  "standard_place": "Rhode Island, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214665263",
+              "ark": "ark:/61903/1:1:MHRM-NBP",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Madora A",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Plainfield, Windham, Connecticut, United States",
+                  "standard_place": "Plainfield, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Connecticut",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169209758",
+              "resource_type": "Record",
+              "title": "Household of Palmer G Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRM-NBV : Mon Jul 08 04:44:31 UTC 2024), Entry for Palmer G Phillips and Betsey M Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBY-MRH",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBG-2KR",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214665262",
+              "resource_type": "Person",
+              "url": "#p_214665262"
+            }
+          ],
+          "places": [
+            {
+              "id": "341",
+              "name": "Rhode Island, United States",
+              "latitude": 41.7,
+              "longitude": -71.5
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779547",
+              "name": "Plainfield, Windham, Connecticut, United States",
+              "latitude": 41.7006,
+              "longitude": -71.8953
+            }
+          ]
+        },
+        "primaryId": "p_214665262",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHRS-8CJ",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Woodstock, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary E Philipps",
+        "score": 4.40288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1851",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1473181",
+        "collectionTitle": "United States, Census, 1860",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+        "recordTitle": "Household of Samuel Wilkinson, \"United States, Census, 1860\"",
+        "recordArk": "ark:/61903/1:2:MWBB-RNQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214714187",
+              "ark": "ark:/61903/1:1:MHRS-8CJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1851",
+                  "standard_date": "1851",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214714184",
+              "ark": "ark:/61903/1:1:MHRS-8CX",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Samuel",
+                  "surname": "Wilkinson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1794",
+                  "standard_date": "1794",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214714185",
+              "ark": "ark:/61903/1:1:MHRS-8CF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary M",
+                  "surname": "Wilkinson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214714186",
+              "ark": "ark:/61903/1:1:MHRS-8CN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary R",
+                  "surname": "Wilkinson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214714188",
+              "ark": "ark:/61903/1:1:MHRS-8CV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Daniel B",
+                  "surname": "Baker"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1839",
+                  "standard_date": "1839",
+                  "place": "Conn",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Woodstock, Windham, Connecticut, United States",
+                  "standard_place": "Woodstock, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169258984",
+              "resource_type": "Record",
+              "title": "Household of Samuel Wilkinson, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHRS-8CX : Mon Jul 08 04:23:25 UTC 2024), Entry for Samuel Wilkinson and Mary M Wilkinson, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-RNQ",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9F48",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_214714187",
+              "resource_type": "Person",
+              "url": "#p_214714187"
+            }
+          ],
+          "places": [
+            {
+              "id": "12268092",
+              "name": "Woodstock, Windham, Connecticut, United States",
+              "latitude": 41.9667,
+              "longitude": -72.0167
+            },
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_214714187",
+        "role": "Principal"
+      }
+    ]
+  }
+}

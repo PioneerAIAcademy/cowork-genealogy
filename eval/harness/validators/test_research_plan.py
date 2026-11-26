@@ -1019,6 +1019,50 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
     )
 
 
+# --- Tag-gated: an unidentified household member is planned from records ----
+
+# Issue #4670 (decided 2026-11-23): research-plan plans a household member's
+# identity from record items on the relatives' other marriages and on the
+# spouse's parentage, and reads no relative's Family Tree profile. The PIDs
+# are keyed per test id: which relatives are in play is the scenario's.
+_HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID = {
+    "ut_research_plan_4gc": ("LQRZ-FVX", "KNSW-567", "94Z5-N1F"),
+}
+
+
+def test_household_identity_reads_no_relative_profile(tool_calls, attempted_mcp_calls, test):
+    """Tag-gated (``household-identity-no-relative-read``). No `person_read`,
+    called or attempted, on a relative of the household this test names, at
+    any point in the run. A tagged run with no plan write fails: it planned
+    nothing."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID or "household-identity-no-relative-read" in tags, (
+        f"{test_id} has a _HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID entry but no "
+        "'household-identity-no-relative-read' tag - restore the tag or delete the entry"
+    )
+    if "household-identity-no-relative-read" not in tags:
+        pytest.skip("not a household-identity-no-relative-read test")
+    forbidden = set(_HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID.get(test_id) or ())
+    assert forbidden, (
+        f"{test_id} carries 'household-identity-no-relative-read' but has no entry in "
+        "_HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID"
+    )
+    calls = [c for c in tool_calls or [] if isinstance(c, dict)]
+    assert _first_plan_write(calls) is not None, "no research_append wrote plans or plan_items"
+    attempts = [a for a in attempted_mcp_calls or [] if isinstance(a, dict)]
+    reads = [
+        (c.get("args") or {}).get("personId")
+        for c in calls + attempts
+        if _bare(c.get("tool", "")) == "person_read"
+    ]
+    hit = sorted({pid for pid in reads if isinstance(pid, str) and _pid_tail(pid) in forbidden})
+    assert not hit, (
+        "A household member is planned from record items, never from a relative's "
+        f"FamilySearch profile: person_read on {hit}."
+    )
+
+
 # --- V1: identifiers in a rationale must trace to a served response ---------
 
 # person_read (issue #2208): the plan cites the attached-source ARKs a profile read

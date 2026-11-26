@@ -1,0 +1,5499 @@
+{
+  "log_id": "log_004",
+  "tool": "record_search",
+  "retrieved": "2026-11-18T21:29:31.486Z",
+  "returned_count": 50,
+  "payload": {
+    "query": {
+      "surname": "Phipps",
+      "givenName": "Benjamin",
+      "residenceYearFrom": 1880,
+      "residenceYearTo": 1880,
+      "residencePlace": "Thompson, Windham, Connecticut, United States",
+      "recordType": "census",
+      "projectPath": "/project",
+      "subjectId": "I1"
+    },
+    "totalMatches": 243,
+    "paginationCappedAt": 4999,
+    "returned": 50,
+    "offset": 0,
+    "hasMore": true,
+    "placeExpansion": {
+      "searches": [
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "totalMatches": 243,
+          "returned": 50
+        },
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 1,
+          "returned": 1
+        },
+        {
+          "places": {
+            "residencePlace": "Nashaway, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 1,
+          "returned": 1
+        }
+      ],
+      "mergedCount": 50,
+      "note": "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MFZQ-VND",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Farmer"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Thompson, Windham, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin Phipps",
+        "score": 5.4435997,
+        "confidence": 5,
+        "sex": "Male",
+        "birthDate": "1816",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Benjamin Phipps, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MC93-DLK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_372724692",
+              "ark": "ark:/61903/1:1:MFZQ-VND",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1816",
+                  "standard_date": "1816",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724693",
+              "ark": "ark:/61903/1:1:MFZQ-VN6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724694",
+              "ark": "ark:/61903/1:1:MFZQ-VNX",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724695",
+              "ark": "ark:/61903/1:1:MFZQ-VNF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724697",
+              "ark": "ark:/61903/1:1:MFZQ-VNJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Emily",
+                  "surname": "Child"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372724696",
+              "ark": "ark:/61903/1:1:MFZQ-VNN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Fannie",
+                  "surname": "Carrington"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_372724692",
+              "child": "p_372724695"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_372724692",
+              "person2": "p_372724693"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_372724692",
+              "child": "p_372724694"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_372724697",
+              "child": "p_372724692"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_372724693",
+              "child": "p_372724695"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_372724693",
+              "child": "p_372724694"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_219602449",
+              "resource_type": "Record",
+              "title": "Household of Benjamin Phipps, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND : Wed Sep 09 14:17:27 UTC 2026), Entry for Benjamin Phipps and Mary Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MC93-DLK",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-9CC7",
+              "coverage": {
+                "place_rep_id": "346",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_372724692",
+              "resource_type": "Person",
+              "url": "#p_372724692"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "3779481",
+              "name": "Thompson, Windham, Connecticut, United States",
+              "latitude": 41.9844,
+              "longitude": -71.878
+            }
+          ]
+        },
+        "primaryId": "p_372724692",
+        "batchNumber": "C57555-7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-X78D",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alfred B Phipps",
+        "score": 2.85848,
+        "confidence": 3,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Alfred B Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LLNL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308322842",
+              "ark": "ark:/61903/1:1:6Z1Q-X78D",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps",
+                  "given": "Alfred B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807956401",
+              "resource_type": "Record",
+              "title": "Entry for Alfred B Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-X78D : Wed Oct 22 02:47:19 UTC 2025), Entry for Alfred B Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LLNL",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3ZM9",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308322842",
+              "resource_type": "Person",
+              "url": "#p_292308322842"
+            }
+          ]
+        },
+        "primaryId": "p_292308322842",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-FCSH",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alfred B Phipps",
+        "score": 2.85848,
+        "confidence": 3,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Alfred B Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-G3RC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308353168",
+              "ark": "ark:/61903/1:1:6Z1Q-FCSH",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Alfred B",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807967459",
+              "resource_type": "Record",
+              "title": "Entry for Alfred B Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-FCSH : Thu Aug 21 09:16:18 UTC 2025), Entry for Alfred B Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-G3RC",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3Z9Y",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308353168",
+              "resource_type": "Person",
+              "url": "#p_292308353168"
+            }
+          ]
+        },
+        "primaryId": "p_292308353168",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68XW-97PF",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phipps",
+        "score": 2.6783,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BJB-FLJ1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292674092205",
+              "ark": "ark:/61903/1:1:68XW-97PF",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173938204439",
+              "resource_type": "Record",
+              "title": "Entry for Phipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68XW-97PF : Thu Aug 27 00:33:18 UTC 2026), Entry for Phipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BJB-FLJ1",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DX-RCN8",
+              "coverage": {
+                "place_rep_id": "370",
+                "date_range": "1880",
+                "record_type": "Employment"
+              }
+            },
+            {
+              "id": "src_p_p_292674092205",
+              "resource_type": "Person",
+              "url": "#p_292674092205"
+            }
+          ]
+        },
+        "primaryId": "p_292674092205",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6YYX-8GD5",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Geo B Phillips",
+        "score": 2.18626,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Geo B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4QP-W826",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_304660757184",
+              "ark": "ark:/61903/1:1:6YYX-8GD5",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Geo B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180179002513",
+              "resource_type": "Record",
+              "title": "Entry for Geo B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YYX-8GD5 : Fri Aug 16 13:47:26 UTC 2024), Entry for Geo B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4QP-W826",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHN-B3B3-X332",
+              "coverage": {
+                "place_rep_id": "3624",
+                "date_range": "1880–1881",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QS9",
+              "resource_type": "auto",
+              "title": "United States, Massachusetts, Residences, from 1587 to 2006",
+              "coverage": {
+                "place_rep_id": "371",
+                "date_range": "+1587-01-01T00:00:00Z/+2006-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_304660757184",
+              "resource_type": "Person",
+              "url": "#p_304660757184"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_304660757184",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-X78Q",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "J B Phillips",
+        "score": 2.12776,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for J B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LLN6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308322834",
+              "ark": "ark:/61903/1:1:6Z1Q-X78Q",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "J B",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807956393",
+              "resource_type": "Record",
+              "title": "Entry for J B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-X78Q : Wed Oct 22 02:47:12 UTC 2025), Entry for J B Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LLN6",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3ZM9",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308322834",
+              "resource_type": "Person",
+              "url": "#p_292308322834"
+            }
+          ]
+        },
+        "primaryId": "p_292308322834",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-86H1",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "T B Filippe",
+        "score": 2.12776,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for T B Filippe, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-L4TT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308248969",
+              "ark": "ark:/61903/1:1:6Z1Q-86H1",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Filippe",
+                  "given": "T B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807944106",
+              "resource_type": "Record",
+              "title": "Entry for T B Filippe, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-86H1 : Wed Oct 22 01:11:55 UTC 2025), Entry for T B Filippe, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-L4TT",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CLT",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308248969",
+              "resource_type": "Person",
+              "url": "#p_292308248969"
+            }
+          ]
+        },
+        "primaryId": "p_292308248969",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-X783",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James B Phillips",
+        "score": 2.12776,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LLND",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308322833",
+              "ark": "ark:/61903/1:1:6Z1Q-X783",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James B",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807956392",
+              "resource_type": "Record",
+              "title": "Entry for James B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-X783 : Wed Oct 22 02:47:16 UTC 2025), Entry for James B Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LLND",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3ZM9",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308322833",
+              "resource_type": "Person",
+              "url": "#p_292308322833"
+            }
+          ]
+        },
+        "primaryId": "p_292308322833",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z17-STPZ",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "J B Phillips",
+        "score": 2.12776,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for J B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-16N3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308828100",
+              "ark": "ark:/61903/1:1:6Z17-STPZ",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "J B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808165183",
+              "resource_type": "Record",
+              "title": "Entry for J B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z17-STPZ : Thu Aug 21 09:15:42 UTC 2025), Entry for J B Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-16N3",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DF-3CPP",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308828100",
+              "resource_type": "Person",
+              "url": "#p_292308828100"
+            }
+          ]
+        },
+        "primaryId": "p_292308828100",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-X78C",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James B Phillips",
+        "score": 2.12776,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LLNV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308322839",
+              "ark": "ark:/61903/1:1:6Z1Q-X78C",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "James B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807956398",
+              "resource_type": "Record",
+              "title": "Entry for James B Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-X78C : Wed Oct 22 02:47:19 UTC 2025), Entry for James B Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LLNV",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3ZM9",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308322839",
+              "resource_type": "Person",
+              "url": "#p_292308322839"
+            }
+          ]
+        },
+        "primaryId": "p_292308322839",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZVB-94KC",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 2.0060802,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BH1-HJ1N",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292060113879",
+              "ark": "ark:/61903/1:1:6ZVB-94KC",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173720122186",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZVB-94KC : Tue May 13 11:58:06 UTC 2025), Entry for Phelps.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BH1-HJ1N",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DY-59XY-3",
+              "coverage": {
+                "place_rep_id": "396499",
+                "date_range": "1880-1900",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-N55",
+              "resource_type": "auto",
+              "title": "United States, Missouri, Residences, from 1766 to 1989",
+              "coverage": {
+                "place_rep_id": "352",
+                "date_range": "+1766-01-01T00:00:00Z/+1989-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_292060113879",
+              "resource_type": "Person",
+              "url": "#p_292060113879"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_292060113879",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PXK-PFG8",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "Mar 1880",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 2.0060802,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "March 1880",
+        "birthPlace": "Texas, United States",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Phelps, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:HQ49-PDRB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_301433225171",
+              "ark": "ark:/61903/1:1:6PXK-PFG8",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "Texas",
+                  "standard_place": "Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_178047542578",
+              "resource_type": "Record",
+              "title": "Household of Phelps, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PXK-PFG8 : Tue Apr 22 18:11:13 UTC 2025), Entry for Phelps, Mar 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HQ49-PDRB",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "Mar 1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_c_1420441",
+              "resource_type": "Collection",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-13P2-H4T3",
+              "coverage": {
+                "place_rep_id": "342",
+                "date_range": "1880",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_301433225171",
+              "resource_type": "Person",
+              "url": "#p_301433225171"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "343",
+              "name": "Texas, United States",
+              "latitude": 31.25,
+              "longitude": -99.25
+            }
+          ]
+        },
+        "primaryId": "p_301433225171",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PFH-DP3Q",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "Mar 1880",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 2.0060802,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "March 1880",
+        "birthPlace": "Texas, United States",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Phelps, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:HQ4F-8WNZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_301448324794",
+              "ark": "ark:/61903/1:1:6PFH-DP3Q",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "Texas",
+                  "standard_place": "Texas, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_178058552890",
+              "resource_type": "Record",
+              "title": "Household of Phelps, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFH-DP3Q : Tue Apr 22 18:10:25 UTC 2025), Entry for Phelps, Mar 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HQ4F-8WNZ",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "Mar 1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_c_1420441",
+              "resource_type": "Collection",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHK-Q3P2-8K9R",
+              "coverage": {
+                "place_rep_id": "342",
+                "date_range": "1880",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_301448324794",
+              "resource_type": "Person",
+              "url": "#p_301448324794"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "343",
+              "name": "Texas, United States",
+              "latitude": 31.25,
+              "longitude": -99.25
+            }
+          ]
+        },
+        "primaryId": "p_301448324794",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PFV-P31M",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "Mar 1880",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 2.0060802,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "March 1880",
+        "birthPlace": "Texas, United States",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Phillips, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:HQ4R-5S8Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_301456704570",
+              "ark": "ark:/61903/1:1:6PFV-P31M",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "Texas",
+                  "standard_place": "Texas, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "Mar 1880",
+                  "standard_date": "Mar 1880",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_178067000134",
+              "resource_type": "Record",
+              "title": "Household of Phillips, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFV-P31M : Tue Apr 22 18:40:03 UTC 2025), Entry for Phillips, Mar 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HQ4R-5S8Q",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "Mar 1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_c_1420441",
+              "resource_type": "Collection",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-13P2-CKD9",
+              "coverage": {
+                "place_rep_id": "342",
+                "date_range": "1880",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_301456704570",
+              "resource_type": "Person",
+              "url": "#p_301456704570"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "343",
+              "name": "Texas, United States",
+              "latitude": 31.25,
+              "longitude": -99.25
+            }
+          ]
+        },
+        "primaryId": "p_301456704570",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6PFH-2J7W",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "Apr 1880",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 2.0060802,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "April 1850",
+        "birthPlace": "Texas, United States",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Phillips, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:HQ4J-RYBS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_301448535456",
+              "ark": "ark:/61903/1:1:6PFH-2J7W",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Apr 1850",
+                  "standard_date": "Apr 1850",
+                  "place": "Texas",
+                  "standard_place": "Texas, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "Apr 1880",
+                  "standard_date": "Apr 1880",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_178060570142",
+              "resource_type": "Record",
+              "title": "Household of Phillips, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFH-2J7W : Tue Apr 22 16:05:40 UTC 2025), Entry for Phillips, Apr 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HQ4J-RYBS",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "Apr 1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_c_1420441",
+              "resource_type": "Collection",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-B3P2-8V8M",
+              "coverage": {
+                "place_rep_id": "342",
+                "date_range": "1880",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_301448535456",
+              "resource_type": "Person",
+              "url": "#p_301448535456"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "343",
+              "name": "Texas, United States",
+              "latitude": 31.25,
+              "longitude": -99.25
+            }
+          ]
+        },
+        "primaryId": "p_301448535456",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z18-Y6PF",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-6FK2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292314351405",
+              "ark": "ark:/61903/1:1:6Z18-Y6PF",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810165090",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z18-Y6PF : Thu Aug 21 09:15:41 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-6FK2",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DF-3CV3",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292314351405",
+              "resource_type": "Person",
+              "url": "#p_292314351405"
+            }
+          ]
+        },
+        "primaryId": "p_292314351405",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z17-TTM6",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philipps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDV-X5B9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292309475413",
+              "ark": "ark:/61903/1:1:6Z17-TTM6",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808580441",
+              "resource_type": "Record",
+              "title": "Entry for Philipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z17-TTM6 : Thu Aug 21 09:16:21 UTC 2025), Entry for Philipps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDV-X5B9",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-3CRT",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292309475413",
+              "resource_type": "Person",
+              "url": "#p_292309475413"
+            }
+          ]
+        },
+        "primaryId": "p_292309475413",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-8RP3",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philip",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-GZVP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308260193",
+              "ark": "ark:/61903/1:1:6Z1Q-8RP3",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philip"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807973563",
+              "resource_type": "Record",
+              "title": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-8RP3 : Tue Oct 21 10:37:05 UTC 2025), Entry for Philip, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-GZVP",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CGN",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308260193",
+              "resource_type": "Person",
+              "url": "#p_292308260193"
+            }
+          ]
+        },
+        "primaryId": "p_292308260193",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-12ZJ",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillippeus",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phillippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-5TMY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315221317",
+              "ark": "ark:/61903/1:1:6Z1D-12ZJ",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillippeus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810471427",
+              "resource_type": "Record",
+              "title": "Entry for Phillippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-12ZJ : Thu Aug 21 09:16:09 UTC 2025), Entry for Phillippeus, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-5TMY",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3CR1",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292315221317",
+              "resource_type": "Person",
+              "url": "#p_292315221317"
+            }
+          ]
+        },
+        "primaryId": "p_292315221317",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-DWZT",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LHF7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308269726",
+              "ark": "ark:/61903/1:1:6Z1Q-DWZT",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807944655",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-DWZT : Thu Aug 21 09:16:05 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LHF7",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CYS",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308269726",
+              "resource_type": "Person",
+              "url": "#p_292308269726"
+            }
+          ]
+        },
+        "primaryId": "p_292308269726",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-VSML",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-5TRK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308427821",
+              "ark": "ark:/61903/1:1:6Z1Q-VSML",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808042169",
+              "resource_type": "Record",
+              "title": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-VSML : Thu Aug 21 09:15:35 UTC 2025), Entry for Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-5TRK",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3CYH",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308427821",
+              "resource_type": "Person",
+              "url": "#p_292308427821"
+            }
+          ]
+        },
+        "primaryId": "p_292308427821",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-FMPK",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philip",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-2YSM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308345709",
+              "ark": "ark:/61903/1:1:6Z1Q-FMPK",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philip"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807934360",
+              "resource_type": "Record",
+              "title": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-FMPK : Tue Oct 21 14:02:07 UTC 2025), Entry for Philip, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-2YSM",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CT8",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308345709",
+              "resource_type": "Person",
+              "url": "#p_292308345709"
+            }
+          ]
+        },
+        "primaryId": "p_292308345709",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-5GFL",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-2CFB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315088271",
+              "ark": "ark:/61903/1:1:6Z1D-5GFL",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810348578",
+              "resource_type": "Record",
+              "title": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-5GFL : Thu Aug 21 09:15:28 UTC 2025), Entry for Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-2CFB",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-3Z38",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292315088271",
+              "resource_type": "Person",
+              "url": "#p_292315088271"
+            }
+          ]
+        },
+        "primaryId": "p_292315088271",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-8RPX",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philip",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-GZKQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308260204",
+              "ark": "ark:/61903/1:1:6Z1Q-8RPX",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philip"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807973574",
+              "resource_type": "Record",
+              "title": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-8RPX : Tue Oct 21 10:37:06 UTC 2025), Entry for Philip, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-GZKQ",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CGN",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308260204",
+              "resource_type": "Person",
+              "url": "#p_292308260204"
+            }
+          ]
+        },
+        "primaryId": "p_292308260204",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-8RLP",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philip",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-GZJ6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308260153",
+              "ark": "ark:/61903/1:1:6Z1Q-8RLP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philip"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807973523",
+              "resource_type": "Record",
+              "title": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-8RLP : Tue Oct 21 10:37:12 UTC 2025), Entry for Philip, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-GZJ6",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9DF-3CGN",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308260153",
+              "resource_type": "Person",
+              "url": "#p_292308260153"
+            }
+          ]
+        },
+        "primaryId": "p_292308260153",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-1266",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philip",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-5T3P",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315221403",
+              "ark": "ark:/61903/1:1:6Z1D-1266",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philip"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810471513",
+              "resource_type": "Record",
+              "title": "Entry for Philip, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-1266 : Thu Aug 21 09:16:29 UTC 2025), Entry for Philip, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-5T3P",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3CR1",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292315221403",
+              "resource_type": "Person",
+              "url": "#p_292315221403"
+            }
+          ]
+        },
+        "primaryId": "p_292315221403",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1C-QCL7",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDK-4K3X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292312106735",
+              "ark": "ark:/61903/1:1:6Z1C-QCL7",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173809196204",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1C-QCL7 : Tue Oct 21 19:50:56 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDK-4K3X",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-3CYF",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292312106735",
+              "resource_type": "Person",
+              "url": "#p_292312106735"
+            }
+          ]
+        },
+        "primaryId": "p_292312106735",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-KFXJ",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-R4S1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308466937",
+              "ark": "ark:/61903/1:1:6Z1Q-KFXJ",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808051389",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-KFXJ : Thu Aug 21 09:16:20 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-R4S1",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3CB8",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308466937",
+              "resource_type": "Person",
+              "url": "#p_292308466937"
+            }
+          ]
+        },
+        "primaryId": "p_292308466937",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-6T49",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philippeus",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LTXZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308314611",
+              "ark": "ark:/61903/1:1:6Z1Q-6T49",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philippeus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807960830",
+              "resource_type": "Record",
+              "title": "Entry for Philippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-6T49 : Thu Aug 21 09:16:13 UTC 2025), Entry for Philippeus, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LTXZ",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-3ZSG",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308314611",
+              "resource_type": "Person",
+              "url": "#p_292308314611"
+            }
+          ]
+        },
+        "primaryId": "p_292308314611",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-5MQ4",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-YXBF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308588127",
+              "ark": "ark:/61903/1:1:6Z1Q-5MQ4",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808112455",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-5MQ4 : Thu Aug 21 09:15:30 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-YXBF",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DF-3CJF",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308588127",
+              "resource_type": "Person",
+              "url": "#p_292308588127"
+            }
+          ]
+        },
+        "primaryId": "p_292308588127",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-8HZM",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phelps",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-KR99",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308244500",
+              "ark": "ark:/61903/1:1:6Z1Q-8HZM",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807905531",
+              "resource_type": "Record",
+              "title": "Entry for Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-8HZM : Thu Aug 21 09:16:14 UTC 2025), Entry for Phelps, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-KR99",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3C5F",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308244500",
+              "resource_type": "Person",
+              "url": "#p_292308244500"
+            }
+          ]
+        },
+        "primaryId": "p_292308244500",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Q-DMB7",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDJ-LXT8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292308264845",
+              "ark": "ark:/61903/1:1:6Z1Q-DMB7",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173807950391",
+              "resource_type": "Record",
+              "title": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Q-DMB7 : Thu Aug 21 09:16:04 UTC 2025), Entry for Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDJ-LXT8",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-3ZW7",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292308264845",
+              "resource_type": "Person",
+              "url": "#p_292308264845"
+            }
+          ]
+        },
+        "primaryId": "p_292308264845",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MW-G4N7",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Philippeus",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Philippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDY-53WD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292334460785",
+              "ark": "ark:/61903/1:1:68MW-G4N7",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Philippeus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173816120892",
+              "resource_type": "Record",
+              "title": "Entry for Philippeus, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MW-G4N7 : Fri Jun 19 19:31:18 UTC 2026), Entry for Philippeus, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDY-53WD",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99DF-3CYJ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1867",
+                "record_type": "Military"
+              }
+            },
+            {
+              "id": "src_p_p_292334460785",
+              "resource_type": "Person",
+              "url": "#p_292334460785"
+            }
+          ]
+        },
+        "primaryId": "p_292334460785",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1P-2DSP",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1880"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phillips",
+        "score": 1.9475801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD5-QW75",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292323880883",
+              "ark": "ark:/61903/1:1:6Z1P-2DSP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173813153574",
+              "resource_type": "Record",
+              "title": "Entry for Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1P-2DSP : Wed Aug 05 13:13:43 UTC 2026), Entry for Phillips, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD5-QW75",
+              "coverage": {
+                "date_range": "1880",
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C913-P9LQ-K",
+              "coverage": {
+                "record_type": "Genealogy"
+              }
+            },
+            {
+              "id": "src_p_p_292323880883",
+              "resource_type": "Person",
+              "url": "#p_292323880883"
+            }
+          ]
+        },
+        "primaryId": "p_292323880883",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6BXZ-LMC5",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Cora B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for George F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4XH-9J9L",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305070867294",
+              "ark": "ark:/61903/1:1:6BXZ-LMC5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Cora B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305070867293",
+              "ark": "ark:/61903/1:1:6BXZ-LMCP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George F",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305070867293",
+              "person2": "p_305070867294"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180409722351",
+              "resource_type": "Record",
+              "title": "Entry for George F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BXZ-LMCP : Tue May 13 12:34:25 UTC 2025), Entry for George F Phillips and Cora B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4XH-9J9L",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-RQ9J-1SNL",
+              "coverage": {
+                "place_rep_id": "392828",
+                "date_range": "1912",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305070867294",
+              "resource_type": "Person",
+              "url": "#p_305070867294"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305070867294",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS45-3KC6",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Jennie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH9G-36TZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307827638383",
+              "ark": "ark:/61903/1:1:XS45-3KC6",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Jennie B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307827638382",
+              "ark": "ark:/61903/1:1:XS45-3KCD",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Albert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307827638382",
+              "person2": "p_307827638383"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180834213490",
+              "resource_type": "Record",
+              "title": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS45-3KCD : Sun Apr 13 07:43:08 UTC 2025), Entry for Albert Phillips and Jennie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH9G-36TZ",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-BQ9V-S98L-T",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1920",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307827638383",
+              "resource_type": "Person",
+              "url": "#p_307827638383"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307827638383",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X9Y7-Y5NN",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pearl B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Chester A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4YB-379X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307569901096",
+              "ark": "ark:/61903/1:1:X9Y7-Y5NN",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Pearl B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307569901095",
+              "ark": "ark:/61903/1:1:X9Y7-Y5NF",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Chester A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307569901095",
+              "person2": "p_307569901096"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180741865544",
+              "resource_type": "Record",
+              "title": "Entry for Chester A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9Y7-Y5NF : Sun Apr 13 02:18:16 UTC 2025), Entry for Chester A Phillips and Pearl B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4YB-379X",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-TQ9V-F7ZR",
+              "coverage": {
+                "place_rep_id": "393093",
+                "date_range": "1931",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "resource_type": "auto",
+              "title": "United States, New York, Residences, from 1600 to 1997",
+              "coverage": {
+                "place_rep_id": "339",
+                "date_range": "+1600-01-01T00:00:00Z/+1997-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_307569901096",
+              "resource_type": "Person",
+              "url": "#p_307569901096"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307569901096",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSZD-7SLC",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Jennie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH3F-9Y1Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307890857439",
+              "ark": "ark:/61903/1:1:XSZD-7SLC",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jennie B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307890857438",
+              "ark": "ark:/61903/1:1:XSZD-7SLH",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Albert",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307890857438",
+              "person2": "p_307890857439"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180877102174",
+              "resource_type": "Record",
+              "title": "Entry for Albert Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZD-7SLH : Sun Apr 13 11:12:09 UTC 2025), Entry for Albert Phillips and Jennie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH3F-9Y1Q",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-YQ9V-S942-2",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1928",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307890857439",
+              "resource_type": "Person",
+              "url": "#p_307890857439"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307890857439",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS4N-C4GK",
+        "events": [],
+        "treeMatches": [],
+        "personName": "May B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH9K-S52Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307821309979",
+              "ark": "ark:/61903/1:1:XS4N-C4GK",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "May B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307821309978",
+              "ark": "ark:/61903/1:1:XS4N-C4GV",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James H",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307821309978",
+              "person2": "p_307821309979"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180831766227",
+              "resource_type": "Record",
+              "title": "Entry for James H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS4N-C4GV : Sat Apr 12 22:23:44 UTC 2025), Entry for James H Phillips and May B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH9K-S52Y",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-BQ9V-SJ46",
+              "coverage": {
+                "place_rep_id": "5446395",
+                "date_range": "1916",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_307821309979",
+              "resource_type": "Person",
+              "url": "#p_307821309979"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307821309979",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6B6S-4M6F",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mina B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Wm H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H46J-PDJ1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305039709405",
+              "ark": "ark:/61903/1:1:6B6S-4M6F",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mina B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305039709404",
+              "ark": "ark:/61903/1:1:6B6S-4M6X",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Wm H",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305039709404",
+              "person2": "p_305039709405"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180393302339",
+              "resource_type": "Record",
+              "title": "Entry for Wm H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6B6S-4M6X : Tue May 13 15:09:38 UTC 2025), Entry for Wm H Phillips and Mina B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H46J-PDJ1",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-GQ9J-PBPK",
+              "coverage": {
+                "place_rep_id": "5446980",
+                "date_range": "1927",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305039709405",
+              "resource_type": "Person",
+              "url": "#p_305039709405"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305039709405",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS4G-195D",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Sarah B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Nelson Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH9L-F1L7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307826704632",
+              "ark": "ark:/61903/1:1:XS4G-195D",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Sarah B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307826704631",
+              "ark": "ark:/61903/1:1:XS4G-1958",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Nelson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307826704631",
+              "person2": "p_307826704632"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180833741735",
+              "resource_type": "Record",
+              "title": "Entry for Nelson Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS4G-1958 : Sun Apr 13 01:30:50 UTC 2025), Entry for Nelson Phillips and Sarah B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH9L-F1L7",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-BQ9V-S9BZ-K",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1928",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307826704632",
+              "resource_type": "Person",
+              "url": "#p_307826704632"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307826704632",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSMH-FHWJ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Ina B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Lowell H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4BF-RPHD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307644892397",
+              "ark": "ark:/61903/1:1:XSMH-FHWJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ina B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307644892396",
+              "ark": "ark:/61903/1:1:XSMH-FHWN",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lowell H",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307644892396",
+              "person2": "p_307644892397"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180756245952",
+              "resource_type": "Record",
+              "title": "Entry for Lowell H Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMH-FHWN : Sun Apr 13 08:48:45 UTC 2025), Entry for Lowell H Phillips and Ina B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4BF-RPHD",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-GQ9V-F5S1",
+              "coverage": {
+                "place_rep_id": "11816052",
+                "date_range": "1927",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-7Y9",
+              "resource_type": "auto",
+              "title": "United States, Texas, Residences, from 1600 to 1996",
+              "coverage": {
+                "place_rep_id": "343",
+                "date_range": "+1600-01-01T00:00:00Z/+1996-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_307644892397",
+              "resource_type": "Person",
+              "url": "#p_307644892397"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307644892397",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6BN6-X5V5",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hallie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Chas A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4F8-N5M6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305121730164",
+              "ark": "ark:/61903/1:1:6BN6-X5V5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hallie B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305121730163",
+              "ark": "ark:/61903/1:1:6BN6-X5VP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Chas A",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305121730163",
+              "person2": "p_305121730164"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180436863613",
+              "resource_type": "Record",
+              "title": "Entry for Chas A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BN6-X5VP : Tue May 13 17:30:36 UTC 2025), Entry for Chas A Phillips and Hallie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4F8-N5M6",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-RQ9J-RWRK",
+              "coverage": {
+                "place_rep_id": "4136395",
+                "date_range": "1933–1934",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-W83",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Residences, from 1004 to 1995",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1004-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305121730164",
+              "resource_type": "Person",
+              "url": "#p_305121730164"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305121730164",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSHS-RNTS",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Myrtle B Phelps",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Harold O Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH91-PXDD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307834710182",
+              "ark": "ark:/61903/1:1:XSHS-RNTS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Myrtle B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307834710181",
+              "ark": "ark:/61903/1:1:XSHS-RNT9",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Harold O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307834710181",
+              "person2": "p_307834710182"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180840423972",
+              "resource_type": "Record",
+              "title": "Entry for Harold O Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSHS-RNT9 : Sun Apr 13 02:46:38 UTC 2025), Entry for Harold O Phelps and Myrtle B Phelps.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH91-PXDD",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-YQ9V-9ZBB",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1932",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307834710182",
+              "resource_type": "Person",
+              "url": "#p_307834710182"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307834710182",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS4L-ZHPV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Lillian B. Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Thos F. Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HH9L-4TLT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307825387908",
+              "ark": "ark:/61903/1:1:XS4L-ZHPV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lillian B."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307825387907",
+              "ark": "ark:/61903/1:1:XS4L-ZHPJ",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Thos F."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307825387907",
+              "person2": "p_307825387908"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180833523056",
+              "resource_type": "Record",
+              "title": "Entry for Thos F. Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS4L-ZHPJ : Sat Apr 12 23:48:37 UTC 2025), Entry for Thos F. Phillips and Lillian B. Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH9L-4TLT",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-TQ9V-9D2T",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1932",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307825387908",
+              "resource_type": "Person",
+              "url": "#p_307825387908"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307825387908",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSH2-DC12",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Lillian B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Thos F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:HHSZ-LJ1X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307848932990",
+              "ark": "ark:/61903/1:1:XSH2-DC12",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lillian B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307848932989",
+              "ark": "ark:/61903/1:1:XSH2-DC1K",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Thos F",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307848932989",
+              "person2": "p_307848932990"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180849283184",
+              "resource_type": "Record",
+              "title": "Entry for Thos F Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSH2-DC1K : Sun Apr 13 03:16:08 UTC 2025), Entry for Thos F Phillips and Lillian B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HHSZ-LJ1X",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-RQ9J-1WT7",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1934",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_auto_M9KT-33D",
+              "resource_type": "auto",
+              "title": "United States, Residences, from 1588 to 2008",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1588-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "src_p_p_307848932990",
+              "resource_type": "Person",
+              "url": "#p_307848932990"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307848932990",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6BJL-TTQV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Ida B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for T Chas Philipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4NQ-JPTP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305152835538",
+              "ark": "ark:/61903/1:1:6BJL-TTQV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ida B",
+                  "surname": "Phillips"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305152835537",
+              "ark": "ark:/61903/1:1:6BJL-TTQJ",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "T Chas",
+                  "surname": "Philipps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305152835537",
+              "person2": "p_305152835538"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180455520503",
+              "resource_type": "Record",
+              "title": "Entry for T Chas Philipps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BJL-TTQJ : Tue May 13 16:56:04 UTC 2025), Entry for T Chas Philipps and Ida B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4NQ-JPTP",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-GQ9J-YLWS",
+              "coverage": {
+                "place_rep_id": "395814",
+                "date_range": "1931–1932",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-HXV",
+              "resource_type": "auto",
+              "title": "United States, Pennsylvania, Residences, from 1620 to 2013",
+              "coverage": {
+                "place_rep_id": "338",
+                "date_range": "+1620-01-01T00:00:00Z/+2013-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305152835538",
+              "resource_type": "Person",
+              "url": "#p_305152835538"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305152835538",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6B6X-XVRP",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Nellie B Phelps",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Charles H Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H46P-7LBM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305049634973",
+              "ark": "ark:/61903/1:1:6B6X-XVRP",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Nellie B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305049634972",
+              "ark": "ark:/61903/1:1:6B6X-XVRG",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phelps",
+                  "given": "Charles H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305049634972",
+              "person2": "p_305049634973"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180397684740",
+              "resource_type": "Record",
+              "title": "Entry for Charles H Phelps, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6B6X-XVRG : Tue May 13 10:48:05 UTC 2025), Entry for Charles H Phelps and Nellie B Phelps.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H46P-7LBM",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-TQ9J-BC32",
+              "coverage": {
+                "place_rep_id": "392828",
+                "date_range": "1914",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305049634973",
+              "resource_type": "Person",
+              "url": "#p_305049634973"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305049634973",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6BFZ-Z7KW",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hallie B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Chas A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4X5-DX4Z",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_305094875076",
+              "ark": "ark:/61903/1:1:6BFZ-Z7KW",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Hallie B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_305094875075",
+              "ark": "ark:/61903/1:1:6BFZ-Z7K7",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Chas A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_305094875075",
+              "person2": "p_305094875076"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180422976820",
+              "resource_type": "Record",
+              "title": "Entry for Chas A Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BFZ-Z7K7 : Tue May 13 04:41:32 UTC 2025), Entry for Chas A Phillips and Hallie B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4X5-DX4Z",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-TQ9V-9ZGT",
+              "coverage": {
+                "place_rep_id": "4136395",
+                "date_range": "1928",
+                "record_type": "Directory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-W83",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Residences, from 1004 to 1995",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1004-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_305094875076",
+              "resource_type": "Person",
+              "url": "#p_305094875076"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_305094875076",
+        "role": "Spouse"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X9BT-9J8W",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Ulrich B Phillips",
+        "score": 1.6177601,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Lucie M Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:H4BW-PWMT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307610502636",
+              "ark": "ark:/61903/1:1:X9BT-9J8W",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Ulrich B"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307610502635",
+              "ark": "ark:/61903/1:1:X9BT-9J87",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phillips",
+                  "given": "Lucie M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307610502635",
+              "person2": "p_307610502636"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180748886426",
+              "resource_type": "Record",
+              "title": "Entry for Lucie M Phillips, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9BT-9J87 : Sun Apr 13 08:13:45 UTC 2025), Entry for Lucie M Phillips and Ulrich B Phillips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4BW-PWMT",
+              "coverage": {
+                "record_type": "Miscellaneous"
+              }
+            },
+            {
+              "id": "sd_c_3754697",
+              "resource_type": "Collection",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1749/1990",
+                "record_type": "Directory",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-MQ9V-V3V",
+              "coverage": {
+                "place_rep_id": "392881",
+                "date_range": "1921",
+                "record_type": "CityDirectory"
+              }
+            },
+            {
+              "id": "sd_auto_M9KR-ZJP",
+              "resource_type": "auto",
+              "title": "United States, Michigan, Residences, from 1600 to 1995",
+              "coverage": {
+                "place_rep_id": "332",
+                "date_range": "+1600-01-01T00:00:00Z/+1995-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_307610502636",
+              "resource_type": "Person",
+              "url": "#p_307610502636"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_307610502636",
+        "role": "Spouse"
+      }
+    ]
+  }
+}

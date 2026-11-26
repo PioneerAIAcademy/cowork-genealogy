@@ -1,0 +1,27 @@
+{
+  "tool": "collections_search",
+  "description": "FamilySearch record collections for Windham County, Connecticut, 1790-1880 (scope Connecticut). Recorded live 2026-11-26 for the phipps-1860-household-member scenario.",
+  "args": {
+    "standardPlace": "~Connecticut"
+  },
+  "response": {
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
+    "scope": "Connecticut",
+    "totalForPlace": 20,
+    "results": [
+      {"id": "2448938", "title": "Connecticut, Births and Baptisms, 1639-1941", "dateRange": "1639-1941", "personCount": 87659},
+      {"id": "1674736", "title": "Connecticut, Births and Christenings, 1649-1906", "dateRange": "1649-1906", "personCount": 1975883},
+      {"id": "2658554", "title": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955", "dateRange": "1640-1955", "personCount": 1476365},
+      {"id": "2658799", "title": "Connecticut, Church Records, 1660-1955", "dateRange": "1660-1955", "personCount": 33571},
+      {"id": "1674748", "title": "Connecticut, Deaths and Burials, 1772-1934", "dateRange": "1772-1934", "personCount": 1356993},
+      {"id": "2448941", "title": "Connecticut, Deaths, 1640-1955", "dateRange": "1640-1955", "personCount": 838850},
+      {"id": "2141008", "title": "Connecticut, District Court Naturalization Indexes, 1851-1992", "dateRange": "1851-1992", "personCount": 251944},
+      {"id": "1674749", "title": "Connecticut, Marriages, 1630-1997", "dateRange": "1630-1997", "personCount": 556136},
+      {"id": "2448940", "title": "Connecticut, Marriages, 1640-1939", "dateRange": "1640-1939", "personCount": 3052141},
+      {"id": "3238391", "title": "Connecticut, Naturalization Records, 1795-1945", "dateRange": "1795-1945", "personCount": 1083892},
+      {"id": "3477650", "title": "Connecticut, Passenger and Crew Lists, 1804-1959", "dateRange": "1804-1959", "personCount": 98791},
+      {"id": "2843390", "title": "Connecticut, Vital Records, Prior to 1850", "dateRange": "1710-1850", "personCount": 1146260},
+      {"id": "3158818", "title": "Connecticut, Wills and Deeds, ca. 1700s-2017", "dateRange": "1700-2017", "personCount": 6647}
+    ]
+  }
+}

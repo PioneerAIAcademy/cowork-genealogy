@@ -1,0 +1,1578 @@
+{
+  "log_id": "log_012",
+  "tool": "record_search",
+  "retrieved": "2026-11-18T21:47:36.577Z",
+  "returned_count": 12,
+  "payload": {
+    "query": {
+      "surname": "Pheaps",
+      "givenName": "Benjamin",
+      "residenceYearFrom": 1860,
+      "residenceYearTo": 1860,
+      "residencePlace": "Thompson, Windham, Connecticut, United States",
+      "projectPath": "/project",
+      "subjectId": "I1"
+    },
+    "totalMatches": 12,
+    "paginationCappedAt": 4999,
+    "returned": 12,
+    "offset": 0,
+    "hasMore": false,
+    "placeExpansion": {
+      "searches": [
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "totalMatches": 12,
+          "returned": 12
+        },
+        {
+          "places": {
+            "residencePlace": "Thompson, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 0,
+          "returned": 0
+        },
+        {
+          "places": {
+            "residencePlace": "Nashaway, Windham, Connecticut Colony, British Colonial America"
+          },
+          "totalMatches": 0,
+          "returned": 0
+        }
+      ],
+      "mergedCount": 12,
+      "note": "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here."
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:7VGZ-BZ2M",
+        "events": [
+          {
+            "type": "MilitaryDraftRegistration",
+            "date": "from 1917 to 1918",
+            "place": "Wapello, Iowa, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Benjamin B. Phreps",
+        "score": 3.12938,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "2 March 1875",
+        "birthPlace": "United States",
+        "collectionId": "1968530",
+        "collectionTitle": "United States, World War I Draft Registration Cards, 1917-1918",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1968530",
+        "recordTitle": "Entry for Benjamin B. Phreps, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+        "recordArk": "ark:/61903/1:2:7HV1-D2MM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_123015465600",
+              "ark": "ark:/61903/1:1:7VGZ-BZ2M",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin B.",
+                  "surname": "Phreps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "2 Mar 1875",
+                  "standard_date": "2 Mar 1875",
+                  "place": ", , United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "MilitaryDraftRegistration",
+                  "primary": true,
+                  "date": "from 1917 to 1918",
+                  "standard_date": "Bet 1917 and 1918",
+                  "place": "Wapello, Iowa, United States",
+                  "standard_place": "Wapello, Iowa, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_123015465700",
+              "ark": "ark:/61903/1:1:7VGZ-BZPZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Milton",
+                  "surname": "Phreps"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "http://familysearch.org/types/relationships/Relative",
+              "person1": "p_123015465600",
+              "person2": "p_123015465700"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_115643232000",
+              "resource_type": "Record",
+              "title": "Entry for Benjamin B. Phreps, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+              "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7VGZ-BZ2M : Sat May 16 03:11:34 UTC 2026), Entry for Benjamin B. Phreps and Milton Phreps, from 1917 to 1918.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:7HV1-D2MM",
+              "coverage": {
+                "place_rep_id": "394056",
+                "date_range": "from 1917 to 1918",
+                "record_type": "Military",
+                "standard_place": "Wapello, Iowa, United States"
+              }
+            },
+            {
+              "id": "sd_c_1968530",
+              "resource_type": "Collection",
+              "title": "United States, World War I Draft Registration Cards, 1917-1918",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1968530",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1917/1918",
+                "record_type": "Military",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-91H7-2HB",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "title:1917-1918",
+                "record_type": "DraftRegistration"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-SFC",
+              "resource_type": "auto",
+              "title": "United States, Iowa, Military Service, from 0030 to 2000",
+              "coverage": {
+                "place_rep_id": "364",
+                "date_range": "+0030-01-01T00:00:00Z/+2000-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_123015465600",
+              "resource_type": "Person",
+              "url": "#p_123015465600"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "394056",
+              "name": "Wapello, Iowa, United States",
+              "latitude": 41.03333,
+              "longitude": -92.41667
+            }
+          ]
+        },
+        "primaryId": "p_123015465600",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X7GT-C779",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Burial",
+            "place": "Indianapolis, Marion, Indiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Simon B Pheips",
+        "score": 1.50776,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "United States",
+        "deathDate": "February 0001",
+        "collectionId": "5000492",
+        "collectionTitle": "Indiana, Indianapolis, Crown Hill Cemetery, Funeral Home Records, 1834-1959",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/5000492",
+        "recordTitle": "Entry for Simon B Pheips, \"Indiana, Indianapolis, Crown Hill Cemetery, Funeral Home Records, 1834-1959\"",
+        "recordArk": "ark:/61903/1:2:HZJW-QYKB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_310380907651",
+              "ark": "ark:/61903/1:1:X7GT-C779",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pheips",
+                  "given": "Simon B"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Indianapolis, Marion, Indiana, United States",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "01 Feb"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_182668092898",
+              "resource_type": "Record",
+              "title": "Entry for Simon B Pheips, \"Indiana, Indianapolis, Crown Hill Cemetery, Funeral Home Records, 1834-1959\"",
+              "citation": "\"Indiana, Indianapolis, Crown Hill Cemetery, Funeral Home Records, 1834-1959\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7GT-C779 : Fri Feb 20 19:37:19 UTC 2026), Entry for Simon B Pheips.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HZJW-QYKB",
+              "coverage": {
+                "place_rep_id": "4107836",
+                "record_type": "Death",
+                "standard_place": "Indianapolis, Marion, Indiana, United States"
+              }
+            },
+            {
+              "id": "sd_c_5000492",
+              "resource_type": "Collection",
+              "title": "Indiana, Indianapolis, Crown Hill Cemetery, Funeral Home Records, 1834-1959",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/5000492",
+              "coverage": {
+                "place_rep_id": "331",
+                "date_range": "1834/1959",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-57H7-VTRD",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1886/1886",
+                "record_type": "FuneralHome"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-M3S",
+              "resource_type": "auto",
+              "title": "United States, Indiana, Deaths, from 0020 to 2026",
+              "coverage": {
+                "place_rep_id": "331",
+                "date_range": "+0020-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_310380907651",
+              "resource_type": "Person",
+              "url": "#p_310380907651"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "4107836",
+              "name": "Indianapolis, Marion, Indiana, United States",
+              "latitude": 39.7683,
+              "longitude": -86.1581
+            }
+          ]
+        },
+        "primaryId": "p_310380907651",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6R49-N7M6",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Phreps",
+        "score": 1.3275801,
+        "confidence": 1,
+        "sex": "Male",
+        "birthDate": "1889",
+        "birthPlace": "United States",
+        "deathDate": "15 September 1893",
+        "deathPlace": "Polk Township, Benton, Iowa, United States",
+        "collectionId": "5000144",
+        "collectionTitle": "Iowa, Death Records, 1888-1904",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/5000144",
+        "recordTitle": "Entry for Phreps, \"Iowa, Death Records, 1888-1904\"",
+        "recordArk": "ark:/61903/1:2:H7QS-MR9P",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_302706346513",
+              "ark": "ark:/61903/1:1:6R49-N7M6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Phreps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1889",
+                  "standard_date": "1889",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "15 Sep 1893",
+                  "standard_date": "15 Sep 1893",
+                  "place": "Polk Township, Benton, Iowa, United States",
+                  "standard_place": "Polk Township, Benton, Iowa, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_178703842553",
+              "resource_type": "Record",
+              "title": "Entry for Phreps, \"Iowa, Death Records, 1888-1904\"",
+              "citation": "\"Iowa, Death Records, 1888-1904\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R49-N7M6 : Fri Oct 25 16:29:52 UTC 2024), Entry for Phreps, 15 Sep 1893.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H7QS-MR9P",
+              "coverage": {
+                "place_rep_id": "4081244",
+                "date_range": "15 Sep 1893",
+                "record_type": "Death",
+                "standard_place": "Polk Township, Benton, Iowa, United States"
+              }
+            },
+            {
+              "id": "sd_c_5000144",
+              "resource_type": "Collection",
+              "title": "Iowa, Death Records, 1888-1904",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/5000144",
+              "coverage": {
+                "place_rep_id": "364",
+                "date_range": "1888/1904",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-L3FS-68DL",
+              "coverage": {
+                "place_rep_id": "52",
+                "date_range": "1894?/1894",
+                "record_type": "DeathRegister"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-3Z1",
+              "resource_type": "auto",
+              "title": "United States, Iowa, Deaths, from 1300 to 2026",
+              "coverage": {
+                "place_rep_id": "364",
+                "date_range": "+1300-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_302706346513",
+              "resource_type": "Person",
+              "url": "#p_302706346513"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "4081244",
+              "name": "Polk Township, Benton, Iowa, United States",
+              "latitude": 42.24333,
+              "longitude": -91.89
+            }
+          ]
+        },
+        "primaryId": "p_302706346513",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68PP-ZFPQ",
+        "events": [
+          {
+            "type": "Emigration",
+            "date": "18 May 1909",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "Occupation",
+            "value": "SEVT"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Feper",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Feper, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BG2-NY7F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292906814194",
+              "ark": "ark:/61903/1:1:68PP-ZFPQ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Feper"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "18 May 1909",
+                  "standard_date": "18 May 1909",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "SEVT"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174053256465",
+              "resource_type": "Record",
+              "title": "Entry for Feper, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68PP-ZFPQ : Thu Sep 24 05:18:19 UTC 2026), Entry for Feper, 18 May 1909.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BG2-NY7F",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "18 May 1909",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0614%2F00%2F0004%2FP%2F0010F&parentid=TNA%2FBT27%2F0614000004%2F00362"
+            },
+            {
+              "id": "src_p_p_292906814194",
+              "resource_type": "Person",
+              "url": "#p_292906814194"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292906814194",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68PP-VLQB",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Emigration",
+            "date": "8 Mar 1907",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mrs O Rottenburg Pheeps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Mrs O Rottenburg Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BG2-H75T",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292907035048",
+              "ark": "ark:/61903/1:1:68PP-VLQB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "O Rottenburg Pheeps",
+                  "prefix": "Mrs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "8 Mar 1907",
+                  "standard_date": "8 Mar 1907",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174053021246",
+              "resource_type": "Record",
+              "title": "Entry for Mrs O Rottenburg Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68PP-VLQB : Thu Sep 24 05:58:35 UTC 2026), Entry for Mrs O Rottenburg Pheeps, 8 Mar 1907.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BG2-H75T",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "8 Mar 1907",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0552%2F00%2F0070%2FP%2F0002F&parentid=TNA%2FBT27%2F0552000070%2F00054"
+            },
+            {
+              "id": "src_p_p_292907035048",
+              "resource_type": "Person",
+              "url": "#p_292907035048"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292907035048",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68L5-ZNVW",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "Emigration",
+            "date": "1 Sep 1896",
+            "place": "England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mrs Phaps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Mrs Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BL6-QCFJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292859024946",
+              "ark": "ark:/61903/1:1:68L5-ZNVW",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Mrs",
+                  "surname": "Phaps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "1 Sep 1896",
+                  "standard_date": "1 Sep 1896",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174022946567",
+              "resource_type": "Record",
+              "title": "Entry for Mrs Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68L5-ZNVW : Thu Sep 24 01:49:01 UTC 2026), Entry for Mrs Phaps, 1 Sep 1896.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BL6-QCFJ",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "1 Sep 1896",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0213%2F00%2F0021%2FP%2F0009F&parentid=TNA%2FBT27%2F0213000021%2F00530"
+            },
+            {
+              "id": "src_p_p_292859024946",
+              "resource_type": "Person",
+              "url": "#p_292859024946"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292859024946",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68L5-7T2C",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Emigration",
+            "date": "1 Sep 1896",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mr Phaps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Mr Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BL6-MKLW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292858899009",
+              "ark": "ark:/61903/1:1:68L5-7T2C",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Mr",
+                  "surname": "Phaps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "1 Sep 1896",
+                  "standard_date": "1 Sep 1896",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174022847736",
+              "resource_type": "Record",
+              "title": "Entry for Mr Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68L5-7T2C : Thu Sep 24 06:55:23 UTC 2026), Entry for Mr Phaps, 1 Sep 1896.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BL6-MKLW",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "1 Sep 1896",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0213%2F00%2F0021%2FP%2F0009F&parentid=TNA%2FBT27%2F0213000021%2F00529"
+            },
+            {
+              "id": "src_p_p_292858899009",
+              "resource_type": "Person",
+              "url": "#p_292858899009"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292858899009",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68GW-5YYN",
+        "events": [
+          {
+            "type": "Emigration",
+            "date": "8 May 1901",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Miss Pheeps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Miss Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BLK-5F8X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292869133126",
+              "ark": "ark:/61903/1:1:68GW-5YYN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pheeps",
+                  "prefix": "Miss"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "8 May 1901",
+                  "standard_date": "8 May 1901",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174028351844",
+              "resource_type": "Record",
+              "title": "Entry for Miss Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68GW-5YYN : Thu Sep 24 00:39:41 UTC 2026), Entry for Miss Pheeps, 8 May 1901.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BLK-5F8X",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "8 May 1901",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0349%2F00%2F0032%2FP%2F0025F&parentid=TNA%2FBT27%2F0349000032%2F01196"
+            },
+            {
+              "id": "src_p_p_292869133126",
+              "resource_type": "Person",
+              "url": "#p_292869133126"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292869133126",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68G8-P7S7",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "Emigration",
+            "date": "11 Nov 1905",
+            "place": "England, United Kingdom"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Miss Pholps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Miss Pholps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BLG-25ZV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292873135565",
+              "ark": "ark:/61903/1:1:68G8-P7S7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Miss",
+                  "surname": "Pholps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "11 Nov 1905",
+                  "standard_date": "11 Nov 1905",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174030681918",
+              "resource_type": "Record",
+              "title": "Entry for Miss Pholps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68G8-P7S7 : Wed Sep 23 19:45:15 UTC 2026), Entry for Miss Pholps, 11 Nov 1905.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BLG-25ZV",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "11 Nov 1905",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0483%2F00%2F0041%2FP%2F0008F&parentid=TNA%2FBT27%2F0483000041%2F00358"
+            },
+            {
+              "id": "src_p_p_292873135565",
+              "resource_type": "Person",
+              "url": "#p_292873135565"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292873135565",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68LP-2Z2L",
+        "events": [
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "Emigration",
+            "date": "20 Oct 1894",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mr Pheeps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Mr Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BLD-PZQZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292858479621",
+              "ark": "ark:/61903/1:1:68LP-2Z2L",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Mr",
+                  "surname": "Pheeps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "20 Oct 1894",
+                  "standard_date": "20 Oct 1894",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174022650130",
+              "resource_type": "Record",
+              "title": "Entry for Mr Pheeps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68LP-2Z2L : Thu Sep 24 01:39:09 UTC 2026), Entry for Mr Pheeps, 20 Oct 1894.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BLD-PZQZ",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "20 Oct 1894",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0175%2F00%2F0032%2FP%2F0012F&parentid=TNA%2FBT27%2F0175000032%2F00685"
+            },
+            {
+              "id": "src_p_p_292858479621",
+              "resource_type": "Person",
+              "url": "#p_292858479621"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292858479621",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68S2-NRSZ",
+        "events": [
+          {
+            "type": "Emigration",
+            "date": "18 Jun 1892",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Occupation",
+            "value": "LAB"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mrs Febton",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Mrs Febton, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BX9-KVNY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292394254570",
+              "ark": "ark:/61903/1:1:68S2-NRSZ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Febton",
+                  "prefix": "Mrs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "18 Jun 1892",
+                  "standard_date": "18 Jun 1892",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "LAB"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173843539707",
+              "resource_type": "Record",
+              "title": "Entry for Mrs Febton, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68S2-NRSZ : Wed Sep 23 23:37:05 UTC 2026), Entry for Mrs Febton, 18 Jun 1892.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BX9-KVNY",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "18 Jun 1892",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0094%2F00%2F0022%2FP%2F0006F&parentid=TNA%2FBT27%2F0094000022%2F00791"
+            },
+            {
+              "id": "src_p_p_292394254570",
+              "resource_type": "Person",
+              "url": "#p_292394254570"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292394254570",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68LP-VT3T",
+        "events": [
+          {
+            "type": "Emigration",
+            "date": "1 Sep 1896",
+            "place": "England, United Kingdom"
+          },
+          {
+            "type": "Immigration",
+            "place": "USA"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Miss Phaps",
+        "score": 1.2275801,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "4229516",
+        "collectionTitle": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+        "recordTitle": "Entry for Miss Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+        "recordArk": "ark:/61903/1:2:4BLD-NG52",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292858439516",
+              "ark": "ark:/61903/1:1:68LP-VT3T",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Miss",
+                  "surname": "Phaps"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Emigration",
+                  "primary": true,
+                  "date": "1 Sep 1896",
+                  "standard_date": "1 Sep 1896",
+                  "place": "England, United Kingdom",
+                  "standard_place": "England, United Kingdom"
+                },
+                {
+                  "type": "Immigration",
+                  "place": "USA",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174022472540",
+              "resource_type": "Record",
+              "title": "Entry for Miss Phaps, \"United Kingdom, Outgoing Passenger Lists, 1890-1960\"",
+              "citation": "\"United Kingdom, Outgoing Passenger Lists, 1890-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68LP-VT3T : Thu Sep 24 03:26:09 UTC 2026), Entry for Miss Phaps, 1 Sep 1896.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BLD-NG52",
+              "coverage": {
+                "place_rep_id": "267",
+                "date_range": "1 Sep 1896",
+                "record_type": "Migration",
+                "standard_place": "England, United Kingdom"
+              }
+            },
+            {
+              "id": "sd_c_4229516",
+              "resource_type": "Collection",
+              "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4229516",
+              "coverage": {
+                "place_rep_id": "56",
+                "date_range": "1890/1960",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://search.findmypast.com/record?id=TNA%2FBT27%2F0213%2F00%2F0021%2FP%2F0009F&parentid=TNA%2FBT27%2F0213000021%2F00531"
+            },
+            {
+              "id": "src_p_p_292858439516",
+              "resource_type": "Person",
+              "url": "#p_292858439516"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "267",
+              "name": "England, United Kingdom",
+              "latitude": 52.4379,
+              "longitude": -1.6496
+            }
+          ]
+        },
+        "primaryId": "p_292858439516",
+        "role": "Principal"
+      }
+    ]
+  }
+}
