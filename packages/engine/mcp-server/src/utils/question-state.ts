@@ -40,6 +40,7 @@ import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { preferredDisplayName } from "./name-helpers.js";
 
 export type QuestionState =
   | "framed"
@@ -944,7 +945,9 @@ export function questionStatus(
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (kin.length > 0) {
-    nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+    const byId = new Map(arr(tree?.persons).map((p) => [p?.id, p]));
+    const names = kin.map((id) => preferredDisplayName(byId.get(id)) ?? "a person with no name in the tree");
+    nextStep = `hypothesis-tracking — unlinked kin: ${names.join(", ")}`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is

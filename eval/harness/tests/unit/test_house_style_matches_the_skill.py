@@ -36,6 +36,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_init_project import _HOUSE_STYLE  # noqa: E402
+from test_research import test_reply_names_no_tree_id as _no_tree_id  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
 #: The string ships in the engine: `project_create` writes the profile itself
@@ -192,3 +193,14 @@ def _onboarding_slides_guidance() -> str:
 @pytest.mark.parametrize("read", [_e2e_spec_guidance, _onboarding_slides_guidance], ids=["e2e-spec", "onboarding-slides"])
 def test_the_documented_copies_carry_the_shipped_string(read):
     assert read() == _shipped_guidance()
+
+
+def test_the_shipped_house_text_turns_the_tree_id_check_on():
+    """Every project project_create makes carries this string, and the research
+    suite's tree-id check runs only when it says "No identifiers" (issue #4669)."""
+    state = {"research_json": {"researcher_profile": {"narration_guidance": _shipped_guidance()}}}
+    try:
+        with pytest.raises(AssertionError, match="names tree ids"):
+            _no_tree_id("She is in the tree as I13.", state, state)
+    except pytest.skip.Exception as e:
+        pytest.fail(f"the shipped house text leaves the tree-id check off: {e}")

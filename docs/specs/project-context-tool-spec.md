@@ -544,7 +544,10 @@ fires on 5 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).
 
 **Unlinked kin** also needs the tree, and adds no field: only
-`nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person ids>`. It
+`nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person names>`,
+each person's preferred name or "a person with no name in the tree". The step names
+no id, because the main thread repeats it to the researcher; the ids
+go only in the spawn's `personIds:` line (§2.2.2). It
 fires on an unresolved question that no `hypotheses` entry lists in
 `related_question_ids`, for each tree person linked by live `person_evidence` to
 one of its assertions who has no `ParentChild` or `Couple` path, of any length or
@@ -697,7 +700,7 @@ and the `nextStep` text:
   turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict;
-- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set, and for unlinked kin a `personIds:` line with their tree ids.
 
 research-plan gets none: its rung does not know whether the question's
 jurisdiction has had its locality survey, which the router runs first. On Haiku

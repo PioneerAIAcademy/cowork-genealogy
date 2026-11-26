@@ -69,6 +69,17 @@ describe("stepSpawn", () => {
     expect(s?.prompt).toContain("personId: I1; parentIds: I2, I3, I4");
   });
 
+  it("hands hypothesis-tracking the unlinked kin's ids, which the step names only in words", () => {
+    const dir = join(dirname(fileURLToPath(import.meta.url)), "../../../../../eval/fixtures/scenarios/unregistered-sibling-premise-scopes-searches");
+    const r = JSON.parse(readFileSync(join(dir, "research.json"), "utf-8"));
+    const tree = JSON.parse(readFileSync(join(dir, "tree.gedcomx.json"), "utf-8"));
+    const st = questionStates(r, tree).find((q) => q.nextStep?.includes("unlinked kin"))!;
+    const s = stepSpawn("/p", r, st, tree);
+    expect(s?.agent).toBe("hypothesis-tracking");
+    expect(s?.prompt).toContain("personIds: I2, I3");
+    expect(s?.prompt).toContain("reason: hypothesis-tracking — unlinked kin: Nora Stowers, Lois E. Stowers");
+  });
+
   it.each([
     ["research-exhaustiveness, then proof-conclusion", "research-exhaustiveness"],
     ["proof-conclusion — concluded while blocked: re-conclude ps_001", "proof-conclusion"],
