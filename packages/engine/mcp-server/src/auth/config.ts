@@ -323,10 +323,15 @@ function configString(value: unknown): string {
  * The matcher `principal`'s config names. No `matcher` key is FamilySearch's
  * matcher; any value but the two throws rather than fall back to either. Config
  * only, like every getter here: no environment variable is read.
+ *
+ * A key with no value is no key. `connectorConfig` copies the deployment's
+ * setting through to every connector caller, so on a deployment that names no
+ * matcher service the key is present and `undefined`; read as a bad value, that
+ * failed every ranking a connector caller asked for.
  */
 export async function getMatcherSettings(principal: Principal): Promise<MatcherSettings> {
   const config = await loadConfig(principal);
-  if (!Object.hasOwn(config, "matcher") || config.matcher === "familysearch") {
+  if (config.matcher === undefined || config.matcher === "familysearch") {
     return { backend: "familysearch" };
   }
   if (config.matcher !== "service") throw new Error(MATCHER_VALUE_MESSAGE);
