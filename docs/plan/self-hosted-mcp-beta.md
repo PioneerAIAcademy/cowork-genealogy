@@ -269,7 +269,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 **D4 Onboarding page.**
 1. Install the plugin once from the Plugins page. It follows the Claude account.
 2. On the plugin's Connectors tab, connect `Genealogy Research` and sign in. That one connection covers claude.ai, Desktop and the phone, though the phone shows no plugin, so whether research runs there is not measured.
-3. In Claude's settings, open Connectors, then `Genealogy Research`, and set its tools to "Always allow" (lead, 2026-11-26). Chosen at a prompt in Desktop Chat it is not saved.
+3. In Claude's settings, open Connectors, then `Genealogy Research`, and set each of its three tool groups to "Always allow" (lead, 2026-11-26). Chosen at a prompt in Desktop Chat it is not saved.
 
 The signed-out page gives these three steps, then its own sign-in link: connecting from Claude creates the account, so the page's sign-in is not a step.
 
@@ -322,11 +322,13 @@ The first invited user waits for all of these.
 
    For each, record the first `project_list` reply, the tool names in order up to and including the first Skill or Agent call, and whether `project_create` ran before the first answer. It passes when:
    - **all three** run `project_create` before the first answer, for the person the message names;
-   - **the first,** the new-user case, gets a first `project_list` reply of "No project yet" ending in "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.";
+   - **the first,** the new-user case, gets a first `project_list` reply that begins "No project yet" and carries the start-a-project rule (`START_PROJECT_RULE`, `src/utils/project-io.ts`), which ends "with no ID, ask for it and create nothing.";
    - **the second and third,** the returning-user case and recorded separately, get a first `project_list` reply listing the earlier projects, and the model still starts a new project for the new person.
 
+   A rehearsal on 26 November, on a second Claude account with the one-install zip, passed all three. The first two went through the research skill and `init-project`. In the third the main thread called `project_create` itself, with the person's ID, loaded no research skill, and ran `historical-context` in the background with an interim reply. It is a rehearsal, not this gate's run: the commit was not the launch commit.
+
    A run that answers inline goes to the lead, naming the message and which case it was.
-3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26).
+3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26). The page has no single control: it has three group controls, Interactive, Read-only and Other. With all three set on a new account (2026-11-26), three first turns in new chats ran 47 tool calls, 42 of them in agents, with no prompt.
 4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed, as it did on 26 November. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
 5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
 

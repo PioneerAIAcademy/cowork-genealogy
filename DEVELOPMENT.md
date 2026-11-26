@@ -79,7 +79,7 @@ belongs to your account alone: nobody else sees it.
 1. Ask the lead to put your FamilySearch account's email on the server's allowlist.
 2. Open [the add-connector page](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Genealogy%20Research&connectorUrl=https%3A%2F%2Fmalachi.taild68f1b.ts.net%2Fmcp),
    keep the name exactly `Genealogy Research`, then connect and sign in with FamilySearch.
-3. In Settings → Connectors → Genealogy Research, set its tools to "Always allow".
+3. In Settings → Connectors → Genealogy Research, set each of its tool groups to "Always allow".
 
 The connector stays connected, and keeps "Always allow", when you swap plugin zips. The
 landing page's steps are for the one-install zip from `make plugin-connector`, which

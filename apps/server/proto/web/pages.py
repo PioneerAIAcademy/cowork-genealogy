@@ -69,9 +69,9 @@ def _setup_steps() -> str:
 account, so you do this once.</li>
 <li>On the plugin's Connectors tab, connect <strong>{escape(CONNECTOR_NAME)}</strong> and sign in with
 FamilySearch. That one connection covers claude.ai and Claude Desktop.</li>
-<li>In Claude's settings, open Connectors, then <strong>{escape(CONNECTOR_NAME)}</strong>, and set its tools to
-<strong>Always allow</strong>. Chosen at a prompt in Claude Desktop it is not saved, and research then asks
-before every step.</li>
+<li>In Claude's settings, open Connectors, then <strong>{escape(CONNECTOR_NAME)}</strong>, and set each of its
+tool groups to <strong>Always allow</strong>. Chosen at a prompt in Claude Desktop it is not saved, and research
+then asks before every step.</li>
 </ol>"""
 
 
