@@ -1831,11 +1831,18 @@ CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"
 #: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
 #: catch reads as coverage and is worse than none.
 #:
+#: `build_external_search_url` writes its in-flight entry unless the call carries
+#: `awaitingCapture: false`, and returns the entry's `logId` only when it wrote.
+#:
 #: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
 #: written, so it legitimizes no project-file change. Both keys survive into the
 #: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
 #: post hoc as it does live.
-RESPONSE_KEYED_PROJECT_WRITERS = {"record_search": ("logId",), "image_transcribe": ("logId",)}
+RESPONSE_KEYED_PROJECT_WRITERS = {
+    "record_search": ("logId",),
+    "image_transcribe": ("logId",),
+    "build_external_search_url": ("logId",),
+}
 
 
 def _is_project_writer_call(call: dict) -> bool:

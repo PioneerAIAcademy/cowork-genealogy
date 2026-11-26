@@ -8,7 +8,7 @@
  * in `tests/unit/snapshot.test.ts` and `tests/unit/test_snapshot.py`
  * lock the contract.
  *
- * See docs/plan/eval-runlog-versioning.md §A7.
+ * See eval/CLAUDE.md, "Snapshot model".
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -242,9 +242,7 @@ export function isHashedSnapshot(snapshot: Record<string, string>): boolean {
  * flags every test as edited and drops the whole comparison. Hashing the
  * content side first makes the mixed case correct.
  *
- * Lives here rather than beside one caller because both snapshot-vs-snapshot
- * comparisons need it: `lib/compare.ts` (the compare page) and the trend
- * route's `diffTestFiles`. Mirrors the same alignment in Python's
+ * Used by `lib/compare.ts` (the compare page). Mirrors the same alignment in Python's
  * `same_test_inputs`. Drop this once no pre-3 run log remains.
  */
 export function alignSnapshots(

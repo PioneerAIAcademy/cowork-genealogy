@@ -17,7 +17,7 @@ Flags:
           overhead); investigate the harness, not the skill.
 
 "Latest" per skill = the envelope with the most recent `timestamp` field
-(scratch_/candidate/released all considered). Pre-instrumentation run logs
+(scratch_ and committed logs both considered). Pre-instrumentation run logs
 lack the timing fields; those columns show as `-` rather than failing.
 
 Usage:

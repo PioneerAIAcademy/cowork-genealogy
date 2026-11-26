@@ -2,13 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "run-log.schema.json",
   "title": "Cowork Genealogy multi-test run log (v2)",
-  "description": "Output of one harness invocation. Wraps the per-test entries with envelope metadata (version, snapshot, model) so the run log is a self-contained, releasable artifact. See docs/plan/eval-runlog-versioning.md.",
+  "description": "Output of one harness invocation. Wraps the per-test entries with envelope metadata (version, snapshot, model) so the run log is a self-contained artifact. See eval/CLAUDE.md, \"Run log naming\".",
   "type": "object",
   "required": [
     "schema_version",
     "skill",
     "version",
-    "released",
     "releasable",
     "invocation",
     "timestamp",
@@ -31,15 +30,15 @@
         { "type": "integer", "minimum": 1 },
         { "type": "null" }
       ],
-      "description": "Monotonic version number assigned to releasable candidate runs. Null for scratch runs."
+      "description": "The v{N} in the run log's filename. Null for scratch runs."
     },
     "released": {
       "type": "boolean",
-      "description": "True once a senior renames the candidate file to v{N}.json. The harness always writes false; the CRUD UI's release action flips it to true."
+      "description": "Retired; not written. Older logs carry it, and nothing reads it."
     },
     "releasable": {
       "type": "boolean",
-      "description": "True iff the invocation was a full --skill run with no --tag or --test filter."
+      "description": "True iff the invocation was a full --skill run with no --tag or --test filter, which is the run log that is committed."
     },
     "invocation": {
       "enum": ["skill", "test", "tag"],

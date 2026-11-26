@@ -1813,15 +1813,17 @@ def test_hand_edit_detector_passes_when_timeline_build_wrote():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
-def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
-    """`build_external_search_url` writes its hand-off log entry only when it
-    carries a projectPath, so only then may it account for a research.json change."""
+def test_hand_edit_detector_counts_the_url_builder_only_when_it_logged():
+    """`build_external_search_url` returns a `logId` only when it wrote its hand-off
+    entry (not with `awaitingCapture: false`), so only then may it account for a
+    research.json change."""
     with_path = _run_hand_edit_detector(
         research_changed=True,
         tool_calls=[
             {
                 "tool": "mcp__genealogy__build_external_search_url",
                 "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"},
+                "response": {"ok": True, "url": "https://www.findagrave.com/", "logId": "log_001"},
             }
         ],
     )
@@ -1831,7 +1833,13 @@ def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
         tool_calls=[
             {
                 "tool": "mcp__genealogy__build_external_search_url",
-                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}},
+                "args": {
+                    "site": "findagrave",
+                    "attributes": {"surname": "Flynn"},
+                    "projectPath": "/p",
+                    "awaitingCapture": False,
+                },
+                "response": {"ok": True, "url": "https://www.findagrave.com/"},
             }
         ],
     )

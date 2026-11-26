@@ -1,12 +1,8 @@
 name: Check runlog discipline
 
-# Enforces the per-PR runlog contract per docs/plan/eval-runlog-versioning.md §C6:
+# Enforces the per-PR runlog contract (eval/CLAUDE.md, "GitHub Action rules"):
 #
-#   Rule 1 (blocking): At most one newly-added-or-renamed-into-place
-#   v{N}.json (released) per eval/runlogs/unit/<skill>/ per PR.
-#
-#   Rule 2 (blocking): The run log this PR adds per touched skill (a
-#   released v{N}.json it adds, else its newest candidate) must be "active
+#   Rule 2 (blocking): The newest run log this PR adds per touched skill must be "active
 #   on skill-side files": its embedded snapshot matches the current
 #   PR-branch state of all snapshot-tracked files. A PR that adds no run
 #   log is held to the run log that landed on main last instead, and that

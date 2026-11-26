@@ -637,8 +637,17 @@ ARCHION = {"type": "positive", "tags": ["archion-browse"]}
 PARISH = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn"
 
 
-def _build(**args):
-    return {"tool": "mcp__genealogy__build_external_search_url", "args": args}
+def _build(logged=True, **args):
+    """A builder call. `logged` is whether the tool wrote the in-flight entry and
+    returned its `logId`; `False` is a refusal or an `awaitingCapture: false` build."""
+    response = {"ok": True, "url": "https://example.org/", "logId": "log_001"} if logged else {"ok": True, "url": "https://example.org/"}
+    return {"tool": "mcp__genealogy__build_external_search_url", "args": args, "response": response}
+
+
+def test_archion_quiet_when_a_refused_first_build_is_retried():
+    refused = {**_build(site="archion", baseUrl=PARISH, attributes={}, projectPath="/p"), "response": {"ok": False, "reason": "invalid_base_url"}}
+    calls = [refused, _build(site="archion", baseUrl=PARISH, attributes={}, projectPath="/p")]
+    expect_passes(lambda: check_archion(calls, ARCHION))
 
 
 def test_archion_quiet_on_the_parish_page_with_projectpath():
@@ -652,9 +661,9 @@ def test_archion_quiet_on_the_parish_page_with_projectpath():
         ([], "no build_external_search_url call with site 'archion'"),
         ([_build(site="ancestry", attributes={"surname": "Seeger"}, projectPath="/p")], "site 'archion'"),
         ([_build(site="archion", attributes={}, projectPath="/p")], "no Archion parish page"),
-        ([_build(site="archion", baseUrl=PARISH, attributes={})], "omitted projectPath"),
+        ([_build(logged=False, site="archion", baseUrl=PARISH, attributes={}, projectPath="/p", awaitingCapture=False)], "returned a logId"),
     ],
-    ids=["no_call", "wrong_site", "no_baseurl", "no_projectpath"],
+    ids=["no_call", "wrong_site", "no_baseurl", "not_logged"],
 )
 def test_archion_fires(calls, match):
     expect_fires(lambda: check_archion(calls, ARCHION), match)
@@ -722,7 +731,7 @@ def test_browse_catalog_skips_untagged_tests():
     [
         ([_matricula()], GOOD_TAIL, "no catalog_search call"),
         ([_catalog()], GOOD_TAIL, "browse-site link was dropped"),
-        ([_catalog(), _matricula(projectPath=None)], GOOD_TAIL, "omitted projectPath"),
+        ([_catalog(), _matricula(logged=False, awaitingCapture=False)], GOOD_TAIL, "returned a logId"),
         ([_catalog(), _matricula()], "Film 876540 is at a FamilySearch Center.\n---\nOpen the Matricula link.", "names none of the center-only films"),
         ([_catalog(), _matricula()], GOOD_TAIL.replace("film 876540", "film 8765401"), "names none of the center-only films"),
         ([_catalog(), _matricula()], GOOD_TAIL + " I can read image group 008109455 for you.", "offers a read"),

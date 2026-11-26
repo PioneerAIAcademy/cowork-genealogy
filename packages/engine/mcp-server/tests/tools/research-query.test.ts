@@ -1407,6 +1407,27 @@ describe("research_query — fields no caller reads are left out", () => {
     });
   });
 
+  it("plans × planItemId returns the one plan holding that item", async () => {
+    await writeResearch({ plans: PLANS });
+    const all = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!all.ok) throw new Error(all.errors.join(" "));
+    const holder = (all.items as any[]).filter((p) => p.items.some((i: any) => i.id === "pli_008"));
+    expect(holder).toHaveLength(1);
+    const r = await researchQuery({ projectPath: dir, section: "plans", planItemId: "pli_008" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect((r.items as any[]).map((p) => p.id)).toEqual([holder[0].id]);
+    const none = await researchQuery({ projectPath: dir, section: "plans", planItemId: "pli_999" });
+    expect(none.ok && none.count).toBe(0);
+  });
+
+  it("plans: a plan item id sent as questionId is refused, naming planItemId", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans", questionId: "pli_008" } as any);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/'pli_008' is a plan item id.*pass planItemId 'pli_008'/);
+  });
+
   it("plans: the omission is in the answer only, never in research.json", async () => {
     await writeResearch({ plans: PLANS });
     await researchQuery({ projectPath: dir, section: "plans" });

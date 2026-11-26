@@ -64,7 +64,6 @@ def _envelope(entries):
     return build_run_log(
         skill="search-familysearch-wiki",
         version=None,
-        released=False,
         releasable=False,
         invocation="skill",
         timestamp="2026-06-28_10-00-00",
