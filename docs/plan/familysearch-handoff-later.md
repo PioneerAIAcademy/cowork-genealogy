@@ -54,7 +54,7 @@
   Client ID Metadata Document and a loopback redirect (`/token` carried `resource` = the alias's
   `/mcp`), then send `server/discover` (protocol `2026-07-28`) and, refused, `initialize` on
   `2025-11-25`, then call tools. **The claude.ai connector also
-  connects** (the lead's personal account, claude.ai custom connector at default settings,
+  connects** (the lead's account, claude.ai custom connector at default settings,
   2026-11-26, n=1): the add dialog reported "Sign in now: Detected" and "Use Claude's published
   identity (CIMD): Detected", it connected first try, listed the three tools, and `probe_echo`
   answered. The stub's log shows its requests from `160.79.106.0/24` follow the same path as
@@ -62,11 +62,14 @@
   (three times) and never the other, then `/authorize` with client
   `https://claude.ai/oauth/mcp-oauth-client-metadata` and redirect
   `https://claude.ai/api/mcp/auth_callback`, then `/token` with `resource` = the alias's `/mcp`.
-  Its tool calls arrive with `Claude-User` from a client that names itself Claude Code
-  (`2.1.332-ccs…`). So the beta's tiers can run under an alias once `oauth_issuer()`
+  After connecting it initialized as `Anthropic/Toolbox` and `Anthropic/ClaudeAI`; the sessions
+  around its tool calls initialized as Claude Code (`2.1.331`, `2.1.332`, `2.1.332-ccs…`), all
+  with `Claude-User`. So the beta's tiers can run under an alias once `oauth_issuer()`
   (`apps/server/proto/web/auth.py`) accepts a path, the web tier serves its metadata at
   `/.well-known/openid-configuration` (`METADATA_PATH` in `apps/server/proto/web/connector_auth.py`
-  serves only `oauth-authorization-server`), and `isServerUrl` (`scripts/package-plugin.mjs`)
+  serves only `oauth-authorization-server`; the stub's document also carried OIDC's required
+  `jwks_uri`, `subject_types_supported` and `id_token_signing_alg_values_supported`, and whether
+  either client needs them was not tested), and `isServerUrl` (`scripts/package-plugin.mjs`)
   accepts a path;
   the tools tier's `resourceMetadataUrl()` already appends to the issuer. No CloudFront
   distribution (handoff F18) is needed for the connector.
@@ -82,8 +85,9 @@
   completed and 45 s got "Bad Gateway" though the stub logged its answer at 45.0 s; streams with
   progress every 15 s (180 s) and 30 s (90 s) completed and every 60 s lost the connection; a
   300 s stream with progress every 15 s ended at Claude's own 230 s per-call limit, which progress
-  does not extend (`self-hosted-mcp-beta.md`, P0.2 item 4). At 230 s Claude sent
-  `notifications/cancelled`, and the stub, which ignores it, ran on to 300 s: a tool that does not
+  does not extend (`self-hosted-mcp-beta.md`, P0.2 item 4). 230 s after that call began Claude
+  sent `notifications/cancelled` (matched by timing; the stub does not log the cancel's request
+  id), and the stub, which ignores it, ran on to 300 s: a tool that does not
   honour cancellation keeps working, and writing, after Claude has given up on the call. The stub sent
   `X-Accel-Buffering: no`; whether Beanstalk's nginx buffers a stream without it was not tested.
 
