@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   compoundJurisdictionError,
+  hintsReviewRecordTypeError,
   OUTSIDE_SITE_NAMES,
   outsideSiteJurisdictionError,
   planItemFlags,
@@ -811,5 +812,90 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
     writeFileSync(join(dir, "external-collections.json"), "{not json", "utf8");
     expect(await append(dir, { ...NEWS, jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
     expect(await append(dir, { ...NEWS, jurisdiction: PLI_006 })).toMatch(/'chronicling america'/);
+  });
+});
+
+// #4828: the hints-review item routes to the hints reviewer only on record_type
+// "fs_hints". The two bad writes are copied from eval/runlogs/unit/research-plan
+// v20_2026-11-20_21-09-59 (ut_research_plan_prof, `other`) and
+// v20_2026-11-21_01-04-02 (ut_research_plan_subj, `church`).
+describe("research_append refuses a hints-review plan item whose record_type is not fs_hints", () => {
+  const PROF_OTHER = {
+    sequence: 1, record_type: "other", jurisdiction: "Pottsville, Schuylkill County, Pennsylvania", date_range: "1842-1898",
+    repository: "FamilySearch", fallback_for: null, status: "planned",
+    rationale: "Review pending FamilySearch hints on ZZKR-TH2 before searching; an attached hint may already name Thomas Kerrigan's parents. The FamilySearch profile for Thomas (the project tree lists him with no parents) records a christening on 14 Mar 1842 at St. Patrick's Church, Pottsville, and a death in Pottsville in 1898.",
+  };
+  const SUBJ_CHURCH = {
+    sequence: 1, record_type: "church", jurisdiction: "Schuylkill County, Pennsylvania", date_range: "1870-1873",
+    repository: "FamilySearch", fallback_for: null, status: "planned",
+    rationale: "Review pending FamilySearch hints on ZZKR-BR1 before searching. An attached hint may already answer when and where Bridget was baptized.",
+  };
+  const HINTS = { ...SUBJ_CHURCH, record_type: "fs_hints" };
+  const stored = (item: Record<string, unknown>) => project({ plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [{ ...item, id: "pli_001" }] }] });
+  const update = (dir: string, fields: Record<string, unknown>) => researchAppend({
+    projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields,
+  } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+
+  it("refuses both logged writes on a plan_items append, and writes nothing", async () => {
+    for (const [bad, type] of [[PROF_OTHER, "'other'"], [SUBJ_CHURCH, "'church'"]] as const) {
+      const dir = project({});
+      const text = await append(dir, bad);
+      expect(text).toMatch(/"ok":\s*false/);
+      expect(text).toContain(`record_type is ${type}`);
+      expect(text).toContain('set record_type: \\"fs_hints\\"');
+      expect(JSON.parse(readFileSync(join(dir, "research.json"), "utf8")).plans[0].items ?? []).toEqual([]);
+    }
+  });
+
+  it("refuses the same item inline on a plans append", async () => {
+    const out = await researchAppend({
+      projectPath: project({ plans: [] }), section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...PROF_OTHER, id: "pli_001" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/record_type is 'other'/);
+  });
+
+  it("refuses an update that flips an fs_hints item to church", async () => {
+    expect(await update(stored(HINTS), { record_type: "church" })).toMatch(/record_type is 'church'/);
+  });
+
+  it("refuses an update that rewrites a church item's rationale into the hints-review one", async () => {
+    expect(await update(stored({ ...SUBJ_CHURCH, rationale: "Baptism." }), { rationale: SUBJ_CHURCH.rationale })).toMatch(/record_type is 'church'/);
+  });
+
+  it("refuses the item inline on a plans update that changes its record_type", async () => {
+    const out = await researchAppend({
+      projectPath: stored(HINTS), section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...HINTS, id: "pli_001", record_type: "other" }] },
+    } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+    expect(out).toMatch(/record_type is 'other'/);
+  });
+
+  it("accepts a correct fs_hints item", async () => {
+    expect(await append(project({}), HINTS)).toMatch(/"ok":\s*true/);
+  });
+
+  it("accepts a non-hints item whose rationale mentions hints mid-sentence", async () => {
+    const rationale = "Church registers; also review pending FamilySearch hints on ZZKR-BR1 if any remain.";
+    expect(await append(project({}), { ...SUBJ_CHURCH, rationale })).toMatch(/"ok":\s*true/);
+  });
+
+  it("accepts a status-only update to a legacy bad item", async () => {
+    expect(await update(stored(SUBJ_CHURCH), { status: "in_progress" })).toMatch(/"ok":\s*true/);
+  });
+});
+
+describe("hintsReviewRecordTypeError", () => {
+  it("is anchored to the start of the rationale, case-insensitively, after leading whitespace", () => {
+    const item = (rationale: string, record_type = "church") => ({ rationale, record_type });
+    expect(hintsReviewRecordTypeError(item("  review PENDING familysearch hints on X1"))).toMatch(/record_type is 'church'/);
+    expect(hintsReviewRecordTypeError(item("Check FamilySearch hints on X1"))).toBeUndefined();
+    expect(hintsReviewRecordTypeError(item("Review pending FamilySearch hints on X1", "fs_hints"))).toBeUndefined();
+  });
+
+  it("does not throw on a malformed item", () => {
+    for (const bad of [undefined, null, {}, { rationale: 5 }, { rationale: null }]) {
+      expect(hintsReviewRecordTypeError(bad as never)).toBeUndefined();
+    }
   });
 });

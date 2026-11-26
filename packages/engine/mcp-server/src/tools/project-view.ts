@@ -48,7 +48,7 @@ export const MAX_META_BYTES = 1_000_000;
 
 /** Electron's LOG_ID_PATTERN. */
 const LOG_ID_PATTERN = /^log_[a-zA-Z0-9_-]+$/;
-const SHOW_VALUES = ["setup", "plan", "search", "link", "conflict", "hypothesis", "assess", "conclusion", "latest", "file"];
+const SHOW_VALUES = ["setup", "question", "plan", "search", "link", "conflict", "hypothesis", "assess", "conclusion", "latest", "file"];
 const PAGE_VALUES = ["case", "compare", "people", "sources", "log"];
 const PART_VALUES = ["document", "results", "recordSearch", "image"];
 /** A FamilySearch record id inside whatever form a record id takes. */
@@ -61,7 +61,7 @@ function showProjectSchema(projectRule: string) {
     title: "Show project",
     description:
       "Shows the researcher a card of this genealogy project in the conversation. The researcher sees the card, " +
-      "so do not restate what it shows. `show` picks the card: a step (setup, plan, search, link, conflict, " +
+      "so do not restate what it shows. `show` picks the card: a step (setup, question, plan, search, link, conflict, " +
       "hypothesis, assess, conclusion), `latest` for where the research stands, or `file` for the case file. " +
       `Project rule for projectPath: ${projectRule}`,
     inputSchema: {

@@ -3,9 +3,9 @@
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
 an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). M1's
 cards and M3's case file are built and on main. Still to do: their first live run on the
-deployed server; M2's step cards other than the link card (plan, conflict, hypothesis and
-assess); M3's demo
-script and recording; and the router lines (issue #4297).
+deployed server; M2's step cards other than the link card (question, plan, conflict,
+hypothesis and assess: issues #4857 to #4861); and M3's demo script and recording. The
+router lines are in `skills/research/SKILL.md`.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
@@ -27,7 +27,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
    runs a step. The reply stays with the platform's own carrier (in Cowork today,
    the "Continue with …?" line). At a stopping point the order is: the step report,
    the card, then the reply.
-3. **A step card at every stopping point:** setup, plan, search, link,
+3. **A step card at every stopping point:** setup, question, plan, search, link,
    conflict, hypothesis, assess, conclusion. Fallback if Cowork asks for
    approval on every card and "always allow" does not stick: setup, search,
    link (only when it asks an identity question), conflict, hypothesis,
@@ -657,8 +657,8 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   - a card shell that holds the host's height limit, light and dark, and the "Open
     the case file" button, and shared pieces: a person's name, a record link, a tier
     in words, a status label;
-  - every card kind registered, M2's five as stubs, so a card's PR touches only its
-    own file, its tests and its sweep coverage;
+  - every card kind named, and a kind with no card yet drawing `latest`, so a card's PR
+    touches only its own file, its registry entry, its tests and its sweep coverage;
   - a checklist for a finished card: the sweep passes, screenshots in light and dark,
     the id check passes on its text, and no retired row shows.
 - **A first live run,** signed in through the `Genealogy Research` connector, on a
