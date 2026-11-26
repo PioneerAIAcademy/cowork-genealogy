@@ -40,6 +40,10 @@ Settings are read from the environment at call time, so a test can set them per 
   OPENROUTER_LINKING_ENABLED true: serve the /openrouter routes (#3988) and say so in
                              /auth/config; unset or false: every /openrouter route is a 404.
                              Anything else refuses to start
+  OPENROUTER_SEED_AT_CONNECT true: a user the connector's consent creates gets
+                             OPENROUTER_SEED_KEY, encrypted, on their row; unset or false:
+                             nobody is seeded. Anything else, or true with an empty
+                             OPENROUTER_SEED_KEY, refuses to start
   FS_REDIRECT_URI            the FamilySearch redirect URI (#3992); the callback is served at
                              its path, less PUBLIC_URL's prefix. Unset: PUBLIC_URL + /callback.
                              Refuses to start unless it is an absolute http(s) URL whose path is
@@ -267,6 +271,21 @@ def openrouter_linking_enabled() -> bool:
     return _switch("OPENROUTER_LINKING_ENABLED") is True
 
 
+def openrouter_seed_key() -> str | None:
+    """``OPENROUTER_SEED_AT_CONNECT``: on only when ``true``. Then the key
+    (``OPENROUTER_SEED_KEY``) that a user created by the connector's consent gets on their
+    row, so they can transcribe from their first conversation; None when off. On with no
+    key raises: a tier that silently seeded nobody would look like one that does."""
+    if _switch("OPENROUTER_SEED_AT_CONNECT") is not True:
+        return None
+    key = _env("OPENROUTER_SEED_KEY")
+    if not key:
+        raise RuntimeError(
+            "Refusing to start: OPENROUTER_SEED_AT_CONNECT is true, but OPENROUTER_SEED_KEY is empty"
+        )
+    return key
+
+
 def positive_int_env(name: str) -> int | None:
     """``name`` as a positive integer, or None when unset or empty. Raises otherwise, so a
     typo never falls back to the unset behaviour."""
@@ -382,13 +401,14 @@ def preflight() -> None:
 
     - FamilySearch enabled with no readable client config: named error, not a silent
       fall-through to dev-login.
-    - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in or OpenRouter
-      linking on at any scheme (a grant or a key is real whatever the scheme, e.g. an http
+    - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in, OpenRouter
+      linking or seeding on at any scheme (a grant or a key is real whatever the scheme, e.g. an http
       loopback PUBLIC_URL): a default or empty SESSION_SECRET forges every session and the
       OAuth state; a default or empty FS_TOKEN_ENC_KEY encrypts every grant and key under a
       public string. Only http with both off (compose's dev-login tier) may start on the
       defaults.
-    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false,
+    - ``GENEALOGY_CHAT``, ``OPENROUTER_LINKING_ENABLED`` or ``OPENROUTER_SEED_AT_CONNECT``
+      other than true/false, seeding on with an empty ``OPENROUTER_SEED_KEY``,
       ``GENEALOGY_MAX_USERS`` other than a positive integer,
       ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` other than a whole number of at least 2, or an
       ``FS_REDIRECT_URI`` that is not an absolute http(s) URL with a path, at any scheme.
@@ -398,6 +418,7 @@ def preflight() -> None:
     base_path()
     chat_enabled()
     or_on = openrouter_linking_enabled()
+    seed_on = openrouter_seed_key() is not None
     max_users()
     signin_calls_per_minute()
     callback_path()
@@ -405,7 +426,7 @@ def preflight() -> None:
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
-    if not (is_https() or fs_on or or_on):
+    if not (is_https() or fs_on or or_on or seed_on):
         return
     problems = []
     for name, dev in (("SESSION_SECRET", DEV_SESSION_SECRET), ("FS_TOKEN_ENC_KEY", DEV_FS_TOKEN_ENC_KEY)):
@@ -414,7 +435,8 @@ def preflight() -> None:
     if problems:
         why = (f"PUBLIC_URL is {public_url()} (a deployed host)" if is_https()
                else "FAMILYSEARCH_WEB_ENABLED is on (patron grants are stored)" if fs_on
-               else "OPENROUTER_LINKING_ENABLED is on (patron OpenRouter keys are stored)")
+               else "OPENROUTER_LINKING_ENABLED is on (patron OpenRouter keys are stored)" if or_on
+               else "OPENROUTER_SEED_AT_CONNECT is on (the seed key is stored on user rows)")
         raise RuntimeError(f"Refusing to start: {why}, but\n" + "\n".join(problems))
 
 

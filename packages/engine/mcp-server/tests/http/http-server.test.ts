@@ -70,7 +70,9 @@ import {
   type ReadyReport,
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
-import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import { HOSTED_REAUTH_INSTRUCTION, getMatcherSettings } from "../../src/auth/config.js";
+import { connectorPrincipal } from "../../src/auth/principal.js";
+import { configFromEnv } from "../../src/hosted-config-env.js";
 import { CONNECTOR_REFUSAL_NOTE } from "../../src/tool-result.js";
 import { processImageTokens } from "../../src/utils/image-tokens.js";
 import { pageUri } from "../../src/tools/project-view.js";
@@ -1211,6 +1213,32 @@ describe("tool server over Streamable HTTP", () => {
         openRouterApiKey: "patron-key",
       });
       expect(own.openRouterApiKey).toBe("patron-key");
+    });
+
+    it("leaves a connector caller on FamilySearch's matcher when the deployment names no service", async () => {
+      // The config the door builds, read by the getter ranking uses. On malachi,
+      // which sets no MATCHER_URL, this pair failed every ranked search.
+      const caller = { userId: "u_1", familySearchToken: "fs", openRouterApiKey: null };
+      const none = connectorPrincipal({
+        accessToken: "fs",
+        userId: "u_1",
+        config: connectorConfig(configFromEnv({}, { hosted: true }), caller),
+      });
+      await expect(getMatcherSettings(none)).resolves.toEqual({ backend: "familysearch" });
+
+      const service = connectorPrincipal({
+        accessToken: "fs",
+        userId: "u_1",
+        config: connectorConfig(
+          configFromEnv({ MATCHER_URL: "https://matcher.example/", MATCHER_API_KEY: "matcher-key" }, { hosted: true }),
+          caller,
+        ),
+      });
+      await expect(getMatcherSettings(service)).resolves.toEqual({
+        backend: "service",
+        url: "https://matcher.example",
+        apiKey: "matcher-key",
+      });
     });
 
     it.each([
