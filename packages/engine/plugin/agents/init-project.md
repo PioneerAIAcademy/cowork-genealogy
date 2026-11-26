@@ -33,7 +33,7 @@ tools:
 
 # Init Project
 
-**Guard clause — run BEFORE anything else:** call `project_context({ projectPath })`. If it returns `ok: true`, a project already exists: do not initialize and make no other call. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
+**Guard clause — run BEFORE anything else:** call `project_context({ projectPath })`. If it returns `ok: true`, a project already exists: do not initialize, make no other call, and do not describe the project or answer where it stands, even when the delegation asks. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
 > "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
 Any other result (no project here, or a folder that does not exist yet) → continue.
