@@ -196,6 +196,11 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
         if web.get(key) != f"${{{key}:-}}":
             out.append(f"sign-in: web's {key} comes from the env file")
+    # The tool server's build id is the commit this clone deploys, told to its image.
+    build_args = (services["tools"].get("build") or {}).get("args") or {}
+    for key in ("GIT_SHA", "GIT_DIRTY"):
+        if build_args.get(key) != f"${{{key}:-}}":
+            out.append(f"build id: tools' build must take {key} from malachi.sh")
     # Seeding at first connect is the lead's switch, off unless the env file says true.
     for key in ("OPENROUTER_SEED_AT_CONNECT", "OPENROUTER_SEED_KEY"):
         if web.get(key) != f"${{{key}:-}}":
@@ -381,6 +386,11 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "tools' issuer from a second setting", _set_env("tools", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
     ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
     ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
+    ("shape", "a tool server that cannot say which commit it is", _set("tools", "build", {
+        "context": "../../../..", "dockerfile": "apps/server/proto/tools/Dockerfile"})),
+    ("shape", "a build id fixed in the file", _set("tools", "build", {
+        "context": "../../../..", "dockerfile": "apps/server/proto/tools/Dockerfile",
+        "args": {"GIT_SHA": "abc1234", "GIT_DIRTY": "${GIT_DIRTY:-}"}})),
     ("shape", "seeding the env file cannot turn on", _drop_env("web", "OPENROUTER_SEED_AT_CONNECT")),
     ("shape", "seeding on for everyone", _set_env("web", "OPENROUTER_SEED_AT_CONNECT", "true")),
     ("shape", "seeding with no key to give", _drop_env("web", "OPENROUTER_SEED_KEY")),
@@ -1237,19 +1247,19 @@ def check_module():
 def _check_main(module: Any, monkeypatch: pytest.MonkeyPatch, lines: list[tuple[bool, str]]) -> tuple[int, list[tuple]]:
     calls: list[tuple] = []
 
-    def run(dsn: str, url: str, email: str) -> list[tuple[bool, str]]:
-        calls.append((dsn, url, email))
+    def run(dsn: str, url: str, email: str, sha: str | None = None) -> list[tuple[bool, str]]:
+        calls.append((dsn, url, email, sha))
         return lines
 
     monkeypatch.setenv("PG_DSN", "unused")
     monkeypatch.setattr(module, "run", run)
-    return module.main(["--email", "a@example.test", "--url", "http://tools:8787/mcp"]), calls
+    return module.main(["--email", "a@example.test", "--url", "http://tools:8787/mcp", "--sha", "abc1234567"]), calls
 
 
 def test_the_signed_in_check_prints_malachi_shs_lines_and_passes_when_every_call_did(check_module, monkeypatch, capsys):
     status, calls = _check_main(check_module, monkeypatch, [(True, "signed in: project_list (2 projects)"),
                                                            (True, "signed in: auth_status (FamilySearch session live)")])
-    assert status == 0 and calls == [("unused", "http://tools:8787/mcp", "a@example.test")]
+    assert status == 0 and calls == [("unused", "http://tools:8787/mcp", "a@example.test", "abc1234567")]
     assert capsys.readouterr().out == ("  ok    signed in: project_list (2 projects)\n"
                                        "  ok    signed in: auth_status (FamilySearch session live)\n")
 
@@ -1276,6 +1286,18 @@ def test_a_tool_error_fails_its_line_and_quotes_what_the_tool_said(check_module)
         (True, "signed in: project_list (0 projects)")
     long = check_module.line("auth_status", Result("x" * 5000, True), "")
     assert len(long[1]) < 400, "an error is quoted, not dumped"
+
+
+def test_the_build_id_must_name_the_deployed_commit(check_module):
+    sha = "0123456789abcdef0123456789abcdef01234567"
+    assert check_module.build_line("0.1.0+2026-11-26.01234567", sha) == \
+        (True, "signed in: the tools report build 0.1.0+2026-11-26.01234567")
+    assert check_module.build_line("0.1.0+2026-11-26.01234567.dirty", sha)[0] is True
+    # What every build reported before the image was told its commit.
+    assert check_module.build_line("0.1.0+dev", sha) == \
+        (False, "signed in: the tools report build 0.1.0+dev, not commit 01234567")
+    assert check_module.build_line("0.1.0+2026-11-25.89abcdef", sha)[0] is False, "another commit's build"
+    assert check_module.build_line(None, sha) == (False, "signed in: the tools report build nothing, not commit 01234567")
 
 
 def test_the_signed_in_lines_use_the_scripts_own_prefixes():
@@ -1310,7 +1332,8 @@ def test_with_a_check_email_the_calls_run_in_the_web_image_against_the_tool_serv
                     encoding="utf-8")
     result = _run(["check-signed-in"], _with_fake_docker(path.parent, env))
     assert result.returncode == 0, result.stderr
-    assert "signed_in_check.py --email a@example.test --url http://tools:8787/mcp" in result.stdout
+    assert re.search(r"signed_in_check\.py --email a@example\.test --url http://tools:8787/mcp --sha [0-9a-f]{40}\b",
+                     result.stdout), result.stdout
     assert " web python " in result.stdout and "skip" not in result.stdout
 
 
@@ -1325,6 +1348,30 @@ def test_a_signed_in_check_that_fails_fails_the_whole_check(first_run):
     result = _run(["check-signed-in"], fake_env)
     assert result.returncode == 1
     assert "FAIL  signed-in tool calls: not all passed" in result.stdout
+
+
+# ── the tool server's build id ──────────────────────────────────────────────
+
+
+def test_the_tool_servers_image_stamps_the_commit_after_the_compile():
+    """With no .git in the build context the id read `0.1.0+dev` for every commit, so a
+    tester could not say which build they hit. After tsc, so a new commit reruns one cheap
+    layer and not the compile."""
+    dockerfile = (SERVER / "proto" / "tools" / "Dockerfile").read_text(encoding="utf-8")
+    build_stage = dockerfile.split("\nFROM ")[1]  # the first stage, after the header comment
+    assert build_stage.startswith("node:") and " AS build" in build_stage.splitlines()[0]
+    compile_at = build_stage.index("npx tsc")
+    for needed in ("COPY scripts/build-stamp.mjs scripts/write-build-info.mjs /stamp/", "ARG GIT_SHA=", "ARG GIT_DIRTY=",
+                   'RUN BUILD_SHA="$GIT_SHA" BUILD_DIRTY="$GIT_DIRTY" node /stamp/write-build-info.mjs --engine /app'):
+        assert needed in build_stage and build_stage.index(needed) > compile_at, needed
+    assert "COPY --from=build /app/build ./build" in dockerfile
+
+
+def test_malachi_sh_tells_the_build_the_commit_and_whether_the_tree_was_clean():
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    assert 'GIT_SHA=$(git -C "$ROOT" rev-parse HEAD)' in script
+    assert '[ -z "$(git -C "$ROOT" status --porcelain)" ] || GIT_DIRTY=true' in script
+    assert "export GIT_SHA GIT_DIRTY EDGE_CONF_SHA" in script
 
 
 # ── project_export ───────────────────────────────────────────────────────────

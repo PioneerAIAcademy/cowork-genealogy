@@ -167,8 +167,11 @@ load_env() {
     unset "$key"
   done
   GIT_SHA=$(git -C "$ROOT" rev-parse HEAD)
+  # The tool server's build id says so when it was built from uncommitted changes.
+  GIT_DIRTY=false
+  [ -z "$(git -C "$ROOT" status --porcelain)" ] || GIT_DIRTY=true
   EDGE_CONF_SHA=$(git -C "$ROOT" hash-object "$HERE/nginx.conf")
-  export GIT_SHA EDGE_CONF_SHA
+  export GIT_SHA GIT_DIRTY EDGE_CONF_SHA
 }
 
 compose() {
@@ -457,7 +460,8 @@ check_signed_in() {
   fi
   compose run --rm --no-deps -T -e PYTHONPATH=/app \
     -v "$HERE/signed_in_check.py:/opt/malachi/signed_in_check.py:ro" \
-    web python /opt/malachi/signed_in_check.py --email "$email" --url http://tools:8787/mcp </dev/null ||
+    web python /opt/malachi/signed_in_check.py --email "$email" --url http://tools:8787/mcp \
+    --sha "$GIT_SHA" </dev/null ||
     bad "signed-in tool calls: not all passed, see the lines above"
 }
 

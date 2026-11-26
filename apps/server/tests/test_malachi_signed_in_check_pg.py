@@ -96,6 +96,26 @@ def test_run_mints_calls_and_clears_in_one_go(pg_dsn, tools):
     assert _check_tokens(pg_dsn) == []
 
 
+async def test_the_build_id_is_checked_against_the_commit_through_the_real_door(pg_dsn, tools):
+    """The test server runs the local build, which `npm run build` stamped from this checkout."""
+    import json
+
+    from tests._proto_tools import ENGINE
+
+    built = json.loads((ENGINE / "build" / "build-info.json").read_text(encoding="utf-8"))["sha"]
+    await _user(pg_dsn)
+    token = signed_in_check.mint(pg_dsn, EMAIL)
+    try:
+        right = await signed_in_check.calls(tools.url, token, built + "0" * 32)
+        wrong = await signed_in_check.calls(tools.url, token, "f" * 40)
+    finally:
+        signed_in_check.clear(pg_dsn)
+    assert [passed for passed, _ in right] == [True, True, True], right
+    assert built in right[2][1]
+    assert [passed for passed, _ in wrong] == [True, True, False], wrong
+    assert "not commit ffffffff" in wrong[2][1]
+
+
 async def test_an_email_with_no_user_fails_and_writes_nothing(pg_dsn, tools):
     lines = await _run(pg_dsn, tools.url, "nobody@example.org")
     assert lines == [(False, "signed in: no user nobody@example.org: they must connect from Claude once first")]

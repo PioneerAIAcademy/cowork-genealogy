@@ -148,6 +148,10 @@ services:
     build:
       context: ../../../..
       dockerfile: apps/server/proto/tools/Dockerfile
+      # The build id the tools report, so a tester can say which commit they hit.
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+        GIT_DIRTY: ${GIT_DIRTY:-}
     restart: unless-stopped
     logging: *logging
     mem_limit: 2g

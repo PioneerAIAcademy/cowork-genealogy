@@ -55,6 +55,20 @@ export function gitStamp(cwd = process.cwd()) {
 }
 
 /**
+ * The stamp a build was TOLD, for one with no checkout to ask: an image build's
+ * context carries no `.git`, so the tool server on the malachi stack reported
+ * `0.1.0+dev` for every commit. `BUILD_SHA` is the commit and `BUILD_DIRTY`
+ * (`true`) says the tree it was built from had uncommitted changes. Null when
+ * `BUILD_SHA` is unset or not a hex sha, so the caller's stamp stays `dev`.
+ */
+export function envStamp(env = process.env) {
+  const sha = String(env.BUILD_SHA ?? "").trim().toLowerCase();
+  if (!/^[0-9a-f]{7,40}$/.test(sha)) return null;
+  const dirty = String(env.BUILD_DIRTY ?? "").trim().toLowerCase() === "true";
+  return { sha: sha.slice(0, 8), dirty, date: new Date().toISOString().slice(0, 10) };
+}
+
+/**
  * `base` (`x.y.z`, the tracked version) plus the stamp as build metadata.
  * Throws only on a non-semver base — that is a programming error in the
  * caller, not a git condition, and must not be papered over with `dev`.

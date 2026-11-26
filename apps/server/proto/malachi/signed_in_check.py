@@ -9,7 +9,9 @@ It writes one connector token for the user, good for two minutes and stored only
 sha256, calls three read-only tools on the tool server with it, and deletes it. The token is
 never printed. It stays out of ``web/`` so it does not ship in the web bundle.
 
-    python signed_in_check.py --email a@example.com --url http://tools:8787/mcp
+    python signed_in_check.py --email a@example.com --url http://tools:8787/mcp [--sha <commit>]
+
+With ``--sha`` it also fails unless the build id the tools report names that commit.
 
 What it does not show: a search, a ranking or a page read. Each needs a FamilySearch session,
 which ends within a day and which only the user can renew, and each writes to a project.
@@ -80,9 +82,20 @@ def line(name: str, result: Any, detail: str) -> tuple[bool, str]:
     return True, f"signed in: {name} {detail}"
 
 
-async def calls(url: str, token: str) -> list[tuple[bool, str]]:
+def build_line(build_id: object, sha: str) -> tuple[bool, str]:
+    """Whether the build id the tools report names ``sha``, the commit the stack deployed.
+    The image is told its commit at build time; one that was not reports ``<version>+dev``,
+    and a tester quoting that id names no build."""
+    reported = str(build_id or "")
+    if sha[:8] and sha[:8] in reported:
+        return True, f"signed in: the tools report build {reported}"
+    return False, f"signed in: the tools report build {reported or 'nothing'}, not commit {sha[:8]}"
+
+
+async def calls(url: str, token: str, sha: str | None = None) -> list[tuple[bool, str]]:
     """``(passed, line)`` for each call, in order. A refusal at the door (no FamilySearch
-    token on file, a blocked user) raises out of ``initialize`` and is one failed line."""
+    token on file, a blocked user) raises out of ``initialize`` and is one failed line.
+    With ``sha``, ``auth_status``'s build id must name that commit."""
     import httpx
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
@@ -104,6 +117,8 @@ async def calls(url: str, token: str) -> list[tuple[bool, str]]:
                     status = await client.call_tool("auth_status", {})
                     session = "live" if _parsed(status).get("loggedIn") else "ended, so the user must sign in again"
                     note("auth_status", status, f"(FamilySearch session {session})")
+                    if sha and not status.isError:
+                        out.append(build_line(_parsed(status).get("buildId"), sha))
                     if not listed.isError and projects:
                         path = str(projects[0].get("projectPath") or "")
                         context = await client.call_tool("project_context", {"projectPath": path})
@@ -137,12 +152,12 @@ def _describe(exc: BaseException) -> str:
     return "; ".join(dict.fromkeys(found)) or type(exc).__name__
 
 
-def run(dsn: str, url: str, email: str) -> list[tuple[bool, str]]:
+def run(dsn: str, url: str, email: str, sha: str | None = None) -> list[tuple[bool, str]]:
     token = mint(dsn, email)
     if token is None:
         return [(False, f"signed in: no user {email}: they must connect from Claude once first")]
     try:
-        return asyncio.run(calls(url, token))
+        return asyncio.run(calls(url, token, sha))
     finally:
         clear(dsn)
 
@@ -151,8 +166,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--email", required=True)
     parser.add_argument("--url", required=True)
+    parser.add_argument("--sha", help="the deployed commit; the tools' build id must name it")
     args = parser.parse_args(argv)
-    lines = run(os.environ["PG_DSN"], args.url, args.email)
+    lines = run(os.environ["PG_DSN"], args.url, args.email, args.sha)
     for passed, line in lines:
         print(f"  {'ok  ' if passed else 'FAIL'}  {line}")  # malachi.sh's ok() and bad()
     return 0 if all(passed for passed, _ in lines) else 1
