@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_cor",
+    "skill": "search-external-sites",
+    "name": "A researcher's correction that a reported nil was really a timed-out page is logged as a new error entry naming the one it corrects",
+    "type": "positive",
+    "description": "Feedback issue #4747, folded into #4657. log_001 records the researcher's earlier report that a Chronicling America search found nothing (negative, no capture). The researcher now says the search actually timed out. The agent finds log_001 with research_query, appends one new external_site entry with log_001's url_generated copied, outcome error and notes naming log_001, leaves log_001 and pli_001 (in_progress) as they are, and tells the researcher the earlier entry is superseded, giving the link to try again. In the feedback session the agent replied that it could not edit the log and wrote nothing. Gated by test_correction_names_the_entry_it_corrects.",
+    "tags": [
+      "chronicling-america",
+      "external-site",
+      "report-correction",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "That Chronicling America search for Abner Hollis that I told you found nothing: I just realised the page had timed out. It never actually showed results, so I don't know whether he's in there.\n\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "chronicling-america-reported-nil"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "This is a correction turn, not a new search. log_001 already records this Chronicling America search, reported by the researcher as no results. The researcher now says the page timed out, so log_001's nil was wrong.",
+    "Correct behavior: one new external_site log entry whose url_generated is log_001's, copied exactly (found with research_query on section log; it is not in awaitingUser because a negative entry opens no hand-off), with outcome 'error' and notes naming log_001 as the entry it corrects and saying the page timed out. log_001 itself is unchanged: the log is append-only, and the correction is itself an append.",
+    "Not calling build_external_search_url, place_search or external_links_search is correct here and is a pass on Tool selection and URL generation: the search's URL is already in the log, and a rebuilt one could differ and supersede nothing. research_query plus research_log_append is the complete tool use. A rebuilt URL that differs from log_001's is a fail on Log entry, because log_001 is then never corrected.",
+    "Logging the correction as 'negative' is a fail on Log entry: a search that timed out proves nothing either way.",
+    "pli_001 stays in_progress: the search still has to be run. Marking it completed or skipped is a fail on Log entry.",
+    "The reply must tell the researcher the earlier entry is superseded by the new one, and give the link so they can try the search again. Saying the log cannot be edited or changed is a fail on Correctness. Capture steps for the retried search, once its page loads, are optional: giving them or leaving them out are both a pass on Capture guidance."
+  ],
+  "judge_reads_files": true
+}
