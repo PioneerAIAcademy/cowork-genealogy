@@ -435,7 +435,8 @@ The **persisted shape is byte-identical** to the single-op form; `ops` changes o
 the number of write calls (the reason batching is low-risk). One exception, added
 with the plan rules in §5: a `plans` append is **not** legal on its own, because
 its plan must end the call carrying an item, so for that one section the batch
-form is the shape rather than a convenience.
+form, or the plan form that converts into it (§3.3.1), is the shape rather than a
+convenience.
 
 **Stringified-argument tolerance.** The model occasionally serializes a large or
 deeply nested argument as a JSON **string** rather than inline JSON — the ~25 KB
@@ -456,6 +457,39 @@ driving the model into a slow one-op-per-call fallback (the root cause of the
 `record-extraction` eval wall-clock timeouts, 2026-06-30). `tree_edit` applies the
 same tolerance to its `ops` and single-op nested objects (and to
 `sourceDescription` here).
+
+### 3.3.1 Flat ops and the plan form — two inputs that convert into the batch
+
+Haiku 5.5 miscounts closing brackets in a long `ops` batch whose payload sits one
+level down in `entry`/`fields`, and in one that repeats `section`/`op`/`planId` on
+every item. Claude Code streams tool input unchecked (`eager_input_streaming`), so
+the malformed call is refused before the tool sees it and the agent rewrites it
+whole. Two input forms remove those shapes. Both convert into the
+canonical batch before anything reads the call (`src/tools/research-append-forms.ts`),
+so validation, the all-or-nothing write and every refusal are the batch's.
+
+- **Flat op.** Any key on an op other than `section`, `op`, `entry`, `entryId`,
+  `fields`, `edits`, `guideSection`, `surveyRef` and `planId` is payload: it moves
+  under `entry` on an `append` and under `fields` on an `update`. An op carrying
+  payload both ways is refused (`ops[i]: carries both …`), writing nothing. An op
+  with no payload keys, or whose `op` is neither value, is left for the batch's
+  own checks. No research.json entry has a top-level field with one of those nine
+  names, so no payload key is ever read as an op key. Wrapped ops are unchanged,
+  and a batch may mix both.
+- **Plan form.** `plan` (the plans entry) and `planItems` (its items, in sequence
+  order) in place of `ops` or `section`, never beside them. It becomes the
+  `plans` append followed by one `plan_items` append per item. Each item's
+  `planId` is the id the plan is about to get, `nextResearchId(research.plans, "pl_")`,
+  read under the project lock, so the caller never predicts it. `fallback_for`
+  still names the primary's predicted `pli_` id. A refusal is re-addressed: an
+  `ops[0]` prefix reads `plan`, `ops[k]` reads `planItems[k-1]`, and `opsReceived`
+  is dropped. A whole-document error keeps its document path
+  (`plans[N]/items[k]`), whose `k` is the item's `planItems` index.
+
+The same conversion is mirrored in the plugin hook (`guard_project_files.py`,
+`_ops`), whose ownership gates read `entry`/`fields`, and in the eval validators
+(`validators_lib.research_append_ops`). A flat payload sent both ways is merged
+there rather than refused, so a gate sees every field the call carries.
 
 ### 3.4 Composite persist (`sourceDescription`) — D1
 

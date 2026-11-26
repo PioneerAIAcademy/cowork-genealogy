@@ -728,8 +728,10 @@ reach and tree-edit to execute.
 Persist links one source at a time: as soon as one source's links are
 decided, write them in ONE batched `research_append({ ops: [...] })` call —
 one `append` op per assertion-person pair, every party of that source in the
-same call — then score the next source. The tool refuses appends from more
-than one source in a call.
+same call — then score the next source. Each op carries the entry's fields
+directly beside `section` and `op`, with no `entry` wrapper:
+`{ section: "person_evidence", op: "append", assertion_id, person_id, confidence, rationale, match_score }`.
+The tool refuses appends from more than one source in a call.
 Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
