@@ -85,7 +85,6 @@ def _wrap_envelope(entry, *, skill="search-familysearch-wiki", version=1, releas
     return build_run_log(
         skill=skill,
         version=version,
-        released=False,
         releasable=releasable,
         invocation=invocation,
         timestamp=timestamp,
@@ -322,7 +321,7 @@ def test_envelope_validates():
     assert log["schema_version"] == 3
     assert log["skill"] == "search-familysearch-wiki"
     assert log["version"] == 1
-    assert log["released"] is False
+    assert "released" not in log
     assert log["releasable"] is True
     assert log["invocation"] == "skill"
     assert log["totals"]["total_cost_usd"] == pytest.approx(0.011)
@@ -354,7 +353,7 @@ def test_envelope_records_tool_search_and_validates(tool_search):
     """The schema is `additionalProperties: false`, so a recorded setting the
     schema does not list fails the write — here, mid-run, after the money."""
     log = build_run_log(
-        skill="search-familysearch-wiki", version=None, released=False,
+        skill="search-familysearch-wiki", version=None,
         releasable=False, invocation="skill", timestamp="2026-10-09_10-30-00",
         harness_version="0.2.0", model="claude-sonnet-4-6",
         judge_prompt_hash="b" * 64, snapshot={}, tests=[_make_entry()],
@@ -386,7 +385,6 @@ def test_envelope_totals_sum_across_tests():
     log = build_run_log(
         skill="search-familysearch-wiki",
         version=1,
-        released=False,
         releasable=True,
         invocation="skill",
         timestamp="2026-05-18_10-30-00",
@@ -1094,7 +1092,7 @@ def test_cli_version_is_the_bundled_cli_and_validates_against_both_schema_trees(
 
     assert bundled_cli_version() == __cli_version__
     log = build_run_log(
-        skill="check-warnings", version=1, released=False, releasable=True,
+        skill="check-warnings", version=1, releasable=True,
         invocation="skill", timestamp="2026-10-21_10-00-00", harness_version="0.2.0",
         model="claude-sonnet-4-6", judge_prompt_hash="b" * 64, snapshot={},
         tests=[_make_entry()], cli_version=bundled_cli_version(),

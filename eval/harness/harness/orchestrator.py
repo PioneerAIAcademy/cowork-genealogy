@@ -426,8 +426,8 @@ def _step_mode(spec: TestSpec) -> str | None:
     """`execution.step_mode`: the mode this test's turn runs under (decision 25).
 
     None -- the default, and nearly every test in the corpus -- means NO boundary, so
-    the test measures what it always measured. A test opts in by naming `step`, `job`
-    or `wrapup`. Enforcing by default would change what every existing test measures,
+    the test measures what it always measured. A test opts in by naming `step` or
+    `wrapup`. Enforcing by default would change what every existing test measures,
     and the only place that would show is a paid run.
     """
     mode = (spec.execution or {}).get("step_mode")

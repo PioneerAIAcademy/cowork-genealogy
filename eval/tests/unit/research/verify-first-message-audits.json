@@ -1,0 +1,73 @@
+{
+  "test": {
+    "id": "ut_research_vf1",
+    "skill": "research",
+    "name": "A first message asking to verify a person's facts runs setup, then the broad audit, and ends",
+    "type": "positive",
+    "description": "Issue #4791 (lead, 2026-11-26): a first message asking to verify a person's facts, relationships and sources, naming none in particular, is bounded and its deliverable is the broad audit. One turn: init-project, extraction_append for the subject, source-evaluation, check-warnings, the findings each offered as a new project, and no \"Continue with …?\" line. No question-selection, no tree_forget.",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "broad-verify-audits"
+    ]
+  },
+  "input": {
+    "user_message": "Verify whether the facts, relationships, and sources attached to Jean Baptiste Moreau (MRQ1-JBM) are correct.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-moreau-person-level-sources"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "source-evaluation",
+        "response": "Audit written for I1.\n---\nOf Jean Baptiste Moreau's attached sources, the 1846 Belgian census entry gives his birth as about 1831, ten years after the tree's 1821, and may be another man of the same name."
+      },
+      {
+        "skill": "check-warnings",
+        "response": "Warnings read for I1.\n---\nFamilySearch flags one problem on his record: he is listed as a father at age 12 (Henri Moreau, born 1833)."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "forget-and-rederive",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The hand-offs (init-project, then source-evaluation, then check-warnings, and nothing else), the absence of tree_forget and of a \"Continue with …?\" line are checked by test_broad_verify_audits_and_removes_nothing. Do not re-grade them.",
+    "source-evaluation and check-warnings are stubbed with these canned findings, which the router relays and did not invent: the 1846 census birth of about 1831 against the tree's 1821, and a father at age 12. Nothing they report is written to research.json; that is not a failure.",
+    "Grade the reply on offering each finding as its own new project, with the words to start it (a new project from his FamilySearch person ID, answering its setup stop with a narrow request), and on not presenting the findings as settled.",
+    "ROUTING IS NOT YOURS TO GRADE. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

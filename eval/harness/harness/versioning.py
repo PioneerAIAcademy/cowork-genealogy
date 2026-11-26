@@ -1,17 +1,14 @@
 """Run-log filename versioning + invocation classification.
 
-Three kinds of run log live in `eval/runlogs/unit/<skill>/`:
+Two kinds of run log live in `eval/runlogs/unit/<skill>/`:
 
-  - `v{N}.json`                                released (final, immutable)
-  - `v{N}_{YYYY-MM-DD}_{HH-MM-SS}.json`        candidate (full skill run, unreleased)
+  - `v{N}_{YYYY-MM-DD}_{HH-MM-SS}.json`        candidate (full skill run, committed)
   - `scratch_{YYYY-MM-DD}_{HH-MM-SS}.json`     scratch (gitignored, partial / filtered)
 
 A run is **releasable** iff the harness was invoked as `--skill <name>`
 with no `--tag` or `--test` filter — i.e. the full skill suite ran. Any
-filter makes it a scratch run (no version assignment, no release path,
-no participation in active-state or trend).
-
-See docs/plan/eval-runlog-versioning.md §A3, §A5, §A6.
+filter makes it a scratch run (no version assignment, no participation in
+active-state).
 """
 
 from __future__ import annotations
@@ -29,16 +26,14 @@ from typing import Callable, Iterable, Literal, NamedTuple
 # separates the kind prefix (`v{N}` or `scratch`) from the timestamp.
 _TIMESTAMP = r"\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
 
-RELEASED_RE = re.compile(rf"^v(\d+)\.json$")
 CANDIDATE_RE = re.compile(rf"^v(\d+)_({_TIMESTAMP})\.json$")
 SCRATCH_RE = re.compile(rf"^scratch_({_TIMESTAMP})\.json$")
 
-RELEASED_ANN_RE = re.compile(rf"^v(\d+)\.ann\.json$")
 CANDIDATE_ANN_RE = re.compile(rf"^v(\d+)_({_TIMESTAMP})\.ann\.json$")
 SCRATCH_ANN_RE = re.compile(rf"^scratch_({_TIMESTAMP})\.ann\.json$")
 
 
-RunLogKind = Literal["released", "candidate", "scratch", "other"]
+RunLogKind = Literal["candidate", "scratch", "other"]
 
 
 class Classification(NamedTuple):
@@ -49,8 +44,6 @@ class Classification(NamedTuple):
 
 def classify(filename: str) -> Classification:
     """Identify a run log filename's role. Unrecognized names → 'other'."""
-    if m := RELEASED_RE.match(filename):
-        return Classification("released", int(m.group(1)), None)
     if m := CANDIDATE_RE.match(filename):
         return Classification("candidate", int(m.group(1)), m.group(2))
     if m := SCRATCH_RE.match(filename):
@@ -60,8 +53,6 @@ def classify(filename: str) -> Classification:
 
 def classify_ann(filename: str) -> Classification:
     """Same as classify() but for `.ann.json` annotation filenames."""
-    if m := RELEASED_ANN_RE.match(filename):
-        return Classification("released", int(m.group(1)), None)
     if m := CANDIDATE_ANN_RE.match(filename):
         return Classification("candidate", int(m.group(1)), m.group(2))
     if m := SCRATCH_ANN_RE.match(filename):
@@ -85,11 +76,9 @@ def prunable_candidates(filenames: list[str], *, keep: int) -> list[str]:
     candidate sorts last. Timestamps are `YYYY-MM-DD_HH-MM-SS`, which sorts
     correctly as a string.
 
-    Never returns:
-      - a **released** `v{N}.json` — those are the blessed canonical versions
-        and are kept forever;
-      - a **scratch** or unrecognized name — scratch runs are gitignored local
-        artifacts, and `other` covers anything this module does not own.
+    Never returns a **scratch** or unrecognized name — scratch runs are
+    gitignored local artifacts, and `other` covers anything this module does
+    not own.
 
     Keyed on rank, not age. An age rule would delete the *only* run log for
     any skill nobody touched that month, and `check_runlogs` rule 2 gates the
@@ -114,9 +103,9 @@ def landed_order(skill_dir: Path, ref: str) -> dict[str, int] | None:
     never added -- one a branch adds -- is absent. None when git cannot answer
     (no repository, an unknown ref).
 
-    `--no-renames` so a candidate -> release rename counts as the release
-    landing; first-parent so a log lands when its PR merged, not when the
-    branch commit that wrote it was made."""
+    `--no-renames` so a renamed log counts as landing; first-parent so a log
+    lands when its PR merged, not when the branch commit that wrote it was
+    made."""
     try:
         out = subprocess.run(
             ["git", "log", "--first-parent", "--no-renames", "--diff-filter=A",
@@ -135,9 +124,7 @@ def landed_order(skill_dir: Path, ref: str) -> dict[str, int] | None:
 
 def _is_full_skill(name: str) -> bool:
     c = classify(name)
-    return c.version is not None and (
-        c.kind == "released" or (c.kind == "candidate" and c.timestamp is not None)
-    )
+    return c.kind == "candidate" and c.version is not None and c.timestamp is not None
 
 
 def newest_full_skill_runlog(
@@ -147,46 +134,22 @@ def newest_full_skill_runlog(
     landed: dict[str, int] | None = None,
 ) -> tuple[str, dict] | None:
     """Return (filename, parsed_log) for the newest full-skill run log among
-    `names`, released or candidate; `read` parses one by name. Scratch runs
-    ignored.
+    `names`; `read` parses one by name. Scratch runs ignored.
 
     With `landed` (`landed_order`), the log that landed last wins, and one that
     has not landed beats every one that has. Two PRs that run one suite can
     merge in the opposite order to the one they ran in, and the log that merged
-    last is the one CI checked against the tree that followed.
-
-    Among logs that landed together, or with no `landed`, by when the run
-    happened, not by kind. A candidate line above the newest release starts
-    only once that release exists (`next_filename_for`), so it is newer; one
-    below it is older. A candidate left beside the release of its own version
-    line can be either, so at equal versions the candidate's filename time is
-    compared with the release's envelope `timestamp`, which the release flow
-    preserves; the release wins a tie, and when it has no `timestamp` to
-    compare.
+    last is the one CI checked against the tree that followed. Among logs that
+    landed together, or with no `landed`, the newest by (version, timestamp).
     """
-    if landed is not None:
-        full = [n for n in names if _is_full_skill(n)]
-        if full:
-            last = max(landed.get(n, float("inf")) for n in full)
-            names = [n for n in full if landed.get(n, float("inf")) == last]
-    release: tuple[int, str] | None = None
-    candidate: tuple[int, str, str] | None = None
-    for name in names:
-        c = classify(name)
-        if c.kind == "released" and c.version is not None:
-            release = max(release or (c.version, name), (c.version, name))
-        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
-            entry = (c.version, c.timestamp, name)
-            candidate = max(candidate or entry, entry)
-
-    if release is not None and (candidate is None or candidate[0] <= release[0]):
-        log = read(release[1])
-        released_at = log.get("timestamp")
-        if candidate is None or candidate[0] < release[0] or not released_at or str(released_at) >= candidate[1]:
-            return release[1], log
-    if candidate is None:
+    full = [n for n in names if _is_full_skill(n)]
+    if landed is not None and full:
+        last = max(landed.get(n, float("inf")) for n in full)
+        full = [n for n in full if landed.get(n, float("inf")) == last]
+    if not full:
         return None
-    return candidate[2], read(candidate[2])
+    newest = max(full, key=lambda n: (classify(n).version, classify(n).timestamp))
+    return newest, read(newest)
 
 
 def latest_full_skill_runlog(
@@ -259,24 +222,18 @@ def now_utc_filename_timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def scan_versions(skill_runlog_dir: Path) -> tuple[int, int]:
-    """Return `(highest_released, highest_candidate)`.
-
-    Either may be 0 when no file of that kind exists yet.
-    """
-    highest_released = 0
-    highest_candidate = 0
+def highest_version(skill_runlog_dir: Path) -> int:
+    """The highest `v{N}` among the committed run logs, or 0 when there are none."""
     if not skill_runlog_dir.is_dir():
-        return (0, 0)
-    for path in skill_runlog_dir.iterdir():
-        if not path.is_file():
-            continue
-        c = classify(path.name)
-        if c.kind == "released":
-            highest_released = max(highest_released, c.version or 0)
-        elif c.kind == "candidate":
-            highest_candidate = max(highest_candidate, c.version or 0)
-    return (highest_released, highest_candidate)
+        return 0
+    return max(
+        (
+            c.version or 0
+            for path in skill_runlog_dir.iterdir()
+            if path.is_file() and (c := classify(path.name)).kind == "candidate"
+        ),
+        default=0,
+    )
 
 
 def next_filename_for(
@@ -285,20 +242,14 @@ def next_filename_for(
     releasable: bool,
     timestamp: str | None = None,
 ) -> tuple[str, int | None]:
-    """Resolve the filename for the next run log on a full-skill harness run.
+    """Resolve the filename for the next run log on a harness run.
 
-    Returns `(filename, version_or_None)`.
-      - releasable + candidate already exists for v{U} > released v{R}:
-        next candidate is `v{U}_<ts>.json` (continue iterating).
-      - releasable + no higher candidate: next is `v{R+1}_<ts>.json`
-        (new candidate line). When neither released nor candidate exists,
-        starts at v1.
-      - not releasable: `scratch_<ts>.json`, version is None.
+    Returns `(filename, version_or_None)`: `v{N}_<ts>.json` for a releasable
+    run, N being the skill's highest existing version (v1 when it has none),
+    else `scratch_<ts>.json` with version None.
     """
     ts = timestamp or now_utc_filename_timestamp()
     if not releasable:
         return (f"scratch_{ts}.json", None)
-
-    released, candidate = scan_versions(skill_runlog_dir)
-    next_version = candidate if candidate > released else released + 1
-    return (f"v{next_version}_{ts}.json", next_version)
+    version = max(highest_version(skill_runlog_dir), 1)
+    return (f"v{version}_{ts}.json", version)

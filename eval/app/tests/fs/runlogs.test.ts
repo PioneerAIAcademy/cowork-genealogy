@@ -12,7 +12,6 @@ import {
   listRunLogs,
   listRunLogsForSkillWithActive,
   readRunLogById,
-  runLogHistogram,
   runLogWeightedMean,
 } from '../../lib/fs/runlogs';
 import { normalize } from '../../lib/snapshot';
@@ -25,11 +24,10 @@ describe('runlogs — listing', () => {
       runlogs: [
         {
           skill: 'search-familysearch-wiki',
-          filename: 'v1.json',
+          filename: 'v1_2026-05-13_09-30-52.json',
           body: buildRunLog({
             skill: 'search-familysearch-wiki',
             version: 1,
-            released: true,
             timestamp: '2026-05-13_09-30-52',
           }),
         },
@@ -45,11 +43,10 @@ describe('runlogs — listing', () => {
         },
         {
           skill: 'locality-guide',
-          filename: 'v1.json',
+          filename: 'v1_2026-05-15_09-00-00.json',
           body: buildRunLog({
             skill: 'locality-guide',
             version: 1,
-            released: true,
             timestamp: '2026-05-15_09-00-00',
           }),
         },
@@ -66,32 +63,29 @@ describe('runlogs — listing', () => {
   it('lists every run log, sorted by skill then newest-first', async () => {
     const { runs } = await listRunLogs();
     expect(runs.map((r) => r.id)).toEqual([
-      'locality-guide/v1',
-      'search-familysearch-wiki/v1',
+      'locality-guide/v1_2026-05-15_09-00-00',
       'search-familysearch-wiki/v2_2026-05-14_10-00-00',
+      'search-familysearch-wiki/v1_2026-05-13_09-30-52',
     ]);
   });
 
   it('filters by skill', async () => {
     const { runs } = await listRunLogs({ skill: 'search-familysearch-wiki' });
     expect(runs.map((r) => r.id)).toEqual([
-      'search-familysearch-wiki/v1',
       'search-familysearch-wiki/v2_2026-05-14_10-00-00',
+      'search-familysearch-wiki/v1_2026-05-13_09-30-52',
     ]);
   });
 
-  it('classifies released / candidate kinds correctly', async () => {
+  it('classifies candidate kinds correctly', async () => {
     const { runs } = await listRunLogs({ skill: 'search-familysearch-wiki' });
-    expect(runs[0].kind).toBe('released');
-    expect(runs[0].released).toBe(true);
-    expect(runs[1].kind).toBe('candidate');
-    expect(runs[1].released).toBe(false);
+    expect(runs.map((r) => r.kind)).toEqual(['candidate', 'candidate']);
   });
 
   it('reports annotation presence', async () => {
     const { runs } = await listRunLogs({ skill: 'search-familysearch-wiki' });
-    expect(runs[0].annotated).toBe(false); // v1 has no ann
-    expect(runs[1].annotated).toBe(true);
+    expect(runs[0].annotated).toBe(true);
+    expect(runs[1].annotated).toBe(false); // v1 has no ann
   });
 });
 
@@ -103,8 +97,8 @@ describe('runlogs — read by id', () => {
       runlogs: [
         {
           skill: 'search-familysearch-wiki',
-          filename: 'v1.json',
-          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          filename: 'v1_2026-05-13_09-30-52.json',
+          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -116,7 +110,7 @@ describe('runlogs — read by id', () => {
   });
 
   it('reads a run log by skill/filename id', async () => {
-    const result = await readRunLogById('search-familysearch-wiki/v1');
+    const result = await readRunLogById('search-familysearch-wiki/v1_2026-05-13_09-30-52');
     expect(result).not.toBeNull();
     expect(result!.runLog.skill).toBe('search-familysearch-wiki');
     expect(result!.runLog.version).toBe(1);
@@ -135,8 +129,8 @@ describe('runlogs — corrupt / skip', () => {
       runlogs: [
         {
           skill: 'search-familysearch-wiki',
-          filename: 'v1.json',
-          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          filename: 'v1_2026-05-13_09-30-52.json',
+          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
       corruptRunlogs: [
@@ -183,11 +177,10 @@ describe('runlogs — active state detection', () => {
       runlogs: [
         {
           skill: 'search-familysearch-wiki',
-          filename: 'v1.json',
+          filename: 'v1_2026-05-13_09-30-52.json',
           body: buildRunLog({
             skill: 'search-familysearch-wiki',
             version: 1,
-            released: true,
             timestamp: '2026-05-13_09-30-52',
             snapshot,
           }),
@@ -205,7 +198,7 @@ describe('runlogs — active state detection', () => {
   it('marks a releasable run log active when its snapshot matches disk', async () => {
     const active = await detectActiveRunLog('search-familysearch-wiki');
     expect(active).not.toBeNull();
-    expect(active!.id).toBe('search-familysearch-wiki/v1');
+    expect(active!.id).toBe('search-familysearch-wiki/v1_2026-05-13_09-30-52');
   });
 
   it('returns null when no run log snapshot matches', async () => {
@@ -219,7 +212,7 @@ describe('runlogs — active state detection', () => {
   it('listRunLogsForSkillWithActive marks the active row', async () => {
     const list = await listRunLogsForSkillWithActive('search-familysearch-wiki');
     expect(list.runs[0].active).toBe(true);
-    expect(list.active?.id).toBe('search-familysearch-wiki/v1');
+    expect(list.active?.id).toBe('search-familysearch-wiki/v1_2026-05-13_09-30-52');
   });
 });
 
@@ -240,30 +233,5 @@ describe('runlogs — derived stats', () => {
       ],
     });
     expect(runLogWeightedMean(log as never)).toBe(2);
-  });
-
-  it('histogram sums across tests', () => {
-    const log = buildRunLog({
-      skill: 's',
-      version: 1,
-      timestamp: '2026-05-13_09-30-52',
-      tests: [
-        {
-          test_id: 'ut_001',
-          dimensions: [
-            { source: 'base', name: 'A', score: 3 },
-            { source: 'base', name: 'B', score: 2 },
-          ],
-        },
-        {
-          test_id: 'ut_002',
-          dimensions: [
-            { source: 'base', name: 'A', score: 1 },
-            { source: 'base', name: 'B', score: 3 },
-          ],
-        },
-      ],
-    });
-    expect(runLogHistogram(log as never)).toEqual({ 1: 1, 2: 1, 3: 2 });
   });
 });

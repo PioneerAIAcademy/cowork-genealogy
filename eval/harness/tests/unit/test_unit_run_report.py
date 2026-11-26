@@ -146,11 +146,11 @@ def test_a_run_that_aborted_before_capture_is_not_called_old():
 def test_cost_by_model_adds_up_to_the_agent_cost_on_a_real_log():
     """A figure the report works out itself, checked against one it copies.
 
-    Committed log, so this reads real SDK output rather than a fixture. A
-    released `v{N}.json`, never a candidate: candidates are pruned past the
-    newest five, and releasing one renames it.
+    A real run log, so this reads real SDK output. Kept under
+    `tests/fixtures/runlogs/`, because committed run logs are pruned past the
+    newest five.
     """
-    real = Path(__file__).resolve().parents[3] / "runlogs" / "unit" / "gps-mentor" / "v3.json"
+    real = Path(__file__).resolve().parents[1] / "fixtures" / "runlogs" / "gps-mentor" / "v3.json"
     log = json.loads(real.read_text(encoding="utf-8"))
     summary = render(log, real.name).split("SUMMARY")[1]
     by_model = [line for line in summary.splitlines() if "claude-" in line and "$" in line]

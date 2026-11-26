@@ -159,8 +159,9 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
-**Given two or more independent facts, none covered by a question yet:** with
-`userPresent: no` in the delegation, write one question, for the fact the
+**Given two or more independent facts, none covered by a question yet:** a
+`statedQuestion:` line in the delegation is written first (Step 1d). Otherwise,
+with `userPresent: no` in the delegation, write one question, for the fact the
 objective names first, and say in its `rationale` that it follows the
 objective's order because no researcher was present. Otherwise write nothing:
 name each fact and ask the researcher which to research first.
@@ -184,6 +185,22 @@ itself that first question — it both verifies the premise and pursues the
 objective, so nothing is deferred. Once a question at the objective's scope is
 finished with (Step 1a), an independent part of the objective that no question
 covers is the next question; only Step 1b stops the project.
+
+### 1d. The researcher's reply
+
+**A `statedQuestion:` line** is a question the researcher asked to verify, and
+the exception in Step 1b applies to it. Write it as the question, first, even
+when the objective holds several facts, and do not ask which first. With several
+lines, write the first and name the rest as the questions that follow. Its
+`rationale` begins "The researcher asked to verify this."
+
+**A `researcherReply:` line** is the researcher's own answer to what they want
+verified or researched, what is wrong and what they hold. Use it to frame the
+question: a place, a period, a tree fact they say is wrong, a record they hold.
+Write what it says into the question's `rationale`. A tree fact the researcher
+says is wrong is not evidence for the question: frame the question so it does
+not assume that fact ("Where and when did he die?", never "When did he die in
+San Bernardino?").
 
 ## 2. Identify the highest-value question
 
@@ -366,7 +383,8 @@ pursued next.
 ## Edge cases
 
 - **Fresh project, no clear gaps:** default to Priority 2. If the objective
-  holds several independent facts, follow Step 1c: with `userPresent: no` write the
+  holds several independent facts, follow Step 1c: a `statedQuestion:` line is
+  written first; with `userPresent: no` write the
   one the objective names first, otherwise write nothing and ask which first;
   if it is already a single fact, the first question is that objective restated with
   identifying detail — not a narrower record-scoped one — unless it rests on an
@@ -414,7 +432,8 @@ lines above, write a line containing only `---`, then exactly two paragraphs of
 plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: the question chosen
-   next, in plain words, and why it is the one to pursue — or, when you selected
+   next, in full, with the place and period it implies, and why it is the one to
+   pursue — or, when you selected
    nothing, why not. No identifiers, file names, tool names or field names; a
    question is what it asks, never a `q_` id. A finding's evidence or record
    source may be named here.
@@ -577,6 +596,7 @@ question, restated with identifying detail. When the objective holds
 more than one independent fact, name each single unknown fact — a name,
 a relationship, a date, a place — and ask the researcher which to
 research first, or with `userPresent: no` take the one the objective names first (Step 1c).
+A `statedQuestion:` line is written first, with no question about which first (Step 1d).
 
 ---
 

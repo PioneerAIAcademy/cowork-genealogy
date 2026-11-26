@@ -507,7 +507,7 @@ OUTPUT ECONOMY (latency): The timeline is ALREADY persisted to `research.json` b
 ms/token, independent of model tier), so the single biggest latency lever is
 generating fewer tokens. Do NOT reproduce the persisted content — the full event
 table, the distance ladder, or a per-event walkthrough. The full chronological
-table belongs in the persisted timeline (the viewer renders it), not echoed back.
+table belongs in the persisted timeline (the case file shows it), not echoed back.
 Reserve one short line per finding, not a paragraph.
 
 ## Working with places
@@ -885,7 +885,7 @@ hypothesis.
 Return **≤10 lines** to the caller, in this order:
 
 - **Written:** the timeline `t_` id and label plus event / gap counts — e.g.
-  "t_003 — 7 events, 2 gaps; persisted for the viewer" — or "no timeline
+  "t_003 — 7 events, 2 gaps; persisted for the case file" — or "no timeline
   written" when `timeline_build` returned `no_linked_evidence` twice
 - **Gaps:** one line per gap — its span and severity (the actionable negative
   evidence). Omit if none.
@@ -902,7 +902,7 @@ Return **≤10 lines** to the caller, in this order:
 - Next-step hint, per the handoff rules above.
 
 Do NOT re-render every event row or the distance ladder — the events, places, and
-distances are persisted and the viewer renders the full chronological table.
+distances are persisted and the case file shows the full chronological table.
 
 ### `summary_for_user`
 

@@ -66,6 +66,9 @@ export interface RelativeSourcesResult {
    *  description ids). The caller reports the count in the response's `notes[]`; this is
    *  not diagnostic-only. */
   skipped: string[];
+  /** Each `queue` entry that was read -> the ids of the descriptions it returned, so a
+   *  caller can cite each description on the person it came from. */
+  idsBy?: Record<string, string[]>;
 }
 
 /** The `sourceDescriptions` one read of `url` returns. Never throws: a read we cannot
@@ -166,11 +169,13 @@ function collect(
 ): RelativeSourcesResult {
   const byId = new Map<string, GedcomXSourceDescription>();
   const skipped: string[] = [];
+  const idsBy: Record<string, string[]> = {};
   results.forEach((got, i) => {
     if (got === null) {
       skipped.push(queue[i]);
       return;
     }
+    idsBy[queue[i]] = got.flatMap((d) => (typeof d.id === "string" && d.id !== "" ? [d.id] : []));
     for (const d of got) {
       // Keyed by id, which IS the dedupe: two relatives genuinely share a source
       // (measured — 1 of 79 on KNDX-MKG) and a repeated id in `sources[]` breaks the
@@ -179,5 +184,5 @@ function collect(
     }
   });
 
-  return { descriptions: [...byId.values()], skipped };
+  return { descriptions: [...byId.values()], skipped, idsBy };
 }

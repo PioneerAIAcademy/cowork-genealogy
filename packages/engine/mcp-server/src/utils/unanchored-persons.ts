@@ -22,7 +22,7 @@ const LINK_FIELDS = new Set(["person_evidence", "rejected_links"]);
 const list = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 
 /** Every person the anchors reach through relationship edges, anchors included. */
-function reachable(tree: any, anchors: Set<string>): Set<string> {
+export function reachable(tree: any, anchors: Set<string>): Set<string> {
   const neighbours = new Map<string, Set<string>>();
   for (const rel of list(tree?.relationships)) {
     const ends = relationshipEndpoints(rel ?? {});

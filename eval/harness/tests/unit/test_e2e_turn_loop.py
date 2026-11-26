@@ -2,8 +2,8 @@
 
 Driven by a fake client supplying the three `ClaudeSDKClient` methods the loop
 uses, so none of this needs a live CLI. What is tested is the SEQUENCING and the
-two caps -- the reply DECISION is injected and belongs to
-`step_boundary.next_auto_reply`, which has its own tests.
+two caps -- the reply DECISION is injected and belongs to `next_reply`, which
+has its own tests (`test_e2e_next_reply.py`).
 """
 
 from __future__ import annotations
@@ -110,10 +110,10 @@ def test_each_reply_opens_another_turn_on_the_same_session():
     """The point of the rewrite: before step mode this was ONE query, so a turn
     that ended after one step ended the run."""
     client = FakeClient([["a"], ["b"], ["c"]])
-    out = drive(client, ["Keep going.", "Keep going."])
-    assert client.sent == ["find his parents", "Keep going.", "Keep going."]
-    assert [t.sent for t in out.turns] == ["find his parents", "Keep going.", "Keep going."]
-    assert [t.reply for t in out.turns] == ["Keep going.", "Keep going.", None]
+    out = drive(client, ["Continue.", "Continue."])
+    assert client.sent == ["find his parents", "Continue.", "Continue."]
+    assert [t.sent for t in out.turns] == ["find his parents", "Continue.", "Continue."]
+    assert [t.reply for t in out.turns] == ["Continue.", "Continue.", None]
     assert out.stop == STOP_NO_REPLY and out.replies_sent == 2
 
 
@@ -139,7 +139,7 @@ def test_the_caller_can_stamp_the_step_before_the_reply_is_decided():
 
     def decide(turn):
         steps_at_decision.append(turn.step)
-        return "Keep going." if turn.index == 0 else None
+        return "Continue." if turn.index == 0 else None
 
     drive(client, [], decide_reply=decide, on_message=on_message)
     assert steps_at_decision == ["search-records", "person-evidence"]
@@ -152,7 +152,7 @@ def test_an_async_decide_reply_is_awaited():
 
     async def decide(turn):
         await asyncio.sleep(0)
-        return "Keep going." if turn.index == 0 else None
+        return "Continue." if turn.index == 0 else None
 
     out = drive(client, [], decide_reply=decide)
     assert out.replies_sent == 1 and out.stop == STOP_NO_REPLY
@@ -161,7 +161,7 @@ def test_an_async_decide_reply_is_awaited():
 def test_the_reply_cap_stops_the_run_and_is_not_the_fixture_failing():
     """A runaway guard. `max_replies=2` means two replies SENT, so three turns."""
     client = FakeClient([["a"], ["b"], ["c"], ["d"], ["e"]])
-    out = drive(client, ["Keep going."] * 9, max_replies=2)
+    out = drive(client, ["Continue."] * 9, max_replies=2)
     assert out.stop == STOP_REPLY_CAP
     assert out.replies_sent == 2, [t.sent for t in out.turns]
     assert len(client.sent) == 3
@@ -169,7 +169,7 @@ def test_the_reply_cap_stops_the_run_and_is_not_the_fixture_failing():
 
 def test_the_cap_is_checked_before_sending_so_it_never_buys_an_extra_turn():
     client = FakeClient([["a"], ["b"], ["c"]])
-    out = drive(client, ["Keep going."] * 5, max_replies=0)
+    out = drive(client, ["Continue."] * 5, max_replies=0)
     assert out.stop == STOP_REPLY_CAP
     assert client.sent == ["find his parents"], "a cap of 0 still runs the fixture's own turn"
 
@@ -178,7 +178,7 @@ def test_wall_time_is_recorded_per_turn_not_per_run():
     """"How long does a researcher wait for ONE response" is the headline, and a
     whole-run figure cannot answer it."""
     client = FakeClient([["a"], ["b"]])
-    out = drive(client, ["Keep going."])
+    out = drive(client, ["Continue."])
     assert all(isinstance(t.wall_ms, int) and t.wall_ms >= 0 for t in out.turns)
     assert len(out.turns) == 2
 
@@ -224,10 +224,10 @@ def test_the_stream_is_flat_across_turns_so_the_message_loop_is_untouched():
     now arrives at the end of the RUN rather than the end of turn one -- which is
     the entire reason this shape exists."""
     client = FakeClient([["a1", "a2"], ["b1"], ["c1"]])
-    seen, turns = stream(client, ["Keep going.", "Keep going."])
+    seen, turns = stream(client, ["Continue.", "Continue."])
     assert seen == ["a1", "a2", "b1", "c1"]
     assert len(turns) == 3
-    assert client.sent == ["find his parents", "Keep going.", "Keep going."]
+    assert client.sent == ["find his parents", "Continue.", "Continue."]
 
 
 def test_turns_is_appended_in_place_so_the_caller_can_read_the_current_turn():
@@ -243,7 +243,7 @@ def test_turns_is_appended_in_place_so_the_caller_can_read_the_current_turn():
         agen = stream_turns(
             client=client,
             first_message="go",
-            decide_reply=lambda t: "Keep going." if t.index == 0 else None,
+            decide_reply=lambda t: "Continue." if t.index == 0 else None,
             turns=turns,
             max_replies=30,
         )
@@ -256,18 +256,18 @@ def test_turns_is_appended_in_place_so_the_caller_can_read_the_current_turn():
 
 def test_stream_turns_records_the_same_per_turn_fields_run_turns_does():
     client = FakeClient([["a"], ["b"]])
-    _, turns = stream(client, ["Keep going."])
-    assert [t.sent for t in turns] == ["find his parents", "Keep going."]
-    assert [t.reply for t in turns] == ["Keep going.", None]
+    _, turns = stream(client, ["Continue."])
+    assert [t.sent for t in turns] == ["find his parents", "Continue."]
+    assert [t.reply for t in turns] == ["Continue.", None]
     assert all(isinstance(t.wall_ms, int) for t in turns)
     assert [t.messages for t in turns] == [["a"], ["b"]]
 
 
 def test_the_reply_cap_bounds_the_stream_too():
     client = FakeClient([["a"], ["b"], ["c"], ["d"]])
-    seen, turns = stream(client, ["Keep going."] * 9, max_replies=1)
+    seen, turns = stream(client, ["Continue."] * 9, max_replies=1)
     assert len(turns) == 2 and seen == ["a", "b"]
-    assert client.sent == ["find his parents", "Keep going."]
+    assert client.sent == ["find his parents", "Continue."]
 
 
 def test_a_blank_reply_ends_the_stream_rather_than_sending_an_empty_turn():
@@ -293,7 +293,7 @@ def test_stream_turns_waits_rather_than_timing_out_on_a_silent_turn():
         agen = stream_turns(
             client=client,
             first_message="go",
-            decide_reply=lambda t: "Keep going." if t.index == 0 else None,
+            decide_reply=lambda t: "Continue." if t.index == 0 else None,
             turns=turns,
             max_replies=30,
         )
@@ -303,7 +303,7 @@ def test_stream_turns_waits_rather_than_timing_out_on_a_silent_turn():
     with pytest.raises(asyncio.TimeoutError):
         asyncio.run(asyncio.wait_for(go(), timeout=0.2))
     # It reached the stalled second turn and was still waiting there.
-    assert len(turns) == 2 and turns[-1].sent == "Keep going."
+    assert len(turns) == 2 and turns[-1].sent == "Continue."
 
 
 # ── accumulate_usage: the run total, plus decision 28's per-turn breakdown ───────
@@ -384,9 +384,9 @@ def test_the_per_turn_breakdown_carries_step_and_wall_time():
     """Decision 28 wants cost per step and the wait per step. `step` and
     `wall_ms` come from the turn, not the ResultMessage."""
     turns = [
-        _turn(0, step="search-records", wall_ms=1000, sent="go", reply="Keep going.",
+        _turn(0, step="search-records", wall_ms=1000, sent="go", reply="Continue.",
               total_cost_usd=1.5, num_turns=3),
-        _turn(1, step="person-evidence", wall_ms=2000, sent="Keep going.",
+        _turn(1, step="person-evidence", wall_ms=2000, sent="Continue.",
               total_cost_usd=4.0, num_turns=4),
     ]
     out = accumulate_usage(turns)
@@ -394,7 +394,7 @@ def test_the_per_turn_breakdown_carries_step_and_wall_time():
         ("search-records", 1000, 1.5),
         ("person-evidence", 2000, 2.5),
     ]
-    assert out["per_turn"][0]["reply"] == "Keep going."
+    assert out["per_turn"][0]["reply"] == "Continue."
 
 
 def test_a_turn_that_recorded_no_usage_still_appears_in_the_breakdown():
@@ -443,7 +443,7 @@ def test_a_boolean_is_never_summed_as_a_number():
         "total_cost_usd": 2.0,
         "usage": {"input_tokens": 100, "cache_hit": True},  # a token field carrying one
     }
-    sane = Turn(index=1, sent="Keep going.")
+    sane = Turn(index=1, sent="Continue.")
     sane.usage = {"num_turns": 3, "total_cost_usd": 3.0, "usage": {"input_tokens": 50}}
 
     out = accumulate_usage([malformed, sane])

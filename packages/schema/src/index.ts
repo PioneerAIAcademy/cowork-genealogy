@@ -44,6 +44,9 @@ export interface Project {
    *  Optional: absent on legacy projects, where the control plane falls back to
    *  deriving one from `objective`. */
   title?: string
+  /** The researcher's opening request to verify one relationship, fact or source
+   *  of the subject, in their words; the first question's turn removes it first. */
+  verify_request?: string
 }
 
 export interface ResearcherProfile {

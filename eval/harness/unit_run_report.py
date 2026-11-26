@@ -228,7 +228,7 @@ def prune_orphan_reports(skill_dir: Path) -> list[Path]:
     """Delete reports whose run log no longer exists. Returns what was removed.
 
     A report lives exactly as long as its run log: the harness keeps the newest
-    candidates and every released log (`runlog.prune_old_candidates`), so
+    candidates (`runlog.prune_old_candidates`), so
     mirroring the log's existence applies that same retention here without
     restating it.
     """
