@@ -4,12 +4,11 @@
     "skill": "research",
     "name": "Hosted: a message naming a listed project's subject continues that project",
     "type": "positive",
-    "description": "The hosted pair of ut_research_011, on the same project. project_list answers hosted: one project, on the parents of Patrick Flynn, and a fresh newProjectPath. The message names Patrick Flynn, so the router continues the listed project: it reads it with project_context at the listed projectPath, finds an objective and no questions, and hands off to question-selection with that projectPath. question-selection is stubbed with the stop text. The harness serves show_project, as the connector does, so after the step's report the router draws the question card at that projectPath.",
+    "description": "The hosted pair of ut_research_011, on the same project. project_list answers hosted: one project, on the parents of Patrick Flynn, and a fresh newProjectPath. The message names Patrick Flynn, so the router continues the listed project: it reads it with project_context at the listed projectPath, finds an objective and no questions, and hands off to question-selection with that projectPath. question-selection is stubbed with the stop text.",
     "tags": [
       "routing",
       "routes-to:question-selection",
-      "uses-listed-project",
-      "draws-card:question"
+      "uses-listed-project"
     ]
   },
   "input": {
@@ -51,7 +50,7 @@
     ]
   },
   "judge_context": [
-    "project_list answered hosted: one listed project, on the parents of Patrick Flynn, at /proj_3f9a1c2e7b4d6a80, and newProjectPath /proj_8c21d0e94fa7b315. The message names Patrick Flynn, so the router continues the listed project. Deterministic validators (test_named_subject_continues_the_listed_project, test_draws_the_steps_card) check the projectPath it reads and hands off, and the one show_project call with show: \"question\"; do not grade those yourself. The card call's result tells the router not to restate the card: a reply that does not repeat it is right.",
+    "project_list answered hosted: one listed project, on the parents of Patrick Flynn, at /proj_3f9a1c2e7b4d6a80, and newProjectPath /proj_8c21d0e94fa7b315. The message names Patrick Flynn, so the router continues the listed project. A deterministic validator (test_named_subject_continues_the_listed_project) checks the projectPath it reads and hands off; do not grade that yourself.",
     "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions': for the subject, `extraction_append({ personId })` then `timeline_build`, then question-selection. I1 has no attached source here, so both calls write nothing and are not hand-offs; question-selection is still the first hand-off.",
     "question-selection is stubbed and returns the stop text. Grade only the quality of the router's own work: state derivation and narration.",
     "Do not penalize the router for not completing the full research cycle: the stub prevents progress beyond the first routing decision.",

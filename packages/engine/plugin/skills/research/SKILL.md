@@ -29,7 +29,7 @@ allowed-tools:
 
 # /research — Full GPS Research Workflow
 
-**If you have no `Agent` tool, say that this research needs chat with "Chat and Cowork unified" turned on (on a Team or Enterprise plan, an Owner turns it on under Admin, Capabilities, Chat), and stop. If your `Agent` tool offers none of the plugin's agents (`init-project`, `research-plan` and the rest), say that the Genealogy Research plugin is not loaded and needs to be installed, and stop. Never run a step through a general-purpose or other built-in agent.**
+**If you have no `Agent` tool, say that this research needs chat with "Chat and Cowork unified" turned on (on a Team or Enterprise plan, an Owner turns it on under Admin, Capabilities, Chat), and stop. If your `Agent` tool lists none of this plugin's agents, under any prefix (`init-project` or `genealogy-research:init-project`, and the rest), say that the Genealogy Research plugin needs to be installed, and stop. Never run a step through a general-purpose or other built-in agent.**
 
 **Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
@@ -48,7 +48,8 @@ offer the next.
 call, plus the tool calls it needs and any repeat of the same step. A bounded
 first message with no project runs init-project first, then its deliverable
 (§"Bounded request or job"). locality-guide followed by research-plan is one
-step. After it returns:
+step. Never send the same delegation twice: an agent's return is that step's
+report, even one that says nothing changed. After it returns:
 
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
@@ -166,9 +167,11 @@ destination: take it through "Hint review" below.
 
 **When `project_context` answers `no_project`, ask the researcher nothing, and call no other tool until a project exists.** With a person and question in the message, spawn `@plugin:init-project`. With no person in the message, call `project_create({ projectPath, objective })` with the researcher's words as `objective` and no `personId`, then pass that `projectPath`: no person and no question → `@plugin:tree-survey` (in folder mode skip `project_create` and pass no `projectPath`: a folder holds one project, and the survey writes nothing); a record set's names, a named title's DGS numbers, or a page → `@plugin:search-images`. A project with no person refuses research questions. Research on a person in a folder whose project has no person needs a new session; on the connector it starts at `newProjectPath`. When a later message asks for research on a person in that project, say in one sentence that research on a person starts from a FamilySearch person ID in a new project, and ask for it. A named person with no FamilySearch person ID: ask for the ID and create nothing.
 
-**If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
+**If `project_list` is not among your tools, even through tool search,** say the Genealogy Research connector is not connected: turn it on or reconnect it in Claude's connector settings. Then stop.
 
-**When the researcher asks where the report, findings or project are,** call `show_project({ projectPath, show: "file" })` when you have it, and say the case file it opens holds the question, the sources and the conclusion. Without it, say the project's files are in this task's folder. Write no link of your own.
+**When `project_context` returns `signInUrl`,** give the researcher that link to sign in to FamilySearch again, and run no step until they say they have.
+
+**When the researcher asks where the report, findings or project are,** call `show_project({ projectPath, show: "file" })` when you have it, and say the case file it opens holds the question, the sources and the conclusion. Without it, in folder mode, say the project's files are in this task's folder. Write no link of your own.
 
 ## Bounded request or job
 

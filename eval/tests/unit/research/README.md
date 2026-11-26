@@ -93,12 +93,14 @@ which `projectPath` the router took from that answer, and
 `no-wrong-project-path` gates the one that checks `project_context` was called
 at `newProjectPath` or not at all, and nowhere else. The mock serves every project tool from
 the test's one workspace, so each test's scenario is the project its route
-should open. In `ut_research_hnp`, `ut_research_hsp` and `ut_research_hts` it
+should open. In `ut_research_hnp`, `ut_research_hsp`, `ut_research_hts` and `ut_research_hpc` it
 behaves as a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the
 listing does not name is refused, and `show_project`, which the connector alone
 offers, is served. `draws-card:<card>` gates `test_draws_the_steps_card`: one
 `show_project` call, with that card, at the project the router read
-(`ut_research_hsp` draws `question` after question-selection).
+(`ut_research_hpc` draws `plan` after the plan turn). It needs a step whose stub returns a
+real report: after a stub that says nothing changed, the router reports no step and draws
+no card.
 
 ## Reads project state first (issue #3766)
 
