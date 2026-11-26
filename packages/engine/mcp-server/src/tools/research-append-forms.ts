@@ -30,6 +30,15 @@ export const OP_KEYS: ReadonlySet<string> = new Set([
   "planId",
 ]);
 
+/** The call's own arguments. Sent on an op they were never read and still are
+ *  not: they stay on the op, never moved into its payload. */
+export const CALL_KEYS: ReadonlySet<string> = new Set([
+  "projectPath",
+  "resolveStandardPlace",
+  "sourceDescription",
+  "verdict",
+]);
+
 /** Stands in for the new plan's id on the plan form's items until the tool has
  *  read research.json. Not a valid `pl_` id, so it can never match a plan. */
 export const PLAN_FORM_PLAN_ID = "<plan form: the new plan>";
@@ -40,7 +49,8 @@ export const PLAN_FORM_PLAN_ID = "<plan form: the new plan>";
 export function canonicalOp(op: unknown): { op: unknown; error?: string } {
   if (!op || typeof op !== "object" || Array.isArray(op)) return { op };
   const record = op as Record<string, unknown>;
-  const loose = Object.keys(record).filter((k) => !OP_KEYS.has(k));
+  const stays = (k: string) => OP_KEYS.has(k) || CALL_KEYS.has(k);
+  const loose = Object.keys(record).filter((k) => !stays(k));
   if (loose.length === 0) return { op };
   const kind = record.op;
   const wrapper = kind === "append" ? "entry" : kind === "update" ? "fields" : null;
@@ -56,7 +66,7 @@ export function canonicalOp(op: unknown): { op: unknown; error?: string } {
   const out: Record<string, unknown> = {};
   const payload: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(record)) {
-    if (OP_KEYS.has(k)) out[k] = v;
+    if (stays(k)) out[k] = v;
     else payload[k] = v;
   }
   out[wrapper] = payload;

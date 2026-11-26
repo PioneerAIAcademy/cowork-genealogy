@@ -470,8 +470,14 @@ so validation, the all-or-nothing write and every refusal are the batch's.
 
 - **Flat op.** Any key on an op other than `section`, `op`, `entry`, `entryId`,
   `fields`, `edits`, `guideSection`, `surveyRef` and `planId` is payload: it moves
-  under `entry` on an `append` and under `fields` on an `update`. An op carrying
-  payload both ways is refused (`ops[i]: carries both …`), writing nothing. An op
+  under `entry` on an `append` and under `fields` on an `update`. The call's own
+  arguments (`projectPath`, `resolveStandardPlace`, `sourceDescription`, `verdict`)
+  are never payload: sent on an op they stay there, unread, as before. An op carrying
+  payload both ways is refused (`ops[i]: carries both …`), writing nothing.
+  Measured over 503 committed run logs (31,384 batch ops), 41 ops carried keys
+  beside their wrapper: 24 `resolveStandardPlace` (excluded above), 13
+  `superseded_by` on calls refused for other reasons, and 4 stray note keys. So the
+  refusal changes the outcome of at most those 4. An op
   with no payload keys, or whose `op` is neither value, is left for the batch's
   own checks. No research.json entry has a top-level field with one of those nine
   names, so no payload key is ever read as an op key. Wrapped ops are unchanged,

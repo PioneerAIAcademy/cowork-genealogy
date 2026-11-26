@@ -197,6 +197,25 @@ describe("flat ops", () => {
     expect(strip(research(flat))).toEqual(strip(research(wrapped)));
   });
 
+  it("never moves one of the call's own arguments into an op's payload", async () => {
+    // Measured: 24 committed person_evidence appends carry resolveStandardPlace
+    // beside `entry`, and it has always been ignored there.
+    const flat = project("active");
+    const wrapped = project("active");
+    const item = newItem(2);
+    const a = await researchAppend({
+      projectPath: flat,
+      ops: [{ section: "plan_items", op: "append", planId: "pl_001", resolveStandardPlace: false, ...item } as never],
+    });
+    const b = await researchAppend({
+      projectPath: wrapped,
+      ops: [{ section: "plan_items", op: "append", planId: "pl_001", resolveStandardPlace: false, entry: item } as never],
+    });
+    expect(a.ok, JSON.stringify(a)).toBe(true);
+    expect(b.ok, JSON.stringify(b)).toBe(true);
+    expect(plans(flat)).toEqual(plans(wrapped));
+  });
+
   it("refuses an op carrying both a wrapper and loose fields, writing nothing", async () => {
     const dir = project("active");
     const before = research(dir);

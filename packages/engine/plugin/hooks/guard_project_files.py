@@ -822,7 +822,8 @@ def _with_payloads_decoded(op: dict) -> dict:
 
 
 _OP_KEYS = frozenset(
-    {"section", "op", "entry", "entryId", "fields", "edits", "guideSection", "surveyRef", "planId"}
+    {"section", "op", "entry", "entryId", "fields", "edits", "guideSection", "surveyRef", "planId",
+     "projectPath", "resolveStandardPlace", "sourceDescription", "verdict"}
 )
 
 
