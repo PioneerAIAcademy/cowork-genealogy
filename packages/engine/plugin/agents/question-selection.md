@@ -281,6 +281,7 @@ research_append({
     rationale: "<why now — grounded in record availability/methodology>",
     selection_basis: "<the basis you chose from the Step 2 priority table>",
     question_kind: "<enumerative | targeted>",
+    audits_tree: <true | omit>,
     priority: "<high | medium | low>",
     date_window: "<YYYY-YYYY>",
     status: "open",
@@ -295,6 +296,12 @@ Set `question_kind` on every question you write: `enumerative` when it asks
 for every member of an open-ended set of people, such as children or siblings
 ("Who were the children of X?"); `targeted` otherwise, a question about a
 person's parents included.
+
+Set `audits_tree: true` on every question written for an objective that asks
+whether the tree's people, relationships, facts or attached records are right
+(which of the children attributed to X are his, whether the attached parents are
+the correct ones), and on any question that verifies a premise the tree holds
+(Step 1c and Step 3). Omit it otherwise.
 
 The tool validates the whole project before writing and writes nothing on
 failure; on `{ ok: false, errors }`, surface the errors and fix the entry —

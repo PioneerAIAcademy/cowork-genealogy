@@ -559,6 +559,7 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 # `searchAdvice` from the call's own arguments and the answer's counts, so no
 # fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
+_UPLOAD_READ_PLAN_JS = _MCP_BUILD / "utils" / "upload-read-plan.js"
 # record_search writes a nil search's own log entry (issue #4527). The mock
 # performs that write through the SAME compiled code, as it already does for
 # staging — a Python restatement would grade the agent against a log entry
@@ -821,6 +822,47 @@ def _write_nil_log(args: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _hosted_upload_read_plan(response: dict[str, Any]) -> dict[str, Any]:
+    """`response` with production's read plan for a HOSTED project's uploads.
+
+    The compiled `project_context` ran on the file store, where no `uploadUrl` is
+    served, so it answered `uploadsAre: "files"` with no `readWith` on any row.
+    This mock adds the hosted `uploadUrl` afterwards, so the plan is recomputed by
+    the same exported function production runs (`uploadReadPlan`), never a Python
+    copy. Unchanged when there are no uploads, the build predates the function,
+    or node fails (with a warning: a harness fault must not look like the model
+    picking the wrong reader)."""
+    rows = response.get("uploads")
+    if not isinstance(rows, list) or not rows:
+        return response
+    if not _compiled_module_present(_UPLOAD_READ_PLAN_JS, "hosted project_context uploads will say they are files"):
+        return response
+    script = (
+        f"import {{ uploadReadPlan }} from '{_node_module_url(_UPLOAD_READ_PLAN_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const rows = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(uploadReadPlan(rows, true)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(rows), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        plan = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock project_context could not compute the hosted upload read plan ({exc})", stacklevel=2)
+        return response
+    out: dict[str, Any] = {}
+    for key, value in response.items():
+        if key == "uploadsAre":
+            continue
+        if key == "uploads":
+            out["uploads"] = plan["uploads"]
+            out["uploadsAre"] = plan["uploadsAre"]
+        else:
+            out[key] = value
+    return out
+
+
 def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
     """Production's `searchAdvice` for a `record_search` call, as (key, value)
     pairs in the order production serializes them before `results`. Empty when
@@ -914,6 +956,19 @@ def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[st
         "compactWikiSearchAnswer",
         [response, include_text is True],
         consequence="wiki_search fixtures are served unchanged, with chunk_text and rank",
+        fallback=response,
+    )
+
+
+def _attach_film_for_year(response: dict[str, Any], film_year: Any) -> dict[str, Any]:
+    """Production's `filmForYear` (#4721) on a canned `catalog_search` answer,
+    through the compiled `attachFilmForYear`. Fails OPEN: no build, or a node
+    failure, serves the fixture unchanged with a warning."""
+    return _call_compiled_pure(
+        "tools/catalog-search.js",
+        "attachFilmForYear",
+        [response, film_year],
+        consequence="catalog_search fixtures are served without filmForYear",
         fallback=response,
     )
 
@@ -1530,9 +1585,53 @@ def _stage_image_transcribe(
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
             return _unstaged("the node script returned no `staged` key")
-        return parsed
     except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
         return _unstaged(f"{type(exc).__name__}: {exc}")
+    staged = parsed.get("staged")
+    if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str):
+        parsed.update(_write_page_log(input_obj["projectPath"], args, response, staged["resultsRef"]))
+    return parsed
+
+
+_IMAGE_TRANSCRIBE_JS = _MCP_BUILD / "tools" / "image-transcribe-mcp.js"
+
+
+def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str, Any], ref: str) -> dict[str, Any]:
+    """The log entry `image_transcribe` writes for its own staged read (#4721),
+    through production's compiled `logOwnRead` (its outcome, its retry without a
+    refused plan item), so the entry is production's field for field. `{"logId"}` on success, `{"logRefused"}` when
+    the log tool refused; empty, with a warning, when the build is absent or node
+    fails — a harness fault must not read as the tool declining to log."""
+    if not (
+        _compiled_module_present(_RESEARCH_LOG_APPEND_JS, "an image_transcribe read will leave no log entry")
+        and _compiled_module_present(_IMAGE_TRANSCRIBE_JS, "an image_transcribe read will leave no log entry")
+    ):
+        return {}
+    script = (
+        f"import {{ logOwnRead }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await logOwnRead({ projectPath: i.projectPath, planItemId: i.planItemId ?? null,"
+        " ...(i.lookingFor ? { lookingFor: i.lookingFor } : {}) },"
+        " { staged: { resultsRef: i.ref, returnedCount: 1 }, ...i.read });"
+        " process.stdout.write(JSON.stringify(r));"
+    )
+    payload = {
+        "projectPath": project_path,
+        "ref": ref,
+        "planItemId": args.get("planItemId"),
+        "lookingFor": args.get("lookingFor") if isinstance(args.get("lookingFor"), str) else None,
+        "read": {k: response[k] for k in ("found", "truncated") if response.get(k) is not None},
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock image_transcribe could not write its log entry ({exc})", stacklevel=2)
+        return {}
+    return {k: logged[k] for k in ("logId", "logRefused") if logged.get(k) is not None}
 
 
 def _unlogged_staged_handles(
@@ -2086,6 +2185,16 @@ def create_mock_server(
             ):
                 response = _compact_wiki_search(response, args.get("includeText"))
 
+            # Production's catalog_search adds `filmForYear` to each hit when the
+            # call names a `filmYear`; the compiled function adds it here.
+            if (
+                _name == "catalog_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("filmYear") is not None
+            ):
+                response = _attach_film_for_year(response, args.get("filmYear"))
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -2485,11 +2594,10 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "project_list": ("project-list.js", "projectList"),
 }
 
-#: Compiled tools whose `projectPath` is optional and changes what the call
-#: does: given one, `build_external_search_url` also writes the in-flight
-#: hand-off log entry. Production never supplies it on the model's behalf, so
-#: injecting it here would make every run write an entry the agent never asked
-#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: Compiled tools whose `projectPath` the harness never adds for the model:
+#: given one, `build_external_search_url` also writes the in-flight hand-off
+#: log entry (unless `awaitingCapture: false`), and the project gate refuses a
+#: call without one. Injecting it here would hide that refusal. These get the `person_quality` treatment: a projectPath the agent sent
 #: is rebased onto the workspace, and none is added.
 _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
@@ -3046,6 +3154,13 @@ def _make_compiled_tool_handler(
                 call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
+            # Production passes the bound project's links (`projectLinks`) so the
+            # capture steps name the upload page; a hosted test's link is the one
+            # its project_context serves.
+            if tool_name == "build_external_search_url":
+                hosted_links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+                upload_url = (hosted_links or {}).get("uploadUrl")
+                call_args += ", " + json.dumps({"uploadUrl": upload_url} if upload_url else {})
 
             # A tool that resolves places gets the test's own answers and no
             # network: the table is installed in the resolver module the tool
@@ -3096,7 +3211,7 @@ def _make_compiled_tool_handler(
                 # Production spreads `uploadUrl` onto every answer that read the project,
                 # and returns an `ok: false` one before it.
                 if links["uploadUrl"] and response.get("ok") is True:
-                    response = {**response, "uploadUrl": links["uploadUrl"]}
+                    response = {**_hosted_upload_read_plan(response), "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

@@ -1897,3 +1897,96 @@ def test_census_nil_runs_surname_free_search(tool_calls, test):
         "member before reporting the subject not found (issue #4699). Later calls: "
         + repr(later)
     )
+
+
+# --- A written-out surname spelling before FamilySearch is called exhausted (#4777)
+
+
+# Test id -> the surname the tree holds, which FamilySearch's fuzzy match does not
+# carry to the spelling its index uses.
+_TREE_SURNAME_BY_TEST_ID = {
+    "ut_search_records_039": "Renhard",
+}
+
+_CLOSING_PLAN_STATUSES = {"completed", "skipped"}
+_HAND_BACK_EXHAUSTED = re.compile(
+    r"hand[- ]?back[^\n]{0,80}`?(?:search-external-sites|research-plan)", re.I
+)
+
+
+def _spelled_surname_variant(value, tree_surname: str) -> bool:
+    """A surname written out in another spelling: not the tree's (case and
+    punctuation aside), and not a wildcard, which spells nothing."""
+    if not isinstance(value, str) or not value.strip() or re.search(r"[*?]", value):
+        return False
+    return _norm_name(value) != _norm_name(tree_surname)
+
+
+def _closes_plan_item(call: dict) -> bool:
+    if _bare_tool_name(call.get("tool") or "") != "research_append":
+        return False
+    args = _as_mapping(call.get("input") or call.get("args"))
+    return (
+        args.get("section") == "plan_items"
+        and args.get("op") == "update"
+        and _as_mapping(args.get("fields")).get("status") in _CLOSING_PLAN_STATUSES
+    )
+
+
+def test_surname_spelling_before_escalation(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (surname-spelling-before-escalation): issue #4777.
+
+    The Renhard run searched FamilySearch marriages under "Renhard" and the
+    given-name variant "Charls" only, then escalated; the index holds the marriage
+    as "Rheinhardt", which fuzzy matching on "Renhard" does not reach. Before the
+    agent calls FamilySearch exhausted -- a hand-back to search-external-sites or
+    research-plan, or a plan item closed `completed`/`skipped` -- some record_search
+    must carry a `surname` spelled differently from the tree's, written out.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in _TREE_SURNAME_BY_TEST_ID or "surname-spelling-before-escalation" in tags, (
+        f"{test_id} has an entry in _TREE_SURNAME_BY_TEST_ID but no "
+        "'surname-spelling-before-escalation' tag - restore the tag or delete the entry"
+    )
+    if "surname-spelling-before-escalation" not in tags:
+        pytest.skip("not a surname-spelling-before-escalation scenario")
+    assert test_id in _TREE_SURNAME_BY_TEST_ID, (
+        f"{test_id} carries 'surname-spelling-before-escalation' but has no entry "
+        "in _TREE_SURNAME_BY_TEST_ID"
+    )
+    tree_surname = _TREE_SURNAME_BY_TEST_ID[test_id]
+
+    calls = list(tool_calls or [])
+    first_variant = next(
+        (
+            i for i, c in enumerate(calls)
+            if _bare_tool_name(c.get("tool") or "") == "record_search"
+            and _spelled_surname_variant(_as_mapping(c.get("args")).get("surname"), tree_surname)
+        ),
+        None,
+    )
+    closes = [i for i, c in enumerate(calls) if _closes_plan_item(c)]
+    surnames = [
+        _as_mapping(c.get("args")).get("surname")
+        for c in calls if _bare_tool_name(c.get("tool") or "") == "record_search"
+    ]
+    early = [i for i in closes if first_variant is None or i < first_variant]
+    assert not early, (
+        f"a plan item was closed before any record_search spelled the surname other "
+        f"than {tree_surname!r} (issue #4777). record_search surnames: {surnames!r}"
+    )
+
+    from harness.skill_runner import agent_return_text
+
+    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    assert first_variant is not None or not _HAND_BACK_EXHAUSTED.search(reply), (
+        f"handed FamilySearch back as exhausted with no record_search spelling the "
+        f"surname other than {tree_surname!r} (a written-out variant such as Reinhard; "
+        f"a wildcard does not count; issue #4777). record_search surnames: {surnames!r}"
+    )
+    assert first_variant is not None, (
+        f"no record_search spelled the surname other than {tree_surname!r}; the "
+        f"subject's marriage is indexed under another spelling (issue #4777). "
+        f"record_search surnames: {surnames!r}"
+    )

@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "Distance between Luzerne County and Schuylkill County, Pennsylvania (55 km / 34 mi), recorded live 2026-11-24 from placeDistanceTool. For the competing-fathers parentage test. Matches the (Luzerne, Schuylkill) argument order.",
+  "args": {
+    "standardPlace1": "~Luzerne",
+    "standardPlace2": "~Schuylkill"
+  },
+  "response": {
+    "standardPlace1": "Luzerne, Pennsylvania, United States",
+    "standardPlace2": "Schuylkill, Pennsylvania, United States",
+    "miles": 34,
+    "kilometers": 55
+  }
+}

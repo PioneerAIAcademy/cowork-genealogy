@@ -90,6 +90,11 @@ export interface Question {
    *  obligation; `targeted` does not. Optional: absent on questions written
    *  before the field existed. */
   question_kind?: QuestionKind
+  /** Set by question-selection: true when the question tests whether the tree's
+   *  own attributions are right. research_append then refuses a `confident` link
+   *  that only the tree's own citation of the record corroborates. Optional:
+   *  absent means not an audit. */
+  audits_tree?: boolean
   priority: Priority
   status: QuestionStatus
   depends_on: string[]

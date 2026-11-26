@@ -19,6 +19,7 @@
 
 import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -82,7 +83,7 @@ function logWithoutPersistenceWarning(research: any): string | null {
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
   const positives = log.filter(
-    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool) && !isToolLoggedRead(e),
   ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
@@ -200,7 +201,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     .filter((id): id is string => typeof id === "string");
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils < NIL_ESCALATION_THRESHOLD) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
@@ -264,7 +265,7 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
   );
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
@@ -2924,6 +2925,24 @@ export async function researchLogAppend(
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      // Issue #4721. `image_transcribe` logs its own read, so a later hand-log
+      // of that page is the same read, whatever outcome or plan item it names.
+      // Refusing it would send the caller to read the page again — the double
+      // read the tool's write exists to end. Its staged file is consumed, so a
+      // note it adds cannot become an entry of its own; the warning carries it
+      // back rather than dropping it behind `ok: true`.
+      const toolWrote =
+        isToolLoggedRead(prior) &&
+        op.writtenBy === undefined &&
+        (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
+      if (toolWrote) {
+        const note = typeof op.notes === "string" ? op.notes.trim() : "";
+        const extra: string[] = [];
+        if (differs.length > 0) extra.push(`it was logged by image_transcribe itself, so this re-send's ${differs.join(", ")} was not applied`);
+        if (note !== "" && !String(prior.notes ?? "").includes(note)) extra.push(`this note was not stored: "${note}"`);
+        if (extra.length > 0) opWarnings.push(`${ref} is ${found.logId}: ${extra.join("; ")}.`);
+        return found;
+      }
       if (differs.length > 0) {
         // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
         // so a correction to a logged page needs a page of its own, not no ref.

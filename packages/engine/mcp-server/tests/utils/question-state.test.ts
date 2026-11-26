@@ -158,6 +158,34 @@ describe("questionStatus — the state ladder", () => {
       expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
     });
 
+    it.each(["positive", "partial"])(
+      "a %s page image_transcribe logged itself is a read, not a find to extract (#4721)",
+      (outcome) => {
+        const d = doc({
+          plans: [
+            plan([
+              { id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" },
+              { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+            ]),
+          ],
+          log: [
+            { id: "log_1", plan_item_id: "pli_1", tool: "image_search", outcome: "negative" },
+            { id: "log_2", plan_item_id: "pli_1", tool: "image_transcribe", outcome, written_by: "image_transcribe" },
+          ],
+        });
+        expect(questionStatus(d, question()).nextStep).not.toMatch(/^extraction/);
+        expect(questionStatus(d, question()).nextStep).toMatch(/^search-records/);
+      },
+    );
+
+    it("a page an agent logged by hand still routes to extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" }])],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "image_transcribe", outcome: "positive" }],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
+    });
+
     it("once evidence exists an uncited entry does not hold the question on extraction", () => {
       const d = doc({
         plans: [plan([{ id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" }])],
@@ -986,6 +1014,74 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     const c = load(SIBLINGS);
     c.research.conflicts = [{ id: "c_001", status: "unresolved", competing_assertion_ids: ["a_001", "a_005"] }];
     expect(step(c.research, c.tree)).toMatch(/^conflict-resolution/);
+  });
+});
+
+/**
+ * Issue #4692: a partly-linked question none of whose links reaches the project
+ * subject routes to person-evidence (ut_research_pe7, flynn-household-skeleton).
+ */
+describe("questionStatus — a partly-linked question that never reaches the subject", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const load = (scenario: string): { research: any; tree: any } => ({
+    research: JSON.parse(readFileSync(join(SCENARIOS, scenario, "research.json"), "utf-8")),
+    tree: JSON.parse(readFileSync(join(SCENARIOS, scenario, "tree.gedcomx.json"), "utf-8")),
+  });
+  const PE7 = "flynn-household-skeleton";
+  const UNREACHED = /^person-evidence — \d+ of this question's \d+ assertions are unlinked/;
+  const step = (research: any, tree: any): string | null =>
+    questionStatus(research, research.questions[0], tree).nextStep;
+
+  it("fires on pe7: six of seven unlinked and the one link is the head, not the subject", () => {
+    const { research, tree } = load(PE7);
+    expect(step(research, tree)).toBe(
+      "person-evidence — 6 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+  });
+
+  it("is silent on a partly-linked household once a link names the subject", () => {
+    const { research, tree } = load(PE7);
+    research.person_evidence.push({ ...research.person_evidence[0], id: "pe_900", assertion_id: "a_002", person_id: "I1" });
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every assertion is linked, though the subject is still absent from the record", () => {
+    const { research, tree } = load(PE7);
+    for (const a of research.assertions.slice(1)) {
+      research.person_evidence.push({ ...research.person_evidence[0], id: `pe_${a.id}`, assertion_id: a.id, person_id: "I2" });
+    }
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every leftover assertion is rejected against the subject, so it cannot loop", () => {
+    const { research, tree } = load(PE7);
+    const leftovers = research.assertions.slice(1);
+    research.rejected_links = [{ id: "rj_1", assertion_id: leftovers[0].id, person_id: "I1", created: "2026-11-24" }];
+    expect(step(research, tree)).toBe(
+      "person-evidence — 5 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+    research.rejected_links = leftovers.map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I1", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("still fires when the leftover assertions are rejected against someone other than the subject", () => {
+    const { research, tree } = load(PE7);
+    research.rejected_links = research.assertions.slice(1).map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I2", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).toMatch(UNREACHED);
+  });
+
+  it("is silent when no subject is a tree person", () => {
+    const { research, tree } = load(PE7);
+    research.project.subject_person_ids = ["PID-TODO"];
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+    research.project.subject_person_ids = null;
+    expect(step(research, tree)).not.toMatch(UNREACHED);
   });
 });
 
