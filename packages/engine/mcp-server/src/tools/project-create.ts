@@ -66,6 +66,7 @@ import { validateParsed } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { fetchRelativeSources, type RelativeSourcesResult } from "../utils/relative-sources.js";
 import { treePidOfArk } from "../utils/ark.js";
+import { attachedSources } from "../utils/search-delegations.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { sourceImageCapState } from "../utils/image-store.js";
 import {
@@ -200,7 +201,8 @@ export interface ProjectCreateSummary {
   objective: string;
   title?: string;
   relatives: SummaryPerson[];
-  /** The sources cited on the subject (person, name or fact), by tree id and title. */
+  /** The subject's attached sources, as project_context's `attachedSources` gives them.
+   *  Never trimmed: the setup stop asks the researcher which of them is wrong. */
   subjectSources: { id: string; title: string }[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
@@ -211,7 +213,7 @@ export interface ProjectCreateSummary {
    *  own notes (a relative FamilySearch names but does not describe). */
   notes?: string[];
   /** How many entries each list lost to the size cap; absent when none did. */
-  omitted?: Partial<Record<"relatives" | "subjectSources" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
+  omitted?: Partial<Record<"relatives" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
   validation: { valid: true; warnings: string[] };
 }
 
@@ -705,17 +707,8 @@ function summarize(args: {
   const { outcome, tree, subjectId, memorySourceCount } = args;
   const subject = tree.persons.find((p) => p.id === subjectId);
   const memories = outcome.result.sources.filter((s) => outcome.memoryKinds[s.id]);
-  const titleOf = new Map(
-    (tree.sources as Record<string, any>[]).map((src) => [src?.id, typeof src?.title === "string" ? src.title : ""]),
-  );
-  const cited: string[] = [];
-  for (const holder of [subject, ...(subject?.names ?? []), ...(subject?.facts ?? [])]) {
-    for (const ref of Array.isArray(holder?.sources) ? holder.sources : []) {
-      if (typeof ref?.ref === "string" && titleOf.has(ref.ref) && !cited.includes(ref.ref)) cited.push(ref.ref);
-    }
-  }
   const lists = {
-    subjectSources: cited.map((id) => ({ id, title: titleOf.get(id) as string })),
+    subjectSources: attachedSources(tree, subjectId),
     relatives: tree.persons
       .filter((p) => p.id !== subjectId)
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),
@@ -758,8 +751,9 @@ function summarize(args: {
   // up to the relatives, and among those only a child, sibling or other
   // relative. A parent or a spouse is never dropped, so a pathological family
   // can leave the summary over the cap.
-  const order: (keyof typeof lists)[] = ["warnings", "notes", "notTranscribed", "transcribed", "subjectSources", "relatives"];
-  const lastDroppable = (key: keyof typeof lists): number => {
+  type Trimmed = Exclude<keyof typeof lists, "subjectSources">;
+  const order: Trimmed[] = ["warnings", "notes", "notTranscribed", "transcribed", "relatives"];
+  const lastDroppable = (key: Trimmed): number => {
     const list = lists[key] as unknown[];
     if (key !== "relatives") return list.length - 1;
     for (let i = list.length - 1; i >= 0; i--) {

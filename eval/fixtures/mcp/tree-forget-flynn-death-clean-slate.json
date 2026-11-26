@@ -1,0 +1,35 @@
+{
+  "tool": "tree_forget",
+  "description": "tree_forget in verify mode on flynn-unsourced-tree-empty-log: death-of I1 (Patrick Flynn) with cleanSlate. Removes the Death fact and S1, the Ancestry tree cited on it. The response is the compiled tool's own answer on a copy of the scenario (#4791).",
+  "args": {
+    "cleanSlate": true,
+    "forget": "~death-of"
+  },
+  "response": {
+    "ok": true,
+    "dryRun": false,
+    "removed": {
+      "persons": 0,
+      "relationships": 0,
+      "relationshipsCascaded": 0,
+      "factsByType": {
+        "Death": 1
+      },
+      "sources": 1
+    },
+    "sourcesKept": 0,
+    "remaining": {
+      "persons": 2,
+      "relationships": 1
+    },
+    "filesWritten": [
+      "tree.gedcomx.json"
+    ],
+    "restoreFile": ".tree-before-forget.gedcomx.json",
+    "validation": {
+      "valid": true,
+      "warnings": []
+    },
+    "nextStep": "This was the research router's verify step; the turn goes on. For each id in subjectPersonIds, extraction_append({ projectPath, personId }) and timeline_build({ projectPath, personId }); then question-selection with the researcher's reply as researcherReply: and a statedQuestion: line for each relationship or fact removed."
+  }
+}

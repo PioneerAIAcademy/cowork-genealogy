@@ -371,8 +371,23 @@ identifier-casing rule).
                                     // plus "starting-tree.gedcomx.json" when a baseline exists
   restoreFile: string | null,       // the restore file's name, or null under dryRun
   validation: { valid: true, warnings: string[] },
+  nextStep?: string,                // CLEAN_SLATE_NEXT_STEP on a written `cleanSlate` call
 }
 ```
+
+**A writing call must say `cleanSlate`.** Through MCP (`treeForgetTool`), a call
+without `dryRun: true` whose `cleanSlate` is not a boolean is refused with
+`CLEAN_SLATE_UNSAID` and writes nothing: true for the router's verify step, false
+for a practice run. The two modes differ only in that flag, and on Haiku 5.5 low
+forget-and-rederive's verify mode left it out in two of three runs
+(ut_research_sr1), which would keep every source cited on what was removed.
+
+`nextStep` is present only when `cleanSlate` wrote the tree. Only the research
+router's verify step sends `cleanSlate`, so it names what that turn does next: the
+attached-records baseline and timeline for each subject, then question-selection
+with the reply and a `statedQuestion:` per relationship or fact removed. On Haiku
+5.5 low the router ended the turn inside forget-and-rederive once in three runs
+(ut_research_sr1); a step the tool's answer names is one it does not drop.
 
 On failure: `{ ok: false, errors: string[] }`, with nothing written.
 

@@ -127,6 +127,31 @@ export interface TreeForgetRemoved {
   sources: number;
 }
 
+/** A clean-slate forget's `nextStep`: the research router's verify step goes on (#4791). */
+export const CLEAN_SLATE_NEXT_STEP =
+  "This was the research router's verify step; the turn goes on. For each id in subjectPersonIds, " +
+  "extraction_append({ projectPath, personId }) and timeline_build({ projectPath, personId }); then " +
+  "question-selection with the researcher's reply as researcherReply: and a statedQuestion: line for " +
+  "each relationship or fact removed.";
+
+/** The refusal of a writing call that leaves `cleanSlate` unsaid (#4791). */
+export const CLEAN_SLATE_UNSAID =
+  "Nothing was written: a tree_forget call that writes must say cleanSlate. Send cleanSlate: true " +
+  "for the research router's verify step (forget-and-rederive in verify mode), cleanSlate: false " +
+  "for a practice run.";
+
+/**
+ * The MCP entry: `treeForget`, after refusing a writing call whose `cleanSlate`
+ * is not a boolean. The two modes differ only in that flag, so leaving it out
+ * would run a verify as a practice run and keep the sources cited on what went.
+ */
+export async function treeForgetTool(input: TreeForgetInput): Promise<TreeForgetResult> {
+  if (input?.dryRun !== true && typeof input?.cleanSlate !== "boolean") {
+    return { ok: false, errors: [CLEAN_SLATE_UNSAID] };
+  }
+  return treeForget(input);
+}
+
 export type TreeForgetResult =
   | {
       ok: true;
@@ -139,6 +164,8 @@ export type TreeForgetResult =
       filesWritten: string[];
       restoreFile: string | null;
       validation: { valid: true; warnings: string[] };
+      /** CLEAN_SLATE_NEXT_STEP on a written `cleanSlate` forget; absent otherwise. */
+      nextStep?: string;
     }
   | { ok: false; errors: string[] };
 
@@ -1157,6 +1184,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     }
 
     result.restoreFile = RESTORE_FILE;
+    if (input.cleanSlate === true) result.nextStep = CLEAN_SLATE_NEXT_STEP;
     return result;
   } catch (e) {
     if (e instanceof TreeForgetError) return { ok: false, errors: [e.message] };
@@ -1335,7 +1363,8 @@ export const treeForgetSchema = {
       cleanSlate: {
         type: "boolean",
         description:
-          "Also remove every person the removal disconnects from the project's subjects " +
+          "Required on a call that writes (true for the research router's verify step, false " +
+          "for a practice run); optional under dryRun. True also removes every person the removal disconnects from the project's subjects " +
           "(with their relationships), and every source cited on anything removed, " +
           "wherever else it is cited. A source a research.json source row points at is " +
           "kept and counted in sourcesKept. Needs a subject in the tree.",

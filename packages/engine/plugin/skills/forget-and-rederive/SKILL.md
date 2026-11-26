@@ -181,7 +181,7 @@ check first. If the cascade is wider than they want, prefer fact-level selectors
 
 ### 3. Apply it
 
-Re-run the same call without `dryRun`. Then:
+Re-run the same call without `dryRun` and with `cleanSlate: false`. Then:
 
 - Report what went, using the tool's own redacted summary — **counts and kinds
   only**. Do not restate the removed names, dates or places back to the

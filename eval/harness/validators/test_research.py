@@ -1822,8 +1822,8 @@ _RESEARCH_ID_RE = re.compile(
 def test_reply_adds_nothing_after_the_relay(test, text_response):
     """Tag-gated (``relays-only:<callee>``). The reply relays the stubbed callee's
     summary verbatim and adds nothing after it but the turn's closing "Continue
-    with …?" line, and names no research.json id (#4791, feedback #4761: a summary
-    of the router's own after proof-conclusion's, leaking "(ps_001)")."""
+    with …?" line, and from the relay on names no research.json id (#4791, feedback
+    #4761: a summary of the router's own after proof-conclusion's, leaking "(ps_001)")."""
     from harness.skill_runner import load_step_boundary
 
     callee = _one_tag_value(test, _RELAYS_ONLY_PREFIX)
@@ -1842,8 +1842,8 @@ def test_reply_adds_nothing_after_the_relay(test, text_response):
     after = lines[ends[-1] + 1:] if ends else []
     extra = [line for line in after if boundary.offered_step(line) is None and not re.match(r"^<?https?://\S+>?$", line)]
     assert not extra, f"the reply adds its own text after {callee}'s summary: {extra}"
-    ids = sorted(set(_RESEARCH_ID_RE.findall(text_response or "")))
-    assert not ids, f"the reply names research.json ids: {ids}"
+    ids = sorted(set(_RESEARCH_ID_RE.findall(reply[at:])))
+    assert not ids, f"the relay or what follows it names research.json ids: {ids}"
 
 
 _BROAD_VERIFY_TAG = "broad-verify-audits"

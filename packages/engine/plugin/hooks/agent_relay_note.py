@@ -49,11 +49,12 @@ AGENT_NOTES = {
         "check the facts the explanation rests on, and end on the \"Continue with …?\" line."
     ),
     "init-project": (
-        "That was init-project's report. When the researcher's message is a bounded "
-        "request for anything but a research plan (research/SKILL.md, \"Bounded request or "
-        "job\"), relay its text after the final `---` without its closing paragraph, the next step and its questions "
-        "the next step, then deliver what was asked now, in this turn, as research/SKILL.md "
-        "says. Otherwise relay that text word for word and end on the turn's closing offer."
+        "That was init-project's report. Relay its text after the final `---` word for word, "
+        "its source lines and its closing questions included, and end on the turn's closing "
+        "offer. Only when the researcher's message is a bounded request for anything but a "
+        "research plan (research/SKILL.md, \"Bounded request or job\") leave out its closing "
+        "paragraph, the next step and its questions, then deliver what was asked now, in this "
+        "turn, as research/SKILL.md says."
     ),
 }
 

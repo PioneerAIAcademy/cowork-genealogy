@@ -17,7 +17,8 @@
   },
   "mcp_fixtures": [
     "tree-forget-vogt-parents-clean-slate",
-    "person-read-empty-any"
+    "person-read-empty-any",
+    "tree-forget-vogt-parents-cleanslate-unsaid"
   ],
   "execution": {
     "max_turns": 40,

@@ -1950,6 +1950,15 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     },
   );
 
+  it("gives init-project a note that keeps its source lines and closing questions on a job", () => {
+    const note = runRelayNote(
+      JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "init-project" }, tool_response: {} }),
+      true,
+    ).hookSpecificOutput.additionalContext;
+    expect(note).toMatch(/^That was init-project's report\. Relay its text after the final `---` word for word, its source lines and its closing questions included/);
+    expect(note).toMatch(/Only when the researcher's message is a bounded request/);
+  });
+
   it.each(["locality-guide", "genealogy-research:locality-guide"])(
     "gives %s its own note: its report and research-plan's both relayed word for word",
     (subagent_type) => {

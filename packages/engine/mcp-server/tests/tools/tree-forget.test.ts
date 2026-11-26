@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { readFileSync } from "node:fs";
 
-import { treeForget, RESTORE_FILE } from "../../src/tools/tree-forget.js";
+import { treeForget, treeForgetTool, RESTORE_FILE, CLEAN_SLATE_NEXT_STEP, CLEAN_SLATE_UNSAID } from "../../src/tools/tree-forget.js";
 
 const minimalResearch = {
   project: {
@@ -1274,6 +1275,45 @@ describe("tree_forget", () => {
   });
   const cited = (tree: any): string[] => [...JSON.stringify(tree).matchAll(/"ref":"(S\d+)"/g)].map((m) => m[1]);
 
+  it("refuses a writing call that leaves cleanSlate unsaid, and writes nothing (#4791)", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const before = await readTree();
+    const refused = await treeForgetTool({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }] });
+    expect(refused).toEqual({ ok: false, errors: [CLEAN_SLATE_UNSAID] });
+    expect(await readTree()).toEqual(before);
+  });
+
+  it.each([
+    ["a dry run with cleanSlate unsaid", { dryRun: true }],
+    ["a practice run saying cleanSlate: false", { cleanSlate: false }],
+    ["a verify saying cleanSlate: true", { cleanSlate: true }],
+  ])("lets through %s", async (_label, extra) => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const r = await treeForgetTool({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }], ...extra });
+    expect(r.ok).toBe(true);
+  });
+
+  it.each(["tree-forget-vogt-parents-cleanslate-unsaid", "tree-forget-flynn-death-cleanslate-unsaid"])(
+    "keeps the unit fixture %s's refusal the engine's own",
+    (name) => {
+      const fixture = JSON.parse(
+        readFileSync(join(__dirname, `../../../../../eval/fixtures/mcp/${name}.json`), "utf-8"),
+      );
+      expect(fixture.response).toEqual({ ok: false, errors: [CLEAN_SLATE_UNSAID] });
+    },
+  );
+
+  it("names the router's next steps only on a written cleanSlate forget", async () => {
+    await writeProject(cleanSlateFamily(), subjectResearch());
+    const dry = await treeForget({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }], cleanSlate: true, dryRun: true });
+    expect(dry.ok && dry.nextStep).toBeFalsy();
+    const plain = await treeForget({ projectPath: dir, forget: [{ selector: "parents-of", personId: "I1" }] });
+    expect(plain.ok).toBe(true);
+    expect(plain.ok && plain.nextStep).toBeFalsy();
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+    expect(CLEAN_SLATE_NEXT_STEP).toMatch(/then question-selection/);
+  });
+
   it("cleanSlate parents-of takes the cut-off family and every source cited on what went", async () => {
     await writeProject(cleanSlateFamily(), subjectResearch());
     const r = await treeForget({
@@ -1298,6 +1338,7 @@ describe("tree_forget", () => {
       sources: 3,
     });
     expect(r.sourcesKept).toBe(1);
+    expect(r.nextStep).toBe(CLEAN_SLATE_NEXT_STEP);
   });
 
   it("cleanSlate keeps a person who was unconnected before the call", async () => {

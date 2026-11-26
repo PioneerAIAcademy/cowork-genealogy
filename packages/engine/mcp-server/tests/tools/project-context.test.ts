@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -118,6 +118,34 @@ describe("project_context", () => {
       },
       { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", assertionCount: 0 },
     ]);
+  });
+
+  it.each([
+    ["a subject and no question", { subject_person_ids: ["I1"], status: "active" }, undefined, true],
+    ["an empty questions list", { subject_person_ids: ["I1"], status: "active" }, [], true],
+    ["a question already", { subject_person_ids: ["I1"], status: "active" }, [{ id: "q_001", question: "Q?", status: "open" }], false],
+    ["no subject", { status: "active" }, undefined, false],
+    ["a completed project", { subject_person_ids: ["I1"], status: "completed" }, undefined, false],
+  ])("names the first question's steps as a top-level nextStep only on %s (#4791)", async (_label, project, questions, shown) => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Verify his parents.", created: "2026-01-01", updated: "2026-01-01", ...project },
+        ...(questions ? { questions } : {}),
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    if (shown) {
+      expect(r.nextStep).toBe(firstQuestionNextStep("Verify his parents."));
+      expect(r.nextStep).toContain('the objective ("Verify his parents.")');
+      expect(r.nextStep).toMatch(/Skill\("forget-and-rederive"\) with mode: verify/);
+      expect(r.nextStep).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+      expect(r.nextStep).toMatch(/Not on a bounded request/);
+      expect(r.nextStep).toMatch(/not in the turn that created the project/);
+    } else {
+      expect(r.nextStep).toBeUndefined();
+    }
   });
 
   it("gives each person its one-hop family from the tree's edges (#2537)", async () => {

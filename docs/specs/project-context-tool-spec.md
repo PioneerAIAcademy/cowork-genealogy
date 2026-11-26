@@ -715,6 +715,17 @@ sources as tree `S2…` and points the person's, names' and facts' refs at them
 attached on FamilySearch afterwards is not in the tree. A record asked for that
 is already listed is not searched for (ut_research_021).
 
+A top-level `nextStep` (`firstQuestionNextStep`, the objective quoted in it) is present on a project with a
+subject, no question and a status other than `completed`. It names the steps that
+write the first question: `Skill("forget-and-rederive")` in verify mode first when
+the researcher's reply, or with no reply the objective, disputes a particular
+relationship, fact or source of the subject; then `extraction_append` and
+`timeline_build` for each subject; then question-selection. It says that a bounded
+request and the turn that created the project are not that turn. Why a tool says
+it: on Haiku 5.5 low the router read "no questions" and went straight to
+question-selection, skipping the verify step and the baseline (ut_research_vo1,
+ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,

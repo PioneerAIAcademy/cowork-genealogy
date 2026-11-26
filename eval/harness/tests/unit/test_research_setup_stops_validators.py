@@ -237,6 +237,8 @@ ONLY = {
 def test_relays_only_passes_on_the_relay_and_a_closing_line():
     relays_only(test=ONLY, text_response="Writing the conclusion.\n\nThe parentage is not proved.\n\nA baptism would advance it.")
     relays_only(test=ONLY, text_response="The parentage is **not proved**.\n\nA baptism would advance it.\n\nContinue with `planning the searches`? https://example.test/p")
+    # An id in the router's own words before the spawn is the narration's to grade, not this check's.
+    relays_only(test=ONLY, text_response="Concluding q_001 now.\n\nThe parentage is not proved.\n\nA baptism would advance it.")
 
 
 def test_relays_only_fails_on_a_summary_of_its_own_or_a_leaked_id():

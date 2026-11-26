@@ -349,6 +349,20 @@ async function externalCollectionCounts(
   return out;
 }
 
+/** The project-level `nextStep` of a person project with no question yet (#4791). */
+export function firstQuestionNextStep(objective: string | undefined): string {
+  const quoted = objective ? ` ("${objective}")` : "";
+  return (
+    "No question yet. Not on a bounded request, which gets only what it asked for, and not in the turn " +
+    "that created the project, which ends on init-project's report. " +
+    "When the researcher's reply, or with no reply (\"Continue.\") the objective" + quoted + ", " +
+    "says a particular relationship, fact or source of the subject is wrong or doubted, first " +
+    "Skill(\"forget-and-rederive\") with mode: verify and that text verbatim; a verify request naming " +
+    "none is the broad audit instead. Then, for each id in subjectPersonIds, extraction_append({ " +
+    "projectPath, personId }) and timeline_build({ projectPath, personId }); then question-selection."
+  );
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
@@ -373,6 +387,9 @@ export type ProjectContextResult =
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
+      /** firstQuestionNextStep(objective) on a project with a subject, no question
+       *  and a status other than completed; absent otherwise. */
+      nextStep?: string;
       /** research.researcher_profile.subscriptions, strings only. */
       subscriptions?: string[];
       openQuestions?: ProjectContextQuestion[];
@@ -736,6 +753,11 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       typeof research?.researcher_profile?.narration_guidance === "string"
         ? research.researcher_profile.narration_guidance
         : null,
+    ...(typeof subjectId === "string" &&
+    !(Array.isArray(research?.questions) && research.questions.length > 0) &&
+    projectStatus !== "completed"
+      ? { nextStep: firstQuestionNextStep(objective) }
+      : {}),
     subscriptions: (Array.isArray(research?.researcher_profile?.subscriptions)
       ? research.researcher_profile.subscriptions
       : []
@@ -875,7 +897,8 @@ export const projectContextSchema = {
     "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
     "proof summary while its storedStatus is still 'in_progress'; that is not a " +
-    "contradiction. questionStatuses is ADVISORY: it reports what the " +
+    "contradiction. A top-level nextStep, present only on a project with a subject and " +
+    "no question yet, names the steps that write its first question. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
     "question needs nothing further. awaitingUser [{logId, site, urlGenerated, " +
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
