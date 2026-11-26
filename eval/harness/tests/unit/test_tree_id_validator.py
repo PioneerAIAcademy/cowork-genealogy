@@ -63,6 +63,8 @@ def no_tree_id(reply):
         ("She entered on an F1 visa.", ["F1"]),
         ("See https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9; she is I13.", ["I13"]),
         ("Page image 3:1:33SQ-GG8M-S133 shows I13.", ["I13"]),
+        ("See https://www.familysearch.org/tree/person/details/I1 for him.", ["I1"]),
+        ("See [his page](https://www.familysearch.org/tree/person/details/I1).", ["I1"]),
     ],
 )
 def test_a_reply_naming_a_tree_id_fails(reply, expected):
@@ -87,6 +89,9 @@ def test_a_reply_naming_a_tree_id_fails(reply, expected):
         "Page image 3:1:33SQ-GG8M-S133 shows the entry.",
         "the page ark:/61903/3:1:939K-8LJ5-F9 shows it",
         "Her FamilySearch ID is KWCJ-S123.",
+        "See https://www.familysearch.org/tree/person/details/K835-34K for her.",
+        "See https://www.familysearch.org/tree/person/details/F123-ABC for him.",
+        "[her page](https://www.familysearch.org/tree/person/details/KWCJ-S123)",
         "Y-DNA haplogroup R1b, saved as UTF8.",
         "",
         None,

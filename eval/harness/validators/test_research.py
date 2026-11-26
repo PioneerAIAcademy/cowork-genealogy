@@ -635,6 +635,7 @@ _LINK_RE = re.compile(r"(?:https?://|ark:/)\S+|\b\d:\d:\S+")
 _PID_TOKEN_RE = re.compile(r"\b([A-Za-z0-9]{4})-([A-Za-z0-9]{3,4})\b")
 _TREE_ID_RE = re.compile(r"\b" + _TREE_ID_PATTERN + r"\b")
 _WHOLE_TREE_ID_RE = re.compile(_TREE_ID_PATTERN)
+_LINK_TREE_ID_RE = re.compile(r"/(" + _TREE_ID_PATTERN + r")(?![\w-])")
 
 
 def _drop_pid(m: re.Match) -> str:
@@ -645,7 +646,10 @@ def _drop_pid(m: re.Match) -> str:
 
 def tree_ids_named(text: str | None) -> list[str]:
     """The tree ids (`I13`, `S2`, `F4`...) a reply names, distinct and sorted."""
-    return sorted(set(_TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, _LINK_RE.sub(" ", text or "")))))
+    text = text or ""
+    in_links = {i for link in _LINK_RE.findall(text) for i in _LINK_TREE_ID_RE.findall(link)}
+    rest = _TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, _LINK_RE.sub(" ", text)))
+    return sorted(in_links | set(rest))
 
 
 def _narration_guidance(state: dict | None) -> str:
