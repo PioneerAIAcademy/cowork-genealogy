@@ -843,6 +843,40 @@ it again. The tool's write beat filling a tool-written null
 `research/SKILL.md`, because ADR-0011 puts a rule decidable from the call alone at the
 write boundary.
 
+### 5.5.2 A page already read — the stored reading is returned
+
+In a project, a call for a page the project already holds a complete reading of does not
+fetch the page and does not run the OCR. It returns that reading, and the answer carries
+`reusedFrom`, the log entry that holds it (`priorImageRead`, `src/utils/prior-image-read.ts`).
+
+- **What counts as already read:** the newest `log[]` entry with `tool: "image_transcribe"`
+  and a `results_ref` whose sidecar element has this call's id and is not `truncated`. The
+  id is the identifier as given (`imageId`, `ark`, a memory's resolved artifact url) or
+  `capture:<basename>` for a `file`.
+- **Only the identifier as given is matched.** The same page under another spelling (a bare
+  ARK and its page URL with `i=`/`cc=`) is read afresh: a bare waypoint ARK can name a
+  different image than its full URL does (§5.3).
+- **Never reused:** a truncated reading, since a fresh read may reach the rest of the page;
+  a reading whose retained scan (`image_ref`) is no longer in the project, so `imageRef`
+  never names a missing file; a `file` whose size or content type differs from the stored
+  reading's, which is a replaced upload; and a read the tool never logged (§5.5.1), so
+  `person_read`'s and `source_screen`'s own reads are not a source for it.
+- **What still runs:** the found check, against this call's `lookingFor`, over the stored
+  text. With no `lookingFor` no model is called, and an `imageId`, `ark` or memory read then
+  needs no OpenRouter key; a `file` read still resolves the key before it reads the file.
+- **What the answer and the log look like:** as a fresh read's. The stored text is staged
+  again under this call's `query`, with the earlier read's `model`, `content_type`,
+  `size_bytes`, `image_ref` and place, and the tool logs it under this call's `planItemId`
+  with this call's outcome (§5.5.1). A second look at a page for another person is its own
+  log entry.
+- **The image cap (§5.8) is not consulted:** nothing is fetched, and the cap counts
+  distinct images.
+
+Why (lead, 2026-11-26): in 15 tester sessions 30 of 214 reads repeated an image already
+read in the session, and one census page read five times came back as five different
+texts. A second machine reading of one page confirms nothing (`READING_NOTE`,
+`src/utils/index-readings.ts`), so the project keeps one.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
