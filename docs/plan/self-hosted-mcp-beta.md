@@ -307,13 +307,18 @@ A public text or unit test drawn from a report names no account id or anyone who
 The first invited user waits for all of these.
 
 1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12). W2 had its `/security-review` before merge; E2, E3 and W4 are issue #4879, in the icebox until the first invited user is near.
-2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
+2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat, and ends with the Desktop check below (lead, 2026-11-26):
    1. install the plugin, connect it from its Connectors tab and sign in;
    2. research a person, and see the cards and case file, then run the project-first check below;
    3. upload a capture;
    4. start a second project, then resume the first in a new task;
    5. let the session end, sign in again from the link, and continue;
    6. install a newer zip over the old one.
+
+   **The Desktop check,** on the same account, after the steps above. The plugin, the connector, the agents and the cards run for the account whichever app draws them, and every test so far found Desktop Chat and claude.ai alike, so Desktop gets only what the app itself draws:
+   1. one research turn draws a card and ends "Continue with …?", with no approval prompt;
+   2. a link from a reply, which Desktop shows as plain text, opens when copied into a browser;
+   3. the Genealogy Research desktop extension, if that computer has it, is off for the account.
 
    **The project-first check** (step 2; PR #4474, so the build must contain `b97c19276`). Send each message once, each in a new chat, on one surface: claude.ai chat and Desktop Chat behave the same. The server cannot delete a project, so a repeat finds the first run's project.
    - "For PID KNHX-4YB, Elizabeth's marriage says Cuyahoga, Ohio but two of her children have births back in Groton, Connecticut after the Ohio records. Can you evaluate the sources, and create a plan for figuring out why the contradictions?"
