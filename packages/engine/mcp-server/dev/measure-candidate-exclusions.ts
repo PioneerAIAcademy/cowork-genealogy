@@ -12,9 +12,10 @@
  * for e2e the fixture's starting tree for the calls and the run's final tree for
  * the final-state sweep:
  *
- *   CALLS. Every `record_search` a committed run log made with a `subjectId`, a
- *   `projectPath` and a birth range, judged against the project as it stood at
- *   that call: the starting state (a unit test's scenario `research.json` and
+ *   CALLS. Every `record_search` a committed run log made with a `projectPath`
+ *   and a birth range, judged against the project as it stood at that call, and
+ *   counted apart by whether it named a `subjectId` (a call that names none is
+ *   judged for the project subjects whose given name it searches): the starting state (a unit test's scenario `research.json` and
  *   its `results/`; an e2e fixture's `starting-research.json`) plus every
  *   `record_search` the run had already logged by then — a
  *   `research_log_append` op with `stagedResultsRef` and `outcome`, paired with
@@ -137,6 +138,8 @@ function subjectBirth(tree: any, id: string): number | undefined {
 }
 
 let rangedCalls = 0;
+let unnamedCalls = 0;
+const unnamedRefusals: string[] = [];
 let namesakeWrites = 0;
 const namesakeRefusals: string[] = [];
 let unpairedOps = 0;
@@ -153,18 +156,20 @@ async function replayCalls(label: string, file: string, node: unknown, start: St
     const name = bareName(call);
     if (name === "record_search") {
       const a = call.args ?? {};
-      if (typeof a.subjectId === "string" && typeof a.projectPath === "string" &&
+      if (typeof a.projectPath === "string" &&
           (typeof a.birthYearFrom === "number" || typeof a.birthYearTo === "number")) {
-        rangedCalls++;
+        const named = typeof a.subjectId === "string";
+        if (named) rangedCalls++;
+        else unnamedCalls++;
         const hit = await judge(state, {
-          subjectId: a.subjectId, givenName: a.givenName, givenNameAlt: a.givenNameAlt,
+          subjectId: named ? a.subjectId : undefined, givenName: a.givenName, givenNameAlt: a.givenNameAlt,
           birthYearFrom: a.birthYearFrom, birthYearTo: a.birthYearTo,
           fatherGivenName: a.fatherGivenName, fatherSurname: a.fatherSurname,
           motherGivenName: a.motherGivenName, motherSurname: a.motherSurname,
           parentGivenName: a.parentGivenName, parentSurname: a.parentSurname,
         });
         if (hit.length > 0) {
-          refusals.push(
+          (named ? refusals : unnamedRefusals).push(
             `${label} ${file}\n      call ${JSON.stringify({ ...a, projectPath: undefined })}\n      excludes ` +
               hit.map((c) => `${c.personName} (${c.recordId}) b. ${c.birthYear} from ${c.logId}`).join("; "),
           );
@@ -287,12 +292,15 @@ for (const n of scenarios) {
 const head = execFileSync("git", ["rev-parse", "--short=9", "HEAD"], { cwd: repoRoot, encoding: "utf-8" }).trim();
 console.log(`HEAD ${head}; ${files.length} run-log files; ${scenarios.length} scenarios`);
 console.log(`CALLS: record_search calls with subjectId, projectPath and a birth range: ${rangedCalls}; refused: ${refusals.length}`);
+console.log(`  with no subjectId (judged for the subjects whose given name they search): ${unnamedCalls}; refused: ${unnamedRefusals.length}`);
 console.log(`  logged record_search ops whose staged search could not be paired (skipped): ${unpairedOps}`);
 console.log(`NAMESAKES: namesakes appends and updates replayed: ${namesakeWrites}; refused: ${namesakeRefusals.length}`);
 console.log(`CANDIDATES: ${candidateCount} (scenarios + e2e final states); the subject's own +/-5 range would be refused by ${naturalRefused}`);
 if (list) {
   console.log("\nREFUSED CALLS");
   for (const r of refusals) console.log(`  - ${r}`);
+  console.log("\nREFUSED CALLS WITH NO subjectId");
+  for (const r of unnamedRefusals) console.log(`  - ${r}`);
   console.log("\nREFUSED NAMESAKE ROWS");
   for (const r of namesakeRefusals) console.log(`  - ${r}`);
   console.log("\nCANDIDATES");

@@ -530,10 +530,11 @@ refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 
 ### A birth range may not exclude a candidate already found
 
-A call with `projectPath`, `subjectId` and a birth range (`birthYearFrom`,
-`birthYearTo` or both) is refused, before any request, when the range excludes
-the birth year of a **candidate** an earlier search for the same subject
-returned, and the call is one the candidate binds:
+A call with `projectPath` and a birth range (`birthYearFrom`, `birthYearTo` or
+both) is refused, before any request, when the range excludes the birth year of
+a **candidate** an earlier search for the same subject returned, and the call
+is one the candidate binds. The subject is the call's `subjectId`, or, when it
+names none, as below:
 
 - a call with no given name of its own that names a parent (`fatherGivenName`,
   `fatherSurname`, `motherGivenName`, `motherSurname`, `parentGivenName` or
@@ -553,6 +554,19 @@ An initial in the subject's tree name (a one-letter word) matches only an
 initial: with "Hannah E" in the tree, "E" is a search for her and "Edwin" is
 not. A subject the tree does not hold, or holds with no given name, allows the
 call.
+
+**A call with no `subjectId`** is judged for each subject in
+`project.subject_person_ids` whose given name its `givenName` or
+`givenNameAlt` searches (matched as above) **and** whose tree birth year (the
+first year of the tree's `Birth` fact) its range includes. Leaving the id off
+would otherwise let the same range through unjudged: in a run of
+`ut_search_records_035` at `4e25a70` every search went without `subjectId`, and
+an "Ann" search for 1848–1858 ran and came back nil. The birth year is what
+tells the subject from a daughter named for her: a search for Hannah born
+1878–1884 leaves out her mother's 1857 and is not judged as a search for the
+mother. A call with no given name, under a name no subject holds, or for a
+subject the tree gives no birth year, is not judged. The refusal adds that the
+call named no `subjectId` and was judged as a search for that subject.
 
 A candidate is a row of a logged `record_search` sidecar
 (`results/<log_id>.json`, reached through a `log` entry's `results_ref`) where:
@@ -644,6 +658,13 @@ logged by then.
   Spriggs" b. 1870 in `spriggs-parents-1898`, on a three-row page the run
   logged `positive` for another row. Those three are accepted: widening the
   range satisfies the refusal.
+- **Calls with no `subjectId`.** Measured on 2026-11-26 at `b2f1fd886` by the
+  same script, which now also replays every call with a `projectPath` and a
+  birth range but no `subjectId`: of 798, it refuses **0**. Without the
+  tree-birth-year condition it refused 5, all wrong: one
+  `hannah-earnest-children` run's (2026-10-21_06-52-59) searches for the
+  subject's daughter Hannah Grice, born about 1881, under ranges from 1878 or
+  1881 to 1882 or 1884, each blocked by the mother's own 1858 candidate.
 
 Each condition was added because a version without it refused correct calls,
 read individually. Without the subject-name condition the rule refused 13 calls
@@ -2327,7 +2348,7 @@ For each `entry` in `response.entries`:
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
 | `recordType` not in the eight allowed values or the six plan-item values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other (a plan item's vital_record, church, cemetery, land, court or tax is also accepted)."` |
-| A birth range that excludes a candidate an earlier search for the same `subjectId` returned (see "A birth range may not exclude a candidate already found") | Throw, before any request: `"Refused: the birth range <from>–<to> excludes a candidate an earlier search for <subjectId> already returned: <name> (<recordId>), born <year>, from <log_id>. …Search again with no birth range, or with one that includes <years>."` |
+| A birth range that excludes a candidate an earlier search for the same subject returned, the subject being the call's `subjectId` or, with none, a project subject it names (see "A birth range may not exclude a candidate already found") | Throw, before any request: `"Refused: the birth range <from>–<to> excludes a candidate an earlier search for <subjectId> already returned: <name> (<recordId>), born <year>, from <log_id>. …Search again with no birth range, or with one that includes <years>."`, plus, for a call with no `subjectId`, `" This call names no subjectId; its given name is <subjectId>'s, so it is judged as a search for <subjectId>."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |

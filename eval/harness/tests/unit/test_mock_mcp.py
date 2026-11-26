@@ -3805,6 +3805,33 @@ def test_record_search_excluding_the_found_candidate_is_refused_before_any_fixtu
 
 
 @pytest.mark.requires_engine_build
+def test_record_search_with_no_subject_id_is_judged_for_the_subject_it_names(tmp_path):
+    # The failing run's shape: an "Ann" search for 1848-1858 with no subjectId.
+    # Ann is I1's given name and the range holds her tree birth, 1853, so it is
+    # judged as a search for I1; the same name for 1878-1884 is a daughter's.
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    refused = _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "Ann",
+        "birthYearFrom": 1848, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+    assert refused["is_error"] is True
+    assert "names no subjectId" in _extract_response_dict(refused)["error"]
+    assert call_log[-1]["matched"] == {"kind": "candidate_excluded_refused", "index": None}
+
+    _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "Ann",
+        "birthYearFrom": 1878, "birthYearTo": 1884, "projectPath": str(workspace),
+    })
+    assert call_log[-1]["matched"]["kind"] != "candidate_excluded_refused"
+
+
+@pytest.mark.requires_engine_build
 def test_record_search_including_the_found_candidate_matches_a_fixture(tmp_path):
     workspace = _tyler_candidate_workspace(tmp_path)
     _server, call_log, tools_by_name = create_mock_server(

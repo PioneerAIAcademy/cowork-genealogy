@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "delegation": "Run plan item pli_002: find the subject in the 1870 Fluvanna County, Virginia census. A candidate has been found: Antoine Tyler (ark:/61903/1:1:MFLB-F5N), female, mulatto, born 1833, household head, Cunningham, Fluvanna, Virginia — from the 1870 US census (collection 1438024), returned by log_001. Whether she is the subject or a relative is open. Continue searching pli_002 to completion and report whether this candidate should be associated with the subject.\n\nThe subject: a midwife, female, black, born April 1853, Cunningham District, Fluvanna County, Virginia (family name Tyler in 1900). Her given name readings include Ann and Antone.\n\nplanItemId: pli_002\nprojectPath: <workspace>",
+    "delegation": "Run plan item pli_002: find the subject in the 1870 Fluvanna County, Virginia census. A candidate has been found: Antoine Tyler (ark:/61903/1:1:MFLB-F5N), female, mulatto, born 1833, household head, Cunningham, Fluvanna, Virginia — from the 1870 US census (collection 1438024), returned by log_001. Whether she is the subject or a relative is open. Continue searching pli_002 to completion and report the candidates for the subject, each with how strong the match is and what was searched to find it.\n\nThe subject: a midwife, female, black, born April 1853, Cunningham District, Fluvanna County, Virginia (family name Tyler in 1900). Her given name readings include Ann and Antone.\n\nplanItemId: pli_002\nprojectPath: <workspace>",
     "scenario": "tyler-fluvanna-midwife-1870-candidate"
   },
   "mcp_fixtures": [

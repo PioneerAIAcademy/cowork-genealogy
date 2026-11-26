@@ -49,6 +49,16 @@
  * "Margaret" is not. A refusal never blocks the search itself: dropping the
  * range, or widening it to the named years, is always accepted.
  *
+ * A call with no `subjectId` is judged for each of the project's subjects
+ * (`project.subject_person_ids`) whose given name it searches and whose tree
+ * birth year its range includes: an "Ann" search for 1848–1858 with no subject
+ * is a search for the subject the tree calls Ann, born 1853, and leaving the id
+ * off would otherwise let the range through unjudged. The birth year is what
+ * tells the subject from a daughter named for her, whose search (Hannah, 1878–
+ * 1884, for a mother born 1857) leaves the mother's year out. One with no given
+ * name (a surname sweep), under a name no subject holds, or for a subject the
+ * tree gives no birth year, is not judged.
+ *
  * Reads only; a document it cannot read allows the call (an unreadable sidecar
  * is skipped and the rest are judged), because a refusal built on a document it
  * could not read would be a guess.
@@ -92,6 +102,8 @@ export interface CandidateExclusionInput {
 }
 
 export interface ExcludedCandidate {
+  /** The subject the candidate was found for. */
+  subjectId: string;
   recordId: string;
   personName: string | null;
   birthYear: number;
@@ -266,10 +278,32 @@ export async function candidatesFor(
   return out;
 }
 
+/** The first year of the tree's birth fact for `personId`, or undefined. */
+function treeBirthYear(tree: any, personId: string): number | undefined {
+  const person = arr(tree?.persons).find((p) => p?.id === personId);
+  const birth = arr(person?.facts).find((f) => f?.type === "Birth");
+  return birth ? yearsIn(birth.standard_date ?? birth.date)[0] : undefined;
+}
+
+/** The subjects a call is judged for: its own `subjectId`, else each project
+ *  subject one of whose given names the call searches and whose tree birth year
+ *  its range includes. */
+function subjectsJudged(input: CandidateExclusionInput, research: any, tree: any): string[] {
+  if (input.subjectId) return [input.subjectId];
+  const { birthYearFrom: from, birthYearTo: to } = input;
+  return arr(research?.project?.subject_person_ids)
+    .filter((id): id is string => typeof id === "string")
+    .filter((id) => queryIsForSubject(input, subjectGivenWords(tree, id)))
+    .filter((id) => {
+      const born = treeBirthYear(tree, id);
+      return born !== undefined && (typeof from !== "number" || from <= born) && (typeof to !== "number" || born <= to);
+    });
+}
+
 /** Every candidate the call's birth range excludes, oldest log entry first. */
 export async function excludedCandidates(input: CandidateExclusionInput): Promise<ExcludedCandidate[]> {
-  const { projectPath, subjectId, birthYearFrom: from, birthYearTo: to } = input;
-  if (!projectPath || !subjectId) return [];
+  const { projectPath, birthYearFrom: from, birthYearTo: to } = input;
+  if (!projectPath) return [];
   if (typeof from !== "number" && typeof to !== "number") return [];
   if (isSearchForAChild(input)) return [];
 
@@ -283,11 +317,13 @@ export async function excludedCandidates(input: CandidateExclusionInput): Promis
   }
 
   const out: ExcludedCandidate[] = [];
-  for (const c of await candidatesFor(projectPath, research, tree, subjectId, input)) {
-    const below = typeof from === "number" && c.birthYear < from;
-    const above = typeof to === "number" && c.birthYear > to;
-    if (!below && !above) continue;
-    out.push({ recordId: c.recordId, personName: c.personName, birthYear: c.birthYear, logId: c.logId });
+  for (const subjectId of subjectsJudged(input, research, tree)) {
+    for (const c of await candidatesFor(projectPath, research, tree, subjectId, input)) {
+      const below = typeof from === "number" && c.birthYear < from;
+      const above = typeof to === "number" && c.birthYear > to;
+      if (!below && !above) continue;
+      out.push({ subjectId, recordId: c.recordId, personName: c.personName, birthYear: c.birthYear, logId: c.logId });
+    }
   }
   return out;
 }
@@ -301,11 +337,15 @@ export function candidateExclusionMessage(
     .map((c) => `${c.personName ?? "a record"} (${c.recordId}), born ${c.birthYear}, from ${c.logId}`)
     .join("; ");
   const years = [...new Set(excluded.map((c) => c.birthYear))].sort((a, b) => a - b).join(", ");
+  const subjects = [...new Set(excluded.map((c) => c.subjectId))].join(", ");
+  const inferred = input.subjectId
+    ? ""
+    : ` This call names no subjectId; its given name is ${subjects}'s, so it is judged as a search for ${subjects}.`;
   return (
     `Refused: the birth range ${range} excludes a candidate an earlier search for ` +
-    `${input.subjectId} already returned: ${named}. An empty result under this range ` +
+    `${subjects} already returned: ${named}. An empty result under this range ` +
     "could not rule that candidate out, and an indexed age can be years off. Search " +
-    `again with no birth range, or with one that includes ${years}.`
+    `again with no birth range, or with one that includes ${years}.${inferred}`
   );
 }
 

@@ -135,6 +135,71 @@ describe("candidateExclusionRefusal (issue #4580)", () => {
     expect(await excludedCandidates({ projectPath: dir, subjectId: "I1", birthYearTo: 1832 })).toHaveLength(1);
   });
 
+  describe("a call with no subjectId", () => {
+    const subjects = (ids: unknown) => ({ project: { id: "proj_test", title: "t", created: "2026-11-23", subject_person_ids: ids } });
+    const bare = (more: Record<string, unknown> = {}) => ({ projectPath: dir, birthYearFrom: 1848, birthYearTo: 1858, ...more });
+
+    /** The tree with I1 born `birth` (no birth fact when null). */
+    const bornIn = async (birth: string | null) => {
+      const t: any = tree();
+      t.persons[0].facts = birth === null ? [] : [{ id: "F1", type: "Birth", date: birth }];
+      await getProjectStore().writeJson(dir, "tree.gedcomx.json", t);
+    };
+
+    beforeEach(async () => {
+      await bornIn("Apr 1853");
+    });
+
+    it("is not judged when its range leaves out the subject's own tree birth year: a daughter named for her", async () => {
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: 1878, birthYearTo: 1884 }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: 1854, birthYearTo: undefined }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: undefined, birthYearTo: 1852 }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: undefined, birthYearTo: 1830 }))).toBeNull();
+      expect(await candidateExclusionRefusal({ projectPath: dir, subjectId: "I1", givenName: "Ann", birthYearTo: 1830 })).not.toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: 1853, birthYearTo: 1853 }))).not.toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann", birthYearFrom: 1840, birthYearTo: undefined }))).not.toBeNull();
+    });
+
+    it("is not judged for a subject the tree gives no birth year", async () => {
+      await bornIn(null);
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      expect(await candidateExclusionRefusal(bare({ givenName: "Ann" }))).toBeNull();
+    });
+
+    it("is judged as a search for the project subject whose given name it searches, and says so", async () => {
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      const refusal = await candidateExclusionRefusal(bare({ givenName: "Ann" }));
+      expect(refusal).toContain("an earlier search for I1 already returned: Antoine Tyler");
+      expect(refusal).toContain("This call names no subjectId; its given name is I1's");
+      expect(await candidateExclusionRefusal(bare({ givenNameAlt: "Antone" }))).not.toBeNull();
+      expect(await excludedCandidates(bare({ givenName: "Ann" }))).toEqual([
+        { subjectId: "I1", recordId: ANTOINE.recordId, personName: "Antoine Tyler", birthYear: 1833, logId: "log_001" },
+      ]);
+    });
+
+    it("is not judged with no given name, under a name no subject holds, or as a search for a child", async () => {
+      await seed([ANTOINE], "I1", subjects(["I1"]));
+      expect(await candidateExclusionRefusal(bare())).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ surname: "Tyler" }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ givenName: "Margaret" }))).toBeNull();
+      expect(await candidateExclusionRefusal(bare({ motherGivenName: "Ann" }))).toBeNull();
+    });
+
+    it("is not judged when the project names no subject, or the searched name is another subject's", async () => {
+      for (const ids of [undefined, null, [], ["I2"], ["I9"]]) {
+        await seed([ANTOINE], "I1", subjects(ids));
+        expect(await candidateExclusionRefusal(bare({ givenName: "Ann" })), JSON.stringify(ids)).toBeNull();
+      }
+    });
+
+    it("is judged only for the matching subject of several", async () => {
+      await seed([ANTOINE], "I1", subjects(["I2", "I1"]));
+      expect((await excludedCandidates(bare({ givenName: "Ann" }))).map((c) => c.subjectId)).toEqual(["I1"]);
+      expect(await excludedCandidates(bare({ givenName: "Margaret" }))).toEqual([]);
+    });
+  });
+
   it("allows the range when the earlier search was for another subject, or named none", async () => {
     await seed([ANTOINE], "I2");
     expect(await excludedCandidates(ranged())).toEqual([]);
