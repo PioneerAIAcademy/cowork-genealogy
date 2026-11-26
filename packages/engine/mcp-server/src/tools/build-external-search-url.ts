@@ -10,6 +10,7 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import { classifyProjectPath, readProjectJson } from "../utils/project-io.js";
+import type { ProjectLinks } from "../utils/project-links.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -120,10 +121,17 @@ export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlI
   standardPlace?: string;
   // `false` when nothing is awaiting a capture (results already in hand, a
   // search the researcher reports, an unattended run): build and check, write
-  // no in-flight entry. Default `true`.
+  // no in-flight entry. Default `true`. Every call carries a project
+  // (server.ts's gate), so this, not an omitted projectPath, is how a build
+  // says nothing is awaiting a capture.
   awaitingCapture?: boolean;
   // Required with `awaitingCapture: false`: which of the three cases this is.
   notAwaitedBecause?: NotAwaitedReason;
+  // Not advertised (unknown-args.ts ACCEPTED_ALIASES): the delegation's own
+  // field, which Haiku passes through. "no" (or false) reads as
+  // `awaitingCapture: false, notAwaitedBecause: "no_user_present"` unless
+  // `awaitingCapture: true` is sent; any other value changes nothing.
+  userPresent?: unknown;
 }
 
 export const NOT_AWAITED_REASONS = ["results_in_hand", "researcher_reports_result", "no_user_present"] as const;
@@ -152,6 +160,7 @@ export type BuildExternalSearchUrlToolResult =
       notes: string[];
       access: AccessClassification;
       logId?: string;
+      captureSteps?: string;
     })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
   | { ok: false; reason: "place_not_fetched"; errors: string[] }
@@ -786,8 +795,8 @@ export const FS_HOLDINGS_REMINDER =
   "is written in the researcher's part, below summaryStart. A caller line saying so does not replace it.";
 export const BROWSE_SITE_FILM_REMINDER =
   FS_HOLDINGS_REMINDER +
-  " The same goes for a FamilySearch film of this register that catalog_search kept: its sentence, " +
-  'starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`. A film number is ' +
+  " The same goes for a FamilySearch film of this register that catalog_search kept: its " +
+  "`filmForYear.line`, word for word (`FamilySearch has filmed this register: ...`). A film number is " +
   "what the researcher asks a FamilySearch Center for, so it is never left out.";
 // For the agent only: how to skip the route next time.
 const BROWSE_SITE_ROOT_AGENT_TAIL =
@@ -1705,8 +1714,11 @@ async function placeNotFetchedError(projectPath: string, standardPlace: unknown)
 // so `project_context`'s `awaitingUser` sees every URL handed to the user.
 export async function buildExternalSearchUrlTool(
   input: BuildExternalSearchUrlToolInput,
+  links: ProjectLinks = {},
 ): Promise<BuildExternalSearchUrlToolResult> {
-  const awaitingCapture = input?.awaitingCapture;
+  const noUser = (input?.userPresent === "no" || input?.userPresent === false) && input?.awaitingCapture !== true;
+  const awaitingCapture = noUser ? false : input?.awaitingCapture;
+  const notAwaitedBecause = noUser ? (input?.notAwaitedBecause ?? "no_user_present") : input?.notAwaitedBecause;
   if (awaitingCapture !== undefined && awaitingCapture !== null && typeof awaitingCapture !== "boolean") {
     return {
       ok: false,
@@ -1714,7 +1726,7 @@ export async function buildExternalSearchUrlTool(
       errors: [`awaitingCapture must be true or false, got ${JSON.stringify(awaitingCapture)}.`],
     };
   }
-  if (awaitingCapture === false && !NOT_AWAITED_REASONS.includes(input?.notAwaitedBecause as NotAwaitedReason)) {
+  if (awaitingCapture === false && !NOT_AWAITED_REASONS.includes(notAwaitedBecause as NotAwaitedReason)) {
     return { ok: false, reason: "not_awaited_reason_required", errors: [NOT_AWAITED_REASON_REQUIRED] };
   }
   const result = buildExternalSearchUrl(input);
@@ -1748,7 +1760,7 @@ export async function buildExternalSearchUrlTool(
   if (awaitingCapture === false) {
     result.notes.push(NOT_AWAITING_CAPTURE_NOTE);
     if (planItemId !== undefined && planItemId !== null) result.notes.push(PLAN_ITEM_NOT_AWAITING_NOTE);
-    return result;
+    return { ...result, captureSteps: captureSteps(links.uploadUrl) };
   }
 
   const attributes = coerceJsonArg(input.attributes);
@@ -1779,7 +1791,18 @@ export async function buildExternalSearchUrlTool(
   }
   const notes = [...result.notes, ...logged.validation.warnings];
   if (logged.escalationDue) notes.push(logged.escalationDue);
-  return { ...result, notes, logId: logged.logId };
+  return { ...result, notes, logId: logged.logId, captureSteps: captureSteps(links.uploadUrl) };
+}
+
+/** The researcher's capture steps for a hand-off awaiting a capture, written here
+ *  so a caller pastes them rather than composing them. The upload place is the
+ *  project's upload page when the web tier serves one, else "here". */
+export function captureSteps(uploadUrl: string | undefined): string {
+  const where = uploadUrl ? `at ${uploadUrl}` : "here";
+  return (
+    "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+    `Ctrl+P (Windows), choose Save as PDF, and upload it ${where}. Log in first if the page asks.`
+  );
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -1811,6 +1834,7 @@ export const buildExternalSearchUrlSchema = {
     "It also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
     "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "Inside a project it returns `captureSteps`, the researcher's capture steps, to paste word for word. " +
     "With `awaitingCapture: false` it writes no entry and returns no `logId`. " +
     "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +
     "refused (`place_not_fetched`) until external_links_search has looked up that place " +

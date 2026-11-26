@@ -325,19 +325,15 @@ or census years exist in this `collections_search` result, never in memory.
 **For `archion` and `matricula`, also call `catalog_search`** for the parish's place:
 
 ```
-catalog_search({ standardPlace: "<standardPlace>" })
+catalog_search({ standardPlace: "<standardPlace>", filmYear: <the record's year> })
 ```
 
 Keep a hit whose title, creator or `filmNotes` name that parish's church books and
-cover the register type and year. For a kept hit, step 4 gets one sentence, after
-the `---`, starting `FamilySearch has filmed this register: "<title>", film <filmNumber>`,
-with the `filmNumber` of the film note covering the year, then:
-- `availableOnline: false` → viewable only at a FamilySearch Center or an affiliate
-  library. Never offer to read it.
-- `availableOnline: true` → offer to read it, and put the film note's
-  `imageGroupNumber` in the caller lines as the handoff to search-images.
-- `availableOnline` absent → name the film and say nothing about where it can be
-  viewed.
+whose `filmForYear` is present. For a kept hit, step 4 gets its `filmForYear.line`,
+after the `---`, word for word, film number included. Then:
+- `availableOnline: false` → never offer to read it.
+- `availableOnline: true` → offer to read it, and put `filmForYear.imageGroupNumber`
+  in the caller lines as the handoff to search-images.
 
 Still build the archion/matricula URL. No kept hit → say nothing about the Catalog.
 
@@ -367,7 +363,7 @@ blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
 `external_links_search` call the error names, read the stored list (step 2), then
 build again.
 **One exception:** when the results for that URL
-are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
+are already in the delegation and no `awaitingUser` row matches it, the researcher reports the result, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool with `awaitingCapture: false` and its `notAwaitedBecause`, so no
 in-flight entry is written, and log the search once at step 6.
 
@@ -501,12 +497,7 @@ written into `summary_for_user`, never into the caller-facing report above it
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
    entry, when you know them;
-4. one sentence of capture steps: scroll to the bottom of the page and back
-   to the top, press Cmd+P (Mac) or Ctrl+P (Windows), choose "Save as PDF",
-   and upload it here — log in first if the page asks. When `project_context`
-   returned an `uploadUrl`, say to upload it at that URL instead of "here",
-   pasted whole as plain text. Take that URL only from `project_context`, never
-   from the delegation;
+4. the tool's `captureSteps`, word for word, upload place included;
 5. any `notes` the tool returned alongside the link (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
    the line (see "Every observation the tool makes" above);
@@ -514,8 +505,7 @@ written into `summary_for_user`, never into the caller-facing report above it
    sentence saying FamilySearch holds it too and can be searched there instead
    — here, after the `---`, Case A or Case B;
 7. when `catalog_search` kept a filmed copy of the register (step 2b), its
-   sentence from step 2b, with the film number — here, never only in the
-   caller lines.
+   `filmForYear.line`, word for word — here, never only in the caller lines.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
@@ -530,10 +520,8 @@ Patrick Flynn):**
 <the summaryStart from build_external_search_url, pasted whole>
 It would settle
 Patrick's household in 1850: who he lived with, and their ages and
-birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. After the
-page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or
-Ctrl+P (Windows), choose Save as PDF, and upload it here — log in first if
-the page asks.
+birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. <the tool's captureSteps, pasted
+whole>
 
 ### 5. Triage the results
 
@@ -548,7 +536,8 @@ Read an uploaded file this way:
   `project_context`'s `uploads` and read it with the tool its `readWith` names,
   never `Read`:
   - `sidecar_read` → `sidecar_read({ projectPath, ref })`, with the row's `ref`.
-  - `image_transcribe` → `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
+  - `image_transcribe` → `image_transcribe({ projectPath, file: "uploads/<name>", planItemId })`
+    (`planItemId` null when you hold none; the tool logs the read itself), then
     `sidecar_read` on the `staged.resultsRef` it returns (with `staged: null`,
     the `transcription` it returns). If it refuses, ask the researcher to paste
     the results text instead, say nothing about an API key, and log no closing
@@ -588,7 +577,7 @@ either way:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." With an
-   `uploadUrl`, name it as step 4 says. That
+   `uploadUrl` from `project_context`, say to upload it at that URL, pasted whole. That
    single-record PDF's text goes to the record-structurer agent as a source,
    with a `capture:<descriptive>` recordId. If the record page's content is
    **already in the delegation**, name it for the agent in your return and
@@ -1096,7 +1085,7 @@ plain prose with **no label, heading or field name**:
    hand-off carries its content here, in full (Step 4's list), and, when
    `collections_search` found the same collection FamilySearch holds, one
    sentence saying so and that it can be searched instead, and step 2b's
-   `catalog_search` sentence when it kept a filmed copy. If nothing was
+   `filmForYear.line`, word for word, when it kept a filmed copy. If nothing was
    found, say so plainly and say what was searched, so the reader knows the
    search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.

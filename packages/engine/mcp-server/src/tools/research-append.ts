@@ -198,6 +198,7 @@ import { claimRuleFindings, questionCapFindings } from "../validation/claim-rule
 import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
 import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -7585,7 +7586,7 @@ function planItemLogAttributionInvariants(
   // `e &&`: a legacy `log: [null]` must not take the writer down — the same
   // guard planActiveInvariants and hypothesisSupportedInvariants carry.
   const named = (Array.isArray(research?.log) ? research.log : []).some(
-    (e: any) => e && e.plan_item_id === pid,
+    (e: any) => e && e.plan_item_id === pid && !isToolLoggedRead(e),
   );
   if (named) return [];
   // The remedy names a move the agent can actually make. `research_log_append`
@@ -7617,7 +7618,8 @@ function planItemLogAttributionInvariants(
     ];
   }
   return [
-    `plan_items[${pid}]: no log[] entry names ${pid}, so completing it would claim a search ` +
+    `plan_items[${pid}]: no log[] entry names ${pid} (a page image_transcribe logged itself is ` +
+      `a read, not the item's search), so completing it would claim a search ` +
       `nothing in the document records. Log the search that satisfies this item with ` +
       `research_log_append({ planItemId: "${pid}", ... }) before completing it — ` +
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
@@ -7683,7 +7685,7 @@ export function planItemCompletionRecordTypeInvariants(entry: any, research: any
   const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
   if (!terms) return []; // record_type outside the starter table — structural check only
   const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
-    (e: any) => e && e.plan_item_id === pid,
+    (e: any) => e && e.plan_item_id === pid && !isToolLoggedRead(e),
   );
   if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
   const haystack = attributed
@@ -7894,6 +7896,7 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
     const tool = e.tool;
     if (
       e.plan_item_id === pid &&
+      !isToolLoggedRead(e) &&
       (tool === "external_site" ||
         (e.outcome === "positive" && tool !== "external_links_search"))
     ) {

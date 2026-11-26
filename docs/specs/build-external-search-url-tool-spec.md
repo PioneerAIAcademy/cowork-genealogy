@@ -109,12 +109,14 @@ build_external_search_url({
 
   // MCP tool only (§6): the project to log the hand-off in, and the plan item.
   projectPath?: string,
-  planItemId?: string,
+  planItemId?: string | null,
 
   // MCP tool only (§6): `false` when nothing is awaiting a capture. The tool
   // then builds and checks but writes no in-flight entry. Default `true`.
   awaitingCapture?: boolean,
   notAwaitedBecause?: "results_in_hand" | "researcher_reports_result" | "no_user_present",  // required with awaitingCapture: false
+  // not advertised: "no" (or false) reads as awaitingCapture false, no_user_present
+  userPresent?: unknown,
 
   // MCP tool only: the place the search is about, as `external_links_search`
   // takes it. REQUIRED for a site-wide build (no `baseUrl`) when `projectPath`
@@ -176,7 +178,7 @@ build_external_search_url({
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 // MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
-| { ok: true, url, handoffLine, summaryStart, notes, access, logId?: string }   // logId when the in-flight entry was written
+| { ok: true, url, handoffLine, summaryStart, alsoInSummary, notes, access, logId?: string, captureSteps?: string }   // logId when the in-flight entry was written; captureSteps inside a project
 | { ok: false, reason: "log_write_failed", errors: string[] }
 ```
 
@@ -591,8 +593,8 @@ so the MCP tool now refuses the build:
   unreadable `external-collections.json` refuses too, as the `baseUrl` check
   does.
 - **What it leaves alone.** The agent still chooses between a curated link and
-  a site-wide search. A build with a `baseUrl`, and any build outside a project,
-  is not checked. Its limit is in §9.2.
+  a site-wide search. A build with a `baseUrl` is not checked by this gate.
+  Every build now has a project (§9.2).
 
 ## 4. Per-site parameter tables (the ported prose)
 
@@ -737,6 +739,8 @@ nil.
 | MCP tool, `awaitingCapture` not a boolean (`"false"`, `0`) | `{ ok: false, reason: "invalid_awaiting_capture" }`, and nothing is logged |
 | MCP tool, `awaitingCapture: false` with no `notAwaitedBecause`, or one outside its three values | `{ ok: false, reason: "not_awaited_reason_required" }`, naming the three cases and saying a link the researcher will open and capture leaves `awaitingCapture` out; nothing is logged. On Haiku the bare flag was passed on real hand-offs (2 of 10 on a browse site), which left them unlogged |
 | MCP tool, `planItemId` a `pli_` id that no plan in the project holds | `{ ok: false, reason: "unknown_plan_item" }`, saying to pass null for an ad-hoc search; nothing is logged. An invented id (`pli_none`) was written to the log as a reference to nothing. `planItemId` may be null, and the text `"null"` is read as null, as `research_log_append` reads it |
+| MCP tool, `userPresent: "no"` (or `false`), not advertised | read as `awaitingCapture: false, notAwaitedBecause: "no_user_present"` unless `awaitingCapture: true` is sent; any other `userPresent` value changes nothing. search-external-sites' delegation carries the field and Haiku passed it on; refusing it as an unknown argument cost a retry. Listed in `unknown-args.ts`'s `ACCEPTED_ALIASES` |
+| MCP tool, `projectPath` is a project, the build succeeds | `captureSteps` is the researcher's capture steps (scroll, Cmd+P or Ctrl+P, Save as PDF, upload, log in if asked), naming the project's upload page from `projectLinks` when the web tier serves one and "here" otherwise. A caller pastes it word for word: search-external-sites, composing the steps itself, dropped them or the link line in runs of `ut_search_external_sites_mcc` |
 
 ---
 
@@ -1117,8 +1121,8 @@ be closed and its capture logged. On
 project. `search-external-sites` has three builds no capture is awaited for:
 triage with no matching hand-off, a reported result, and the no-user deferral.
 They pass `projectPath` with `awaitingCapture: false`, so the gate checks them
-like any other build. `where-else-to-search` always passes `baseUrl`, so the
-site-wide half of the gate never fires for it.
+like any other build. `where-else-to-search` passes `projectPath` and always a `baseUrl`, so only the
+`baseUrl` check applies to it.
 
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 

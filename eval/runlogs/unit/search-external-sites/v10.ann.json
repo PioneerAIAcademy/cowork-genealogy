@@ -1,6 +1,6 @@
 {
   "run_log": "v10.json",
-  "annotator": "Promiseemmanuel2019@gmail.com",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
       "test_id": "ut_search_external_sites_001",
@@ -30,9 +30,9 @@
       "test_id": "ut_search_external_sites_001",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The birthplace conflict is resolved to Ireland, so Ireland should be in the link. The agent left birthplace out. Collection, name, birth year and residence are right."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_search_external_sites_001",
@@ -67,9 +67,57 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_005",
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -86,14 +134,22 @@
       "test_id": "ut_search_external_sites_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent passed userPresent to build_external_search_url, which does not take it. The tool refused, the agent retried without it and the link was built correctly. Nothing wrong was saved."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -132,16 +188,40 @@
     },
     {
       "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -156,54 +236,6 @@
     },
     {
       "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,95 +243,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The agent asked for the Chronicling America link twice without the standard place, and the Newspapers link once before the links lookup. The tool refused each time and the agent then sent the right call. Nothing wrong was saved."
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Same slip as Tool Arguments: the link was requested before the place and links lookups were used. The tool blocked it and the final order was correct."
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_mcc",
+      "test_id": "ut_search_external_sites_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -318,6 +262,94 @@
       "test_id": "ut_search_external_sites_mcc",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -389,7 +421,7 @@
     {
       "test_id": "ut_search_external_sites_tri",
       "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
+      "dimension_name": "Log entry",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -397,7 +429,7 @@
     {
       "test_id": "ut_search_external_sites_tri",
       "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "dimension_name": "Tool selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -429,7 +461,7 @@
     {
       "test_id": "ut_search_external_sites_tri",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -443,12 +475,44 @@
       "comment": null
     },
     {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly generated the MyHeritage search URL and identified the curated 1855 Massachusetts State Census collection. It also used the collections_search result to confirm that FamilySearch holds the same census (collection 1459985) and offered it as an alternative. The birthPlace omission was tool-confirmed, and the research plan was appropriately updated to in_progress. The response meets the scenario requirements and is factually grounded."
+    },
+    {
+      "test_id": "ut_search_external_sites_mcc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly identified Matricula as a browse-only site, generated the correct homepage URL, provided the Ortssuche navigation instructions, and identified FamilySearch film 876540 as accessible only at a FamilySearch Center or affiliate library. However, it made an unsupported claim that the indexed collection \"Germany, Marriages, 1558-1929\" could be used to search for this particular marriage. The collections_search results did not establish coverage for Ochtrup or the Diocese of Münster. The agent should not present this collection as a confirmed alternative without supporting evidence."
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly selected Ancestry's Pennsylvania, U.S., Wills and Probate Records collection (8800) and generated the search URL using the curated collection link. It appropriately used Schuylkill County as the search location and deferred result evaluation until a capture is provided. Although the hand-off description that pli_006 is a FamilySearch item could be clearer, leaving the plan item unchanged was appropriate because this was a parallel Ancestry search, not the planned FamilySearch search."
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly created log_006 in the same turn as URL generation. The entry records the Ancestry search with a partial outcome and capture_received false. It was appropriate not to attach or change the status of pli_006 because that plan item targets the FamilySearch repository, whereas this was a separate Ancestry search. The log entry was correctly recorded."
+    },
+    {
       "test_id": "ut_search_external_sites_tri",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly assessed all four MyHeritage results against Josiah Barnes's known age and birthplace. It identified the Concord entry as the strongest match, the Springfield entry as a possible match, and correctly rejected the Lowell and New Bedford entries based on age and birthplace. The triage was supported by individual explanations, with no fabricated findings. Although the written order differs from the original result order, the assessments themselves are accurate. The agent also correctly reported that log_002 was written and pli_001 was completed."
     }
   ]
 }

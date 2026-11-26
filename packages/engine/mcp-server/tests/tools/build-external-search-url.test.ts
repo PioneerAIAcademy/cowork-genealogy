@@ -2488,6 +2488,56 @@ describe("build_external_search_url", () => {
         expect(r.errors.join(" ")).toMatch(/awaitingCapture must be true or false/);
         expect(await readLog()).toEqual([]);
       });
+
+      it("returns captureSteps naming the upload page when the project has one, else 'here'", async () => {
+        await writeFetchedProject();
+        const args = { site: "ancestry", attributes: { surname: "Flynn" }, projectPath: dir, standardPlace: PA } as const;
+        const here = await buildExternalSearchUrlTool({ ...args });
+        expect(here.ok && here.captureSteps).toBe(
+          "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+            "Ctrl+P (Windows), choose Save as PDF, and upload it here. Log in first if the page asks.",
+        );
+        const hosted = await buildExternalSearchUrlTool(
+          { ...args, awaitingCapture: false, notAwaitedBecause: "researcher_reports_result" },
+          { uploadUrl: "https://web.example/upload/proj_0123456789abcdef" },
+        );
+        expect(hosted.ok && hosted.captureSteps).toMatch(
+          /and upload it at https:\/\/web\.example\/upload\/proj_0123456789abcdef\. Log in first/,
+        );
+        const outside = await buildExternalSearchUrlTool({ site: "findagrave", attributes: { surname: "Flynn" } });
+        expect(outside.ok && outside.captureSteps).toBeUndefined();
+      });
+
+      it.each(["no", false])("reads userPresent %j as no_user_present: no entry, no reason needed", async (userPresent) => {
+        await writeFetchedProject();
+        const r = await buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { surname: "Flynn" },
+          projectPath: dir,
+          standardPlace: PA,
+          userPresent,
+        });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect(r.logId).toBeUndefined();
+        expect(r.notes.join(" ")).toMatch(/No in-flight entry written/);
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("leaves userPresent yes, and userPresent no with awaitingCapture true, logging the hand-off", async () => {
+        await writeFetchedProject();
+        for (const extra of [{ userPresent: "yes" }, { userPresent: "no", awaitingCapture: true }]) {
+          const r = await buildExternalSearchUrlTool({
+            site: "ancestry",
+            attributes: { surname: "Flynn" },
+            projectPath: dir,
+            standardPlace: PA,
+            ...extra,
+          });
+          expect(r.ok && r.logId, JSON.stringify(r)).toBeTruthy();
+        }
+        expect(await readLog()).toHaveLength(2);
+      });
     });
 
     it("writes nothing when the build fails", async () => {

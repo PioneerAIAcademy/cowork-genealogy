@@ -356,7 +356,16 @@ describe("rejectUnknownArgs: what it lets through", () => {
   });
 
   it("accepts exactly these aliases: adding one is a deliberate edit here", () => {
-    expect(ACCEPTED_ALIASES).toEqual({ image_read: ["imageArk"], image_transcribe: ["imageArk"] });
+    expect(ACCEPTED_ALIASES).toEqual({
+      image_read: ["imageArk"],
+      image_transcribe: ["imageArk"],
+      build_external_search_url: ["userPresent"],
+    });
+  });
+
+  it("accepts userPresent on build_external_search_url, and nowhere else", () => {
+    expect(rejectUnknownArgs("build_external_search_url", { site: "ancestry", userPresent: "no" })).toBeNull();
+    expect(rejectUnknownArgs("record_search", { surname: "Flynn", userPresent: "no" })).not.toBeNull();
   });
 
   it("accepts imageArk on the two image tools, and nowhere else", () => {
