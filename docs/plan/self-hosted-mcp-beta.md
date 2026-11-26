@@ -118,7 +118,7 @@ A 401 from the door itself brings up Claude's "Reconnect a connector to keep usi
 | 3. Hook | The `PreToolUse` hook fires on connector calls. |
 | 4. Limits | Through Funnel, in Desktop Chat: a call times out after 230 s (120 s finished, 240 s did not). A 40,000-character result reaches the model whole; at 100,000 only a 2 KB preview does and the rest goes to a file the model reads with a shell; at 160,000 the model gets an error and the file. |
 | 5. Tool delivery | Every advertised tool arrives on a fresh add. After a redeploy that changed 48 of 57 tool definitions and added 3 tools, a new chat at claude.ai listed the new tool and the new argument with the connector left in place, and no call prompted (2026-11-26, one account). An open chat was not tried. |
-| 6. Sign-in | Recorded: Claude's client document, the `/authorize` and `/token` parameters, and that it accepts a grant with no refresh token. Not measured: whether a sign-in started in one Claude account can finish in another. If it can, report it to Anthropic, and the launch decision goes to the lead. |
+| 6. Sign-in | Recorded: Claude's client document, the `/authorize` and `/token` parameters, and that it accepts a grant with no refresh token. A sign-in started in one Claude account cannot finish in another (2026-11-26). The consent page's address, from a sign-in the first account started, was opened in a second browser signed in to a different Claude account and a different FamilySearch account. Our server issued a code as it must; Claude answered "Account mismatch" at `/settings/mcp/auth_mismatch`, never asked `/token`, and the first account stayed not connected. |
 | 7. Folder access | `Read` cannot see the project folder. `search-images` and `search-hints` reach staged results through `sidecar_read` on the connector (2026-11-08), which asks for approval like any tool. |
 | 8. Updates | Not measured on a second Claude account. On one account, removing the plugin and uploading a newer zip works (2026-11-26); which chats then run the new one was not recorded. |
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
@@ -327,7 +327,7 @@ The first invited user waits for all of these.
 
    A run that answers inline goes to the lead, naming the message and which case it was.
 3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26).
-4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
+4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed, as it did on 26 November. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
 5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
 
 ## Ending the beta
