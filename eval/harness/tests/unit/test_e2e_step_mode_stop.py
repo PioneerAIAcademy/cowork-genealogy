@@ -136,7 +136,7 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
 def test_the_turn_step_is_read_from_the_gate_not_re_derived():
     """Ask 2. `step_candidate` reports the router skill; the gate does not. So
     re-deriving stamped `research` as the step of any turn that opened with a
-    router call — 13 of the 222 committed e2e runs — and `next_auto_reply` then
+    router call — 13 of the 222 committed e2e runs — and `next_reply` then
     keyed on `(research, offer)` pairs, ended runs on false repeats, and never
     saw `research-plan` or `proof-conclusion`. The gate is the one thing that
     knows which step a turn opened with."""

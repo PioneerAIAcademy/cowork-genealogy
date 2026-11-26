@@ -35,6 +35,13 @@ RELAY_NOTE = (
 
 #: Agents whose relay rule is not "after the final `---`" (research/SKILL.md, "One step per turn").
 AGENT_NOTES = {
+    "locality-guide": (
+        "That was locality-guide's report. Keep its text after the final `---` word for "
+        "word. When research-plan runs next in this turn, give the researcher both reports "
+        "word for word, locality-guide's first, then research-plan's, adding nothing but the "
+        "turn's closing offer and the one sentence before it; otherwise relay this one the "
+        "same way."
+    ),
     "historical-context": (
         "That was historical-context's report. Give the researcher everything above its "
         "`### Search implications` heading word for word, the Sources consulted list "
@@ -42,11 +49,13 @@ AGENT_NOTES = {
         "check the facts the explanation rests on, and end on the \"Continue with …?\" line."
     ),
     "init-project": (
-        "That was init-project's report. When the researcher's message is a bounded "
-        "request for anything but a research plan (research/SKILL.md, \"Bounded request or "
-        "job\"), relay its text after the final `---` without its closing sentences about "
-        "the next step, then deliver what was asked now, in this turn, as research/SKILL.md "
-        "says. Otherwise relay that text word for word and end on the turn's closing offer."
+        "That was init-project's report. Relay its text after the final `---` word for word, "
+        "its source lines included, then add exactly these two lines and nothing else: \"What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?\" "
+        "and \"Continue with `choosing the question`?\" Only when the researcher's message is a bounded request for anything but a "
+        "research plan (research/SKILL.md, \"Bounded request or job\"), or its return has a "
+        "`Verify request: broad` line (the broad audit is then what was asked), leave out its sentence "
+        "naming the next step, add neither line, and deliver what was asked now, in this "
+        "turn, as research/SKILL.md says."
     ),
 }
 

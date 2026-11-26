@@ -1,0 +1,75 @@
+{
+  "test": {
+    "id": "ut_research_pr2",
+    "skill": "research",
+    "name": "The plan turn relays locality-guide's and research-plan's summaries in full",
+    "type": "positive",
+    "description": "Issue #4791, stop 3. When locality-guide runs before research-plan, the reply carries each agent's summary verbatim after its final `---` (the router condensed ~1,800 characters of summaries to a median ~470 in the feedback this issue cites), then ends on \"Continue with `running the searches`?\".",
+    "tags": [
+      "routing",
+      "routes-to:locality-guide",
+      "relays-both-plan-summaries"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered `planning the searches`. Continue.",
+    "scenario": "wilkins-first-plan"
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 900,
+    "stub_skills": [
+      {
+        "skill": "locality-guide",
+        "response": "Locality entry written for Muhlenberg County, Kentucky, 1870-1911.\n---\nKentucky began statewide death certificates in 1911; before that, Muhlenberg County deaths were recorded only in the 1852-1862 and 1874-1878 vital-statistics registers and in county probate and church records."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Plan written for q_001 with three items.\n---\nThe plan searches the 1874-1878 Muhlenberg County death register first, then the county probate index for an estate after 1870, then the 1880 mortality schedule."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "The two summaries in the reply, verbatim, and the closing \"Continue with `running the searches`?\" line are checked by test_plan_turn_relays_both_summaries. Do not re-grade them.",
+    "locality-guide and research-plan are stubbed. Their summaries are this canned text, which the router relays and did not invent: locality-guide \"Kentucky began statewide death certificates in 1911; before that, Muhlenberg County deaths were recorded only in the 1852-1862 and 1874-1878 vital-statistics registers and in county probate and church records.\"; research-plan \"The plan searches the 1874-1878 Muhlenberg County death register first, then the county probate index for an estate after 1870, then the 1880 mortality schedule.\".",
+    "Both agents are stubbed with canned summaries, so nothing reaches research.json; that is not a failure.",
+    "Grade whether the router added nothing to the two summaries but its closing line: no restatement, table or summary of its own.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

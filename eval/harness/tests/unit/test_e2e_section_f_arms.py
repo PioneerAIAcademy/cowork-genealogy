@@ -16,6 +16,7 @@ import pytest
 
 from e2e import run_e2e
 from e2e.orchestrator import ended_on_a_question, wrap_up_override
+from e2e.turn_loop import next_reply
 from tests.unit.test_e2e_tool_search_switch import _argv, _record_run
 
 REPO = next(
@@ -83,28 +84,25 @@ def test_a_question_earlier_in_the_text_does_not_make_it_a_question():
 
 
 def test_the_override_swaps_the_reply_after_the_named_step():
-    """It is an override of the REPLY, not a session mode: `next_auto_reply`
-    stays production's own function with no test-only branch in it."""
-    assert wrap_up_override(sb, sb.REPLY_KEEP_GOING, "search-records",
+    """It is an override of the REPLY `next_reply` chose, not a session mode."""
+    assert wrap_up_override(sb, sb.REPLY_CONTINUE, "search-records",
                             "search-records") == sb.REPLY_WRAP_UP
 
 
 def test_the_override_leaves_every_other_step_alone():
-    assert wrap_up_override(sb, sb.REPLY_KEEP_GOING, "person-evidence",
-                            "search-records") == sb.REPLY_KEEP_GOING
+    assert wrap_up_override(sb, sb.REPLY_CONTINUE, "person-evidence",
+                            "search-records") == sb.REPLY_CONTINUE
 
 
 def test_the_override_is_inert_when_no_step_was_named():
     """Every run without the flag, which is every committed one."""
-    assert wrap_up_override(sb, sb.REPLY_KEEP_GOING, "search-records",
-                            None) == sb.REPLY_KEEP_GOING
+    assert wrap_up_override(sb, sb.REPLY_CONTINUE, "search-records",
+                            None) == sb.REPLY_CONTINUE
 
 
 def test_the_override_never_invents_a_reply():
-    """It swaps one; it does not create one. A turn `next_auto_reply` ended the
-    run on stays ended, so the arm cannot extend a run past where production
-    would have stopped it -- which would make it measure something production
-    never does."""
+    """It swaps one; it does not create one. A turn `next_reply` ended the run on
+    stays ended, so the arm cannot extend a run."""
     assert wrap_up_override(sb, None, "search-records", "search-records") is None
 
 
@@ -112,16 +110,16 @@ def test_a_turn_that_ran_no_step_is_never_the_named_one():
     """`turn.step` is None when the turn spawned nothing (a question between
     steps). Matching None against the flag would fire the arm on a turn that
     ran nothing at all."""
-    assert wrap_up_override(sb, sb.REPLY_KEEP_GOING, None,
-                            "search-records") == sb.REPLY_KEEP_GOING
+    assert wrap_up_override(sb, sb.REPLY_CONTINUE, None,
+                            "search-records") == sb.REPLY_CONTINUE
 
 
 def test_the_run_ends_after_the_override():
-    """The reply opens a turn that reads `wrapup`, and `next_auto_reply`
-    answers nothing for one -- so the arm needs no stop of its own."""
+    """The reply opens a turn that reads `wrapup`, and `next_reply` answers
+    nothing for one -- so the arm needs no stop of its own."""
     assert sb.step_mode(sb.REPLY_WRAP_UP) == "wrapup"
-    assert sb.next_auto_reply({}, "wrapup", "search-records", "person-evidence",
-                              "conclude", "ok")["reply"] is None
+    assert next_reply(sb, {}, "wrapup", "search-records", "person-evidence",
+                      "conclude", "ok")["reply"] is None
 
 
 # --- the CLI wiring ----------------------------------------------------------
@@ -129,32 +127,32 @@ def test_the_run_ends_after_the_override():
 
 def test_the_flag_reaches_the_run(monkeypatch, tmp_path):
     calls = _record_run(monkeypatch)
-    assert run_e2e.main(_argv(tmp_path, "--step-mode", "job",
+    assert run_e2e.main(_argv(tmp_path, "--step-mode", "unattended",
                               "--wrap-up-after", "search-records")) == 0
     assert calls and calls[0]["wrap_up_after"] == "search-records"
 
 
 def test_no_flag_means_no_override(monkeypatch, tmp_path):
     calls = _record_run(monkeypatch)
-    assert run_e2e.main(_argv(tmp_path, "--step-mode", "job")) == 0
+    assert run_e2e.main(_argv(tmp_path, "--step-mode", "unattended")) == 0
     assert calls and calls[0]["wrap_up_after"] is None
 
 
 def test_the_flag_is_refused_under_step_mode_step(monkeypatch, tmp_path, capsys):
-    """Under `--step-mode step` no host reply is sent at all, so there is nothing
+    """Under `--step-mode step` no reply is sent at all, so there is nothing
     to override — and a run that silently ignored the flag would be bought and
     would measure the wrong thing."""
     calls = _record_run(monkeypatch)
     assert run_e2e.main(_argv(tmp_path, "--step-mode", "step",
                               "--wrap-up-after", "search-records")) == 2
     assert not calls
-    assert "needs --step-mode job" in capsys.readouterr().err
+    assert "needs --step-mode unattended" in capsys.readouterr().err
 
 
-def test_the_flag_needs_no_step_mode_now_that_job_is_the_default(monkeypatch, tmp_path):
-    """Step mode phase 2 made `job` the e2e default, so the override works with no
+def test_the_flag_needs_no_step_mode_since_unattended_is_the_default(monkeypatch, tmp_path):
+    """`unattended` is the e2e default, so the override works with no
     `--step-mode` at all."""
     calls = _record_run(monkeypatch)
     assert run_e2e.main(_argv(tmp_path, "--wrap-up-after", "search-records")) == 0
     assert calls[0]["wrap_up_after"] == "search-records"
-    assert calls[0]["step_mode"] == "job"
+    assert calls[0]["step_mode"] == "unattended"

@@ -351,6 +351,10 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+A `framed` question's `nextStep` is `research-plan`, or `locality-guide, then
+research-plan` while the project has no `localities` entry at all: the plan
+step opens with the locality survey.
+
 `critiqued` is reached only when the user asked for a gps-mentor review — the
 mentor is not on the default `/research` path — so it records that a critique
 exists and gates nothing. A superseded verdict does not count — a
@@ -714,6 +718,16 @@ sources as tree `S2…` and points the person's, names' and facts' refs at them
 attached on FamilySearch afterwards is not in the tree. A record asked for that
 is already listed is not searched for (ut_research_021).
 
+A top-level `nextStep` (`FIRST_QUESTION_NEXT_STEP`) is present on a project with a
+subject, no question and a status other than `completed`. It names the steps that
+write the first question: `Skill("forget-and-rederive")` in verify mode first when
+the researcher's reply (never the objective) disputes a particular
+relationship, fact or source of the subject; then `extraction_append` and
+`timeline_build` for each subject; then question-selection. It says that a bounded
+request and the turn that created the project are not that turn. Why a tool says
+it: on Haiku 5.5 low the router read "no questions" and went straight to
+question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
@@ -724,7 +738,7 @@ and the `nextStep` text:
 
 - person-evidence: `assertionIds:` every live assertion of the question (the
   rung fires only when none is linked) and `userPresent: yes`, which the router
-  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+  turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict;
 - hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.

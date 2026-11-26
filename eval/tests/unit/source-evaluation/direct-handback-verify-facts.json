@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_vf1",
+    "skill": "source-evaluation",
+    "name": "Whether a person's facts and relationships are correct — hand back to research, call no tool",
+    "type": "negative",
+    "description": "Issue #4791 (lead, 2026-11-24, from feedback #4761): \"Verify whether the facts, relationships, and sources attached to <person> are correct\" reached this agent, which audits attached sources and never tests a relationship. It is a research job even though it also names the sources. The front-door gate hands it back to research and calls no tool. Gated by test_scope_handback_calls_no_tool.",
+    "tags": [
+      "scope-handback",
+      "handback-to-research",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Verify whether the facts, relationships, and sources attached to Christian P. Hole (KD96-TV2) are correct.\n\nprojectPath: <workspace>",
+    "scenario": "christian-hole-quality"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "Verifying a person's facts and relationships is a research job (lead, 2026-11-24). The correct, complete response is the one-line hand-back 'Hand-back: research — <clause>' with no tool calls and no audit. Do NOT penalize the agent for not reading the sources or for the reply being one line.",
+    "The scope-handback invariant validator decides this test's outcome: no MCP tool call, both project files unchanged, and a Hand-back line naming research."
+  ],
+  "negative": {
+    "correct_skill": [
+      "research"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Testing whether a person's facts and relationships are correct is research: it plans and searches for the evidence. On the direct arm there is no router whose choice could be graded, so the test is graded on the front-door invariant: the agent hands back by name and calls nothing."
+  }
+}
