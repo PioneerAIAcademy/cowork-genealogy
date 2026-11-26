@@ -2032,7 +2032,7 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     },
   );
 
-  it.each(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"])(
+  it.each(["source_evaluation", "check_warnings", "translation", "validate_schema"])(
     "tells the agent to return the %s report it just logged (#3524)",
     async (tool) => {
       await write(baseResearch([]));
@@ -2044,6 +2044,26 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
       expect((batch as any).next).toMatch(/return the report you just logged, in full/);
     },
   );
+
+  it("hands a convert_dates report back as `replyStart`, to paste as the reply (#4846)", async () => {
+    await write(baseResearch([]));
+    const op = { tool: "convert_dates", query: { dates: ["15 Feb 1749/50"] }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: "  Original: 15 Feb 1749/50. Converted: 26 Feb 1750.  " };
+    const single = await researchLogAppend({ projectPath: dir, ...op });
+    expect(single.ok).toBe(true);
+    expect((single as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((single as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    const batch = await researchLogAppend({ projectPath: dir, ops: [op] });
+    expect((batch as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((batch as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    // No notes to echo: the older reminder, and no `replyStart`.
+    const bare = await researchLogAppend({ projectPath: dir, ...op, notes: null });
+    expect((bare as any).next).toMatch(/return the report you just logged, in full/);
+    expect(bare).not.toHaveProperty("replyStart");
+    // Another report tool is not echoed.
+    const other = await researchLogAppend({ projectPath: dir, ...op, tool: "translation" });
+    expect((other as any).next).toMatch(/return the report you just logged, in full/);
+    expect(other).not.toHaveProperty("replyStart");
+  });
 
   it("carries no report reminder for a record search or a reference lookup (#3524)", async () => {
     await write(baseResearch([]));
