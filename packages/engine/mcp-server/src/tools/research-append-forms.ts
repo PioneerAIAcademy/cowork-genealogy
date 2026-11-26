@@ -31,12 +31,12 @@ export const OP_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 /** The call's own arguments. Sent on an op they were never read and still are
- *  not: they stay on the op, never moved into its payload. */
+ *  not: they stay on the op, never moved into its payload. Not `verdict`: it is
+ *  also a required field of `hit_verdicts` and `evaluations` entries. */
 export const CALL_KEYS: ReadonlySet<string> = new Set([
   "projectPath",
   "resolveStandardPlace",
   "sourceDescription",
-  "verdict",
 ]);
 
 /** Stands in for the new plan's id on the plan form's items until the tool has

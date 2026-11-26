@@ -471,8 +471,10 @@ so validation, the all-or-nothing write and every refusal are the batch's.
 - **Flat op.** Any key on an op other than `section`, `op`, `entry`, `entryId`,
   `fields`, `edits`, `guideSection`, `surveyRef` and `planId` is payload: it moves
   under `entry` on an `append` and under `fields` on an `update`. The call's own
-  arguments (`projectPath`, `resolveStandardPlace`, `sourceDescription`, `verdict`)
-  are never payload: sent on an op they stay there, unread, as before. An op carrying
+  arguments (`projectPath`, `resolveStandardPlace`, `sourceDescription`) are never
+  payload: sent on an op they stay there, unread, as before. The call's `verdict`
+  argument is not among them, because `verdict` is also a required field of
+  `hit_verdicts` and `evaluations` entries, so on an op it is payload. An op carrying
   payload both ways is refused (`ops[i]: carries both …`), writing nothing.
   Measured over 503 committed run logs (31,384 batch ops), 41 ops carried keys
   beside their wrapper: 24 `resolveStandardPlace` (excluded above), 13

@@ -265,6 +265,22 @@ describe("canonicalOp", () => {
     expect(canonicalOp(op)).toEqual({ op });
   });
 
+  it("moves `verdict` into the payload: it is a field of hit_verdicts and evaluations entries", () => {
+    const append = { section: "hit_verdicts", op: "append", log_id: "log_001", hit_id: "h1", verdict: "match" };
+    expect(canonicalOp(append).op).toEqual({
+      section: "hit_verdicts",
+      op: "append",
+      entry: { log_id: "log_001", hit_id: "h1", verdict: "match" },
+    });
+    const update = { section: "evaluations", op: "update", entryId: "ev_001", verdict: "pass" };
+    expect(canonicalOp(update).op).toEqual({
+      section: "evaluations",
+      op: "update",
+      entryId: "ev_001",
+      fields: { verdict: "pass" },
+    });
+  });
+
   it("keeps every canonical key on the op and moves the rest", () => {
     const op = { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [], tier: "probable" };
     expect(canonicalOp(op).op).toEqual({

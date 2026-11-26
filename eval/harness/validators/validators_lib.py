@@ -525,53 +525,8 @@ def response_strings(value: Any, _depth: int = 0) -> list[str]:
     return [str(value)]
 
 
-_RESEARCH_APPEND_OP_KEYS = frozenset(
-    {"section", "op", "entry", "entryId", "fields", "edits", "guideSection", "surveyRef", "planId",
-     "projectPath", "resolveStandardPlace", "sourceDescription", "verdict"}
-)
-
-
-def _json_or_none(value: Any) -> Any:
-    if isinstance(value, str):
-        try:
-            return json.loads(value)
-        except (ValueError, TypeError):
-            return None
-    return value
-
-
-def research_append_ops(args: Any) -> list[dict]:
-    """The ops one `research_append` call writes, in canonical form, from any
-    shape the model sends: a batch `ops` (a list or a JSON string), the plan
-    form `plan` + `planItems`, or one top-level op. An op whose payload sits
-    beside `section`/`op` gets it under `entry` (append) or `fields` (update),
-    as the tool does (`research-append-forms.ts`); a payload sent both ways is
-    merged, so nothing the call carried is missed."""
-    args = as_mapping(args)
-    plan, items = _json_or_none(args.get("plan")), _json_or_none(args.get("planItems"))
-    if plan is not None or items is not None:
-        ops: list = [{"section": "plans", "op": "append", "entry": plan if isinstance(plan, dict) else {}}]
-        ops += [
-            {"section": "plan_items", "op": "append", "entry": item}
-            for item in (items if isinstance(items, list) else [])
-            if isinstance(item, dict)
-        ]
-        return ops
-    raw = _json_or_none(args.get("ops"))
-    if not isinstance(raw, list):
-        return [args] if args.get("section") else []
-    out = []
-    for op in raw:
-        if not isinstance(op, dict):
-            continue
-        wrapper = {"append": "entry", "update": "fields"}.get(op.get("op"))
-        loose = {k: v for k, v in op.items() if k not in _RESEARCH_APPEND_OP_KEYS}
-        if wrapper and loose:
-            present = _json_or_none(op.get(wrapper))
-            op = {k: v for k, v in op.items() if k in _RESEARCH_APPEND_OP_KEYS}
-            op[wrapper] = {**present, **loose} if isinstance(present, dict) else loose
-        out.append(op)
-    return out
+# Shared with the guardrail checks and the replay (harness/research_append_ops.py).
+from harness.research_append_ops import research_append_ops  # noqa: E402,F401
 
 
 def as_mapping(value: Any) -> dict:
