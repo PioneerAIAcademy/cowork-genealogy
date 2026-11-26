@@ -238,35 +238,41 @@ that would replace it (probed 2026-10-02, §5):
   found her afterwards in the 1920 census with a wildcard over every reading and
   a birth range re-derived from all the censuses, and in the 1910 census and on
   a 1923 death certificate only by searching the people she lived with: both are
-  indexed under her birth surname, not the one the question used. Step 3 now
-  says, in one sentence, that when the asked fact is disputed the plan holds a
-  census item for every census in the question's `date_window` (skip 1890) and a
-  death record, and that the plan write names any census year left out. With no
-  death recorded, the window runs to the year the subject would be 100
-  (genealogist ruling, 2026-11-25: elderly census ages are often overstated, so
-  the cut-off stays generous), and 1890 is skipped.
+  indexed under her birth surname, not the one the question used. The Step 3 rule fires on
+  something the planner can read in the project (the question text, two or more
+  assertions giving the fact differently, or an index entry that omits it) and
+  requires every census and vital record of the lifetime through a death record,
+  per census an item on identifiers not in dispute and a search through each
+  household member, and a death item with no surname filter. Step 6 adds that a
+  new reading is new information for a supersede. With no death recorded, the
+  censuses run from the record's year to the one at which the subject would be
+  100, skipping 1890 (genealogist ruling, 2026-11-25: elderly census ages are
+  often overstated, so the cut-off stays generous). Step 4's breadth self-check
+  item 7 lists those years and asks for an item for each.
   - **The census years are named by the plan write's tool note.** On
     `claude-haiku-5-5` / `low` the prose alone did not hold: measured on
     `ut_research_plan_c7m`, 5 scratch runs each (2026-11-25), runs not failed:
-    unedited body 0/5; a longer Step 3 rule (every census and vital record of
-    the lifetime, per census an item on identifiers not in dispute and one
-    through each household member, a death item with no surname filter) 0/5;
-    with a census-years self-check in the Return contract 1/5; with it in
-    Step 4's breadth self-check 0/5. Every failure planned the 1910 census and
-    stopped there. So the fixture's question carries the `date_window`
-    question-selection writes (birth year to death, or to age 100 when no death
-    is recorded), and `research_append`'s date-window warning
-    (`guardrail-enforcement-spec.md`, "A plan should reach its question's date
-    window") names each US federal census year in that window that no census
-    item covers, skipping 1890 and any year after 1950. research-plan stays on
-    `claude-haiku-5-5` / `low`. Measured 2026-11-26, 10 scratch runs each, runs
-    not failed: with the note and that longer rule (plus the self-check and a
-    Step 6 re-planning line), `ut_research_plan_c7m` 10/10 (8 pass, 2 partial)
-    and `ut_research_plan_tgt` 10/10 (8 pass, 2 partial); with the note and the
-    one-sentence rule, c7m 9/10 (1 pass, 8 partial, 1 fail) and tgt 10/10 (7
-    pass, 3 partial). The one-sentence rule is kept. Its c7m partials are mostly
-    the judge's Completeness 2: a death item that does not say it searches with
-    no surname filter.
+    unedited body 0/5; the Step 3 rule 0/5; with a census-years self-check in
+    the Return contract 1/5; with it in Step 4's breadth self-check 0/5. Every
+    failure planned the 1910 census and stopped there. So the fixture's question
+    carries the `date_window` question-selection writes (birth year to death, or
+    to age 100 when no death is recorded), and `research_append`'s date-window
+    warning (`guardrail-enforcement-spec.md`, "A plan should reach its
+    question's date window") names each US federal census year in that window
+    that no census item covers, skipping 1890 and any year after 1950.
+    research-plan stays on `claude-haiku-5-5` / `low`. With the note and this
+    body, 10 scratch runs each (2026-11-26), runs not failed:
+    `ut_research_plan_c7m` 10/10 (5 pass, 5 partial), `ut_research_plan_tgt`
+    10/10 (9 pass, 1 partial).
+  - **Shorter Step 3 wordings were measured and not kept.** One sentence (a
+    census item for every census in the `date_window`, skip 1890, and a death
+    record) gave c7m 9/10 with 1 full pass: its partials lacked the death item
+    with no surname filter. That sentence with the no-surname death item put
+    back gave c7m 10/10 with 4 full passes. Both below the longer rule. A
+    warning wording that offered a skipped census item as an alternative led
+    Haiku to write skipped items, which `test_new_plan_items_planned_status`
+    fails, so the warning ends "Add a census item whose date_range covers
+    each."
   - **Decided (review-ready, 2026-11-16): "never keyed on the given name in
     doubt" means never on ONE reading.** A wildcard over every reading found is
     allowed, beside at least one item per census that uses no given name. That
@@ -274,8 +280,7 @@ that would replace it (probed 2026-10-02, §5):
     wildcard is what found her in 1920. A literal ban on any given-name search was
     considered: it contradicts that comment and drops a search that worked. The
     remarriage/surname rule above is left alone: it governs a surname from a
-    single marriage record, not a reading in dispute. The one-sentence body
-    no longer states it; the test's judge_context still does.
+    single marriage record, not a reading in dispute.
   - **Prose, not a writer-tool rule.** Plan items carry no search-key field
     (`plan_item` holds `record_type`, `jurisdiction`, `date_range`, `repository`
     and a free-text `rationale`), so whether an item is keyed on one reading

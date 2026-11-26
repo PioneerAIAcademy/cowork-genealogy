@@ -270,6 +270,7 @@ describe("planWindowFlag — US federal census years the plan leaves out", () =>
       item("census", "1910"), item("vital_record", "1900-1960"),
     ])]);
     expect(msg).toMatch(/q_001: no item covers 1860, 1920, 1930, 1940, 1950 — US federal census years/);
+    expect(msg).toMatch(/ in its date window 1852–1952\. Add a census item whose date_range covers each\.$/);
   });
 
   it("skips 1890 and never names a year after 1950", () => {

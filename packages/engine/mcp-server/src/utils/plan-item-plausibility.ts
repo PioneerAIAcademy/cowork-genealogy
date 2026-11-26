@@ -169,8 +169,7 @@ function censusYearsNote(id: string, [ws, we]: [number, number], live: DatedItem
   if (missing.length === 0) return "";
   return (
     `${id}: no item covers ${missing.join(", ")} — US federal census years in its date window ` +
-    `${ws}–${we}. Add a census item whose date_range covers each, or a skipped census item ` +
-    `whose skip_reason says why that census cannot hold the record.`
+    `${ws}–${we}. Add a census item whose date_range covers each.`
   );
 }
 
