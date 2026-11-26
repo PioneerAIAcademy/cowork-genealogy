@@ -145,11 +145,14 @@ export function connectorLogoutMessage(principal: Principal): string {
 }
 
 /** A connector caller has no settings page and no config file: on this beta
- *  the key that reads images is put on an account by its administrator. */
+ *  the key that reads images is put on an account by its administrator. It rules
+ *  out the browser by name: told only to carry on, a model read the page through
+ *  the user's own signed-in browser, where nothing is saved to the project. */
 export const CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE =
   "Reading images is not turned on for this account, so this image was not transcribed. " +
   "Tell the user it is turned on per account by the beta's administrator, and carry on " +
-  "without this image. Do not ask the user to paste a key into the chat.";
+  "without this image. Do not read the image any other way, such as through a web browser: " +
+  "nothing read that way is saved to the project. Do not ask the user to paste a key into the chat.";
 
 // The one variable the stdio entrypoint reads. manifest.json's `user_config`
 // asks for the key on the extension's Configure page in Claude Desktop, and its
@@ -320,10 +323,15 @@ function configString(value: unknown): string {
  * The matcher `principal`'s config names. No `matcher` key is FamilySearch's
  * matcher; any value but the two throws rather than fall back to either. Config
  * only, like every getter here: no environment variable is read.
+ *
+ * A key with no value is no key. `connectorConfig` copies the deployment's
+ * setting through to every connector caller, so on a deployment that names no
+ * matcher service the key is present and `undefined`; read as a bad value, that
+ * failed every ranking a connector caller asked for.
  */
 export async function getMatcherSettings(principal: Principal): Promise<MatcherSettings> {
   const config = await loadConfig(principal);
-  if (!Object.hasOwn(config, "matcher") || config.matcher === "familysearch") {
+  if (config.matcher === undefined || config.matcher === "familysearch") {
     return { backend: "familysearch" };
   }
   if (config.matcher !== "service") throw new Error(MATCHER_VALUE_MESSAGE);
