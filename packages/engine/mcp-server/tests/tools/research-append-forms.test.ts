@@ -111,7 +111,8 @@ describe("plan form", () => {
     expect(a.ok, JSON.stringify(a)).toBe(true);
     expect(b.ok, JSON.stringify(b)).toBe(true);
     expect(plans(viaForm)).toEqual(plans(viaOps));
-    expect(a.ok && a.results.map((r) => r.entryId)).toEqual(["pl_002", "pli_002", "pli_003"]);
+    const ids = a.ok && "results" in a ? a.results.map((r) => r.entryId) : [];
+    expect(ids).toEqual(["pl_002", "pli_002", "pli_003"]);
   });
 
   it("decodes a stringified plan and planItems", async () => {
