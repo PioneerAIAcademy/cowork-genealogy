@@ -70,7 +70,7 @@ _SOLO = (
     "search-familysearch-wiki",
     "search-wikipedia",
     "validate-schema",
-    # Its own group: a one-shot ask that needs no project and writes nothing,
+    # Its own group: a one-shot ask that writes nothing of its own,
     # the shape section K describes.
     "where-else-to-search",
     # Its own group: the per-hit verdicts fan out as repeats of one step, and a
@@ -120,7 +120,7 @@ STEP_LABELS: dict[str, str] = {
     "setup": "setting up the project",
     "plan": "planning the searches",
     "search": "running the searches",
-    "link": "linking the records",
+    "link": "linking the records to people in this project",
     "conflict": "resolving the conflict",
     "hypothesis": "sorting out the competing identities",
     "assess": "checking the search is exhaustive",
@@ -316,18 +316,20 @@ def _closes_hand_off(entry: dict, url: str) -> bool:
     return ext is not None and ext.get("url_generated") == url and entry.get("outcome") != "partial"
 
 
-def awaiting_upload_item_ids(research: dict) -> set[str]:
-    """Plan items waiting only on a capture the researcher owes us.
+def awaiting_hand_offs(research: dict) -> list[dict]:
+    """Hand-offs still waiting on the researcher, in log order.
 
     The Python mirror of `awaitingUserHandOffs` (`src/utils/awaiting-hand-offs.ts`): an
     `external_site` entry with `outcome: "partial"` and `capture_received: false`
     that no LATER entry closes. Keyed on `partial`, not on `capture_received`
     alone -- a `positive` entry logged with `capture_received: false` already had
-    its results in hand (alpha feedback #2864) and waits on nobody.
+    its results in hand (alpha feedback #2864) and waits on nobody. Each row carries
+    `log_id`, `site`, `url_generated` and `plan_item_id` (None when absent). The hosted
+    planes post each new row's URL to the chat (issue #4660).
     """
     log = research.get("log") if isinstance(research, dict) else None
     entries = log if isinstance(log, list) else []
-    waiting: set[str] = set()
+    rows: list[dict] = []
     for i, entry in enumerate(entries):
         ext = _external_site_of(entry)
         if ext is None or entry.get("outcome") != "partial" or ext.get("capture_received") is not False:
@@ -339,9 +341,20 @@ def awaiting_upload_item_ids(research: dict) -> set[str]:
         if any(_closes_hand_off(later, url) for later in entries[i + 1:]):
             continue
         item_id = entry.get("plan_item_id")
-        if isinstance(item_id, str):
-            waiting.add(item_id)
-    return waiting
+        site = ext.get("site")
+        rows.append({
+            "log_id": entry["id"],
+            "site": site if isinstance(site, str) else "",
+            "url_generated": url,
+            "plan_item_id": item_id if isinstance(item_id, str) else None,
+        })
+    return rows
+
+
+def awaiting_upload_item_ids(research: dict) -> set[str]:
+    """Plan items waiting only on a capture the researcher owes us: the plan items of
+    `awaiting_hand_offs`."""
+    return {row["plan_item_id"] for row in awaiting_hand_offs(research) if row["plan_item_id"] is not None}
 
 
 def current_question(research: dict) -> dict | None:
@@ -486,7 +499,14 @@ def _is_low_risk_choice(question, research: dict) -> bool:
 # `offer_key` puts a caller's agent name into the same space -- so
 # `offered_step(deny_reason(x))` and `offer_key(x)` agree for every step.
 _OFFER_RE = re.compile(r"continue\s+with\s+(?P<label>.+?)\s*\?", re.IGNORECASE)
+# A line that is only a link, bare, in angle brackets or as a markdown link. A Haiku
+# 5.5 router put one after the offer line (ut_research_hv3, hva), which hid the
+# offer and so the researcher's buttons; such lines are read past.
+_LINK_ONLY_RE = re.compile(r"^(?:<?https?://\S+>?|\[[^\]]*\]\(https?://\S+\))$")
 _LABEL_TO_KEY = {label.casefold(): key for key, label in STEP_LABELS.items()}
+# Retired labels, read back but never written: a resumed session's history and
+# committed run logs still end on them (issue #4688).
+_LABEL_TO_KEY.update({"linking the records": "link"})
 # The one label that carries a count: "extracting the 3 Matches", "the Match".
 # A count of 0 is not an offer. No other label drops a count.
 _EXTRACT_RE = re.compile(
@@ -509,9 +529,12 @@ def offered_step(text: str | None) -> str | None:
 
     Only the last line, because that is where the router is told to put it; a
     line naming no entry is no offer, which is how a step that ended on a
-    question for the researcher ends a "Keep going" run.
+    question for the researcher ends a "Keep going" run. Trailing lines that are
+    only a link are read past (`_LINK_ONLY_RE`).
     """
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+    while lines and _LINK_ONLY_RE.match(lines[-1]):
+        lines.pop()
     if not lines:
         return None
     match = _OFFER_RE.search(lines[-1])

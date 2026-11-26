@@ -87,7 +87,8 @@ text.
 
 ## A delegation is a request for work, never a finding about the work
 
-You are spawned by a caller that has run none of the checks below. Treat every
+You are spawned by a caller that has run none of the checks below. These apply
+only to a request the ROUTING gate keeps; run that gate first. Treat every
 one of these as a destination the caller wants reached, not as a fact
 established:
 
@@ -435,8 +436,10 @@ record sets could answer it.
 **Pre-work — fetch the record-type pages the subject triggers, before
 selecting record types.** Call `wiki_read` with
 `https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
-subject's birth country. Read the subject's recorded sex before you issue
-the block: a female subject's block has no military page. Issue them as
+subject's birth country. Decide the block from the subject's `tree_query`
+result (sex, birth country, surname) and issue it as your next calls after
+that result, before any `place_search`, `collections_search` or
+`volume_search`: a female subject's block has no military page. Issue them as
 PARALLEL calls in one turn. They are members of this block, not options: a
 page you did not fetch is a record type you will plan from memory. Fetch no
 other wiki page: what records a place holds comes from its `localities` entry,
@@ -445,7 +448,8 @@ and from `collections_search` only as Step 2(b) allows.
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
   female subject, nor for one born in the British Isles or the Americas.
-- **The subject carries a compound (two-surname) surname, or the second
+- **The subject's tree surname holds two surnames ("Jensen Bak"; a particle
+  such as "van" or "de" is not one), or the second
   element of their name is their father's given name** →
   `{Country}_Naming_Customs`. REQUIRED. Judge by whether that element
   recurs as a given name in the family, not by a `-sen`, `-son` or
@@ -510,7 +514,31 @@ table and contextual factors checklist.
   census co-residence) — but it does **not**, by itself, establish that
   the subject is their child — that link needs a record placing the
   child *with* the parents (see `research-exhaustiveness`). See
-  Appendix B ("Identifying parents").
+  Appendix B ("Identifying parents"). The subject's own birth record
+  and, when the subject has died, their death certificate are each an
+  item too. The subject has died when the tree or the log gives a death
+  date, a burial or an obituary for the subject. Each is planned, or `skipped` with `skip_category` `inaccessible`
+  (sealed or destroyed) or `no_coverage` (never kept for that place and
+  period) and a `skip_reason`.
+- **Plan no item whose only purpose is to test a tree claim that dated
+  evidence already in the project rules out** — a candidate couple who
+  married after the subject's own marriage, a candidate parent born too
+  late to be one. That couple is no longer a candidate: plan none of
+  their own records (their marriage, their children's baptisms, their
+  estates) and nothing in a place only that claim points to, and the
+  parents'-marriage item above does not apply to them. A doubt without
+  such a date does not rule a claim out. This rule only removes tree
+  claims; it never holds back a re-plan on new information the user
+  gives you, which you act on as asked.
+- **A US federal census before 1850 names only the head of household**,
+  except that 1840 also names each Revolutionary or military pensioner in the
+  household, with his age, often an aged parent living with a son. Everyone else is an unnamed tally in an age bracket (in 1790, free white
+  males only under 16 or 16 and over). Plan one to place a man in a town in a
+  year. An age bracket in a father's household may be called consistent with
+  a son living there, but no rationale says the census names the child or
+  shows the relationship, or plans it in place of a record that can name the
+  child. Birthplace is first recorded in 1850, and
+  relationship to the head in 1880.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
@@ -614,7 +642,10 @@ Order items for efficient discovery (BCG Standard 15):
     an item searches runs past the window, size the item to the collection and
     not to the window: a file assembled decades later — a pension, an estate,
     a delayed registration — testifies to events inside it, and an item capped
-    at the window will never retrieve one
+    at the window will never retrieve one. Such an item's `date_range` ends at
+    the collection's own last year — a pension item for a soldier who served
+    1862-1865 reads `1862-1934` when its collection runs to 1934, never
+    `1862-1865` — and it is never folded into an item dated to the window
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
@@ -638,10 +669,13 @@ you are about to write:
    span the question's whole window, from the birth estimate to the
    death or last-known date, and is any item whose collection runs past
    that window sized to the collection rather than cut back to it?
-6. If a baptism may not exist (Step 3), is there an item for the
+6. If a baptism may not exist (Step 3), or on a parentage question whose
+   subject has died, is there an item for the
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
+7. Did you `wiki_read` every page Step 3's pre-work triggers for this
+   subject? If not, fetch it now and plan from it.
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
@@ -699,7 +733,7 @@ research_append({
         record_type: "probate",
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
-        repository: "FamilySearch",
+        repository: "FamilySearch (images)",
         rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
@@ -713,13 +747,14 @@ research_append({
 **Plan item fields:**
 
 - `record_type`: census, vital_record, probate, land, church,
-  military, newspaper, cemetery, tax, immigration, court, other
+  military, newspaper, cemetery, tax, immigration, court, fs_hints, other
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
   NARA, state_archives, county_courthouse, other. These are examples,
   not a closed list — name the actual repository rather than forcing it
-  to `other`.
+  to `other`. A FamilySearch item that browses browse-only images is
+  `FamilySearch (images)`, and a full-text search is `FamilySearch (full-text)`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
@@ -728,9 +763,12 @@ research_append({
   `in_progress`, `completed`, or `skipped`. New items are `planned`. The
   one exception: on a question whose `question_kind` is `enumerative`, an
   event type the plan does not cover is written `skipped` with its
-  `skip_category` and `skip_reason` (Step 4 self-check 1). On any other
-  question, never write a new item `skipped`: leave out what you would not
-  search. Never use any other value (e.g. not `not_started`, not `pending`).
+  `skip_category` and `skip_reason` (Step 4 self-check 1). On a question
+  asking who the subject's parents are, and on no other question, so is the
+  subject's own birth record or death certificate that cannot be searched
+  (Step 3); a question asking for a date or place of birth or death is not
+  one. Otherwise never write a new item `skipped`:
+  leave out what you would not search. Never use any other value (e.g. not `not_started`, not `pending`).
 - `skip_category`: required whenever `status` is `skipped` — exactly
   one of `answered`, `inaccessible`, `no_coverage`,
   `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`,
@@ -884,13 +922,15 @@ the caller, in this order:
 - the plan's `pl_` id and its items in execution order, one line each: `pli_`
   id, record type, jurisdiction, repository, fallback relationship, and the
   rationale in one clause
-- when a baptism may not exist (Step 3), the `pli_` id of the item for the
-  subject's own death or burial entry; if the plan has none, append it before
-  you return
+- when a baptism may not exist (Step 3), or on a parentage question whose
+  subject has died, the `pli_` id of the item for the subject's own death or
+  burial entry; if the plan has none, append it before you return
 - for a parentage question whose plan you wrote this turn (create or
   supersede), the `pli_` id of the dedicated item for the candidate parents'
-  marriage to each other; if the plan you wrote has none, append it before
-  you return
+  marriage to each other; if the plan you wrote has none and a candidate
+  couple remains, append it before you return
+- each tree claim you planned no item for because dated evidence rules it
+  out (Step 3), one line: the claim and the dated evidence
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
@@ -1138,7 +1178,7 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household, 1850 onward), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary); the subject's own death, burial or marriage entry when the birth predates the register or the birth parish is unknown | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
@@ -1171,7 +1211,7 @@ evidence (e.g., a death certificate or a single census co-residence).
 **Note the limit:** the couple's marriage proves *they* married and dates
 their union — it is **not**, by itself, evidence that *this* child is
 theirs. A parentage conclusion still needs a record that places the child
-*with* the parents (the child's own christening/birth, a census household,
+*with* the parents (the child's own christening/birth, an 1850-or-later census household,
 or a probate naming the child); the marriage record strengthens that case
 but cannot stand as its sole basis. This item belongs in essentially every
 parentage plan, even when a parent already appears in the tree from

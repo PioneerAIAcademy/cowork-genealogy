@@ -318,7 +318,7 @@ describe("questionStatus — the state ladder", () => {
     const d = doc({ proof_summaries: [{ id: "ps_001", question_id: Q }] });
     const s = questionStatus(d, question());
     expect(s.state).toBe("concluded");
-    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude this question's proof summary");
     expect(s.nextStep).not.toMatch(/gps-mentor/);
   });
 
@@ -341,7 +341,7 @@ describe("questionStatus — the state ladder", () => {
     expect(s.state).toBe("critiqued");
     // An on-demand critique does not change what is outstanding: concluding
     // again, which proof-conclusion owns.
-    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude this question's proof summary");
   });
 
   it("critiqued AND resolved has nothing outstanding", () => {
@@ -385,7 +385,7 @@ describe("questionStatus — conflicts outrank everything", () => {
     expect(s.nextStep).not.toMatch(/proof-conclusion/);
   });
 
-  it("the latest summary is the one named when a question was concluded twice while blocked", () => {
+  it("a question concluded twice while blocked names no summary id (#4661)", () => {
     const d = doc({
       proof_summaries: [
         { id: "ps_001", question_id: Q, tier: "not_proved" },
@@ -393,7 +393,7 @@ describe("questionStatus — conflicts outrank everything", () => {
       ],
     });
     expect(questionStatus(d, question()).nextStep).toBe(
-      "proof-conclusion — concluded while blocked: re-conclude ps_004",
+      "proof-conclusion — concluded while blocked: re-conclude this question's proof summary",
     );
   });
 
@@ -990,6 +990,74 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
 });
 
 /**
+ * Issue #4692: a partly-linked question none of whose links reaches the project
+ * subject routes to person-evidence (ut_research_pe7, flynn-household-skeleton).
+ */
+describe("questionStatus — a partly-linked question that never reaches the subject", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const load = (scenario: string): { research: any; tree: any } => ({
+    research: JSON.parse(readFileSync(join(SCENARIOS, scenario, "research.json"), "utf-8")),
+    tree: JSON.parse(readFileSync(join(SCENARIOS, scenario, "tree.gedcomx.json"), "utf-8")),
+  });
+  const PE7 = "flynn-household-skeleton";
+  const UNREACHED = /^person-evidence — \d+ of this question's \d+ assertions are unlinked/;
+  const step = (research: any, tree: any): string | null =>
+    questionStatus(research, research.questions[0], tree).nextStep;
+
+  it("fires on pe7: six of seven unlinked and the one link is the head, not the subject", () => {
+    const { research, tree } = load(PE7);
+    expect(step(research, tree)).toBe(
+      "person-evidence — 6 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+  });
+
+  it("is silent on a partly-linked household once a link names the subject", () => {
+    const { research, tree } = load(PE7);
+    research.person_evidence.push({ ...research.person_evidence[0], id: "pe_900", assertion_id: "a_002", person_id: "I1" });
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every assertion is linked, though the subject is still absent from the record", () => {
+    const { research, tree } = load(PE7);
+    for (const a of research.assertions.slice(1)) {
+      research.person_evidence.push({ ...research.person_evidence[0], id: `pe_${a.id}`, assertion_id: a.id, person_id: "I2" });
+    }
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every leftover assertion is rejected against the subject, so it cannot loop", () => {
+    const { research, tree } = load(PE7);
+    const leftovers = research.assertions.slice(1);
+    research.rejected_links = [{ id: "rj_1", assertion_id: leftovers[0].id, person_id: "I1", created: "2026-11-24" }];
+    expect(step(research, tree)).toBe(
+      "person-evidence — 5 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+    research.rejected_links = leftovers.map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I1", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("still fires when the leftover assertions are rejected against someone other than the subject", () => {
+    const { research, tree } = load(PE7);
+    research.rejected_links = research.assertions.slice(1).map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I2", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).toMatch(UNREACHED);
+  });
+
+  it("is silent when no subject is a tree person", () => {
+    const { research, tree } = load(PE7);
+    research.project.subject_person_ids = ["PID-TODO"];
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+    research.project.subject_person_ids = null;
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+});
+
+/**
  * Section B's "not exhaustive" choice.
  *
  * The search stopped on RESOURCES rather than on a finding, so neither
@@ -1450,7 +1518,7 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
 
   it("an unencoded claim reports the encode step", () => {
     const s = questionStatus(concluded([father]), question({ status: "resolved" }), tree);
-    expect(s.nextStep).toBe("proof-conclusion — encode father from ps_001");
+    expect(s.nextStep).toBe("proof-conclusion — encode father");
   });
 
   it("an encoded claim reports nothing, and with no tree the arm is skipped", () => {
@@ -1466,7 +1534,7 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
       person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
     });
     expect(questionStatus(d, question(), tree).nextStep).toBe(
-      "proof-conclusion — hypothesis h_001 is supported and no related question has a proof summary",
+      "proof-conclusion — a supported hypothesis has no proof summary on a related question",
     );
   });
 

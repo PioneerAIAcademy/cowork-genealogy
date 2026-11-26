@@ -114,6 +114,102 @@ describe('The case', () => {
     const locality = MCANDREW_DOC().research!.localities![0]
     expect(body()).toContain(locality.place)
     expect(document.querySelector('section h3')?.textContent).toBeTruthy()
+    expect([...document.querySelectorAll('h3')].map((h) => h.textContent)).not.toContain('Other websites')
     expect(leftoverIds(body())).toEqual([])
+  })
+
+  it('outside collections sit in a closed Other websites group per place, after Background and out of Direct mentions', async () => {
+    const doc = MCANDREW_DOC()
+    const row = (place: string, n: number, url = `https://www.ancestry.com/search/collections/${n}/`) => ({
+      key: `ancestry:${n}`,
+      url,
+      link_text: `Planted collection ${n}`,
+      record_types: ['Census'],
+      place,
+      cost: 'paid',
+      content_type: 'index',
+      start_year: '1900',
+      end_year: '1940'
+    })
+    const outer = 'Mississippi, United States'
+    const inner = 'Scott, Mississippi, United States'
+    const partial = 'Hinds, Mississippi, United States'
+    const places: Record<string, { rows: ReturnType<typeof row>[]; too_large?: true }> = {
+      [inner]: { rows: [row(inner, 3)] },
+      'Leake, Mississippi, United States': { rows: [] },
+      'Alabama, United States': { rows: [], too_large: true },
+      [outer]: { rows: [row(outer, 1), row(outer, 2, 'http://example.org/2')] },
+      [partial]: { rows: [row(partial, 5)], too_large: true }
+    }
+    doc.collections = { places }
+    await caseOn(doc, { page: 'sources' })
+    const summaryFor = (place: string, count: string) =>
+      `Other websites with records for ${place} (${count}). FamilySearch’s list, for planning: being listed here does not mean a site was searched or paid for.`
+    const section = (title: string) => [...document.querySelectorAll('section')].find((s) => s.querySelector('h3')?.textContent === title)
+    const mentions = section('Direct mentions')
+    const background = section('Background')
+    const other = section('Other websites')
+    expect(mentions).toBeDefined()
+    expect(background).toBeDefined()
+    expect(other).toBeDefined()
+    expect(background!.compareDocumentPosition(other!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    for (const [place, { rows, too_large }] of Object.entries(places)) {
+      for (const { link_text, url } of rows) {
+        expect(mentions!.textContent).not.toContain(link_text)
+        expect(background!.textContent).not.toContain(link_text)
+        const items = [...document.querySelectorAll('li')].filter((li) => li.textContent?.startsWith(link_text))
+        expect(items).toHaveLength(1)
+        expect(mentions!.contains(items[0])).toBe(false)
+        expect(background!.contains(items[0])).toBe(false)
+        expect(items[0].querySelector('a')?.getAttribute('href') ?? null).toBe(url.startsWith('https://') ? url : null)
+        expect(items[0].textContent).toBe(`${link_text}Census · 1900–1940`)
+        const details = items[0].closest('details')
+        expect(details).not.toBeNull()
+        expect(details!.hasAttribute('open')).toBe(false)
+        expect(details!.querySelector('summary')?.textContent).toBe(summaryFor(place, too_large ? `${rows.length} of a longer list` : `${rows.length}`))
+        expect(details!.querySelector('summary')?.textContent).toContain('searched')
+      }
+    }
+    expect([...other!.querySelectorAll('details > summary')].map((s) => s.textContent)).toEqual([
+      summaryFor(partial, '1 of a longer list'),
+      summaryFor(outer, '2'),
+      summaryFor(inner, '1')
+    ])
+    expect(leftoverIds(body())).toEqual([])
+  })
+
+  it('a malformed collections file draws only its good rows, and Background is absent with no locality', async () => {
+    const doc = MCANDREW_DOC()
+    doc.research!.localities = []
+    doc.collections = {
+      places: {
+        'Null Entry Place': null,
+        'String Entry Place': 'not a place',
+        'Leake, Mississippi, United States': {
+          rows: [
+            { link_text: '', url: 'https://example.org/4' },
+            { link_text: '', url: 'http://example.org/7' },
+            { link_text: { text: 'Object Link Text' }, url: 'http://example.org/5' },
+            'String Row'
+          ]
+        }
+      }
+    }
+    await caseOn(doc, { page: 'sources' })
+    expect(body()).toContain('Other websites with records for Leake, Mississippi, United States (2).')
+    expect(document.querySelector('a[href="https://example.org/4"]')?.textContent).toBe('A collection')
+    expect(document.querySelector('a[href="https://example.org/4"]')?.closest('li')?.querySelector('p')).toBeNull()
+    expect([...document.querySelectorAll('li')].map((li) => li.textContent)).toContain('http://example.org/7')
+    expect(document.querySelector('a[href="http://example.org/7"]')).toBeNull()
+    expect(body()).not.toContain('Null Entry Place')
+    expect(body()).not.toContain('String Entry Place')
+    expect(body()).not.toContain('String Row')
+    expect([...document.querySelectorAll('h3')].map((h) => h.textContent)).not.toContain('Background')
+    cleanup()
+    const listed = MCANDREW_DOC()
+    listed.collections = { places: [{ rows: [{ link_text: 'Planted collection 6', url: 'https://example.org/6' }] }] }
+    await caseOn(listed, { page: 'sources' })
+    expect(body()).not.toContain('Planted collection 6')
+    expect(document.querySelectorAll('details > summary').length).toBe(0)
   })
 })

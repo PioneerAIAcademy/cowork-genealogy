@@ -65,12 +65,10 @@ relay that result.
   `research.json` and `tree.gedcomx.json` and note what validated cleanly
   (required fields, enum values, ID-prefix conventions, and cross-file
   references), so the user sees what was checked rather than a bare "valid."
-- **On no project:** the tool answers `reason: "no_project"`; point the user
-  to init-project (both files are created together).
 
 ## Log the report
 
-Unless the tool answered `reason: "no_project"`, in this order:
+In this order:
 
 1. Write the full report from "What to do" first.
 2. One `research_log_append` call with the same project directory path and one
@@ -83,7 +81,6 @@ Unless the tool answered `reason: "no_project"`, in this order:
 3. Return the report exactly as it went into `notes`, above the `---` line —
    never only a note that it was logged.
 
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction → rewrite `notes` as instructed, use the
   same text in your return, and re-send. Never drop the entry.
 

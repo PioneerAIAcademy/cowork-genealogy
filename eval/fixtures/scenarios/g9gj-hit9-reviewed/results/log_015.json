@@ -1,0 +1,3177 @@
+{
+  "log_id": "log_015",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:28:23.336Z",
+  "returned_count": 36,
+  "payload": {
+    "query": {
+      "count": 50,
+      "projectPath": "<workspace>",
+      "recordType": "census",
+      "residencePlace": "New Hampshire, United States",
+      "residenceYearFrom": 1790,
+      "residenceYearTo": 1810,
+      "surname": "Hyde"
+    },
+    "totalMatches": 36,
+    "paginationCappedAt": 4999,
+    "returned": 36,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:XH2J-6RV",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Tamworth, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Daniel Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Daniel Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4HB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071468",
+              "ark": "ark:/61903/1:1:XH2J-6RV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Daniel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Tamworth, Strafford, New Hampshire, United States",
+                  "standard_place": "Tamworth, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821568",
+              "title": "Household of Daniel Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-6RV : Sat Mar 09 03:10:15 UTC 2024), Entry for Daniel Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4HB"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S92"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071468",
+              "url": "#p_10417071468"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560121",
+              "name": "Tamworth, Strafford, New Hampshire, United States",
+              "latitude": 43.8599,
+              "longitude": -71.2628
+            }
+          ]
+        },
+        "primaryId": "p_10417071468"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-X7G",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Wolfborough, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Samuel Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Samuel Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4FG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071772",
+              "ark": "ark:/61903/1:1:XH2J-X7G",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Samuel",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Wolfborough, Strafford, New Hampshire, United States",
+                  "standard_place": "Wolfeboro, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821772",
+              "title": "Household of Samuel Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-X7G : Fri Mar 08 23:36:22 UTC 2024), Entry for Samuel Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4FG"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S47"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071772",
+              "url": "#p_10417071772"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560128",
+              "name": "Wolfeboro, Strafford, New Hampshire, United States",
+              "latitude": 43.5857,
+              "longitude": -71.2102
+            }
+          ]
+        },
+        "primaryId": "p_10417071772"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-X76",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Wolfborough, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Henry Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4F6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071763",
+              "ark": "ark:/61903/1:1:XH2J-X76",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Wolfborough, Strafford, New Hampshire, United States",
+                  "standard_place": "Wolfeboro, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821763",
+              "title": "Household of Henry Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-X76 : Fri Mar 08 23:36:22 UTC 2024), Entry for Henry Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4F6"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S47"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071763",
+              "url": "#p_10417071763"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560128",
+              "name": "Wolfeboro, Strafford, New Hampshire, United States",
+              "latitude": 43.5857,
+              "longitude": -71.2102
+            }
+          ]
+        },
+        "primaryId": "p_10417071763"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-X7D",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Wolfborough, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Levi Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Levi Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4FD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071762",
+              "ark": "ark:/61903/1:1:XH2J-X7D",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Levi",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Wolfborough, Strafford, New Hampshire, United States",
+                  "standard_place": "Wolfeboro, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821762",
+              "title": "Household of Levi Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-X7D : Fri Mar 08 23:36:22 UTC 2024), Entry for Levi Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4FD"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S47"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071762",
+              "url": "#p_10417071762"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560128",
+              "name": "Wolfeboro, Strafford, New Hampshire, United States",
+              "latitude": 43.5857,
+              "longitude": -71.2102
+            }
+          ]
+        },
+        "primaryId": "p_10417071762"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-6RJ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Tamworth, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Saml Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Saml Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4HY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071467",
+              "ark": "ark:/61903/1:1:XH2J-6RJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Saml"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Tamworth, Strafford, New Hampshire, United States",
+                  "standard_place": "Tamworth, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821567",
+              "title": "Household of Saml Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-6RJ : Sat Mar 09 03:10:15 UTC 2024), Entry for Saml Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4HY"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S92"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071467",
+              "url": "#p_10417071467"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560121",
+              "name": "Tamworth, Strafford, New Hampshire, United States",
+              "latitude": 43.8599,
+              "longitude": -71.2628
+            }
+          ]
+        },
+        "primaryId": "p_10417071467"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-6RT",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Tamworth, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Stephen Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Stephen Hyde, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-4CW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417071476",
+              "ark": "ark:/61903/1:1:XH2J-6RT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Stephen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Tamworth, Strafford, New Hampshire, United States",
+                  "standard_place": "Tamworth, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784821576",
+              "title": "Household of Stephen Hyde, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-6RT : Sat Mar 09 03:10:15 UTC 2024), Entry for Stephen Hyde, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-4CW"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9S92"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417071476",
+              "url": "#p_10417071476"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560121",
+              "name": "Tamworth, Strafford, New Hampshire, United States",
+              "latitude": 43.8599,
+              "longitude": -71.2628
+            }
+          ]
+        },
+        "primaryId": "p_10417071476"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-DJY",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elihu Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Elihu Hyde, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKN-Y84",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420742337",
+              "ark": "ark:/61903/1:1:XHR3-DJY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elihu"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788646637",
+              "title": "Household of Elihu Hyde, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-DJY : Sat Mar 09 07:24:39 UTC 2024), Entry for Elihu Hyde, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKN-Y84"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R8F-QZ1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420742337",
+              "url": "#p_10420742337"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10420742337"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-T51",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Portsmouth, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Thomas Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Thomas Hyde, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKJ-8VC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420755149",
+              "ark": "ark:/61903/1:1:XHR3-T51",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Thomas",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Portsmouth, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788659449",
+              "title": "Household of Thomas Hyde, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-T51 : Fri Mar 08 16:01:46 UTC 2024), Entry for Thomas Hyde, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKJ-8VC"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GR8F-W4J"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420755149",
+              "url": "#p_10420755149"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577042",
+              "name": "Portsmouth, Rockingham, New Hampshire, United States",
+              "latitude": 43.0762,
+              "longitude": -70.754999
+            }
+          ]
+        },
+        "primaryId": "p_10420755149"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-6SL",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Concord, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Abel Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Abel Hyde, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKN-YT9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420742781",
+              "ark": "ark:/61903/1:1:XHR3-6SL",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Abel",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Concord, Grafton, New Hampshire, United States",
+                  "standard_place": "Lisbon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788647081",
+              "title": "Household of Abel Hyde, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-6SL : Sun Mar 10 03:19:48 UTC 2024), Entry for Abel Hyde, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKN-YT9"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R8F-QZF"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420742781",
+              "url": "#p_10420742781"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576887",
+              "name": "Lisbon, Grafton, New Hampshire, United States",
+              "latitude": 44.2138,
+              "longitude": -71.9111
+            }
+          ]
+        },
+        "primaryId": "p_10420742781"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKY-LY1",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elihu Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Elihu Hyde, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RK5-YY1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416538739",
+              "ark": "ark:/61903/1:1:XHKY-LY1",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elihu"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764563139",
+              "title": "Household of Elihu Hyde, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKY-LY1 : Sun Mar 10 21:03:25 UTC 2024), Entry for Elihu Hyde, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RK5-YY1"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-96TV"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416538739",
+              "url": "#p_10416538739"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10416538739"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKY-LBM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Levi Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Levi Hyde, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RK5-YBM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416538740",
+              "ark": "ark:/61903/1:1:XHKY-LBM",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Levi"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764563140",
+              "title": "Household of Levi Hyde, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKY-LBM : Sun Mar 10 21:03:25 UTC 2024), Entry for Levi Hyde, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RK5-YBM"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-96TV"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416538740",
+              "url": "#p_10416538740"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10416538740"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKY-LYB",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elihu Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Elihu Hyde, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RK5-YYB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416538738",
+              "ark": "ark:/61903/1:1:XHKY-LYB",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elihu"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764563138",
+              "title": "Household of Elihu Hyde, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKY-LYB : Sun Mar 10 21:03:25 UTC 2024), Entry for Elihu Hyde, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RK5-YYB"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-96TV"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416538738",
+              "url": "#p_10416538738"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10416538738"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKY-L1C",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Silas Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Silas Hyde, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RK5-Y1C",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416538779",
+              "ark": "ark:/61903/1:1:XHKY-L1C",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Silas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764563179",
+              "title": "Household of Silas Hyde, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKY-L1C : Sun Mar 10 21:03:24 UTC 2024), Entry for Silas Hyde, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RK5-Y1C"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-96TV"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416538779",
+              "url": "#p_10416538779"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10416538779"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-DJG",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Silas Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Silas Hyde, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKN-Y8S",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420742332",
+              "ark": "ark:/61903/1:1:XHR3-DJG",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Silas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788646632",
+              "title": "Household of Silas Hyde, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-DJG : Sat Mar 09 07:24:39 UTC 2024), Entry for Silas Hyde, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKN-Y8S"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R8F-QZ1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420742332",
+              "url": "#p_10420742332"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10420742332"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-DNP",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Lebanon, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Araph Hyde",
+        "score": 3.6318,
+        "confidence": 4,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Araph Hyde, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKN-YZ3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420742303",
+              "ark": "ark:/61903/1:1:XHR3-DNP",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Araph"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Lebanon, Grafton, New Hampshire, United States",
+                  "standard_place": "Lebanon, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788646603",
+              "title": "Household of Araph Hyde, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-DNP : Sat Mar 09 07:24:39 UTC 2024), Entry for Araph Hyde, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKN-YZ3"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R8F-QZ1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420742303",
+              "url": "#p_10420742303"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577048",
+              "name": "Lebanon, Grafton, New Hampshire, United States",
+              "latitude": 43.6425,
+              "longitude": -72.2526
+            }
+          ]
+        },
+        "primaryId": "p_10420742303"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-SJ7",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Newington, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Saml Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Saml Hight, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TX5-RY7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417061315",
+              "ark": "ark:/61903/1:1:XH2J-SJ7",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Saml",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Newington, Rockingham, New Hampshire, United States",
+                  "standard_place": "Newington, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784811315",
+              "title": "Household of Saml Hight, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-SJ7 : Sun Mar 10 09:38:31 UTC 2024), Entry for Saml Hight, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TX5-RY7"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYK-97X1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417061315",
+              "url": "#p_10417061315"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576945",
+              "name": "Newington, Rockingham, New Hampshire, United States",
+              "latitude": 43.1,
+              "longitude": -70.8347
+            }
+          ]
+        },
+        "primaryId": "p_10417061315"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2N-1QK",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Colebrook, Coos, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Abiel Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of Abiel Hide, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TX5-GXK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417058239",
+              "ark": "ark:/61903/1:1:XH2N-1QK",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Abiel",
+                  "surname": "Hide"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Colebrook, Coos, New Hampshire, United States",
+                  "standard_place": "Colebrook, Coos, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784808239",
+              "title": "Household of Abiel Hide, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2N-1QK : Sun Mar 10 21:08:24 UTC 2024), Entry for Abiel Hide, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TX5-GXK"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYK-9MRW"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417058239",
+              "url": "#p_10417058239"
+            }
+          ],
+          "places": [
+            {
+              "id": "4604159",
+              "name": "Colebrook, Coos, New Hampshire, United States",
+              "latitude": 44.8932,
+              "longitude": -71.498
+            }
+          ]
+        },
+        "primaryId": "p_10417058239"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-DVW",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "New Hampton, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of John Hide, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TXR-WVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417070346",
+              "ark": "ark:/61903/1:1:XH2J-DVW",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hide",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "New Hampton, Strafford, New Hampshire, United States",
+                  "standard_place": "New Hampton, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784820946",
+              "title": "Household of John Hide, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-DVW : Sat Mar 09 19:29:36 UTC 2024), Entry for John Hide, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TXR-WVW"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYK-9SJ1"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417070346",
+              "url": "#p_10417070346"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560095",
+              "name": "New Hampton, Strafford, New Hampshire, United States",
+              "latitude": 43.62333,
+              "longitude": -71.63361
+            }
+          ]
+        },
+        "primaryId": "p_10417070346"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XH2J-SV4",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1810",
+            "place": "Newington, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803765",
+        "collectionTitle": "United States, Census, 1810",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803765",
+        "recordTitle": "Household of William Hight, \"United States, Census, 1810\"",
+        "recordArk": "ark:/61903/1:2:1TX5-RB4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10417061347",
+              "ark": "ark:/61903/1:1:XH2J-SV4",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1810",
+                  "standard_date": "1810",
+                  "place": "Newington, Rockingham, New Hampshire, United States",
+                  "standard_place": "Newington, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21784811347",
+              "title": "Household of William Hight, \"United States, Census, 1810\"",
+              "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2J-SV4 : Sun Mar 10 09:23:06 UTC 2024), Entry for William Hight, 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TX5-RB4"
+            },
+            {
+              "id": "sd_c_1803765",
+              "title": "United States, Census, 1810",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803765"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYK-97N9"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10417061347",
+              "url": "#p_10417061347"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576945",
+              "name": "Newington, Rockingham, New Hampshire, United States",
+              "latitude": 43.1,
+              "longitude": -70.8347
+            }
+          ]
+        },
+        "primaryId": "p_10417061347"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKB-QSC",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Newington, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jonathan Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Jonathan Hight, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-CB1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416549669",
+              "ark": "ark:/61903/1:1:XHKB-QSC",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jonathan",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Newington, Rockingham, New Hampshire, United States",
+                  "standard_place": "Newington, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764573969",
+              "title": "Household of Jonathan Hight, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKB-QSC : Tue Jul 09 02:53:12 UTC 2024), Entry for Jonathan Hight, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-CB1"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-9FG2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416549669",
+              "url": "#p_10416549669"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576945",
+              "name": "Newington, Rockingham, New Hampshire, United States",
+              "latitude": 43.1,
+              "longitude": -70.8347
+            }
+          ]
+        },
+        "primaryId": "p_10416549669"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKB-DMV",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Lee, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jno Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Jno Hide, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-JYH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416556818",
+              "ark": "ark:/61903/1:1:XHKB-DMV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hide",
+                  "given": "Jno"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Lee, Strafford, New Hampshire, United States",
+                  "standard_place": "Lee, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764581118",
+              "title": "Household of Jno Hide, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKB-DMV : Sun Mar 10 07:10:05 UTC 2024), Entry for Jno Hide, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-JYH"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBC-9DZ5"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416556818",
+              "url": "#p_10416556818"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576905",
+              "name": "Lee, Strafford, New Hampshire, United States",
+              "latitude": 43.1225,
+              "longitude": -71.0119
+            }
+          ]
+        },
+        "primaryId": "p_10416556818"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-DPQ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Jefferson, Grafton, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of James Hight, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKN-YPQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420742494",
+              "ark": "ark:/61903/1:1:XHR3-DPQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hight",
+                  "given": "James"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Jefferson, Grafton, New Hampshire, United States",
+                  "standard_place": "Jefferson, Grafton, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788646994",
+              "title": "Household of James Hight, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-DPQ : Sun Mar 10 00:12:38 UTC 2024), Entry for James Hight, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKN-YPQ"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R8F-QQC"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420742494",
+              "url": "#p_10420742494"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560003",
+              "name": "Jefferson, Grafton, New Hampshire, United States",
+              "latitude": 44.4201,
+              "longitude": -71.4756
+            }
+          ]
+        },
+        "primaryId": "p_10420742494"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHRQ-9CY",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Lee, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of John Kido, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKJ-NWJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420759197",
+              "ark": "ark:/61903/1:1:XHRQ-9CY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kido",
+                  "given": "John"
+                },
+                {
+                  "type": "BirthName",
+                  "surname": "Hide",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Lee, Strafford, New Hampshire, United States",
+                  "standard_place": "Lee, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788663597",
+              "title": "Household of John Kido, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHRQ-9CY : Sat Mar 09 16:52:37 UTC 2024), Entry for John Hide, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKJ-NWJ"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GR8F-WMF"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420759197",
+              "url": "#p_10420759197"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576905",
+              "name": "Lee, Strafford, New Hampshire, United States",
+              "latitude": 43.1225,
+              "longitude": -71.0119
+            }
+          ]
+        },
+        "primaryId": "p_10420759197"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKB-M7V",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Wolfeboro, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Saml Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Saml Hide, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-WSH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416546168",
+              "ark": "ark:/61903/1:1:XHKB-M7V",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hide",
+                  "given": "Saml"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Wolfeboro, Strafford, New Hampshire, United States",
+                  "standard_place": "Wolfeboro, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764570468",
+              "title": "Household of Saml Hide, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKB-M7V : Sat Mar 09 01:12:32 UTC 2024), Entry for Saml Hide, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-WSH"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBZ-9"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416546168",
+              "url": "#p_10416546168"
+            }
+          ],
+          "places": [
+            {
+              "id": "10560128",
+              "name": "Wolfeboro, Strafford, New Hampshire, United States",
+              "latitude": 43.5857,
+              "longitude": -71.2102
+            }
+          ]
+        },
+        "primaryId": "p_10416546168"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKB-QSZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Newington, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of William Hight, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-C1M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416549670",
+              "ark": "ark:/61903/1:1:XHKB-QSZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hight",
+                  "given": "William"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Newington, Rockingham, New Hampshire, United States",
+                  "standard_place": "Newington, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764573970",
+              "title": "Household of William Hight, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKB-QSZ : Fri Jul 19 09:25:39 UTC 2024), Entry for William Hight, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-C1M"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-9FG2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416549670",
+              "url": "#p_10416549670"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576945",
+              "name": "Newington, Rockingham, New Hampshire, United States",
+              "latitude": 43.1,
+              "longitude": -70.8347
+            }
+          ]
+        },
+        "primaryId": "p_10416549670"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKB-3YH",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Newington, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Dennis Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Dennis Hight, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-CPB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416549518",
+              "ark": "ark:/61903/1:1:XHKB-3YH",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hight",
+                  "given": "Dennis"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Newington, Rockingham, New Hampshire, United States",
+                  "standard_place": "Newington, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764573818",
+              "title": "Household of Dennis Hight, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKB-3YH : Sun Jan 19 11:16:07 UTC 2025), Entry for Dennis Hight, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-CPB"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBC-9FG2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416549518",
+              "url": "#p_10416549518"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576945",
+              "name": "Newington, Rockingham, New Hampshire, United States",
+              "latitude": 43.1,
+              "longitude": -70.8347
+            }
+          ]
+        },
+        "primaryId": "p_10416549518"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHKY-R2L",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1790",
+            "place": "Chester, Rockingham, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Gershom Hide",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1803959",
+        "collectionTitle": "United States, Census, 1790",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803959",
+        "recordTitle": "Household of Gershom Hide, \"United States, Census, 1790\"",
+        "recordArk": "ark:/61903/1:2:1RKR-9J8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10416542121",
+              "ark": "ark:/61903/1:1:XHKY-R2L",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Gershom",
+                  "surname": "Hide"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1790",
+                  "standard_date": "1790",
+                  "place": "Chester, Rockingham, New Hampshire, United States",
+                  "standard_place": "Chester, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21764566421",
+              "title": "Household of Gershom Hide, \"United States, Census, 1790\"",
+              "citation": "\"United States, Census, 1790\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHKY-R2L : Sun Apr 14 07:43:36 UTC 2024), Entry for Gershom Hide, 1790.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1RKR-9J8"
+            },
+            {
+              "id": "sd_c_1803959",
+              "title": "United States, Census, 1790",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803959"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBZ-6G"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10416542121",
+              "url": "#p_10416542121"
+            }
+          ],
+          "places": [
+            {
+              "id": "4576403",
+              "name": "Chester, Rockingham, New Hampshire, United States",
+              "latitude": 42.958,
+              "longitude": -71.257
+            }
+          ]
+        },
+        "primaryId": "p_10416542121"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHR3-1QX",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1800",
+            "place": "Rochester, Strafford, New Hampshire, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hight",
+        "score": 2.9010801,
+        "confidence": 3,
+        "collectionId": "1804228",
+        "collectionTitle": "United States, Census, 1800",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804228",
+        "recordTitle": "Household of Joseph Hight, \"United States, Census, 1800\"",
+        "recordArk": "ark:/61903/1:2:1TKJ-65X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10420757234",
+              "ark": "ark:/61903/1:1:XHR3-1QX",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Rochester, Strafford, New Hampshire, United States",
+                  "standard_place": "Rochester, Strafford, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21788661434",
+              "title": "Household of Joseph Hight, \"United States, Census, 1800\"",
+              "citation": "\"United States, Census, 1800\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHR3-1QX : Sat Mar 09 10:05:27 UTC 2024), Entry for Joseph Hight, 1800.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TKJ-65X"
+            },
+            {
+              "id": "sd_c_1804228",
+              "title": "United States, Census, 1800",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804228"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GR8F-7TG"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10420757234",
+              "url": "#p_10420757234"
+            }
+          ],
+          "places": [
+            {
+              "id": "4577040",
+              "name": "Rochester, Strafford, New Hampshire, United States",
+              "latitude": 43.3008,
+              "longitude": -70.9789
+            }
+          ]
+        },
+        "primaryId": "p_10420757234"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZTR-JRKT",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1800 to 1809",
+            "place": "United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mrs Mary Hyde",
+        "score": 2.7418,
+        "confidence": 3,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B8T-D2S8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292252532096",
+              "ark": "ark:/61903/1:1:6ZTR-JRKT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde",
+                  "prefix": "Mrs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1800 to 1809",
+                  "standard_date": "Bet 1800 and 1809",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292252532097",
+              "ark": "ark:/61903/1:1:6ZTR-JRKY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292252532096",
+              "person2": "p_292252532097"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173790702071",
+              "title": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZTR-JRKT : Sun Mar 10 18:47:50 UTC 2024), Entry for Mrs Mary Hyde and Hyde, from 1800 to 1809.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B8T-D2S8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DX-DFMQ"
+            },
+            {
+              "id": "sd_auto_M9J1-QD2",
+              "title": "United States, Louisiana, Residences, from 1805 to 1978"
+            },
+            {
+              "id": "src_p_p_292252532096",
+              "url": "#p_292252532096"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_292252532096"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZTR-JRKY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hyde",
+        "score": 1.8218,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B8T-D2S8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292252532097",
+              "ark": "ark:/61903/1:1:6ZTR-JRKY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292252532096",
+              "ark": "ark:/61903/1:1:6ZTR-JRKT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde",
+                  "prefix": "Mrs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1800 to 1809",
+                  "standard_date": "Bet 1800 and 1809",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292252532096",
+              "person2": "p_292252532097"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173790702071",
+              "title": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZTR-JRKT : Sun Mar 10 18:47:50 UTC 2024), Entry for Mrs Mary Hyde and Hyde, from 1800 to 1809.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B8T-D2S8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DX-DFMQ"
+            },
+            {
+              "id": "sd_auto_M9J1-QD2",
+              "title": "United States, Louisiana, Residences, from 1805 to 1978"
+            },
+            {
+              "id": "src_p_p_292252532097",
+              "url": "#p_292252532097"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_292252532097"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NSYF-QQV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elijah Clark Hyde",
+        "score": 1.8218,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417695",
+        "collectionTitle": "United States, Freedman's Bank Records, 1865-1874",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417695",
+        "recordTitle": "Entry for Rhoda H., \"United States, Freedman's Bank Records, 1865-1874\"",
+        "recordArk": "ark:/61903/1:2:MZ3M-FQV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11734878738",
+              "ark": "ark:/61903/1:1:NSYF-QQV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elijah Clark"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878737",
+              "ark": "ark:/61903/1:1:NSYF-QQJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rhoda H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878739",
+              "ark": "ark:/61903/1:1:NSYF-QQK",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Adeline C."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878739",
+              "child": "p_11734878737"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11734878738",
+              "person2": "p_11734878739"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878738",
+              "child": "p_11734878737"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_245443638",
+              "title": "Entry for Rhoda H., \"United States, Freedman's Bank Records, 1865-1874\"",
+              "citation": "\"United States, Freedman's Bank Records, 1865-1874\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NSYF-QQJ : Wed Oct 15 03:50:33 UTC 2025), Entry for Rhoda H. and Elijah Clark Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MZ3M-FQV"
+            },
+            {
+              "id": "sd_c_1417695",
+              "title": "United States, Freedman's Bank Records, 1865-1874",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417695"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QC3-F8G"
+            },
+            {
+              "id": "src_p_p_11734878738",
+              "url": "#p_11734878738"
+            }
+          ]
+        },
+        "primaryId": "p_11734878738"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NSYF-QQY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elijah Clark Hyde",
+        "score": 1.8218,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417695",
+        "collectionTitle": "United States, Freedman's Bank Records, 1865-1874",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417695",
+        "recordTitle": "Entry for C.W. Gilland, \"United States, Freedman's Bank Records, 1865-1874\"",
+        "recordArk": "ark:/61903/1:2:MZ3M-FQL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11734878747",
+              "ark": "ark:/61903/1:1:NSYF-QQY",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elijah Clark",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878746",
+              "ark": "ark:/61903/1:1:NSYF-QQT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "C.W.",
+                  "surname": "Gilland"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878748",
+              "ark": "ark:/61903/1:1:NSYF-QQB",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Adeline C."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878748",
+              "child": "p_11734878746"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878747",
+              "child": "p_11734878746"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11734878747",
+              "person2": "p_11734878748"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_245443641",
+              "title": "Entry for C.W. Gilland, \"United States, Freedman's Bank Records, 1865-1874\"",
+              "citation": "\"United States, Freedman's Bank Records, 1865-1874\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NSYF-QQT : Thu Oct 16 01:42:04 UTC 2025), Entry for C.W. Gilland and Elijah Clark Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MZ3M-FQL"
+            },
+            {
+              "id": "sd_c_1417695",
+              "title": "United States, Freedman's Bank Records, 1865-1874",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417695"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QC3-F8G"
+            },
+            {
+              "id": "src_p_p_11734878747",
+              "url": "#p_11734878747"
+            }
+          ]
+        },
+        "primaryId": "p_11734878747"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NSYF-QQ5",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elijah Clark Hyde",
+        "score": 1.8218,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417695",
+        "collectionTitle": "United States, Freedman's Bank Records, 1865-1874",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417695",
+        "recordTitle": "Entry for Robert C., \"United States, Freedman's Bank Records, 1865-1874\"",
+        "recordArk": "ark:/61903/1:2:MZ3M-FQ2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11734878744",
+              "ark": "ark:/61903/1:1:NSYF-QQ5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elijah Clark"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878743",
+              "ark": "ark:/61903/1:1:NSYF-QQP",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert C."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878745",
+              "ark": "ark:/61903/1:1:NSYF-QQR",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Adeline C."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878744",
+              "child": "p_11734878743"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11734878744",
+              "person2": "p_11734878745"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878745",
+              "child": "p_11734878743"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_245443640",
+              "title": "Entry for Robert C., \"United States, Freedman's Bank Records, 1865-1874\"",
+              "citation": "\"United States, Freedman's Bank Records, 1865-1874\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NSYF-QQP : Thu Oct 16 01:42:05 UTC 2025), Entry for Robert C. and Elijah Clark Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MZ3M-FQ2"
+            },
+            {
+              "id": "sd_c_1417695",
+              "title": "United States, Freedman's Bank Records, 1865-1874",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417695"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QC3-F8G"
+            },
+            {
+              "id": "src_p_p_11734878744",
+              "url": "#p_11734878744"
+            }
+          ]
+        },
+        "primaryId": "p_11734878744"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NSYF-QQL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elijah Clark Hyde",
+        "score": 1.8218,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417695",
+        "collectionTitle": "United States, Freedman's Bank Records, 1865-1874",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417695",
+        "recordTitle": "Entry for Lucy H.M., \"United States, Freedman's Bank Records, 1865-1874\"",
+        "recordArk": "ark:/61903/1:2:MZ3M-FQK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11734878741",
+              "ark": "ark:/61903/1:1:NSYF-QQL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Elijah Clark"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878740",
+              "ark": "ark:/61903/1:1:NSYF-QQ2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lucy H.M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11734878742",
+              "ark": "ark:/61903/1:1:NSYF-QQG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Adeline C."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878741",
+              "child": "p_11734878740"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11734878742",
+              "child": "p_11734878740"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11734878741",
+              "person2": "p_11734878742"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_245443639",
+              "title": "Entry for Lucy H.M., \"United States, Freedman's Bank Records, 1865-1874\"",
+              "citation": "\"United States, Freedman's Bank Records, 1865-1874\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NSYF-QQ2 : Thu Oct 16 01:58:31 UTC 2025), Entry for Lucy H.M. and Elijah Clark Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MZ3M-FQK"
+            },
+            {
+              "id": "sd_c_1417695",
+              "title": "United States, Freedman's Bank Records, 1865-1874",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417695"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QC3-F8G"
+            },
+            {
+              "id": "src_p_p_11734878741",
+              "url": "#p_11734878741"
+            }
+          ]
+        },
+        "primaryId": "p_11734878741"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6822-VSYY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Oliva M Hiatt",
+        "score": 1.0910801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Zachariah P Millington, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B25-13YL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292831688637",
+              "ark": "ark:/61903/1:1:6822-VSYY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Oliva M",
+                  "surname": "Hiatt"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292831688636",
+              "ark": "ark:/61903/1:1:6822-VSYT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Zachariah P",
+                  "surname": "Millington"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1884 to 1886",
+                  "standard_date": "Bet 1884 and 1886"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292831688636",
+              "person2": "p_292831688637"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174008226531",
+              "title": "Entry for Zachariah P Millington, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6822-VSYT : Mon Apr 27 17:08:34 UTC 2026), Entry for Zachariah P Millington and Oliva M Hiatt, from 1884 to 1886.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B25-13YL"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99SJ-P3K5"
+            },
+            {
+              "id": "src_p_p_292831688637",
+              "url": "#p_292831688637"
+            }
+          ]
+        },
+        "primaryId": "p_292831688637"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68GZ-WDFL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mrs J.J. Hight",
+        "score": 1.0910801,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for J.J. Hight, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BLG-793D",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292871873271",
+              "ark": "ark:/61903/1:1:68GZ-WDFL",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Mrs",
+                  "given": "J.J.",
+                  "surname": "Hight"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292871873270",
+              "ark": "ark:/61903/1:1:68GZ-WDF2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "J.J.",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1879",
+                  "standard_date": "1879"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292871873270",
+              "person2": "p_292871873271"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174030256002",
+              "title": "Entry for J.J. Hight, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68GZ-WDF2 : Tue Aug 11 08:48:45 UTC 2026), Entry for J.J. Hight and Mrs J.J. Hight, 1879.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BLG-793D"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9DF-56C7"
+            },
+            {
+              "id": "src_p_p_292871873271",
+              "url": "#p_292871873271"
+            }
+          ]
+        },
+        "primaryId": "p_292871873271"
+      }
+    ]
+  }
+}

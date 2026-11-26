@@ -35,7 +35,11 @@
     "wikipedia-search-great-famine",
     "wikipedia-search-schuylkill-county",
     "wikipedia-search-philadelphia-immigration",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-schuylkill-county-pennsylvania",
+    "place-search-pennsylvania-united-states",
+    "place-search-pennsylvania-bare",
+    "place-search-any"
   ],
   "judge_context": [
     "The return ends its narrative with a `### Search implications` block, above the `---` line, with a `hypothesis-tracking:` label and a `research-plan:` label (either may read `none`).",

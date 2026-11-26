@@ -145,7 +145,7 @@ function openItems(plans: any[]): any[] {
 /** Fact types that name one event per person, so two values are a disagreement
  *  rather than two events. `birthplace` is folded into `birth`'s place, since
  *  extractions record a birth's place under either. */
-const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
+export const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
   birth: "birth",
   birthplace: "birth",
   death: "death",
@@ -154,12 +154,12 @@ const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
 
 /** Years further apart than this disagree. Census ages drift a year or two
  *  between enumerations; that is ordinary, not a conflict. */
-const YEAR_TOLERANCE = 2;
+export const YEAR_TOLERANCE = 2;
 
 /** Both spellings of an assertion's place, each split into components. The raw
  *  and standardized forms are compared separately because standardization
  *  renames ("Forfarshire" → "Angus") and adds a country the raw form omits. */
-const placeForms = (a: any): string[][] =>
+export const placeForms = (a: any): string[][] =>
   [a?.place, a?.standard_place]
     .filter((p): p is string => typeof p === "string" && p.trim() !== "")
     .map((p) => p.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
@@ -169,7 +169,7 @@ const partsMatch = (p: string, q: string): boolean => p.startsWith(q) || q.start
 /** Places agree when every component of the less specific one matches one in
  *  the other — "England" agrees with "Rochdale, Lancashire, England", and
  *  "Russia" with "Russian Empire". Any pair of spellings agreeing is enough. */
-const placesAgree = (xs: string[][], ys: string[][]): boolean =>
+export const placesAgree = (xs: string[][], ys: string[][]): boolean =>
   xs.some((x) =>
     ys.some((y) => {
       const [short, long] = x.length <= y.length ? [x, y] : [y, x];
@@ -184,7 +184,7 @@ const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
  *  disagrees on its open side. A bounded date the standard-date parser cannot
  *  read ("after 1870, before 1880") is left out; any other unreadable date
  *  falls back to its first four-digit year as a one-year span. */
-const yearsOf = (a: any): [number, number] | null => {
+export const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
     if (typeof raw !== "string") continue;
     const lo = earliestYear(raw), hi = latestYear(raw);
@@ -307,6 +307,37 @@ export function competingParentSets(
   return [...parents]
     .filter(([, s]) => s.size > 2)
     .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
+}
+
+/** The person-evidence rung for a partly-linked question: some of its
+ *  assertions are linked and some are not, yet no live link reaches a project
+ *  subject. Null when every assertion is linked or rejected against a subject
+ *  (`rejected_links`; person-evidence has nothing left to do, so the rung
+ *  cannot loop), when a link already names a subject,
+ *  or when no subject is a tree person. `linkedAssertionIds` holds the links
+ *  `countsForLinkedRung` admits. */
+export function subjectUnreached(
+  research: any,
+  tree: any,
+  assertions: readonly any[],
+  linkedAssertionIds: ReadonlySet<unknown>,
+): { unlinked: number; subjects: string[] } | null {
+  if (!tree) return null;
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return null;
+  const rejected = new Set(
+    arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
+  );
+  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id) && !rejected.has(a?.id)).length;
+  if (unlinked === 0 || unlinked === assertions.length) return null;
+  const ids = new Set(assertions.map((a) => a?.id));
+  const reaches = arr(research?.person_evidence).some(
+    (pe) => countsForLinkedRung(pe) && ids.has(pe?.assertion_id) && subjects.includes(pe?.person_id),
+  );
+  return reaches ? null : { unlinked, subjects };
 }
 
 /** Tree persons linked to this question's assertions whom nothing ties to a
@@ -885,6 +916,9 @@ export function questionStatus(
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   const kin = resolved ? [] : unlinkedKin(research, tree, qid, assertionIds);
+  const unreached = resolved || summaries.length > 0 || noneLinked
+    ? null
+    : subjectUnreached(research, tree, assertions, linkedAssertionIds);
   if (attachedBirthPairs.length > 0) {
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
@@ -945,6 +979,12 @@ export function questionStatus(
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (kin.length > 0) {
     nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+  } else if (unreached) {
+    // Below the kin rung, so it changes no step that rung sets. Some links but
+    // none reaching the subject: the record was linked around them, not to them.
+    nextStep =
+      `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
+      `are unlinked and none of its links reaches the project subject (${unreached.subjects.join(", ")})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
@@ -966,8 +1006,7 @@ export function questionStatus(
     // arms above found nothing open, so the blocker has settled and the next
     // step is to conclude again. Reporting null here would tell the router
     // nothing is left to do.
-    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
-    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
+    nextStep = "proof-conclusion — concluded while blocked: re-conclude this question's proof summary";
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

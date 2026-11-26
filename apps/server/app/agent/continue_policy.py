@@ -24,6 +24,7 @@ import re
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote, urlsplit
 
 # turns.outcome, and what a reader is told for each (PR #2870 items 1b, 1c, 1e).
 #
@@ -56,8 +57,11 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # in the deleted research_delivered guidance (step mode phase 2) and moved here rather
 # than going with it.
 NO_PROJECT_NOTE = (
-    "While no project exists yet (`project_context` returns `no_project`), "
-    "a request about a named FamilySearch person starts a project first, through the research skill."
+    "While no project exists yet (`project_context` returns `no_project`), a call to any tool but "
+    "project_create, project_context and project_list is refused. An activity with no person in it (a page read, a record set's names, "
+    "a surname survey) starts a project first: project_create with the researcher's request as "
+    "objective and no personId. A request about a named FamilySearch person starts one through the "
+    "research skill, which needs the person's FamilySearch ID; with no ID, ask for it and create nothing."
 )
 
 
@@ -74,12 +78,26 @@ NO_PROJECT_NOTE = (
 SOURCES_GUIDANCE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
-    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "a collections search, which the locality-guide and research-plan agents run. This rule is about "
     "what you name, not about which agent a question goes to. "
     "Nothing here can change FamilySearch's Family Tree: tree_edit, tree_correct and the "
     "merge tools change the project's own tree only. When a change belongs on FamilySearch, "
     "such as a merge or a wrong parent link, give the researcher the steps to make it on "
     "FamilySearch.org, and never offer to make it yourself."
+)
+
+
+# The main thread's one routing sentence, with or without a project. The plugin hook
+# carries the same text as `no_project_route.ROUTING_NOTE`;
+# `test_the_routing_sentence_is_the_one_the_plugin_hook_adds` fails if they differ.
+ROUTING_GUIDANCE = (
+    "Hand each genealogy request to the skill or plugin agent whose work it is, and relay "
+    "what it returns. Researching, investigating or finding a person, a relative or a record, "
+    "or carrying the research on, goes to the research skill, with or without a project; any "
+    "other request, such as one about a place's history or a person's data problems, goes to "
+    "the agent whose description covers it. Do not answer it yourself from your own knowledge "
+    "or from the project's state. A question about where the project stands you answer from "
+    "project_context."
 )
 
 
@@ -121,6 +139,9 @@ DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
 
+PLUGIN_PREFIX = "plugin:"
+
+
 def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """An allow-with-rewrite forcing a delegation to the foreground, or None.
 
@@ -131,13 +152,25 @@ def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> 
     in the background by default", its own tool text from 2.1.215 through 2.1.308) and
     both measured incidents carried no key at all.
 
+    It also drops a `plugin:` the router copied onto `subagent_type` from
+    research/SKILL.md's `@plugin:<name>` notation: no agent is registered under that
+    name, and a Haiku 5.5 router wrote it in spite of the skill saying not to
+    (ut_research_b4p, cq7). A call carrying one is rewritten even when it is already
+    in the foreground.
+
     It outlives the Stop veto, which never covered this: see `DELEGATION_TOOLS`. Without
     it a turn ends while its delegations still run. The prototype worker then kills the
     CLI (`_run_turn`), so the delegation dies mid-run; on the alpha its report arrives
     after the turn, where `_drain_background` discards it.
     """
     data = dict(tool_input or {})
-    if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:
+    if tool_name not in DELEGATION_TOOLS:
+        return None
+    name = data.get("subagent_type")
+    prefixed = isinstance(name, str) and name.startswith(PLUGIN_PREFIX) and len(name) > len(PLUGIN_PREFIX)
+    if prefixed:
+        data["subagent_type"] = name[len(PLUGIN_PREFIX):]
+    elif data.get("run_in_background") is False:
         return None
     return {
         "hookSpecificOutput": {
@@ -295,6 +328,164 @@ def completion_halt_summary(
     if summary is None or not summary.endswith(PROOF_CONCLUSION_FINISHED):
         return None
     return summary
+
+
+# ── The host posts each new search link (issue #4660, lead 2026-11-23) ───────────────
+#
+# An external-site search is a link the researcher has to open. It reaches the chat only if
+# the main thread relays the agent's report, and `project_context`'s `awaitingUser` then
+# treats it as handed over whether it was or not (spec project-context-tool-spec.md §2.3).
+# In one alpha session 11 links were logged and none reached the chat. So both planes post
+# each hand-off a turn opened, from the `research.json` they can read, as its own paragraph
+# of the reply. The rows come from `step_boundary.awaiting_hand_offs`, the Python mirror of
+# the engine's rule, never a second copy here.
+
+
+# Only a web link is autolinked: the chat's markdown blanks any other scheme's href
+# (react-markdown's urlTransform), and `ancestry.com:443/...` would read as scheme
+# `ancestry.com:`. A bare host name, with an optional port, then a path or nothing, gets
+# `https://` when it starts `www.` or ends in a top-level domain below; text with a dot
+# that is not one (`no results found.`, `results.json`, `St.Louis/1880`) does not.
+_WEB_URL = re.compile(r"https?://", re.I)
+_BARE_HOST = re.compile(r"((?:[A-Za-z0-9-]+\.)+([A-Za-z]{2,}))(?::\d+)?(?:[/?#]|$)")
+_WEB_TLDS = frozenset(
+    "com org net gov edu info us uk au ca nz ie de at ch fr be nl lu dk se no fi is it es pt "
+    "pl cz sk hu ro bg hr si rs ua ru za mx br ar cl co jp kr cn in il io".split()
+)
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def hand_off_link_text(url: str) -> str:
+    """One link's paragraph: plain words, the site's host name, and the URL as a markdown
+    autolink, so `_`, `*` or a trailing `)` in a search URL is not read as markup. Never
+    raises: a URL that will not parse loses only its host name.
+
+    An autolink holds no ASCII control character, space, `<` or `>`, and an agent-logged
+    URL is not always encoded, so those are percent-encoded; the link opens the same page.
+    Only an http(s) URL is a link: a logged `www.ancestry.com/...` gets `https://`, and
+    anything else (no URL at all, `localhost:8080/x`, `javascript:...`) is shown as code
+    rather than as a link that opens nothing."""
+    url = url.strip()
+    bare = None if _WEB_URL.match(url) else _BARE_HOST.match(url.lstrip("/"))
+    if bare and (bare.group(1).lower().startswith("www.") or bare.group(2).lower() in _WEB_TLDS):
+        url = "https://" + url.lstrip("/")
+    web = bool(_WEB_URL.match(url))
+    try:
+        host = (urlsplit(url).hostname or "").removeprefix("www.") if web else ""
+    except ValueError:  # e.g. an unbalanced `[` in the netloc
+        host = ""
+    where = f" on {host}" if host else ""
+    head = f"Search to run{where}: open this link, then send back what you find there."
+    if not web:
+        # One line: a newline would end the code span, and a blank line the paragraph.
+        return f"{head}\n`{_CONTROL.sub(' ', url).replace('`', '')}`"
+    href = "".join(quote(c, safe="") if c <= " " or c in "<>\x7f" else c for c in url)
+    return f"{head}\n<{href}>"
+
+
+class HandOffLinks:
+    """Which hand-offs one turn has posted. Per turn, never persisted (the ruling rejected
+    a stored `shown` flag).
+
+    ``seed`` records the hand-offs already open before the turn's first call that can open
+    one (``seed_hand_offs``), which an earlier turn handed out; it reads only the first
+    time, so a turn with no such call never reads research.json. ``new_texts`` returns a paragraph for each row opened since,
+    once: a parallel second return that re-sees the first's rows posts only its own, and
+    the turn-end sweep posts only what no return did. A link sent again is logged under a
+    new id and so is posted again. Before ``seed`` it posts nothing; a seed whose read
+    failed seeds empty (``seed_hand_offs``)."""
+
+    def __init__(self) -> None:
+        self.seen: set[str] | None = None
+
+    @property
+    def seeded(self) -> bool:
+        return self.seen is not None
+
+    def seed(self, rows: list[Mapping[str, Any]]) -> None:
+        if self.seen is None:
+            self.seen = {str(r.get("log_id")) for r in rows}
+
+    def new_texts(self, rows: list[Mapping[str, Any]]) -> list[str]:
+        if self.seen is None:
+            return []
+        out: list[str] = []
+        for row in rows:
+            log_id, url = row.get("log_id"), row.get("url_generated")
+            if not isinstance(log_id, str) or not isinstance(url, str) or log_id in self.seen:
+                continue
+            self.seen.add(log_id)
+            out.append(hand_off_link_text(url))
+        return out
+
+
+# The MCP tools that can log a hand-off, by bare name. `research_log_append` is on the
+# plugin hook's MAIN_THREAD_OK, so the main thread can log one without delegating;
+# `build_external_search_url` is denied to it, and listed so a change there is covered.
+HAND_OFF_LOG_TOOLS = frozenset({"research_log_append", "build_external_search_url"})
+
+
+def opens_hand_offs(tool: Any) -> bool:
+    """Whether a main-thread call to ``tool`` can open a hand-off: a delegation, or one of
+    ``HAND_OFF_LOG_TOOLS`` under any server prefix (``mcp__genealogy__…``). A bare tool name
+    does not count: the alpha's seed matcher (``.*__<tool>$``) never fires for one, so a
+    trigger it accepted would find the turn unseeded."""
+    if not isinstance(tool, str):
+        return False
+    if tool in DELEGATION_TOOLS:
+        return True
+    prefix, sep, bare = tool.rpartition("__")
+    return bool(sep and prefix) and bare in HAND_OFF_LOG_TOOLS
+
+
+def wants_hand_off_seed(links: HandOffLinks, data: Mapping[str, Any]) -> bool:
+    """Whether a ``PreToolUse`` input would seed the turn: the turn is unseeded and this is a
+    main-thread (no ``agent_id`` key) call that can open a hand-off. Lets a plane share one
+    read between the seed and another reading before the same call."""
+    return not links.seeded and "agent_id" not in data and opens_hand_offs(data.get("tool_name"))
+
+
+def seed_hand_offs(
+    links: HandOffLinks,
+    data: Mapping[str, Any],
+    read_rows: Callable[[], list[Mapping[str, Any]] | None],
+) -> None:
+    """Seed the turn from a ``PreToolUse`` input, once: the ONE seed both planes run. Only a
+    main-thread (no ``agent_id`` key) call that can open a hand-off (``opens_hand_offs``)
+    seeds. It runs in the hook, before the tool does, and not at the message stream's
+    ``tool_use``, because by the time the host reads that the CLI may already have run the
+    call, and a fast ``research_log_append`` would then be seeded as seen and never posted.
+
+    ``read_rows`` returning None (unreadable) seeds the turn EMPTY, so every open hand-off
+    a later read finds is posted, even one an earlier turn handed out. Left unseeded, the
+    next qualifying call would seed instead, after this call's agent may have logged its
+    links, and they would never be posted (/code-review round 3). A link shown twice can be
+    ignored; a link never shown cannot be run."""
+    if not wants_hand_off_seed(links, data):
+        return
+    rows = read_rows()
+    links.seed(rows if rows is not None else [])
+
+
+def hand_off_texts(
+    links: HandOffLinks,
+    message: Any,
+    event: Mapping[str, Any],
+    read_rows: Callable[[], list[Mapping[str, Any]] | None],
+) -> list[str]:
+    """The link paragraphs one ``map_message`` event calls for: the ONE trigger both planes
+    run. The ``tool_result`` of a main-thread (no ``parent_tool_use_id``) call that can open
+    a hand-off (``opens_hand_offs``) posts what it opened, once the turn was seeded
+    (``seed_hand_offs``, from the plane's ``PreToolUse``). ``read_rows`` is the plane's read
+    of ``step_boundary.awaiting_hand_offs``; None means it could not read, and then nothing
+    is posted."""
+    tool = event.get("tool")
+    if not opens_hand_offs(tool) or getattr(message, "parent_tool_use_id", None):
+        return []
+    if event.get("kind") == "tool_result" and links.seeded:
+        rows = read_rows()
+        return links.new_texts(rows) if rows is not None else []
+    return []
 
 
 def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0) -> int:

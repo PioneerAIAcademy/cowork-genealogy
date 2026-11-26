@@ -1,0 +1,514 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:LTQD-HM6",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Benjamin Fairbanks",
+          "surname": "Phipps",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "30 January 1816",
+          "standard_date": "30 Jan 1816",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "16 August 1893",
+          "standard_date": "16 Aug 1893",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Burial",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S5"
+        },
+        {
+          "ref": "S6"
+        },
+        {
+          "ref": "S7"
+        },
+        {
+          "ref": "S8"
+        },
+        {
+          "ref": "S9"
+        },
+        {
+          "ref": "S10"
+        },
+        {
+          "ref": "S11"
+        },
+        {
+          "ref": "S12"
+        },
+        {
+          "ref": "S13"
+        },
+        {
+          "ref": "S14"
+        },
+        {
+          "ref": "S15"
+        },
+        {
+          "ref": "S16"
+        },
+        {
+          "ref": "S17"
+        },
+        {
+          "ref": "S18"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:94Z5-N1F",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary L",
+          "surname": "Childs",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N9",
+          "given": "Mary L.",
+          "surname": "Child",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Birth",
+          "date": "6 January 1828",
+          "standard_date": "6 Jan 1828",
+          "place": "Woodstock, Windham, Connecticut, United States",
+          "standard_place": "Woodstock, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F25",
+          "type": "Death",
+          "date": "23 March 1893",
+          "standard_date": "23 Mar 1893",
+          "place": "Thompson, Windham, Connecticut, United States",
+          "standard_place": "Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Burial",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "standard_place": "New Boston Cemetery, Thompson, Windham, Connecticut, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S61"
+        },
+        {
+          "ref": "S62"
+        },
+        {
+          "ref": "S63"
+        },
+        {
+          "ref": "S64"
+        },
+        {
+          "ref": "S65"
+        },
+        {
+          "ref": "S66"
+        },
+        {
+          "ref": "S67"
+        },
+        {
+          "ref": "S68"
+        },
+        {
+          "ref": "S69"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I4",
+      "facts": [
+        {
+          "id": "F85",
+          "type": "Marriage",
+          "date": "24 March 1849",
+          "standard_date": "24 Mar 1849",
+          "place": "Webster, Worcester, Massachusetts, United States",
+          "standard_place": "Webster, Worcester, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from Benjamin Fairbanks Phipps, LTQD-HM6)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 18 November 2026), read from the page of Benjamin Fairbanks Phipps (LTQD-HM6).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "Benjamin Fairbanks, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLM4-WVQB : Wed Oct 14 22:54:33 UTC 2026), Benjamin Fairbanks, 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLM4-WVQB"
+    },
+    {
+      "id": "S3",
+      "title": "1860 Federal Census, Agriculture Schedule",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QHJ-1QDY-S9ZM-4"
+    },
+    {
+      "id": "S4",
+      "title": "Benj Phillips, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Benj Phillips, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHR9-JWT"
+    },
+    {
+      "id": "S5",
+      "title": "1850 Federal Census, Agriculture Schedule",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QHJ-DQDV-Z5VF?view=explore"
+    },
+    {
+      "id": "S6",
+      "title": "Biography in _History of Windham County, Connecticut: With Illustrations_",
+      "citation": "Richard M. Bayles, _History of Windham County, Connecticut: With Illustrations_ (New York: W.W. Preston & Co., 1889), 743-4; digital images, _FamilySearch_ (www.familysearch.org/library/books/idviewer/504578/818), images 818-820.",
+      "url": "http://www.familysearch.org/library/books/idviewer/504578/818"
+    },
+    {
+      "id": "S7",
+      "title": "Benjamin J Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B65 : Wed Jan 15 16:21:28 UTC 2025), Benjamin J Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68Y-B65"
+    },
+    {
+      "id": "S8",
+      "title": "Benjamin F Phipps, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKY-7K5P : Fri Oct 02 22:10:00 UTC 2026), Benjamin F Phipps.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKY-7K5P"
+    },
+    {
+      "id": "S9",
+      "title": "Benjamin Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N8P : Mon Oct 13 21:07:25 UTC 2025), Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N8P"
+    },
+    {
+      "id": "S10",
+      "title": "Benjamin F. Phipps, \"Connecticut, Deaths and Burials, 1772-1934\"",
+      "citation": "\"Connecticut, Deaths and Burials, 1772-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7V7-229 : Wed Oct 14 21:35:41 UTC 2026), Benjamin F. Phipps, 16 Aug 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7V7-229"
+    },
+    {
+      "id": "S11",
+      "title": "Benjamin F. Phipps, \"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\"",
+      "citation": "\"Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F7XP-R2N : Sun Mar 10 07:28:53 UTC 2024), Benjamin F. Phipps, 16 August 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7XP-R2N"
+    },
+    {
+      "id": "S12",
+      "title": "Benjamin F. Phipps, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SVM : Wed Mar 06 19:27:29 UTC 2024), Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SVM"
+    },
+    {
+      "id": "S13",
+      "title": "Benjamin F. Phipps, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-355 : Tue Jul 07 18:25:35 UTC 2026), Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-355"
+    },
+    {
+      "id": "S14",
+      "title": "Benjamin Fairbanks Phipps, \"Connecticut, Births and Christenings, 1649-1906\"",
+      "citation": "\"Connecticut, Births and Christenings, 1649-1906\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F746-4YS : Wed Oct 14 22:32:40 UTC 2026), Benjamin Fairbanks Phipps, 30 January 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F746-4YS"
+    },
+    {
+      "id": "S15",
+      "title": "Benj. F. Phipps, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2X8 : Thu May 23 00:41:19 UTC 2024), Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2X8"
+    },
+    {
+      "id": "S16",
+      "title": "Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VND : Wed Sep 09 14:17:27 UTC 2026), Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VND"
+    },
+    {
+      "id": "S17",
+      "title": "Benjamin F. Phipps in entry for George Fairbanks Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4CJ-PYD : Fri Jul 25 11:36:28 UTC 2025), Benjamin F. Phipps in entry for George Fairbanks Phipps, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4CJ-PYD"
+    },
+    {
+      "id": "S18",
+      "title": "Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K3L : Wed May 22 23:54:32 UTC 2024), Benjamin F. Phipps in entry for George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K3L"
+    },
+    {
+      "id": "S61",
+      "title": "Mary S Phillips, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWY : Mon Jul 08 04:23:14 UTC 2024), Mary S Phillips in entry for Benj Phillips, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHR9-JWY"
+    },
+    {
+      "id": "S62",
+      "title": "Mary L Phipps, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6R : Wed Jan 15 16:21:28 UTC 2025), Mary L Phipps in entry for Benjamin J Phipps, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68Y-B6R"
+    },
+    {
+      "id": "S63",
+      "title": "Mary Phipps, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN7R-N85 : Mon Oct 13 21:07:25 UTC 2025), Mary Phipps in entry for Benjamin Phipps, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN7R-N85"
+    },
+    {
+      "id": "S64",
+      "title": "Mary L. Child, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4WR-2XX : Thu May 23 00:41:19 UTC 2024), Benj. F. Phipps and Mary L. Child, 24 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4WR-2XX"
+    },
+    {
+      "id": "S65",
+      "title": "Mary L. Child, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH7J-SJY : Wed Mar 06 19:27:29 UTC 2024), Mary L. Child in entry for Benjamin F. Phipps, 20 March 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH7J-SJY"
+    },
+    {
+      "id": "S66",
+      "title": "Mary Phipps in household of Benjamin Phipps, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZQ-VN6 : Wed Sep 09 14:17:27 UTC 2026), Mary Phipps in entry for Benjamin Phipps, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFZQ-VN6"
+    },
+    {
+      "id": "S67",
+      "title": "Mary L. Childs in entry for George Fairbanks Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4CJ-PY6 : Fri Jul 25 11:36:28 UTC 2025), Mary L. Childs in entry for George Fairbanks Phipps, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4CJ-PY6"
+    },
+    {
+      "id": "S68",
+      "title": "Mary L. Child in entry for George F. Phipps and Rebecca Sneyd, \"Massachusetts Marriages, 1841-1915\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N44G-K3G : Wed May 22 23:54:32 UTC 2024), Mary L. Child in entry for George F. Phipps and Rebecca Sneyd, 12 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N44G-K3G"
+    },
+    {
+      "id": "S69",
+      "title": "Mary L. Child, \"Massachusetts Marriages, 1695-1910, 1921-1924\"",
+      "citation": "\"Massachusetts Marriages, 1695-1910, 1921-1924\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCDG-35L : Tue Jul 07 18:25:35 UTC 2026), Mary L. Child in entry for Benjamin F. Phipps, 20 Mar 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCDG-35L"
+    }
+  ]
+}

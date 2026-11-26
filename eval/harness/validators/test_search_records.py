@@ -92,6 +92,26 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     )
 
 
+def test_cited_record_search_not_logged_negative(before_state, after_state, test):
+    """Tag-gated: when the search returns a record the tree already cites on
+    the subject (issue #4667), no new record_search entry that kept results
+    may be `negative` or `error`, and one that kept results must be `positive`
+    or `partial`. A nil keeps no results and is rightly negative, so an entry
+    without results cannot stand in for the search that returned the record.
+    `research_log_append` refuses the negative write; this confirms the agent
+    recovered from the refusal rather than dodging it."""
+    if "cited-record-not-negative" not in test.get("tags", []):
+        pytest.skip("not a cited-record-not-negative scenario")
+    searches = [e for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"]
+    kept = [e for e in searches if e.get("results_ref")]
+    bad = [e.get("id") for e in kept if e.get("outcome") in ("negative", "error")]
+    assert not bad, f"record_search that returned results logged negative/error despite the cited record: {bad}"
+    assert any(e.get("outcome") in ("positive", "partial") for e in kept), (
+        "expected a new record_search entry that kept its results, logged positive or partial; got "
+        f"{[(e.get('id'), e.get('outcome'), e.get('results_ref')) for e in searches]}"
+    )
+
+
 # --- Pre-1880 census: family structure must be marked inferred --------
 
 _CENSUS_REFUSAL = "relationship-to-head"
@@ -1182,6 +1202,7 @@ _CENSUS_SEARCH_TEST_IDS = frozenset({
     "ut_search_records_017",
     "ut_search_records_018",
     "ut_search_records_027",
+    "ut_search_records_037",
     "ut_search_records_hpi",
     "ut_search_records_hpm",
     "ut_search_records_d01",
@@ -1816,4 +1837,156 @@ def test_found_candidate_not_excluded(tool_calls, test):
         f"a record_search's birth range excludes {candidate_year}, the birth year of "
         "a candidate this invocation was already handed (issue #4580): "
         + repr(excluding)
+    )
+
+
+# --- A census nil runs a surname-free search before "not found" (#4699) ----
+
+
+def _census_schedules(call: dict) -> list:
+    response = call.get("response")
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            return []
+    census = _as_mapping(response).get("census") if isinstance(response, dict) else None
+    schedules = _as_mapping(census).get("schedules") if census else None
+    return schedules if isinstance(schedules, list) else []
+
+
+def test_census_nil_runs_surname_free_search(tool_calls, test):
+    """Tag-gated (census-nil-surname-free): issue #4699.
+
+    Generalizes #4580's woman-only `nil-drops-surname` check to any subject,
+    and narrows the trigger to a response the tool's own census table (not a
+    guess) confirms covers the collection searched: a `record_search` whose
+    response carries a non-empty `census.schedules` and whose `surname`
+    nils (`totalMatches: 0`). A statewide census search on a surname is not a
+    true negative on its own — Step 8 item 2 requires dropping `surname`
+    entirely (anchored on `recordCountry`, place, and a household member)
+    before reporting the subject "not found." The wildcard-surname half of
+    that same requirement is left to the judge (rubric "Nil escalation" +
+    this test's `judge_context`) — there is no deterministic ground-truth
+    field distinguishing a wildcarded surname search from any other.
+    """
+    if "census-nil-surname-free" not in test.get("tags", []):
+        pytest.skip("not a census-nil scenario")
+
+    calls = _record_search_calls(tool_calls)
+    first_nil = next(
+        (
+            i for i, c in enumerate(calls)
+            if _as_mapping(c.get("args")).get("surname")
+            and _census_schedules(c)
+            and _total_matches(c) == 0
+        ),
+        None,
+    )
+    assert first_nil is not None, (
+        "no record_search under a surname, against a collection the tool's own "
+        "census table covers, came back empty — this test never reached the nil "
+        "it grades; record_search calls: "
+        + repr([_as_mapping(c.get("args")) for c in calls])
+    )
+    later = [_as_mapping(c.get("args")) for c in calls[first_nil + 1:]]
+    dropped = [a for a in later if not a.get("surname")]
+    assert dropped, (
+        "after the empty census surname search, every later record_search kept a "
+        "surname; none dropped it entirely to anchor on the place and a household "
+        "member before reporting the subject not found (issue #4699). Later calls: "
+        + repr(later)
+    )
+
+
+# --- A written-out surname spelling before FamilySearch is called exhausted (#4777)
+
+
+# Test id -> the surname the tree holds, which FamilySearch's fuzzy match does not
+# carry to the spelling its index uses.
+_TREE_SURNAME_BY_TEST_ID = {
+    "ut_search_records_039": "Renhard",
+}
+
+_CLOSING_PLAN_STATUSES = {"completed", "skipped"}
+_HAND_BACK_EXHAUSTED = re.compile(
+    r"hand[- ]?back[^\n]{0,80}`?(?:search-external-sites|research-plan)", re.I
+)
+
+
+def _spelled_surname_variant(value, tree_surname: str) -> bool:
+    """A surname written out in another spelling: not the tree's (case and
+    punctuation aside), and not a wildcard, which spells nothing."""
+    if not isinstance(value, str) or not value.strip() or re.search(r"[*?]", value):
+        return False
+    return _norm_name(value) != _norm_name(tree_surname)
+
+
+def _closes_plan_item(call: dict) -> bool:
+    if _bare_tool_name(call.get("tool") or "") != "research_append":
+        return False
+    args = _as_mapping(call.get("input") or call.get("args"))
+    return (
+        args.get("section") == "plan_items"
+        and args.get("op") == "update"
+        and _as_mapping(args.get("fields")).get("status") in _CLOSING_PLAN_STATUSES
+    )
+
+
+def test_surname_spelling_before_escalation(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (surname-spelling-before-escalation): issue #4777.
+
+    The Renhard run searched FamilySearch marriages under "Renhard" and the
+    given-name variant "Charls" only, then escalated; the index holds the marriage
+    as "Rheinhardt", which fuzzy matching on "Renhard" does not reach. Before the
+    agent calls FamilySearch exhausted -- a hand-back to search-external-sites or
+    research-plan, or a plan item closed `completed`/`skipped` -- some record_search
+    must carry a `surname` spelled differently from the tree's, written out.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in _TREE_SURNAME_BY_TEST_ID or "surname-spelling-before-escalation" in tags, (
+        f"{test_id} has an entry in _TREE_SURNAME_BY_TEST_ID but no "
+        "'surname-spelling-before-escalation' tag - restore the tag or delete the entry"
+    )
+    if "surname-spelling-before-escalation" not in tags:
+        pytest.skip("not a surname-spelling-before-escalation scenario")
+    assert test_id in _TREE_SURNAME_BY_TEST_ID, (
+        f"{test_id} carries 'surname-spelling-before-escalation' but has no entry "
+        "in _TREE_SURNAME_BY_TEST_ID"
+    )
+    tree_surname = _TREE_SURNAME_BY_TEST_ID[test_id]
+
+    calls = list(tool_calls or [])
+    first_variant = next(
+        (
+            i for i, c in enumerate(calls)
+            if _bare_tool_name(c.get("tool") or "") == "record_search"
+            and _spelled_surname_variant(_as_mapping(c.get("args")).get("surname"), tree_surname)
+        ),
+        None,
+    )
+    closes = [i for i, c in enumerate(calls) if _closes_plan_item(c)]
+    surnames = [
+        _as_mapping(c.get("args")).get("surname")
+        for c in calls if _bare_tool_name(c.get("tool") or "") == "record_search"
+    ]
+    early = [i for i in closes if first_variant is None or i < first_variant]
+    assert not early, (
+        f"a plan item was closed before any record_search spelled the surname other "
+        f"than {tree_surname!r} (issue #4777). record_search surnames: {surnames!r}"
+    )
+
+    from harness.skill_runner import agent_return_text
+
+    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    assert first_variant is not None or not _HAND_BACK_EXHAUSTED.search(reply), (
+        f"handed FamilySearch back as exhausted with no record_search spelling the "
+        f"surname other than {tree_surname!r} (a written-out variant such as Reinhard; "
+        f"a wildcard does not count; issue #4777). record_search surnames: {surnames!r}"
+    )
+    assert first_variant is not None, (
+        f"no record_search spelled the surname other than {tree_surname!r}; the "
+        f"subject's marriage is indexed under another spelling (issue #4777). "
+        f"record_search surnames: {surnames!r}"
     )

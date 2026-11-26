@@ -230,6 +230,9 @@
         "question_kind": {
           "$ref": "enums.schema.json#/$defs/question_kind"
         },
+        "audits_tree": {
+          "type": "boolean"
+        },
         "priority": {
           "$ref": "enums.schema.json#/$defs/priority"
         },

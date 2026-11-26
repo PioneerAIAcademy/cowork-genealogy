@@ -21,5 +21,28 @@
   "execution": {
     "max_turns": 12,
     "max_wall_clock_seconds": 400
-  }
+  },
+  "expected_classifications": [
+    {
+      "record_role": "child",
+      "fact_type": "birth",
+      "attribute": "date",
+      "value": "11 July"
+    },
+    {
+      "record_role": "child",
+      "fact_type": "christening",
+      "attribute": "date",
+      "value": "20 July"
+    },
+    {
+      "record_role": "father",
+      "fact_type": "name"
+    },
+    {
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Inger Larsdatter"
+    }
+  ]
 }

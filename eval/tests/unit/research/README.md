@@ -123,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,12 +137,9 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states: for `pe7` it says
-`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
-assertion from an unlinked one, and for `si3` it says `search-records`, because
-browse-only is stated only in the plan item's rationale. The router passed both 3
-of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
-on `main`).
+advisory is still wrong on one of these states: for `si3` it says `search-records`,
+because browse-only is stated only in the plan item's rationale. The router passes
+it 3 of 3 regardless.
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
@@ -328,6 +325,48 @@ hand-off list, that the project exists with no question or plan, and that the of
 names that step. Unlike `b4i`, the reply may keep init-project's next-step sentence,
 because on a plan ask the next step is the first research question.
 
+`ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`
+(`bounded-interpretive-first-message.json`) cover the interpretive ask (issue #4381).
+Why a move or event in the family happened, what could explain a pattern in it, or
+historical background for either, is bounded and goes to `historical-context` (lead,
+2026-11-09). Feedback #4300 asked "can you explain what could be behind the migration
+patterns?"; question-selection made it a records question, and the run made 11 locality
+surveys and 2 plans and never answered it. The same tester's #3244 and #3930 went the
+same way.
+- **ia1** runs on `empty-project-just-created`. It has no questions, so the job path's
+  first hand-off is question-selection, and `routes-to:historical-context` tells the two
+  apart.
+- **ia2** is feedback #4564's shape: a first message with a PID and no project, under
+  #4350's paragraph. The `bounded-after-init` validator checks it. Its `routes-to:` is
+  init-project, so the deliverable's owner comes from a new `deliverable:<agent>` tag. With
+  no such tag the owner is search-records, so b4i and b4w are unchanged.
+  `delegates-verbatim` reads its callee the same way: `deliverable:`, else `routes-to:`,
+  else person-evidence.
+
+Two more tags are deterministic:
+- **`delegates-tree-facts`**: the session calls `tree_query`, and the spawn names every year
+  and leading place word of the subject's tree facts, and no year outside those facts, what
+  `tree_query` returned (a spouse's or child's years), the message and the project objective.
+  The `tree_query` half is what tells ia1 apart on
+  main's SKILL.md: in a scratch run there, the router reached historical-context from the
+  agent's own description, skipped `tree_query`, and handed over the objective's years.
+  After init-project, ia2's tree holds Ireland ~1845 and Schuylkill County 1908,
+  and the message names neither. ia1's tree holds nothing, so on ia1 it checks that no
+  other year appears and that the objective's years are named as the objective's. The
+  delegation may pass them if a year only the objective holds sits at least once on a line
+  saying "objective", or under a heading line that does. "Tree data: … born ca. 1845" fails.
+  This is Ikennaya's call (2026-11-17, after 3 of 3 scratch runs of ia1 did so), not a lead
+  ruling: the years come from the researcher's own objective, not an outside source or an
+  assumption.
+- **`relays-overview`**: the reply carries the overview's Sources consulted list and not
+  its `### Search implications` block (Richard, 2026-11-17).
+
+ia2 is a `/research` test on purpose. #4564's skip was the main thread spawning
+historical-context directly. No unit test here can see that, because the harness never
+adds Cowork's routing sentence; the beta acceptance run covers it. ia2 stubs
+historical-context with its return contract's shape: narrative, Sources consulted,
+Search implications, `---`, summary. A change to that contract should update the stub.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
@@ -412,6 +451,29 @@ spawn of each named agent. The stub reply reaches the router as an agent return 
 canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
 line. The validator checks the spawn, not that the report names a cross-group owner or
 ends on "Continue with …?"; the judge reads that part.
+
+## No hand-written FamilySearch links (issue #4777)
+
+`ut_research_fl1` (`no-fs-link-for-searched-census.json`) runs on
+`renhard-1901-census-searched`, whose log already holds three nil 1901-census searches,
+with `search-records` stubbed; the researcher asks to check the 1901 census.
+`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) asks research to drive the workflow on
+`renhard-marriage-england`, so it dispatches the planned search to `search-records`, which runs
+against `record_search` fixtures that all return the timeout error. Its message names no
+search: "Search FamilySearch for …" went straight to the `search-records` agent on both
+runs, research never loaded, and the positive test failed on activation. Both carry
+`no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
+fails on any `familysearch.org/search/record` or `/search/catalog/results` link in the
+reply. A film viewer (`/search/film/`) or collection (`/search/collection/`) link is one
+`image_read`, `image_transcribe` or `collections_search` returns, and passes.
+
+Decided (Richard, 2026-11-25): the main thread never writes that link and never hands
+the researcher a FamilySearch search to run; a failed `record_search` is reported and
+offered again. The link in feedback #4743 was malformed (`collection_id` is not a
+parameter FamilySearch reads; the filter is `f.collectionId`) and was for a search
+already run three times. A tool-built `webSearchUrl` on `record_search` was considered
+and not chosen, since it adds a response field; it rests on issue #4707 fixing the
+search timeouts themselves, and can be revisited if they persist after that lands.
 
 ## Attached records (issue #3516)
 

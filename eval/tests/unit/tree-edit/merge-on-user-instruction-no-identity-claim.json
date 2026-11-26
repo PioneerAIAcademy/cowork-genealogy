@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_tree_edit_020",
+    "skill": "tree-edit",
+    "name": "A merge the user instructs proceeds with the instruction quoted as its justification",
+    "type": "positive",
+    "description": "Decision 13 of docs/plan/conclusion-tree.md: a merge needs an identity decision or the user's instruction. In mid-research-flynn-merge-pending no edge joins I3 (James Flynn) and I4 (James Patrick Flynn), and ps_002 carries no identity claim, so merge_tree_persons returns a mergeIdentity warning. The user's instruction is the justification: the agent re-calls with it quoted, the merge lands, and the justification is persisted.",
+    "tags": [
+      "tree-edit",
+      "person-merge",
+      "merge-on-instruction",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Merge the stub I3 (James Flynn) into I4 (James Patrick Flynn) now: I have checked, they are the same man. Run merge_tree_persons and report what was folded.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-merge-pending"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "GROUNDING: decide what the run did from its tool calls. merge_tree_persons first returns reason unjustified_warnings with one warning, mergeIdentity|I4|I3, because no identity claim covers the pair. The correct outcome is a second merge_tree_persons call whose warningJustifications quote the user's instruction, which lands: I3 is gone, I4 keeps both birth facts, and research.json references to I3 now name I4.",
+    "Merging in the other direction (I4 into I3) is wrong: I4 carries the FamilySearch id, so it is the survivor.",
+    "Stopping at the refusal and asking the user again is a partial: the user already instructed the merge and said they had checked.",
+    "A justification that does not reflect the user's instruction (an invented proof, or text claiming a proof summary records the identity) fails Evidence grounding.",
+    "Should NOT need a separate validate_research_schema call. Do not score down for omitting it; do not reward calling it."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
