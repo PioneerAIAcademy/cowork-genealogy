@@ -23,7 +23,7 @@ command that recomputes it.
 
 **Who this is not for.** Genealogists working on skill prose and evals — that
 is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
-(reviewing and releasing). Different audience, different workflow.
+(reviewing a PR). Different audience, different workflow.
 
 ---
 
@@ -879,8 +879,7 @@ There **is** an orchestrator, and it is a skill:
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
 3. **One loop, in the router.** It runs every job the same way: one step per turn
-   where a host replies (below; in Cowork a "keep going" runs the steps in one
-   turn), decisions logged to the audit-trail fields. **Only the router reads
+   (below), decisions logged to the audit-trail fields. **Only the router reads
    `--autonomous`,** for a trigger and two rules. Its own flag branch went with
    S2, and six others (`search-external-sites`, `question-selection`, `search-records`,
    `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
@@ -891,8 +890,8 @@ There **is** an orchestrator, and it is a skill:
    `userPresent: no` to
    `search-external-sites` and `question-selection`, which get it on no other run
    (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those two read that field,
-   not the string (§9.5 below). The router also sends it to `person-evidence`, on a "Keep
-   going." or "Wrap it up." turn as well, but `agents/person-evidence.md` no longer
+   not the string (§9.5 below). The router also sends it to `person-evidence`, on a "Wrap it
+   up." turn as well, but `agents/person-evidence.md` no longer
    reads it.
    `agents/search-records.md` hands back `userPresent: no` for
    search-external-sites only when its delegation says the search is part of an
@@ -948,11 +947,16 @@ There **is** an orchestrator, and it is a skill:
    `docs/specs/research-step-mode-spec.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
-   enforces that boundary on the FS prototype always, on every e2e run (the e2e
-   harness runs `--step-mode job` by default since step mode phase 2), and in the
-   unit harness only where a test opts in through `execution.step_mode`. Cowork and the hosted alpha follow the router's own text with no
-   such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
-   since no host is there to reply.
+   enforces that boundary on the FS prototype and the hosted alpha always (deny,
+   then halt), on every e2e run (the e2e harness runs `--step-mode unattended` by
+   default, answering each boundary `/research --autonomous Continue.` as a researcher
+   would, the flag kept so the router keeps passing `userPresent: no`), and in the
+   unit harness only where a test opts in through `execution.step_mode`. On the
+   connector and in Cowork the plugin hook `step_gate_hook.py` imports it and
+   denies every out-of-group spawn, never halting. Before any search a job stops
+   three times: after setting up the project, after choosing the question, and
+   after planning the searches. "Keep going." reads as "Continue.": no plane
+   replies for the researcher.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
@@ -1333,12 +1337,15 @@ is not a guardrail: it adds two sentences to each Cowork researcher message (wit
 a request to research a person goes to the research skill; and a source, collection, book or
 citation is named only from a tool result) and is silent
 wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
-hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name, enforces **five**
+hook that adds context rather than deciding a call. A second `PreToolUse` entry (on
+`Agent|Task|Skill`) and a second `UserPromptSubmit` entry run `step_gate_hook.py`, the step
+boundary on the connector and in Cowork (`docs/specs/research-step-mode-spec.md`, decision
+25); it too is silent under `GENEALOGY_HOSTED_PLANE`. The guard's `PreToolUse` hook, despite this section's name, enforces **five**
 rules, not one. Its matcher is
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` — wider
 than the file-write tools, because two rules act on `research_append` itself, one
-on the delegation tools, and one on the tools only agents hold, which the final
-`.*(…)` alternative names one by one:
+on the delegation tools, and one on the tools only agents hold and the tools the main
+thread may never call, which the final `.*(…)` alternative names one by one:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1379,7 +1386,10 @@ on the delegation tools, and one on the tools only agents hold, which the final
    tool on `AGENT_ONLY_TOOLS` — held by agents, declared by no skill — and names
    every agent that holds it. `MAIN_THREAD_OK` lists the few such tools the main
    thread still needs, each with its reason; both lists are hand-kept (lead,
-   2026-10-20) and `plugin-hooks.test.ts` fails when a tool is on neither.
+   2026-10-20) and `plugin-hooks.test.ts` fails when a tool is on neither. A tool
+   no agent holds that no step may call on the main thread goes on
+   `MAIN_THREAD_DENIED` with its deny text instead: `person_search`, because a
+   project starts only from a FamilySearch person ID (lead, 2026-11-24).
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
@@ -2346,33 +2356,21 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
-  4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-     `docs/specs/research-step-mode-spec.md` decision 25 (lead, 2026-10-19, amended
-     2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
-     stops a model starting the next step without asking differs by plane: the FS
-     prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
-     router prose and no hook at all**. There is no plugin step hook anywhere.
-     It is built (PR 1), and since step mode phase 2 every e2e run applies the step
-     check (rider 3), while the plane it tracks, `real_agent`
-     (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
-     suite enforces a boundary that neither Cowork nor the alpha has, and the one
-     plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
-     suite will therefore say nothing about whether the boundary holds where researchers
-     actually are.**
-     Do not read a passing step-mode test as evidence the boundary holds in Cowork or on
-     the alpha.
-
-   This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
-   *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
-   does end a Cowork turn), and the lead judged it not worth a stateful hook yet,
-   because the cost exposure is the prototype and a Cowork researcher can press stop.
-   Two things would close it, and the first is already instrumented: decision 25's
-   rider logs **every halt on the prototype**, and because the router prose is identical
-   on both planes that rate estimates how often Cowork runs past a boundary — a high
-   one buys the hook with numbers rather than a guess. The facts such a hook would
-   need are already recorded, so they need no re-measuring (ADR-0005, "PARKED for a
-   possible future Cowork hook"). Otherwise it needs an instrument that reaches Cowork,
-   which today is only a live session, for the same reason as gap 1.
+  4. **The connector and Cowork step hook's binding: live sessions only.** Under
+     `docs/specs/research-step-mode-spec.md` decision 25 (lead, 2026-10-19, widened
+     2026-11-19 and 2026-11-24) every plane enforces the step boundary in code. The FS
+     prototype and the hosted alpha load `step_boundary.py` in process and deny, then
+     halt; the connector and Cowork get the plugin hook `step_gate_hook.py`, which
+     denies and never halts. The in-process gates are tested (`make server-test`) and
+     the e2e and unit harnesses apply the same library. The plugin hook is not: its
+     packaging tests (`step-gate-hook.test.ts`) prove what it *decides*, and nothing
+     in CI proves a runtime *binds* it. `make hook-smoke` drives the hosted loader,
+     where the hook is silent under `GENEALOGY_HOSTED_PLANE`, so it cannot show the
+     hook binding either. Since the hook must never raise, one that stopped binding
+     looks exactly like one that allowed every spawn. **Do not read a passing step-mode
+     test as evidence the boundary holds on the connector or in Cowork.** The only
+     instrument is a live connector chat or Cowork task on a branch's uploaded plugin,
+     for the same reason as gap 1; none had been run as of 2026-11-24.
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 
@@ -2407,7 +2405,7 @@ nobody will) and `agents/question-selection.md` (a user can pick which fact of t
 objective first; mid-run nobody can). `search-hints` decides hints itself on every run. Each has eval fixtures on
 each side. The mode difference survives in the router, which sets that field from the
 flag: on an autonomous e2e run the router hands search-external-sites `userPresent: no`
-where a hosted "Keep going." run leaves it at `yes`. So an autonomous e2e run is meant
+where an attended run leaves it at `yes`. So an autonomous e2e run is meant
 never to reach its `yes` side, and `ut_research_ue1` (tag `delegates-user-present-no-external`)
 checks that the router sends the field on the opening turn of an autonomous run.
 That is narrower than the miss it was written for: one committed step-mode run

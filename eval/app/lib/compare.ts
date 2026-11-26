@@ -3,7 +3,7 @@
  *
  * Schema v2 update: each run log is a multi-test envelope. Comparison
  * is between two arbitrary envelopes (chosen by the user, defaulting
- * to latest released + latest candidate). Scores come from `.ann.json`
+ * to the two newest run logs). Scores come from `.ann.json`
  * `corrected_score` when present; fall back to the run log's
  * `aggregated_dimensions[].score` (the LLM judge's score) when not.
  *
@@ -11,7 +11,7 @@
  * between the two envelopes when any of the test's referenced files
  * (its test JSON, scenario, fixtures) differ in the two snapshots.
  *
- * See docs/plan/eval-runlog-versioning.md §B3.
+ * See docs/specs/eval-crud-ui-spec.md.
  */
 import { alignSnapshots } from './snapshot';
 import type {

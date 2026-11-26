@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { FIRST_QUESTION_NEXT_STEP, firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -118,6 +118,53 @@ describe("project_context", () => {
       },
       { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", assertionCount: 0 },
     ]);
+  });
+
+  it.each([
+    ["a subject and no question", { subject_person_ids: ["I1"], status: "active" }, undefined, true],
+    ["an empty questions list", { subject_person_ids: ["I1"], status: "active" }, [], true],
+    ["a question already", { subject_person_ids: ["I1"], status: "active" }, [{ id: "q_001", question: "Q?", status: "open" }], false],
+    ["no subject", { status: "active" }, undefined, false],
+    ["a completed project", { subject_person_ids: ["I1"], status: "completed" }, undefined, false],
+  ])("names the first question's steps as a top-level nextStep only on %s (#4791)", async (_label, project, questions, shown) => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Verify his parents.", created: "2026-01-01", updated: "2026-01-01", ...project },
+        ...(questions ? { questions } : {}),
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    if (shown) {
+      expect(r.nextStep).toBe(FIRST_QUESTION_NEXT_STEP);
+      expect(r.nextStep).not.toMatch(/objective/);
+      expect(r.nextStep).toMatch(/Skill\("forget-and-rederive"\) with mode: verify/);
+      expect(r.nextStep).toMatch(/extraction_append\(\{ projectPath, personId \}\) and timeline_build/);
+      expect(r.nextStep).toMatch(/^For the research router only; an agent it spawned ignores this/);
+      expect(r.nextStep).toMatch(/Not on a bounded request/);
+      expect(r.nextStep).toMatch(/not in the turn that created the project/);
+    } else {
+      expect(r.nextStep).toBeUndefined();
+    }
+  });
+
+  it("quotes the opening verify request in the first question's nextStep (#4791)", async () => {
+    await writeProject(
+      {
+        project: {
+          id: "rp_001", objective: "Verify his parents.", status: "active", created: "2026-01-01",
+          updated: "2026-01-01", subject_person_ids: ["I1"], verify_request: "Verify his parents.",
+        },
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.nextStep).toBe(firstQuestionNextStep("Verify his parents."));
+    expect(r.nextStep).toContain('The researcher asked, when the project was created: "Verify his parents."');
+    expect(r.nextStep).toMatch(/First Skill\("forget-and-rederive"\) with mode: verify/);
+    expect(firstQuestionNextStep(undefined)).toBe(FIRST_QUESTION_NEXT_STEP);
   });
 
   it("gives each person its one-hop family from the tree's edges (#2537)", async () => {
@@ -1635,7 +1682,7 @@ describe("project_context — searches on a search step (spec §2.2.1)", () => {
 
   it("carries no searches when the next step is not a search", async () => {
     const row = await contextFor([]);
-    expect(row.nextStep).toBe("research-plan");
+    expect(row.nextStep).toBe("locality-guide, then research-plan");
     expect(row.searches).toBeUndefined();
   });
 });

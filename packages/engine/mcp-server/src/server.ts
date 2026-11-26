@@ -108,7 +108,7 @@ import {
 import { projectLinks } from "./utils/project-links.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
-import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
+import { treeForgetTool, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
   researchAppendFromCaller,
   type ResearchAppendInput,
@@ -868,7 +868,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "tree_forget") {
       try {
         const args = request.params.arguments as unknown as TreeForgetInput;
-        const result = await treeForget(args);
+        const result = await treeForgetTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

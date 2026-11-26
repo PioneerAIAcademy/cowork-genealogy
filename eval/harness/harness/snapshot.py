@@ -16,7 +16,7 @@ across Windows + macOS + Linux developer machines. Test vectors in
 `tests/test_snapshot.py` + `eval/app/tests/unit/snapshot.test.ts` are
 the shared contract.
 
-See docs/plan/eval-runlog-versioning.md §A4 and §A7.
+See eval/CLAUDE.md, "Snapshot model".
 """
 
 from __future__ import annotations

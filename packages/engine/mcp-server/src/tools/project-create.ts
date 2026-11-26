@@ -58,12 +58,21 @@ import {
   fileExists,
   findNestingAncestor,
   formatIssues,
+  readProjectJson,
+  withProjectLock,
 } from "../utils/project-io.js";
+import { isDeepStrictEqual } from "node:util";
 import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
+import { fetchRelativeSources, type RelativeSourcesResult } from "../utils/relative-sources.js";
+import { treePidOfArk } from "../utils/ark.js";
+import { attachedSources } from "../utils/search-delegations.js";
+import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { sourceImageCapState } from "../utils/image-store.js";
 import {
   OCR_PHASE_BUDGET_MS,
   readPerson,
+  shapeDescriptions,
   type MemoryKind,
   type PersonReadOutcome,
 } from "./person-read.js";
@@ -76,6 +85,7 @@ import {
   displayName,
   divisionMismatchesOf,
   factsOf,
+  pickSourceFields,
   unresolvedPlacesOf,
   type BuiltTree,
   type DroppedLoopEdge,
@@ -145,6 +155,9 @@ export interface ProjectCreateInput {
   projectPath: string;
   objective: string;
   title?: string;
+  /** The researcher's request to verify one relationship, fact or source of the
+   *  subject, in their words: stored as `project.verify_request` (#4791). */
+  verifyRequest?: string;
   subjectPersonIds?: string[];
   /** The subject's FamilySearch person ID. Absent for an activity with no person
    *  in it (lead, 2026-11-19): the project is then seeded by `objective` alone,
@@ -156,6 +169,10 @@ export interface ProjectCreateInput {
   /** Removed 2026-11-02 with the hand-built tree: refused by name, so no
    *  project comes into being without a FamilySearch person. */
   tree?: unknown;
+  /** Tree person ids whose FamilySearch attached sources to read into an EXISTING
+   *  project: the create's `relativeSourcesSkipped`. Takes no other input but
+   *  `projectPath`, and creates nothing. */
+  fillRelativeSources?: unknown;
 }
 
 /** One person in the summary: tree id, display name, and how they relate to
@@ -187,13 +204,33 @@ export interface ProjectCreateSummary {
   objective: string;
   title?: string;
   relatives: SummaryPerson[];
+  /** The subject's attached sources, as project_context's `attachedSources` gives them.
+   *  Never trimmed: the setup stop asks the researcher which of them is wrong. */
+  subjectSources: { id: string; title: string }[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
+  /** Tree ids of relatives whose attached sources could not be read; absent when
+   *  none. Read them with `fillRelativeSources`. */
+  relativeSourcesSkipped?: string[];
   /** A sentence per ParentChild loop the build broke, first, then the read's
    *  own notes (a relative FamilySearch names but does not describe). */
   notes?: string[];
   /** How many entries each list lost to the size cap; absent when none did. */
   omitted?: Partial<Record<"relatives" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
+  validation: { valid: true; warnings: string[] };
+}
+
+/** The `fillRelativeSources` mode's answer. */
+export interface FillRelativeSourcesSummary {
+  ok: true;
+  filesWritten: string[];
+  /** Each person read, with how many of their attached sources are now cited on them. */
+  filled: { id: string; name: string; sources: number }[];
+  /** Sources new to the tree, and descriptions the tree already held that were cited again. */
+  sourcesAdded: number;
+  sourcesReused: number;
+  /** Tree ids still unread; absent when none. */
+  relativeSourcesSkipped?: string[];
   validation: { valid: true; warnings: string[] };
 }
 
@@ -211,6 +248,7 @@ export interface ProjectCreateNoPersonSummary {
 
 export type ProjectCreateResult =
   | ProjectCreateSummary
+  | FillRelativeSourcesSummary
   | ProjectCreateNoPersonSummary
   | { ok: false; errors: string[] };
 
@@ -223,12 +261,18 @@ class ProjectCreateError extends Error {}
 export interface ProjectCreateDeps {
   readPerson: (
     personId: string,
-    opts: { projectPath?: string; deadline?: number },
+    opts: { projectPath?: string; deadline?: number; relativeSourcesFirst?: boolean },
     principal: Principal,
   ) => Promise<PersonReadOutcome>;
+  /** What `fillRelativeSources` reads through. Absent, that mode is refused. */
+  fetchRelativeSources?: (
+    personIds: string[],
+    principal: Principal,
+    deadline: number,
+  ) => Promise<RelativeSourcesResult>;
 }
 
-const DEFAULT_DEPS: ProjectCreateDeps = { readPerson };
+const DEFAULT_DEPS: ProjectCreateDeps = { readPerson, fetchRelativeSources };
 
 /** Today as an ISO date (YYYY-MM-DD), matching every other tool's stamp. */
 function today(): string {
@@ -260,6 +304,9 @@ export async function runProjectCreate(
     }
     if (input.tree !== undefined) {
       throw new ProjectCreateError(PROJECT_TREE_REMOVED);
+    }
+    if (input.fillRelativeSources !== undefined) {
+      return await fillRelativeSources(input, deps, principal, start);
     }
 
     const objective = typeof input.objective === "string" ? input.objective.trim() : "";
@@ -392,7 +439,7 @@ export async function runProjectCreate(
       // ever spent on a create that can happen.
       outcome = await deps.readPerson(
         pid,
-        { projectPath, deadline: start + OCR_PHASE_BUDGET_MS },
+        { projectPath, deadline: start + OCR_PHASE_BUDGET_MS, relativeSourcesFirst: true },
         principal,
       );
       built = await buildFromStagedRead({
@@ -449,6 +496,10 @@ export async function runProjectCreate(
     const ids = [...new Set([pid, outcome.resolvedId])];
     const storedObjective = nameForId(objective, ids, displayName(subject));
     const storedTitle = input.title ? nameForId(input.title, ids, displayName(subject)) : input.title;
+    const verifyRequest =
+      typeof input.verifyRequest === "string" && input.verifyRequest.trim() !== ""
+        ? nameForId(input.verifyRequest.trim(), ids, displayName(subject))
+        : undefined;
 
     const stamp = today();
     const research: Record<string, unknown> = {
@@ -456,6 +507,7 @@ export async function runProjectCreate(
         id: "rp_001",
         objective: storedObjective,
         ...(storedTitle ? { title: storedTitle } : {}),
+        ...(verifyRequest ? { verify_request: verifyRequest } : {}),
         subject_person_ids: subjectPersonIds,
         status: "active",
         created: stamp,
@@ -514,6 +566,7 @@ export async function runProjectCreate(
     return summarize({
       outcome,
       tree,
+      relativeSourcesSkipped: treeIdsOf(outcome.relativeSourcesSkipped ?? [], idMap),
       subjectId: idMap.persons[outcome.resolvedId],
       objective: storedObjective,
       ...(storedTitle ? { title: storedTitle } : {}),
@@ -651,6 +704,7 @@ function factLine(person: Record<string, any> | undefined, type: string): string
 function summarize(args: {
   outcome: PersonReadOutcome;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
+  relativeSourcesSkipped: string[];
   subjectId: string;
   objective: string;
   title?: string;
@@ -662,6 +716,7 @@ function summarize(args: {
   const subject = tree.persons.find((p) => p.id === subjectId);
   const memories = outcome.result.sources.filter((s) => outcome.memoryKinds[s.id]);
   const lists = {
+    subjectSources: attachedSources(tree, subjectId),
     relatives: tree.persons
       .filter((p) => p.id !== subjectId)
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),
@@ -686,6 +741,7 @@ function summarize(args: {
     objective: args.objective,
     ...(args.title ? { title: args.title } : {}),
     relatives: lists.relatives,
+    subjectSources: lists.subjectSources,
     counts: {
       persons: tree.persons.length,
       relationships: tree.relationships.length,
@@ -693,6 +749,7 @@ function summarize(args: {
       memorySources: memorySourceCount,
     },
     memories: { transcribed: lists.transcribed, notTranscribed: lists.notTranscribed },
+    ...(args.relativeSourcesSkipped.length ? { relativeSourcesSkipped: args.relativeSourcesSkipped } : {}),
     ...(lists.notes.length ? { notes: lists.notes } : {}),
     ...(Object.keys(omitted).length ? { omitted: { ...omitted } } : {}),
     validation: { valid: true, warnings: lists.warnings },
@@ -702,8 +759,9 @@ function summarize(args: {
   // up to the relatives, and among those only a child, sibling or other
   // relative. A parent or a spouse is never dropped, so a pathological family
   // can leave the summary over the cap.
-  const order: (keyof typeof lists)[] = ["warnings", "notes", "notTranscribed", "transcribed", "relatives"];
-  const lastDroppable = (key: keyof typeof lists): number => {
+  type Trimmed = Exclude<keyof typeof lists, "subjectSources">;
+  const order: Trimmed[] = ["warnings", "notes", "notTranscribed", "transcribed", "relatives"];
+  const lastDroppable = (key: Trimmed): number => {
     const list = lists[key] as unknown[];
     if (key !== "relatives") return list.length - 1;
     for (let i = list.length - 1; i >= 0; i--) {
@@ -719,6 +777,166 @@ function summarize(args: {
     summary = build();
   }
   return summary;
+}
+
+/** The tree ids of `pids`, each once, in order; a PID the tree does not hold is left out. */
+function treeIdsOf(pids: string[], idMap: IdMap): string[] {
+  return [...new Set(pids.map((pid) => idMap.persons[pid]).filter((id): id is string => typeof id === "string"))];
+}
+
+/** A source as the tree dedupes it: the fields a tree source keeps, less its id. */
+function sourceKey(src: Record<string, unknown>): string {
+  const { id: _id, ...rest } = pickSourceFields(src);
+  return JSON.stringify(Object.keys(rest).sort().map((k) => [k, rest[k]]));
+}
+
+/**
+ * The `fillRelativeSources` mode: read the attached sources of tree persons the
+ * create could not read, and merge them into the existing tree as the create's read
+ * would have — a description the tree already holds is cited again, not copied, and
+ * each is cited at person level on the person it is attached to. Writes the tree
+ * (and the starting tree when it is still the opening tree), never research.json.
+ */
+async function fillRelativeSources(
+  input: ProjectCreateInput,
+  deps: ProjectCreateDeps,
+  principal: Principal,
+  start: number,
+): Promise<ProjectCreateResult> {
+  const { projectPath } = input;
+  const extra = (["personId", "objective", "title", "subjectPersonIds"] as const).filter((k) => input[k] !== undefined);
+  if (extra.length > 0) {
+    throw new ProjectCreateError(
+      `fillRelativeSources reads into an existing project and creates nothing, so it takes ` +
+        `only projectPath; remove ${extra.join(", ")}.`,
+    );
+  }
+  const asked = coerceJsonArg(input.fillRelativeSources);
+  if (!Array.isArray(asked) || asked.length === 0 || asked.some((v) => typeof v !== "string" || v.trim() === "")) {
+    throw new ProjectCreateError(
+      "fillRelativeSources must be a non-empty array of tree person ids, as the create's " +
+        "relativeSourcesSkipped lists them (e.g. [\"I4\", \"I7\"]).",
+    );
+  }
+  const ids = [...new Set((asked as string[]).map((v) => v.trim()))];
+  const fetchSources = deps.fetchRelativeSources;
+  if (!fetchSources) {
+    throw new ProjectCreateError("fillRelativeSources cannot read FamilySearch here; nothing was written.");
+  }
+  const load = async (ref: string): Promise<any> => {
+    try {
+      return await readProjectJson(projectPath, ref);
+    } catch (e) {
+      throw new ProjectCreateError(
+        `fillRelativeSources adds to an existing project, and ${projectPath} has none it can read ` +
+          `(${e instanceof Error ? e.message : String(e)}). Create the project with personId first.`,
+      );
+    }
+  };
+  /** Each asked id -> the FamilySearch PID its `ark` names; refuses any that has none. */
+  const pidsOf = (tree: any): Map<string, string> => {
+    const out = new Map<string, string>();
+    const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
+    const bad: string[] = [];
+    for (const id of ids) {
+      const person = persons.find((p) => p?.id === id);
+      const pid = person ? treePidOfArk(person.ark) : undefined;
+      if (!pid) bad.push(person ? `${id} (no FamilySearch ark)` : `${id} (not in the tree)`);
+      else out.set(id, pid);
+    }
+    if (bad.length > 0) {
+      throw new ProjectCreateError(
+        "fillRelativeSources names tree persons with a FamilySearch ark, as relativeSourcesSkipped " +
+          `lists them; these are not: ${bad.join(", ")}. Nothing was written.`,
+      );
+    }
+    return out;
+  };
+  // Every refusal is made before the read, so a refused call spends no network.
+  await load("research.json");
+  const pids = pidsOf(await load("tree.gedcomx.json"));
+  const fetched = await fetchSources([...new Set(pids.values())], principal, start + OCR_PHASE_BUDGET_MS);
+
+  return withProjectLock(projectPath, async (): Promise<ProjectCreateResult> => {
+    const research = await load("research.json");
+    const tree = await load("tree.gedcomx.json");
+    const byPerson = pidsOf(tree);
+    const before = structuredClone(tree);
+    const persons: any[] = tree.persons;
+    if (!Array.isArray(tree.sources)) tree.sources = [];
+    const sources: any[] = tree.sources;
+
+    const shaped = new Map(shapeDescriptions(fetched.descriptions).map((s) => [s.id, s]));
+    const byKey = new Map<string, string>();
+    for (const s of sources) if (typeof s?.id === "string" && !byKey.has(sourceKey(s))) byKey.set(sourceKey(s), s.id);
+    const taken = new Set<unknown>(sources.map((s) => s?.id));
+    let next = 1;
+    const mint = (): string => {
+      while (taken.has(`S${next}`)) next++;
+      taken.add(`S${next}`);
+      return `S${next}`;
+    };
+    const idsBy = new Map(Object.entries(fetched.idsBy ?? {}).map(([pid, d]) => [pid.toUpperCase(), d]));
+    const skippedPids = new Set(fetched.skipped.map((p) => p.toUpperCase()));
+
+    const added = new Set<string>();
+    const reused = new Set<string>();
+    const filled: FillRelativeSourcesSummary["filled"] = [];
+    const stillSkipped: string[] = [];
+    for (const [id, pid] of byPerson) {
+      if (skippedPids.has(pid.toUpperCase())) {
+        stillSkipped.push(id);
+        continue;
+      }
+      const person = persons.find((p) => p?.id === id);
+      let cited = 0;
+      for (const descId of idsBy.get(pid.toUpperCase()) ?? []) {
+        const src = shaped.get(descId) as unknown as Record<string, unknown> | undefined;
+        if (!src) continue;
+        const key = sourceKey(src);
+        let sId = byKey.get(key);
+        if (sId === undefined) {
+          sId = mint();
+          sources.push({ ...pickSourceFields(src), id: sId });
+          byKey.set(key, sId);
+          added.add(sId);
+        } else if (!added.has(sId)) {
+          reused.add(sId);
+        }
+        const refs: any[] = Array.isArray(person.sources) ? person.sources : [];
+        if (!refs.some((r) => r?.ref === sId)) person.sources = [...refs, { ref: sId }];
+        cited++;
+      }
+      filled.push({ id, name: displayName(person), sources: cited });
+    }
+
+    const validation = await validateIntroduced({ research, tree: before }, { research, tree }, { projectPath });
+    if (!validation.valid) return { ok: false, errors: formatIssues(validation.errors) };
+
+    const filesWritten: string[] = [];
+    if (!isDeepStrictEqual(before, tree)) {
+      const writes = [{ ref: "tree.gedcomx.json", data: tree }];
+      // The opening baseline gets them too while it is still the opening tree: they
+      // are what the create's read would have put there.
+      if (
+        (await fileExists(projectPath, "starting-tree.gedcomx.json")) &&
+        isDeepStrictEqual(await load("starting-tree.gedcomx.json"), before)
+      ) {
+        writes.push({ ref: "starting-tree.gedcomx.json", data: tree });
+      }
+      await atomicWriteBoth(projectPath, writes);
+      filesWritten.push(...writes.map((w) => w.ref));
+    }
+    return {
+      ok: true,
+      filesWritten,
+      filled,
+      sourcesAdded: added.size,
+      sourcesReused: reused.size,
+      ...(stillSkipped.length ? { relativeSourcesSkipped: stillSkipped } : {}),
+      validation: { valid: true, warnings: formatIssues(validation.warnings) },
+    };
+  });
 }
 
 /** The researcher-facing sentence for an edge the build dropped to break a
@@ -761,6 +979,10 @@ export const projectCreateSchema = {
     "ID creates nothing: ask the researcher for the ID first. A project with no person " +
     "refuses research questions.\n" +
     "\n" +
+    "When the summary carries `relativeSourcesSkipped`, call this tool once more with only " +
+    "`projectPath` and `fillRelativeSources` set to that list: it reads those relatives' " +
+    "attached sources into the project's tree and reports anyone still unread.\n" +
+    "\n" +
     "Refuses if either file already exists; it never overwrites a project. It writes the " +
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +
     "afterwards with research_append, only from what the researcher actually told you.\n" +
@@ -781,13 +1003,23 @@ export const projectCreateSchema = {
           "What this project sets out to find out, in the researcher's terms. Required " +
           "and non-empty. Written once and never rewritten — every later step plans " +
           "against it. Name the subject by their ID if you do not know their name: each " +
-          "mention is stored as the name the read gives.",
+          "mention is stored as the name the read gives. Required to create; never with " +
+          "`fillRelativeSources`.",
       },
       title: {
         type: "string",
         description:
           "Concise 3-6 word session name (e.g. \"KWCJ-RN4's parents\", stored as \"Patrick " +
           "Flynn's parents\"). A mention of the subject by ID is named as the objective's is.",
+      },
+      verifyRequest: {
+        type: "string",
+        description:
+          "With personId: the researcher's own words asking to verify one particular " +
+          "relationship, fact or source of the subject, or saying one is wrong (\"verify his " +
+          "parents\", \"his birth date is wrong\"). Stored as project.verify_request; the first " +
+          "question's turn removes that conclusion as a clean slate. Omit when the message names " +
+          "nothing in particular to verify.",
       },
       subjectPersonIds: {
         type: "array",
@@ -800,9 +1032,18 @@ export const projectCreateSchema = {
         description:
           "The subject's FamilySearch person ID (e.g. \"KWCJ-RN4\"). This tool reads the " +
           "person and builds the starting tree from the read; it requires a FamilySearch " +
-          "login. Omit it only for an activity with no person in it.",
+          "login. Omit it only for an activity with no person in it, or with fillRelativeSources.",
+      },
+      fillRelativeSources: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "Only for a project this tool already created: the tree ids its summary listed in " +
+          "`relativeSourcesSkipped`. Reads those relatives' attached FamilySearch sources into " +
+          "tree.gedcomx.json, a source already in the tree cited rather than copied. Pass with " +
+          "`projectPath` alone; it creates nothing and writes nothing to research.json.",
       },
     },
-    required: ["projectPath", "objective"],
+    required: ["projectPath"],
   },
 };

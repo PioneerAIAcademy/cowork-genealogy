@@ -178,6 +178,22 @@ export async function saveSourceImage(args: {
 }
 
 /**
+ * Rewrite a retained scan in place, so the GC's TTL below restarts as it does
+ * when a fresh read saves it. A reading handed back with its old scan untouched
+ * could lose that scan to the next sweep, before the source that cites it is
+ * written. False when the scan is gone or cannot be rewritten.
+ */
+export async function refreshSourceImage(projectPath: string, imageRef: string): Promise<boolean> {
+  const store = getProjectStore();
+  try {
+    await store.writeBytes(projectPath, imageRef, await store.readBytes(projectPath, imageRef));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Best-effort GC: remove `images/*.jpg` that no retained source cites (not in
  * `referenced`) AND that are older than the TTL. TTL-gating is what makes it
  * race-safe — a scan just saved by image_transcribe survives until the

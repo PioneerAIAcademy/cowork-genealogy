@@ -156,7 +156,6 @@ export async function makeFixtureTree(spec: FixtureTreeSpec): Promise<FixtureTre
 export function buildRunLog(opts: {
   skill: string;
   version: number | null;
-  released?: boolean;
   releasable?: boolean;
   invocation?: 'skill' | 'test' | 'tag';
   timestamp: string;
@@ -237,7 +236,6 @@ export function buildRunLog(opts: {
     schema_version: 3,
     skill: opts.skill,
     version: opts.version,
-    released: opts.released ?? false,
     releasable: opts.releasable ?? true,
     invocation: opts.invocation ?? 'skill',
     timestamp: opts.timestamp,

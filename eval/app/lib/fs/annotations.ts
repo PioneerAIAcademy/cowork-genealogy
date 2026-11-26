@@ -131,7 +131,6 @@ export async function deleteAnnotation(runLogId: string): Promise<void> {
  * dimension_name)` triples — dimensions of the SAMPLED tests present in the
  * run log but missing from the annotation. Used by:
  *   - The scoring UI to show which dimensions remain
- *   - The release gate (a run log cannot be released while incomplete)
  *   - Mirrors the GH Action's completeness rule (rule 3)
  */
 export function unreviewedDimensions(

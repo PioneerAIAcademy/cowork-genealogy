@@ -226,16 +226,22 @@ function runGuard(payload: unknown, env?: NodeJS.ProcessEnv): any {
 const HOSTED_ENV = { ...process.env, GENEALOGY_HOSTED_PLANE: "1" };
 
 /**
- * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
- * read by loading the script rather than by regex: the dict values are tuples
- * and strings that carry their own parentheses.
+ * The guard's AGENT_ONLY_TOOLS (tool -> owning agents), MAIN_THREAD_OK keys and
+ * MAIN_THREAD_DENIED (tool -> deny text), read by loading the script rather than
+ * by regex: the dict values are tuples and strings that carry their own
+ * parentheses.
  */
-function guardAgentOnlyTables(): { agentOnly: Record<string, string[]>; mainThreadOk: string[] } {
+function guardAgentOnlyTables(): {
+  agentOnly: Record<string, string[]>;
+  mainThreadOk: string[];
+  mainThreadDenied: Record<string, string>;
+} {
   if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
   const [cmd, ...pre] = PYTHON;
   const code =
     "import json, runpy, sys; g = runpy.run_path(sys.argv[1]); " +
-    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK'])}))";
+    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK']), " +
+    "'mainThreadDenied': g['MAIN_THREAD_DENIED']}))";
   return JSON.parse(execFileSync(cmd, [...pre, "-c", code, GUARD], { encoding: "utf-8" }));
 }
 
@@ -560,9 +566,12 @@ describe("plugin hooks are packaged and wired", () => {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
     }
-    const agentOnlyTools = Object.keys(guardAgentOnlyTables().agentOnly);
+    const { agentOnly, mainThreadDenied } = guardAgentOnlyTables();
+    const agentOnlyTools = Object.keys(agentOnly);
+    const deniedTools = Object.keys(mainThreadDenied);
     expect(agentOnlyTools.length).toBeGreaterThan(0);
-    for (const tool of [...ownerRoutedTools, ...agentOnlyTools]) {
+    expect(deniedTools.length).toBeGreaterThan(0);
+    for (const tool of [...ownerRoutedTools, ...agentOnlyTools, ...deniedTools]) {
       // An MCP tool, so all THREE server spellings — the same rule agent
       // frontmatter follows, and for the same reason: the server's name is
       // chosen by whoever registers it and the plugin cannot control that.
@@ -1779,6 +1788,45 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
   });
 });
 
+describe("the main thread is denied person_search (#4791)", () => {
+  const REASON =
+    "Ask the researcher for the FamilySearch person ID; a project never starts from a name search.";
+
+  it.each([
+    "mcp__genealogy__person_search",
+    "mcp__remote-devices__Genealogy_Research__person_search",
+    "mcp__Genealogy_Research__person_search",
+  ])("denies a main-thread %s with the ask-for-the-ID reason", (tool_name) => {
+    const out = runGuard({ tool_name, tool_input: { surname: "Hagell" } });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toBe(REASON);
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it("does not touch a subagent's person_search", () => {
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__person_search",
+        tool_input: { surname: "Hagell" },
+        agent_id: "a1",
+        agent_type: "genealogy-research:tree-survey",
+      }),
+    ).toEqual({});
+  });
+
+  it("denies only tools no agent holds and no skill declares", () => {
+    const { mainThreadDenied, agentOnly, mainThreadOk } = guardAgentOnlyTables();
+    const { agents, skillDeclared } = toolHolders();
+    const all = manifestToolNames();
+    for (const tool of Object.keys(mainThreadDenied)) {
+      expect(all, `${tool} is no tool the server advertises`).toContain(tool);
+      expect(agents.get(tool) ?? [], `an agent holds ${tool}`).toEqual([]);
+      expect(skillDeclared.has(tool), `a skill declares ${tool}`).toBe(false);
+      expect(tool in agentOnly || mainThreadOk.includes(tool), `${tool} is on another list`).toBe(false);
+    }
+  });
+});
+
 describe("the main thread is denied the tools only agents hold", () => {
   const SPELLINGS = (tool: string) => [
     `mcp__genealogy__${tool}`,
@@ -1899,6 +1947,30 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
       const note = out.hookSpecificOutput.additionalContext;
       expect(note).toMatch(/everything above its `### Search implications` heading word for word/);
       expect(note).not.toMatch(/after the final `---`/);
+    },
+  );
+
+  it("gives init-project a note that keeps its source lines and closing questions on a job", () => {
+    const note = runRelayNote(
+      JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "init-project" }, tool_response: {} }),
+      true,
+    ).hookSpecificOutput.additionalContext;
+    expect(note).toMatch(/^That was init-project's report\. Relay its text after the final `---` word for word, its source lines included/);
+    expect(note).toMatch(/then add exactly these two lines and nothing else: "What do you want to verify or research\?/);
+    expect(note).toMatch(/and "Continue with `choosing the question`\?"/);
+    expect(note).toMatch(/Only when the researcher's message is a bounded request/);
+    expect(note).toMatch(/`Verify request: broad` line \(the broad audit is then what was asked\)/);
+  });
+
+  it.each(["locality-guide", "genealogy-research:locality-guide"])(
+    "gives %s its own note: its report and research-plan's both relayed word for word",
+    (subagent_type) => {
+      const note = (s: string) =>
+        runRelayNote(JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: s }, tool_response: {} }), true)
+          .hookSpecificOutput.additionalContext;
+      expect(note(subagent_type)).toMatch(/locality-guide's first, then research-plan's/);
+      expect(note(subagent_type)).toMatch(/word for word/);
+      expect(note(subagent_type)).not.toBe(note("search-records"));
     },
   );
 
