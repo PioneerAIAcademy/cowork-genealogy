@@ -304,10 +304,10 @@ A public text or unit test drawn from a report names no account id or anyone who
 
 ## Phase 4: launch gates
 
-The first invited user waits for all of these.
+The first invited user waits for all of these. The target is that every gate passes during December (lead, 2026-11-26). Each gate names its issue. The gates that come last are in the icebox until the rest is done: the security reviews, the text the lead supplies, and the acceptance run.
 
 1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12). W2 had its `/security-review` before merge; E2, E3 and W4 are issue #4879, in the icebox until the first invited user is near.
-2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat, and ends with the Desktop check below (lead, 2026-11-26):
+2. **The acceptance run (issue #4885, in the icebox until every other gate has passed),** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat, and ends with the Desktop check below (lead, 2026-11-26):
    1. install the plugin, connect it from its Connectors tab and sign in;
    2. research a person, and see the cards and case file, then run the project-first check below;
    3. upload a capture;
@@ -333,9 +333,9 @@ The first invited user waits for all of these.
    A rehearsal on 26 November, on a second Claude account with the one-install zip, passed all three. The first two went through the research skill and `init-project`. In the third the main thread called `project_create` itself, with the person's ID, loaded no research skill, and ran `historical-context` in the background with an interim reply. It is a rehearsal, not this gate's run: the commit was not the launch commit.
 
    A run that answers inline goes to the lead, naming the message and which case it was.
-3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26). The page has no single control: it has three group controls, Interactive, Read-only and Other. With all three set on a new account (2026-11-26), three first turns in new chats ran 47 tool calls, 42 of them in agents, with no prompt.
-4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed, as it did on 26 November. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget. In the 26 November rehearsal a user created at first connect, seeded by `OPENROUTER_SEED_AT_CONNECT`, read both: a FamilySearch index card and an uploaded JPEG. An uploaded PNG with a transparent background came back as a blank image.
-5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
+3. **Approvals (settled by the acceptance run, issue #4885).** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix. Measured (P0.2 item 2): set on the connector's page it holds; chosen at a prompt in Desktop Chat it does not save. D4 tells users to set it on the page (lead, 2026-11-26). The page has no single control: it has three group controls, Interactive, Read-only and Other. With all three set on a new account (2026-11-26), three first turns in new chats ran 47 tool calls, 42 of them in agents, with no prompt.
+4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed, as it did on 26 November. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget (part of issue #4885). In the 26 November rehearsal a user created at first connect, seeded by `OPENROUTER_SEED_AT_CONNECT`, read both: a FamilySearch index card and an uploaded JPEG. An uploaded PNG with a transparent background came back as a blank image.
+5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1. D2 is issue #4867, and L1, with the feedback address on the pages, is issue #4880. The rest are done. Two more are due before invited users and are not gates: routine answers shown as red errors (issue #4865), and the question card and four step cards (issues #4857 to #4861).
 
 ## Ending the beta
 
@@ -372,7 +372,8 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Done |
 | Refusals are not errors in chat | PR #4869, then issue #4865 | remote-server agent, then team | PR #4869 merged and seen live 26 Nov; issue #4865 before invited users |
 | Security reviews of E2, E3 and W4 | issue #4879 | team, senior | Icebox until the first invited user is near |
-| L1 Policy text | issue #4880 | the lead supplies it | Icebox until then |
+| L1 Policy text, and the feedback address | issue #4880 | the lead supplies them | Icebox until then |
+| The acceptance run, with gates 3 and 4's checks | issue #4885 | the lead and the remote-server agent | Icebox until every other gate has passed |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 
