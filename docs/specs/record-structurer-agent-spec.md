@@ -172,6 +172,14 @@ is §11.7's code.
   got a standard place, and a rule the tool checks binds on every model. A
   date-shaped residence goes in `date`. The engine still never reads a place out
   of `value`; it refuses rather than guess.
+- **Census households (2026-11-26, issue #4827).** On a census of two or more
+  persons, every person carries `household`: the dwelling or family number the
+  page gives, or "1" for all on a one-household page. `extraction_append`
+  refuses the document otherwise, naming the persons without one. The body's
+  old line ("only when one text covers several") read as optional: in run 0 of
+  `v6_2026-11-25_15-46-42` Haiku sent a two-dwelling 1860 page with no
+  `household` on any of its eight persons, and the second dwelling's head was
+  written as a member of the first family.
 - **Age (lead, 2026-11-23).** An age the text gives is an `age` fact on that
   person. Without the line Haiku dropped the obituary's "91" (v1, v2, v5) or
   wrote it as `age_at_death` (v3), which no `age` row matches.
@@ -224,9 +232,10 @@ read images, write the log, or call the calendar tool.
 
 ## 6. Verification
 
-- `extraction_append` rejects a malformed document, shown failing three ways: a
-  smuggled `record_basis`, a census with no `census` block, and a residence with
-  a `value` and no `place`. It also refuses
+- `extraction_append` rejects a malformed document, shown failing four ways: a
+  smuggled `record_basis`, a census with no `census` block, a residence with a
+  `value` and no `place`, and a census of two or more persons with a person
+  missing `household`. It also refuses
   the whole batch when one document is malformed, and writes nothing.
 - The unit fixtures that start from text reach this agent directly (the
   harness's direct-agent arm, since no skill remains in front of it). They pass

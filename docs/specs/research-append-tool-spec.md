@@ -3978,7 +3978,7 @@ document: {
   persons: [{                          // IN SOURCE ORDER — array order is enumeration order
     id: string,                        // local only; relationships refer to it
     principal?: true,
-    household?: string,                // only when one text covers several households
+    household?: string,                // census of 2+ persons: on every person, the dwelling or family number the page gives; "1" for all on a one-household page
     names:  [{ given?: string, surname?: string,  // EVERY name the text gives, the one it shows first first;
                type?: "birth" | "married" | "nickname" | "also_known_as",  // only where the text says which
                uncertain?: true, note?: string }],  // each name is its own `name` assertion, its type in structured_value
@@ -4028,10 +4028,20 @@ tries to classify is refused by the schema. It is not left to a prompt.
 - any unknown key, at any depth — the classification fields above included;
 - `recordType` or `documentForm` outside its enum;
 - `recordType: "census"` without `census`, or `census` on anything else;
+- a census of two or more persons on which any person lacks a non-empty string `household`, naming those persons;
 - a person with no `names[0]`, or a name with neither `given` nor `surname`;
 - a relationship naming an `id` not in `persons`, or naming one person twice;
 - a `computed` entry naming an attribute the fact does not carry;
 - an empty `persons`.
+
+**`household` on a census (issue #4827, 2026-11-26).** Roles are assigned per household, so a census page
+sent with no `household` files a second dwelling's head into the first family: run 0 of
+`eval/runlogs/unit/record-structurer/v6_2026-11-25_15-46-42.json` sent all eight persons of a two-dwelling
+1860 page with none, and Michael Gallagher was written as `household_member_4`. So every person needs it
+once there are two or more, not only where some carry it (that run omitted it on all eight), and the
+agent sends "1" on every person of a one-household page. A one-person census is exempt: one person cannot
+be filed into the wrong family. A two-dwelling page sent as "1" throughout is not refused, because no
+field in the document says where one dwelling ends.
 
 #### What code decides from the document
 
