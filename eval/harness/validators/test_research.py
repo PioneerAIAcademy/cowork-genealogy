@@ -642,7 +642,9 @@ _BIRTHPLACE_RE = re.compile(r"birthplace|place of birth|born in (?:ireland|penns
 _VERDICT_RE = re.compile(r"looks[ _-]solid", re.IGNORECASE)
 _CRAFT_VERDICT_RE = re.compile(r"consider[ _]addressing", re.IGNORECASE)
 _NO_REVIEW_RE = re.compile(
-    r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been",
+    r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been"
+    r"|verdict:?\s*none\b"
+    r"|only (?:\w+ ){0,3}review (?:\w+ ){0,3}is a (?:craft|style|wording)",
     re.IGNORECASE,
 )
 

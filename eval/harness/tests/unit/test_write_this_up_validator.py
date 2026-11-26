@@ -160,6 +160,15 @@ def test_a_craft_only_report_that_says_no_review_passes():
     _run(test=CRAFT, text=CRAFT_REPORT, tool_calls=READS + [SIDECAR])
 
 
+@pytest.mark.parametrize("said", [
+    "Reviewer verdict: none. The only review on file is a style critique of the write-up.",
+    "The only saved review is a craft critique of the wording, so it does not count as a GPS review.",
+])
+def test_a_craft_only_report_may_word_the_missing_review_its_own_way(said):
+    text = CRAFT_REPORT.replace("No review has been requested on this proof.", said)
+    _run(test=CRAFT, text=text, tool_calls=READS + [SIDECAR])
+
+
 def test_the_craft_read_given_as_the_verdict_fails():
     text = CRAFT_REPORT + " The reviewer's verdict is consider addressing."
     with pytest.raises(AssertionError, match="craft read must not appear"):
