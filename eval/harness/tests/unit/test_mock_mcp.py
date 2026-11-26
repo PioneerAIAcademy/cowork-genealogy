@@ -3826,9 +3826,24 @@ def test_record_search_including_the_found_candidate_matches_a_fixture(tmp_path)
     "names",
     [
         {"givenName": "Margaret"},
+        {"givenNameAlt": "Margaret"},
         {"motherGivenName": "Ann"},
+        {"fatherGivenName": "Job"},
+        {"fatherSurname": "Lightfoot"},
+        {"motherSurname": "Tyler"},
+        {"parentGivenName": "Ann"},
+        {"parentSurname": "Tyler"},
     ],
-    ids=["another-given-name", "child-by-mother-name"],
+    ids=[
+        "another-given-name",
+        "another-given-name-alt",
+        "child-by-mother-name",
+        "child-by-father-given-name",
+        "child-by-father-surname",
+        "child-by-mother-surname",
+        "child-by-parent-given-name",
+        "child-by-parent-surname",
+    ],
 )
 def test_record_search_for_someone_else_under_the_subject_id_matches_a_fixture(tmp_path, names):
     # The mock forwards the given names and the parent names to the guard, as
