@@ -177,8 +177,8 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
       if (missing.length > 0) {
         errs.push(
           `${path}.persons: a census with more than one person needs \`household\` on every person, as a string: ` +
-            `the dwelling or family number the page gives, or "1" on every person when the page holds one household. ` +
-            `Missing, or not a string, on: ${missing.join(", ")}.`,
+            `the family number the page gives, else its dwelling number, else "1", "2", … by household in page order. ` +
+            `Missing, empty, or not a string, on: ${missing.join(", ")}.`,
         );
       }
     }

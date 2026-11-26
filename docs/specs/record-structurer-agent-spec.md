@@ -172,11 +172,13 @@ is §11.7's code.
   got a standard place, and a rule the tool checks binds on every model. A
   date-shaped residence goes in `date`. The engine still never reads a place out
   of `value`; it refuses rather than guess.
-- **Census households (2026-11-26, issue #4827).** On a census of two or more
-  persons, every person carries `household`: the dwelling or family number the
-  page gives, or "1" for all on a one-household page. `extraction_append`
-  refuses the document otherwise, naming the persons without one. The body's
-  old line ("only when one text covers several") read as optional: in run 0 of
+- **Census households (2026-11-26).** On a census of two or more persons,
+  every person carries `household`: the family number the page gives, else its
+  dwelling number, else "1", "2", … by household in page order. Roles are
+  assigned per household, so the family number comes first: two families in one
+  dwelling sent under its dwelling number are written as one. `extraction_append`
+  refuses the document when a person has none, naming them. The body's old line
+  ("only when one text covers several") read as optional: in run 0 of
   `v6_2026-11-25_15-46-42` Haiku sent a two-dwelling 1860 page with no
   `household` on any of its eight persons, and the second dwelling's head was
   written as a member of the first family.

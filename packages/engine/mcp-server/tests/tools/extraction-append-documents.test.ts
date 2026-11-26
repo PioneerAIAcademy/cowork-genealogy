@@ -156,12 +156,12 @@ describe("extraction_append: documents", () => {
   });
 
   describe("household on a census with more than one person (#4827)", () => {
-    /** ut_record_structurer_007's page: Dwelling 412 (the Flynns), then Dwelling 413. */
+    /** ut_record_structurer_007's page: Family 418 (the Flynns) in Dwelling 412, then Family 419 in Dwelling 413. */
     const PEOPLE = [
       ["Thomas", "Flynn", "male", "Laborer"], ["Bridget", "Flynn", "female"], ["Patrick", "Flynn", "male"], ["Mary", "Flynn", "female"],
       ["Michael", "Gallagher", "male", "Miner"], ["Ellen", "Gallagher", "female"], ["Catherine", "Gallagher", "female"], ["John", "Doyle", "male", "Laborer"],
     ];
-    const TWO_DWELLINGS = ["412", "412", "412", "412", "413", "413", "413", "413"];
+    const TWO_FAMILIES = ["418", "418", "418", "418", "419", "419", "419", "419"];
     /** The first `count` people; `households[i]`, when given (null included), is person i's `household`. */
     const page = (households: unknown[] = [], count = 8): any => ({
       recordType: "census",
@@ -175,8 +175,8 @@ describe("extraction_append: documents", () => {
       })),
     });
     const RULE =
-      'a census with more than one person needs `household` on every person, as a string: the dwelling or family number ' +
-      'the page gives, or "1" on every person when the page holds one household. Missing, or not a string, on: ';
+      'a census with more than one person needs `household` on every person, as a string: the family number the page ' +
+      'gives, else its dwelling number, else "1", "2", … by household in page order. Missing, empty, or not a string, on: ';
     /** The persons each household refusal names, one string per refusal. */
     const named = (errs: string[] | undefined) =>
       (errs ?? []).filter((e) => e.includes(RULE)).map((e) => e.slice(e.indexOf(RULE) + RULE.length).replace(/\.$/, ""));
@@ -194,8 +194,8 @@ describe("extraction_append: documents", () => {
       expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
     });
 
-    it("accepts the same page with each dwelling's number, and each dwelling's first person heads it", async () => {
-      const r = await run([{ recordId: "capture:census-1860-butler-p37", document: page(TWO_DWELLINGS) }]);
+    it("accepts the same page with each family's number, and each family's first person heads it", async () => {
+      const r = await run([{ recordId: "capture:census-1860-butler-p37", document: page(TWO_FAMILIES) }]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       expect(await roleOf("capture:census-1860-butler-p37", "Thomas Flynn")).toBe("head_of_household");
       expect(await roleOf("capture:census-1860-butler-p37", "Michael Gallagher")).toBe("head_of_household");
@@ -213,7 +213,7 @@ describe("extraction_append: documents", () => {
     });
 
     it("refuses a page where some persons have a household and some do not, naming only those without", async () => {
-      const households = [...TWO_DWELLINGS];
+      const households = [...TWO_FAMILIES];
       delete households[2];
       delete households[5];
       const r = await run([{ recordId: "capture:census-1860-butler-p37", document: page(households) }]);
@@ -225,6 +225,38 @@ describe("extraction_append: documents", () => {
       expect(named(validateStructuredDocument(page(["412", "", "  ", 412, null, "413", "413", "413"])))).toEqual([
         "p2 (Bridget Flynn), p3 (Patrick Flynn), p4 (Mary Flynn), p5 (Michael Gallagher)",
       ]);
+    });
+
+    it("refuses a column-year transcript with stated relations and no household", async () => {
+      const relations = ["head", "wife", "son", "daughter", "head", "wife", "daughter", "boarder"];
+      const doc = {
+        ...page(),
+        documentForm: "verbatim_transcript",
+        census: { jurisdiction: "United States", year: 1880 },
+        persons: page().persons.map((p: any, i: number) => ({ ...p, statedRelation: relations[i] })),
+      };
+      const r = await run([{ recordId: "capture:census-1880-two-families", document: doc }]);
+      expect(r.ok).toBe(false);
+      expect(named(r.errors)).toHaveLength(1);
+    });
+
+    it("accepts any non-blank household string, numeric or not", async () => {
+      const r = await run([{
+        recordId: "capture:census-1860-butler-p37",
+        document: page(["Family 418", "Family 418", "Family 418", "Family 418", "419a", "419a", "419a", "419a"]),
+      }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await roleOf("capture:census-1860-butler-p37", "Michael Gallagher")).toBe("head_of_household");
+    });
+
+    it("reports a bad census block and the missing households in one refusal", () => {
+      const errs = validateStructuredDocument({ ...page(), census: { jurisdiction: "United States", year: "1860" } });
+      expect(errs).toContain("document.census.year: must be an integer year");
+      expect(named(errs)).toHaveLength(1);
+      const { census: _census, ...noBlock } = page();
+      const noBlockErrs = validateStructuredDocument(noBlock);
+      expect(noBlockErrs.join(" ")).toMatch(/census: required on a census/);
+      expect(named(noBlockErrs)).toHaveLength(1);
     });
 
     it("names a malformed person by what it has, and never throws", async () => {
