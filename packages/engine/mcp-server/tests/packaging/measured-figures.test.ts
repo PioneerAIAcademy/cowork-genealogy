@@ -329,8 +329,15 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
     1239,
     {
-      reason: "of those, the ops on an active plan: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived. In record-search-tool-spec-v2.md the same number is, by coincidence, the logged record_search ops the candidate-exclusion replay could not pair with their search (dev/measure-candidate-exclusions.ts, a corpus replay with no probe verdict; re-run the script to check it)",
-      scope: ["docs/specs/research-log-editor-spec.md", "docs/specs/record-search-tool-spec-v2.md"],
+      reason: "of those, the ops on an active plan: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1240,
+    {
+      reason: "the logged record_search ops the candidate-exclusion replay could not pair with their search: dev/measure-candidate-exclusions.ts, a corpus replay with no probe verdict, date-stamped in the spec (2026-11-26 at 46e26c861). Keyed by EXACT value: re-key it whenever the replay is re-run",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
     },
   ],
   [

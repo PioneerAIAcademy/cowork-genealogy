@@ -645,29 +645,42 @@ the same compiled `candidateExclusionRefusal` and logs a refused call as
 `matched.kind: "candidate_excluded_refused"`; `research_append` runs for real in
 the mock, so the namesake rule needs no mirror.
 
-**Corpus refusal measurement (ADR-0011).** Measured on 2026-11-25 over the run
-logs and scenarios at `9531a7ac7` by `npx tsx dev/measure-candidate-exclusions.ts
+**Corpus refusal measurement (ADR-0011).** Measured on 2026-11-26 over the run
+logs and scenarios at `46e26c861` (503 run-log files, 238 scenarios, main merged
+after #4823), with the no-`subjectId`, same-role parent, own-entry role and
+own-entry release rules in place, by `npx tsx dev/measure-candidate-exclusions.ts
 --list` (from `packages/engine/mcp-server`), which runs `excludedCandidates` and
 `namesakeCandidateRefusals` on a temporary project rebuilt for each call: the
 starting state plus every `record_search` and `namesakes` row the run had
 logged by then.
 
-- **Ranges.** Of 738 `record_search` calls in the committed unit and e2e run
-  logs with a `subjectId`, a `projectPath` and a birth range, it refuses **2**.
+- **Ranges.** Of 497 `record_search` calls in the committed unit and e2e run
+  logs with a `subjectId`, a `projectPath` and a birth range, it refuses **1**.
   In `hannah-earnest-children` (run 2026-11-24_05-04-48), a search for Hannah
   Grice with birth 1857 only, after the run had logged two Hannah Ernest
-  records born 1856. In `ut_search_records_020`, a search for Job Purnell born
-  about 1826 with 1824–1828, after the run had logged a Job Purnell baptised
-  in 1821. Both are the intended shape: each record was still a logged
-  candidate, and widening the range by its years leaves the search the run
-  needed.
-- **Namesake rows.** Of 99 `namesakes` appends and updates, it refuses **1**:
-  in `thomas-hanrahan-marriage` (run 2026-11-09_12-14-54), a row for the subject
+  records born 1856: the intended shape, since each record was still a logged
+  candidate and widening the range by its years leaves the search the run
+  needed. (At `9531a7ac7` it was 2 of 738; the other, a `ut_search_records_020`
+  Job Purnell search after a logged Job baptised in 1821, was in a run log
+  main's #4811 replaced with a run that does not make that call.)
+- **Calls with no `subjectId`.** Of 785 calls with a `projectPath` and a birth
+  range but no `subjectId`, it refuses **0**.
+- **Namesake rows.** Of 86 `namesakes` appends and updates, it refuses **7**.
+  `thomas-hanrahan-marriage` (run 2026-11-09_12-14-54), 1: a row for the subject
   (b. about 1840) naming a Thomas Hanrahan the run's own search for him had
   returned, born 1825 by an 1865 census age, whose notes give the birth year as
-  the only ground. That is the shape the rule refuses, accepted. Links come
-  from the starting research only, so a row a later link in the same run
-  would release counts as refused; the one refusal has none.
+  the only ground; the shape the rule refuses, accepted. `ut_search_records_038`
+  (run 2026-11-25_18-48-08), 2: John Hansen b. 1871 and John Smith b. 1880 for a
+  subject b. about 1858, ruled out on the birth year and a wife's name the
+  documents cannot compare; refused as intended. `ut_search_records_032`, 4
+  (four runs): Patrick Flynn rows ruled out because his marriage record names
+  his father Michael and the tree's is Thomas. **These four are the replay's
+  limit, not refusals:** it rebuilds each sidecar from the agent-visible
+  response, which carries no `gedcomx`, so it cannot see the parents; run
+  through the rule against the real staged fixture
+  (`record-search-flynn-1870-marriages-other-parents`), both Flynn records are
+  allowed. Links come from the starting research only, so a row a later link in
+  the same run would release counts as refused; none of the seven has one.
 - **Candidates.** Over the same corpus the guard holds 22 candidates (each
   scenario, and each e2e run's final reconstructed state); 4 would refuse a
   search for the subject under the subject's own birth year ±5: Antoine Tyler
@@ -676,13 +689,6 @@ logged by then.
   Spriggs" b. 1870 in `spriggs-parents-1898`, on a three-row page the run
   logged `positive` for another row. Those three are accepted: widening the
   range satisfies the refusal.
-- **Calls with no `subjectId`.** Measured on 2026-11-26 at `b2f1fd886` by the
-  same script, which now also replays every call with a `projectPath` and a
-  birth range but no `subjectId`: of 798, it refuses **0**. Without the
-  tree-birth-year condition it refused 5, all wrong: one
-  `hannah-earnest-children` run's (2026-10-21_06-52-59) searches for the
-  subject's daughter Hannah Grice, born about 1881, under ranges from 1878 or
-  1881 to 1882 or 1884, each blocked by the mother's own 1858 candidate.
 
 Each condition was added because a version without it refused correct calls,
 read individually. Without the subject-name condition the rule refused 13 calls
@@ -697,9 +703,14 @@ the run's searches for Hannah's children (no given name, a parent's name, births
 from 1877 or 1886 to 1900) asked to widen to her own 1856. Without the birthplace
 exception the namesake rule refused 4 of 99 rows, the other three the same row
 in three runs of `ut_search_records_016`: a Sarah Price ruled out on an indexed
-New York birthplace against the subject's Wisconsin birth.
+New York birthplace against the subject's Wisconsin birth. Without the tree-birth-year
+condition on a call with no `subjectId` (then gated on the subject's given name),
+it refused 5 of 798 at `b2f1fd886`, all wrong: one `hannah-earnest-children`
+run's (2026-10-21_06-52-59) searches for the subject's daughter Hannah Grice,
+born about 1881, under ranges from 1878 or 1881 to 1882 or 1884, each blocked by
+the mother's own 1858 candidate.
 
-Its limits: 1,239 logged e2e and unit `record_search` ops could not be paired
+Its limits: 1,240 logged e2e and unit `record_search` ops could not be paired
 with the call that staged them (most from e2e run logs whose captures are
 stripped after 14 days), so the e2e count is a lower bound; rows are the page
 the run log kept, not the sidecar; and an e2e call is judged against the
