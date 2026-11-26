@@ -481,14 +481,13 @@ the §6 classification is unchanged.
   and `extraction_append` takes the same string as its `transcriptionRef`.
   `search-images`, `search-hints` and the `research` skill read a staged
   transcription.
-- **`search-external-sites`** reads a capture at `uploads/<name>` when
-  `project_context` returns an `uploadUrl`, by that upload's `uploads` row: the
-  `<name>.txt` text layer when `hasText` is true, a lone `.txt` upload itself,
-  and for any other upload the page `image_transcribe({ file: "uploads/<name>" })`
-  stages (its `staged.resultsRef`). An `uploads/<name>` no row names is read
-  by `sidecar_read` on that path. With no `uploadUrl` a capture is read by the
-  built-in `Read`, and reaches these reads only when that `Read` fails on an
-  `uploads/<name>` path.
+- **`search-external-sites`** reads a capture at `uploads/<name>` the way
+  `project_context` says. With `uploadsAre: "stored"` it follows that upload's
+  row: `readWith: "sidecar_read"` with the row's `ref` (the `<name>.txt` text
+  layer, or a lone `.txt` upload itself), or `readWith: "image_transcribe"`,
+  after which it reads the staged page (`staged.resultsRef`). An
+  `uploads/<name>` no row names is read by `sidecar_read` on that path. With
+  `uploadsAre: "files"` a capture is read by the built-in `Read`.
 - **`search-full-text`** reads one hit's transcript by
   `<staged.resultsRef>#<hit id>` when the stubs cannot settle a hit's role or
   date, and **`translation`** reads the page `image_transcribe` staged for a

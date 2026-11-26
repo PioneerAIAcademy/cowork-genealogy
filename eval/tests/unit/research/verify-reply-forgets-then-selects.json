@@ -1,0 +1,68 @@
+{
+  "test": {
+    "id": "ut_research_vr1",
+    "skill": "research",
+    "name": "\"Verify his parents\" forgets them with a clean slate, runs the baseline, then chooses the question",
+    "type": "positive",
+    "description": "Issue #4791, stop 2. The researcher answers the setup stop with \"Verify his parents.\" The router runs forget-and-rederive in verify mode, whose one tree_forget call sends parents-of on the subject with cleanSlate: true and no dry run, then extraction_append({ personId }) and timeline_build, then question-selection with a `statedQuestion:` line asking who his parents were. The unit harness is single-turn, so the message names the offer it answers. forget-and-rederive runs live; tree_forget is served from a fixture; question-selection is stubbed.",
+    "tags": [
+      "routing",
+      "routes-to:forget-and-rederive",
+      "verify-forget-then-select"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered `choosing the question`. Verify his parents.",
+    "scenario": "disputed-parents-unsourced"
+  },
+  "mcp_fixtures": [
+    "tree-forget-vogt-parents-clean-slate",
+    "person-read-empty-any",
+    "tree-forget-vogt-parents-cleanslate-unsaid"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_skills": [
+      "forget-and-rederive"
+    ],
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "Stop 2 of a research job (issue #4791). The order forget-and-rederive (verify mode) -> extraction_append -> question-selection, the tree_forget arguments (parents-of on I1, cleanSlate: true, no dry run) and the statedQuestion line are checked by test_verify_reply_forgets_then_selects. Do not re-grade them.",
+    "tree_forget is served from a fixture that reports 2 persons, 3 relationships, 1 fact and 1 source removed; the scenario files themselves do not change. That the tree still shows Johann and Maria Vogt afterwards is the fixture, not a failure.",
+    "question-selection is stubbed and writes nothing, so no question appears in research.json; that is not a failure.",
+    "Grade the reply on reporting the forget step's counts as counts (not restating the removed names), saying that undoing it means a new project, and not looking the removed parents up again.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_research_nm1",
+    "skill": "research",
+    "name": "A person named with no FamilySearch ID gets a request for the ID, never a name search",
+    "type": "positive",
+    "description": "Issue #4791. A project starts only from a FamilySearch person ID. A first message naming a person with no ID creates nothing and asks for the ID, either through init-project or in the router's own reply; it makes no person_search call (a main-thread person_search is denied by the plugin hook, MAIN_THREAD_DENIED).",
+    "tags": [
+      "routing",
+      "no-name-search"
+    ]
+  },
+  "input": {
+    "user_message": "/research Research John Hagell of Ohio, born about 1850.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "No person_search call, the single hand-off to init-project and the absence of a project are checked by test_no_project_from_a_name_search. Do not re-grade them.",
+    "Grade the reply on asking for John Hagell's FamilySearch person ID in plain words and promising nothing it cannot do. It must not offer candidates from a name search.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ]
+}

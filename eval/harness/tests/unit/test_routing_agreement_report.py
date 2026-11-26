@@ -168,6 +168,16 @@ def test_owed_findings_next_steps_are_not_counted_as_question_steps():
     assert next_steps(summary) == ["search-records"]
 
 
+def test_the_first_question_next_step_is_not_a_question_step():
+    """project_context's top-level nextStep on a project with no question (#4791) is
+    the router's, so a no-question opener scores no row."""
+    summary = (
+        '{"ok":true,"objective":"x","nextStep":"For the research router only; an agent it spawned '
+        'ignores this and does its own task. No question yet.","sectionCounts":{}}'
+    )
+    assert next_steps(summary) == []
+
+
 def test_a_summary_without_question_statuses_is_scanned_whole():
     assert next_steps('{"ok":true,"x":[{"nextStep":"research-plan"}]') == ["research-plan"]
 

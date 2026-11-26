@@ -178,6 +178,15 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
+/**
+ * A refusal, as this surface presents one. Everywhere but the connector it is error-marked.
+ * A connector caller gets it as an ordinary result under a `refused` note, because a chat
+ * host draws the mark as a red error box (`connectorToolResult`, src/tool-result.ts). A
+ * failure a tool raises is still `isError` on both, so this is only for refusals.
+ */
+const refusedHere = (res: CallResult, ctx: SmokeCtx): boolean =>
+  ctx.connector ? !res.isError && typeof res.body?.refused === "string" : res.isError;
+
 /** Never a viewer link, and no upload link unless the server has both WEB_PUBLIC_URL and
  *  UPLOADS_ENABLED (not the default). It does not read `process.env.WEB_PUBLIC_URL`:
  *  compose can take it from a `.env` file this process never sees. */
@@ -276,9 +285,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       objective: "Is the removed parameter refused by name?",
       personReadRef: STAGED_REF,
     }),
-    expect: (res) => ({
+    expect: (res, ctx) => ({
       // Refused by server.ts's unknown-argument guard, with project_create's own text.
-      ok: res.isError && /personReadRef is no longer accepted/.test(String(res.body?.error ?? "")),
+      ok: refusedHere(res, ctx) && /personReadRef is no longer accepted/.test(String(res.body?.error ?? "")),
       detail: brief(res, 300),
     }),
   },
@@ -313,9 +322,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       objective: "Is a hand-built tree refused by name?",
       tree: SEED_TREE,
     }),
-    expect: (res) => ({
+    expect: (res, ctx) => ({
       // Refused by server.ts's unknown-argument guard, with project_create's own text.
-      ok: res.isError && /tree is no longer accepted/.test(String(res.body?.error ?? "")),
+      ok: refusedHere(res, ctx) && /tree is no longer accepted/.test(String(res.body?.error ?? "")),
       detail: brief(res, 300),
     }),
   },
@@ -574,7 +583,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       writeHostFixture(ctx, FULLTEXT_REF, { tool: "fulltext_search", payload: { results: [FULLTEXT_HIT] } }),
     expect: (res, ctx) => {
       if (!ctx.hostProjectDir) {
-        const ok = res.isError && res.body?.reason === "not_found";
+        const ok = refusedHere(res, ctx) && res.body?.reason === "not_found";
         return { ok, detail: ok ? "no host fixtures: missing full-text sidecar refused" : brief(res) };
       }
       return {

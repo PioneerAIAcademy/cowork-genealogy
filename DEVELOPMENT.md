@@ -747,9 +747,9 @@ uv run python run_tests.py --skill search-wikipedia           # run one skill's 
 uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
-Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}.json` (released),
-`v{N}_<ts>.json` (candidate), or `scratch_<ts>.json` (partial `--test`/`--tag` runs,
-gitignored). There is no `<model>` directory; the model is recorded in the run-log
+Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}_<ts>.json` (full-skill
+runs, committed; the newest 5 per skill are kept) or `scratch_<ts>.json` (partial
+`--test`/`--tag` runs, gitignored). There is no `<model>` directory; the model is recorded in the run-log
 JSON's `model` field. The harness has its own unit-test suite:
 
 ```bash

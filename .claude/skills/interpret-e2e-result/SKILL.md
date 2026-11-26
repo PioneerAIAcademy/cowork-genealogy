@@ -241,8 +241,8 @@ Translate `stop_reason` into something a researcher can act on:
   proof-conclusion fired. Look at the final tree to judge quality.
 - `natural_end` — the run ended with the project not completed. On a
   step-mode run (`usage.step_mode`, every run since step mode phase 2)
-  this usually means the host sent no reply to the last turn
-  (`next_auto_reply`): the turn made no "Continue with …?" offer, offered
+  this usually means the simulated researcher sent no reply to the last turn
+  (`next_reply` in `eval/harness/e2e/turn_loop.py`): the turn made no "Continue with …?" offer, offered
   wrap-up, repeated a step it had already offered, started a second
   planning round, or hit the reply cap. Read the last entry of
   `usage.per_turn` (its step and the reply sent) and the last `narration`

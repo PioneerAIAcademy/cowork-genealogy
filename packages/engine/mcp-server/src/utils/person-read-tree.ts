@@ -123,7 +123,7 @@ export function displayName(person: Obj | undefined): string {
 
 /** The tree's own source fields (`tree-shape.ts`), so a field added there
  *  is carried here without a second edit. */
-function pickSourceFields(src: Obj): Obj {
+export function pickSourceFields(src: Obj): Obj {
   const out: Obj = {};
   for (const k of TREE_SOURCE_FIELDS) if (src[k] !== undefined) out[k] = src[k];
   return out;

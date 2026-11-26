@@ -73,6 +73,17 @@ The result says the call did not run and what to do next. A request with no tool
 (`initialize`, `tools/list`, a notification) keeps its 403 or 503, a refused token is
 always a 401 over HTTP, and the worker path keeps every status it had.
 
+A **refusal** reaches a connector caller as an ordinary result, not an `isError` one: a
+write a tool refused with `{ ok: false, errors }`, an argument that is not a parameter, or
+a call with no project. Claude draws an `isError` result as a red error box in front of the
+user, and a refusal is the tools working. The result's first key is `refused`, a note
+saying nothing was written and to fix the call and send it again; the body follows
+unchanged (`connectorToolResult`, `src/tool-result.ts`). A failure a tool raises (a
+timeout, an unreachable service, an ended FamilySearch session) is still `isError`. A
+failure a tool returns as `{ ok: false }` is not: `project_create` returns a failed
+FamilySearch read that way, so the note claims only that nothing was written. The worker
+path keeps the mark on all of them.
+
 Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
 E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
 cap waits its turn, oldest first, and is never refused; `initialize`, `tools/list`,

@@ -132,10 +132,45 @@ function searchStepFor(item: any): string {
  *  arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const searchedOut = searchedOutItemIds(research, plans);
   const items = openItems(plans)
-    .filter((i) => !waitingOnUpload.has(i?.id))
+    .filter((i) => !waitingOnUpload.has(i?.id) && !searchedOut.has(i?.id))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
+}
+
+/** The step once nothing is left to search. Items searched with nothing found
+ *  are still `in_progress`, and every gate reads that as unfinished work: the
+ *  declaration, `hasOpenWork`, the unsettled-conflict ending and the new-question
+ *  gate. So research-plan's Dispose mode closes them first (it completes a search
+ *  that ran, even when it found nothing), and only then does the question go to
+ *  research-exhaustiveness and proof-conclusion (lead, 2026-11-26). */
+function searchSpentStep(research: any, plans: any[]): string {
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const ids = [...searchedOutItemIds(research, plans)].filter((id) => !waitingOnUpload.has(id)).sort();
+  return ids.length > 0
+    ? `research-plan — dispose of ${ids.join(", ")} (searched, nothing found), then ` +
+        "research-exhaustiveness and proof-conclusion"
+    : "research-exhaustiveness, then proof-conclusion";
+}
+
+/** `in_progress` items already searched with nothing found: every entry they own
+ *  is `negative`. search-records leaves such an item `in_progress`
+ *  for re-planning, so it is executed, not due again; picking it re-ran the same
+ *  searches turn after turn and the question never reached a conclusion
+ *  (kenneth-quass-death, 2026-11-26: one item searched 9 times). A `fs_hints`
+ *  item is never searched out: search-hints finishes it. */
+function searchedOutItemIds(research: any, plans: any[]): Set<any> {
+  const entries = arr(research?.log);
+  const out = new Set<any>();
+  for (const item of openItems(plans)) {
+    if (item?.status !== "in_progress" || item?.record_type === "fs_hints") continue;
+    const own = entries.filter((e) => e?.plan_item_id === item?.id);
+    if (own.length > 0 && own.every((e) => e?.outcome === "negative")) {
+      out.add(item?.id);
+    }
+  }
+  return out;
 }
 
 /** The `planned`/`in_progress` items on a plan that is active or status-less. */
@@ -960,9 +995,9 @@ export function questionStatus(
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Unreachable — `hasOpenWork`'s items are a subset of the picker's and
-        // both apply the same upload skip.
-        : "research-exhaustiveness, then proof-conclusion";
+        // Every open item is waiting on an upload or was searched with nothing
+        // found: the conflict's evidence search is over (lead, 2026-11-26).
+        : searchSpentStep(research, plans);
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -1016,7 +1051,11 @@ export function questionStatus(
     // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
-    nextStep = "research-plan";
+    // A project with no localities entry at all has surveyed no place, so the plan
+    // step opens with locality-guide (issue #4791, stop 3). Whether an entry covers
+    // this question's own place is research-plan's to judge, and it hands back.
+    const surveyed = Array.isArray(research?.localities) && research.localities.length > 0;
+    nextStep = surveyed ? "research-plan" : "locality-guide, then research-plan";
   } else if (state === "evidence-gathered") {
     // Not preempted by an uncited positive/partial entry: agents log
     // inconclusive searches as `partial` and link lists as `positive`, and those
@@ -1054,8 +1093,7 @@ export function questionStatus(
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
     const item = nextUnexecutedItem(research, plans);
-    if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
-    else nextStep = searchStepFor(item);
+    nextStep = item ? searchStepFor(item) : searchSpentStep(research, plans);
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

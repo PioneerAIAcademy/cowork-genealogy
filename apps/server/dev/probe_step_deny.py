@@ -92,7 +92,8 @@ believing `_halt` was no better, on the reading that halt fields end the turn
 only AFTER the call runs. That is true of the stop fields alone, but `_halt`
 (`options.py:391-392`) ships `**_deny(reason)` with them, so it does stop the
 call it fires on. Decision 25 (2026-10-19) chose the halt, on the FamilySearch
-prototype only; Cowork gets no hook and the alpha gets nothing. This probe's
+prototype only. Issue #4791 (2026-11-24) gates the web app in process and the
+connector and Cowork through a plugin hook that denies and never halts. This probe's
 result stands as the reason the deny was not chosen.
 
 Two further observations from the transcripts, both costing nothing extra:

@@ -25,6 +25,7 @@ import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/pa
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import {
   compoundJurisdictionError,
+  hintsReviewRecordTypeError,
   outsideSiteJurisdictionError,
   planItemFlags,
   planWindowFlag,
@@ -8097,6 +8098,18 @@ function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly 
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
+/** A hints-review item carries `record_type: "fs_hints"` (`hintsReviewRecordTypeError`,
+ *  #4828). Checked on an append and on a change to `rationale` or `record_type`
+ *  only, so an item written before the rule stays editable by a status change. */
+function hintsReviewRuleInputsChanged(stored: any, next: any): boolean {
+  return stored?.rationale !== next?.rationale || stored?.record_type !== next?.record_type;
+}
+
+function hintsReviewRecordTypeInvariants(item: any): string[] {
+  const error = hintsReviewRecordTypeError(item ?? {});
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -10566,6 +10579,9 @@ function applyOne(
         if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
           invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
         }
+        if (item && hintsReviewRuleInputsChanged(storedItem, item)) {
+          invariantErrors.push(...hintsReviewRecordTypeInvariants(item));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         invariantErrors.push(...planItemVoidSearchInvariants(item, research, fulltextSearchable));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -10660,6 +10676,9 @@ function applyOne(
     }
     if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
       invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
+    }
+    if (op.op === "append" || hintsReviewRuleInputsChanged(storedItem, resultEntry)) {
+      invariantErrors.push(...hintsReviewRecordTypeInvariants(resultEntry));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
@@ -14438,7 +14457,8 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
+    const recordArks = await namesakeRowRecordArks({ research: beforeResearch }, { research }, applied, readResults);
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree, recordArks);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -14890,6 +14910,245 @@ export function namesakeRowLogCheck(
   return findings;
 }
 
+/** The upper-cased `n:n:ID` core of a FamilySearch ARK in any form, or null. */
+function arkCore(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const m = /^ark:\/61903\/(\d:\d:[A-Za-z0-9.-]+)$/.exec(toArk(v));
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** A record id's core when it is a record persona's (1:1:), else null: an
+ *  image or full-text id names a page, which can hold several people. */
+function personaArkCore(v: unknown): string | null {
+  const core = arkCore(v);
+  return core !== null && core.startsWith("1:1:") ? core : null;
+}
+
+/** The rows a call appended, or whose `record_ids` it changed, each with the
+ *  last op that wrote it. A row the call leaves listing the same records is
+ *  not judged again. */
+function namesakeRowsWritten(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ row: any; index: number }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const cores = (r: any) =>
+    JSON.stringify([...new Set((Array.isArray(r?.record_ids) ? r.record_ids : []).map(personaArkCore).filter(Boolean))].sort());
+  const out: Array<{ row: any; index: number }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (prior && cores(prior) === cores(row)) continue;
+    out.push({ row, index });
+  }
+  return out;
+}
+
+/** Per persona (by ARK core) of a call's written namesake rows, the 1:2 records
+ *  its own search hits place it in (`records`, a hit's `recordArk`), and, for
+ *  those whose persons include a second person of the row's given name, how many
+ *  people of that given name each holds (`shared`). */
+export type NamesakeSidecarRecords = ReadonlyMap<
+  string,
+  { records: ReadonlySet<string>; shared: ReadonlyMap<string, number> }
+>;
+
+/** Reads `NamesakeSidecarRecords` from the rows' own search sidecars. */
+export async function namesakeRowRecordArks(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<Map<string, { records: Set<string>; shared: Map<string, number> }>> {
+  const out = new Map<string, { records: Set<string>; shared: Map<string, number> }>();
+  const logById = logIndex(after.research);
+  for (const { row } of namesakeRowsWritten(before, after, applied)) {
+    const wanted = new Set((Array.isArray(row.record_ids) ? row.record_ids : []).map(personaArkCore).filter(Boolean));
+    if (wanted.size === 0) continue;
+    const given = rowGivenWords(row.name);
+    for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+      const entry = logById.get(logId);
+      if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+      for (const hit of (await readResults(entry.results_ref)) ?? []) {
+        const persona = personaArkCore(hit?.recordId);
+        const record = arkCore(hit?.recordArk);
+        if (persona === null || record === null || !wanted.has(persona)) continue;
+        if (!out.has(persona)) out.set(persona, { records: new Set(), shared: new Map() });
+        const links = out.get(persona)!;
+        links.records.add(record);
+        const persons = (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []) as any[];
+        const named = given.words.size > 0 ? persons.filter((p) => sharesRowGivenName(p, given)).length : 0;
+        if (named > 1) links.shared.set(record, Math.max(named, links.shared.get(record) ?? 0));
+      }
+    }
+  }
+  return out;
+}
+
+/** The 1:2 records whose live name assertions give two or more people of the
+ *  row's given name, each with how many, a person in a record being its
+ *  `record_persona_id`, else its `record_role`. */
+function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): Map<string, number> {
+  const people = new Map<string, Set<string>>();
+  for (const a of assertions) {
+    if (a?.fact_type !== "name" || typeof a?.value !== "string") continue;
+    const record = arkCore(a?.record_document_id);
+    if (record === null) continue;
+    const words = rowGivenWords(a.value).words;
+    if (![...words].some((w) => given.words.has(w))) continue;
+    const who = `${arkCore(a?.record_id) ?? ""}|${a?.record_persona_id ?? a?.record_role ?? ""}`;
+    if (!people.has(record)) people.set(record, new Set());
+    people.get(record)!.add(who);
+  }
+  return new Map([...people].filter(([, who]) => who.size > 1).map(([record, who]) => [record, who.size]));
+}
+
+/** A namesake row records someone the tree does not hold (issue #2475, the row
+ *  from feedback issue #4660). One finding per row the call wrote that lists a
+ *  record persona the tree already cites on another person sharing the row's
+ *  given name, or that another row for the same `person_id` already lists. The
+ *  row's own subject is never the holder: they often appear in the same record
+ *  in another role. A record reaches the tree through the 1:2 records its
+ *  assertions were read from (`record_document_id`), the row's own search hits
+ *  (`recordArks`), or a tree source whose url is the persona itself. A 1:2
+ *  record that holds a second person of the row's given name (a father and son
+ *  both John) is not followed: the tree may cite it for that other person. */
+export function namesakeKnownRecordCheck(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  recordArks: NamesakeSidecarRecords = new Map(),
+): Array<{ index: number; message: string }> {
+  const written = namesakeRowsWritten(before, after, applied);
+  if (written.length === 0) return [];
+  const research = after.research;
+  const tree = after.tree;
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
+  const documents = new Map<string, Set<string>>();
+  for (const a of assertions) {
+    const persona = personaArkCore(a?.record_id);
+    const record = arkCore(a?.record_document_id);
+    if (persona === null || record === null) continue;
+    if (!documents.has(persona)) documents.set(persona, new Set());
+    documents.get(persona)!.add(record);
+  }
+  const sourceUrl = new Map<string, string>();
+  for (const s of (Array.isArray(tree?.sources) ? tree.sources : []) as any[]) {
+    const core = arkCore(s?.url);
+    if (typeof s?.id === "string" && core !== null) sourceUrl.set(s.id, core);
+  }
+  const citing = ((Array.isArray(tree?.persons) ? tree.persons : []) as any[])
+    .filter((p) => p && typeof p.id === "string")
+    .map((p) => {
+      const cites = new Map<string, string>();
+      for (const node of [...(Array.isArray(p.facts) ? p.facts : []), ...(Array.isArray(p.names) ? p.names : [])]) {
+        for (const ref of bareRefsOf(node)) {
+          const core = sourceUrl.get(ref);
+          if (core !== undefined && !cites.has(core)) cites.set(core, ref);
+        }
+      }
+      return { person: p, cites };
+    })
+    .filter((c) => c.cites.size > 0);
+  const nameOf = (p: any) => {
+    const n = (Array.isArray(p?.names) ? p.names : [])[0];
+    return [n?.given, n?.surname].filter((x) => typeof x === "string" && x !== "").join(" ");
+  };
+  // Each tree person's live links, as `<1:2 record>|<record_persona_id>`.
+  const assertionById = new Map(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const linkedPersonas = new Map<string, Set<string>>();
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const a = assertionById.get(e.assertion_id);
+    const record = arkCore(a?.record_document_id);
+    if (record === null || typeof a?.record_persona_id !== "string") continue;
+    if (!linkedPersonas.has(e.person_id)) linkedPersonas.set(e.person_id, new Set());
+    linkedPersonas.get(e.person_id)!.add(`${record}|${a.record_persona_id}`);
+  }
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const { row, index } of written) {
+    const given = rowGivenWords(row.name);
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    const label = `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""}`;
+    const listed = (Array.isArray(row.record_ids) ? row.record_ids : []) as unknown[];
+    const held: string[] = [];
+    const repeated: string[] = [];
+    const sharedByAssertions = recordsSharingGivenName(assertions, given);
+    for (const id of listed) {
+      const persona = personaArkCore(id);
+      if (persona === null) continue;
+      const sidecar = recordArks.get(persona);
+      const shared = new Map(sharedByAssertions);
+      for (const [r, n] of sidecar?.shared ?? []) shared.set(r, Math.max(n, shared.get(r) ?? 0));
+      const viaRecord = [...(documents.get(persona) ?? []), ...(sidecar?.records ?? [])];
+      const records = new Set([persona, ...viaRecord.filter((r) => !shared.has(r))]);
+      const stamped = row.record_persona_ids?.[String(id)];
+      const subject = citing.find((c) => c.person.id === row.person_id);
+      const subjectNamed = subject !== undefined && sharesRowGivenName(subject.person, given);
+      // A record holding two or more people of the row's given name counts for a
+      // holder linked to the row's own persona in it; one holding exactly two
+      // also when the row's same-named subject cites it, being the other one.
+      const heldIn = (c: { person: any; cites: Map<string, string> }) => [
+        ...[...records].filter((r) => c.cites.has(r)),
+        ...viaRecord.filter(
+          (r) => shared.has(r) && c.cites.has(r) && (
+            (shared.get(r) === 2 && subjectNamed && subject!.cites.has(r)) ||
+            (typeof stamped === "string" && (linkedPersonas.get(c.person.id)?.has(`${r}|${stamped}`) ?? false))
+          ),
+        ),
+      ];
+      const holders = citing.filter(
+        (c) => c.person.id !== row.person_id && given.words.size > 0 && sharesRowGivenName(c.person, given) &&
+          heldIn(c).length > 0,
+      );
+      if (holders.length > 0) {
+        held.push(
+          `'${String(id)}' is cited on ` +
+            holders
+              .map((c) => {
+                const ref = c.cites.get(heldIn(c)[0]);
+                return `tree person '${c.person.id}' (${nameOf(c.person)}, source '${ref}')`;
+              })
+              .join(" and "),
+        );
+      }
+      const other = rows.find(
+        (r) => r && r.id !== row.id && r.person_id === row.person_id &&
+          (Array.isArray(r.record_ids) ? r.record_ids : []).some((x: unknown) => personaArkCore(x) === persona),
+      );
+      if (other) repeated.push(`'${String(id)}' is already on namesakes row '${other.id}'`);
+    }
+    if (held.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} records someone the tree does not hold, yet ${held.join("; ")}. Nothing was written. ` +
+          `If the record is that tree person's, leave it off this row: a person in the tree is not an unknown ` +
+          `namesake of '${row.person_id}'. If the tree cites it on them by mistake, return \`Hand-back: tree-edit\` ` +
+          `so the citation is corrected first.`,
+      });
+    }
+    if (repeated.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} repeats a record another row for '${row.person_id}' lists: ${repeated.join("; ")}. ` +
+          `Nothing was written. A record persona is one person, so update that row instead, adding this ` +
+          `search's log entry to its log_entry_ids.`,
+      });
+    }
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -14899,9 +15158,11 @@ function namesakeMessages(
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
   startingTree: SimplifiedGedcomX | null,
+  recordArks: NamesakeSidecarRecords = new Map(),
 ): string[] {
   return [
     ...namesakeRowLogCheck(before, after, applied),
+    ...namesakeKnownRecordCheck(before, after, applied, recordArks),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>
@@ -15086,6 +15347,7 @@ async function everyOpFailure(c: {
     const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
     await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
     lines.push(...(await namesakeCandidateLines(c.projectPath, before.research, doc, before.tree, applied, fmt)));
+    const recordArks = await namesakeRowRecordArks({ research: before.research }, { research: doc }, applied, c.readResults);
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },
@@ -15093,7 +15355,7 @@ async function everyOpFailure(c: {
     );
     const found = documentFailure({
       validation,
-      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree),
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree, recordArks),
       doc,
       ops: applied.map((a) => ops[a.opIndex]),
       applied,

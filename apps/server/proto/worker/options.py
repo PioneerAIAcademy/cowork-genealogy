@@ -473,8 +473,8 @@ STOP_REASON = "Stopped by the researcher."
 #
 # `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, by the loader in
 # `app/agent/plugin_lib.py`, which both planes share (issue #4660). It is not a hook
-# anywhere: this worker is the only plane that ENFORCES the boundary, and it does so from
-# its own `PreToolUse` below. `load_step_boundary` and `_default_plugin_dir` are
+# anywhere: this worker enforces the boundary from its own `PreToolUse` below, as the web
+# app does from its own. `load_step_boundary` and `_default_plugin_dir` are
 # re-exported from here for `proto/steps.py`, `worker.py` and the tests that read them
 # off this module (`test_step_gate.py`, `test_step_mode_wiring.py`).
 

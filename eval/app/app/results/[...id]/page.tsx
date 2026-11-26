@@ -54,8 +54,6 @@ import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 interface Detail {
   runLog: RunLogFile;
   annotation: AnnotationFile | null;
-  /** Highest released version on disk for this skill, or null if none. */
-  latestReleasedVersion: number | null;
   /**
    * Current on-disk content of every path the snapshot names, read fresh by
    * the API route. The snapshot itself holds sha256 digests from
@@ -1460,8 +1458,8 @@ export default function RunLogDetailPage({
   const log = query.data.runLog;
   const ann = localAnn;
   // Sampled tests only. Counting every dimension here would render "6/90
-  // reviewed" against a sample of 6 and leave Release permanently disabled
-  // while CI is green — the annotator would have no way to finish.
+  // reviewed" against a sample of 6 and never read complete while CI is
+  // green — the annotator would have no way to finish.
   const sampled = sampledTestIds(log);
   const allDimensions = log.tests
     .filter((t) => !sampled || sampled.has(t.test_id))
@@ -1476,12 +1474,10 @@ export default function RunLogDetailPage({
         c.dimension_name === d.name,
     ),
   ).length;
-  // Delegate the release gate to the shared rule rather than re-deriving it.
-  // A local `reviewedCount === allDimensions.length` counts only whether an
-  // ENTRY exists, so it green-lights a release with no comments written that
-  // `check_runlogs.rule3_completeness` then rejects — and by then the candidate
-  // has already been renamed to v{N}.json. Re-deriving the rule in the UI is
-  // the same split that let the run-log list badge and this gate disagree.
+  // Delegate completeness to the shared rule rather than re-deriving it. A
+  // local `reviewedCount === allDimensions.length` counts only whether an
+  // ENTRY exists, so it reads complete with no comments written that
+  // `check_runlogs.rule3_completeness` then rejects.
   const uncommented = uncommentedSampledCorrections(log, ann);
   const complete = reviewedCount === allDimensions.length && uncommented.length === 0;
 
@@ -1489,44 +1485,10 @@ export default function RunLogDetailPage({
   const currentIdx = selectedEntry ? log.tests.findIndex((t) => t.test_id === selectedEntry.test_id) : -1;
   const isLast = currentIdx >= 0 && currentIdx === log.tests.length - 1;
 
-  // Action visibility. Delete is offered only for "current" candidates —
-  // those whose version is above the latest released version (or when no
-  // release exists yet). Historical candidates can still be removed by
-  // hand from the filesystem.
-  const isCurrentCandidate =
-    log.version != null &&
-    !log.released &&
-    (query.data.latestReleasedVersion == null || log.version > query.data.latestReleasedVersion);
-  const showRelease = log.version != null && !log.released && log.releasable;
-  const showDelete = isCurrentCandidate;
+  const showDelete = log.version != null;
 
-  const release = async () => {
-    if (!complete) {
-      alert(
-        uncommented.length > 0
-          ? `Cannot release: ${uncommented.length} sampled dimension(s) have no comment. `
-            + 'Every dimension of a sampled test needs one, whether or not you changed the score.'
-          : 'Cannot release: annotation is incomplete. Review every sampled dimension first.',
-      );
-      return;
-    }
-    if (!confirm(`Release this candidate as v${log.version}? The file will be renamed.`)) {
-      return;
-    }
-    const res = await fetch(`/api/runlogs/${runLogId}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'release' }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      alert(`release failed: ${body.error ?? res.status}`);
-    } else {
-      window.location.href = `/results/${body.newRunLogId}`;
-    }
-  };
   const deleteCandidate = async () => {
-    if (!confirm(`Delete this candidate iteration? The .json and .ann.json will be removed.`)) {
+    if (!confirm(`Delete this run log? The .json and .ann.json will be removed.`)) {
       return;
     }
     const res = await fetch(`/api/runlogs/${runLogId}`, {
@@ -1552,9 +1514,7 @@ export default function RunLogDetailPage({
         <Stack gap={2}>
           <Title order={3}>{log.skill}</Title>
           <Group gap="xs">
-            {log.released ? (
-              <Badge color="green">v{log.version} released</Badge>
-            ) : log.version != null ? (
+            {log.version != null ? (
               <Badge color="blue">v{log.version} candidate</Badge>
             ) : (
               <Badge color="gray">scratch</Badge>
@@ -1578,30 +1538,15 @@ export default function RunLogDetailPage({
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
-          {showRelease || showDelete ? (
+          {showDelete ? (
             <Menu shadow="md" position="bottom-end" width={220}>
               <Menu.Target>
                 <Button size="xs" variant="default">Actions ▾</Button>
               </Menu.Target>
               <Menu.Dropdown>
-                {showRelease ? (
-                  <Menu.Item
-                    disabled={!complete}
-                    onClick={release}
-                    color="green"
-                  >
-                    Release v{log.version}
-                    {!complete ? (
-                      <Text size="xs" c="dimmed">review every dimension first</Text>
-                    ) : null}
-                  </Menu.Item>
-                ) : null}
-                {showRelease && showDelete ? <Menu.Divider /> : null}
-                {showDelete ? (
-                  <Menu.Item color="red" onClick={deleteCandidate}>
-                    Delete candidate
-                  </Menu.Item>
-                ) : null}
+                <Menu.Item color="red" onClick={deleteCandidate}>
+                  Delete run log
+                </Menu.Item>
               </Menu.Dropdown>
             </Menu>
           ) : null}
