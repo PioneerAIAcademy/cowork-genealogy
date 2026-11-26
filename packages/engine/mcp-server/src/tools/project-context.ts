@@ -53,10 +53,11 @@ const QUESTION_TRUNCATE_AT = 140;
 export const BOUNDED_REQUEST_RULE =
   "For the research router only; an agent it spawned ignores this and does its own task. A researcher " +
   "message asking for one thing (one record such as a birth, marriage, death or census entry, or when or " +
-  "where one event happened; a transcription; a letter; a review of attached sources) is a bounded " +
-  "request. Its owning agent runs in this turn, after init-project when there is no project yet, and the " +
-  "turn never runs question-selection. For a record that agent is search-records, and its turn ends on " +
-  "search-records' \"Continue with …?\" offer. A requested record that " +
+  "where one event happened; a person's children or siblings, or whether they are complete; a " +
+  "transcription; a letter; a review of attached sources) is a bounded request. Its owning agent runs in " +
+  "this turn, after init-project when there is no project yet, and the turn never runs question-selection. " +
+  "For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +
+  "on search-records' \"Continue with …?\" offer. A requested record that " +
   "attachedSources already lists is not searched for: read it with person_read, and with record_read when it " +
   "has a recordId, and name it. A children or " +
   "siblings ask starts from what is attached: before any search, read each census in attachedSources that " +

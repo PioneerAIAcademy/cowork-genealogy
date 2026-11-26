@@ -745,13 +745,17 @@ question-selection, skipping the verify step and the baseline (ut_research_sr1),
 `boundedRequest` (`BOUNDED_REQUEST_RULE`) is one fixed sentence on every project
 answer and on the `no_project` answer, addressed to the router as the `nextStep`
 above is. It says what a bounded request is by example: one record (a birth,
-marriage, death or census entry, or when or where one event happened), a
-transcription, a letter, a review of attached sources. Its owning agent runs in the
+marriage, death or census entry, or when or where one event happened), a person's
+children or siblings or whether they are complete, a transcription, a letter, a
+review of attached sources. Its owning agent runs in the
 same turn, after init-project in a folder with no project, and that turn never runs
-question-selection. For a record the agent is search-records, and the turn ends on its
-"Continue with …?" offer; the closing-offer clause names only that case, since a
-general one made the router add text after a final conclusion it must relay bare
-(`ut_research_rp1`). A children or siblings ask starts from what is attached:
+question-selection. For a record, or for a person's children or siblings, the agent is
+search-records, and the turn ends on its "Continue with …?" offer; the closing-offer
+clause names only search-records' asks, since a general one made the router add text
+after a final conclusion it must relay bare (`ut_research_rp1`). Without the children
+example the router took "Find all the children of LTQD-HM6" in a new folder for a job
+and stopped after init-project (`children-attached-households-benjamin-phipps`,
+2026-11-26). A children or siblings ask starts from what is attached:
 before any search the router reads each census in `attachedSources` that has a
 `recordId` with `record_read`, names the household, and hands search-records the
 rest. A requested record that

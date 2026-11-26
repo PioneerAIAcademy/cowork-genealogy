@@ -314,7 +314,10 @@ With `personId`, each mention of the requested ID or the read's resolved ID —
 bare, or as `FamilySearch ID <id>`, `person ID <id>` or `ID <id>`, matched
 case-insensitively as a whole token — is replaced by the subject's name as the
 read gives it ("Identify the parents of LZNY-BRF" is stored as "Identify the
-parents of Patrick Flynn"). A mention inside parentheses, such as
+parents of Patrick Flynn"). A mention right after that name, with only a space or
+comma between, is dropped with the separator, so "the death record for Patrick Flynn
+LZNY-BRF" is stored as "the death record for Patrick Flynn", not with the name
+twice. A mention inside parentheses, such as
 "Patrick Flynn (LZNY-BRF)", is an annotation beside a name the researcher wrote
 and is kept, and nothing is replaced when the read gives no name. A name is not
 a research direction, so this keeps the objective in the researcher's words; the

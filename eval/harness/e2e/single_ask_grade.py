@@ -324,15 +324,15 @@ def grade(
     )
 
     if spec.read_before_search:
-        first = next(
+        cut = next(
             (i for i, e in enumerate(tool_calls) if _bare(str(e.get("tool") or "")) in SEARCH_TOOLS),
             len(tool_calls),
         )
         before = {
-            _bare(str(e.get("tool") or "")) for e in tool_calls[:first] if e.get("is_error") is not True
+            _bare(str(e.get("tool") or "")) for e in tool_calls[:cut] if e.get("is_error") is not True
         }
         late = [t for t in spec.read_before_search if t not in before]
-        where = "the first search" if first < len(tool_calls) else "the end of a turn that searched nothing"
+        where = "the first search" if cut < len(tool_calls) else "the end of a turn that searched nothing"
         checks["read_before_search"] = (
             not late,
             f"not called without error before {where}: {', '.join(late)}" if late

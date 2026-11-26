@@ -622,6 +622,7 @@ def test_a_read_before_the_first_search_passes_on_either_thread():
         g, line = run([read, agent("search-records"), {**SEARCH, "thread": "sub"}], final_research=SEARCHED, spec=ATTACHED_FIRST)
         assert g.passed, line
         assert g.checks["read_before_search"] == (True, "[record_read] called before the first search")
+        assert g.first_unit == "search-records" and "first=search-records" in line, line
 
 
 def test_a_read_only_after_the_first_search_fails():

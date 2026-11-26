@@ -1171,7 +1171,8 @@ describe("project_context", () => {
     it("names the record's owner, the step a bounded turn never runs, and the attached-record read", () => {
       expect(BOUNDED_REQUEST_RULE).toMatch(/^For the research router only; an agent it spawned ignores this and does its own task\. /);
       expect(BOUNDED_REQUEST_RULE).toContain("after init-project when there is no project yet, and the turn never runs question-selection");
-      expect(BOUNDED_REQUEST_RULE).toContain("For a record that agent is search-records");
+      expect(BOUNDED_REQUEST_RULE).toContain("a person's children or siblings, or whether they are complete;");
+      expect(BOUNDED_REQUEST_RULE).toContain("For a record, or for a person's children or siblings, that agent is search-records");
       expect(BOUNDED_REQUEST_RULE).toContain('its turn ends on search-records\' "Continue with …?" offer');
       expect(BOUNDED_REQUEST_RULE).toContain(
         "A requested record that attachedSources already lists is not searched for: read it with person_read, and " +

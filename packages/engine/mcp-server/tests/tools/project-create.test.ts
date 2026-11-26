@@ -1091,6 +1091,13 @@ describe("nameForId", () => {
     expect(nameForId(text, ids, "Patrick Flynn")).toBe(want);
   });
   it.each([
+    ["Find the death record for Patrick Flynn LZNY-BRF.", "Find the death record for Patrick Flynn."],
+    ["patrick flynn, FamilySearch ID LZNY-BRF, was born in Cork", "patrick flynn, was born in Cork"],
+    ["Patrick Flynn LZNY-BRF and OLDX-001", "Patrick Flynn and Patrick Flynn"],
+  ])("drops a mention right after the name rather than write the name twice: %s", (text, want) => {
+    expect(nameForId(text, ids, "Patrick Flynn")).toBe(want);
+  });
+  it.each([
     ["an ID in parentheses", "Patrick Flynn (LZNY-BRF) parents"],
     ["a labelled ID in parentheses", "Patrick Flynn (FamilySearch ID LZNY-BRF)"],
     ["a longer token", "XLZNY-BRF and LZNY-BRFX and LZNY-BRF2"],

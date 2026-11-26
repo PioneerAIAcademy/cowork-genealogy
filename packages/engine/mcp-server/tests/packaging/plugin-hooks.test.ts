@@ -1962,13 +1962,14 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     expect(note).toMatch(/`Verify request: broad` line \(the broad audit is then what was asked\)/);
   });
 
-  it("names one record as a bounded request in init-project's note, so a record ask on a new folder runs in that turn", () => {
+  it("names one record and a children or siblings ask as bounded in init-project's note, so either runs in that turn on a new folder", () => {
     const note = runRelayNote(
       JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "init-project" }, tool_response: {} }),
       true,
     ).hookSpecificOutput.additionalContext;
     expect(note).toContain(
-      "(research/SKILL.md, \"Bounded request or job\"; a request for one record, or for when or where one event happened, is one)",
+      "(research/SKILL.md, \"Bounded request or job\"; a request for one record, for when or where one event happened, " +
+        "or for a person's children or siblings, is one)",
     );
   });
 

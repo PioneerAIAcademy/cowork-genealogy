@@ -675,17 +675,20 @@ function relationTo(
 /**
  * `text` with each mention of the subject by FamilySearch ID — bare, or as
  * "FamilySearch ID <id>" / "person ID <id>" / "ID <id>" — replaced by `name`.
- * A mention in parentheses is an annotation beside a name and is kept, and so
- * is everything when the read gave no name.
+ * A mention right after `name` itself is dropped with the space or comma before
+ * it, so the name is not written twice. A mention in parentheses is an
+ * annotation beside a name and is kept, and so is everything when the read gave
+ * no name.
  */
 export function nameForId(text: string, ids: string[], name: string): string {
   if (!name || name === "Unknown" || ids.length === 0) return text;
-  const alt = ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-  const re = new RegExp(
-    `(\\(\\s*)?(?<![A-Za-z0-9-])(?:FamilySearch\\s+)?(?:person\\s+)?(?:ID:?\\s+)?(?:${alt})(?![A-Za-z0-9-])`,
-    "gi",
-  );
-  return text.replace(re, (match, paren: string | undefined) => (paren !== undefined ? match : name));
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const mention = `(?<![A-Za-z0-9-])(?:FamilySearch\\s+)?(?:person\\s+)?(?:ID:?\\s+)?(?:${ids.map(escape).join("|")})(?![A-Za-z0-9-])`;
+  const afterName = new RegExp(`(?<![A-Za-z])(${escape(name)})[\\s,]+${mention}`, "gi");
+  const re = new RegExp(`(\\(\\s*)?${mention}`, "gi");
+  return text
+    .replace(afterName, "$1")
+    .replace(re, (match, paren: string | undefined) => (paren !== undefined ? match : name));
 }
 
 /** A fact as one short line: its date and place, whichever it has. */
