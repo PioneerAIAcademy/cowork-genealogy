@@ -735,7 +735,8 @@ above is. It says what a bounded request is by example: one record (a birth,
 marriage, death or census entry, or when or where one event happened), a
 transcription, a letter, a review of attached sources. Its owning agent runs in the
 same turn, after init-project in a folder with no project, search-records for a
-record, and that turn never runs question-selection. A requested record that
+record; the reply ends on that agent's "Continue with …?" line; and that turn never
+runs question-selection. A requested record that
 `attachedSources` already lists is read with `person_read` and named, not searched
 for. A research plan is left out: one asked for in a folder with no project ends
 after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says

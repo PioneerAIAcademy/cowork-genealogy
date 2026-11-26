@@ -401,9 +401,10 @@ export type ProjectContextResult =
       /** The first subject as a search agent's `subject:` block: names (a doubted
        *  given name as its searchAs), birth, death and up to two parents. */
       subject?: Record<string, unknown>;
+      /** BOUNDED_REQUEST_RULE: the router's rule for a researcher message that asks for one thing. */
+      boundedRequest: string;
       /** The first subject's sources attached on FamilySearch when the project was
        *  made, as project_create stored them in the tree. */
-      boundedRequest?: string;
       attachedSources?: { id: string; title: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
