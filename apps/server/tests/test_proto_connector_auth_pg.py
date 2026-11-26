@@ -319,3 +319,24 @@ async def test_a_new_identity_with_create_off_is_refused_and_writes_no_row(pg_ds
     assert sql(pg_dsn, "SELECT count(*) FROM users") == [(0,)]
     created = await store.upsert_user("stranger@example.org", "STR-1", create=True)
     assert (await store.upsert_user("stranger@example.org", "STR-1", create=False)).id == created.id
+
+
+async def test_a_seed_key_goes_on_the_row_the_call_inserts_and_on_no_other(pg_dsn):
+    """OPENROUTER_SEED_AT_CONNECT: in the insert itself, so it never overwrites."""
+    store = PgStore(pg_dsn)
+    created = await store.upsert_user(EMAIL, "PAT-1", accept_terms=True, openrouter_key_enc="cipher-1")
+    assert sql(pg_dsn, "SELECT openrouter_key_enc FROM users WHERE id = %s", (created.id,)) == [("cipher-1",)]
+    # The same person connecting again keeps what they have.
+    await store.upsert_user(EMAIL, "PAT-1", accept_terms=True, openrouter_key_enc="cipher-2")
+    assert sql(pg_dsn, "SELECT openrouter_key_enc FROM users WHERE id = %s", (created.id,)) == [("cipher-1",)]
+    # A key an administrator cleared stays cleared.
+    await store.clear_openrouter_key(created.id)
+    await store.upsert_user(EMAIL, "PAT-1", accept_terms=True, openrouter_key_enc="cipher-3")
+    assert sql(pg_dsn, "SELECT openrouter_key_enc FROM users WHERE id = %s", (created.id,)) == [(None,)]
+    # A user who existed before seeding was on is not seeded by signing in.
+    plain = await store.upsert_user("other@example.org", "OTH-1")
+    await store.upsert_user("other@example.org", "OTH-1", accept_terms=True, openrouter_key_enc="cipher-4")
+    assert sql(pg_dsn, "SELECT openrouter_key_enc FROM users WHERE id = %s", (plain.id,)) == [(None,)]
+    # With no seed, a new row has no key.
+    bare = await store.upsert_user("third@example.org", "THI-1", accept_terms=True)
+    assert sql(pg_dsn, "SELECT openrouter_key_enc FROM users WHERE id = %s", (bare.id,)) == [(None,)]
