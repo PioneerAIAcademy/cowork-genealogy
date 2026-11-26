@@ -494,10 +494,17 @@ so validation, the all-or-nothing write and every refusal are the batch's.
   is dropped. A whole-document error keeps its document path
   (`plans[N]/items[k]`), whose `k` is the item's `planItems` index.
 
-The same conversion is mirrored in the plugin hook (`guard_project_files.py`,
-`_ops`), whose ownership gates read `entry`/`fields`, and in the eval validators
-(`validators_lib.research_append_ops`). A flat payload sent both ways is merged
-there rather than refused, so a gate sees every field the call carries.
+The same conversion is mirrored in three other readers of the call:
+- the plugin hook (`guard_project_files.py`, `_ops`), whose ownership gates read
+  `entry`/`fields`;
+- the eval harness (`eval/harness/harness/research_append_ops.py`), which the
+  validators, the guardrail checks (`skill_invocation.py`) and the replay
+  (`replay.py`) all read through;
+- the beta worker's write record (`apps/server/proto/worker/writer_record.py`),
+  which records a plan-form write as `plans,plan_items`.
+
+A flat payload sent both ways is merged in the hook and the harness rather than
+refused, so a gate sees every field the call carries.
 
 ### 3.4 Composite persist (`sourceDescription`) — D1
 
