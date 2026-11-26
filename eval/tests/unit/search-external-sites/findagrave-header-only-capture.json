@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_fgh",
+    "skill": "search-external-sites",
+    "name": "Hosted: a Find a Grave capture showing only the site header is a captured nil, not a resave",
+    "type": "positive",
+    "description": "Feedback issue #4745, folded into #4657. Find a Grave prints a search with no results as its site header alone. The Find a Grave hand-off for pli_001 is open, and the researcher uploaded the results page as a PDF with no text layer; image_transcribe returns only the logo and a divider line. The agent reads it, treats it as zero results, and closes the hand-off with a negative entry (capture_received true, the PDF's name), sets pli_001 completed, and does not ask for a resave. In the feedback session the same captures were logged error as unusable and a recapture was asked for. Gated by test_triage_closes_its_open_handoff, test_log_site_findagrave and test_header_only_capture_is_a_nil.",
+    "tags": [
+      "findagrave",
+      "external-site",
+      "triage",
+      "triage-closes-handoff",
+      "upload-capture",
+      "hosted",
+      "log-site-findagrave",
+      "header-only-capture",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher brought back the capture for the Find a Grave search on plan item pli_001, the memorial search for Abner Hollis (d. 1874).\n\ncapture: uploads/findagrave-search-abner-hollis-1874.pdf\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: /proj_3e9a71c4d28b5f06",
+    "scenario": "findagrave-header-only-capture"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-hollis-findagrave",
+    "image-transcribe-upload-findagrave-header-only"
+  ],
+  "judge_context": [
+    "This is a triage turn: the capture came back as an upload. Do not penalize the absence of a new URL, of capture instructions, or of a build_external_search_url call: the hand-off's URL is already open in awaitingUser.",
+    "This test runs hosted: project_context returns uploadUrl https://genealogy.example.org/#/p/proj_3e9a71c4d28b5f06/upload, and the delegation names the project as projectPath /proj_3e9a71c4d28b5f06. That path is correct here; it is not a missing or invented project folder.",
+    "The capture is uploads/findagrave-search-abner-hollis-1874.pdf, which project_context lists with hasText: false, to be read with image_transcribe. A built-in Read (or Grep or Glob) of the uploads/ path is wrong on a hosted store: production keeps no file at that path.",
+    "Find a Grave prints a search that finds nothing as its site header alone. The page image_transcribe returns, only the Find a Grave logo and a divider line, is therefore that site's no-results page: a fully loaded capture of an empty result. Treating it as zero results is correct and a pass on Result triage. Calling it blank, failed, unusable, not loaded or truncated is a fail on Result triage.",
+    "The closing log entry must be an external_site entry with the same url_generated as the open log_001 hand-off, capture_received TRUE, capture_filename 'findagrave-search-abner-hollis-1874.pdf', and outcome 'negative'. Logging it 'error' or 'partial' is a fail on Log entry. Its notes should say the search found no memorial and that a nil on a user-contributed site does not prove there is no grave.",
+    "pli_001 must end completed: a captured empty results page is a conclusive nil for this search. Leaving it in_progress to wait for a recapture is a fail on Log entry.",
+    "Asking the researcher to resave, recapture, re-print or re-upload the page is a fail on Capture guidance: the capture they made is complete, and a second one would show the same header. Suggesting a different search (a spelling variant, no death year, a nearby county, BillionGraves) is fine and is not a resave."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
