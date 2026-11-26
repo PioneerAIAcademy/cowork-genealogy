@@ -34,6 +34,7 @@ from validators_lib import (
 )
 from validators_lib import existing_plan_changes
 from validators_lib import new_plan_ids as _new_plan_ids
+from validators_lib import research_append_ops
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
 # so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
@@ -858,17 +859,8 @@ def test_research_plan_no_out_of_lane_tools(
 
 
 def _plan_write_ops(args: dict) -> list[dict]:
-    """The ops of one `research_append` call, in either shape the model sends:
-    `ops` as a list or a JSON string, or a single top-level op (same parse as
-    test_universal.py's assertion-update check)."""
-    ops = args.get("ops")
-    if isinstance(ops, str):
-        try:
-            ops = json.loads(ops)
-        except (ValueError, TypeError):
-            ops = None
-    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-    return [op for op in candidates if isinstance(op, dict)]
+    """The ops of one `research_append` call, in any shape the model sends."""
+    return research_append_ops(args)
 
 
 def _pid_tail(value: str) -> str:
