@@ -6,8 +6,9 @@
  *     (`candidateExclusionRefusal`);
  *   - research_append refuses a `namesakes` row that rules a candidate out on
  *     nothing the project holds but its birth year (`namesakeCandidateRefusals`):
- *     not a precise birth date, a birthplace in another country or state, or a
- *     link of the person to another record.
+ *     not a precise birth date, a birthplace in another country or state, a link
+ *     of the person to another record of the candidate's own collection, or
+ *     parents on the candidate's record unrelated to the person's tree parents.
  *
  * In the reported session `log_099` returned an 1870 household headed by
  * "Antoine Tyler", born 1833, for a subject born about 1853. The next search,
@@ -55,6 +56,7 @@
 
 import { arkToBareId } from "./ark.js";
 import { birthCountriesDiffer, yearsIn } from "./attached-births.js";
+import { givenNamesRelated } from "./attachment-support.js";
 import { stdDate } from "./date-standardize.js";
 import { isPerfectStandardDate } from "./fact-helpers.js";
 import { divisionContradiction } from "./place-resolver.js";
@@ -103,6 +105,10 @@ export interface Candidate {
   birthDate: string;
   birthYear: number;
   birthPlace: string | null;
+  /** The row's collection, or null when the row names none. */
+  collectionId: string | null;
+  /** Given names of the parents the row's own record names, or empty. */
+  parentGivenNames: string[];
   logId: string;
 }
 
@@ -153,6 +159,18 @@ function queryGivenWords(query: any): string[] {
   return [query?.givenName, query?.givenNameAlt]
     .filter((v): v is string => typeof v === "string" && v.trim() !== "")
     .flatMap((v) => v.trim().split(/\s+/));
+}
+
+/** Given names of the parents a staged row's record names for its principal
+ *  (`gedcomx` and `primaryId`), or empty when the row carries no record. */
+function rowParentGivenNames(row: any): string[] {
+  const g = row?.gedcomx;
+  if (!g || typeof row?.primaryId !== "string") return [];
+  const byId = new Map(arr(g.persons).map((p: any) => [p?.id, p]));
+  return arr(g.relationships)
+    .filter((r: any) => r?.type === "ParentChild" && r?.child === row.primaryId)
+    .flatMap((r: any) => arr(byId.get(r?.parent)?.names).map((n: any) => n?.given))
+    .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "");
 }
 
 /** Whether `row` is a hit for the given name `query` searched for. A query with
@@ -239,6 +257,8 @@ export async function candidatesFor(
         birthDate: String(row.birthDate),
         birthYear,
         birthPlace: typeof row.birthPlace === "string" ? row.birthPlace : null,
+        collectionId: typeof row.collectionId === "string" ? row.collectionId : null,
+        parentGivenNames: rowParentGivenNames(row),
         logId: typeof entry.id === "string" ? entry.id : entry.results_ref,
       });
     }
@@ -295,9 +315,39 @@ export async function candidateExclusionRefusal(input: CandidateExclusionInput):
   return excluded.length === 0 ? null : candidateExclusionMessage(input, excluded);
 }
 
+/** The collection of every row of every logged record_search sidecar, by bare
+ *  record id. An unreadable sidecar is skipped. */
+async function loggedCollections(projectPath: string, research: any): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const entry of arr(research?.log)) {
+    if (entry?.tool !== "record_search" || typeof entry?.results_ref !== "string") continue;
+    let sidecar: any;
+    try {
+      sidecar = await readProjectJson(projectPath, entry.results_ref);
+    } catch {
+      continue;
+    }
+    for (const row of arr(sidecar?.payload?.results)) {
+      if (typeof row?.recordId === "string" && typeof row?.collectionId === "string") {
+        out.set(arkToBareId(row.recordId), row.collectionId);
+      }
+    }
+  }
+  return out;
+}
+
 /** Whether `research` links `personId`, `probable` or `confident` and not
- *  superseded, to a record other than `recordId`: another result is the subject. */
-function linkedToAnotherRecord(research: any, personId: string, recordId: string): boolean {
+ *  superseded, to a record other than `recordId` in the same collection
+ *  (`collectionId`, looked up in `collectionOf`): the subject found elsewhere in
+ *  the same record set is what makes the candidate someone else. A link to a
+ *  record of another collection says nothing about who the candidate was. */
+function linkedToAnotherRecord(
+  research: any,
+  personId: string,
+  recordId: string,
+  collectionId: string | null,
+  collectionOf: Map<string, string>,
+): boolean {
   const recordOf = new Map<string, string>(
     arr(research?.assertions)
       .filter((a) => typeof a?.id === "string" && typeof a?.record_id === "string")
@@ -307,7 +357,23 @@ function linkedToAnotherRecord(research: any, personId: string, recordId: string
     if (pe?.person_id !== personId || pe?.superseded_by) return false;
     if (pe?.confidence !== "probable" && pe?.confidence !== "confident") return false;
     const rec = recordOf.get(pe?.assertion_id);
-    return rec !== undefined && rec !== recordId;
+    return rec !== undefined && rec !== recordId && collectionOf.get(rec) === collectionId;
+  });
+}
+
+/** Whether the candidate's own record names a parent whose given name is
+ *  unrelated to every parent the tree holds for `personId` (not the same, a
+ *  match, or a variant or nickname): the record is of another family. */
+function otherParents(c: Candidate, tree: any, personId: string): boolean {
+  if (c.parentGivenNames.length === 0) return false;
+  const parentIds = arr(tree?.relationships)
+    .filter((r) => r?.type === "ParentChild" && r?.child === personId && typeof r?.parent === "string")
+    .map((r) => r.parent as string);
+  const treeWords = parentIds.flatMap((id) => subjectGivenWords(tree, id));
+  if (treeWords.length === 0) return false;
+  return c.parentGivenNames.some((g) => {
+    const first = g.trim().split(/\s+/)[0];
+    return !treeWords.some((t) => givenMatches(t, first) || givenNamesRelated(t, first) !== "different");
   });
 }
 
@@ -337,8 +403,11 @@ export interface NamesakeCandidateRefusal {
  * (`before`). A row may still name a candidate when the candidate's birth date is
  * a full day-month-year date (a precise date, not an age), when its indexed
  * birthplace names another country, US state or Canadian province than the
- * person's tree birth, or when the project links the person `probable` or
- * `confident` to another record (another result is the subject). Otherwise the
+ * person's tree birth, when the project links the person `probable` or
+ * `confident` to another record of the candidate's own collection (the subject is
+ * found elsewhere in the same record set), or when the candidate's own record
+ * names a parent whose given name is unrelated to every tree parent of the person
+ * (the record is of another family). Otherwise the
  * row would drop a record the search found for the subject on its birth year
  * alone, and an indexed age can be years off.
  *
@@ -357,6 +426,7 @@ export async function namesakeCandidateRefusals(
 ): Promise<NamesakeCandidateRefusal[]> {
   const out: NamesakeCandidateRefusal[] = [];
   const byPerson = new Map<string, Candidate[]>();
+  let collectionOf: Map<string, string> | undefined;
   for (const { opIndex, row } of rows) {
     const personId = row?.person_id;
     if (typeof personId !== "string") continue;
@@ -364,12 +434,14 @@ export async function namesakeCandidateRefusals(
     const candidates = byPerson.get(personId)!;
     if (candidates.length === 0) continue;
     const named = new Set(arr(row?.record_ids).filter((id) => typeof id === "string").map((id: string) => arkToBareId(id)));
+    collectionOf ??= await loggedCollections(projectPath, after);
     const hit = candidates.filter((c) => {
       const id = arkToBareId(c.recordId);
       if (!named.has(id)) return false;
       if (isPerfectStandardDate(stdDate(c.birthDate))) return false;
       if (birthPlaceContradicts(c.birthPlace, tree, personId)) return false;
-      return !linkedToAnotherRecord(after, personId, id);
+      if (otherParents(c, tree, personId)) return false;
+      return !linkedToAnotherRecord(after, personId, id, c.collectionId, collectionOf!);
     });
     if (hit.length === 0) continue;
     const list = hit
@@ -383,9 +455,10 @@ export async function namesakeCandidateRefusals(
         "so it may still be the subject and is not recorded as a namesake. Leave it out of the row and " +
         "report it as needs-review, the subject or a relative, naming the disagreement and the record that " +
         "would settle it; do not call it probably or likely someone else. A row may " +
-        `name it once '${personId}' is linked probable or confident to another record, when its birth ` +
-        `date is a full day-month-year date, or when its birthplace names another country or state than ` +
-        `'${personId}''s. If its parents or spouse rule it out, hand it to person-evidence to record as a ` +
+        `name it once '${personId}' is linked probable or confident to another record of the same ` +
+        `collection, when its birth date is a full day-month-year date, when its birthplace names another ` +
+        `country or state than '${personId}''s, or when its record names a parent unrelated to ` +
+        `'${personId}''s tree parents. If a spouse rules it out, hand it to person-evidence to record as a ` +
         "rejected link.",
     });
   }

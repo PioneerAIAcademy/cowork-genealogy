@@ -445,8 +445,8 @@ candidates; you still confirm the top ones:
   **Exception for an indexed age, however wide the gap:** when the record's
   birth year comes from an age (a census), whatever the subject's date, a month
   and year included, and nothing else separates them (a full birth date on the
-  record, another birthplace, other parents or spouse, the subject found in
-  another record), it is not a namesake signal. Present it as `needs-review — the subject or a
+  record, another birthplace, other parents or spouse, the subject found
+  elsewhere in the same record set), it is not a namesake signal. Present it as `needs-review — the subject or a
   relative`, name the gap and the record that would settle it, and never call
   it probably, likely or very likely someone else, nor recommend against
   linking it. `research_append` refuses its namesake row.

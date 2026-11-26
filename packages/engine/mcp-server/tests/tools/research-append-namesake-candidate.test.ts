@@ -132,9 +132,35 @@ describe("namesakeCandidateRefusals: when a row may name a candidate", () => {
   const judge = (after: any = research, r: any = row("I1", [ANTOINE])) =>
     namesakeCandidateRefusals(dir, research, after, tree, [{ opIndex: 0, row: r }]);
 
-  /** `research` with I1 linked at `confidence` to an assertion of `recordId`. */
-  const linked = (recordId: string, confidence: string, extra: Record<string, unknown> = {}) => ({
+  /** Antoine's collection, the 1870 US census. */
+  const CENSUS_1870 = "1438024";
+  /** I1's own 1870 entry, found by a second, broad search (`log_002`). */
+  const OWN_1870 = "ark:/61903/1:1:ABCD-123";
+  /** I1's 1900 entry, found by a third search (`log_003`) in another collection. */
+  const OWN_1900 = "ark:/61903/1:1:WXYZ-900";
+
+  /** Logs a record_search for I1 as `id`, its sidecar holding one row of
+   *  `recordId` in `collectionId` on a page too long to make it a candidate. */
+  const logSearch = async (id: string, recordId: string, collectionId: string) => {
+    await getProjectStore().writeJson(dir, `results/${id}.json`, {
+      payload: {
+        query: { surname: "Tyler", givenName: "Ann", collectionId, subjectId: "I1" },
+        totalMatches: 40,
+        results: [{ recordId, personName: "Ann Tyler", birthDate: "1853", collectionId }],
+      },
+    });
+    return { id, tool: "record_search", results_ref: `results/${id}.json`, outcome: "positive" };
+  };
+
+  /** `research` with both searches logged and I1 linked at `confidence` to an
+   *  assertion of `recordId`. */
+  const linked = async (recordId: string, confidence: string, extra: Record<string, unknown> = {}) => ({
     ...research,
+    log: [
+      ...(research.log ?? []),
+      await logSearch("log_002", OWN_1870, CENSUS_1870),
+      await logSearch("log_003", OWN_1900, "1325221"),
+    ],
     assertions: [{ id: "a_001", record_id: recordId }],
     person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence, ...extra }],
   });
@@ -144,15 +170,69 @@ describe("namesakeCandidateRefusals: when a row may name a candidate", () => {
     expect(await judge(research, row("I1", ["MFLB-F5N"]))).toHaveLength(1);
   });
 
-  it("allows it once I1 is linked probable or confident to another record", async () => {
-    expect(await judge(linked("ark:/61903/1:1:ABCD-123", "probable"))).toEqual([]);
-    expect(await judge(linked("ark:/61903/1:1:ABCD-123", "confident"))).toEqual([]);
+  it("allows it once I1 is linked probable or confident to her own entry in the same census", async () => {
+    expect(await judge(await linked(OWN_1870, "probable"))).toEqual([]);
+    expect(await judge(await linked(OWN_1870, "confident"))).toEqual([]);
   });
 
-  it("a speculative or superseded link to another record, or any link to Antoine's own record, does not", async () => {
-    expect(await judge(linked("ark:/61903/1:1:ABCD-123", "speculative"))).toHaveLength(1);
-    expect(await judge(linked("ark:/61903/1:1:ABCD-123", "confident", { superseded_by: "pe_002" }))).toHaveLength(1);
-    expect(await judge(linked(ANTOINE, "confident"))).toHaveLength(1);
+  it("a link to a record of another collection, or one no logged search returned, does not", async () => {
+    expect(await judge(await linked(OWN_1900, "probable"))).toHaveLength(1);
+    expect(await judge(await linked("ark:/61903/1:1:NONE-000", "confident"))).toHaveLength(1);
+  });
+
+  it("a speculative or superseded link in the same census, or any link to Antoine's own record, does not", async () => {
+    expect(await judge(await linked(OWN_1870, "speculative"))).toHaveLength(1);
+    expect(await judge(await linked(OWN_1870, "confident", { superseded_by: "pe_002" }))).toHaveLength(1);
+    expect(await judge(await linked(ANTOINE, "confident"))).toHaveLength(1);
+  });
+
+  describe("the parents Antoine's own record names", () => {
+    /** Gives Antoine's row a record naming `fatherGiven` as her father, and
+     *  I1 a tree father `treeFatherGiven` (none when null). */
+    const withParents = async (fatherGiven: string | null, treeFatherGiven: string | null) => {
+      const s: any = await readProjectJson(dir, "results/log_001.json");
+      const r0 = s.payload.results[0];
+      if (fatherGiven === null) {
+        delete r0.gedcomx;
+        delete r0.primaryId;
+      } else {
+        r0.primaryId = "p1";
+        r0.gedcomx = {
+          persons: [
+            { id: "p1", names: [{ given: "Antoine", surname: "Tyler" }] },
+            { id: "p2", names: [{ given: fatherGiven, surname: "Tyler" }] },
+          ],
+          relationships: [{ type: "ParentChild", parent: "p2", child: "p1" }],
+        };
+      }
+      await getProjectStore().writeJson(dir, "results/log_001.json", s);
+      tree = structuredClone(tree);
+      tree.persons = tree.persons.filter((p: any) => p.id !== "F1");
+      tree.relationships = (tree.relationships ?? []).filter((r: any) => r.parent !== "F1");
+      if (treeFatherGiven !== null) {
+        tree.persons.push({ id: "F1", names: [{ given: treeFatherGiven, surname: "Tyler" }] });
+        tree.relationships.push({ type: "ParentChild", parent: "F1", child: "I1" });
+      }
+    };
+
+    it("allows the row when her record names a father unrelated to I1's tree father", async () => {
+      await withParents("Michael", "William");
+      expect(await judge()).toEqual([]);
+    });
+
+    it("refuses it when her record names I1's tree father, or a nickname of him", async () => {
+      await withParents("William", "William");
+      expect(await judge()).toHaveLength(1);
+      await withParents("Bill", "William");
+      expect(await judge()).toHaveLength(1);
+    });
+
+    it("refuses it when her row carries no record, or I1 has no tree parent", async () => {
+      await withParents(null, "William");
+      expect(await judge()).toHaveLength(1);
+      await withParents("Michael", null);
+      expect(await judge()).toHaveLength(1);
+    });
   });
 
   it("allows it when the candidate's birth date is a full day-month-year date", async () => {

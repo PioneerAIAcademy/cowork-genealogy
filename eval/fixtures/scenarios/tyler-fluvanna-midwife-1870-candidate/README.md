@@ -21,7 +21,7 @@ Anthony), for Antoine's, or for none. A search for I1 under another given name i
 someone else and is not refused, nor is a search with no given name that names a parent
 (`motherGivenName` and the like), which is a search for her child. `research_append`
 refuses a `namesakes` row for I1 that names Antoine: nothing in the project rules her out
-but her birth year (I1 is linked to no other record, and the row's 1833 is an age, not a
-full date).
+but her birth year (I1 is linked to no other record of the 1870 census, Antoine's row names
+no parents, and the row's 1833 is an age, not a full date).
 
 Used by `ut_search_records_035` (1870 candidate).

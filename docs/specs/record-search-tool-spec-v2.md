@@ -588,8 +588,14 @@ a sidecar that cannot be read is skipped and the others are judged.
 before the call), unless something besides the birth year separates them: the
 candidate's `birthDate` is a full day-month-year date; its `birthPlace` names
 another country, US state or Canadian province than the person's tree birth;
-or the project links the person `probable` or `confident`, not superseded, to
-another record. A record a row named before the call is no candidate, so a
+the project links the person `probable` or `confident`, not superseded, to
+another record of the candidate's own collection (the `collectionId` a logged
+search's row gives it: the person found elsewhere in the same record set); or
+the candidate's own staged record (`gedcomx`, `primaryId`) names a parent whose
+given name is not the same as, a match for, or a variant or nickname of any tree
+parent's (`givenNamesRelated`). A link to a record of another collection says
+nothing about who the candidate was, and one no logged search returned has no
+collection to compare. A record a row named before the call is no candidate, so a
 standing row is never refused (`research-append-tool-spec.md`, the namesake
 candidate row). A namesake is what releases a candidate from the range refusal,
 so without this the same write that drops her would also let the next tight
