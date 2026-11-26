@@ -80,9 +80,10 @@ from app.agent.continue_policy import (
     wants_status_before,
 )
 from app.agent.main_thread import MainThread, load_main_thread
+from app.agent.plugin_lib import default_plugin_dir as _default_plugin_dir  # noqa: F401 - re-exported
+from app.agent.plugin_lib import load_step_boundary  # noqa: F401 - re-exported
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
-from app.agent.step_boundary_loader import load_step_boundary  # noqa: F401 - worker.py and steps.py import it from here
 from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
@@ -470,9 +471,13 @@ STOP_REASON = "Stopped by the researcher."
 
 # ── The step boundary (decision 25) ──────────────────────────────────────────────
 #
-# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY by
-# `app.agent.step_boundary_loader.load_step_boundary`, which the web app shares. It is
-# not a hook anywhere: this worker enforces the boundary from its own `PreToolUse` below.
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, by the loader in
+# `app/agent/plugin_lib.py`, which both planes share (issue #4660). It is not a hook
+# anywhere: this worker enforces the boundary from its own `PreToolUse` below, as the web
+# app does from its own. `load_step_boundary` and `_default_plugin_dir` are
+# re-exported from here for `proto/steps.py`, `worker.py` and the tests that read them
+# off this module (`test_step_gate.py`, `test_step_mode_wiring.py`).
+
 
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
 # checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
@@ -701,6 +706,7 @@ FS_TOOLS = frozenset({
     "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
     "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "source_screen",
     "tree_gaps", "volume_bisect", "volume_search",
 })
 
@@ -863,6 +869,10 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,

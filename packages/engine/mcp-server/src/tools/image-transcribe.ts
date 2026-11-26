@@ -29,24 +29,15 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 import { connectorUserId } from "../utils/user-limits.js";
 import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
-import {
-  classifyProjectPath,
-  MISSING_PROJECT_PATH_MESSAGE,
-  missingProjectDirMessage,
-  noProjectResult,
-  type NoProjectResult,
-} from "../utils/project-io.js";
-import { attachIndexReadings } from "../utils/index-readings.js";
+import { classifyProjectPath, MISSING_PROJECT_PATH_MESSAGE, missingProjectDirMessage, NO_PROJECT_REFUSAL } from "../utils/project-io.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
 import {
-  compactImageTranscribeAnswer,
   normalizeTranscription,
   transcriptionDigest,
 } from "../utils/staged-compaction.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
-  ImageTranscribeToolResponse,
   OpenRouterChatResponse,
   StagedTranscription,
 } from "../types/image-transcribe.js";
@@ -182,11 +173,21 @@ function assertOneImageForm(input: ImageTranscribeInput): void {
  * conflicting identifiers should be told which ones conflict, not that the
  * server is busy — otherwise it retries the same malformed call forever.
  */
+/** Internal only, never on the MCP schema. `budgetMs` is a whole-call budget
+ *  from entry, as the connector's: the fetch makes one attempt clamped to what
+ *  is left, and the OCR gets the rest, so both stop at the caller's deadline
+ *  (source_screen's image reads). */
+export interface TranscribeOptions {
+  ocrTimeoutMs?: number;
+  imageKey?: string;
+  budgetMs?: number;
+}
+
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+  opts: TranscribeOptions = {},
+): Promise<ImageTranscribeResult> {
   // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
   // unfolded input would read a valid imageArk call as "no image input".
   // Folding is idempotent, so the body's own fold is still correct for a
@@ -207,8 +208,8 @@ async function imageTranscribeToolInner(
    * it, burning an OpenRouter call nothing will read. Capping the underlying
    * fetch aborts it for real rather than abandoning the promise.
    */
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
+  opts: TranscribeOptions = {},
+): Promise<ImageTranscribeResult> {
   // The connector time budget (#3996) starts HERE, at entry — before the
   // Memories lookup, the fetch and the OCR all have a chance to spend from it.
   // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
@@ -216,7 +217,9 @@ async function imageTranscribeToolInner(
   // call MORE time than the budget actually allows.
   const enteredAt = monotonicNow();
   const isConnector = connectorUserId(principal) !== undefined;
-  const remainingBudgetMs = (): number => CONNECTOR_TRANSCRIBE_BUDGET_MS - (monotonicNow() - enteredAt);
+  const budgetMs = Math.min(isConnector ? CONNECTOR_TRANSCRIBE_BUDGET_MS : Infinity, opts.budgetMs ?? Infinity);
+  const budgeted = Number.isFinite(budgetMs);
+  const remainingBudgetMs = (): number => budgetMs - (monotonicNow() - enteredAt);
 
   input = foldImageArkInput(input, "image_transcribe");
   assertOneImageForm(input);
@@ -237,13 +240,13 @@ async function imageTranscribeToolInner(
     // No FamilySearch token — the bytes are the researcher's own upload, not an
     // FS-hosted scan — and no transport cap: the file goes host→OpenRouter only.
     // The project is classified FIRST so a folder that is not a project gets the
-    // no-project ANSWER (#1695) rather than a key error or a path error.
+    // refusal rather than a key error or a path error.
     const cls = await classifyProjectPath(input.projectPath);
     if (cls === "missing_arg") {
       throw new Error(`${MISSING_PROJECT_PATH_MESSAGE} when \`file\` is given — the path is relative to it.`);
     }
     if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-    if (cls === "no_project") return noProjectResult("read");
+    if (cls === "no_project") throw new Error(NO_PROJECT_REFUSAL);
     const projectPath = input.projectPath as string;
 
     const problem = fileRefProblem(input.file);
@@ -328,10 +331,12 @@ async function imageTranscribeToolInner(
     // cleanly, if the Memories lookup above already spent the whole budget.
     const fetched = await fetchFsImageBytes(
       resolved.url,
-      isConnector ? undefined : resolved.fallbackUrl,
+      budgeted ? undefined : resolved.fallbackUrl,
       principal,
       resolved.memoryShape,
-      isConnector ? { timeoutMs: clampToBudget(remainingBudgetMs(), CONNECTOR_FETCH_TIMEOUT_MS) } : {},
+      budgeted
+        ? { timeoutMs: clampToBudget(remainingBudgetMs(), isConnector ? CONNECTOR_FETCH_TIMEOUT_MS : Infinity) }
+        : {},
     );
     await recordImageBrowse(browse);
     bytes = fetched.bytes;
@@ -361,8 +366,8 @@ async function imageTranscribeToolInner(
   // memories-phase budget (`opts.ocrTimeoutMs`) still applies even here.
   // runOcr/runFoundCheck stay principal-free (#3996); this is computed here,
   // not passed down.
-  const ocrBudgetMs = isConnector
-    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, CONNECTOR_STAGING_MARGIN_MS)
+  const ocrBudgetMs = budgeted
+    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, isConnector ? CONNECTOR_STAGING_MARGIN_MS : 0)
     : nominalOcrBudgetMs;
   const ocrStartedAt = Date.now();
 
@@ -535,148 +540,3 @@ async function imageTranscribeToolInner(
     },
   };
 }
-
-/**
- * The MCP entry point. In a project (issue #2490, lead ruling 2026-10-16) the
- * page is staged and the inline `transcription` dropped, so the caller gets
- * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
- * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
- *
- * With no project — no `projectPath`, or a folder holding neither project file —
- * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
- * is saved or staged anywhere and the text comes back inline (issue #4136, lead
- * ruling 2026-11-02). The read counts under the in-memory no-project image cap
- * (spec §5.8). A `file` keeps its project-relative path, so it still needs one.
- *
- * person_read calls `imageTranscribeTool` directly and keeps the text; the
- * strip lives here so it cannot reach that leg.
- */
-export async function imageTranscribeMcpTool(
-  input: ImageTranscribeInput,
-  principal: Principal,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if (input?.file !== undefined) {
-    return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
-  }
-  const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
-  if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-  if (cls === "missing_arg" || cls === "no_project") {
-    const { projectPath: _dropped, ...unsaved } = input;
-    return compactOrPass(await imageTranscribeTool(unsaved, principal));
-  }
-  return withIndexReadings(input, compactOrPass(await imageTranscribeTool(input, principal)));
-}
-
-/** The project leg's index beside the reading (issue #4578). A refusal passes. */
-async function withIndexReadings(
-  input: ImageTranscribeInput,
-  out: ImageTranscribeToolResponse | NoProjectResult,
-): Promise<ImageTranscribeToolResponse | NoProjectResult> {
-  if ("ok" in out || typeof input.projectPath !== "string") return out;
-  if (input.file !== undefined) return attachIndexReadings(input.projectPath, out, undefined);
-  // The ark that was read: a blank `ark` counts as absent, as foldImageArkInput folds it.
-  const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : input.imageArk;
-  return attachIndexReadings(input.projectPath, out, ark);
-}
-
-function compactOrPass(
-  out: ImageTranscribeResult | NoProjectResult,
-): ImageTranscribeToolResponse | NoProjectResult {
-  if ("ok" in out) return out;
-  return compactImageTranscribeAnswer(out);
-}
-
-export const imageTranscribeToolSchema = {
-  name: "image_transcribe",
-  description:
-    "OCR a FamilySearch page scan host-side. In a project it STAGES the " +
-    "transcription and returns `staged.resultsRef`, a `digest` (length, a " +
-    "300-character excerpt) and, with lookingFor, `found` — not the page text. " +
-    "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
-    "ref: staged.resultsRef }) only when you need it, and hand " +
-    "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
-    "comes back inline only when staging failed (`stagingError`). In a project " +
-    "it also returns `readingNote`, and `indexReadings`, the held records' " +
-    "indexed names for that page: follow the note. With no " +
-    "project (no projectPath, or a folder holding no research.json) the text " +
-    "comes back inline as `transcription` and nothing is saved; those reads " +
-    "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
-    "image_read refuses (over its inline size cap): the image never enters the " +
-    "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
-    "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
-    "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
-    "including a PDF, and an UPLOADED image or PDF already " +
-    "inside a project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
-    "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
-    "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
-    "file need none. Needs an OpenRouter API key (set in " +
-    "~/.familysearch-mcp/config.json if it reports no key). Inputs over 14 MiB " +
-    "are refused with the remedy.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      imageId: {
-        type: "string",
-        description:
-          "FamilySearch Image Group Number NUMBER_NUMBER (e.g. 004884748_02613), " +
-          "as returned by image_search.",
-      },
-      ark: {
-        type: "string",
-        description:
-          "A FamilySearch document-image ARK when no imageId is available — " +
-          "ark:/61903/3:1:... or 3:2:... (e.g. fulltext_search's `id`), a bare " +
-          "3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), " +
-          "a resolver URL for one, or a resolved distribution URL. " +
-          "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +
-          "film/register — the bare ARK can silently resolve to the WRONG image " +
-          "within that group. If the record was reached via a FamilySearch page " +
-          "URL carrying i=/cc=/groupId= query parameters (e.g. from the browser or " +
-          "a citation), pass the FULL URL including them, not just the bare ARK — " +
-          "those parameters are preserved and select the correct image.",
-      },
-      memoryArtifactUrl: {
-        type: "string",
-        description:
-          "A FamilySearch memory: a scanned will, certificate, obituary " +
-          "clipping or compiled history uploaded by a relative. Either form " +
-          "works — the direct artifact URL (a person_read source's " +
-          "artifact_url) or the page URL a person sees " +
-          "(familysearch.org/photos/artifacts/<id>, or /memories/<id>, which " +
-          "is that source's url); a page URL is resolved first. PDFs are " +
-          "supported as well as images. Needs no FamilySearch login.",
-      },
-      file: {
-        type: "string",
-        description:
-          "A project-relative POSIX path to an uploaded image or PDF inside the " +
-          "project folder — the hosted upload endpoint writes uploads/<name>. " +
-          "Requires projectPath. JPEG, PNG, GIF, WEBP or PDF, decided by the " +
-          "file's bytes, not its name. No FamilySearch login needed.",
-      },
-      lookingFor: {
-        type: "string",
-        description:
-          "Optional: who or what to locate on the page. A search key only — on a " +
-          "complete read it sets a FOUND/NOT FOUND pointer, but it never shortens " +
-          "or slants the full transcription. The pointer is withheld on a " +
-          "truncated read (`truncated: true`): a half-read page cannot support a " +
-          "clean NOT FOUND, so `found` is absent there — judge from the returned " +
-          "lines and treat the rest of the page as unread. On a FOUND, " +
-          "`matchedForms` lists the other forms of a sought given name that the " +
-          "page carries (`{ Eliza: [\"Elizabeth\"] }`): an entry under one of " +
-          "them carries the name sought, not a different name.",
-      },
-      projectPath: {
-        type: "string",
-        description:
-          "Absolute path to the project folder. In a project the transcription " +
-          "is staged under it (`staged`, `digest`), and a fetched FamilySearch scan " +
-          "is saved under images/ with its project-relative path returned as " +
-          "imageRef, so a retained source can cite it (image_filename) for viewer " +
-          "display. Omit it, or pass a folder that is not a project, to get the " +
-          "text inline with nothing saved. Required with `file`.",
-      },
-    },
-  },
-};

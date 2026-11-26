@@ -356,7 +356,7 @@ def test_build_hooks_publishes_the_counter_to_the_turn_boundary(tmp_path, monkey
 
 
 def _load_boundary():
-    from app.agent.step_boundary_loader import load_step_boundary
+    from app.agent.plugin_lib import load_step_boundary
 
     return load_step_boundary()
 

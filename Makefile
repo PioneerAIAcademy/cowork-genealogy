@@ -400,6 +400,23 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-auto-memory
+probe-auto-memory: $(ENGINE_BUILD) ## Live probe: does CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 actually stop a memory write? (issue #4778; 2 short sessions)
+	# test_auto_memory_off.py proves the CLI offers no memory block; this runs
+	# the real agent twice and proves no memory file lands.
+	#
+	# Control arm is "0" (forced_on), not unset: per the bundled CLI's Nm()/Z8(),
+	# a falsy value returns before swt() and the autoMemoryEnabled setting, so it
+	# is the stronger control and it tests the polarity live.
+	#
+	# An EMPTY control arm is reported VOID, not PASS: the model must choose to
+	# persist a memory, so an empty control and a working fix look identical.
+	# Both arms redirect HOME and CLAUDE_CONFIG_DIR into a tempdir, and the probe
+	# fails if the operator's own ~/.claude/projects changed.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_auto_memory.py
+
 .PHONY: probe-agent-nesting
 probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn another in the hosted loader, and under Task or Agent? (issue #2817; 6 sessions, ~$5)
 	# Main thread -> probe-driver-<arm> -> probe-leaf. Four arms grant the driver
@@ -1175,7 +1192,7 @@ malachi-rehearsal: ## Bring the whole stack up, through every target but malachi
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-screen source-screen-judge source-screen-score
 source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
@@ -1196,11 +1213,15 @@ source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: m
 	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
 
+source-screen-screen: $(ENGINE_DEPS) ## Build each copy's project and run source_screen over it: make source-screen-screen SNAPSHOT=<dir> [WITHOUT="a h"] [IMAGE_READ=1]
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts screen --snapshot "$(abspath $(SNAPSHOT))" $(foreach c,$(WITHOUT),--without $(c)) $(if $(filter 1 true yes on,$(IMAGE_READ)),--image-read)
+
 source-screen-judge: $(ENGINE_BUILD) ## Run the source-evaluation agent over a snapshot, on your Claude subscription: make source-screen-judge SNAPSHOT=<dir>
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
 	cd eval/harness && uv run python source_screen_judge.py --snapshot "$(abspath $(SNAPSHOT))"
 
-source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl"
+source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl <dir>/screen.jsonl"
 	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
 

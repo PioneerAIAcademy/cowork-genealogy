@@ -46,7 +46,11 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
+    HAND_OFF_LOG_TOOLS,
+    HandOffLinks,
     foreground_rewrite,
+    hand_off_texts,
+    seed_hand_offs,
     NO_PROJECT_NOTE,
     ROUTING_GUIDANCE,
     SOURCES_GUIDANCE,
@@ -58,7 +62,7 @@ from .continue_policy import (
 )
 from .errors import UNEXPECTED, classify, log_operator
 from .main_thread import EFFORT_LEVELS, load_main_thread  # noqa: F401 - EFFORT_LEVELS re-exported
-from .step_boundary_loader import load_step_boundary
+from .plugin_lib import load_step_boundary
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
     classify_server_status,
@@ -284,6 +288,10 @@ _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
 # `step_boundary.STEP_TOOLS`. Wider than `_DELEGATION_MATCHER`, since a skill such as
 # question-selection is a step too. Pinned to STEP_TOOLS by test_alpha_turn_hooks.py.
 _STEP_MATCHER = "^(Agent|Skill|Task)$"
+
+# The hand-off seed's matcher (issue #4660): every call `opens_hand_offs` accepts, so the
+# turn is seeded before such a call runs and its research.json read runs on no other call.
+_HAND_OFF_MATCHER = _DELEGATION_MATCHER + "|" + "|".join(f".*__{t}$" for t in sorted(HAND_OFF_LOG_TOOLS))
 
 # How long the CLI waits for a PreToolUse callback before giving up on it.
 #
@@ -671,12 +679,19 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     2026-09-11, ``make probe-gateway-path``). ``CLAUDE_CODE_FORK_SUBAGENT=0`` keeps
     the Agent tool from offering ``subagent_type: "fork"`` (on by default in the
     SDK from CLI 2.1.302): a fork inherits the main thread's context and tools, not
-    a plugin agent's ``tools:`` list.
+    a plugin agent's ``tools:`` list. ``CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`` turns
+    Claude Code's auto-memory off, so a researcher's remark is never written to a
+    memory file under the sandbox's ``~/.claude`` — outside the project, unreviewed,
+    and loaded into later sessions. ``"1"`` is OFF; a falsy value means ``forced_on``.
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
     }
     base_url = _current_base_url()
@@ -884,6 +899,20 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
+    if agent is not None:
+        async def hand_off_seed(_input_data, _tool_use_id, _ctx):
+            """PreToolUse: seed the turn's hand-off links before the call runs (issue
+            #4660, ``continue_policy.seed_hand_offs``). Never raises, never changes the
+            call."""
+            try:
+                agent._seed_hand_offs(_input_data or {})
+            except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+                _log(f"[agent] hand-off seed failed: {type(exc).__name__}: {exc}")
+            return {}
+
+        # Before `completion_status`, which stays last; the order changes nothing.
+        hooks["PreToolUse"].insert(-1,
+            HookMatcher(matcher=_HAND_OFF_MATCHER, hooks=[hand_off_seed], timeout=_PRETOOL_TIMEOUT_S))
     return hooks
 
 
@@ -948,10 +977,19 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
         # stage_plugin_agents just wrote. "user" was also listed, which read a
-        # source no harness run sees: nothing writes ~/.claude in the sandbox
-        # (sandbox/e2b.Dockerfile creates only ~/.familysearch-mcp), so it
-        # contributed nothing here while widening the gap between what CI
-        # exercises and what production loads.
+        # source no harness run sees: the image creates only ~/.familysearch-mcp
+        # (sandbox/e2b.Dockerfile), so it contributed nothing here while widening
+        # the gap between what CI exercises and what production loads.
+        #
+        # The original wording was "nothing writes ~/.claude in the sandbox",
+        # which was false while it stood: auto-memory wrote a memory file there
+        # on every session that produced one, and _pretool_hook does not deny
+        # that Write. It is narrowed above rather than repaired, because the
+        # memory tree is not a settings source and dropping "user" never
+        # governed it: test_auto_memory_off.py captures the CLI's prompt with
+        # setting_sources=[] and the memory block is still there. What governs
+        # it is _sdk_env's CLAUDE_CODE_DISABLE_AUTO_MEMORY — a separate
+        # mechanism, and not a reason to revisit this option.
         setting_sources=["project"],
         plugins=[{"type": "local", "path": _PLUGIN_DIR}],
         mcp_servers={
@@ -1648,6 +1686,44 @@ class RealAgent:
         log_operator("mcp_init", text, detail=f"health={health} entry={entry!r}")
         return [_event("error", text=text)]
 
+    def _open_hand_offs(self) -> list[dict] | None:
+        """The project's open external-site hand-offs (``step_boundary.awaiting_hand_offs``,
+        the Python mirror of ``awaitingUser``), or None when they cannot be read. Never
+        raises: a link the host fails to post is logged, not a failed turn."""
+        try:
+            boundary = getattr(self, "_step_boundary", None)
+            if boundary is None:
+                boundary = load_step_boundary(Path(_PLUGIN_DIR) / "hooks" / "step_boundary.py")
+                self._step_boundary = boundary
+            research = read_research_json(self.dir)
+            if research is None:
+                if (Path(self.dir) / "research.json").exists():
+                    # Unparseable (a hand edit, a BOM): "could not read", not "nothing open",
+                    # so it is logged; the seed then seeds empty (`seed_hand_offs`).
+                    _log("[agent] hand-off read failed, posting no links: research.json is unreadable")
+                    return None
+                research = {}
+            return boundary.awaiting_hand_offs(research)
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off read failed, posting no links: {type(exc).__name__}: {exc}")
+            return None
+
+    def _seed_hand_offs(self, data: dict) -> None:
+        """The PreToolUse half of issue #4660 (``continue_policy.seed_hand_offs``)."""
+        links = getattr(self, "_hand_off_links", None)
+        if links is not None:
+            seed_hand_offs(links, data, self._open_hand_offs)
+
+    def _hand_off_events(self, links: HandOffLinks, message, ev: dict) -> list[dict]:
+        """Issue #4660: the host posts each search link a main-thread call opened
+        (``continue_policy.hand_off_texts``, shared with the worker). Never raises."""
+        try:
+            texts = hand_off_texts(links, message, ev, self._open_hand_offs)
+        except Exception as exc:  # noqa: BLE001 - never fail a turn over a link
+            _log(f"[agent] hand-off post failed: {type(exc).__name__}: {exc}")
+            return []
+        return [_event("text", text=t) for t in texts]
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage, SystemMessage
@@ -1682,10 +1758,13 @@ class RealAgent:
             yield _event("error", text=classification)
             return
         try:
-            # Before the query: the hook callbacks are answered off the transport's own
-            # read loop, so one of this turn's could otherwise run under the last turn's
-            # gate.
+            # The per-turn hook state, BEFORE the query: the SDK's reader can run this
+            # turn's first PreToolUse while `client.query` is still awaited, and its writes
+            # (the step gate, `status_before`, the hand-off seed) must land in this turn's
+            # state, not be cleared after or go to the previous turn's tracker.
             self._begin_turn_hook_state(text)
+            # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
+            links = self._hand_off_links = HandOffLinks()
             await client.query(text)
             self._stream_dirty = True
             # Whether an errored AssistantMessage has already told the user about
@@ -1717,6 +1796,10 @@ class RealAgent:
                         if counter_now and counter_now.get("completion_summary"):
                             counter_now["completion_summary"] = None
                     yield ev
+                    # After the reset above, never through it: a posted link is the host's
+                    # words, not the model going on past a completion halt.
+                    for link_ev in self._hand_off_events(links, message, ev):
+                        yield link_ev
                 if isinstance(message, SystemMessage):
                     # #941 ported from the e2e harness (issue #1126). The CLI's
                     # init message lists every MCP server it tried to connect
@@ -1806,6 +1889,13 @@ class RealAgent:
                                 "continuations": counter.get("continuations") if counter else None,
                             },
                         )
+                    # Issue #4660: a link whose call never returned (the researcher pressed
+                    # Stop mid-search) is posted here, once. Only in a turn that made a call
+                    # able to open one (`opens_hand_offs`), so any other turn reads nothing.
+                    if links.seeded:
+                        rows = self._open_hand_offs()
+                        for link_text in links.new_texts(rows or []):
+                            yield _event("text", text=link_text)
                     # A completion halt ended the turn on the agent's summary, which the
                     # browser never receives as `stopReason`: show it as the turn's text.
                     hook_counter = getattr(self, "_hook_counter", None)

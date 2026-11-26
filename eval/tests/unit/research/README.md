@@ -123,7 +123,7 @@ that keeps the judge off the routing decision.
 
 | Test | Row | Scenario |
 |---|---|---|
-| `ut_research_pe7` (deleted in #4537; issue #4659 restores it) | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
 | `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
 | `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
 | `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
@@ -137,12 +137,9 @@ spells `@plugin:search-images`, and `_paired_names()` picks it up.
 `project_context`'s advisory `nextStep`, which then said `search-records` for any
 planned item whatever its repository. The step now names `search-external-sites`
 for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
-advisory is still wrong on two of these states: for `pe7` it says
-`research-exhaustiveness`, because a no-link leaves no record to tell a rejected
-assertion from an unlinked one, and for `si3` it says `search-records`, because
-browse-only is stated only in the plan item's rationale. The router passed both 3
-of 3 regardless until 2026-11-18, when `pe7` began following the advisory (2 of 3
-on `main`).
+advisory is still wrong on one of these states: for `si3` it says `search-records`,
+because browse-only is stated only in the plan item's rationale. The router passes
+it 3 of 3 regardless.
 
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
@@ -479,6 +476,29 @@ spawn of each named agent. The stub reply reaches the router as an agent return 
 canned text rides in the hook's denial reason), so the router acts on its `Hand-back:`
 line. The validator checks the spawn, not that the report names a cross-group owner or
 ends on "Continue with …?"; the judge reads that part.
+
+## No hand-written FamilySearch links (issue #4777)
+
+`ut_research_fl1` (`no-fs-link-for-searched-census.json`) runs on
+`renhard-1901-census-searched`, whose log already holds three nil 1901-census searches,
+with `search-records` stubbed; the researcher asks to check the 1901 census.
+`ut_research_fl2` (`no-fs-link-on-search-timeout.json`) asks research to drive the workflow on
+`renhard-marriage-england`, so it dispatches the planned search to `search-records`, which runs
+against `record_search` fixtures that all return the timeout error. Its message names no
+search: "Search FamilySearch for …" went straight to the `search-records` agent on both
+runs, research never loaded, and the positive test failed on activation. Both carry
+`no-familysearch-search-link`, and `test_no_hand_written_familysearch_search_link`
+fails on any `familysearch.org/search/record` or `/search/catalog/results` link in the
+reply. A film viewer (`/search/film/`) or collection (`/search/collection/`) link is one
+`image_read`, `image_transcribe` or `collections_search` returns, and passes.
+
+Decided (Richard, 2026-11-25): the main thread never writes that link and never hands
+the researcher a FamilySearch search to run; a failed `record_search` is reported and
+offered again. The link in feedback #4743 was malformed (`collection_id` is not a
+parameter FamilySearch reads; the filter is `f.collectionId`) and was for a search
+already run three times. A tool-built `webSearchUrl` on `record_search` was considered
+and not chosen, since it adds a response field; it rests on issue #4707 fixing the
+search timeouts themselves, and can be revisited if they persist after that lands.
 
 ## Attached records (issue #3516)
 

@@ -110,6 +110,9 @@ build_external_search_url({
   // MCP tool only (§6): the project to log the hand-off in, and the plan item.
   projectPath?: string,
   planItemId?: string,
+  // false: build and check, but write no in-flight entry (results already in
+  // hand, or no researcher to make the capture). Default true.
+  awaitingCapture?: boolean,
 
   // MCP tool only: the place the search is about, as `external_links_search`
   // takes it. REQUIRED for a site-wide build (no `baseUrl`) when `projectPath`
@@ -171,7 +174,7 @@ build_external_search_url({
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 // MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
-| { ok: true, url, handoffLine, notes, access, logId?: string }   // logId when projectPath was given
+| { ok: true, url, handoffLine, notes, access, logId?: string, captureSteps?: string }   // logId when the hand-off was logged; captureSteps inside a project
 | { ok: false, reason: "log_write_failed", errors: string[] }
 ```
 
@@ -571,8 +574,8 @@ so the MCP tool now refuses the build:
   unreadable `external-collections.json` refuses too, as the `baseUrl` check
   does.
 - **What it leaves alone.** The agent still chooses between a curated link and
-  a site-wide search. A build with a `baseUrl`, and any build outside a project,
-  is not checked. Its limit is in §9.2.
+  a site-wide search. A build with a `baseUrl` is not checked by this gate.
+  Every build now has a project (§9.2).
 
 ## 4. Per-site parameter tables (the ported prose)
 
@@ -710,15 +713,18 @@ nil.
 | MCP tool, `projectPath` is a project, no `baseUrl` (or a blank one), and `standardPlace` missing, blank or not a string | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message says `standardPlace` is required and names `external_links_search` (§3.12) |
 | MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` has no entry for `standardPlace` or a place containing it (or no file at all) | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message names `external_links_search({standardPlace, projectPath})` as the next call. A stored `rows: []` entry counts as looked up (§3.12) |
 | MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` cannot be read | `{ ok: false, reason: "place_not_fetched" }` naming the read error, as the `baseUrl` check does |
-| MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
+| MCP tool, `projectPath` given, folder holds neither project file | refused: `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
+| MCP tool, `projectPath` is a project, the build succeeds | `captureSteps` is the researcher's capture steps (scroll, Cmd+P or Ctrl+P, Save as PDF, upload, log in if asked), naming the project's upload page from `projectLinks` when the web tier serves one and "here" otherwise. A caller pastes it word for word: search-external-sites, composing the steps itself, dropped them or the link line in runs of `ut_search_external_sites_mcc` |
+| MCP tool, `projectPath` is a project, `awaitingCapture: false` | the build and both project checks run as above; on success nothing is logged and no `logId` is returned. The caller logs the search once itself |
 
 ---
 
 ## 6. Non-goals / persistence
 
-- **Writes one log entry, and only when given a `projectPath`.** Decided by
+- **Writes one log entry, and only when given a `projectPath` and not
+  `awaitingCapture: false`.** Decided by
   the lead 2026-09-30, after an alpha-feedback session re-raised one Fold3
   petition seven times over eight turns. The URL build itself
   (`buildExternalSearchUrl`) stays pure and synchronous. The MCP tool
@@ -736,8 +742,10 @@ nil.
 - **`projectPath` and `planItemId` are advertised** in the MCP `inputSchema`, in
   the same change that removed the in-flight `research_log_append` call from the
   search-external-sites agent, so a hand-off is logged once. The description
-  tells the caller not to log it again, and to omit `projectPath` when the
-  results are already in hand.
+  tells the caller not to log it again, and to pass `awaitingCapture: false`
+  when the results are already in hand. Omitting `projectPath` was that signal
+  until `server.ts`'s project gate (every tool but six needs a project) made a
+  build with none a refusal; `awaitingCapture` replaced it.
 - **Does not decide which event a search targets, or resolve `conflicts[]`.**
   Those are the skill's judgments (SKILL.md `:314-333`) — the tool receives
   already-decided attribute values and templates them.
@@ -1076,21 +1084,17 @@ url the log already held, which the guard lets through so its hand-off can still
 be closed and its capture logged. On
 2026-10-28 one run carried the field, with one collection-scoped entry, backed.
 
-### 9.2 The looked-up-place gate sees only builds with a `projectPath`
+### 9.2 The looked-up-place gate now sees every build
 
 §3.12's gate fires only "inside a project", by the ruling's own words: a build
-with a `projectPath` that is a project. `search-external-sites` calls the
-builder **without** `projectPath` on three paths: triage with no matching
-hand-off, a reported result, and the no-user deferral
-(`search-external-sites.md`, its triage and deferral steps). Those builds are
-not checked, and nothing else checks them.
-
-Not widened, on purpose. Refusing a build without `projectPath`, or gating
-`research_log_append`, would change another tool's contract, and nobody has
-ruled on that. The measured skips (`_002`, `_004`, `_uhh`, `_fhk`) were all on
-the hand-off path, which does pass `projectPath`. `where-else-to-search` never
-passes `projectPath` and always passes `baseUrl`, so the gate never fires for
-it either.
+with a `projectPath` that is a project. `search-external-sites` once built
+without `projectPath` on its paths that await no capture (triage with no
+matching hand-off, a reported result, the no-user deferral, results already in
+hand), and those builds went unchecked. `server.ts`'s project gate now refuses a
+build with no project, so those paths pass `projectPath` with
+`awaitingCapture: false`, and the place and `baseUrl` checks run on every build.
+`where-else-to-search` passes `projectPath` and always a `baseUrl`, so only the
+`baseUrl` check applies to it.
 
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 

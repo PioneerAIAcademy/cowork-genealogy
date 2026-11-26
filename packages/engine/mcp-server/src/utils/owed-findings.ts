@@ -11,6 +11,7 @@ import { liveAssertions, questionAssertions } from "./assertion-liveness.js";
 import { claimCoversEdge, claimCoversFact, claimKind, factSubjectIds, setAsideRival } from "./claim-join.js";
 import { normalizeString } from "./string-similarity.js";
 import { countsForProofGate } from "./tree-person.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 import { PROOF_TIER_RANK } from "../validation/validator.js";
 
 export type OwedKind = "extract" | "conclude" | "hypothesis" | "encode" | "raise" | "claims" | "frame";
@@ -69,6 +70,8 @@ function encodedInTree(claim: any, tree: any): boolean {
 /** Every finding the project owes, in kind order. `tree` null skips `encode`. */
 export function owedFindings(research: any, tree: any | null): OwedFinding[] {
   const items: OwedFinding[] = [];
+  // `ref` carries the id; `nextStep` names none, so a reader can repeat it to the
+  // researcher as it stands (lead, 2026-11-19, #4661).
   const add = (kind: OwedKind, ref: string, personIds: string[], nextStep: string) =>
     items.push({ kind, ref, personIds, nextStep, blocksCompletion: BLOCKING.has(kind) });
 
@@ -81,6 +84,7 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
   for (const q of questions) {
     const tied = questionAssertions(research, q.id);
     // extract: a positive log entry on this question's plan item, with nothing extracted.
+    // A page `image_transcribe` logged itself is a read, not a find (as questionStatus).
     if (tied.length === 0) {
       const itemIds = new Set(
         arr(research?.plans)
@@ -88,15 +92,20 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
           .flatMap((p) => arr(p?.items).map((i) => i?.id)),
       );
       for (const e of arr(research?.log)) {
-        if (e?.outcome === "positive" && itemIds.has(e?.plan_item_id) && typeof e.id === "string") {
-          add("extract", e.id, [], `extraction — ${e.id} found a record for ${q.id} and nothing is extracted from it yet`);
+        if (
+          e?.outcome === "positive" &&
+          !isToolLoggedRead(e) &&
+          itemIds.has(e?.plan_item_id) &&
+          typeof e.id === "string"
+        ) {
+          add("extract", e.id, [], "extraction — a positive search found a record for this question and nothing is extracted from it yet");
         }
       }
     }
     // conclude: tied assertions and no proof summary.
     if (tied.length > 0 && !summarised.has(q.id)) {
       const ids = new Set<string>(tied.map((a) => String(a.id)));
-      add("conclude", q.id, linkedPersons(research, ids), `proof-conclusion — ${q.id} has ${tied.length} tied assertion(s) and no proof summary`);
+      add("conclude", q.id, linkedPersons(research, ids), `proof-conclusion — this question has ${tied.length} tied assertion(s) and no proof summary`);
     }
   }
 
@@ -105,7 +114,7 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
     if (h?.status !== "supported" || typeof h.id !== "string") continue;
     const related = arr(h.related_question_ids);
     if (related.some((qid) => summarised.has(qid))) continue;
-    add("hypothesis", h.id, [], `proof-conclusion — hypothesis ${h.id} is supported and no related question has a proof summary`);
+    add("hypothesis", h.id, [], "proof-conclusion — a supported hypothesis has no proof summary on a related question");
   }
 
   const allClaims = summaries.flatMap((s) => arr(s?.claims).filter((c) => c && typeof c === "object"));
@@ -119,16 +128,16 @@ export function owedFindings(research: any, tree: any | null): OwedFinding[] {
       if (!kind || !ENCODABLE.has(kind) || !isAffirmed(c)) return;
       // encode: affirmed at probable or better, and no tree object carries it.
       if (tree && rank(c.proof_tier) >= rank("probable") && !encodedInTree(c, tree)) {
-        add("encode", `${sid}/${label}`, [], `proof-conclusion — encode ${label} from ${sid}`);
+        add("encode", `${sid}/${label}`, [], `proof-conclusion — encode ${label}`);
       }
       // raise (advisory): affirmed at possible, not a rival set aside beside a winner.
       if (c.proof_tier === "possible" && !setAsideRival(c, allClaims, genderOf)) {
-        add("raise", `${sid}/${label}`, [], `proof-conclusion — ${label} in ${sid} stands at possible`);
+        add("raise", `${sid}/${label}`, [], `proof-conclusion — ${label} stands at possible`);
       }
     });
     // claims (advisory): a summary at possible or better, or disproved, stating none.
     if ((rank(s?.tier) >= rank("possible") || s?.tier === "disproved") && claims.length === 0) {
-      add("claims", sid, [], `proof-conclusion — ${sid} states no claims`);
+      add("claims", sid, [], "proof-conclusion — a proof summary states no claims");
     }
   }
 

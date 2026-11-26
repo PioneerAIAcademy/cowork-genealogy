@@ -34,11 +34,14 @@
 // the pair atomic and validates them against each other in one pass — there is
 // no window in which the project is inconsistent, and no order to remember.
 //
-// WHY ONLY FROM A FAMILYSEARCH PERSON (lead, 2026-11-02). A project always
-// starts from a person ID, and the rule is enforced here, not only in
-// init-project's prose: a hand-built `tree` let two sessions create a project
-// with no person in it, once through init-project and once through a
-// general-purpose agent. `personId` is required and `tree` is refused by name.
+// WHY `tree` IS REFUSED, AND WHEN `personId` MAY BE LEFT OUT (lead, 2026-11-19,
+// narrowing the 2026-11-02 rule). Every activity starts a project, including one
+// with no person in it (a page read, a record set's names, a surname survey); with
+// no `personId` this tool seeds the project from the objective alone, with no
+// subject and an empty tree, and reads nothing from FamilySearch. Research on a
+// named person still needs the ID, and a project with no person refuses
+// `research_append`'s `questions` append, which is what holds that line. A
+// hand-built `tree` stays refused by name.
 //
 // WHY IT READS THE PERSON ITSELF (issues #2944, #3384). Re-typing a
 // `person_read` into `tree` cost the model about 51 KB of output on a 15-person
@@ -95,7 +98,7 @@ import {
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
-const EMPTY_SECTIONS = [
+export const EMPTY_SECTIONS = [
   "questions",
   "plans",
   "log",
@@ -152,10 +155,10 @@ export interface ProjectCreateInput {
   objective: string;
   title?: string;
   subjectPersonIds?: string[];
-  /** The subject's FamilySearch person ID. Required: a project always starts
-   *  from one (lead, 2026-11-02). This tool reads the person and builds the
-   *  starting tree from the read. */
-  personId: string;
+  /** The subject's FamilySearch person ID. Absent for an activity with no person
+   *  in it (lead, 2026-11-19): the project is then seeded by `objective` alone,
+   *  with no subject and an empty tree. Research on a named person passes one. */
+  personId?: string;
   /** Removed (issue #3384): refused by name, so a caller built against the old
    *  contract is told to pass `personId`. */
   personReadRef?: unknown;
@@ -224,9 +227,22 @@ export interface FillRelativeSourcesSummary {
   validation: { valid: true; warnings: string[] };
 }
 
+/** The answer for a project created with no `personId`. */
+export interface ProjectCreateNoPersonSummary {
+  ok: true;
+  projectId: string;
+  filesWritten: string[];
+  objective: string;
+  title?: string;
+  subject: null;
+  note: string;
+  validation: { valid: true; warnings: string[] };
+}
+
 export type ProjectCreateResult =
   | ProjectCreateSummary
   | FillRelativeSourcesSummary
+  | ProjectCreateNoPersonSummary
   | { ok: false; errors: string[] };
 
 class ProjectCreateError extends Error {}
@@ -294,15 +310,22 @@ export async function runProjectCreate(
           "what they want to find out before creating anything.",
       );
     }
-    if (typeof input.personId !== "string" || input.personId.trim() === "") {
+    const noPerson = input.personId === undefined || input.personId === null;
+    if (noPerson && input.subjectPersonIds !== undefined) {
       throw new ProjectCreateError(
-        input.personId == null || typeof input.personId === "string"
+        "subjectPersonIds needs a personId: a project with no person has no subject. " +
+          "Pass the subject's FamilySearch person ID as personId, or drop subjectPersonIds.",
+      );
+    }
+    if (!noPerson && (typeof input.personId !== "string" || input.personId.trim() === "")) {
+      throw new ProjectCreateError(
+        typeof input.personId === "string"
           ? PERSON_ID_REQUIRED
           : `personId must be a FamilySearch person ID such as "KWCJ-RN4"; got ${JSON.stringify(input.personId)}. ` +
               PERSON_ID_REQUIRED.slice(PERSON_ID_REQUIRED.indexOf("Ask the researcher")),
       );
     }
-    const pid = input.personId.trim();
+    const pid = noPerson ? "" : (input.personId as string).trim();
 
     // The opening tree, copied write-once alongside the two live documents. The
     // tree-encoding completion gate (issue #1490) diffs the final tree against
@@ -361,6 +384,44 @@ export async function runProjectCreate(
           `one. Create this project outside it, or add to the existing project at ` +
           `${ancestor} with research_append.`,
       );
+    }
+
+    if (noPerson) {
+      const stamp = today();
+      const title = input.title ? input.title.trim() : "";
+      const tree = { persons: [], relationships: [], sources: [] };
+      const research: Record<string, unknown> = {
+        project: {
+          id: "rp_001",
+          objective,
+          ...(title ? { title } : {}),
+          subject_person_ids: [],
+          status: "active",
+          created: stamp,
+          updated: stamp,
+        },
+      };
+      for (const section of EMPTY_SECTIONS) research[section] = [];
+      research.researcher_profile = { ...HOUSE_RESEARCHER_PROFILE };
+      const validation = await validateParsed(research, tree, { projectPath });
+      if (!validation.valid) return { ok: false, errors: formatIssues(validation.errors) };
+      await atomicWriteBoth(projectPath, [
+        { ref: "tree.gedcomx.json", data: tree },
+        { ref: "research.json", data: research },
+        { ref: "starting-tree.gedcomx.json", data: tree },
+      ]);
+      return {
+        ok: true,
+        projectId: "rp_001",
+        filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
+        objective,
+        ...(title ? { title } : {}),
+        subject: null,
+        note:
+          "This project has no person: it holds an objective and an empty tree. Research on a " +
+          "person does not run here; it starts a new project from a FamilySearch person ID.",
+        validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      };
     }
 
     const now = new Date();
@@ -889,16 +950,19 @@ export const projectCreateSchema = {
     "project into being — the other writer tools all require the files to already exist, " +
     "and writing them directly is blocked.\n" +
     "\n" +
-    "A project always starts from a FamilySearch person: pass `personId` and nothing else " +
-    "about the tree. This tool " +
+    "Every activity starts a project. For research on a named person, pass `personId` and " +
+    "nothing else about the tree. For an activity with no person in it (reading a page, a " +
+    "record set's names, a surname survey), omit `personId` and pass the researcher's request " +
+    "as `objective`: the project holds an objective and an empty tree. This tool " +
     "reads the person, their relatives and sources, and their transcribed memories itself; " +
     "do not call person_read first. It writes the starting tree, the house researcher " +
     "profile, and one research.json source per transcribed memory, and returns a summary: " +
     "the subject, the objective and title as stored, each relative with their tree id and " +
     "relationship, and which memories were and were not transcribed. Add a person the " +
     "researcher named who is not among the relatives afterwards. `subjectPersonIds` takes " +
-    "FamilySearch IDs, and defaults to the person read. With no person ID, create no " +
-    "project: ask the researcher for one. A surname survey needs no project.\n" +
+    "FamilySearch IDs, and defaults to the person read. Research on a named person with no " +
+    "ID creates nothing: ask the researcher for the ID first. A project with no person " +
+    "refuses research questions.\n" +
     "\n" +
     "When the summary carries `relativeSourcesSkipped`, call this tool once more with only " +
     "`projectPath` and `fillRelativeSources` set to that list: it reads those relatives' " +
@@ -942,9 +1006,9 @@ export const projectCreateSchema = {
       personId: {
         type: "string",
         description:
-          "Required to create. The subject's FamilySearch person ID (e.g. \"KWCJ-RN4\"). This " +
-          "tool reads the person and builds the starting tree from the read. Requires a " +
-          "FamilySearch login.",
+          "The subject's FamilySearch person ID (e.g. \"KWCJ-RN4\"). This tool reads the " +
+          "person and builds the starting tree from the read; it requires a FamilySearch " +
+          "login. Omit it only for an activity with no person in it, or with fillRelativeSources.",
       },
       fillRelativeSources: {
         type: "array",

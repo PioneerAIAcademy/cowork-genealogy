@@ -73,6 +73,7 @@ def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
     assert auth.env_for_sdk(cfg) == {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         "ANTHROPIC_API_KEY": "",
     }
 
@@ -82,6 +83,7 @@ def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     assert auth.env_for_sdk(cfg) == {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         "ANTHROPIC_API_KEY": "sk-x",
     }
 
@@ -96,6 +98,7 @@ def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
     assert auth.env_for_sdk(cfg) == {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         "ANTHROPIC_API_KEY": "",
     }
 

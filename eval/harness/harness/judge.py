@@ -657,6 +657,9 @@ _WRITER_NO_REFUSAL_PATH = {
     # `recordSubdivision`/`residencePlace` and the per-year
     # `residenceYearFrom`/`residenceYearTo`.
     "record_search": "no ok:false path; search rubrics grade its executed args",
+    # `image_transcribe` writes only its own page-read log entry (#4721); a refused
+    # append surfaces as `logRefused` on an otherwise ok answer.
+    "image_transcribe": "no ok:false path; a refused log write is `logRefused` on the read",
 }
 
 # Says only what is always true. "it wrote nothing" would be FALSE for

@@ -242,8 +242,8 @@ names the phrases.
 
 **The library.** `packages/engine/plugin/hooks/step_boundary.py` is stdlib-only and does
 no I/O. It lives in `plugin/hooks/` and is a library, not a registered hook (lead,
-2026-11-24). The prototype worker and the web app (`load_step_boundary` in
-`apps/server/app/agent/step_boundary_loader.py`) and both harnesses load it with
+2026-11-24). Both hosted planes (`load_step_boundary` in `apps/server/app/agent/plugin_lib.py`,
+re-exported by `apps/server/proto/worker/options.py`) and both harnesses load it with
 `importlib.util.spec_from_file_location`, the way
 `eval/harness/harness/context_policy.py` loads `guard_project_files.py`, and the
 registered hook beside it, `step_gate_hook.py`, imports it for the connector and Cowork.
@@ -594,7 +594,7 @@ choice. The alpha sends no `options`.
   extraction for a found record not yet extracted, otherwise the next item's search. A
   conflict not yet analysed still goes to conflict-resolution first.
 - **Ladder: after the round settles the conflict,** the concluded-but-open arm routes to
-  proof-conclusion ("concluded while blocked: re-conclude <ps_id>").
+  proof-conclusion ("concluded while blocked: re-conclude this question's proof summary").
 - **Ending on an unsettled conflict.**
   - **`weighed_log_entry_ids`** (optional, on a conflict): conflict-resolution sends it
     on an analysis that finds nothing left to search. `research_append` fills the value
@@ -713,7 +713,9 @@ over and returns. The wait is a step boundary.
   later entry for the same URL closes. One helper,
   `packages/engine/mcp-server/src/utils/awaiting-hand-offs.ts` (`awaitingUserHandOffs`,
   `awaitingUploadItemIds`, `closesHandOff`), serves `project_context`, `question-state.ts`
-  and `research-append.ts`. `step_ctx`'s `awaiting_upload_item_ids` mirrors it, and
+  and `research-append.ts`. `step_boundary.py`'s `awaiting_hand_offs` mirrors it row for
+  row (the hosted planes post each new row's link, project-context spec §2.3);
+  `step_ctx`'s `awaiting_upload_item_ids` is read off it; and
   `eval/harness/tests/unit/test_awaiting_hand_offs_parity.py` holds the two to one
   fixture. Such an item is not open for the ladder, E's writer rule, or `open_items`.
 - **Other `in_progress` external items stay open:** a capture that arrived unusable, a nil

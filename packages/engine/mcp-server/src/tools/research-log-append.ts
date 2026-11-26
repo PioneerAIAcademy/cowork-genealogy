@@ -19,20 +19,11 @@
 
 import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import {
-  atomicWriteJson,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-  isInsideProject,
-  assertInsideProject,
-  projectRelativeRef,
-} from "../utils/project-io.js";
+import { atomicWriteJson, readProjectJson, formatIssues, withProjectLock, isInsideProject, assertInsideProject, projectRelativeRef } from "../utils/project-io.js";
 import {
   checkStagedResults,
   consumeStagedResults,
@@ -92,7 +83,7 @@ function logWithoutPersistenceWarning(research: any): string | null {
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
   const positives = log.filter(
-    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool) && !isToolLoggedRead(e),
   ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
@@ -210,7 +201,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     .filter((id): id is string => typeof id === "string");
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils < NIL_ESCALATION_THRESHOLD) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
@@ -274,7 +265,7 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
   );
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
@@ -364,10 +355,7 @@ export type ResearchLogAppendResult =
       planRationale?: string;
       next?: string;
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
@@ -2520,9 +2508,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult().
-    if (e instanceof NoProjectError) throw e;
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -2826,10 +2811,8 @@ async function applyLogAppendOp(
     warnings.push(
       `${logId}: ${op.tool} reported ${resultsAvailableCoerced} available result(s) but ` +
         `retained none — no results/${logId}.json sidecar was written, and the raw ` +
-        `response is unrecoverable. Pass \`projectPath\` to ${op.tool} so it stages ` +
-        `its response, then hand the returned \`staged.resultsRef\` back here as ` +
-        `\`stagedResultsRef\`. Omit \`projectPath\` only for an exploratory search ` +
-        `you do not intend to log.`,
+        `response is unrecoverable. Hand the \`staged.resultsRef\` that ${op.tool} ` +
+        `returned back here as \`stagedResultsRef\`.`,
     );
   }
 
@@ -2942,6 +2925,24 @@ export async function researchLogAppend(
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      // Issue #4721. `image_transcribe` logs its own read, so a later hand-log
+      // of that page is the same read, whatever outcome or plan item it names.
+      // Refusing it would send the caller to read the page again — the double
+      // read the tool's write exists to end. Its staged file is consumed, so a
+      // note it adds cannot become an entry of its own; the warning carries it
+      // back rather than dropping it behind `ok: true`.
+      const toolWrote =
+        isToolLoggedRead(prior) &&
+        op.writtenBy === undefined &&
+        (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
+      if (toolWrote) {
+        const note = typeof op.notes === "string" ? op.notes.trim() : "";
+        const extra: string[] = [];
+        if (differs.length > 0) extra.push(`it was logged by image_transcribe itself, so this re-send's ${differs.join(", ")} was not applied`);
+        if (note !== "" && !String(prior.notes ?? "").includes(note)) extra.push(`this note was not stored: "${note}"`);
+        if (extra.length > 0) opWarnings.push(`${ref} is ${found.logId}: ${extra.join("; ")}.`);
+        return found;
+      }
       if (differs.length > 0) {
         // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
         // so a correction to a logged page needs a page of its own, not no ref.
@@ -3217,12 +3218,6 @@ export async function researchLogAppend(
     // is written. The agent's pre-search note comes first, the escalation after.
     // Only for a tool's own write; a hand-logged entry keeps the agent's note.
     if (typeof singleOp.writtenBy === "string" && singleOp.writtenBy !== "") {
-      // Advisory, exactly as `escalation()` above is, and wrapped for the same
-      // reason it is: the note is a nicety and the write is not, so a failure
-      // computing it must drop the note rather than fail a search that already
-      // succeeded. Without this the throw escapes the outer catch (which
-      // converts only NoProjectError and LogAppendError) and record_search
-      // reports a completed search as a failed tool call.
       try {
         const note = nilEscalationNote(research, research.log.slice(priorLogLength));
         if (note) {
@@ -3258,7 +3253,6 @@ export async function researchLogAppend(
       },
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }

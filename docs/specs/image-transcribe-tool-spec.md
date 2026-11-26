@@ -370,6 +370,7 @@ consistent across schema, manifest, and skill.)*
   file?: string       // project-relative path to an UPLOADED image/PDF inside the project (needs projectPath)
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
   projectPath?: string // absolute project-folder path; required with `file`; stages the read (§5.5) and saves an FS JPEG (§8.5)
+  planItemId?: string | null // the `pli_` plan item this read serves; the tool's own log entry is filed under it (§5.5.1)
 }
 ```
 
@@ -446,8 +447,7 @@ consistent across schema, manifest, and skill.)*
   an uploaded PDF did (the model opened it itself). Contract:
   - **Requires `projectPath`**; the ref is relative to it. The directory is classified first
     (`classifyProjectPath`): a missing `projectPath` and a missing directory are the shared
-    loud errors, a folder holding neither project file is the no-project *answer*
-    (`{ ok: false, reason: "no_project" }`, the no-project rule) — before any key or path error.
+    loud errors, a folder holding neither project file throws `NO_PROJECT_REFUSAL` — before any key or path error.
   - **Shape, before any I/O:** no leading slash or drive letter, no backslash, no NUL, no
     empty / `.` / `..` segment. Any ref *inside* the project is allowed; the containment guard
     is the store's (`FsProjectStore.readableReal`: realpath'd, symlink-aware, regular files
@@ -695,6 +695,8 @@ Text only, no image block:
   readingNote?: string       // in a project, always: READING_NOTE (see "Index readings")
   indexReadings?: { sourceId: string; recordId: string; role: string; name: string }[]
                              // in a project, for an `ark` read whose page a held source's image_ark names
+  logId?: string             // the log entry this tool wrote for the read (§5.5.1)
+  logRefused?: string[]      // why that write was refused; the read still answers
 }
 ```
 
@@ -796,6 +798,51 @@ unchanged. Four of those five runs skipped the index lookup the lines asked for
 (scratch 2026-11-18). In the tool result, the index is in front of the model when it
 writes the reply, with no lookup to forget.
 
+### 5.5.1 Logging — the tool logs its own read
+
+Every read made through `imageTranscribeMcpTool` (`src/tools/image-transcribe-mcp.ts`) that stages a page in a project writes
+one `research.json` `log[]` entry itself, through `research_log_append`'s own write path
+(`researchLogAppend`, the same refusals and lock), with `written_by: "image_transcribe"`,
+`tool: "image_transcribe"`, `stagedResultsRef` = the read's `staged.resultsRef`,
+`plan_item_id` = `planItemId` (null when absent), `results_examined: 1`, and `query`
+defaulted from the staged payload's echo (the image named, plus `lookingFor`). The staged
+file becomes `results/<logId>.json`; `sidecar_read`, `extraction_append` and
+`waitingPages` all follow a logged staged ref to it, so the `staged.resultsRef` the
+caller holds keeps working.
+
+`outcome` (`readOutcome`): `negative` on `found: "NOT FOUND"`, `positive` on `FOUND` or
+when no `lookingFor` was sent, and `partial` on a truncated read or when a `lookingFor`
+was sent and no `found` came back (a found check that failed is not a hit).
+
+- **The MCP boundary only.** `person_read` and `source_screen` call
+  `imageTranscribeTool` for reads of their own, which are not research-log events.
+- **No ref, no entry.** A read whose staging failed (`staged: null`), a thrown read, and a
+  read with no project log nothing; an `image_transcribe` entry without its ref is refused.
+- **A refused write never fails the read:** the answer carries `logRefused`, as
+  `record_search` carries `nilLogRefused`. A write refused with a `planItemId` (malformed,
+  or on a superseded plan) is retried once under no plan item, since a refused write keeps
+  its staged file: the page is still logged, and `logRefused` names why the plan item was
+  dropped.
+- **A later hand-log of the same page** returns this entry (`alreadyLogged`) whatever
+  `outcome` or `planItemId` it names, with a warning naming each difference and any note
+  it could not store (`research-log-editor-spec.md`).
+- **A read, never a find or a plan item's search.** A navigation read with no
+  `lookingFor` logs `positive`, so every reader that judges a plan item or a question by
+  its log outcomes skips a `written_by: "image_transcribe"` entry (`isToolLoggedRead`,
+  `src/utils/tool-logged-read.ts`): `questionStatus`'s pending-extraction count,
+  `owedFindings`' `extract` finding, a fallback item's wait on its primary, both halves of
+  the completed-plan-item check (`research_append`), `research_log_append`'s
+  positive-searches-with-nothing-persisted warning, and its nil-escalation and
+  `planRationale` notes. `extraction_append` cites the entry when the page is extracted.
+
+Why the tool writes it (lead, 2026-11-23): a page the main thread transcribed and never
+logged left the project with no record it was read, so agents reported it missing or read
+it again. The tool's write beat filling a tool-written null
+`plan_item_id` from a later agent call, which would amend the append-only rule
+(`research-schema-spec.md`, "Why `log` is append-only"), and beat a prose line in
+`research/SKILL.md`, because ADR-0011 puts a rule decidable from the call alone at the
+write boundary.
+
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
 | Condition | Message shape |
@@ -804,7 +851,7 @@ writes the reply, with no lookup to forget.
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
-| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
+| `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file throws `NO_PROJECT_REFUSAL` (the gate in `server.ts` refuses first) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
@@ -896,6 +943,13 @@ block, with its own default ~20s worst case (two sequential FamilySearch
 group-service calls) not drawn from this budget — so the true worst case on
 that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
 lookup," not a hard 180s ceiling on every path.
+
+**An in-process caller can set a tighter whole-call budget.** The internal
+`budgetMs` option (never on the MCP schema) is a budget from entry like the
+connector's, for any principal: one download attempt clamped to what is left,
+then the OCR on the rest; under a connector principal the tighter of the two
+budgets wins. `source_screen` passes it so each page read stops at that tool's
+own deadline (`source-screen-tool-spec.md`, "Time budget").
 
 ### 5.8 Image cap (hard, shared, persisted)
 
@@ -1365,7 +1419,8 @@ built now.)
 
 A read of a page an indexed record sits on is not kept until
 `extraction_append({ attachWaitingPages: true })` copies it onto that record's source
-(`research-append-tool-spec.md` §11.9). This tool writes nothing to `research.json`.
+(`research-append-tool-spec.md` §11.9). Apart from its own log entry for the read (§5.5.1), this tool
+writes nothing to `research.json`.
 
 ## 8.5 Image persistence + viewing (retained sources only)
 

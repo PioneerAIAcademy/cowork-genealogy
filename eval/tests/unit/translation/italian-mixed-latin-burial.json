@@ -5,10 +5,19 @@
     "name": "Translate an early Italian burial register mixing Italian and Latin",
     "type": "positive",
     "description": "Early-modern Italian parish burial entry that switches between Italian (the body of the entry) and Latin (the closing formula). Covers a language not yet in the corpus (Italian), a record type not yet covered (burial/death), and the 'Mixed Latin/vernacular record' decision rule — the skill must translate both layers and note where the scribe switches language.",
-    "tags": ["italian", "latin", "mixed-language", "burial", "death", "parish-register", "direct-arm"]
+    "tags": [
+      "italian",
+      "latin",
+      "mixed-language",
+      "burial",
+      "death",
+      "parish-register",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you translate this old Italian burial record for me? 'Adì 14 Marzo 1748. Giovanni Battista Rossi, figlio del fu Antonio, d'età d'anni sessanta in circa, munito de' Santissimi Sacramenti, rese l'anima a Dio, ed il suo corpo fu sepolto nella chiesa parrocchiale di San Lorenzo. Anima eius requiescat in pace.'"
+    "delegation": "Can you translate this old Italian burial record for me? 'Adì 14 Marzo 1748. Giovanni Battista Rossi, figlio del fu Antonio, d'età d'anni sessanta in circa, munito de' Santissimi Sacramenti, rese l'anima a Dio, ed il suo corpo fu sepolto nella chiesa parrocchiale di San Lorenzo. Anima eius requiescat in pace.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

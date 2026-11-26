@@ -42,6 +42,7 @@ import type { Principal } from "../auth/principal.js";
 import { owedFindings, type OwedFinding } from "../utils/owed-findings.js";
 import { conclusionStatus, type StatusRow } from "../utils/conclusion-status.js";
 import { readStartingTree } from "../utils/starting-tree.js";
+import { familyReadPersonIds } from "../utils/import-baseline.js";
 import { attachedSources, searchDelegations, subjectBlock, type SearchDelegation } from "../utils/search-delegations.js";
 import { stepSpawn, type StepSpawn } from "../utils/step-spawn.js";
 import { historicalContextSpawn, type HistoricalContextSpawn } from "../utils/historical-context-spawn.js";
@@ -61,7 +62,10 @@ export interface ProjectContextInput {
 }
 
 /** `row` without the keys whose value is null, "" or []: in this answer an
- *  absent key means null or empty. `keep` names a key that stays even then. */
+ *  absent key means null or empty. `keep` names a key that stays even then.
+ *  A person's spouseIds/parentIds/childIds are the exception in meaning: for a
+ *  person not in `familyReadPersonIds` the tree holds only the relatives copied
+ *  into it, so absent there is "not copied", not "none". */
 function omitEmpty<T extends object>(row: T, keep: readonly string[] = []): T {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
@@ -356,6 +360,10 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only). The
        *  router has no other way to see who the research is about. */
       subjectPersonIds?: string[];
+      /** Tree persons whose own spouses, parents and children were read from
+       *  Family Tree (`familyReadPersonIds`); for anyone else a missing relative
+       *  means not copied, not none. */
+      familyReadPersonIds?: string[];
       /** The first subject as a search agent's `subject:` block: names (a doubted
        *  given name as its searchAs), birth, death and up to two parents. */
       subject?: Record<string, unknown>;
@@ -416,7 +424,7 @@ export type ProjectContextResult =
       signInUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // a failure (project_context runs with no project). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 
@@ -721,6 +729,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    familyReadPersonIds: familyReadPersonIds(tree),
     ...(subject ? { subject } : {}),
     attachedSources: typeof subjectId === "string" ? attachedSources(tree, subjectId) : [],
     narrationGuidance:
@@ -820,7 +829,14 @@ export const projectContextSchema = {
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. A key whose value would be null, \"\" " +
     "or [] is left out, so an absent key means none; only nextStep and sectionCounts " +
-    "values are ever null. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
+    "values are ever null. The one exception is a person's spouseIds, parentIds and childIds. " +
+    "familyReadPersonIds names the persons whose own spouses, parents and children were read " +
+    "from Family Tree; it is absent when no one's were. For a person not in familyReadPersonIds, " +
+    "an absent or short spouseIds/parentIds/childIds means not copied from Family Tree, not " +
+    "none: their parents, other spouses (a stepparent) and children may be in Family Tree. Say " +
+    "\"not in the project tree\"; say what Family Tree records only after person_read of their " +
+    "pid, and only when your answer depends on it, not to summarize the project. A person " +
+    "with no pid cannot be checked. An optional include list (closed: \"persons\", \"sources\", \"status\", \"historicalContext\") names " +
     "the larger lists you read; persons and sources are returned whether or not you pass it, status and " +
     "historicalContext only when named. " +
     "Returns projectStatus; " +
@@ -867,7 +883,7 @@ export const projectContextSchema = {
     "capture, or says they cannot access the site, log that as the row's closing " +
     "entry with the same urlGenerated. waitingPages [{sourceId, ref, index}], absent when " +
     "none, lists read pages of held records, each with its record's index " +
-    "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
+    "[{assertionId, role, factType, value, date?, place?}]; hand them to record-structurer in one spawn, " +
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +

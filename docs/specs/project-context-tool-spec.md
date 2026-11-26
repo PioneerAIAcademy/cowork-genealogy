@@ -63,8 +63,9 @@ repo's identifier-casing rule).
 **Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
 is left out, at every level of the answer. Two nulls are answers and stay:
 `questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
-(`research_query` would refuse the section). Every `?` below is a key this rule
-can drop:
+(`research_query` would refuse the section). One exception in meaning: a
+person's `spouseIds`, `parentIds` and `childIds` (see `persons`). Every `?` below
+is a key this rule can drop:
 
 ```typescript
 {
@@ -73,6 +74,7 @@ can drop:
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
   subjectPersonIds?: string[],           // research.project.subject_person_ids
+  familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
   subscriptions?: string[],              // researcher_profile.subscriptions
   openQuestions?: [{
@@ -179,6 +181,7 @@ can drop:
     ref: string,                         // the staged or logged page
     index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
+      date?: string, place?: string,     // present when the assertion has one (a date equal to value is not repeated): a page that agrees on them sends nothing
     }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
@@ -225,7 +228,13 @@ Projection rules:
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  skipped; ids are distinct, in edge order. For a person not in
+  `familyReadPersonIds`, an absent or short one of these three keys means
+  **not copied** from Family Tree, never none: their parents, other spouses (a
+  stepparent) and children may be there. The description tells the model to say
+  "not in the project tree", to say what Family Tree records only after
+  `person_read` of the person's `pid` and only when the answer depends on it,
+  and that a person with no `pid` cannot be checked. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
   (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.
@@ -297,6 +306,25 @@ Projection rules:
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
+- **`familyReadPersonIds`** — the tree persons whose own spouses, parents and
+  children were read from Family Tree, in tree order; absent when none were
+  (`familyReadPersonIds` in `src/utils/import-baseline.ts`, shared with
+  `tree_query`). The project tree is a copy of part of Family Tree: the person
+  `project_create` read and that person's own family. A relative in the copy
+  (a spouse, a parent) had their own family left out, so a missing relative of
+  theirs is not copied, not none. The person read is the one whose `ark` carries
+  the PID in the first Family Tree source titled `FamilySearch Family Tree (read
+  from <Name>, <PID>)`, which `buildFromStagedRead` writes as `S1`. Only the
+  first counts, so a later source given the same title (any writer can set a
+  title) cannot add a person whose family was never read. It is anchored on that
+  read and never on `subjectPersonIds`: `project_create` takes the subjects
+  separately, so a caller can make the wife the subject while her family was
+  never read, and a two-subject project has two subjects but one read. A tree
+  with no such source (a project made before the title named the read, or most
+  eval fixtures) gives no key: no person's family is known to have been read in
+  full. A person added later by `tree_edit` or a merge is never in it unless
+  its `ark` carries that PID. One top-level key, rather than a flag on every
+  `persons` row, because `persons` is the largest part of the answer.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
@@ -336,6 +364,7 @@ outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank unlinked kin, which outranks
+a partly-linked question that never reaches the subject, which outranks
 **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
@@ -446,6 +475,31 @@ LZJF-J13: 15 assertions, 0 links, and the router went on to exhaustiveness and a
 across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run and 21
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
+
+**Some links, none reaching the subject, also routes to person-evidence.** When a
+question that is not resolved and has no proof summary has some assertions with a
+link (`countsForLinkedRung`) and some without, no such link names a
+`subject_person_ids` entry, and at least one subject is a tree person, its
+`nextStep` reads `person-evidence — N of this question's M assertions are unlinked
+and none of its links reaches the project subject (<ids>)`. This is the household
+record linked around the subject: in `flynn-household-skeleton` the 1850 census
+head is linked and the six children are not, and Patrick is not in that household.
+"Any unlinked assertion" would send the 53 partly-linked concluded households to
+person-evidence; requiring the subject to be unreached is what separates this case.
+It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
+and it stops once every assertion is linked or rejected against a subject
+(`rejected_links`), so it cannot loop. It is silent until a
+subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
+dev/measure-question-state-signals.ts --list`, 568 question entries across 222
+scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e
+question-runs, and is in `nextStep` on 2 of each; the rest are masked by the kin
+rung, `flynn-marriage-only-no-child-link` among them. Spot-checked: pe7 and
+`norwegian-patronymic-nil-recovery` (the subject's own birth unlinked, both parents
+linked) are intended; `maria-vazsan-spouse/run-2026-10-30_13-39-29` is real (the
+links go to four "Maria Vázsan" stubs, none to the subject); `jimmie-jewel-neal/run-2026-07-30_23-05-46`
+q_002 is not (the question is about Martha Wood, who is linked). The false route is
+accepted for the same reason as the kin rung's (lead, 2026-11-19): it is rare and
+costs one hop.
 
 **Before any evidence exists, the next search is named by its repository.** A
 `planned` or `searching` question whose log holds a positive or partial entry no
@@ -568,8 +622,9 @@ Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `proof-conclusion` resolves the question it concludes, in the same batch as the
 summary (its step 7), and leaves the question open only when its preconditions gate
 blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
-resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
-naming its latest summary. That arm sits below the conflict arms, so while the
+resolved reports `proof-conclusion — concluded while blocked: re-conclude this
+question's proof summary`. It names no summary id, as `owedFindings` names none (§2.9).
+That arm sits below the conflict arms, so while the
 blocking conflict is still open the question routes to `conflict-resolution` instead,
 and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
@@ -727,6 +782,45 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+**Delivery: the host posts the link** (lead, 2026-11-23). A row here
+says the researcher already has the link, and the router never raises it again. That
+held only when the main thread relayed the agent's report, and in the Hagell alpha
+session it rewrote every report and no logged link reached the chat. So on both hosted
+web planes (`real_agent.py`, the alpha, and the prototype worker) the host posts the link
+itself: when a main-thread call that can open a hand-off returns — an `Agent`/`Task`
+delegation, or `research_log_append`, which the main thread may call itself
+(`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
+open when the turn's first such call began is written to the chat as its own paragraph
+of the turn's reply: the site's host name, one sentence, and the URL as a markdown
+autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
+to a bare host name that starts `www.` or ends in a common top-level domain; only an
+http(s) URL is a link, and anything else is shown as code, on one line).
+"Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
+before the tool does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. If that read fails, the turn
+counts nothing as open, so a link may be posted twice but is never skipped. A link logged by a call that never
+returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
+a worker attempt that lost its grant lock posts its links before it raises. Each row is
+posted once per turn; a link sent again opens a new row and is posted again. The rule
+is `step_boundary.awaiting_hand_offs`, the Python mirror of `awaitingUserHandOffs`, held
+to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
+`continue_policy.hand_off_texts`, shared by both planes. A turn with no such call reads
+nothing for this.
+
+- **Not covered here:** the connector's chat, where `show_project` lists
+  `awaitingUser`, and Cowork and Desktop, which still rely on the relay.
+- **A turn that never reached its end** posts nothing for a call that had not
+  returned, and those rows read as handed over: a process that died, and a worker
+  attempt ended by the store going down, a newer claim superseding it, or a failed
+  transcript write. Catching those would need a stored "shown" flag, which the ruling
+  rejected: a schema change, set by the same relay that fails.
+- **A link logged after its turn ended** is read as open-before by the next turn and
+  never posted. Both planes force every delegation to the foreground
+  (`continue_policy.foreground_rewrite`), so a search agent does not outlive its turn;
+  what is left is an agent the CLI backgrounded in spite of that.
+- The main thread may repeat a link the host already posted. A duplicate is accepted
+  over a drop.
 
 ### 2.4 `externalCollections` — counts of the stored curated collections
 
@@ -898,7 +992,14 @@ advisory `raise`, `claims` and `frame`. `blocksCompletion` is true for `conclude
 and `hypothesis`; completing a project with one, or with an `encode` item, warns
 (research-append-tool-spec §5.2) and never refuses until Stage 1c. `nextStep`
 keeps the `unit — detail` shape of `questionStatuses`; an `encode` item routes to
-proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
+proof-conclusion. An owed item's `nextStep` names no id: `ref` carries it, and the detail says what
+is owed in words (`proof-conclusion — this question has 2 tied assertion(s) and no
+proof summary`, `proof-conclusion — encode father`). An `encode` or `raise` detail
+still prints the claim's own `claim` text, or `claims[<i>]` when it has none.
+**Decided (lead, 2026-11-19):** the status answer repeats `nextStep` to the
+researcher and must name no id, so an owed item's id lives only in `ref`; no
+separate plain-words field is added. The ruling covers `owedFindings` and the
+concluded-while-blocked arm only; the other `questionStatuses` arms still name ids. It sits before `questionStatuses` in the answer, so a reader
 scoping to that array by its key does not take an owed item's step for a
 question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
 
@@ -910,9 +1011,12 @@ Only under `include: ["historicalContext"]`, and only when the tree holds
 objective on a line naming it as the researcher's and not a tree fact, then one line
 per person, the subject first and then its parents, spouses and children from the
 tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
-place as `Type date, place`, or "no dated or placed facts". The router spawns the
-agent with that prompt as given, then a `message:` line holding the researcher's
-message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+place as `Type date, place`, or "no dated or placed facts". The prompt's last line
+is a bare `message:`. The router spawns the agent with that prompt as given, the
+researcher's message copied verbatim after that `message:`, and nothing else
+(research/SKILL.md, "Bounded request or job"). The trailing line is there because a
+prompt that ended on the facts left the router to add the `message:` line itself, and
+it sent the prompt alone in 1 of 4 runs of `ut_research_ia2`.
 
 Why a tool writes it: told to call `tree_query` and hand over only the places and
 years it returned, a Haiku 5.5 low router added its own era ranges and a candidate

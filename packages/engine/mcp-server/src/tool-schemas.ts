@@ -22,7 +22,7 @@ import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
 import { localitySurveySchema } from "./tools/locality-survey.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
-import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
+import { imageTranscribeToolSchema } from "./tools/image-transcribe-mcp.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
@@ -44,6 +44,7 @@ import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { imageIndexSchema } from "./tools/image-index.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { sourceScreenToolSchema } from "./tools/source-screen.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
@@ -68,6 +69,7 @@ import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.
 import { treeQuerySchema } from "./tools/tree-query.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
 import { getNameVariantsSchema } from "./tools/name-variants.js";
+import { PROJECT_EXEMPT_TOOLS } from "./utils/project-gate.js";
 
 // Tools exempt from ToolSearch deferral: their schemas load up front instead of
 // costing a ToolSearch turn each time. Sized against the September 2026 e2e corpus.
@@ -120,6 +122,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "research_query",
   "sidecar_read",
   "source_attachments",
+  "source_screen",
   "tree_gaps",
   "tree_query",
   "validate_research_schema",
@@ -167,6 +170,7 @@ export const allToolSchemas = [
   imageSearchSchema,
   imageIndexSchema,
   personWarningsToolSchema,
+  sourceScreenToolSchema,
   personQualityToolSchema,
   mergeWarningsSchema,
   volumeSearchSchema,
@@ -229,9 +233,9 @@ export const AGENT_ONLY: ReadonlySet<string> = new Set([
   "place_population",
   "place_search",
   "place_search_all",
-  "project_create",
   "record_search",
   "same_person",
+  "source_screen",
   "tree_correct",
   "tree_edit",
   "tree_gaps",
@@ -257,3 +261,20 @@ for (const name of AGENT_ONLY) {
 
 mark(ALWAYS_LOAD, "ALWAYS_LOAD", { _meta: { "anthropic/alwaysLoad": true } });
 mark(READ_ONLY, "READ_ONLY", { annotations: { readOnlyHint: true } });
+
+// Every tool outside PROJECT_EXEMPT_TOOLS requires `projectPath` (utils/project-gate.ts;
+// server.ts refuses a call without one). Set in place here so no tool file has to
+// remember it and a new tool cannot be advertised without it; a tool that already
+// describes the parameter keeps its own description. Declared last so the marks above
+// are untouched.
+// Short on purpose: the description is billed on every tool in every session, and the
+// refusal itself says how to start a project.
+const PROJECT_PATH_DESCRIPTION = "Absolute path of the project directory. Required.";
+for (const schema of allToolSchemas as Array<{ name: string; inputSchema: any }>) {
+  if (PROJECT_EXEMPT_TOOLS.has(schema.name)) continue;
+  const input = schema.inputSchema;
+  input.properties ??= {};
+  input.properties.projectPath ??= { type: "string", description: PROJECT_PATH_DESCRIPTION };
+  const required: string[] = (input.required ??= []);
+  if (!required.includes("projectPath")) required.push("projectPath");
+}

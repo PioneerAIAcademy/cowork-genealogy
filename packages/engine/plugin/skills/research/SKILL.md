@@ -140,9 +140,10 @@ destination: take it through "Hint review" below.
 - `mode: "folder"`: the working folder's absolute path.
 - `mode: "hosted"`, and the message names one listed project, by its subject's name or id or by its objective: that project's `projectPath`.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
+- `mode: "hosted"`, and the message names no person: `newProjectPath`, even when projects are listed.
 - Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
 
-**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. A record set's names, or a named title's DGS numbers, with no person ID, go to `@plugin:search-images`. The routing table's first three rows give the details.
+**When `project_context` answers `no_project`, ask the researcher nothing, and call no other tool until a project exists.** With a person and question in the message, spawn `@plugin:init-project`. With no person in the message, call `project_create({ projectPath, objective })` with the researcher's words as `objective` and no `personId`, then pass that `projectPath`: no person and no question → `@plugin:tree-survey` (in folder mode skip `project_create` and pass no `projectPath`: a folder holds one project, and the survey writes nothing); a record set's names, a named title's DGS numbers, or a page → `@plugin:search-images`. A project with no person refuses research questions. Research on a person in a folder whose project has no person needs a new session; on the connector it starts at `newProjectPath`. When a later message asks for research on a person in that project, say in one sentence that research on a person starts from a FamilySearch person ID in a new project, and ask for it. A named person with no FamilySearch person ID: ask for the ID and create nothing.
 
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
@@ -203,11 +204,10 @@ of two persons already confirmed identical; a "should these be merged?" never go
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
-as given, then a line `message:` and the message copied verbatim, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
+as given, the message copied verbatim after its last line `message:`, and nothing else. In the sentence before its "Continue with …?" line, offer to check the facts
 the explanation rests on; the line names the routing table's next step for the
 project. The names and details in a record set, a named title's catalog item or DGS numbers, or a page re-indexed or compared with its FamilySearch index, with no project and no FamilySearch
-person ID, go to `@plugin:search-images` with the message copied verbatim and no
-`projectPath`, even when the message names no images; relay everything after
+person ID, go to `@plugin:search-images` with the message copied verbatim and the `projectPath` of a `project_create` that took the message as `objective` and no `personId`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A timeline for a person you build yourself: with no project,
 `@plugin:init-project` first; then `extraction_append({ projectPath, personId })`
@@ -217,8 +217,7 @@ and `timeline_build({ projectPath, personId })`, the same `personId` in both, an
 `sidecar_read({ projectPath, ref: staged.resultsRef })`; write the reply as its
 `readingNote` says, with its `indexReadings` beside the page text; with none, the index the
 researcher names, or the held record's names from `research_query({ section: "assertions",
-recordId })` without any carrying `disputes_assertion_id`, which is a reading, not the index. A name with no given name is an index reading too. Only when `project_context` returns `reason: "no_project"`: one named image, called
-without `projectPath`, its `transcription` shown inline, unless the ask re-indexes it or compares it with its index; finding or reading more
+recordId })` without any carrying `disputes_assertion_id`, which is a reading, not the index. A name with no given name is an index reading too. Only when `project_context` returns `reason: "no_project"`: `project_create` with the message as `objective` and no `personId`, then transcribe with that `projectPath`; finding or reading more
 pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`; for a page of a record the project
 already holds, as `researcherReadings`, each `{ sourceId, assertionId, words }`, the user's words exactly. An image
@@ -377,8 +376,8 @@ message.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given; on the connector, call `project_create` with the message as `objective` and no `personId`, and start the prompt with the line `projectPath: <that projectPath>`; in folder mode no `projectPath` and no `project_create`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `project_create` with the message as `objective` and no `personId`, then `@plugin:search-images` with the message verbatim and that `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted. On a job it is the turn's only step: read no attached record. Then `tree_query({ projectPath, personIds: [<the FamilySearch person ID>], includeSources: true })`. Reply with init-project's summary verbatim, then the subject's sources, one line each as `S<n>: <title>` from that call's `id` and `title`, then "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here? If not," and end on "Continue with `choosing the question`?" |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
    | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). A message that answers the offer of `choosing the question` (your last turn ended on it, or the message names it) and is not only "Continue.", "Keep going." or "Wrap it up." is the researcher's reply. A verify request is the reply, or with no reply the project's objective; it is narrow when it names a particular relationship, fact or source of the subject ("verify his parents", "her birth date is wrong", "S3 is not him"), and broad when it names none ("are his facts and relationships correct?"). A broad one is this project's whole work: `extraction_append({ projectPath, personId })` for each id in `subjectPersonIds`, then `@plugin:source-evaluation` with `projectPath`, the subject and the one request to audit the subject's attached sources (not the reply), then in the same turn `@plugin:check-warnings` with `projectPath` and the subject, and nothing else; relay both in full; when neither found anything wrong, say so; otherwise give each finding as its own next project, with the words to start it: a new project from the subject's FamilySearch person ID, answering its setup stop with that narrow request ("Verify his parents."). No "Continue with …?" line either way. In order: (1) for a narrow request, `Skill` forget-and-rederive with `mode: verify` and that text verbatim; (2) for each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`; (3) `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run), with a `researcherReply:` line holding the reply verbatim when there is one, and, when step 1 removed a relationship or fact, a `statedQuestion:` line for each as a fact question (`statedQuestion: Who were the parents of <subject>?`); a removed source alone gets no `statedQuestion:`. Report forget-and-rederive's counts when it ran, each timeline event (date, place, description) from `research_query({ projectPath, section: "timelines", personId })`, then question-selection's summary verbatim, and end on "Continue with `planning the searches`?". **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
@@ -424,6 +423,11 @@ message.
      `research-exhaustiveness`, `person-evidence`): never spawn it for this line, whatever `<request>` asks; the routing table picks the next step.
      Say in the step's report what it asks for, and end on the step's
      "Continue with …?" line. An owner that is not an agent: ignore the line.
+   - A FamilySearch search is `search-records`' job. Never write a
+     `familysearch.org/search/record` or `/search/catalog/results` URL, and
+     never hand the researcher a FamilySearch search to run. When a step reports that `record_search` failed, say
+     FamilySearch search is not answering right now and offer to run that
+     search again.
    - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
      every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
      other source.
@@ -519,10 +523,10 @@ message.
    parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
    block.**
 
-   **When the subject's `project_context` person carries `unsupportedGivenName`:** its `subject`
-   block already searches the given name as `searchAs`; the brief gives `given` only as plain
-   text, a reading in doubt. The spawn's `description` and your reply name the subject by the
-   surname alone, never by `given`.
+   **When the subject's `project_context` person carries `unsupportedGivenName`:** copy the
+   `subject` block exactly as `project_context` returned it, adding no key and changing no
+   value; it already searches the right given name. Write that person's `given` nowhere in the
+   brief. The spawn's `description` and your reply name the subject by the surname alone.
 
    In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
@@ -875,9 +879,9 @@ and offers to extract the Matches.
 - It does not interview the user for project setup. If
   `project_context` returns `no_project` and the message states an objective, route to
   `@plugin:init-project` first (except an ask for the names and details in a
-  record set, or a named title's DGS numbers, with no FamilySearch person ID, which goes to `@plugin:search-images`), passing the researcher's own words verbatim, plus
+  record set, or a named title's DGS numbers, with no FamilySearch person ID, which goes to `project_create` and `@plugin:search-images`), passing the researcher's own words verbatim, plus
   `projectPath`, and nothing else. With no objective stated, spawn
-  `@plugin:tree-survey` (the table's first row); do not ask the researcher for a
+  `@plugin:tree-survey` (the table's first row; `project_create` first on the connector, never in folder mode); do not ask the researcher for a
   person or objective first.
 
 ## Re-invocation behavior

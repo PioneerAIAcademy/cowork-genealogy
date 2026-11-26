@@ -747,6 +747,37 @@ def test_new_question_carries_question_kind(before_state, after_state):
     )
 
 
+# --- Tag-gated: audits_tree marks a question that tests the tree (#4430) ---
+
+def test_new_question_marks_audits_tree(before_state, after_state, test):
+    """Tag-gated by `audits-tree` / `not-audits-tree`: a question that tests
+    whether the tree's own attributions are right carries `audits_tree: true`,
+    which research_append reads to refuse a `confident` link that only the
+    tree's own citation of the record corroborates; any other question carries
+    no `true`. Skips when no question was written (an honest ask-instead turn)."""
+    tags = test.get("tags", [])
+    want = "audits-tree" in tags
+    if not want and "not-audits-tree" not in tags:
+        pytest.skip("no audits-tree tag on this test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    if not new:
+        pytest.skip("no new question written")
+    offenders = [
+        f"{q.get('id')}: audits_tree={q.get('audits_tree')!r}"
+        for q in new
+        if (q.get("audits_tree") is True) != want
+    ]
+    assert not offenders, (
+        ("question(s) testing the tree without audits_tree: true: " if want
+         else "question(s) that test nothing on the tree marked audits_tree: true: ")
+        + ", ".join(offenders)
+    )
+
+
 # --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---
 
 # A single-turn harness cannot exercise a real ask-and-wait: the skill either

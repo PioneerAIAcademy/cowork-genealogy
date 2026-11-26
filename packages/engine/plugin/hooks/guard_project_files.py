@@ -209,9 +209,9 @@ AGENT_ONLY_TOOLS = {
         "timeline",
         "tree-edit",
     ),
-    "project_create": ("init-project",),
     "record_search": ("search-records", "survey-surname"),
     "same_person": ("person-evidence",),
+    "source_screen": ("person-evidence", "source-evaluation"),
     "tree_correct": ("proof-conclusion", "tree-edit"),
     "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
     "tree_gaps": ("tree-survey",),
@@ -256,6 +256,11 @@ MAIN_THREAD_DENIED = {
 # skill declares it -- it is then not held only by agents -- and the drift test
 # says so.
 MAIN_THREAD_OK = {
+    "project_create": (
+        "every activity starts a project and one with no person is created from the "
+        "researcher's request without init-project (lead, 2026-11-19, issue #4686); the "
+        "tool itself refuses a person-less project a research question"
+    ),
     "image_transcribe": (
         "research/SKILL.md delivers a bounded transcription itself (lead, "
         "2026-10-18; issue #2490 retires the wrapper agent)"
@@ -649,8 +654,9 @@ OUT_OF_LANE_REASON = (
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
-    "which writes both files together (from the main session, invoke "
-    "`@plugin:init-project`, which calls it); to add to an existing one use "
+    "which writes both files together (from the main session, call it directly for a "
+    "project with no person, and invoke `@plugin:init-project` for research on a "
+    "person); to add to an existing one use "
     "research_append or research_log_append, and for the tree tree_edit or "
     "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "

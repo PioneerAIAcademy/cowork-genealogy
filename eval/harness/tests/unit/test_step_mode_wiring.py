@@ -137,9 +137,7 @@ def test_all_three_planes_load_the_same_boundary_file():
     assert skill_runner._STEP_BOUNDARY == expected
     assert orchestrator.load_step_boundary is skill_runner.load_step_boundary
     # The worker resolves its path through ENGINE_PLUGIN_DIR, so compare what it loads.
-    from app.agent import step_boundary_loader
-
-    assert step_boundary_loader._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
+    assert options._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
 
 
 def test_each_plane_gets_a_module_carrying_the_gate():

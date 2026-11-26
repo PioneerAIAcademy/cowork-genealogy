@@ -1474,7 +1474,8 @@ describe("tree_forget", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect((r as any).reason).toBe("no_project");
+    expect((r as any).reason).toBeUndefined();
+    expect(r.errors.join(" ")).toContain("No project:");
   });
 
   // ─── validate before persist ───────────────────────────────────────────────

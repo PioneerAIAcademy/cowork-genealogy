@@ -708,11 +708,11 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
-- **If your tool reads the project files** — a sixth site, and nothing will
-  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
-  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
-  is not in a research project gets an answer rather than `research.json not
-  found in projectPath`. Then add the tool to `CALLS` in
+- **If your tool reads the project files** — list `projectPath` in `required`
+  (it is added for you in `src/tool-schemas.ts` unless the tool is one of the
+  six in `src/utils/project-gate.ts`): `server.ts` refuses a call with no
+  project before the tool runs, so the tool carries no no-project branch. Add
+  the tool to `CALLS` in
   `tests/tools/no-project.test.ts` — that list is backed by a derivation test
   that traces each tool's imports transitively and flags any project-reading tool
   absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
@@ -1378,7 +1378,10 @@ thread may never call, which the final `.*(…)` alternative names one by one:
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
 4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
    (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
-   deny is what reaches Cowork.
+   deny is what reaches Cowork. Those same paths set
+   `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` (`"1"` is OFF; a falsy value is
+   `forced_on`), but **no hook arm carries that one to Cowork**; whether
+   auto-memory writes a file there has not been observed.
 5. **No agent's step on the main thread.** Denies a call with no `agent_id` to a
    tool on `AGENT_ONLY_TOOLS` — held by agents, declared by no skill — and names
    every agent that holds it. `MAIN_THREAD_OK` lists the few such tools the main

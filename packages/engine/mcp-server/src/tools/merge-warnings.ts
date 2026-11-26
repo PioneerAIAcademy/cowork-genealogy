@@ -31,8 +31,6 @@ import {
   sanitizeCandidate,
   validateCandidateGedcomx,
   formatIssues,
-  NoProjectError,
-  noProjectResult,
 } from "./merge-shared.js";
 
 export async function mergeWarnings(
@@ -129,7 +127,6 @@ export async function mergeWarnings(
       sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings, ...formatIssues(validation.warnings)],
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;
   }

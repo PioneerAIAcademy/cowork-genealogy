@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Vermont, matched only on a Vermont place name (issue #4163). The response is place-search-vermont's; that fixture's '~' predicate answers every place_search, so a test that also resolves Massachusetts places uses this one.",
+  "args": {
+    "placeName": "~Vermont"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Vermont, United States",
+        "type": "State",
+        "dateRange": "+1791/",
+        "latitude": 44.0,
+        "longitude": -72.7,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Vermont&focusedId=46"
+      }
+    ]
+  }
+}

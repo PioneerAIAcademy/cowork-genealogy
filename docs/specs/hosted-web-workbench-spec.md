@@ -631,7 +631,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   ahead of the researcher's next message, then drops `sessions.auto_reply`.
 >
 >   **The alpha enforces one step per turn too** (decision 25, widened 2026-11-19).
->   `real_agent.py` loads `step_boundary.py` (`app/agent/step_boundary_loader.py`),
+>   `real_agent.py` loads `step_boundary.py` (`app/agent/plugin_lib.py`),
 >   builds the turn's `StepGate` from its text in `_begin_turn_hook_state` before the
 >   query, and consults it in `PreToolUse` on `Agent`, `Skill` and `Task`, main thread
 >   only: the first out-of-group step is denied, a second attempt halts the turn. A

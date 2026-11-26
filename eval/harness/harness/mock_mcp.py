@@ -441,12 +441,23 @@ UNLOGGED_SEARCHES_NOTE = (
     "search is deleted 24h after it ran."
 )
 
-#: Verbatim copy of NO_PROJECT_MESSAGE_READ in
-#: packages/engine/mcp-server/src/utils/project-io.ts: what image_transcribe answers
-#: a `file` read with no project (#4136).
-NO_PROJECT_MESSAGE_READ = (
-    "This folder is not a research project — there is no research.json here. "
-    "There is no project state to read — anything you are working on is standalone."
+#: Verbatim copy of NO_PROJECT_REFUSAL in packages/engine/mcp-server/src/utils/project-io.ts:
+#: what server.ts's gate answers any tool outside PROJECT_EXEMPT_TOOLS called with no
+#: project (issue #4686). tests/unit/test_mock_mcp.py pins the words.
+START_PROJECT_RULE = (
+    "Every activity needs a project. For an activity with no person in it (a page read, a record "
+    "set's names, a surname survey), call project_create with the researcher's request as "
+    "objective and no personId. For research on a named person, start init-project with the "
+    "FamilySearch person ID; with no ID, ask for it and create nothing."
+)
+NO_PROJECT_REFUSAL = f"No project: {START_PROJECT_RULE} Then pass its projectPath."
+
+#: A harness unit test of one handler's own behaviour turns the gate off; nothing else does.
+PROJECT_GATE_ENABLED = True
+
+#: Mirrors PROJECT_EXEMPT_TOOLS in src/utils/project-gate.ts: the tools that run with no project.
+PROJECT_EXEMPT_TOOLS = frozenset(
+    {"project_create", "project_list", "project_context", "login", "logout", "auth_status", "tree_gaps"}
 )
 
 #: What production's no-project image_transcribe omits: it reads with projectPath
@@ -664,7 +675,9 @@ def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
         return None
 
 
-def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]]):
+def _guard_unknown_args(
+    tool_name: str, handler, call_log: list[dict[str, Any]], workspace: Path | None = None
+):
     """Wrap `handler` so a non-parameter argument is refused before it runs.
 
     WHY AT REGISTRATION, NOT INSIDE THE HANDLER. `tools_by_name[name].handler(...)`
@@ -684,6 +697,17 @@ def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]])
 
     async def guarded(args, _name=tool_name, _handler=handler, _log=call_log):
         refusal = _reject_unknown_args(_name, args)
+        # The project gate runs after the argument check, as in server.ts: every tool
+        # outside PROJECT_EXEMPT_TOOLS refuses a call that names no project, or whose
+        # folder holds none. The model's own `projectPath` is what counts.
+        if (
+            refusal is None
+            and PROJECT_GATE_ENABLED
+            and _name not in PROJECT_EXEMPT_TOOLS
+            and workspace is not None
+            and not (isinstance(args, dict) and str(args.get("projectPath") or "").strip() and _is_project(workspace))
+        ):
+            refusal = NO_PROJECT_REFUSAL
         if refusal is None:
             return await _handler(args)
         response = {"error": refusal}
@@ -890,6 +914,19 @@ def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[st
         "compactWikiSearchAnswer",
         [response, include_text is True],
         consequence="wiki_search fixtures are served unchanged, with chunk_text and rank",
+        fallback=response,
+    )
+
+
+def _attach_film_for_year(response: dict[str, Any], film_year: Any) -> dict[str, Any]:
+    """Production's `filmForYear` (#4721) on a canned `catalog_search` answer,
+    through the compiled `attachFilmForYear`. Fails OPEN: no build, or a node
+    failure, serves the fixture unchanged with a warning."""
+    return _call_compiled_pure(
+        "tools/catalog-search.js",
+        "attachFilmForYear",
+        [response, film_year],
+        consequence="catalog_search fixtures are served without filmForYear",
         fallback=response,
     )
 
@@ -1506,46 +1543,53 @@ def _stage_image_transcribe(
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
             return _unstaged("the node script returned no `staged` key")
-        return parsed
     except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
         return _unstaged(f"{type(exc).__name__}: {exc}")
+    staged = parsed.get("staged")
+    if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str):
+        parsed.update(_write_page_log(input_obj["projectPath"], args, response, staged["resultsRef"]))
+    return parsed
 
 
-def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
-    """A canned `image_transcribe` page as production answers with no project
-    (#4136): nothing staged or saved, the text cleaned and bounded, and
-    `metadata` and `nameExpansion` dropped, through the compiled
-    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
-    returns the page with only the project keys removed, with a warning.
-    """
-    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
-    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+_IMAGE_TRANSCRIBE_JS = _MCP_BUILD / "tools" / "image-transcribe-mcp.js"
 
-    def _fallback(why: str) -> dict[str, Any]:
-        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
-        return inline
 
-    if not compactor_js.exists():
-        return _fallback(f"no engine build at {_MCP_BUILD}")
+def _write_page_log(project_path: str, args: dict[str, Any], response: dict[str, Any], ref: str) -> dict[str, Any]:
+    """The log entry `image_transcribe` writes for its own staged read (#4721),
+    through production's compiled `logOwnRead` (its outcome, its retry without a
+    refused plan item), so the entry is production's field for field. `{"logId"}` on success, `{"logRefused"}` when
+    the log tool refused; empty, with a warning, when the build is absent or node
+    fails — a harness fault must not read as the tool declining to log."""
+    if not (
+        _compiled_module_present(_RESEARCH_LOG_APPEND_JS, "an image_transcribe read will leave no log entry")
+        and _compiled_module_present(_IMAGE_TRANSCRIBE_JS, "an image_transcribe read will leave no log entry")
+    ):
+        return {}
     script = (
-        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
-        f" from '{_node_module_url(compactor_js)}';"
+        f"import {{ logOwnRead }} from '{_node_module_url(_IMAGE_TRANSCRIBE_JS)}';"
         " import { readFileSync } from 'node:fs';"
-        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
-        " if (typeof out.transcription === 'string')"
-        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
-        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
-        " process.stdout.write(JSON.stringify(out));"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const r = await logOwnRead({ projectPath: i.projectPath, planItemId: i.planItemId ?? null,"
+        " ...(i.lookingFor ? { lookingFor: i.lookingFor } : {}) },"
+        " { staged: { resultsRef: i.ref, returnedCount: 1 }, ...i.read });"
+        " process.stdout.write(JSON.stringify(r));"
     )
+    payload = {
+        "projectPath": project_path,
+        "ref": ref,
+        "planItemId": args.get("planItemId"),
+        "lookingFor": args.get("lookingFor") if isinstance(args.get("lookingFor"), str) else None,
+        "read": {k: response[k] for k in ("found", "truncated") if response.get(k) is not None},
+    }
     try:
-        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
-        out = proc.stdout.strip()
-        if proc.returncode != 0 or not out:
-            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
-        parsed = json.loads(out)
-        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
-    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
-        return _fallback(f"{type(exc).__name__}: {exc}")
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        logged = json.loads(proc.stdout.strip())
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock image_transcribe could not write its log entry ({exc})", stacklevel=2)
+        return {}
+    return {k: logged[k] for k in ("logId", "logRefused") if logged.get(k) is not None}
 
 
 def _unlogged_staged_handles(
@@ -2099,6 +2143,16 @@ def create_mock_server(
             ):
                 response = _compact_wiki_search(response, args.get("includeText"))
 
+            # Production's catalog_search adds `filmForYear` to each hit when the
+            # call names a `filmYear`; the compiled function adds it here.
+            if (
+                _name == "catalog_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("filmYear") is not None
+            ):
+                response = _attach_film_for_year(response, args.get("filmYear"))
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -2237,19 +2291,8 @@ def create_mock_server(
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
-            # With no project (no projectPath, or a folder holding neither project
-            # file) production reads with projectPath removed and returns the
-            # page inline, staging nothing (#4136); a `file` still needs one.
-            _no_project_read = _name == "image_transcribe" and (
-                not args.get("projectPath") or (_workspace is not None and not _is_project(_workspace))
-            )
-            # Production answers a `file` with no project before reading anything,
-            # so no fixture has to match it.
-            if _no_project_read and args.get("file") is not None:
-                response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
-            elif _no_project_read and "error" not in response:
-                response = _inline_image_transcribe(response)
-            elif (
+            # Every read has a project (issue #4686), so there is no unsaved read.
+            if (
                 _name == "image_transcribe"
                 and _workspace is not None
                 and "error" not in response
@@ -2424,7 +2467,7 @@ def create_mock_server(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )
         decorated = tool(tool_name, description, input_schema)(
-            _guard_unknown_args(tool_name, handler, call_log)
+            _guard_unknown_args(tool_name, handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2458,7 +2501,7 @@ def create_mock_server(
             or _PERMISSIVE_SCHEMA
         )
         decorated = tool(live_tool_name, description, input_schema)(
-            _guard_unknown_args(live_tool_name, live_handler, call_log)
+            _guard_unknown_args(live_tool_name, live_handler, call_log, workspace)
         )
         tools.append(decorated)
 
@@ -2475,7 +2518,7 @@ def create_mock_server(
             "person_quality",
             tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
             (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
-        )(_guard_unknown_args("person_quality", pq_handler, call_log))
+        )(_guard_unknown_args("person_quality", pq_handler, call_log, workspace))
     )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
@@ -3070,6 +3113,13 @@ def _make_compiled_tool_handler(
                 call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
+            # Production passes the bound project's links (`projectLinks`) so the
+            # capture steps name the upload page; a hosted test's link is the one
+            # its project_context serves.
+            if tool_name == "build_external_search_url":
+                hosted_links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+                upload_url = (hosted_links or {}).get("uploadUrl")
+                call_args += ", " + json.dumps({"uploadUrl": upload_url} if upload_url else {})
 
             # A tool that resolves places gets the test's own answers and no
             # network: the table is installed in the resolver module the tool

@@ -143,7 +143,7 @@ def test_gap_skips_other_tests():
 
 # --- no project: person_warnings' own answer, then the hand-back ---
 
-NO_PROJECT_ANSWER = {"ok": False, "reason": "no_project", "errors": ["no project"]}
+NO_PROJECT_ANSWER = {"error": "No project: every activity needs a project."}
 GOOD_REPLY = "Hand-back: init-project — create a project for KWCJ-RN4, then check it\n---\nx"
 
 
@@ -170,8 +170,8 @@ def test_no_project_fails_a_second_call():
         no_project(calls, NO_PROJECT_TEST, _agent(GOOD_REPLY), None)
 
 
-def test_no_project_fails_when_the_answer_was_not_no_project():
-    with pytest.raises(AssertionError, match="did not answer no_project"):
+def test_no_project_fails_when_the_call_was_not_refused():
+    with pytest.raises(AssertionError, match="not refused with the no-project refusal"):
         no_project([_call("person_warnings", {}, {"warnings": []})], NO_PROJECT_TEST, _agent(GOOD_REPLY), None)
 
 

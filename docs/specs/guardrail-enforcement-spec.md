@@ -173,7 +173,7 @@ depends on another shipping first.
 | §5 | A plan should reach its question's date window | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update setting `date_range` or `status: "skipped"`, after which the question's live plan items span less than half of its `questions[].date_window` | **advisory only — warns, refuses nothing.** Silent on every committed document: no question carries `date_window` yet. See "A plan should reach its question's date window" below |
 | §5 | The objective's target record leads the plan (`objectiveTargetLeadError`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a first-question plan the call writes or reorders that sequences the record `project.objective` names, at the place it names, behind other work, or makes it a `fallback_for` work that does not search it | **enforcing.** Silent when no item searches the target. Refuses 0 of 241 committed e2e first-question plans (applies to 1). Rule and measurement: `research-append-tool-spec.md` §5 |
 | §5.6 | Namesake warning (`namesakeRowWarnings`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_append` call that appends or updates a `namesakes` row whose holder has live `probable` or `confident` links the namesake cap refuses: it lists them, the facts their parties carried and the names citing their sources | **advisory only — warns, refuses nothing** (lead, 2026-10-18, item 5 of the list of 2026-10-17). With rows planted on the 212 committed e2e final states (measured at `20ad24872`, `dev/measure-namesake-cap.ts` §4): 455 of 1,306 persons warned, listing 2,216 links; on subjects alone, 58 of 181, listing 366 links |
-| §5 | Circular-corroboration gate (`circularCorroborationCallCheck`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `person_evidence` link a call asserts at `probable`/`confident` to a starting-tree person whose only corroboration is the linked record's own: every source on the baseline relationship to each role-matched parent or spouse is that record or a copy of it (a copy: a shared source or description, or a party's birth, christening or baptism with the same full date, place and given name). Where no such relative exists the person's own sources decide, and only `confident` is refused. Instrument: `packages/engine/mcp-server/dev/measure-circular-corroboration.ts` | **enforcing**. Measured at `e28bffc08`, as committed it refuses **6 of 10,417** committed links, all `confident`, subject-alone, in one fixture (`ferber-marriage`, I4 and the 1900 census `MM88-DGG`, two runs): I4's only non-tree source is that census, and one of the six (`pe_024`, residence) matches a tree fact sourced to the same census; the other five match name and birth month against facts whose tree provenance is unknown. Read by the genealogist (2026-10-24), who ruled all six true positives, so the gate ships enforcing. **Unmeasurable on the relationship arm:** 20 of 2,036 committed starting-tree relationships carry a source (captured before relationship sources existed), so the arm that catches the reported Latham shape can fire on none of them. Planted instead, with every role-matched edge sourced to the record alone: 486 of 1,672 links that reach one are refused, and 0 of 1,672 once the edge also carries another record. A mother of `<x>` beside a father of `<x>` reads as a couple since 2026-10-29, so 355 parent entries reach the relationship arm rather than the subject alone, where `probable` can be refused (1,317 links reached it before): as committed the same 6 are refused, and planted they add 61 refusals, 27 `probable` and 34 `confident` (425 of 1,317 before) |
+| §5 | Circular-corroboration gate (`circularCorroborationCallCheck`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `person_evidence` link a call asserts at `probable`/`confident` to a starting-tree person whose only corroboration is the linked record's own: every source on the baseline relationship to each role-matched parent or spouse is that record or a copy of it (a copy: a shared source or description, or a party's birth, christening or baptism with the same full date, place and given name). Where no such relative exists the person's own sources decide, and only `confident` is refused. **Audit arm**: on a question carrying `audits_tree`, a `confident` link to a starting-tree person who already cites the record, unless another record no starting-tree person or relationship cites, linked to the person, agrees with it on an event year or a life fact's county (`research-append-tool-spec.md` §5). Instrument: `packages/engine/mcp-server/dev/measure-circular-corroboration.ts` | **enforcing**. Measured at `e28bffc08`, as committed it refuses **6 of 10,417** committed links, all `confident`, subject-alone, in one fixture (`ferber-marriage`, I4 and the 1900 census `MM88-DGG`, two runs): I4's only non-tree source is that census, and one of the six (`pe_024`, residence) matches a tree fact sourced to the same census; the other five match name and birth month against facts whose tree provenance is unknown. Read by the genealogist (2026-10-24), who ruled all six true positives, so the gate ships enforcing. **Unmeasurable on the relationship arm:** 20 of 2,036 committed starting-tree relationships carry a source (captured before relationship sources existed), so the arm that catches the reported Latham shape can fire on none of them. Planted instead, with every role-matched edge sourced to the record alone: 486 of 1,672 links that reach one are refused, and 0 of 1,672 once the edge also carries another record. A mother of `<x>` beside a father of `<x>` reads as a couple since 2026-10-29, so 355 parent entries reach the relationship arm rather than the subject alone, where `probable` can be refused (1,317 links reached it before): as committed the same 6 are refused, and planted they add 61 refusals, 27 `probable` and 34 `confident` (425 of 1,317 before). **Audit arm, measured at `569122dce`** (§4 of the instrument, 253 final states): no committed question carries the marker, so unmarked it judges nothing and the 6 refusals are unchanged (both are floors); the 2 questions whose text reads as an audit reach no link. With all 292 questions marked, the upper bound, it judges 74 links and refuses 64 (10 cleared), 13 person-record pairs in 7 fixtures: 11 where the person has no linked record outside the tree's own citations, 1 where the only such record shares no event with the judged one, and 1 miss, a 2026-07-10 `ferber-marriage` run whose census stored the marriage as `marriage_date`, so the uncited 1890 marriage record could not agree with it (the 2026-07-21 run's `marriage` clears). The 2026-11-09 alpha-feedback bundle that prompted it (a Find a Grave entry linked `confident` to I5, who already cited it), marked and replayed at the call that wrote them, refuses all four Find a Grave links to I5 at `confident`, allows them at `probable`, and still refuses with the undated birth index raised to `confident`; unmarked it is unchanged |
 | §5 | Claim rules (`src/validation/claim-rules.ts`, conclusion-tree Stage 1b) | engine (MCP tool) — so Cowork, hosted, both harnesses | a proof summary's claims breaking rules 1, 2 and 4-12 of `docs/plan/conclusion-tree.md` § "Stage 1b": rival verdicts, one answer per slot, no empty escape on rivals, claims present, claims cite, grounding, absence never grounds, polarity, couple first, capped claims keep the question open, proved needs confident identity (`research-append-tool-spec.md` §5.15) | **advisory only until Stage 1c** — each warns, prefixed `Will be refused:` and naming the summary, from `rule-modes.ts`; its flip to refuse is the Stage 1c PR. Grounding holds 8 of 89 labelled relationships, 0 of 25 facts and 1 of 11 couple facts at `possible` |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness for the file-write tools; **the file mode** for shell writes (`Bash`, `device_bash`): `FsProjectStore` keeps the files read-only between writes, so it binds wherever that store runs — the desktop `.mcpb`, both harnesses, the hosted sandbox — and not on the prototype's Postgres store, which has no files | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool. The file mode refuses `>`, `>>`, `tee` and `open(…, 'w')`; it does not refuse `chmod` first, nor `sed -i` or `mv` on macOS and Linux (§6.1) | **enforcing** |
 | §6 | Raw-read deny | plugin hook (Cowork, hosted, wherever the plugin loads) — `Read`/`Grep`/`Glob` only; the e2e harness already denies any read under its project root (`project_read_denied`) and the prototype worker has `deny.py`, so neither takes a copy of this rule; `Bash` and `device_bash` reads are not covered, for the reason the device-write note gives | a `Read`, `Grep` or `Glob` whose target's basename is `research.json` or `tree.gedcomx.json`. The reason names the tool that serves the file (`project_context` and `research_query`, or `tree_query`). Matched on the basename because the hook cannot see a project root in Cowork; a directory or a wildcard names no file and is allowed, and so is any other project file (no tool serves `results/` or `images/`). Why: in a connected-folder Cowork session a `Read` of `research.json` returned "File does not exist" before and after an MCP write (measured 2026-11-04) | **enforcing** on the hosted path (`make hook-smoke`, `read` case BOUND 2026-11-05); **seen binding in Cowork by hand, 2026-11-05** (one session on Windows: a built-in `Read` of `research.json` was refused with `READ_REASON`'s text, where before it returned "File does not exist"); **no automated check** of Cowork's loader (`docs/architecture.md` §9.4 gap 1) |
@@ -787,73 +787,33 @@ real weak-match signal, not an ARK artifact.
 
 ## 5. Write-boundary invariants
 
-### Not being in a project is an answer, not a failure
+### Not being in a project is a refusal that names the way in
 
-The lead ruling: it is fine for standalone work not to be persisted; it is not
-fine for the user to see an error merely because they are not in a project. A
-search that ran, returned results, and had nowhere to log them must say so in a
-sentence a skill can relay unedited.
+Reverses the earlier ruling that it is fine for standalone work not to be persisted
+(replaced by the lead's ruling of 2026-11-19: every activity starts a project). `server.ts` calls `projectGateRefusal` once, beside `rejectUnknownArgs`,
+and every tool except `project_create`, `project_list`, `project_context`, `login`,
+`logout`, `auth_status` and `tree_gaps` (the tree survey, which writes nothing and runs
+with no project in folder mode) returns `isError: true` with `NO_PROJECT_REFUSAL` when
+`projectPath` is absent or names a folder that holds no project. The text names both
+routes: `project_create` with the researcher's request as the objective and no
+`personId` for an activity with no person, or init-project with the FamilySearch
+person ID for research on a person. The gate does not create a project: a search
+tool never sees the researcher's message, and a folder holds one project.
 
-`classifyProjectPath` in `packages/engine/mcp-server/src/utils/project-io.ts`
-decides five states, and it is deliberately **independent of which file the
-current read wanted** — six of the twelve project-reading tools read
-`tree.gedcomx.json` first, so a file-derived verdict hands those six the wrong
-message in a folder that is simply not a project.
+`classifyProjectPath` still decides the states, independent of any filename. Only
+`project` (both files, or exactly one: a broken project, which stays loud in the
+tool) passes the gate; absent, a missing directory and a directory with neither file
+are refused. A connector store has no directories, so a fresh `/proj_` path with no
+`projects` row classifies as no project and is refused until `project_create` runs.
+The check of the argument comes first: a connector call that names no project holds a
+store that cannot classify. The two connector-only view tools are dispatched before
+the gate and resolve their project themselves.
 
-| State of `projectPath` | Verdict |
-|---|---|
-| absent or not a string | loud — `projectPath is required` |
-| not an existing directory | loud — `projectPath does not exist: <path>` |
-| a directory holding **neither** project file | `reason: "no_project"`, **no `isError`** |
-| a directory holding **exactly one** of the two | loud — a *broken* project |
-| a file present but unparseable | loud |
-
-A connector store has no directories: it reads the anchor path with no `projects`
-row as a directory holding neither file, so a fresh `/proj_` path answers
-`no_project`, and the first write claims the id.
-
-The half-a-project row runs in both directions, and it is the one that matters.
-A folder whose `research.json` was deleted still holds a real project, so a write
-against it must stay loud; softening it drops the write with a cheerful message.
-
-`reason` is the sole discriminator. `errors` is retained so every existing
-consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
-unset — the only `ok: false` exempt from that flag, because nothing was asked of
-a project that exists.
-
-**The sentence has two variants, because four of the twelve tools are not
-writers.** `research_query` and `project_context` are reads; `person_warnings`
-and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
-non-project folder that their work was not saved is both wrong and alarming, so
-those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
-`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
-single-phrasing packaging lint keys on.
-
-**An unreadable directory is not an absent project.** `classifyProjectPath`
-distinguishes a clean `ENOENT` from any other `access()` failure. A real project
-directory that has lost its execute bit still stats as a directory while every
-probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
-a write against a genuine project is dropped with a cheerful message — the same
-silent loss the half-a-project row exists to prevent.
-
-**The harness must mirror this, and one of the three mirrors is inverted.**
-`is_error` is how the detectors know a call never landed, so a no-project write
-that kept its `isError` would be counted as a landed protected write and
-manufacture violations in paid grading. `did_not_land` in
-`eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
-use it to **skip** a call (`find_unguarded_protected_writes`, and
-`guardrail_shadow_report.py`'s person-evidence scan). The third —
-`find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
-it now checks for unresolved `unjustified_warnings` refusals from tree writers
-rather than checking whether `person_warnings` was called. **The polarity trap
-survived the retarget**: the success arm still withholds *credit* rather than
-skipping a call, so a success matched in the wrong place is a missed violation
-and therefore silent. It is matched by ORDER — the last refusal, then a
-successful writer call after it. Scanning the whole call list for "any success"
-credits a write that landed *before* the refusal, so a run that wrote one op,
-was refused on the next, and gave up reads as clean; that is how the retarget
-first shipped, and `test_warnings_unchecked_fires_when_the_success_predates_the_refusal`
-is what holds it.
+`tests/packaging/project-gate.test.ts` fails when a schema outside the exempt tools lacks
+`projectPath` in `required` (the exempt tools excepted), and drives the gate both ways. The harness mirrors it in
+`eval/harness/harness/mock_mcp.py` (`NO_PROJECT_REFUSAL`, `PROJECT_EXEMPT_TOOLS`).
+A tool called directly on a folder with no project fails with the same words
+(`NO_PROJECT_REFUSAL`); only `project_context` still answers `reason: "no_project"`.
 
 ### Set-once project fields
 

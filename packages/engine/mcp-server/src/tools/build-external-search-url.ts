@@ -10,6 +10,7 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend, PLAN_ITEM_WITHOUT_PROJECT_NOTE } from "./research-log-append.js";
 import { classifyProjectPath } from "../utils/project-io.js";
+import type { ProjectLinks } from "../utils/project-links.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -105,6 +106,12 @@ export type BuildExternalSearchUrlResult =
 export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlInput {
   projectPath?: string;
   planItemId?: string | null;
+  // false when the search's results are already in hand, or no researcher can
+  // make the capture: the build still runs its project checks but writes no
+  // in-flight entry, and the caller logs the search once itself. Every call
+  // carries a project (server.ts's gate), so this, not an omitted projectPath,
+  // is how a build says nothing is awaiting a capture.
+  awaitingCapture?: boolean;
   // The place the search is about, as external_links_search takes it. Required
   // for a site-wide build (no `baseUrl`) inside a project, which is refused
   // until that place or one containing it is stored (issue #4410).
@@ -112,7 +119,7 @@ export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlI
 }
 
 export type BuildExternalSearchUrlToolResult =
-  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string })
+  | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string; captureSteps?: string })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
   | { ok: false; reason: "place_not_fetched"; errors: string[] }
   | { ok: false; reason: "log_write_failed"; errors: string[] };
@@ -1605,6 +1612,7 @@ async function placeNotFetchedError(projectPath: string, standardPlace: unknown)
 // so `project_context`'s `awaitingUser` sees every URL handed to the user.
 export async function buildExternalSearchUrlTool(
   input: BuildExternalSearchUrlToolInput,
+  links: ProjectLinks = {},
 ): Promise<BuildExternalSearchUrlToolResult> {
   const result = buildExternalSearchUrl(input);
   if (!result.ok) return result;
@@ -1627,6 +1635,8 @@ export async function buildExternalSearchUrlTool(
     if (refusal) return { ok: false, reason: "place_not_fetched", errors: [refusal] };
   }
 
+  if (input.awaitingCapture === false) return { ...result, captureSteps: captureSteps(links.uploadUrl) };
+
   const attributes = coerceJsonArg(input.attributes);
   const query =
     attributes !== null && typeof attributes === "object" && !Array.isArray(attributes)
@@ -1648,11 +1658,6 @@ export async function buildExternalSearchUrlTool(
     externalSite: { site: input.site, urlGenerated: result.url, captureReceived: false },
   });
   if (!logged.ok) {
-    // Not a project: the URL still serves a standalone search, so it is an
-    // answer, not a failure — relayed with the log tool's own message.
-    if (logged.reason === "no_project") {
-      return { ...result, notes: [...result.notes, ...logged.errors] };
-    }
     return { ok: false, reason: "log_write_failed", errors: logged.errors };
   }
   if (!("logId" in logged)) {
@@ -1660,7 +1665,18 @@ export async function buildExternalSearchUrlTool(
   }
   const notes = [...result.notes, ...logged.validation.warnings];
   if (logged.escalationDue) notes.push(logged.escalationDue);
-  return { ...result, notes, logId: logged.logId };
+  return { ...result, notes, logId: logged.logId, captureSteps: captureSteps(links.uploadUrl) };
+}
+
+/** The researcher's capture steps for a hand-off awaiting a capture, written here
+ *  so a caller pastes them rather than composing them. The upload place is the
+ *  project's upload page when the web tier serves one, else "here". */
+export function captureSteps(uploadUrl: string | undefined): string {
+  const where = uploadUrl ? `at ${uploadUrl}` : "here";
+  return (
+    "After the page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or " +
+    `Ctrl+P (Windows), choose Save as PDF, and upload it ${where}. Log in first if the page asks.`
+  );
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -1688,7 +1704,10 @@ export const buildExternalSearchUrlSchema = {
     "researcher, carrying the same URL: paste it whole and never retype the URL. " +
     "Given `projectPath`, it also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
-    "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "to research.json and returns its `logId` — do not log that hand-off again — and " +
+    "`captureSteps`, the researcher's capture steps, to paste word for word. " +
+    "With awaitingCapture false (results already in hand, or no researcher to make the " +
+    "capture) it writes no entry: log the search once yourself. " +
     "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +
     "refused (`place_not_fetched`) until external_links_search has looked up that place " +
     "or one containing it. " +
@@ -1721,9 +1740,15 @@ export const buildExternalSearchUrlSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute project-folder path. When given, the tool logs the URL as an in-flight " +
-          "hand-off awaiting the researcher's capture and returns its `logId`. Omit it when " +
-          "the results are already in hand and nothing is awaiting a capture.",
+          "Absolute project-folder path. The tool logs the URL as an in-flight hand-off " +
+          "awaiting the researcher's capture and returns its `logId`, unless awaitingCapture is false.",
+      },
+      awaitingCapture: {
+        type: "boolean",
+        description:
+          "Default true. Pass false when the results are already in hand or no researcher can " +
+          "make the capture: the URL is built and checked, no in-flight entry is written and no " +
+          "`logId` is returned, and you log the search once yourself.",
       },
       planItemId: {
         type: "string",
