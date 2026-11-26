@@ -48,10 +48,12 @@
   prefix and never routes the host root, so the stub's issuer was the alias URL itself. For such an
   issuer the MCP spec's discovery order (2025-11-25, "Authorization") tries two host-root URLs, then
   `<issuer>/.well-known/openid-configuration`, the only one that reaches the origin; the stub also
-  served `<issuer>/.well-known/oauth-authorization-server`. Claude Code 2.1.332's MCP log records
-  the alias URL as its authorization server, then a sign-in with its Client ID Metadata Document and
-  a loopback redirect, then tool calls; it does not record which of the two documents it read
-  (the stub's request log in FS112 Splunk does, unread). The claude.ai connector client is a
+  served `<issuer>/.well-known/oauth-authorization-server`. The stub's request log shows Claude
+  Code 2.1.332 follow the 401's `resource_metadata`, then read
+  `<issuer>/.well-known/openid-configuration` (twice) and never the other, then sign in with its
+  Client ID Metadata Document and a loopback redirect (`/token` carried `resource` = the alias's
+  `/mcp`), then send `server/discover` (protocol `2026-07-28`) and, refused, `initialize` on
+  `2025-11-25`, then call tools. The claude.ai connector client is a
   different client and is **not measured**: the org account used blocks adding any connector,
   custom or shipped in a plugin. If it passes too, the beta's tiers can run under an alias once
   `oauth_issuer()` (`apps/server/proto/web/auth.py`) accepts a path, the web tier serves its
