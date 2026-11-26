@@ -50,6 +50,15 @@ import { historicalContextSpawn, type HistoricalContextSpawn } from "../utils/hi
 
 const QUESTION_TRUNCATE_AT = 140;
 
+export const BOUNDED_REQUEST_RULE =
+  "For the research router only; an agent it spawned ignores this and does its own task. A researcher " +
+  "message asking for one thing (one record such as a birth, marriage, death or census entry, or when or " +
+  "where one event happened; a transcription; a letter; a review of attached sources) is a bounded " +
+  "request. Its owning agent runs in this turn, after init-project when there is no project yet " +
+  "(search-records for a record), the reply ends on that agent's \"Continue with …?\" line, and the " +
+  "turn never runs question-selection. A requested record that " +
+  "attachedSources already lists is not searched for: read it with person_read and name it.";
+
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
  *  "persons" and "sources" are returned regardless of `include` until #4422
@@ -394,6 +403,7 @@ export type ProjectContextResult =
       subject?: Record<string, unknown>;
       /** The first subject's sources attached on FamilySearch when the project was
        *  made, as project_create stored them in the tree. */
+      boundedRequest?: string;
       attachedSources?: { id: string; title: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
@@ -457,7 +467,7 @@ export type ProjectContextResult =
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (project_context runs with no project). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
+  | { ok: false; errors: string[]; reason?: "no_project"; boundedRequest?: string; buildId: string };
 
 function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
@@ -507,7 +517,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     // before answering must not surface a path error to a user who simply is
     // not in a project.
     if (e instanceof NoProjectError) {
-      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_MESSAGE_CONTEXT], buildId };
+      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_MESSAGE_CONTEXT], boundedRequest: BOUNDED_REQUEST_RULE, buildId };
     }
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
@@ -757,6 +767,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     buildId,
     projectStatus,
     objective,
+    boundedRequest: BOUNDED_REQUEST_RULE,
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
@@ -931,7 +942,8 @@ export const projectContextSchema = {
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +
     "searched as its searchAs; attachedSources [{id, title}] are that subject's sources attached on " +
-    "FamilySearch when the project was made. subjectPersonIds are the project's subject " +
+    "FamilySearch when the project was made. boundedRequest, on this answer and on a no_project one, is " +
+    "the rule for routing a researcher message that asks for one thing. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +

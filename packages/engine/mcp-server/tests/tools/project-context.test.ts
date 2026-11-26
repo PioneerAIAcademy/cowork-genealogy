@@ -4,7 +4,13 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { FIRST_QUESTION_NEXT_STEP, firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import {
+  BOUNDED_REQUEST_RULE,
+  FIRST_QUESTION_NEXT_STEP,
+  firstQuestionNextStep,
+  projectContext,
+  projectContextSchema,
+} from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -459,6 +465,7 @@ describe("project_context", () => {
       buildId: readBuildInfo().version,
       projectStatus: "active",
       objective: "Fresh",
+      boundedRequest: BOUNDED_REQUEST_RULE,
       // Absent here: an optional section counts 0, a required one is null
       // because research_query would refuse it.
       sectionCounts: Object.fromEntries(
@@ -587,7 +594,7 @@ describe("project_context", () => {
       // waitingPages and uploadUrl need a staged page and a hosted store; their own tests show them.
       expect(keys(r)).toEqual(
         [
-          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
+          "ok", "buildId", "projectStatus", "objective", "boundedRequest", "subjectPersonIds", "subject", "attachedSources", "narrationGuidance", "subscriptions",
           "openQuestions", "owedFindings", "questionStatuses", "persons", "sources", "localities", "nationalCollections", "awaitingUser",
           "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
           "unregisteredDisagreementCount", "uploads", "uploadsAre",
@@ -1135,6 +1142,44 @@ describe("project_context", () => {
       expect(none.ok).toBe(false);
       if (!none.ok) expect(none.reason).toBe("no_project");
       expect(none.buildId).toBe(expected);
+    });
+  });
+
+  // The router reads this answer just before it routes, so the bounded-request rule rides
+  // here, on the project answer and on the no-project one a new folder gets.
+  describe("boundedRequest", () => {
+    it("rides on a project's answer and on a folder with no project, not on a broken one", async () => {
+      await writeProject({ project: { status: "active" }, questions: [], sources: [], assertions: [] }, { persons: [] });
+      const populated = await projectContext({ projectPath: dir }, LOCAL);
+      expect(populated.ok).toBe(true);
+      if (populated.ok) expect(populated.boundedRequest).toBe(BOUNDED_REQUEST_RULE);
+
+      await rm(join(dir, "tree.gedcomx.json")); // broken project: one file of two
+      const broken = await projectContext({ projectPath: dir }, LOCAL);
+      expect(broken.ok).toBe(false);
+      if (!broken.ok) expect(broken.boundedRequest).toBeUndefined();
+
+      await rm(join(dir, "research.json")); // not a project at all
+      const none = await projectContext({ projectPath: dir }, LOCAL);
+      expect(none.ok).toBe(false);
+      if (!none.ok) {
+        expect(none.reason).toBe("no_project");
+        expect(none.boundedRequest).toBe(BOUNDED_REQUEST_RULE);
+      }
+    });
+
+    it("names the record's owner, the step a bounded turn never runs, and the attached-record read", () => {
+      expect(BOUNDED_REQUEST_RULE).toMatch(/^For the research router only; an agent it spawned ignores this and does its own task\. /);
+      expect(BOUNDED_REQUEST_RULE).toContain("after init-project when there is no project yet (search-records for a record)");
+      expect(BOUNDED_REQUEST_RULE).toContain("the turn never runs question-selection");
+      expect(BOUNDED_REQUEST_RULE).toContain('the reply ends on that agent\'s "Continue with …?" line');
+      expect(BOUNDED_REQUEST_RULE).toContain(
+        "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
+      );
+    });
+
+    it("leaves a research plan out of the list, since a plan on a new folder stops after init-project", () => {
+      expect(BOUNDED_REQUEST_RULE).not.toMatch(/\bplan\b/);
     });
   });
 

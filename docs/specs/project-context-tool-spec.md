@@ -73,6 +73,7 @@ is a key this rule can drop:
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
+  boundedRequest: string,                // BOUNDED_REQUEST_RULE, the same sentence on every answer (below)
   subjectPersonIds?: string[],           // research.project.subject_person_ids
   familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
@@ -728,6 +729,27 @@ request and the turn that created the project are not that turn. Why a tool says
 it: on Haiku 5.5 low the router read "no questions" and went straight to
 question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
 
+`boundedRequest` (`BOUNDED_REQUEST_RULE`) is one fixed sentence on every project
+answer and on the `no_project` answer, addressed to the router as the `nextStep`
+above is. It says what a bounded request is by example: one record (a birth,
+marriage, death or census entry, or when or where one event happened), a
+transcription, a letter, a review of attached sources. Its owning agent runs in the
+same turn, after init-project in a folder with no project, search-records for a
+record, and that turn never runs question-selection. A requested record that
+`attachedSources` already lists is read with `person_read` and named, not searched
+for. A research plan is left out: one asked for in a folder with no project ends
+after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says
+it: on Haiku 5.5 low the router sent a record ask to question-selection, on a
+project with no question and after init-project in a new folder, searched for a
+death index the subject already had, and ran a research job after a source review
+it was asked for with a plan; the single-ask panel's `find-death-john-mcnerny`,
+`marriage-victoriana-vasquez`, `death-attached-susan-cornwell` and
+`evaluate-sources-moses-watrous` (2026-11-26). The no-project answer carries it
+because that is the only answer the router reads before init-project in a new
+folder. The same rule in the routing note on the researcher's message left two of
+those three record asks on their old route, one run each. Every caller sees the
+sentence; an agent ignores it as it ignores `nextStep`.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
@@ -1159,7 +1181,7 @@ untouched.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, boundedRequest, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
 | `include` is not an array, or names a value outside `"persons"`, `"sources"`, `"status"` and `"historicalContext"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
