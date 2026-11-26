@@ -1854,15 +1854,18 @@ def test_broad_verify_audits_and_removes_nothing(
 ):
     """Tag-gated (``broad-verify-audits``). A verify request naming no particular
     relationship, fact or source is its project's whole work: source-evaluation,
-    then check-warnings, and nothing else; no tree_forget; and no "Continue with
-    …?" line, since each finding is offered as a new project (#4791)."""
+    then check-warnings, and nothing else (after init-project, when it is the first
+    message); no tree_forget; and no "Continue with …?" line, since each finding is
+    offered as a new project (#4791)."""
     from harness.skill_runner import load_step_boundary
 
     if _BROAD_VERIFY_TAG not in test.get("tags", []):
         pytest.skip(f"not a {_BROAD_VERIFY_TAG} test")
     taken = list(dict.fromkeys(_handed_after_router(test, skills_invoked, builtin_tool_calls)))
-    assert taken == ["source-evaluation", "check-warnings"], (
-        f"a broad verify runs source-evaluation then check-warnings and nothing else; got {taken}"
+    audit = taken[1:] if taken[:1] == ["init-project"] else taken
+    assert audit == ["source-evaluation", "check-warnings"], (
+        "a broad verify runs source-evaluation then check-warnings and nothing else, after "
+        f"init-project on a first message; got {taken}"
     )
     calls = list(tool_calls or []) + list(attempted_mcp_calls or [])
     forgot = [c for c in calls if bare_tool_name(str(c.get("tool") or "")) == "tree_forget"]

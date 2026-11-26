@@ -25,8 +25,7 @@
     "Naming a record that would advance the tier is required, and it must be a reasonably obtainable one. A privacy-restricted or sealed record (a recent vital record under embargo) does not count.",
     "Saying nothing at all about advancing the tier is also a fail: the tier is below `proved` and named searches remain.",
     "Do not charge the agent on the TIER here. That `probable` is correct on this scenario is `ut_proof_conclusion_d7g`'s subject; this test is only about where it routes.",
-    "DATES — the 1832/1833 discrepancy is real fixture content, not an internal inconsistency to charge.",
-    "TREE ENCODING is not this test's subject; ut_proof_conclusion_d7g grades it on the same scenario. The concluded parentage's ParentChild links R28 (I1 -> LR9N-VGQ) and R29 (I2 -> LR9N-VGQ) are on the tree before the run, each carrying source ref S1, and a parentage concludes no fact value to mark primary. A run that confirms both links and writes nothing else has the conclusion on the tree; setting their subtype is also fine. Score Tree encoding null here, as on d7g."
+    "DATES — the 1832/1833 discrepancy is real fixture content, not an internal inconsistency to charge."
   ],
   "judge_reads_files": true,
   "execution": {

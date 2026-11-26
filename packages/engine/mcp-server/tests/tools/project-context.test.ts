@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { FIRST_QUESTION_NEXT_STEP, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
+import { FIRST_QUESTION_NEXT_STEP, firstQuestionNextStep, projectContext, projectContextSchema } from "../../src/tools/project-context.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
 import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
 import {
@@ -147,6 +147,24 @@ describe("project_context", () => {
     } else {
       expect(r.nextStep).toBeUndefined();
     }
+  });
+
+  it("quotes the opening verify request in the first question's nextStep (#4791)", async () => {
+    await writeProject(
+      {
+        project: {
+          id: "rp_001", objective: "Verify his parents.", status: "active", created: "2026-01-01",
+          updated: "2026-01-01", subject_person_ids: ["I1"], verify_request: "Verify his parents.",
+        },
+      },
+      { persons: [{ id: "I1", gender: "Male", names: [{ given: "Anton", surname: "Vogt" }] }], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.nextStep).toBe(firstQuestionNextStep("Verify his parents."));
+    expect(r.nextStep).toContain('The researcher asked, when the project was created: "Verify his parents."');
+    expect(r.nextStep).toMatch(/First Skill\("forget-and-rederive"\) with mode: verify/);
+    expect(firstQuestionNextStep(undefined)).toBe(FIRST_QUESTION_NEXT_STEP);
   });
 
   it("gives each person its one-hop family from the tree's edges (#2537)", async () => {

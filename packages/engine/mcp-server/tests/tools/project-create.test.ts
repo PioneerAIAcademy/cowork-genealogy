@@ -677,6 +677,24 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(result.subjectSources).toEqual(attachedSources(tree, "I1"));
   });
 
+  it("stores verifyRequest as project.verify_request, named as the objective is, and omits a blank one (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "  Verify LZNY-BRF's parents. " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project.verify_request).toBe("Verify Patrick Flynn's parents.");
+  });
+
+  it("writes no verify_request when verifyRequest is blank (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "   " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project).not.toHaveProperty("verify_request");
+  });
+
   it("never trims the subject's attached sources, even past the summary cap (#4791)", async () => {
     const read = structuredClone(FAMILY);
     const extra = Array.from({ length: 40 }, (_, i) => ({

@@ -55,6 +55,13 @@ Ask one thing in the opening turn, alongside the person ID request: the research
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
+**A request to verify.** When the message asks to verify one particular relationship, fact
+or source of the subject, or says one is wrong ("verify his parents", "his birth date is
+wrong", "the 1850 census isn't him"), pass that sentence, in the user's words, as
+`project_create`'s `verifyRequest`. When it asks to verify his facts, relationships or
+sources in general, naming none, pass no `verifyRequest`; add the caller line
+`Verify request: broad`.
+
 **No ID, no project.** Research on a person needs a FamilySearch person ID. If the message carries none, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
 
 ## Holdings the researcher mentions
@@ -147,9 +154,7 @@ Report what the import did, the subject's vitals and relatives, and nothing else
 - One sentence on what comes next, defining "objective" and "research
   question" on first use: "Your objective is the overall goal — <restate it>.
   The next step is choosing the first research question: the single fact we go
-  after first." Then, exactly: "What do you want to verify or research? Is
-  anything here you think is wrong, or do you know or have anything that isn't
-  here?"
+  after first." Ask the researcher nothing.
 
 ## Example
 
@@ -184,6 +189,8 @@ caller-facing lines, in this order:
 
 - the project folder, and the persons, relationships and sources `project_create` reported
 - the objective as `project_create` returned it, and whether it was defaulted
+- `Verify request: broad`, when the message asked to verify his facts, relationships or
+  sources in general
 
 ### `summary_for_user`
 
@@ -195,8 +202,8 @@ or field name**:
    genealogy. No identifiers, file names, tool names or field names.
 2. The subject's sources, one line each as `S<n>: <title>`, when `subjectSources`
    has any.
-3. One paragraph: what happens next, defining "objective" and "research
-   question" as Step 4 says — never which step, skill or tool does it — then
-   the two questions Step 4 gives.
+3. One sentence: what happens next, defining "objective" and "research
+   question" as Step 4 says — never which step, skill or tool does it. No
+   question to the researcher.
 
 The caller prints everything after that `---` verbatim and nothing above it.

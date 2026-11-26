@@ -274,3 +274,7 @@ def test_broad_verify_passes_and_fails():
         _broad(calls=[_mcp("tree_forget", forget=[{"selector": "parents-of", "personId": "I1"}], cleanSlate=True)])
     with pytest.raises(AssertionError, match="no \"Continue with"):
         _broad(text="Two findings.\n\nContinue with `choosing the question`?")
+    # On a first message the audit follows init-project in the same turn.
+    _broad(names=("init-project", "source-evaluation", "check-warnings"))
+    with pytest.raises(AssertionError, match="nothing else"):
+        _broad(names=("init-project",))

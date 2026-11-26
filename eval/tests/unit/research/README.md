@@ -338,8 +338,10 @@ reply to question-selection as `researcherReply:`; `ut_research_pl2` and
 and relay both summaries in full; `ut_research_nm1`
 (`name-without-pid-asks-for-id.json`, `no-name-search`) makes no `person_search`
 call for a person named with no FamilySearch ID; `ut_research_vf1`
-(`verify-first-message-is-a-job.json`, `setup-stop`) sends a first message asking
-to verify a person's facts and relationships to research, not source-evaluation;
+(`verify-first-message-audits.json`, `broad-verify-audits`) sends a first message asking
+to verify a person's facts and relationships, and gets setup then the broad audit in one turn;
+`ut_research_vq1` (`verify-request-forgets-on-continue.json`) runs the narrow verify
+from the opening request init-project recorded, on a bare "Continue.";
 `ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
 source-evaluation then check-warnings for a broad verify, removes nothing and offers
 each finding as a new project; and

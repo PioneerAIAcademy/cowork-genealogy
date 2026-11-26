@@ -174,7 +174,8 @@ entry says so.
     in one turn, removing nothing. The turn ends with no offer, and gives each finding as
     its own next project: a new project from the same person ID whose setup reply is the
     narrow request (lead, 2026-11-24: an audit, broad or narrow, is its own project, as a
-    chat is).
+    chat is). A first message that is itself a broad verify request is bounded: setup,
+    then the broad audit, in that one turn, ending on its findings (lead, 2026-11-26).
 
 ## Evidence
 

@@ -50,10 +50,11 @@ AGENT_NOTES = {
     ),
     "init-project": (
         "That was init-project's report. Relay its text after the final `---` word for word, "
-        "its source lines and its closing questions included, and end on the turn's closing "
-        "offer. Only when the researcher's message is a bounded request for anything but a "
-        "research plan (research/SKILL.md, \"Bounded request or job\") leave out its closing "
-        "paragraph, the next step and its questions, then deliver what was asked now, in this "
+        "its source lines included, then add exactly these two lines and nothing else: \"What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?\" "
+        "and \"Continue with `choosing the question`?\" Only when the researcher's message is a bounded request for anything but a "
+        "research plan (research/SKILL.md, \"Bounded request or job\"), or its return has a "
+        "`Verify request: broad` line (the broad audit is then what was asked), leave out its sentence "
+        "naming the next step, add neither line, and deliver what was asked now, in this "
         "turn, as research/SKILL.md says."
     ),
 }

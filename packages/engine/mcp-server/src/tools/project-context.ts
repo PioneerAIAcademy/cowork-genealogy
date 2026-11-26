@@ -359,6 +359,24 @@ export const FIRST_QUESTION_NEXT_STEP =
   "none is the broad audit instead. Then, for each id in subjectPersonIds, extraction_append({ " +
   "projectPath, personId }) and timeline_build({ projectPath, personId }); then question-selection.";
 
+/**
+ * The first question's `nextStep` (#4791). With a `verify_request` the researcher
+ * made when the project was created, the forget runs on it unless their reply names
+ * something else, so a bare "Continue." still clears what they doubted.
+ */
+export function firstQuestionNextStep(verifyRequest: string | undefined): string {
+  if (!verifyRequest) return FIRST_QUESTION_NEXT_STEP;
+  return (
+    "For the research router only; an agent it spawned ignores this and does its own task. " +
+    "No question yet. Not on a bounded request, which gets only what it asked for, and not in the turn " +
+    "that created the project, which ends on init-project's report. The researcher asked, when the " +
+    `project was created: "${verifyRequest}". First Skill(\"forget-and-rederive\") with mode: verify ` +
+    "and those words verbatim, or the reply verbatim when it names something else to verify. Then, for " +
+    "each id in subjectPersonIds, extraction_append({ projectPath, personId }) and timeline_build({ " +
+    "projectPath, personId }); then question-selection, with that text as researcherReply:."
+  );
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
@@ -383,8 +401,8 @@ export type ProjectContextResult =
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
-      /** FIRST_QUESTION_NEXT_STEP on a project with a subject, no question and a
-       *  status other than completed; absent otherwise. */
+      /** firstQuestionNextStep(project.verify_request) on a project with a subject,
+       *  no question and a status other than completed; absent otherwise. */
       nextStep?: string;
       /** research.researcher_profile.subscriptions, strings only. */
       subscriptions?: string[];
@@ -752,7 +770,13 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     ...(typeof subjectId === "string" &&
     !(Array.isArray(research?.questions) && research.questions.length > 0) &&
     projectStatus !== "completed"
-      ? { nextStep: FIRST_QUESTION_NEXT_STEP }
+      ? {
+          nextStep: firstQuestionNextStep(
+            typeof research?.project?.verify_request === "string" && research.project.verify_request.trim() !== ""
+              ? research.project.verify_request
+              : undefined,
+          ),
+        }
       : {}),
     subscriptions: (Array.isArray(research?.researcher_profile?.subscriptions)
       ? research.researcher_profile.subscriptions

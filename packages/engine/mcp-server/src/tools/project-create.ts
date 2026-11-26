@@ -155,6 +155,9 @@ export interface ProjectCreateInput {
   projectPath: string;
   objective: string;
   title?: string;
+  /** The researcher's request to verify one relationship, fact or source of the
+   *  subject, in their words: stored as `project.verify_request` (#4791). */
+  verifyRequest?: string;
   subjectPersonIds?: string[];
   /** The subject's FamilySearch person ID. Absent for an activity with no person
    *  in it (lead, 2026-11-19): the project is then seeded by `objective` alone,
@@ -493,6 +496,10 @@ export async function runProjectCreate(
     const ids = [...new Set([pid, outcome.resolvedId])];
     const storedObjective = nameForId(objective, ids, displayName(subject));
     const storedTitle = input.title ? nameForId(input.title, ids, displayName(subject)) : input.title;
+    const verifyRequest =
+      typeof input.verifyRequest === "string" && input.verifyRequest.trim() !== ""
+        ? nameForId(input.verifyRequest.trim(), ids, displayName(subject))
+        : undefined;
 
     const stamp = today();
     const research: Record<string, unknown> = {
@@ -500,6 +507,7 @@ export async function runProjectCreate(
         id: "rp_001",
         objective: storedObjective,
         ...(storedTitle ? { title: storedTitle } : {}),
+        ...(verifyRequest ? { verify_request: verifyRequest } : {}),
         subject_person_ids: subjectPersonIds,
         status: "active",
         created: stamp,
@@ -1003,6 +1011,15 @@ export const projectCreateSchema = {
         description:
           "Concise 3-6 word session name (e.g. \"KWCJ-RN4's parents\", stored as \"Patrick " +
           "Flynn's parents\"). A mention of the subject by ID is named as the objective's is.",
+      },
+      verifyRequest: {
+        type: "string",
+        description:
+          "With personId: the researcher's own words asking to verify one particular " +
+          "relationship, fact or source of the subject, or saying one is wrong (\"verify his " +
+          "parents\", \"his birth date is wrong\"). Stored as project.verify_request; the first " +
+          "question's turn removes that conclusion as a clean slate. Omit when the message names " +
+          "nothing in particular to verify.",
       },
       subjectPersonIds: {
         type: "array",

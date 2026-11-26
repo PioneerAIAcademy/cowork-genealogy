@@ -1955,8 +1955,11 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
       JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type: "init-project" }, tool_response: {} }),
       true,
     ).hookSpecificOutput.additionalContext;
-    expect(note).toMatch(/^That was init-project's report\. Relay its text after the final `---` word for word, its source lines and its closing questions included/);
+    expect(note).toMatch(/^That was init-project's report\. Relay its text after the final `---` word for word, its source lines included/);
+    expect(note).toMatch(/then add exactly these two lines and nothing else: "What do you want to verify or research\?/);
+    expect(note).toMatch(/and "Continue with `choosing the question`\?"/);
     expect(note).toMatch(/Only when the researcher's message is a bounded request/);
+    expect(note).toMatch(/`Verify request: broad` line \(the broad audit is then what was asked\)/);
   });
 
   it.each(["locality-guide", "genealogy-research:locality-guide"])(

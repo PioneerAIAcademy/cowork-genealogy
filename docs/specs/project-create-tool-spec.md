@@ -111,6 +111,7 @@ and in this build's place retry.
 | `projectPath` | yes | Absolute path to the project directory |
 | `objective` | to create | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
 | `title` | no | Omitted from the document when absent, never written empty. Named as `objective` is |
+| `verifyRequest` | no | With `personId`: the researcher's words asking to verify one particular relationship, fact or source of the subject, or saying one is wrong. Stored trimmed as `project.verify_request`, named as `objective` is; omitted when absent or blank. `project_context`'s first-question `nextStep` quotes it |
 | `personId` | to create | A FamilySearch person ID, trimmed. This tool reads the person (needs a FamilySearch login) and builds the starting tree from the read |
 | `fillRelativeSources` | no | Tree person ids, the create's `relativeSourcesSkipped`. The one input valid on an existing project: it reads those relatives' attached sources into the tree and creates nothing ("Filling the relatives' sources" below). Taken with `projectPath` alone |
 | `subjectPersonIds` | no | FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read |

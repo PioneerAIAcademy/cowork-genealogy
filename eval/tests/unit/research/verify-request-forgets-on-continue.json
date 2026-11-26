@@ -1,44 +1,34 @@
 {
   "test": {
-    "id": "ut_research_vf1",
+    "id": "ut_research_vq1",
     "skill": "research",
-    "name": "A first message asking to verify a person's facts and relationships is a research job",
+    "name": "An opening request to verify the parents is honoured on a bare Continue",
     "type": "positive",
-    "description": "Issue #4791 (lead, 2026-11-24, from feedback #4761): a first message asking whether a person's facts, relationships and sources are correct went straight to source-evaluation, which audits attached sources and never tests a relationship. It is a research job: the research skill runs init-project alone and stops at setup, asking what to verify. init-project runs live on the Moreau fixture; source-evaluation is stubbed, so a spawn of it fails the hand-off check.",
+    "description": "Issue #4791 (lead, 2026-11-26): a first message asking to verify the subject's parents stops after setup; init-project recorded the request as project.verify_request. On \"Continue.\" the router runs forget-and-rederive in verify mode with those words (project_context's nextStep quotes them), then the baseline, then question-selection.",
     "tags": [
       "routing",
-      "routes-to:init-project",
-      "setup-stop"
+      "routes-to:forget-and-rederive",
+      "verify-forget-then-select"
     ]
   },
   "input": {
-    "user_message": "Verify whether the facts, relationships, and sources attached to Jean Baptiste Moreau (MRQ1-JBM) are correct.",
-    "scenario": "empty-folder-no-project"
+    "user_message": "/research You offered `choosing the question`. Continue.",
+    "scenario": "disputed-parents-verify-request"
   },
   "mcp_fixtures": [
-    "person-read-moreau-person-level-sources"
+    "tree-forget-vogt-parents-clean-slate",
+    "person-read-empty-any",
+    "tree-forget-vogt-parents-cleanslate-unsaid"
   ],
   "execution": {
     "max_turns": 40,
     "max_wall_clock_seconds": 900,
-    "run_agents": [
-      "init-project"
+    "run_skills": [
+      "forget-and-rederive"
     ],
     "stub_skills": [
       {
-        "skill": "source-evaluation",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "check-warnings",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
         "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
@@ -46,26 +36,30 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
         "skill": "search-records",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
-        "skill": "search-hints",
+        "skill": "record-structurer",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
-        "skill": "tree-survey",
+        "skill": "person-evidence",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
-        "skill": "forget-and-rederive",
+        "skill": "init-project",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
   },
   "judge_context": [
-    "A request to verify a person's facts and relationships is a research job, not an audit of the attached sources (lead, 2026-11-24). The hand-off to init-project alone, the source lines, the verify-or-research question and the closing \"Continue with `choosing the question`?\" line are checked by test_job_setup_stops_after_init_project. Do not re-grade them.",
-    "Grade the reply on what it tells the researcher: Jean Baptiste Moreau's birth and death as the tree gives them, his relatives by name, and his attached sources by title. Nothing is verified in this turn; that is correct.",
+    "The order forget-and-rederive (verify mode) -> extraction_append -> question-selection, the tree_forget arguments and the statedQuestion line are checked by test_verify_reply_forgets_then_selects. Do not re-grade them.",
+    "tree_forget is served from a fixture; the scenario files do not change, so Johann and Maria Vogt still show in the tree afterwards. question-selection is stubbed and writes nothing. Neither is a failure.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
   ],
   "judge_reads_files": true
