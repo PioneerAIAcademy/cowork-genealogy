@@ -1174,7 +1174,12 @@ describe("project_context", () => {
       expect(BOUNDED_REQUEST_RULE).toContain("the turn never runs question-selection");
       expect(BOUNDED_REQUEST_RULE).toContain('the reply ends on that agent\'s "Continue with …?" line');
       expect(BOUNDED_REQUEST_RULE).toContain(
-        "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
+        "A requested record that attachedSources already lists is not searched for: read it with person_read, and " +
+          "with record_read when it has a recordId, and name it.",
+      );
+      expect(BOUNDED_REQUEST_RULE).toContain(
+        "A children or siblings ask starts from what is attached: before any search, read each census in " +
+          "attachedSources that has a recordId with record_read({ projectPath, recordId })",
       );
     });
 

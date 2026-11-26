@@ -57,7 +57,11 @@ export const BOUNDED_REQUEST_RULE =
   "request. Its owning agent runs in this turn, after init-project when there is no project yet " +
   "(search-records for a record), the reply ends on that agent's \"Continue with …?\" line, and the " +
   "turn never runs question-selection. A requested record that " +
-  "attachedSources already lists is not searched for: read it with person_read and name it.";
+  "attachedSources already lists is not searched for: read it with person_read, and with record_read when it " +
+  "has a recordId, and name it. A children or " +
+  "siblings ask starts from what is attached: before any search, read each census in attachedSources that " +
+  "has a recordId with record_read({ projectPath, recordId }), name the household it shows, then hand " +
+  "search-records the rest.";
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
@@ -405,7 +409,7 @@ export type ProjectContextResult =
       boundedRequest: string;
       /** The first subject's sources attached on FamilySearch when the project was
        *  made, as project_create stored them in the tree. */
-      attachedSources?: { id: string; title: string }[];
+      attachedSources?: { id: string; title: string; recordId?: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
@@ -942,7 +946,7 @@ export const projectContextSchema = {
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +
-    "searched as its searchAs; attachedSources [{id, title}] are that subject's sources attached on " +
+    "searched as its searchAs; attachedSources [{id, title, recordId?}] are that subject's sources attached on " +
     "FamilySearch when the project was made. boundedRequest, on this answer and on a no_project one, is " +
     "the rule for routing a researcher message that asks for one thing. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +

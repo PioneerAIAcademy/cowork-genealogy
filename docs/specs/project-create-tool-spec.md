@@ -267,7 +267,7 @@ keeps every FamilySearch-supplied value; only the warning is new.
 has them), `objective` and `title` as stored, `relatives` (each other person's `id`, `name`, and `relationship` to
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `subjectSources` (the subject's
-attached sources as `{id, title}`, exactly as `project_context`'s `attachedSources` lists them,
+attached sources as `{id, title}`, as `project_context`'s `attachedSources` lists them less `recordId`,
 the Family Tree source left out, and never trimmed: init-project lists them as `S<n>: <title>` at
 the setup stop, which asks the researcher whether any is wrong), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the

@@ -716,7 +716,7 @@ function summarize(args: {
   const subject = tree.persons.find((p) => p.id === subjectId);
   const memories = outcome.result.sources.filter((s) => outcome.memoryKinds[s.id]);
   const lists = {
-    subjectSources: attachedSources(tree, subjectId),
+    subjectSources: attachedSources(tree, subjectId).map(({ id, title }) => ({ id, title })),
     relatives: tree.persons
       .filter((p) => p.id !== subjectId)
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),

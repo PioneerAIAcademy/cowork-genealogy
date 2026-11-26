@@ -666,7 +666,7 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(JSON.stringify(result).length).toBeLessThanOrEqual(2000);
   });
 
-  it("lists the subject's attached sources by tree id and title, without the Family Tree source (#4791)", async () => {
+  it("lists the subject's attached sources by tree id and title, without the Family Tree source or the record link (#4791)", async () => {
     const read = structuredClone(FAMILY);
     read.persons[0].sources = [{ ref: "MMM9-1QF" }];
     const result: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, read);
@@ -674,7 +674,8 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     const tree = await readJson("tree.gedcomx.json");
     const s2 = tree.sources.find((s: any) => s.title === src("MMM9-1QF").title);
     expect(result.subjectSources).toEqual([{ id: s2.id, title: s2.title }]);
-    expect(result.subjectSources).toEqual(attachedSources(tree, "I1"));
+    // project_context's attachedSources carries the record link; init-project's list does not need it.
+    expect(attachedSources(tree, "I1")).toEqual([{ id: s2.id, title: s2.title, recordId: "ark:/61903/1:1:JQ4M-2XS" }]);
   });
 
   it("stores verifyRequest as project.verify_request, named as the objective is, and omits a blank one (#4791)", async () => {
