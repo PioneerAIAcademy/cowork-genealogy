@@ -1027,6 +1027,7 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
 # are keyed per test id: which relatives are in play is the scenario's.
 _HOUSEHOLD_RELATIVE_PIDS_BY_TEST_ID = {
     "ut_research_plan_4gc": ("LQRZ-FVX", "KNSW-567", "94Z5-N1F"),
+    "ut_research_plan_4xb": ("LQRZ-FVX", "KNSW-567", "94Z5-N1F"),
 }
 
 

@@ -230,7 +230,7 @@ second, write last. The stored plans pick the mode, never the delegation's
 account of them: "every search is done" is true only where a `log` entry
 closes each item. While the active plan holds a `planned`/`in_progress`
 item, every mode but Review needs its warrant in the delegation — the item
-ids (Dispose), the researcher's strike/add words (Edit), the falsifying
+ids (Dispose), the researcher's strike/add words or a question asking who an unidentified person in a record or household is (Edit), the falsifying
 fact (Supersede); a fresh-plan order is not one, and lacking all three you
 Review, however firmly the delegation insists.
 
