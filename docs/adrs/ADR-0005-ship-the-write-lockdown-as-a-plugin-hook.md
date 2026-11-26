@@ -325,8 +325,9 @@ import. This replaces the 2026-10-21 amendment, under which the alpha ran on rou
 prose alone, "keep going" was one bounded turn, and no plugin step hook existed. "Keep
 going" itself is retired: it runs one step, like "Continue.". The hook is silent under
 `GENEALOGY_HOSTED_PLANE`, so `make hook-smoke`, which drives the hosted loader, cannot
-show it binds; only a live connector or Cowork session can, and none has been run yet
-(2026-11-24).
+show it binds; only a live connector or Cowork session can. Two claude.ai connector
+sittings (2026-11-25, 2026-11-26) showed it binding, recorded in
+research-step-mode-spec.md's enforcement table.
 
 **What the Cowork hook was built on** (lead, 2026-10-19: "Please write them into
 ADR-0005 with today's date, so they're there if we build the Cowork hook later"). The
