@@ -1126,7 +1126,7 @@ malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 80
 	$(MALACHI) up
 
 .PHONY: malachi-check
-malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+malachi-check: ## Health, routes, deployed sha, disk, and tool calls signed in as the env file's CHECK_EMAIL: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
 	$(MALACHI) check
 
 .PHONY: malachi-logs
