@@ -440,13 +440,36 @@ cmd_check() {
     check_reach pop-stats "${pop:-$DEFAULT_POP_STATS_URL}/openapi.json"
   fi
   [ -z "${PUBLIC:-}" ] || check_public "$edge"
+  check_signed_in
   [ "$FAILED" = 0 ] || die "check failed"
   printf 'malachi: check passed\n'
+}
+
+# Everything above stops at the door. This calls tools through it as CHECK_EMAIL's user,
+# on the stack's own network, so a build that answers and refuses correctly but fails a
+# signed-in call does not pass (signed_in_check.py).
+check_signed_in() {
+  local email
+  email=$(env_get CHECK_EMAIL)
+  if [ -z "$email" ]; then
+    skip "signed-in tool calls: CHECK_EMAIL is blank in $ENV_FILE"
+    return
+  fi
+  compose run --rm --no-deps -T -e PYTHONPATH=/app \
+    -v "$HERE/signed_in_check.py:/opt/malachi/signed_in_check.py:ro" \
+    web python /opt/malachi/signed_in_check.py --email "$email" --url http://tools:8787/mcp </dev/null ||
+    bad "signed-in tool calls: not all passed, see the lines above"
 }
 
 cmd_check_http() {
   [ -n "${1:-}" ] || die "usage: malachi.sh check-http <base url>"
   check_http "$1"
+  [ "$FAILED" = 0 ] || die "check failed"
+}
+
+cmd_check_signed_in() {
+  load_env
+  check_signed_in
   [ "$FAILED" = 0 ] || die "check failed"
 }
 
@@ -680,6 +703,7 @@ case "${1:-}" in
   check) cmd_check ;;
   check-http) cmd_check_http "${2:-}" ;;
   check-public) cmd_check_public ;;
+  check-signed-in) cmd_check_signed_in ;;
   logs) cmd_logs ;;
   backup) cmd_backup ;;
   restore-check) cmd_restore_check ;;
@@ -691,5 +715,5 @@ case "${1:-}" in
   prune) cmd_prune ;;
   down) cmd_down ;;
   wipe) cmd_wipe ;;
-  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|block-user|delete-user|prune|down|wipe" ;;
+  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|check-signed-in|logs|backup|restore-check|restore|export|openrouter|block-user|delete-user|prune|down|wipe" ;;
 esac

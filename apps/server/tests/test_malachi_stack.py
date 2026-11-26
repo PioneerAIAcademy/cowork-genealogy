@@ -468,6 +468,7 @@ def test_the_template_carries_no_secret_and_no_port():
     for key in ("POSTGRES_PASSWORD", "DML_PASSWORD", "MINIO_ROOT_PASSWORD", "SESSION_SECRET", "FS_TOKEN_ENC_KEY",
                 "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "FS_REDIRECT_URI",
                 "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY", "OPENROUTER_SEED_AT_CONNECT",
+                "CHECK_EMAIL",
                 "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         assert values[key] == "", key
     assert values["UPLOADS_ENABLED"] == "false"
@@ -1216,6 +1217,114 @@ def test_malachi_openrouter_fails_when_the_seed_does(first_run):
     fake = Path(fake_env["PATH"].split(os.pathsep)[0]) / "docker"
     fake.write_text("#!/bin/sh\ncat >/dev/null\nexit 1\n", encoding="utf-8")
     assert _run(["openrouter"], {**fake_env, "EMAIL": "a@example.test"}).returncode != 0
+
+
+# ── signed-in tool calls (signed_in_check.py; its pg half is test_malachi_signed_in_check_pg.py) ──
+
+
+@pytest.fixture
+def check_module():
+    sys.path.insert(0, str(SERVER / "proto"))
+    sys.path.insert(0, str(MALACHI))
+    try:
+        import signed_in_check
+        yield signed_in_check
+    finally:
+        sys.path.remove(str(MALACHI))
+        sys.path.remove(str(SERVER / "proto"))
+
+
+def _check_main(module: Any, monkeypatch: pytest.MonkeyPatch, lines: list[tuple[bool, str]]) -> tuple[int, list[tuple]]:
+    calls: list[tuple] = []
+
+    def run(dsn: str, url: str, email: str) -> list[tuple[bool, str]]:
+        calls.append((dsn, url, email))
+        return lines
+
+    monkeypatch.setenv("PG_DSN", "unused")
+    monkeypatch.setattr(module, "run", run)
+    return module.main(["--email", "a@example.test", "--url", "http://tools:8787/mcp"]), calls
+
+
+def test_the_signed_in_check_prints_malachi_shs_lines_and_passes_when_every_call_did(check_module, monkeypatch, capsys):
+    status, calls = _check_main(check_module, monkeypatch, [(True, "signed in: project_list (2 projects)"),
+                                                           (True, "signed in: auth_status (FamilySearch session live)")])
+    assert status == 0 and calls == [("unused", "http://tools:8787/mcp", "a@example.test")]
+    assert capsys.readouterr().out == ("  ok    signed in: project_list (2 projects)\n"
+                                       "  ok    signed in: auth_status (FamilySearch session live)\n")
+
+
+def test_one_failed_signed_in_call_fails_the_check_and_is_named(check_module, monkeypatch, capsys):
+    status, _calls = _check_main(check_module, monkeypatch, [(True, "signed in: project_list (2 projects)"),
+                                                            (False, "signed in: auth_status answered an error: boom")])
+    assert status == 1
+    assert "  FAIL  signed in: auth_status answered an error: boom\n" in capsys.readouterr().out
+
+
+def test_a_tool_error_fails_its_line_and_quotes_what_the_tool_said(check_module):
+    class Block:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    class Result:
+        def __init__(self, text: str, is_error: bool) -> None:
+            self.content, self.isError = [Block(text)], is_error
+
+    failed = check_module.line("project_context", Result('{"error":"The matcher setting must be ..."}', True), "(opens)")
+    assert failed == (False, 'signed in: project_context answered an error: {"error":"The matcher setting must be ..."}')
+    assert check_module.line("project_list", Result('{"projects":[]}', False), "(0 projects)") == \
+        (True, "signed in: project_list (0 projects)")
+    long = check_module.line("auth_status", Result("x" * 5000, True), "")
+    assert len(long[1]) < 400, "an error is quoted, not dumped"
+
+
+def test_the_signed_in_lines_use_the_scripts_own_prefixes():
+    """main() prints what ok() and bad() print, so the check's output reads as one list."""
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    assert "ok() { printf '  ok    %s\\n' \"$*\"; }" in script
+    assert "printf '  FAIL  %s\\n' \"$*\"" in script
+
+
+def test_the_full_check_ends_with_the_signed_in_calls_and_every_deploy_runs_it():
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    body = script.split("\ncmd_check() {\n", 1)[1].split("\n}\n", 1)[0]
+    assert body.rstrip().splitlines()[-3].strip() == "check_signed_in"
+    makefile = (SERVER.parents[1] / "Makefile").read_text(encoding="utf-8")
+    deploy = makefile.split("\nmalachi-deploy:", 1)[1].split("\n\n", 1)[0]
+    assert "$(MAKE) malachi-check" in deploy
+
+
+@needs_bash
+def test_with_no_check_email_the_signed_in_calls_are_skipped_out_loud(first_run):
+    path, env = first_run
+    result = _run(["check-signed-in"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 0, result.stderr
+    assert "skip  signed-in tool calls: CHECK_EMAIL is blank" in result.stdout
+    assert "signed_in_check.py" not in result.stdout
+
+
+@needs_bash
+def test_with_a_check_email_the_calls_run_in_the_web_image_against_the_tool_server(first_run):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("CHECK_EMAIL=\n", "CHECK_EMAIL=a@example.test\n"),
+                    encoding="utf-8")
+    result = _run(["check-signed-in"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 0, result.stderr
+    assert "signed_in_check.py --email a@example.test --url http://tools:8787/mcp" in result.stdout
+    assert " web python " in result.stdout and "skip" not in result.stdout
+
+
+@needs_bash
+def test_a_signed_in_check_that_fails_fails_the_whole_check(first_run):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("CHECK_EMAIL=\n", "CHECK_EMAIL=a@example.test\n"),
+                    encoding="utf-8")
+    fake_env = _with_fake_docker(path.parent, env)
+    fake = Path(fake_env["PATH"].split(os.pathsep)[0]) / "docker"
+    fake.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    result = _run(["check-signed-in"], fake_env)
+    assert result.returncode == 1
+    assert "FAIL  signed-in tool calls: not all passed" in result.stdout
 
 
 # ── project_export ───────────────────────────────────────────────────────────

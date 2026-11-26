@@ -12,6 +12,7 @@ MinIO and an nginx edge. There is no worker, queue or shim.
 | `dml_role.py` | Creates the role web and tools connect as. Runs in the `migrate` one-shot. |
 | `project_export.py` | `make malachi-export`. Runs in the web image. |
 | `openrouter_seed.py` | `make malachi-openrouter`. Runs in the web image. |
+| `signed_in_check.py` | The signed-in tool calls at the end of `make malachi-check`. Runs in the web image. |
 | `user_admin.py` | `make beta-block-user` and `make beta-delete-user`. Runs in the web image. |
 | `rehearsal.sh` | `make malachi-rehearsal`: all of this on a Mac, under its own name. |
 
@@ -91,7 +92,7 @@ Only a new row is seeded. An existing user's key is never written at sign-in.
 
 | Target | What it does |
 |---|---|
-| `make malachi-check` | Health, routes, the deployed sha and disk. `BASE_URL=` points it elsewhere. |
+| `make malachi-check` | Health, routes, the deployed sha and disk, then tool calls signed in as `CHECK_EMAIL`. `BASE_URL=` points it elsewhere. |
 | `make malachi-logs SERVICE=web` | The last 200 lines. `TAIL=`, and `FOLLOW=1` to follow. |
 | `make malachi-deploy REF=<sha>` | Fetch, check out detached, `malachi-up`, `malachi-check`. Needs a clean tree and a sha, not a branch name. |
 | `make malachi-backup` | `pg_dump` and a mirror of MinIO to `DATA_DIR/backups/<UTC>/`, with the stack up. Keeps the newest `KEEP` (14), each a full copy. Under 14 needs `CONFIRM=yes`: pruning runs before any restore check. |
@@ -102,6 +103,8 @@ Only a new row is seeded. An existing user's key is never written at sign-in.
 | `make beta-delete-user ACCOUNT= CODE=` | Checks the deletion code, then prints the account, its projects and what would be deleted. `CONFIRM=yes` deletes. See below. |
 | `make malachi-prune` | Removes this stack's superseded images, and build cache older than a week. Build cache has no owner, so that half reaches everyone on the host. |
 | `make malachi-down` | Stops the stack and keeps the data. |
+
+**Signed-in tool calls.** Everything else `make malachi-check` does stops at the door, so a build can pass it and still fail every signed-in call. Set `CHECK_EMAIL` in the env file to a user who has connected from Claude once. The check then writes a two-minute connector token for them, calls `project_list`, `auth_status` and `project_context` on the tool server with it, and deletes it. `make malachi-deploy` ends with the check, so every deploy runs these calls. Blank, it prints `skip`. It runs no search, ranking or page read: each needs a FamilySearch session, which only the user can renew, and each writes to a project. Run one ranked record search in Claude after a deploy for those.
 
 **Roll back** with `make malachi-deploy REF=<previous sha>`. A migration is not undone, and an
 older build is fine on a newer schema.
