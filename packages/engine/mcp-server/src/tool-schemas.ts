@@ -22,7 +22,7 @@ import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
 import { localitySurveySchema } from "./tools/locality-survey.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
-import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
+import { imageTranscribeToolSchema } from "./tools/image-transcribe-mcp.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";

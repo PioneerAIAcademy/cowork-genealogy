@@ -1222,6 +1222,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.resume is None and opts.session_id is None
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1", "auto-memory off; \"1\" is OFF, \"0\" would force it ON"
     assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
@@ -1316,6 +1317,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
     off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
     assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
@@ -6648,3 +6650,184 @@ def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
     assert "CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END" in sql
     assert "COALESCE(mode, %s)" in sql
     assert params == ("init-project", "search-records", "step", "t1")
+
+
+# ── the host posts each new search link (issue #4660) ─────────────────────────────────
+#
+# The worker's arm of `continue_policy.hand_off_texts`; the alpha's, and the trigger's
+# edges, are in `test_hand_off_links.py`. Real SDK messages run through the worker's own
+# `map_message` loop; a callable in the stream is the subagent's write landing between
+# its Agent call and the call's result.
+
+_LINK_URL = "https://www.findagrave.com/memorial/search?firstname=Thomas&lastname=Hagell_x"
+
+
+def _link_hand_off(log_id: str, url: str = _LINK_URL) -> dict:
+    return {"id": log_id, "tool": "external_site", "outcome": "partial", "plan_item_id": "pli_001",
+            "external_site": {"site": "findagrave", "url_generated": url, "capture_received": False}}
+
+
+class _ScriptedClient(FakeClient):
+    async def receive_response(self):
+        for m in self.messages:
+            if isinstance(m, ToolCall):
+                await self._fire_pretool(m)
+                continue
+            if callable(m):
+                m()
+                continue
+            yield m
+
+
+def _agent_use(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolUseBlock
+    return AssistantMessage(content=[ToolUseBlock(id=use_id, name="Agent",
+                                                  input={"subagent_type": "search-external-sites"})], model="m")
+
+
+def _agent_result(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolResultBlock, UserMessage
+    return UserMessage(content=[ToolResultBlock(tool_use_id=use_id, content="the agent's report")])
+
+
+def _run_links(turn_env, monkeypatch, research: dict, script: list) -> tuple[list[str], list[dict]]:
+    reads: list[dict] = []
+
+    def read(conn, project_id):
+        reads.append(json.loads(json.dumps(research)))
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    turn_env["client"] = _ScriptedClient(script, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    return _text_events(turn_env["conn"]), reads
+
+
+def _links_only(texts: list[str]) -> list[str]:
+    return [t for t in texts if t.startswith("Search to run")]
+
+
+def test_the_worker_posts_a_link_its_delegation_opened(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result(), _text("The probate file turned up."), _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)], texts
+    assert texts.index(hand_off_link_text(_LINK_URL)) < texts.index("The probate file turned up."), (
+        "posted at the agent's result, before the model's own words")
+
+
+def test_the_worker_does_not_post_a_link_open_before_the_turn(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(), _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
+def test_a_worker_turn_with_no_delegation_reads_only_at_the_close(turn_env, monkeypatch):
+    """The worker's rule (COMPLETED_LABELLED_SQL): no turn-start read. The close's one read
+    is the only one."""
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [_init(), _text("Hello."), _result()])
+    assert len(reads) == 1
+    assert _links_only(texts) == []
+
+
+def test_a_delegation_that_never_returned_posts_its_link_at_the_close(turn_env, monkeypatch):
+    """The search agent's result never came back (the patron's Stop is one way), but its
+    link was logged: the close's read posts it, and nothing posts it twice."""
+    research = {"project": {"status": "active"}, "log": []}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert len(reads) == 2, "the seed and the close; the sweep reuses the close's read"
+
+
+def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(turn_env, monkeypatch):
+    """The redelivery seeds afresh and would read this attempt's link as already open, so
+    the attempt posts it before raising GrantLockLost."""
+    research = {"project": {"status": "active"}, "log": []}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    turn_env["lock_held"] = lambda asked: asked < 2
+    turn_env["client"] = _ScriptedClient([
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        ToolCall(), ToolCall(), _result(num_turns=2),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(worker.GrantLockLost):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(_text_events(turn_env["conn"])) == [hand_off_link_text(_LINK_URL)]
+
+
+def test_a_worker_seed_that_raises_is_not_retried_by_a_later_call(turn_env, monkeypatch):
+    """/code-review round 3: the first delegation's pretool read raises (not a store error),
+    so its seed never runs. Left unseeded, the second delegation's pretool would seed after
+    the first agent logged log_041, and that link would never be posted. It seeds empty."""
+    from app.agent.continue_policy import hand_off_link_text
+    url_b = "https://www.ancestry.com/search/?name=Thomas_Hagell"
+    research = {"project": {"status": "active"}, "log": []}
+    calls = {"n": 0}
+
+    def read(conn, project_id):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ValueError("a malformed document")
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    delegate = {"subagent_type": "search-external-sites"}
+    turn_env["client"] = _ScriptedClient([
+        _init(), ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s1"),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result("toolu_s1"),
+        ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s2"),
+        lambda: research["log"].append(_link_hand_off("log_045", url_b)),
+        _agent_result("toolu_s2"), _result(num_turns=3),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert _links_only(_text_events(turn_env["conn"])) == [
+        hand_off_link_text(_LINK_URL), hand_off_link_text(url_b)]
+
+
+def test_a_status_reading_that_raises_after_a_good_read_keeps_the_seed(turn_env, monkeypatch):
+    """Fresh-session review: a proof-conclusion delegation wants both the seed and the
+    status reading from one read. When the read succeeds and the status reading raises, the
+    turn keeps its real seed, so a link open before the turn is not posted again."""
+    def raises(research):
+        raise AttributeError("'str' object has no attribute 'get'")
+
+    monkeypatch.setattr(worker, "status_before_call", raises)
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "proof-conclusion"}), _agent_use(),
+        _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
+def test_a_worker_write_that_lands_before_the_stream_reads_the_call_is_posted(turn_env, monkeypatch):
+    """The seed is in `pretool`, which runs before the tool does: a fast main-thread
+    `research_log_append` whose row is in the store before the worker reads its `tool_use`
+    is still new at its result."""
+    from claude_agent_sdk import ToolResultBlock, ToolUseBlock, UserMessage
+    from app.agent.continue_policy import hand_off_link_text
+    tool = "mcp__genealogy__research_log_append"
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall(tool),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        AssistantMessage(content=[ToolUseBlock(id="toolu_l1", name=tool, input={})], model="m"),
+        UserMessage(content=[ToolResultBlock(tool_use_id="toolu_l1", content="logged")]),
+        _result(num_turns=2),
+    ])
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert texts.count(hand_off_link_text(_LINK_URL)) == 1

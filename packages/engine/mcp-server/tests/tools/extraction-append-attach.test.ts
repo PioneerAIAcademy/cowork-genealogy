@@ -154,6 +154,36 @@ describe("waiting pages", () => {
     ]);
   });
 
+  it("an index entry carries its assertion's date and place, so a page that agrees is seen to (ut_record_structurer_010)", async () => {
+    const doc = research([source("src_001", { image_ark: ARK })]);
+    const a = (id: string, more: Record<string, unknown>) => ({
+      id, source_id: "src_001", record_id: "XHRQ-CGX", record_role: "child_2",
+      information_quality: "primary", informant: "x", informant_proximity: "self", record_basis: "stated",
+      extracted_for_question_ids: [], ...more,
+    });
+    doc.assertions = [
+      a("a_008", { fact_type: "name", value: "Patrick Flynn" }),
+      a("a_009", { fact_type: "birth", value: "age 15", place: "Ireland" }),
+      a("a_010", { fact_type: "marriage", value: "Mary Burke", date: "1870", place: "" }),
+      a("a_011", { fact_type: "death", value: "3 May 1901", date: "3 May 1901" }),
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+    const ref = await stagePage({ ark: ARK });
+    const r: any = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.waitingPages).toEqual([
+      {
+        sourceId: "src_001",
+        ref,
+        index: [
+          { assertionId: "a_008", role: "child_2", factType: "name", value: "Patrick Flynn" },
+          { assertionId: "a_009", role: "child_2", factType: "birth", value: "age 15", place: "Ireland" },
+          { assertionId: "a_010", role: "child_2", factType: "marriage", value: "Mary Burke", date: "1870" },
+          { assertionId: "a_011", role: "child_2", factType: "death", value: "3 May 1901" },
+        ],
+      },
+    ]);
+  });
+
   it("project_context leaves the key out when nothing waits", async () => {
     await seed([source("src_001", { image_ark: ARK })]);
     expect(await projectContext({ projectPath: dir }, LOCAL)).not.toHaveProperty("waitingPages");
