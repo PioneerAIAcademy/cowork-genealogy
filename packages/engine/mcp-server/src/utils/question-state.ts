@@ -132,10 +132,30 @@ function searchStepFor(item: any): string {
  *  arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const searchedOut = searchedOutItemIds(research, plans);
   const items = openItems(plans)
-    .filter((i) => !waitingOnUpload.has(i?.id))
+    .filter((i) => !waitingOnUpload.has(i?.id) && !searchedOut.has(i?.id))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
+}
+
+/** `in_progress` items already searched with nothing found: every entry they own
+ *  is `negative` (research-exhaustiveness.md states the same rule). search-records leaves such an item `in_progress`
+ *  for re-planning, so it is executed, not due again; picking it re-ran the same
+ *  searches turn after turn and the question never reached a conclusion
+ *  (kenneth-quass-death, 2026-11-26: one item searched 9 times). A `fs_hints`
+ *  item is never searched out: search-hints finishes it. */
+function searchedOutItemIds(research: any, plans: any[]): Set<any> {
+  const entries = arr(research?.log);
+  const out = new Set<any>();
+  for (const item of openItems(plans)) {
+    if (item?.status !== "in_progress" || item?.record_type === "fs_hints") continue;
+    const own = entries.filter((e) => e?.plan_item_id === item?.id);
+    if (own.length > 0 && own.every((e) => e?.outcome === "negative")) {
+      out.add(item?.id);
+    }
+  }
+  return out;
 }
 
 /** The `planned`/`in_progress` items on a plan that is active or status-less. */
@@ -960,8 +980,8 @@ export function questionStatus(
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Unreachable — `hasOpenWork`'s items are a subset of the picker's and
-        // both apply the same upload skip.
+        // Every open item is waiting on an upload or was searched with nothing
+        // found: the conflict's evidence search is over (lead, 2026-11-26).
         : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;

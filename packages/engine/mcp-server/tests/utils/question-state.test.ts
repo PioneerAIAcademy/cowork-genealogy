@@ -1508,6 +1508,70 @@ describe("questionStatus — a conflict that wants new evidence (section E)", ()
   });
 });
 
+describe("questionStatus — an item searched with nothing found is not searched again", () => {
+  const conflict = {
+    id: "cf_1",
+    status: "unresolved",
+    blocks_question_ids: [Q],
+    independence_analysis: "The certificate and the memorial disagree on the place.",
+  };
+  const plans = (items: Record<string, unknown>[]) => [{ id: "pl_1", question_id: Q, status: "active", items }];
+  const searched = (id: string, ...outcomes: string[]) =>
+    outcomes.map((outcome, n) => ({ id: `log_${id}_${n}`, plan_item_id: id, tool: "record_search", outcome }));
+
+  it("a conflict whose evidence searches all came back empty goes to exhaustiveness, then the conclusion", () => {
+    // kenneth-quass-death, 2026-11-26: pli_004 was searched nine times because the
+    // conflict arm kept naming the in_progress item search-records leaves after a nil.
+    const d = doc({
+      plans: plans([
+        { id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" },
+        { id: "pli_6", status: "in_progress", sequence: 6, repository: "FamilySearch" },
+      ]),
+      log: [...searched("pli_4", "negative", "negative"), ...searched("pli_6", "negative")],
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("research-exhaustiveness, then proof-conclusion");
+  });
+
+  it("names the next item still to search, past one searched with nothing found", () => {
+    const d = doc({
+      plans: plans([
+        { id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" },
+        { id: "pli_7", status: "planned", sequence: 7, repository: "Ancestry" },
+      ]),
+      log: searched("pli_4", "negative"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_7 (Ancestry)");
+  });
+
+  it("an item whose search errored is searched again", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative", "error"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("an fs_hints item searched with nothing found still goes back to search-hints", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_h", status: "in_progress", sequence: 1, record_type: "fs_hints", repository: "FamilySearch" }]),
+      log: searched("pli_h", "negative"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-hints — pli_h");
+  });
+
+  it("with no conflict, a question whose only item was searched with nothing found goes to exhaustiveness", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative"),
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("research-exhaustiveness, then proof-conclusion");
+  });
+});
+
 describe("questionStatus — the dispatch arm skips an item waiting on an upload (section I)", () => {
   it("names the next search past an upload-waiting item, with no conflict open", () => {
     const d = doc({
