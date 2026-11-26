@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 // @ts-expect-error -- plain .mjs build helper, no type declarations (tsconfig
 // only compiles src/**, so this import is never typechecked).
-import { BUILD_VERSION_RE, buildVersion, gitStamp } from "../../../../../scripts/build-stamp.mjs";
+import { BUILD_VERSION_RE, buildVersion, envStamp, gitStamp } from "../../../../../scripts/build-stamp.mjs";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 
 /**
@@ -115,6 +115,75 @@ describe("gitStamp — never throws", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("envStamp — the stamp a build with no checkout is told", () => {
+  it("takes the commit, shortened to eight, and says dirty only on true", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    expect(envStamp({ BUILD_SHA: sha })).toMatchObject({ sha: "01234567", dirty: false });
+    expect(envStamp({ BUILD_SHA: ` ${sha.toUpperCase()}\n`, BUILD_DIRTY: " TRUE " })).toMatchObject({ sha: "01234567", dirty: true });
+    expect(envStamp({ BUILD_SHA: sha, BUILD_DIRTY: "false" })?.dirty).toBe(false);
+    expect(envStamp({ BUILD_SHA: sha, BUILD_DIRTY: "1" })?.dirty).toBe(false);
+    expect(buildVersion("0.1.0", envStamp({ BUILD_SHA: sha, BUILD_DIRTY: "true" }))).toMatch(BUILD_VERSION_RE);
+  });
+
+  it.each([[undefined], [""], ["  "], ["unknown"], ["main"], ["abc12"], ["0123456789abcdef0123456789abcdef012345678"]])(
+    "is null for BUILD_SHA %j, so the stamp stays dev",
+    (value) => {
+      expect(envStamp({ BUILD_SHA: value })).toBeNull();
+      expect(buildVersion("0.1.0", envStamp({ BUILD_SHA: value }) ?? { sha: null, dirty: false, date: "x" })).toBe("0.1.0+dev");
+    },
+  );
+});
+
+describe("write-build-info.mjs — in an image, where no checkout exists", () => {
+  // The tool server's image runs the script from /stamp against /app. Two copies in a
+  // temp folder stand in: outside any repository, so git has no answer.
+  const run = (env: Record<string, string>, script?: string) => {
+    const dir = mkdtempSync(join(tmpdir(), "build-info-image-"));
+    try {
+      mkdirSync(join(dir, "stamp"));
+      mkdirSync(join(dir, "app"));
+      for (const name of ["build-stamp.mjs", "write-build-info.mjs"]) {
+        copyFileSync(join(repoRoot, "scripts", name), join(dir, "stamp", name));
+      }
+      writeFileSync(join(dir, "app", "package.json"), JSON.stringify({ version: "0.1.0" }));
+      const { BUILD_SHA: _sha, BUILD_DIRTY: _dirty, ...clean } = process.env;
+      execFileSync("node", [script ?? join(dir, "stamp", "write-build-info.mjs"), "--engine", join(dir, "app")], {
+        env: { ...clean, GIT_CEILING_DIRECTORIES: dir, ...env },
+        stdio: "ignore",
+      });
+      const file = join(dir, "app", "build", "build-info.json");
+      return { info: JSON.parse(readFileSync(file, "utf8")), read: readBuildInfo(file) };
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+  const SHA = "0123456789abcdef0123456789abcdef01234567";
+
+  it("stamps the commit it was told, and the reader takes the file", () => {
+    const { info, read } = run({ BUILD_SHA: SHA });
+    expect(info.version).toMatch(/^0\.1\.0\+\d{4}-\d{2}-\d{2}\.01234567$/);
+    expect(info).toMatchObject({ base: "0.1.0", sha: "01234567", dirty: false });
+    expect(read.version).toBe(info.version);
+  });
+
+  it("says dirty when told the tree was", () => {
+    expect(run({ BUILD_SHA: SHA, BUILD_DIRTY: "true" }).info.version).toMatch(/\.01234567\.dirty$/);
+  });
+
+  it("stays dev when told nothing, or told something that is not a commit", () => {
+    expect(run({}).info.version).toBe("0.1.0+dev");
+    expect(run({ BUILD_SHA: "" }).info.version).toBe("0.1.0+dev");
+    expect(run({ BUILD_SHA: "unknown" }).info.version).toBe("0.1.0+dev");
+  });
+
+  it.skipIf(!hasGit())("lets a real checkout answer for itself, whatever the environment says", () => {
+    // The repo's own script: its ROOT is this checkout, so git answers and BUILD_SHA is not read.
+    const { info } = run({ BUILD_SHA: SHA }, join(repoRoot, "scripts", "write-build-info.mjs"));
+    expect(info.sha).not.toBe("01234567");
+    expect(info.sha).toBe(gitStamp(repoRoot).sha);
   });
 });
 
