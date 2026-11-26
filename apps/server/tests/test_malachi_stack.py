@@ -1286,6 +1286,13 @@ def test_a_tool_error_fails_its_line_and_quotes_what_the_tool_said(check_module)
         (True, "signed in: project_list (0 projects)")
     long = check_module.line("auth_status", Result("x" * 5000, True), "")
     assert len(long[1]) < 400, "an error is quoted, not dumped"
+    # A connector caller's refusal has no error mark: a `refused` note over the body.
+    refused = Result('{"refused":"Refused, and nothing was written or changed.","ok":false,"errors":["x"]}', False)
+    assert check_module.line("project_context", refused, "(opens)")[0] is False
+    assert check_module.line("auth_status", Result('{"refused":"Refused.","error":"bogus is not a parameter"}', False), "")[0] is False
+    # And an unmarked ok:false is not a pass either: the no-project answer to a listed project.
+    assert check_module.line("project_context", Result('{"ok":false,"reason":"no_project"}', False), "(opens)")[0] is False
+    assert check_module.line("auth_status", Result('{"loggedIn":false,"buildId":"0.1.0+dev"}', False), "(ended)")[0] is True
 
 
 def test_the_build_id_must_name_the_deployed_commit(check_module):
