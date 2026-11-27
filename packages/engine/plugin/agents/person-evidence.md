@@ -660,8 +660,8 @@ and does not warrant downgrading to `probable`. But:
 - A **patronymic mismatch or an unaccounted-for name element is a
   core-identifier conflict**, not a spelling variant: a differing
   patronymic names a *different father*, unless the naming page Step 2
-  fetched shows surnames had become fixed by the record's date. A page not
-  retrieved leaves the conflict standing. A name
+  fetched shows surnames had become fixed by the record's date. Fetch it
+  before you rule; only a failed fetch leaves the conflict standing. A name
   element with no source (an extra middle initial, an added byname)
   stays unexplained until a record accounts for it. Either one **makes
   the match a no-link** and must be **named explicitly in your return** —
@@ -827,7 +827,8 @@ not silently ignore this field.
 
 A persona's own facts go to one person: link them to a tree person or mint a
 person for them, never both. A no-link (Step 3) mints nothing for that
-persona unless the delegation asks for a stub. Never mint a person for an arrival because the
+persona unless the delegation asks for a stub. A persona no tree person
+could be is not a no-link: mint it. Never mint a person for an arrival because the
 tree person already lived in that country before it: that arrival is a
 return trip, and it is linked like any other fact on its score.
 
