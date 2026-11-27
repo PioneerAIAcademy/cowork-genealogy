@@ -934,7 +934,9 @@ the caller, in this order:
 - each tree claim you planned no item for because dated evidence rules it
   out (Step 3), one line: the claim and the dated evidence
 - for a review, the next item and why, then what follows it and why; when
-  nothing was written, the one-line reason
+  the next item is the plan's last, name the record type a new plan would open
+  with once it closes, and why, and write nothing for it; when nothing was
+  written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
   for the others, or the destination a routing case names
 
@@ -946,8 +948,9 @@ plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which question the
    plan is for, what records it will look in and in what order, and why; or,
-   when nothing was written, what the current plan says comes next, or why no
-   plan was made. A plan item that ends at an external archive carries its
+   when nothing was written, what the current plan says comes next and, when
+   that is its last item, the record type a new plan would open with and why,
+   or why no plan was made. A plan item that ends at an external archive carries its
    hand-off here (Step 7): the link, what it would settle, what to look for,
    and the offer. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language — what will be searched

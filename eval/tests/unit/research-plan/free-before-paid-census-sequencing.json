@@ -30,7 +30,7 @@
   ],
   "judge_context": [
     "For each census year (1870, 1880, 1900), the FamilySearch item must appear at a lower sequence number than any Ancestry item for the same year — free before paid",
-    "At least one fallback_for chain must appear: an Ancestry item should link back (via fallback_for) to the corresponding FamilySearch item for the same year",
+    "At least one census year has an Ancestry item sequenced after that year's FamilySearch item and linked to it by fallback_for.",
     "Rationale for each item should explain what the census year would reveal (e.g., 1870 shows Patrick as an adult, 1880 might still show him in Thomas's household if Thomas was alive)",
     "Plan should not re-search 1850 or 1860 census — those are already logged as completed in pl_001 and pl_002"
   ],
