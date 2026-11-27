@@ -15,6 +15,8 @@
  * the repo's own doctrine is that heuristics are flags, never gates.
  */
 
+import { resolveCensusPlace } from "./census-note.js";
+
 export interface PlanItemLike {
   jurisdiction?: unknown;
   date_range?: unknown;
@@ -69,10 +71,11 @@ function isInside(item: string, locality: string): boolean {
   );
 }
 
-/** `"1855-1876"` → [1855, 1876]; a single year `"1891"` → [1891, 1891], which the
- *  corpus writes for a one-census item. Anything else is null. */
+/** `"1855-1876"` (or with an en or em dash) → [1855, 1876]; a single year `"1891"`
+ *  → [1891, 1891], which the corpus writes for a one-census item. Anything else is
+ *  null. */
 function parseRange(value: string): [number, number] | null {
-  const m = /^\s*(\d{4})\s*(?:-\s*(\d{4})\s*)?$/.exec(value);
+  const m = /^\s*(\d{4})\s*(?:[-–—]\s*(\d{4})\s*)?$/.exec(value);
   if (!m) return null;
   return [Number(m[1]), Number(m[2] ?? m[1])];
 }
@@ -93,34 +96,80 @@ function parseRange(value: string): [number, number] | null {
  *
  * A flag, never a gate (decided 2026-10-01): a plan can stop short for a reason the
  * documents do not hold.
+ *
+ * When the live items include a US federal census item, it also names each US federal
+ * census year inside the window that no US federal census item's `date_range` covers
+ * ("no item covers 1920"). A skipped census item covers its years here: its
+ * `skip_reason` is the stated reason that census cannot hold the record. 1890 is never
+ * named (its schedules almost all burned), nor any year after 1950 (not yet released).
+ * Both notes, when both fire, come back as one string.
  */
 export function planWindowFlag(question: any, plans: any[]): string | null {
   const window = typeof question?.date_window === "string" ? parseRange(question.date_window) : null;
   if (!window || window[0] > window[1]) return null;
-  let lo = Infinity;
-  let hi = -Infinity;
+  const dated: DatedItem[] = [];
   for (const plan of plans ?? []) {
     if (plan?.question_id !== question.id || plan?.status === "superseded") continue;
     for (const item of Array.isArray(plan?.items) ? plan.items : []) {
-      if (item?.status === "skipped" || typeof item?.date_range !== "string") continue;
+      if (typeof item?.date_range !== "string") continue;
       const r = parseRange(item.date_range);
       if (!r || r[0] > r[1]) continue;
-      lo = Math.min(lo, r[0]);
-      hi = Math.max(hi, r[1]);
+      dated.push({ item, range: r });
     }
   }
-  if (lo === Infinity) return null;
-  const [ws, we] = window;
+  const live = dated.filter((d) => d.item?.status !== "skipped");
+  if (live.length === 0) return null;
+  const notes = [spanNote(question.id, window, live), censusYearsNote(question.id, window, live, dated)];
+  return notes.filter(Boolean).join(" ") || null;
+}
+
+interface DatedItem {
+  item: any;
+  range: [number, number];
+}
+
+function spanNote(id: string, [ws, we]: [number, number], live: { range: [number, number] }[]): string {
+  const lo = Math.min(...live.map((l) => l.range[0]));
+  const hi = Math.max(...live.map((l) => l.range[1]));
   const length = we - ws + 1;
   const outside =
     Math.min(length, Math.max(0, lo - ws)) + Math.min(length, Math.max(0, we - hi));
   const uncovered = Math.min(length, outside);
-  if (uncovered * 2 <= length) return null;
+  if (uncovered * 2 <= length) return "";
   return (
-    `${question.id}'s plans span ${lo}–${hi} but its date window is ${ws}–${we}: ` +
+    `${id}'s plans span ${lo}–${hi} but its date window is ${ws}–${we}: ` +
     `${uncovered} of its ${length} years fall outside every plan item. Add an item whose ` +
     `date_range covers the uncovered years, or say in that item's rationale why they ` +
     `cannot hold the record.`
+  );
+}
+
+/** Every US federal census year whose population schedules can be searched. */
+const US_FEDERAL_CENSUS_YEARS: readonly number[] = Array.from({ length: 17 }, (_, i) => 1790 + 10 * i).filter(
+  (y) => y !== 1890,
+);
+
+const isCensusItem = (item: any) => /census/i.test(String(item?.record_type ?? ""));
+
+/** A census item whose `record_type` does not name a state census and whose
+ *  `jurisdiction` resolves, through the census table's place reading, to the
+ *  United States ("Goochland County, Virginia" included). */
+function isUsFederalCensusItem(item: any): boolean {
+  if (!isCensusItem(item) || /state/i.test(String(item?.record_type ?? ""))) return false;
+  const jurisdiction = typeof item?.jurisdiction === "string" ? item.jurisdiction : "";
+  return resolveCensusPlace(jurisdiction).at(-1) === "united states";
+}
+
+function censusYearsNote(id: string, [ws, we]: [number, number], live: DatedItem[], dated: DatedItem[]): string {
+  if (!live.some((l) => isUsFederalCensusItem(l.item))) return "";
+  const census = dated.filter((d) => isUsFederalCensusItem(d.item));
+  const missing = US_FEDERAL_CENSUS_YEARS.filter(
+    (y) => y >= ws && y <= we && !census.some((l) => l.range[0] <= y && y <= l.range[1]),
+  );
+  if (missing.length === 0) return "";
+  return (
+    `${id}: no item covers ${missing.join(", ")} — US federal census years in its date window ` +
+    `${ws}–${we}. Add a census item whose date_range covers each.`
   );
 }
 

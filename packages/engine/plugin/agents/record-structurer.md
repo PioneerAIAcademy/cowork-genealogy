@@ -76,7 +76,7 @@ classifications are not yours to send.
   persons: [{                                  // in the order the source lists them
     id,                                        // p1, p2, …
     principal?: true,
-    household?: "1",                           // only when one text covers several
+    household?: "1",                           // census of 2+ persons: on every person, the family number the page gives, else its dwelling number, else "1", "2", … by household in page order
     names: [{ given?, surname?, type?: birth | married | nickname | also_known_as,
               uncertain?: true, note? }],
     gender?: male | female,

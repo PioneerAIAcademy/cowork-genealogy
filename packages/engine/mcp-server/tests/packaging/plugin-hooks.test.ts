@@ -966,6 +966,34 @@ describe("the guard script's decisions", () => {
     expect(out).toEqual({});
   });
 
+  // research_append's plan form (`plan` + `planItems`) writes `plans` and
+  // `plan_items` with no `section` on the call (issue #4866).
+  const PLAN_FORM = {
+    plan: { question_id: "q_001", status: "active", created: "2026-05-04" },
+    planItems: [{ sequence: 1, record_type: "census", status: "planned" }],
+  };
+
+  it("denies a plan-form write to an agent whose lane holds no plans", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: PLAN_FORM,
+      agent_id: "agent-1",
+      agent_type: PE_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+  });
+
+  it("allows a plan-form write from research-plan", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: PLAN_FORM,
+      agent_id: "agent-1",
+      agent_type: "genealogy-research:research-plan",
+    });
+    expect(out).toEqual({});
+  });
+
   it("denies the person-evidence agent a section outside its own lane", () => {
     // Without its AGENT_WRITABLE_SECTIONS row this agent's `writable` is None
     // and the out-of-lane arm is skipped ENTIRELY — it could write any section
@@ -1568,6 +1596,11 @@ describe("the guard script's decisions", () => {
     ["batched ops form",
       { ops: [{ section: "plan_items", op: "update" },
               { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } }] }, {}],
+    // research_append also takes an op's payload beside section/op (issue #4866).
+    ["flat op form",
+      { ops: [{ section: "questions", op: "update", entryId: "q_001", search_stop: DECLARE }] }, {}],
+    ["flat op form beside an empty fields",
+      { ops: [{ section: "questions", op: "update", entryId: "q_001", fields: {}, search_stop: DECLARE }] }, {}],
     // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
     ["agent_type present but agent_id absent",
       { section: "questions", op: "update", fields: { search_stop: DECLARE } }, { agent_type: EXH_OWNER }],

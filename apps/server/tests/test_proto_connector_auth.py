@@ -512,7 +512,7 @@ async def test_a_new_users_plain_sign_in_is_refused_and_writes_no_row(connector_
     users = dict(store.users)
     async with _client(store) as c:
         r = await _plain_sign_in(c)
-    assert r.status_code == 403 and "no account here yet" in r.text and "connector in Claude" in r.text
+    assert r.status_code == 403 and "no account here yet" in r.text and "from its Connectors tab" in r.text
     assert store.users == users and store.grants == {} and auth.COOKIE_NAME not in r.cookies
 
 

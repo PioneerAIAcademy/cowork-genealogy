@@ -58,6 +58,7 @@ from harness.schema_validator import (
 )
 from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions, is_attachment_link
 from harness.ts_validator import validate_parsed
+from validators_lib import research_append_ops
 
 
 # The research.json sections the diff-aware tests below iterate —
@@ -895,14 +896,7 @@ def _caller_notes_update_ids(tool_calls) -> set[str]:
         args = call.get("args")
         if not isinstance(args, dict):
             continue
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (ValueError, TypeError):
-                ops = None
-        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-        for op in candidates:
+        for op in research_append_ops(args):
             if not isinstance(op, dict) or op.get("section") != "assertions" or op.get("op") != "update":
                 continue
             fields = op.get("fields")
@@ -990,17 +984,7 @@ def _wrote_project_status(tool_calls) -> bool:
     for c in tool_calls or []:
         if not str(c.get("tool", "")).endswith("research_append"):
             continue
-        args = c.get("args") or {}
-        candidates = [args]
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (TypeError, ValueError):
-                ops = None
-        if isinstance(ops, list):
-            candidates = ops
-        for op in candidates:
+        for op in research_append_ops(c.get("args") or {}):
             if not isinstance(op, dict) or op.get("section") != "project":
                 continue
             for key in ("fields", "entry"):
@@ -1254,14 +1238,7 @@ def _claims_changed(tool_calls) -> bool:
         args = call.get("args")
         if not isinstance(args, dict):
             continue
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (ValueError, TypeError):
-                ops = None
-        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in candidates):
+        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in research_append_ops(args)):
             return True
     return False
 
@@ -1293,6 +1270,8 @@ def _corrected_assertion_ids(tool_calls) -> set[str]:
             except (ValueError, TypeError):
                 ops = None
         candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        if _bare_tool_name(call.get("tool", "")) == "research_append":
+            candidates = research_append_ops(args)
         for op in candidates:
             if not isinstance(op, dict):
                 continue
