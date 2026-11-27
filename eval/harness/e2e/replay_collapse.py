@@ -160,6 +160,10 @@ def owners(research: dict[str, Any]) -> dict[str, str]:
 #: Log-entry fields research_query leaves out of its answer.
 UNSERVED_LOG_FIELDS = frozenset({"staged_ref"})
 
+#: Log-entry fields research_query computes rather than reads (issue #1157).
+#: They are not in research.json, so the oracle cannot hold them.
+DERIVED_LOG_FIELDS = frozenset({"assertion_count"})
+
 
 def oracle(research: dict[str, Any], question: str) -> list[dict[str, Any]]:
     """Every log entry whose `plan_item_id` is an item of a plan for `question`,
@@ -361,7 +365,8 @@ async def evaluate_group(g: Group, base, candidate, project: Path, tree: dict | 
             f"(missing {missing}, extra {extra})"
         )
     for e in returned:
-        if e != expected_by_id[e.get("id")]:
+        stored = {k: v for k, v in e.items() if k not in DERIVED_LOG_FIELDS}
+        if stored != expected_by_id[e.get("id")]:
             raise IntegrityError(f"{g.run} {g.question}: entry {e.get('id')} differs from the oracle")
     out.entries_returned = len(returned)
 

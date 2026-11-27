@@ -24,6 +24,7 @@ import type {
 } from "../types/tree-gaps.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
+import { withQuestions } from "../utils/tree-gap-question.js";
 
 const API = "https://api.familysearch.org/platform";
 const ACCEPT = "application/x-fs-v1+json";
@@ -78,7 +79,9 @@ export const treeGapsToolSchema = {
     "was under 34 though she lived past 40, a deceased adult with no " +
     "spouse, a wife with no surname, a deceased person with no birth date " +
     "or place, a deceased person with no death date. Each hole gives the " +
-    "person's ID, name, life years, the year range and place to search, and " +
+    "person's ID, name, life years, the year range and place to search, " +
+    "`question`: one research question for the hole (a single fact, the " +
+    "person named, scoped by its place and years), and " +
     "`coverage`: catalog collections that could hold the record, census " +
     "years inside the window, and how specific the place is, and " +
     "`pendingHints`: how many of FamilySearch's pending record hints for " +
@@ -509,8 +512,8 @@ export async function treeGapsTool(
   }
 
   return {
-    root: { personId: rootPerson.id, name: rootPerson.name },
-    gaps,
+    root: { name: rootPerson.name },
+    gaps: withQuestions(gaps),
     scanned: {
       ancestorGenerations,
       descendantGenerations,

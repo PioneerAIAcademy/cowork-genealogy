@@ -601,14 +601,58 @@ describe("recordSearchTool error propagation", () => {
     );
   });
 
-  it("25. throws on 403 with WAF/UA guidance", async () => {
+  it("25. a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 403,
       statusText: "Forbidden",
+      text: async () => JSON.stringify({ incidentId: "1234-5678", hostName: "x", errorCode: "15", description: "This request was blocked by our security service" }),
+    });
+    const msg = ((await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
+  });
+
+  // #4707: a 403 that is not the firewall's is FamilySearch refusing the search.
+  // Calling it a User-Agent fault sent agents and testers after the wrong cause.
+  it.each([
+    ["an empty body", ""],
+    ["a non-JSON body", "<html><body>Access   denied\n</body></html>"],
+    ["JSON with another errorCode", JSON.stringify({ errorCode: "7" })],
+  ])("25b. a 403 with %s is a refusal, not a WAF block, and carries the body", async (_label, body) => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      text: async () => body,
+    });
+    const err = await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e);
+    expect(err).toBeInstanceOf(Error);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/FamilySearch refused this record search \(403\)/);
+    expect(msg).toMatch(/NOT an empty result — coverage is unknown/);
+    expect(msg).toContain("status 403; body: ");
+    expect(msg).not.toMatch(/WAF|User-Agent|unmodified build/);
+    expect(msg).toContain(`body: ${body.replace(/\s+/g, " ").trim().slice(0, 120)})`);
+  });
+
+  it("25c. a 403 whose body cannot be read is still a refusal", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403, statusText: "Forbidden" });
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      /refused this record search \(403\).*\(status 403; body: \)/s
+    );
+  });
+
+  it("25d. caps the body snippet at 120 characters", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      text: async () => "x".repeat(500),
     });
     await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
-      /User-Agent header was rejected by the WAF/
+      new RegExp(`body: x{120}\\)$`)
     );
   });
 
@@ -675,17 +719,26 @@ describe("recordSearchTool error propagation", () => {
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316 / #2054: a timeout (AbortSignal firing → fetch rejects) is transient
-  // too. fetchWithRetry re-throws the last error after exhaustion, caught by
-  // the try/catch in recordSearchTool.
-  it("retries a timeout and throws the terminal error when exhausted", async () => {
+  // #4707: a timeout says it timed out and was not retried. A real 25s attempt
+  // outlasts the 10s retry budget, so there is no second attempt; the mock
+  // rejects at once, which is why it is called more than once here.
+  it("a timeout says it timed out and was not retried, not 'after retries'", async () => {
     mockFetch.mockRejectedValue(
       Object.assign(new Error("The operation timed out"), {
         name: "TimeoutError",
       })
     );
+    const err = await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/record search timed out after 25s and was not retried/);
+    expect(msg).toMatch(/NOT an empty result — coverage is unknown/);
+    expect(msg).not.toMatch(/after retries/);
+  });
+
+  it("a network error that exhausts its retries still says 'after retries'", async () => {
+    mockFetch.mockRejectedValue(new Error("fetch failed"));
     await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
-      /did not complete after retries.*network timeout or transient error/s
+      /did not complete after retries \(network or transient error\).*coverage is unknown/s
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
@@ -1590,6 +1643,26 @@ describe("recordSearchTool — the nil log write, end to end (#4527)", () => {
     expect(after.log).toHaveLength(2);
     // Hand-logged, so neither is a dedupe target for a later identical entry.
     expect(after.log.every((e: any) => e.written_by === undefined)).toBe(true);
+  });
+
+  it("does not log a pinned nil in a browse-only collection, even with its unpinned retry logged (§8.7)", async () => {
+    // The unpinned retry clears the pinned-nil rule, which is the path that wrote
+    // the tester's negatives: without the browse-only check this nil is logged.
+    await writeProject([{ ...priorNil(1), query: { surname: "Flynn", givenName: "Patrick" } }]);
+    nilOnce();
+    const catalog = new Map([
+      ["2036959", { personCount: 6, recordCount: 0, imageCount: 4302124, title: "Mississippi, Probate Records, 1781-1930" }],
+    ]);
+    const out = await recordSearchTool(
+      { surname: "Flynn", givenName: "Patrick", collectionId: "2036959", projectPath: dir, planItemId: "pli_001" },
+      LOCAL,
+      { loadCatalog: async () => catalog },
+    );
+
+    expect(out.logId).toBeUndefined();
+    expect(out.nilLogRefused!.join(" ")).toContain("browse-only");
+    expect(out.totalMatches).toBe(0);
+    expect((await readResearch()).log).toHaveLength(1);
   });
 
   it("gives three nils sent at once three ids, in sequence, with nothing lost", async () => {

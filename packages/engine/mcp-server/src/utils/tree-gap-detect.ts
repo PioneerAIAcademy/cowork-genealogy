@@ -34,6 +34,13 @@ export const NO_SPOUSE_MIN_DEATH_AGE = 25;
 export const MARRIAGE_SEARCH_MIN_AGE = 18;
 /** Assumed maximum lifespan when scoping a missing death date. */
 export const MAX_LIFESPAN = 90;
+// `detail` of a hole, which tree-gap-question.ts reads to pick its question.
+export const BOTH_PARENTS_MISSING = "Father and mother are both missing from the tree.";
+export const FATHER_MISSING = "The father is missing from the tree.";
+export const MOTHER_MISSING = "The mother is missing from the tree.";
+export const NO_BIRTH_DATE_OR_PLACE = "Deceased, but the tree gives no birth date or place.";
+export const NO_BIRTH_DATE = "Deceased, but the tree gives no birth date.";
+export const NO_BIRTH_PLACE = "Deceased, but the tree gives no birth place.";
 
 const TYPE_PRIORITY: Record<TreeGapType, number> = {
   missing_parents: 0,
@@ -278,14 +285,13 @@ function missingParents(model: GapModel, out: TreeGap[]): void {
     const noFather = !model.ancestors.has(2 * n);
     const noMother = !model.ancestors.has(2 * n + 1);
     if (!noFather && !noMother) continue;
-    const which = noFather && noMother ? "Father and mother are both" : noFather ? "The father is" : "The mother is";
     const by = p.birthYear;
     out.push(
       gap(
         model,
         "missing_parents",
         p,
-        `${which} missing from the tree.`,
+        noFather && noMother ? BOTH_PARENTS_MISSING : noFather ? FATHER_MISSING : MOTHER_MISSING,
         by == null ? null : range(by - 1, by + 3),
         p.birthPlace,
       ),
@@ -487,7 +493,7 @@ function missingBirthInfo(model: GapModel, out: TreeGap[]): void {
   const now = new Date().getFullYear();
   for (const p of model.people.values()) {
     if (p.living || (p.hasBirthDate && p.hasBirthPlace)) continue;
-    const missing = !p.hasBirthDate && !p.hasBirthPlace ? "date or place" : !p.hasBirthDate ? "date" : "place";
+    const detail = !p.hasBirthDate && !p.hasBirthPlace ? NO_BIRTH_DATE_OR_PLACE : !p.hasBirthDate ? NO_BIRTH_DATE : NO_BIRTH_PLACE;
     let window: TreeGapYearRange | null = null;
     if (p.birthYear != null) window = range(p.birthYear - 1, p.birthYear + 3);
     else if (p.deathYear != null) window = range(p.deathYear - MAX_LIFESPAN, p.deathYear);
@@ -497,7 +503,7 @@ function missingBirthInfo(model: GapModel, out: TreeGap[]): void {
         model,
         "no_birth_info",
         p,
-        `Deceased, but the tree gives no birth ${missing}.`,
+        detail,
         window,
         p.birthPlace ?? p.deathPlace ?? p.marriagePlace,
       ),

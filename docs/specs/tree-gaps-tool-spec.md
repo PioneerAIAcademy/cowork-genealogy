@@ -135,7 +135,7 @@ them. A living root whose descendants are all living yields no holes.
 
 ```ts
 {
-  root: { personId, name },
+  root: { name },              // no id: a suggestion names a hole's personId, never the root's
   gaps: [{
     type,                       // one of the eight above
     personId, name,
@@ -143,6 +143,7 @@ them. A living root whose descendants are all living yields no holes.
     lifespan,                   // FamilySearch's string, e.g. "1809-1865", or null
     generation,                 // signed from the root: + above, 0 same, − below
     detail,                     // plain words
+    question,                   // one research question for the hole; see Question
     yearRange: {start,end}|null,
     place: string|null,
     coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null,
@@ -162,6 +163,31 @@ the root's sibling is `0`, the root's child is `−1`.
 answer; `maxHoles` of them are returned, nearest first. After the pending hints are counted, a hole whose
 `pendingHints.fitting` is above 0 moves ahead of the rest, and the order within each group is
 unchanged (a stable sort). A hole with `pendingHints: null` stays in the second group.
+
+## Question
+
+Each returned hole carries `question`: one research question that asks a single
+fact, names the person, and is scoped by the hole's own `place` and `yearRange`,
+so the caller hands it on as the research objective and writes none itself. It
+is built by `gapQuestion` (`src/utils/tree-gap-question.ts`) from the hole's
+fields alone:
+
+| Hole | Question |
+|---|---|
+| `missing_parents` | Who were the parents of X — or the father, or the mother, when `detail` says only one is missing — born in P between Y1 and Y2? |
+| `missing_surname` | What was the maiden surname of X, wife of S, of P between Y1 and Y2? (no "wife of" with no spouse; "of P", since P may be a birth or death place, not the marriage's) |
+| `no_spouse` | Whom did X marry in P between Y1 and Y2? |
+| `no_children`, `child_gap`, `early_last_child` | Who were the children born to X and S in P between Y1 and Y2? |
+| `no_birth_info` | When was X, of P, born between Y1 and Y2? ("of P": P may be a death or marriage place) — or, when only the place is missing, Where was X born between Y1 and Y2? |
+| `no_death_date` | When did X, born in P, die between Y1 and Y2? |
+
+X carries the hole's `lifespan` in brackets only when it gives both years
+(`1861-1934`; never `1850-`, `-1901` or `Deceased`). A part whose field is null
+is left out, with the word that introduced it, so a hole with no place and no
+years asks "Who were the parents of X?". Which parent, and which part of the
+birth, are read from `detail`, whose strings `tree-gap-detect.ts` exports for
+that reason. The eval mock adds `question` to every canned hole with the
+same compiled `withQuestions`, so no fixture carries one.
 
 ## Coverage
 

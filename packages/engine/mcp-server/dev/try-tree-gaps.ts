@@ -32,7 +32,7 @@ const t0 = Date.now();
 try {
   const r = await treeGapsTool(input, LOCAL);
   console.log(`${Date.now() - t0}ms`, JSON.stringify(r.scanned), r.notes);
-  console.log(`root: ${r.root.name} (${r.root.personId})`);
+  console.log(`root: ${r.root.name}`);
   for (const g of r.gaps) {
     const yr = g.yearRange ? `${g.yearRange.start}-${g.yearRange.end}` : "-";
     const cov = g.coverage

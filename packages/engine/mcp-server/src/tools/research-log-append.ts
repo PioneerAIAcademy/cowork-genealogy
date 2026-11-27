@@ -52,6 +52,9 @@ import {
   type StoredCollectionUrls,
 } from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
+import { collectionAvailability } from "../utils/collection-availability.js";
+import { readCatalog, type CollectionCatalog } from "../utils/collection-catalog.js";
+import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 import {
   BRITISH_RELATIONSHIP_COLUMN_FROM,
   HEAD_ONLY_US_CENSUS_YEARS,
@@ -2081,6 +2084,86 @@ export function pinnedNilRetryInvariants(
 }
 
 /**
+ * The collection a FamilySearch name-search URL is pinned to, or undefined
+ * (§8.7). The host is `familysearch.org` or a subdomain; the id comes from
+ * `f.collectionId=<id>` or a `/search/collection/<id>` path. A URL with no `q.*`
+ * search term is a collection's landing page, where a browse starts, and a
+ * `/search/full-text/` URL reads the images themselves: neither is a name search.
+ */
+export function familySearchCollectionIdOf(url: unknown): string | undefined {
+  if (typeof url !== "string") return undefined;
+  let u: URL;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return undefined;
+  }
+  const host = u.hostname.toLowerCase();
+  if (host !== "familysearch.org" && !host.endsWith(".familysearch.org")) return undefined;
+  if (/\/search\/full-text(?:\/|$)/i.test(u.pathname)) return undefined;
+  if (![...u.searchParams.keys()].some((k) => k.startsWith("q."))) return undefined;
+  const id = (u.searchParams.get("f.collectionId") ?? "").trim() || /\/search\/collection\/(\d+)(?:\/|$)/i.exec(u.pathname)?.[1];
+  return id && /^\d+$/.test(id) ? id : undefined;
+}
+
+/** The collection a log entry's search was pinned to: `query.collectionId` on a
+ *  `record_search` entry (a string or a whole number), else the collection of a
+ *  FamilySearch name-search `urlGenerated`, whatever the entry's `tool` says. */
+export function loggedSearchCollectionId(entry: { tool?: unknown; query?: unknown; urlGenerated?: unknown }): string | undefined {
+  if (canonicalToolName(entry?.tool) === "record_search") {
+    const q = entry.query;
+    if (q !== null && typeof q === "object" && !Array.isArray(q)) {
+      const c = (q as Record<string, unknown>).collectionId;
+      if (typeof c === "string" && /^\d+$/.test(c.trim())) return c.trim();
+      if (typeof c === "number" && Number.isInteger(c) && c > 0) return String(c);
+    }
+  }
+  return familySearchCollectionIdOf(entry?.urlGenerated);
+}
+
+/** Whether an outcome would record a browse-only collection's zero as absence:
+ *  `negative` or `partial`. `positive` and `error` record no absence. */
+const recordsAbsence = (outcome: unknown): boolean => outcome === "negative" || outcome === "partial";
+
+/**
+ * Refuse a `negative` or `partial` entry for a search pinned to a collection
+ * FamilySearch has almost no index for (§8.7): `collectionAvailability`, the one
+ * label `collections_search` and the research plan read, says browse-only. A
+ * name search there finds nothing about most of its records, so its zero is not
+ * evidence of absence. `positive` and `error` pass, as does a collection the
+ * catalog does not list.
+ *
+ * Pure and replayable: it reads the entry's `tool`, `query`, `outcome` and
+ * `urlGenerated`, and the catalog.
+ */
+export function browseOnlyNilInvariants(
+  entry: { tool?: unknown; query?: unknown; outcome?: unknown; urlGenerated?: unknown },
+  catalog: ReadonlyMap<string, CollectionCounts>,
+): string[] {
+  if (!recordsAbsence(entry?.outcome)) return [];
+  const id = loggedSearchCollectionId(entry);
+  if (id === undefined) return [];
+  const counts = catalog.get(id);
+  if (!counts || collectionAvailability(counts.personCount, counts.imageCount) !== "browse-only") return [];
+  const n = (v: number) => v.toLocaleString("en-US");
+  const persons = counts.personCount === 0 ? "no indexed persons" : `only ${n(counts.personCount)} indexed persons`;
+  const images =
+    typeof counts.imageCount === "number" && counts.imageCount > 0 ? ` over ${n(counts.imageCount)} page images` : "";
+  const name =
+    typeof counts.title === "string" && counts.title.trim() !== ""
+      ? `${counts.title.trim()} (collection ${id})`
+      : `Collection ${id}`;
+  return [
+    `${name} has ${persons}${images}: it is browse-only, so a name search there indexes ` +
+      `almost none of its records and finds nothing about the rest. Do not log this search as \`negative\` ` +
+      `or \`partial\`. This stays refused even when batched with an unpinned retry — drop it from the batch. ` +
+      `If you log it at all, use \`outcome: "error"\` with a note that the collection is browse-only (that ` +
+      `also closes an open hand-off for this URL). To search the collection, browse its page images with ` +
+      `search-images (\`image_search\`).`,
+  ];
+}
+
+/**
  * Resolve each op's sent query and zero-hit state (I/O), then refuse a filtered
  * zero-hit fulltext op with no unfiltered sibling (`filteredNilRetryInvariants`)
  * and a pinned zero-hit record_search op with no unpinned sibling
@@ -2101,22 +2184,37 @@ export function pinnedNilRetryInvariants(
  *
  * `checked` holds the staged reads `preflightStagedRef` already made, by op
  * index; an op found there is not read again.
+ *
+ * It also runs the browse-only rule (`browseOnlyNilInvariants`, §8.7) on the same
+ * resolved query, so a staged search is judged by what it sent. `catalog` is
+ * undefined when no loader was given (no check); `"unavailable"` writes the op and
+ * adds one warning to `warnings` for every op the check could not judge. Every
+ * message that fires on an op is returned, browse-only first.
  */
 async function preflightFilteredNilRetry(
   ops: ResearchLogAppendOp[],
   research: any,
   projectPath: string,
   checked: ReadonlyMap<number, StagedCheck> = new Map(),
-): Promise<Array<{ i: number; message: string }>> {
+  catalog?: CollectionCatalog,
+  warnings?: string[],
+): Promise<Array<{ i: number; messages: string[] }>> {
   const resolved = await Promise.all(
     ops.map(async (op, i) => {
+      const outcome = op?.outcome;
+      const urlGenerated = opUrlGenerated(op);
       try {
-        if (op?.tool !== "fulltext_search" && op?.tool !== "record_search") return { tool: op?.tool };
+        // A tool name spelled with a server prefix ("mcp__genealogy__record_search")
+        // skips the two retry rules, as before, but keeps its query for the
+        // browse-only rule, which reads the tool name canonicalized.
+        if (op?.tool !== "fulltext_search" && op?.tool !== "record_search") {
+          return { tool: op?.tool, query: coerceObjectArg(op?.query, "query"), outcome, urlGenerated };
+        }
         // An errored search (fixture_not_found, upstream error) that examined 0
         // is not a filtered nil — the filter never ran, so there is nothing to
         // retry unfiltered. #3592 (this dropped _014, a fixture_not_found error,
         // from the row's true positives).
-        if (op?.outcome === "error") return { tool: op.tool };
+        if (op?.outcome === "error") return { tool: op.tool, outcome, urlGenerated };
         const ref = asNull(op.stagedResultsRef);
         let query: unknown = coerceObjectArg(op.query, "query");
         let zeroHit: boolean;
@@ -2137,19 +2235,60 @@ async function preflightFilteredNilRetry(
           zeroHit =
             examined === 0 && (available === undefined || available === null || available === 0);
         }
-        return { tool: op.tool, query, zeroHit };
+        return { tool: op.tool, query, zeroHit, outcome, urlGenerated };
       } catch {
-        return { tool: op?.tool };
+        return { tool: op?.tool, outcome, urlGenerated };
       }
     }),
   );
-  const firing: Array<{ i: number; message: string }> = [];
+  const firing: Array<{ i: number; messages: string[] }> = [];
+  const unjudged: string[] = [];
   for (let i = 0; i < resolved.length; i++) {
     const ctx = { log: research.log, ops: resolved };
-    const errors = [...filteredNilRetryInvariants(resolved[i], ctx), ...pinnedNilRetryInvariants(resolved[i], ctx)];
-    if (errors.length > 0) firing.push({ i, message: errors[0] });
+    const browseOnly =
+      catalog instanceof Map ? browseOnlyNilInvariants(resolved[i], catalog as ReadonlyMap<string, CollectionCounts>) : [];
+    if (
+      catalog === "unavailable" &&
+      recordsAbsence(resolved[i].outcome)
+    ) {
+      const id = loggedSearchCollectionId(resolved[i]);
+      if (id !== undefined) unjudged.push(`ops[${i}] (collection ${id})`);
+    }
+    const errors = [
+      ...browseOnly,
+      ...filteredNilRetryInvariants(resolved[i], ctx),
+      ...pinnedNilRetryInvariants(resolved[i], ctx),
+    ];
+    if (errors.length > 0) firing.push({ i, messages: errors });
+  }
+  if (unjudged.length > 0) {
+    warnings?.push(
+      `FamilySearch's collection catalog could not be read, so the browse-only check did not run on ` +
+        `${unjudged.join(", ")} and the entry was written. If that collection is browse-only (page images ` +
+        `with almost no index), its zero is not evidence of absence.`,
+    );
   }
   return firing;
+}
+
+/** Whether an op could trip the browse-only rule, judged before the lock from
+ *  what the op itself carries, so the catalog is read only when it might be
+ *  needed. A `record_search` op with a staged ref counts: its query is known only
+ *  from the staged echo. Coerced as the write coerces, so a stringified `query`
+ *  or `externalSite` is seen. */
+function mayNeedBrowseOnlyCheck(op: ResearchLogAppendOp): boolean {
+  if (op === null || typeof op !== "object") return false;
+  if (!recordsAbsence(op.outcome)) return false;
+  const tool = canonicalToolName(op.tool);
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref === "string" && ref !== "" && (tool === undefined || tool === "record_search")) return true;
+  let query: unknown;
+  try {
+    query = coerceObjectArg(op.query, "query");
+  } catch {
+    query = undefined;
+  }
+  return loggedSearchCollectionId({ tool: op.tool, query, urlGenerated: opUrlGenerated(op) }) !== undefined;
 }
 
 /** The `urlGenerated` an op would log, trimmed, or undefined. */
@@ -2853,8 +2992,20 @@ async function applyLogAppendOp(
   return { logId, performed, resultsRef, returnedCount };
 }
 
+/** How a caller reaches FamilySearch for the browse-only check (§8.7). Bound at
+ *  dispatch (`server.ts`, `record-search.ts`) so this module imports no token
+ *  code. With no `loadCatalog` the check does not run: direct callers and the
+ *  unit eval's mock never reach FamilySearch. */
+export interface ResearchLogAppendOptions {
+  loadCatalog?: CollectionCatalogLoader | null;
+  /** How long the write waits on a cold catalog before writing unchecked.
+   *  Defaults to `CATALOG_READ_BUDGET_MS`. */
+  catalogBudgetMs?: number;
+}
+
 export async function researchLogAppend(
   input: ResearchLogAppendInput,
+  options: ResearchLogAppendOptions = {},
 ): Promise<ResearchLogAppendResult> {
   const { projectPath } = input;
 
@@ -2869,6 +3020,17 @@ export async function researchLogAppend(
       if (op && typeof op === "object") op.notes = unescapeJsonNotes(op.notes);
     }
   }
+
+  // The catalog read starts before the lock, and only when an op could trip the
+  // browse-only rule. It never refuses on its own: every failure, a spent
+  // FamilySearch budget included, reads as "unavailable" and the write goes on.
+  // Awaited here, before the lock, so a cold read never holds every other
+  // writer on this project (and, on the Postgres store, an open transaction).
+  const candidateOps: ResearchLogAppendOp[] = Array.isArray(input.ops) ? input.ops : [input as ResearchLogAppendOp];
+  const catalog: CollectionCatalog | undefined =
+    options.loadCatalog && candidateOps.some(mayNeedBrowseOnlyCheck)
+      ? await readCatalog(options.loadCatalog, { budgetMs: options.catalogBudgetMs, rethrowBudget: false })
+      : undefined;
 
   // Serialize the read-modify-write against every other writer on this project
   // (issue #1715).
@@ -3134,9 +3296,19 @@ export async function researchLogAppend(
       // Needs the whole resolved batch (an in-batch unfiltered sibling clears an
       // op), so it runs once over every op after the per-op preflights. Runs only
       // once there is a new op to write (idempotent re-logs short-circuit above).
-      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath, stagedChecks);
+      const nilRetryErrors = await preflightFilteredNilRetry(
+        input.ops,
+        research,
+        projectPath,
+        stagedChecks,
+        catalog,
+        opWarnings,
+      );
       if (nilRetryErrors.length > 0) {
-        return { ok: false, errors: nilRetryErrors.map(({ i, message }) => `ops[${i}]: ${message}`) };
+        return {
+          ok: false,
+          errors: nilRetryErrors.flatMap(({ i, messages }) => messages.map((m) => `ops[${i}]: ${m}`)),
+        };
       }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
@@ -3217,8 +3389,10 @@ export async function researchLogAppend(
       research,
       projectPath,
       singleStaged ? new Map([[0, singleStaged]]) : new Map(),
+      catalog,
+      opWarnings,
     );
-    if (singleNilRetry.length > 0) throw new LogAppendError(singleNilRetry[0].message);
+    if (singleNilRetry.length > 0) return { ok: false, errors: singleNilRetry[0].messages };
     await checkCollection(singleOp);
     let result;
     try {
