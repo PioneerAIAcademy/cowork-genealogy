@@ -244,6 +244,11 @@ attachments".
 
 In this mode:
 
+- When the entry under review has a null `match_score`, call
+  `same_person({ projectPath, assertionId, treePersonId })` first; it writes
+  nothing. Open your verdict with that score and judge the tier from it and
+  the person's other links, as Step 3 does: 0.80 or above with no open
+  conflict keeps `confident`. Do not write the score onto the entry.
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
   context (other pe entries for the same assertion or person; the
@@ -255,11 +260,6 @@ In this mode:
 - A person the record names besides the one being reviewed (a parent,
   spouse, child) is only linked when that person has their own `pe_`
   entry. Note explicitly when a named party has none.
-- When the entry under review has a null `match_score`, call
-  `same_person({ projectPath, assertionId, treePersonId })` first; it writes
-  nothing. Open your verdict with that score and judge the tier from it and
-  the person's other links, as Step 3 does: 0.80 or above with no open
-  conflict keeps `confident`. Do not write the score onto the entry.
 - **Produce a written analysis only.** Do NOT write to `research.json`
   or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
   modify the entry under review (not its `confidence`, not its
@@ -892,9 +892,8 @@ use instead.
   new person, using the `personId` that `materialize_facts` returned in
   its compact summary
 - **Confidence:** a stub rests on the single record that introduced the
-  person, so every fact of that persona links to it at `probable`; doubt
-  about who the stub is goes in the rationale. `confident` waits for a
-  second record.
+  person, so its `pe_` link is `probable`. `confident` waits for a second
+  record.
 
 **When to create a stub vs. skip:**
 - Create a stub for persons who are likely relevant to the research
