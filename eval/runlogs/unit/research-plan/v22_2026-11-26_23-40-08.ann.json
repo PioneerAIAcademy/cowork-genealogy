@@ -1,8 +1,328 @@
 {
-  "run_log": "v20_2026-11-21_20-01-44.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v22_2026-11-26_23-40-08.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree: no concrete path past pli_006."
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree: the dependency on the 1870/1880 censuses is left implicit."
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_plan_clc",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -14,9 +334,9 @@
       "test_id": "ut_research_plan_clc",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_plan_clc",
@@ -48,7 +368,7 @@
       "dimension_name": "Sequencing logic",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "comment": "Agree: no fallback chains."
     },
     {
       "test_id": "ut_research_plan_clc",
@@ -60,6 +380,70 @@
     },
     {
       "test_id": "ut_research_plan_clc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree: no concrete path past pli_006."
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_d01",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
@@ -131,7 +515,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,7 +523,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,7 +531,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,103 +539,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_d02",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_d01",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_d01",
+      "test_id": "ut_research_plan_d9k",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
@@ -304,7 +624,7 @@
       "dimension_name": "Sequencing logic",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "comment": "Agree: the 1840 census and the marriage come late, with no fallbacks."
     },
     {
       "test_id": "ut_research_plan_enm",
@@ -323,31 +643,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_plan_r3d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree: two place searches missed; it recovered later."
+    },
+    {
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
@@ -355,7 +675,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
@@ -363,15 +683,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -379,7 +699,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_011",
+      "test_id": "ut_research_plan_r3d",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
@@ -387,7 +707,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -395,7 +715,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -403,7 +723,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -411,7 +731,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
@@ -419,7 +739,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
@@ -427,79 +747,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_rws",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_rws",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_rws",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_005",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "research and fix partials later"
+      "comment": "Agree: the restricted birth certificate is planned before the free censuses."
     },
     {
-      "test_id": "ut_research_plan_005",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
@@ -507,455 +763,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_plan_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_q4g",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "research and fix partials later"
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_tgt",
+      "test_id": "ut_research_plan_zgw",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
