@@ -105,9 +105,6 @@ one in prose you then act on.
 **Write the label verbatim.** The host reads that line to offer the
 researcher's buttons; an invented label offers none.
 
-**In your own sentences, never state or imply a kinship between people no
-record links;** say what they share and that no record links them.
-
 **A step that ends on a question only the researcher can answer writes no
 "Continue with …?" line.** Ask the question and end the turn. The same holds
 for a final conclusion, and for a step that found nothing further to do.
