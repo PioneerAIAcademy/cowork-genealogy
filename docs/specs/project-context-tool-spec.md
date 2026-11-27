@@ -746,7 +746,11 @@ marriage, death or census entry, or when or where one event happened), a person'
 children or siblings or whether they are complete, a transcription, a letter, a
 review of attached sources. Its owning agent runs in the
 same turn, after init-project in a folder with no project, and that turn never runs
-question-selection. For a record, or for a person's children or siblings, the agent is
+question-selection. A bounded request that asks for more than one thing runs only the
+first one's agent and names the rest, as `research/SKILL.md` says; once the
+closing-offer clause below named only search-records' asks, a source review asked for
+with a plan went on to the plan and question-selection in one of three runs
+(`evaluate-sources-moses-watrous`, 2026-11-27). For a record, or for a person's children or siblings, the agent is
 search-records, and the turn ends on its "Continue with …?" offer; the closing-offer
 clause names only search-records' asks, since a general one made the router add text
 after a final conclusion it must relay bare (`ut_research_rp1`). Without the children

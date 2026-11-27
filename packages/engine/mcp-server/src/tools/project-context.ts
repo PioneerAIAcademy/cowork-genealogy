@@ -56,7 +56,8 @@ export const BOUNDED_REQUEST_RULE =
   "where one event happened; a person's children or siblings, or whether they are complete; a " +
   "transcription; a letter; a review of attached sources) is a bounded request. Its owning agent runs in " +
   "this turn, after init-project when there is no project yet, and the turn never runs question-selection. " +
-  "For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +
+  "A bounded request that asks for more than one thing runs only the first one's agent this turn and names " +
+  "the rest. For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +
   "on search-records' \"Continue with …?\" offer. For a review of attached sources that agent is " +
   "source-evaluation, which reads them: the router reads none of them itself. A requested record that " +
   "attachedSources already lists is not searched for: read it with person_read and name it. A children or " +
