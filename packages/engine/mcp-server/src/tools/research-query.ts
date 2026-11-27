@@ -1035,7 +1035,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
     const assertionCount =
       section === "log"
-        ? logAssertionCounter(research, await searchHits(projectPath, ordered))
+        ? logAssertionCounter(research, await searchHits(projectPath, research, ordered))
         : () => undefined;
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
       const page: OkPage = {

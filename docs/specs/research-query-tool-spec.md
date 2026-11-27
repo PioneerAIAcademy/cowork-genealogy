@@ -289,9 +289,12 @@ named, compared as bare ARK ids. An entry names the records its `query` read in
 `recordId` or `recordIds`, and a `record_search` or `fulltext_search` entry also
 names its hits: each row's `recordId` (`record_search`) or `id`
 (`fulltext_search`) in the sidecar its `results_ref` points at, read when the
-answer is built. Extraction logs its own `record_read` and cites that entry,
-never the search that found the record, so without the hits a search whose find
-was extracted would come out at 0. A missing or unreadable sidecar gives no hits,
+answer is built, widened to every persona of the hit's record that a
+`record_read` sidecar lists (`personaGroups`, the grouping `extraction_append`
+completes plan items with). Extraction logs its own `record_read` and cites
+that entry, never the search that found the record, and extracts under the
+persona the agent asked for, so without the hits a search whose find was
+extracted would come out at 0. A missing or unreadable sidecar gives no hits,
 and the entry counts by the other two clauses. An assertion that matches more
 than one way counts once. Only an entry whose tool can return a record carries
 the field (`record_search`, `record_read`, `fulltext_search`, `image_transcribe`,

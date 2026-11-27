@@ -2,15 +2,17 @@
 // assertion counts toward an entry when its `log_entry_id` is the entry's id, or
 // when its `record_id` is a record the entry named: one its `query` read
 // (`recordId` / `recordIds`), or, for a search, one of the hits its sidecar
-// holds. Extraction logs its own `record_read` and cites that entry, never the
-// search that found the record, so without the hits a search whose find was
-// extracted would read 0. Only a tool that can return a record gets a count, and
-// a page `image_transcribe` logged itself does not: that is a read, not a find.
+// holds, widened to every persona of the record its `record_read` sidecar
+// lists. Extraction logs its own `record_read` and cites that entry, never the
+// search that found the record, and extracts under the persona the agent asked
+// for, so without the hits a search whose find was extracted would read 0. Only
+// a tool that can return a record gets a count, and a page `image_transcribe`
+// logged itself does not: that is a read, not a find.
 
 import { liveAssertions } from "./assertion-liveness.js";
 import { arkToBareId } from "./ark.js";
 import { isToolLoggedRead } from "./tool-logged-read.js";
-import { readStagedResults } from "./results-staging.js";
+import { personaGroups, sidecarHitIds } from "./results-staging.js";
 import { mapWithConcurrency } from "./place-resolver.js";
 
 /** Tools whose log entry can lead to an assertion. */
@@ -25,8 +27,6 @@ export const RECORD_TOOLS: ReadonlySet<string> = new Set([
   "user_provided",
 ]);
 
-/** Searches whose sidecar rows name the records they found: `recordId` on a
- *  record_search row, `id` on a fulltext_search one. */
 const HIT_TOOLS: ReadonlySet<string> = new Set(["record_search", "fulltext_search"]);
 
 const bare = (v: unknown): string | undefined =>
@@ -45,24 +45,26 @@ export function countsAssertions(entry: any): boolean {
   return RECORD_TOOLS.has(entry?.tool) && !isToolLoggedRead(entry);
 }
 
-/** Each search entry's hit record ids, read from its sidecar. An entry whose
- *  sidecar is missing or unreadable has none, so it counts by log id alone. */
-export async function searchHits(projectPath: string, entries: any[]): Promise<Map<string, string[]>> {
+/** Each search entry's hit record ids, read from its sidecar and widened to
+ *  every persona of each hit's record. An entry whose sidecar is missing or
+ *  unreadable has none, so it counts by log id alone. */
+export async function searchHits(
+  projectPath: string,
+  research: any,
+  entries: any[],
+): Promise<Map<string, string[]>> {
   const searches = entries.filter(
     (e) => HIT_TOOLS.has(e?.tool) && typeof e?.id === "string" && typeof e?.results_ref === "string",
   );
   const hits = new Map<string, string[]>();
+  if (searches.length === 0) return hits;
+  const groups = await personaGroups(projectPath, research);
   await mapWithConcurrency(searches, 8, async (e) => {
-    let rows: unknown[];
-    try {
-      rows = await readStagedResults(projectPath, e.results_ref);
-    } catch {
-      return;
+    const ids = new Set<string>();
+    for (const h of await sidecarHitIds(projectPath, e.results_ref, e.tool)) {
+      for (const x of groups.get(h) ?? [h]) ids.add(x);
     }
-    const ids = rows
-      .map((r: any) => (e.tool === "fulltext_search" ? r?.id : r?.recordId))
-      .filter((v): v is string => typeof v === "string");
-    if (ids.length > 0) hits.set(e.id, ids);
+    if (ids.size > 0) hits.set(e.id, [...ids]);
   });
   return hits;
 }

@@ -1505,6 +1505,24 @@ describe("research_query — fields no caller reads are left out", () => {
       }
     });
 
+    it("a search counts a record extracted under another persona of the record it found", async () => {
+      const SON = "ark:/61903/1:1:SONN-001";
+      const FATHER = "ark:/61903/1:1:FATH-001";
+      await writeResearch({
+        plans: PLANS,
+        log: [
+          { id: "log_001", tool: "record_search", outcome: "positive", plan_item_id: "pli_005", results_ref: "results/log_001.json" },
+          { id: "log_002", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordId: FATHER }, results_ref: "results/log_002.json" },
+        ],
+        assertions: [{ id: "a_001", log_entry_id: "log_002", record_id: FATHER }],
+      });
+      await sidecar("log_001", "record_search", [{ recordId: SON }]);
+      await sidecar("log_002", "record_read", [{ recordId: FATHER, gedcomx: { persons: [{ ark: SON }, { ark: FATHER }] } }]);
+      const r = await researchQuery({ projectPath: dir, section: "log" });
+      if (!r.ok) throw new Error(r.errors.join(" "));
+      expect(counts(r.items)).toEqual({ log_001: 1, log_002: 1 });
+    });
+
     it("an assertion matching an entry two ways counts once", async () => {
       await writeResearch({
         plans: PLANS,
