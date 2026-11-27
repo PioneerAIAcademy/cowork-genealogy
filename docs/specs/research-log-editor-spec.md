@@ -154,7 +154,12 @@ and `next: string`, present only when the call logged a report-only agent's own
 entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
 `validate_schema`): it tells the agent to return the report it just logged, in
 full, as its reply — not a note that it was logged, and not a pointer to text it
-wrote before the call, which the caller never receives.
+wrote before the call, which the caller never receives. A `convert_dates` entry
+with `notes` also carries `replyStart: string`, those stored `notes` and a `---`
+line, and its `next` says to paste `replyStart` whole as the start of the reply:
+on Haiku 5.5 convert-dates wrote its short report a second time in other words
+(4 of 51 runs), so the reply no longer matched the log. The other four report
+tools are not echoed.
 
 **camelCase at the boundary; snake_case on disk.** The tool renames on persist
 (`planItemId → plan_item_id`, `resultsExamined → results_examined`,
@@ -430,6 +435,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file and no log entry records it — pruned after 24h, never staged, or logged before `staged_ref` existed | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search, or `image_transcribe` for a page |
 | `stagedResultsRef` names no staged file, but a log entry records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
+| that already-logged entry carries `written_by: "image_transcribe"` (the tool logged its own read, `image-transcribe-tool-spec.md` §5.5.1), and the re-send names `image_transcribe` or no tool | not an error, whatever `outcome` or `planItemId` it names: return that entry with `alreadyLogged: true`, with one warning naming each difference that was not applied and quoting any `notes` the entry lacks, and write nothing. A refusal here would send the caller to read the page again, the double read the tool's write exists to end; and the staged file is consumed, so the note cannot become an entry of its own. A re-send under another tool still refuses (next row). Never applies to the tool's own write, which carries the internal `writtenBy` |
 | that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it. The `tool` is compared as the image-entry rows above compare it, so a re-send under a variant spelling of the logged tool is the same entry and returns it. When the logged entry and the new one would both be `image_transcribe`, which needs a ref of its own (row above), the correction is a fresh `image_transcribe` call with `projectPath`, logged with its new ref |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |

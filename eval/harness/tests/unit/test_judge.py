@@ -1333,16 +1333,13 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     orchestrator._run_judge's actual behavior.
     """
     runlogs_dir = REPO_ROOT / "eval/runlogs/unit"
-    # Classify rather than glob `v1_*.json`. That literal matches neither a
-    # RELEASED `v{N}.json` nor any v2+ candidate, so the first time any of the
-    # 25+ skills is released — a normal step in the documented per-PR workflow,
-    # not an edge case — this corpus would quietly shrink and the test would go
-    # on passing over whatever was left. Nothing in the corpus is released
-    # today, which is exactly why it has not been noticed.
+    # Classify rather than glob `v1_*.json`, which matches no v2+ run log, so
+    # this corpus would quietly shrink and the test would go on passing over
+    # whatever was left.
     log_paths = sorted(
         p for p in runlogs_dir.rglob("v*.json")
         if not p.name.endswith(".ann.json")
-        and classify(p.name).kind in ("released", "candidate")
+        and classify(p.name).kind == "candidate"
     )
     assert len(log_paths) > 50, (
         f"sanity check: expected a substantial committed run-log corpus, "

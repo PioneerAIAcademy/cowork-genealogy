@@ -80,6 +80,13 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         </div>
       )}
 
+      {question.audits_tree === true && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Audits the Tree</div>
+          <div className={styles.fieldValue}>yes</div>
+        </div>
+      )}
+
       {stopped_because && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Stopped Because</div>

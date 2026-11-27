@@ -10,22 +10,17 @@ from harness.versioning import (
     ann_filename_for,
     classify,
     classify_ann,
+    highest_version,
     is_releasable_invocation,
     landed_order,
     latest_full_skill_runlog,
     newest_full_skill_runlog,
     next_filename_for,
     prunable_candidates,
-    scan_versions,
 )
 
 
 # ---- classify ------------------------------------------------------------
-
-
-def test_classify_released():
-    assert classify("v3.json") == Classification("released", 3, None)
-    assert classify("v12.json") == Classification("released", 12, None)
 
 
 def test_classify_candidate():
@@ -42,12 +37,13 @@ def test_classify_scratch():
 
 def test_classify_other():
     assert classify("foo.json").kind == "other"
+    assert classify("v3.json").kind == "other"
     assert classify("v3.ann.json").kind == "other"  # ann uses classify_ann
     assert classify("v3_bad-timestamp.json").kind == "other"
 
 
 def test_classify_ann():
-    assert classify_ann("v3.ann.json").kind == "released"
+    assert classify_ann("v3.ann.json").kind == "other"
     assert classify_ann("v3_2026-05-18_10-30-00.ann.json").kind == "candidate"
     assert classify_ann("scratch_2026-05-18_10-30-00.ann.json").kind == "scratch"
 
@@ -126,29 +122,19 @@ def test_is_releasable_single_run_default_unchanged():
     )
 
 
-# ---- scan_versions -------------------------------------------------------
+# ---- highest_version -----------------------------------------------------
 
 
-def test_scan_versions_empty_directory(tmp_path: Path):
-    assert scan_versions(tmp_path) == (0, 0)
+def test_highest_version_empty_and_missing_directory(tmp_path: Path):
+    assert highest_version(tmp_path) == 0
+    assert highest_version(tmp_path / "nope") == 0
 
 
-def test_scan_versions_missing_directory(tmp_path: Path):
-    assert scan_versions(tmp_path / "nope") == (0, 0)
-
-
-def test_scan_versions_finds_released_and_candidate(tmp_path: Path):
-    (tmp_path / "v1.json").write_text("{}", encoding="utf-8")
-    (tmp_path / "v2.json").write_text("{}", encoding="utf-8")
-    (tmp_path / "v3_2026-05-18_10-30-00.json").write_text("{}", encoding="utf-8")
-    (tmp_path / "scratch_2026-05-18_09-00-00.json").write_text("{}", encoding="utf-8")  # Ignored
-    assert scan_versions(tmp_path) == (2, 3)
-
-
-def test_scan_versions_higher_candidate_wins(tmp_path: Path):
-    (tmp_path / "v3.json").write_text("{}", encoding="utf-8")
-    (tmp_path / "v5_2026-05-18_10-30-00.json").write_text("{}", encoding="utf-8")
-    assert scan_versions(tmp_path) == (3, 5)
+def test_highest_version_reads_committed_logs_only(tmp_path: Path):
+    for name in ("v2_2026-05-18_10-30-00.json", "v3_2026-05-17_10-30-00.json",
+                 "v9.json", "scratch_2026-05-18_09-00-00.json"):
+        (tmp_path / name).write_text("{}", encoding="utf-8")
+    assert highest_version(tmp_path) == 3
 
 
 # ---- next_filename_for ---------------------------------------------------
@@ -164,9 +150,9 @@ def test_next_filename_first_run_starts_at_v1(tmp_path: Path):
     assert version == 1
 
 
-def test_next_filename_continues_candidate_line(tmp_path: Path):
-    """When candidate v2 exists and released is v1, next iteration stays at v2."""
-    (tmp_path / "v1.json").write_text("{}", encoding="utf-8")
+def test_next_filename_keeps_the_highest_version(tmp_path: Path):
+    """The version does not move: the next run takes the highest one on disk."""
+    (tmp_path / "v1_2026-05-16_12-00-00.json").write_text("{}", encoding="utf-8")
     (tmp_path / "v2_2026-05-17_12-00-00.json").write_text("{}", encoding="utf-8")
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
@@ -177,17 +163,15 @@ def test_next_filename_continues_candidate_line(tmp_path: Path):
     assert version == 2
 
 
-def test_next_filename_bumps_after_release(tmp_path: Path):
-    """When highest released == highest candidate (no candidate above release),
-    next bumps to a new version line."""
+def test_next_filename_ignores_a_bare_version_file(tmp_path: Path):
     (tmp_path / "v3.json").write_text("{}", encoding="utf-8")
     filename, version = next_filename_for(
         skill_runlog_dir=tmp_path,
         releasable=True,
         timestamp="2026-05-18_10-30-00",
     )
-    assert filename == "v4_2026-05-18_10-30-00.json"
-    assert version == 4
+    assert filename == "v1_2026-05-18_10-30-00.json"
+    assert version == 1
 
 
 def test_next_filename_scratch(tmp_path: Path):
@@ -226,8 +210,7 @@ def test_prunable_orders_by_version_then_timestamp():
     assert prunable_candidates(names, keep=1) == ["v1_2026-07-09_00-00-00.json"]
 
 
-def test_prunable_never_returns_released():
-    """Released v{N}.json are the blessed canonical versions — kept forever."""
+def test_prunable_ignores_a_bare_version_file():
     names = ["v1.json", "v2.json", "v3_2026-07-01_00-00-00.json"]
     assert prunable_candidates(names, keep=1) == []
 
@@ -273,56 +256,25 @@ def _newest(logs: dict[str, dict]) -> str | None:
     return got[0] if got else None
 
 
-def test_newest_prefers_a_candidate_run_after_the_newest_release():
+def test_newest_orders_by_version_then_timestamp():
+    """As numbers, not strings: "v9_" sorts after "v10_" by name."""
     logs = {
-        "v1.json": {"timestamp": "2026-10-01_00-00-00"},
-        "v2_2026-10-02_00-00-00.json": {},
-        "v2_2026-10-03_00-00-00.json": {},
+        "v9_2026-10-09_00-00-00.json": {},
+        "v10_2026-10-02_00-00-00.json": {},
+        "v10_2026-10-03_00-00-00.json": {},
     }
-    assert _newest(logs) == "v2_2026-10-03_00-00-00.json"
-
-
-def test_newest_prefers_a_release_run_after_its_leftover_candidate():
-    """A candidate left beside the release of its own version line ran earlier."""
-    logs = {
-        "v3.json": {"timestamp": "2026-10-10_00-00-00"},
-        "v3_2026-10-05_00-00-00.json": {},
-    }
-    assert _newest(logs) == "v3.json"
-
-
-def test_newest_reads_only_the_highest_release():
-    logs = {
-        "v1.json": {"timestamp": "2026-10-20_00-00-00"},
-        "v2.json": {"timestamp": "2026-10-10_00-00-00"},
-        "v2_2026-10-15_00-00-00.json": {},
-    }
-    assert _newest(logs) == "v2_2026-10-15_00-00-00.json"
-
-
-def test_newest_release_wins_a_tie_and_without_a_timestamp():
-    assert _newest({"v2.json": {"timestamp": "2026-10-15_00-00-00"},
-                    "v2_2026-10-15_00-00-00.json": {}}) == "v2.json"
-    assert _newest({"v2.json": {}, "v2_2026-10-15_00-00-00.json": {}}) == "v2.json"
-    assert _newest({"v2.json": {}}) == "v2.json"
-
-
-def test_newest_orders_version_lines_by_version_without_reading_timestamps():
-    """A candidate line above the release started after it; one below, before."""
-    assert _newest({"v2.json": {"timestamp": "2026-12-01_00-00-00"},
-                    "v3_2026-10-15_00-00-00.json": {}}) == "v3_2026-10-15_00-00-00.json"
-    assert _newest({"v2.json": {"timestamp": "2026-01-01_00-00-00"},
-                    "v1_2026-10-15_00-00-00.json": {}}) == "v2.json"
+    assert _newest(logs) == "v10_2026-10-03_00-00-00.json"
 
 
 def test_newest_ignores_scratch_annotations_and_other_files():
     logs = {
-        "v1.json": {"timestamp": "2026-10-01_00-00-00"},
-        "v1.ann.json": {},
+        "v1_2026-10-01_00-00-00.json": {},
+        "v1_2026-10-01_00-00-00.ann.json": {},
+        "v2.json": {},
         "scratch_2026-10-30_00-00-00.json": {},
         "README.md": {},
     }
-    assert _newest(logs) == "v1.json"
+    assert _newest(logs) == "v1_2026-10-01_00-00-00.json"
     assert _newest({"README.md": {}}) is None
 
 
@@ -384,13 +336,13 @@ def test_a_log_the_ref_never_added_is_newer_than_every_landed_one(repo):
     assert latest_full_skill_runlog(repo / "logs", "main")[0] == RAN_FIRST
 
 
-def test_a_log_promoted_by_rename_lands_at_the_rename(repo):
+def test_a_renamed_log_lands_at_the_rename(repo):
     _commit_log(repo, "v2_2026-10-01_00-00-00.json")
     _commit_log(repo, "v2_2026-10-05_00-00-00.json")
-    _git(repo, "mv", "logs/v2_2026-10-01_00-00-00.json", "logs/v2.json")
-    _git(repo, "commit", "-m", "release")
-    assert landed_order(repo / "logs", "main")["v2.json"] == 4
-    assert latest_full_skill_runlog(repo / "logs", "main")[0] == "v2.json"
+    _git(repo, "mv", "logs/v2_2026-10-01_00-00-00.json", "logs/v1_2026-10-01_00-00-00.json")
+    _git(repo, "commit", "-m", "rename")
+    assert landed_order(repo / "logs", "main")["v1_2026-10-01_00-00-00.json"] == 4
+    assert latest_full_skill_runlog(repo / "logs", "main")[0] == "v1_2026-10-01_00-00-00.json"
 
 
 def test_no_git_answer_falls_back_to_run_time(tmp_path):

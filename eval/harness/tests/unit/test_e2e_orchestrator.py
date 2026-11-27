@@ -311,7 +311,7 @@ def test_provided_documents_lists_bundled_files(tmp_path: Path):
     assert names == ["ancestry-death-cert.pdf", "findagrave-quass.pdf"]  # sorted
 
 
-def test_build_workspace_copies_provided_docs_to_root(tmp_path: Path):
+def test_build_workspace_copies_provided_docs_to_uploads(tmp_path: Path):
     fixture_dir = _make_fixture_dir(tmp_path)
     _add_provided_doc(fixture_dir, "findagrave-quass.pdf")
     fixture = load_fixture(fixture_dir)
@@ -320,8 +320,9 @@ def test_build_workspace_copies_provided_docs_to_root(tmp_path: Path):
     workspace = tmp_path / "ws"
     workspace.mkdir()
     build_workspace(fixture, workspace, skills_dir)
-    # Lands at the workspace root, where an uploaded PDF would.
-    assert (workspace / "findagrave-quass.pdf").exists()
+    # Lands in uploads/, where an uploaded file does and the read tools reach.
+    assert (workspace / "uploads" / "findagrave-quass.pdf").exists()
+    assert not (workspace / "findagrave-quass.pdf").exists()
 
 
 def test_user_message_names_provided_docs(tmp_path: Path):
@@ -329,7 +330,7 @@ def test_user_message_names_provided_docs(tmp_path: Path):
     _add_provided_doc(fixture_dir, "findagrave-quass.pdf")
     fixture = load_fixture(fixture_dir)
     msg = _render_user_message(fixture)
-    assert "findagrave-quass.pdf" in msg
+    assert "uploads/findagrave-quass.pdf" in msg
     assert msg.startswith("/research --autonomous ")
 
 

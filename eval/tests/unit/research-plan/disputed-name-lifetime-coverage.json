@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_research_plan_c7m",
+    "skill": "research-plan",
+    "name": "A fact the records state differently gets a plan for the subject's whole lifetime",
+    "type": "positive",
+    "description": "Issue #4579. When a question asks about a fact the records state differently (two or more assertions giving it differently, or an index entry that omits it), the plan covers every census and vital record of the subject's lifetime through a death record, including every census after the record the question is about. It finds the subject through identifiers not in dispute and through the people she lived with, and keys no item on one reading alone. The validator `test_disputed_name_plan_covers_lifetime` gates census items whose date_range covers each post-question census year and a death or vital item dated after the question's record, keyed on this test id. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "record-type-selection",
+      "new-plan-items-planned-status",
+      "direct-arm",
+      "disputed-name-lifetime-coverage"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — what given name is written for the head of household recorded as Mayfield on the 1900 census page?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "mayfield-disputed-given-name"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "Whether census items cover 1910 and 1920, and whether a death or vital item is dated after 1900, is checked by the deterministic validator test_disputed_name_plan_covers_lifetime. If the plan misses either, that validator is listed among the failed validators; if it is not listed, the plan met both. Do not re-derive this from the date ranges.",
+    "Census coverage the validator does not check: the 1870 and 1880 censuses must also be planned (1900 is the record the question is about). A 1930 census item is welcome but not required, because her death date is unknown. The 1890 census is not required, since its schedules were nearly all destroyed. The 1860 census is not required, because enslaved people were not named in it.",
+    "For each planned census, at least one item finds her through identifiers that are not in dispute: a birth range re-derived from every census age, birthplace Virginia, the county, race, occupation and marital status. At least one item for each census also searches through a household member, such as her son Isaac.",
+    "Death: a Virginia death-record item dated after 1900 is required (statewide death certificates begin in 1912), and it carries no surname filter, because she may be indexed under another surname. A cemetery or burial search is welcome. The validator checks only that a death or vital item is dated after 1900; whether the death search drops the surname is for you to judge.",
+    "Name keys: plan items have no search-key field, so read each item's rationale. A wildcard spanning every reading found (Ottilie, Tillie, Atilla) is acceptable. No item may be keyed on one reading alone. A rationale that names a reading in order to say the search does not depend on it is correct, not a single-reading key.",
+    "Welcome but not required: pre-1900 items such as Freedmen's Bureau records, Virginia's 1866 cohabitation registers and marriage records. Their absence does not lower any score.",
+    "The repository is irrelevant. FamilySearch, Ancestry and the Library of Virginia all reach these records, and an item may reach a record without naming a collection id.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3."
+  ]
+}

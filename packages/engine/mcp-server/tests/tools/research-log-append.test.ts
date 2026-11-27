@@ -1996,6 +1996,21 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count a page image_transcribe logged itself as a positive search (#4721)", async () => {
+    const read = (n: number) => ({ ...pos(n), tool: "image_transcribe", written_by: "image_transcribe" });
+    await write(baseResearch([read(1), read(2), read(3)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+
   it.each([
     "wiki_search",
     "wiki_read",
@@ -2017,7 +2032,7 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     },
   );
 
-  it.each(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"])(
+  it.each(["source_evaluation", "check_warnings", "translation", "validate_schema"])(
     "tells the agent to return the %s report it just logged (#3524)",
     async (tool) => {
       await write(baseResearch([]));
@@ -2029,6 +2044,26 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
       expect((batch as any).next).toMatch(/return the report you just logged, in full/);
     },
   );
+
+  it("hands a convert_dates report back as `replyStart`, to paste as the reply (#4846)", async () => {
+    await write(baseResearch([]));
+    const op = { tool: "convert_dates", query: { dates: ["15 Feb 1749/50"] }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: "  Original: 15 Feb 1749/50. Converted: 26 Feb 1750.  " };
+    const single = await researchLogAppend({ projectPath: dir, ...op });
+    expect(single.ok).toBe(true);
+    expect((single as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((single as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    const batch = await researchLogAppend({ projectPath: dir, ops: [op] });
+    expect((batch as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((batch as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    // No notes to echo: the older reminder, and no `replyStart`.
+    const bare = await researchLogAppend({ projectPath: dir, ...op, notes: null });
+    expect((bare as any).next).toMatch(/return the report you just logged, in full/);
+    expect(bare).not.toHaveProperty("replyStart");
+    // Another report tool is not echoed.
+    const other = await researchLogAppend({ projectPath: dir, ...op, tool: "translation" });
+    expect((other as any).next).toMatch(/return the report you just logged, in full/);
+    expect(other).not.toHaveProperty("replyStart");
+  });
 
   it("carries no report reminder for a record search or a reference lookup (#3524)", async () => {
     await write(baseResearch([]));
@@ -2459,6 +2494,12 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
   });
 
+  it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+    const read = nil(3, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 });
+    await write(project([nil(1), nil(2), read]));
+    expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
+  });
+
   it("does not count a search that had results it left unexamined", async () => {
     await write(project([nil(1), nil(2, { results_available: 450 })]));
     expect(((await logNil()) as any).escalationDue).toBeUndefined();
@@ -2611,6 +2652,11 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     it("stays silent when the plan item has already found something", async () => {
       await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
       expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+      await write(project([nil(1, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
     });
 
     it("stays silent for a search that had results it left unexamined", async () => {
@@ -3912,4 +3958,87 @@ describe("research_log_append — a negative search whose rows include a record 
       expect(r.ok).toBe(true);
     });
   }
+});
+
+describe("research_log_append — a page image_transcribe logged itself (#4721)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4721-"));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const log = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log as any[];
+
+  /** The entry image_transcribe writes for its own read: positive, no plan item. */
+  async function toolLoggedPage(writtenBy: string | null = "image_transcribe") {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: { query: { imageId: "004884748_02613" }, results: [{ id: "004884748_02613", transcription: "page" }] },
+    });
+    const first = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: handle!.resultsRef,
+      planItemId: null, outcome: "positive", resultsExamined: 1,
+      ...(writtenBy ? { writtenBy } : {}),
+    });
+    expect(first.ok).toBe(true);
+    return { ref: handle!.resultsRef, logId: (first as any).logId as string };
+  }
+
+  it("a hand-log naming another outcome and plan item returns the tool's entry and writes nothing", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).alreadyLogged).toBe(true);
+    expect((again as any).logId).toBe(logId);
+    expect((again as any).validation.warnings.join(" ")).toMatch(/logged by image_transcribe itself.*outcome 'negative'/);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("carries back a note it could not store, rather than dropping it behind ok", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      outcome: "positive", resultsExamined: 1, notes: "Mary E. named as daughter of Benjamin F.",
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).validation.warnings.join(" ")).toContain('this note was not stored: "Mary E. named as daughter of Benjamin F."');
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("does the same inside a batch", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", stagedResultsRef: ref, planItemId: "pli_007", outcome: "negative", resultsExamined: 1 } as any],
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).results[0]).toMatchObject({ logId, alreadyLogged: true });
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a re-send under another tool", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "record_read", stagedResultsRef: ref, outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a differing re-send of a page an agent logged by hand", async () => {
+    const { ref } = await toolLoggedPage(null);
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect((again as any).errors.join(" ")).toMatch(/already logged as log_001/);
+  });
 });

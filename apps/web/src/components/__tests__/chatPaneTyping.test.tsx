@@ -495,11 +495,15 @@ describe('step mode: the replies a turn offers', () => {
   it('shows one button per phrase the turn named, and nothing else', () => {
     const { conn } = mount()
     startTurn(conn)
-    conn.emit(done(['Continue.', 'Keep going.', 'Wrap it up.']))
-    for (const phrase of ['Continue.', 'Keep going.', 'Wrap it up.']) {
+    conn.emit(done(['Continue.', 'Wrap it up.']))
+    for (const phrase of ['Continue.', 'Wrap it up.']) {
       expect(screen.getByRole('button', { name: REPLY_LABELS[phrase] })).toBeTruthy()
     }
     expect(screen.queryByRole('button', { name: REPLY_LABELS['Search more.'] })).toBeNull()
+  })
+
+  it('has no "Keep going" button: "Continue." is the one way forward', () => {
+    expect(Object.keys(REPLY_LABELS)).not.toContain('Keep going.')
   })
 
   it('sends the phrase VERBATIM, not the label it shows', () => {
@@ -508,18 +512,18 @@ describe('step mode: the replies a turn offers', () => {
     // no run, and the button would silently do the wrong thing.
     const { conn } = mount()
     startTurn(conn)
-    conn.emit(done(['Keep going.']))
-    fireEvent.click(screen.getByRole('button', { name: REPLY_LABELS['Keep going.'] }))
-    expect(conn.sent[conn.sent.length - 1]).toEqual({ type: 'user_msg', text: 'Keep going.' })
+    conn.emit(done(['Wrap it up.']))
+    fireEvent.click(screen.getByRole('button', { name: REPLY_LABELS['Wrap it up.'] }))
+    expect(conn.sent[conn.sent.length - 1]).toEqual({ type: 'user_msg', text: 'Wrap it up.' })
   })
 
   it('clears the row once answered, so a spent choice never lingers', () => {
     const { conn } = mount()
     startTurn(conn)
-    conn.emit(done(['Continue.', 'Keep going.']))
+    conn.emit(done(['Continue.', 'Wrap it up.']))
     fireEvent.click(screen.getByRole('button', { name: REPLY_LABELS['Continue.'] }))
     expect(screen.queryByRole('button', { name: REPLY_LABELS['Continue.'] })).toBeNull()
-    expect(screen.queryByRole('button', { name: REPLY_LABELS['Keep going.'] })).toBeNull()
+    expect(screen.queryByRole('button', { name: REPLY_LABELS['Wrap it up.'] })).toBeNull()
   })
 
   it('shows none when the turn named none -- a question for the researcher', () => {
@@ -531,41 +535,15 @@ describe('step mode: the replies a turn offers', () => {
     }
   })
 
-  it('shows none while the next turn runs, after the host answered', () => {
-    // A choice on screen during a running turn is one the researcher cannot act on,
-    // and clicking it would send a SECOND message into a run already moving.
-    const { conn } = mount()
-    startTurn(conn)
-    conn.emit(done(['Keep going.']))
-    conn.emit({ type: 'user_msg', text: 'Keep going.', auto: true })
-    expect(screen.queryByRole('button', { name: REPLY_LABELS['Keep going.'] })).toBeNull()
-  })
-
   it('shows none on a reconnect that lands mid-turn', () => {
     // The replayed history carries the PREVIOUS turn's offer, and the live state then
     // says a turn is running. This is the case `!busy` exists for: no send happened
     // in this tab, so nothing else retires the offer.
     const { conn } = mount()
-    conn.emit(done(['Continue.', 'Keep going.']))
+    conn.emit(done(['Continue.', 'Wrap it up.']))
     expect(screen.getByRole('button', { name: REPLY_LABELS['Continue.'] })).toBeTruthy()
     conn.emit({ type: 'status', state: 'turn_active' })
     expect(screen.queryByRole('button', { name: REPLY_LABELS['Continue.'] })).toBeNull()
-  })
-
-  it('draws the host’s own reply as a message, marked as automatic', () => {
-    // No tab sent it, so there is no local bubble: without this the agent answers
-    // messages nobody can see.
-    const { conn } = mount()
-    startTurn(conn)
-    conn.emit(done(['Keep going.']))
-    conn.emit({ type: 'user_msg', text: 'Keep going.', auto: true })
-    expect(screen.getByText('sent automatically')).toBeTruthy()
-  })
-
-  it('does not mark a replayed message of the researcher’s own', () => {
-    const { conn } = mount()
-    conn.emit({ type: 'user_msg', text: 'find his parents' })
-    expect(screen.queryByText('sent automatically')).toBeNull()
   })
 
   it('ignores junk in options rather than rendering a button that sends nothing', () => {

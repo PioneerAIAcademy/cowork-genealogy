@@ -181,6 +181,7 @@ is a key this rule can drop:
     ref: string,                         // the staged or logged page
     index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
+      date?: string, place?: string,     // present when the assertion has one (a date equal to value is not repeated): a page that agrees on them sends nothing
     }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
@@ -193,7 +194,10 @@ is a key this rule can drop:
     name: string,
     uploaded: string,                    // ISO, from the store's mtime
     hasText: boolean,                    // uploads/<name>.txt exists
+    readWith?: "sidecar_read" | "image_transcribe",  // stored projects only — §2.7
+    ref?: string,                        // with readWith "sidecar_read": the ref to pass
   }],
+  uploadsAre?: "files" | "stored",       // how the uploads are read; absent when none — §2.7
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
   signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
@@ -347,6 +351,10 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+A `framed` question's `nextStep` is `research-plan`, or `locality-guide, then
+research-plan` while the project has no `localities` entry at all: the plan
+step opens with the locality survey.
+
 `critiqued` is reached only when the user asked for a gps-mentor review — the
 mentor is not on the default `/research` path — so it records that a critique
 exists and gates nothing. A superseded verdict does not count — a
@@ -359,6 +367,7 @@ outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank unlinked kin, which outranks
+a partly-linked question that never reaches the subject, which outranks
 **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
@@ -470,6 +479,31 @@ across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run a
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
 
+**Some links, none reaching the subject, also routes to person-evidence.** When a
+question that is not resolved and has no proof summary has some assertions with a
+link (`countsForLinkedRung`) and some without, no such link names a
+`subject_person_ids` entry, and at least one subject is a tree person, its
+`nextStep` reads `person-evidence — N of this question's M assertions are unlinked
+and none of its links reaches the project subject (<ids>)`. This is the household
+record linked around the subject: in `flynn-household-skeleton` the 1850 census
+head is linked and the six children are not, and Patrick is not in that household.
+"Any unlinked assertion" would send the 53 partly-linked concluded households to
+person-evidence; requiring the subject to be unreached is what separates this case.
+It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
+and it stops once every assertion is linked or rejected against a subject
+(`rejected_links`), so it cannot loop. It is silent until a
+subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
+dev/measure-question-state-signals.ts --list`, 568 question entries across 222
+scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e
+question-runs, and is in `nextStep` on 2 of each; the rest are masked by the kin
+rung, `flynn-marriage-only-no-child-link` among them. Spot-checked: pe7 and
+`norwegian-patronymic-nil-recovery` (the subject's own birth unlinked, both parents
+linked) are intended; `maria-vazsan-spouse/run-2026-10-30_13-39-29` is real (the
+links go to four "Maria Vázsan" stubs, none to the subject); `jimmie-jewel-neal/run-2026-07-30_23-05-46`
+q_002 is not (the question is about Martha Wood, who is linked). The false route is
+accepted for the same reason as the kin rung's (lead, 2026-11-19): it is rare and
+costs one hop.
+
 **Before any evidence exists, the next search is named by its repository.** A
 `planned` or `searching` question whose log holds a positive or partial entry no
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
@@ -477,7 +511,17 @@ capture has not come back does not count, because it is an open hand-off. Otherw
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
 decides, skipping any item that waits only on the researcher's upload — the same
 skip the rest of this ladder applies, so a question whose only open item is waiting
-names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
+names no search — and any `in_progress` item (not `fs_hints`) whose own log entries
+are all `negative`. search-records leaves an item `in_progress` after a search that
+found nothing, for re-planning; picking it again re-ran the same searches turn after
+turn (kenneth-quass-death, 2026-11-26: one item nine times). The same picker names the
+search for a conflict that wants new evidence. Once nothing is left to search, a
+question holding such items reports `research-plan — dispose of <ids> (searched,
+nothing found), then research-exhaustiveness and proof-conclusion`: research-plan's
+Dispose mode closes each as `completed`, because every gate reads `in_progress` as
+unfinished work (the declaration, `hasOpenWork`, the unsettled-conflict ending, the
+new-question gate). With none left it reports `research-exhaustiveness, then
+proof-conclusion` (lead, 2026-11-26). A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
@@ -684,6 +728,16 @@ sources as tree `S2…` and points the person's, names' and facts' refs at them
 attached on FamilySearch afterwards is not in the tree. A record asked for that
 is already listed is not searched for (ut_research_021).
 
+A top-level `nextStep` (`FIRST_QUESTION_NEXT_STEP`) is present on a project with a
+subject, no question and a status other than `completed`. It names the steps that
+write the first question: `Skill("forget-and-rederive")` in verify mode first when
+the researcher's reply (never the objective) disputes a particular
+relationship, fact or source of the subject; then `extraction_append` and
+`timeline_build` for each subject; then question-selection. It says that a bounded
+request and the turn that created the project are not that turn. Why a tool says
+it: on Haiku 5.5 low the router read "no questions" and went straight to
+question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
@@ -694,7 +748,7 @@ and the `nextStep` text:
 
 - person-evidence: `assertionIds:` every live assertion of the question (the
   rung fires only when none is linked) and `userPresent: yes`, which the router
-  turns to `no` on a "Keep going." or wrap-up turn and in an autonomous run;
+  turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict;
 - hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
@@ -751,6 +805,45 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+**Delivery: the host posts the link** (lead, 2026-11-23). A row here
+says the researcher already has the link, and the router never raises it again. That
+held only when the main thread relayed the agent's report, and in the Hagell alpha
+session it rewrote every report and no logged link reached the chat. So on both hosted
+web planes (`real_agent.py`, the alpha, and the prototype worker) the host posts the link
+itself: when a main-thread call that can open a hand-off returns — an `Agent`/`Task`
+delegation, or `research_log_append`, which the main thread may call itself
+(`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
+open when the turn's first such call began is written to the chat as its own paragraph
+of the turn's reply: the site's host name, one sentence, and the URL as a markdown
+autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
+to a bare host name that starts `www.` or ends in a common top-level domain; only an
+http(s) URL is a link, and anything else is shown as code, on one line).
+"Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
+before the tool does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. If that read fails, the turn
+counts nothing as open, so a link may be posted twice but is never skipped. A link logged by a call that never
+returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
+a worker attempt that lost its grant lock posts its links before it raises. Each row is
+posted once per turn; a link sent again opens a new row and is posted again. The rule
+is `step_boundary.awaiting_hand_offs`, the Python mirror of `awaitingUserHandOffs`, held
+to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
+`continue_policy.hand_off_texts`, shared by both planes. A turn with no such call reads
+nothing for this.
+
+- **Not covered here:** the connector's chat, where `show_project` lists
+  `awaitingUser`, and Cowork and Desktop, which still rely on the relay.
+- **A turn that never reached its end** posts nothing for a call that had not
+  returned, and those rows read as handed over: a process that died, and a worker
+  attempt ended by the store going down, a newer claim superseding it, or a failed
+  transcript write. Catching those would need a stored "shown" flag, which the ruling
+  rejected: a schema change, set by the same relay that fails.
+- **A link logged after its turn ended** is read as open-before by the next turn and
+  never posted. Both planes force every delegation to the foreground
+  (`continue_policy.foreground_rewrite`), so a search agent does not outlive its turn;
+  what is left is an agent the CLI backgrounded in spite of that.
+- The main thread may repeat a link the host already posted. A duplicate is accepted
+  over a drop.
 
 ### 2.4 `externalCollections` — counts of the stored curated collections
 
@@ -834,9 +927,23 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 ### 2.7 `uploads`, `uploadUrl` — the self-hosted beta's web tier
 
 ```typescript
-uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean,
+             readWith?: "sidecar_read" | "image_transcribe", ref?: string }]
+uploadsAre?: "files" | "stored"
 uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
+
+`uploadsAre` says how the uploads are read, so no agent works it out from
+`uploadUrl`, `hasText` and the file name. It is present whenever `uploads` is:
+`"stored"` when the answer carries an `uploadUrl`, `"files"` otherwise. On a
+`"stored"` project each row names its reader: `readWith: "sidecar_read"` with
+`ref: "uploads/<name>.txt"` when `hasText` is true, `"sidecar_read"` with
+`ref: "uploads/<name>"` for a lone `.txt` upload, and `"image_transcribe"` for
+anything else. On a `"files"` project the rows carry neither field: the uploads
+are files in the project folder, and its callers do not agree on one reader for
+an image (search-external-sites reads the file, translation transcribes it).
+One function, `uploadReadPlan` (`src/utils/upload-read-plan.ts`), computes all
+of it, and the eval mock runs the same function after it adds `uploadUrl`.
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
 entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
@@ -941,9 +1048,12 @@ Only under `include: ["historicalContext"]`, and only when the tree holds
 objective on a line naming it as the researcher's and not a tree fact, then one line
 per person, the subject first and then its parents, spouses and children from the
 tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
-place as `Type date, place`, or "no dated or placed facts". The router spawns the
-agent with that prompt as given, then a `message:` line holding the researcher's
-message verbatim, and nothing else (research/SKILL.md, "Bounded request or job").
+place as `Type date, place`, or "no dated or placed facts". The prompt's last line
+is a bare `message:`. The router spawns the agent with that prompt as given, the
+researcher's message copied verbatim after that `message:`, and nothing else
+(research/SKILL.md, "Bounded request or job"). The trailing line is there because a
+prompt that ended on the facts left the router to add the `message:` line itself, and
+it sent the prompt alone in 1 of 4 runs of `ut_research_ia2`.
 
 Why a tool writes it: told to call `tree_query` and hand over only the places and
 years it returned, a Haiku 5.5 low router added its own era ranges and a candidate

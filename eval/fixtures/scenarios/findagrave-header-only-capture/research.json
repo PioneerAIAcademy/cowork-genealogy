@@ -1,0 +1,88 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find where Abner Hollis (d. 1874, Warren County, Ohio) was buried",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-18",
+    "updated": "2026-11-18"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Abner Hollis buried after his death in 1874?",
+      "rationale": "A burial place would name the cemetery and may carry a headstone with his birth date and family plot.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-18",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Warren County, Ohio, United States",
+          "date_range": "1874",
+          "repository": "Find a Grave",
+          "rationale": "Find a Grave is free to search and indexes memorials by name and death year; a memorial would name the cemetery.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-18T15:00:00.000Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Abner",
+        "surname": "Hollis",
+        "deathYear": 1874
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "notes": "Find a Grave memorial search handed to the researcher.",
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?firstname=Abner&lastname=Hollis&deathyear=1874",
+        "capture_received": false
+      },
+      "results_ref": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

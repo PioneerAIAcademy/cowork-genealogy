@@ -590,7 +590,12 @@
               "surname": "Flynn"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "house and lot on Main Street, for her natural life"
+            }
+          ]
         },
         {
           "id": "p3",
@@ -602,7 +607,12 @@
               "surname": "Flynn"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "mining tools and one hundred dollars"
+            }
+          ]
         },
         {
           "id": "p4",
@@ -614,7 +624,12 @@
               "surname": "Doyle"
             }
           ],
-          "facts": []
+          "facts": [
+            {
+              "type": "bequest",
+              "value": "fifty dollars"
+            }
+          ]
         },
         {
           "id": "p5",
@@ -834,7 +849,7 @@
       "persons": [
         {
           "id": "p1",
-          "household": "1",
+          "household": "418",
           "gender": "male",
           "names": [
             {
@@ -868,7 +883,7 @@
         },
         {
           "id": "p2",
-          "household": "1",
+          "household": "418",
           "gender": "female",
           "names": [
             {
@@ -898,7 +913,7 @@
         },
         {
           "id": "p3",
-          "household": "1",
+          "household": "418",
           "gender": "male",
           "names": [
             {
@@ -932,7 +947,7 @@
         },
         {
           "id": "p4",
-          "household": "1",
+          "household": "418",
           "gender": "female",
           "names": [
             {
@@ -966,7 +981,7 @@
         },
         {
           "id": "p5",
-          "household": "2",
+          "household": "419",
           "gender": "male",
           "names": [
             {
@@ -1000,7 +1015,7 @@
         },
         {
           "id": "p6",
-          "household": "2",
+          "household": "419",
           "gender": "female",
           "names": [
             {
@@ -1030,7 +1045,7 @@
         },
         {
           "id": "p7",
-          "household": "2",
+          "household": "419",
           "gender": "female",
           "names": [
             {
@@ -1060,7 +1075,7 @@
         },
         {
           "id": "p8",
-          "household": "2",
+          "household": "419",
           "gender": "male",
           "names": [
             {

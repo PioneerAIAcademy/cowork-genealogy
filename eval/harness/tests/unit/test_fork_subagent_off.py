@@ -13,67 +13,17 @@ offer is a sentence.
 
 from __future__ import annotations
 
-import asyncio
 import json
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from claude_agent_sdk import ClaudeAgentOptions
+from tests.unit.cli_capture import capture_request_bodies
 
 from harness.auth import AuthConfig, env_for_sdk
-from harness.sdk_query import close_query, open_query
 
 _FORK_OFFER = "forks yourself"
 
 
 def _agent_tool_prompt(tmp_path, extra_env: dict[str, str]) -> str:
-    bodies: list[dict] = []
-
-    class Capture(BaseHTTPRequestHandler):
-        def do_POST(self):
-            raw = self.rfile.read(int(self.headers.get("content-length", 0)))
-            if self.path.startswith("/v1/messages") and "count_tokens" not in self.path:
-                bodies.append(json.loads(raw))
-            self.send_response(400)
-            self.send_header("content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"type":"error","error":{"type":"invalid_request_error","message":"capture"}}')
-
-        def log_message(self, *args):
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), Capture)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    options = ClaudeAgentOptions(
-        cwd=str(tmp_path),
-        setting_sources=[],
-        permission_mode="bypassPermissions",
-        env={
-            **extra_env,
-            "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
-            "ANTHROPIC_API_KEY": "sk-capture",
-            "CLAUDE_CODE_OAUTH_TOKEN": "",
-            "ANTHROPIC_AUTH_TOKEN": "",
-            "ENABLE_TOOL_SEARCH": "false",
-        },
-        max_turns=1,
-    )
-
-    async def main() -> None:
-        stream = open_query(prompt="hi", options=options)
-        try:
-            async for _ in stream:
-                if bodies:
-                    break
-        except Exception:
-            pass
-        finally:
-            await close_query(stream)
-
-    try:
-        asyncio.run(main())
-    finally:
-        server.shutdown()
+    bodies = capture_request_bodies(tmp_path, extra_env)
     for body in bodies:
         for tool in body.get("tools", []):
             if tool.get("name") == "Agent":

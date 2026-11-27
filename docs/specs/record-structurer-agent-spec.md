@@ -65,6 +65,9 @@ and flagging it; Sonnet 5 read all six correctly. No cheaper setting was tried
 further, since a cheaper one cannot read better than the setting that already
 failed. Cost: about $0.36 per six-document run against $0.11.
 
+**Moved (2026-11-05): `claude-haiku-5-5` at `effort: low`**, in the lead's
+2026-10-21 helper sweep. The frontmatter holds the current setting.
+
 ## 3. What the agent does
 
 Aim for three turns per batch: read all, write all, return.
@@ -166,7 +169,25 @@ is §11.7's code.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
-  City", 1 of 3).
+  City", 1 of 3). `extraction_append` refuses a document residence that has a
+  `value` and no `place` (lead, 2026-11-23; a page-pass reading is not checked): on Haiku 5.5 low (v3) all four of
+  ut_record_structurer_001's residences held the place only in `value`, so none
+  got a standard place, and a rule the tool checks binds on every model. A
+  date-shaped residence goes in `date`. The engine still never reads a place out
+  of `value`; it refuses rather than guess.
+- **Census households (2026-11-26).** On a census of two or more persons,
+  every person carries `household`: the family number the page gives, else its
+  dwelling number, else "1", "2", … by household in page order. Roles are
+  assigned per household, so the family number comes first: two families in one
+  dwelling sent under its dwelling number are written as one. `extraction_append`
+  refuses the document when a person has none, naming them. The body's old line
+  ("only when one text covers several") read as optional: in run 0 of
+  `v6_2026-11-25_15-46-42` Haiku sent a two-dwelling 1860 page with no
+  `household` on any of its eight persons, and the second dwelling's head was
+  written as a member of the first family.
+- **Age (lead, 2026-11-23).** An age the text gives is an `age` fact on that
+  person. Without the line Haiku dropped the obituary's "91" (v1, v2, v5) or
+  wrote it as `age_at_death` (v3), which no `age` row matches.
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,
@@ -176,7 +197,10 @@ is §11.7's code.
   without a gender is written as a father.
 - **Probate (2026-10-04).** The will's execution is a `will` fact; the
   court's acts (proof, letters granted) are `probate` facts, all on the
-  testator, even where the letters name the executor.
+  testator, even where the letters name the executor. Each bequest is a
+  `bequest` fact on the person who receives it (lead, 2026-11-23); the rule
+  named none, and v1 and v2 dropped all three of ut_record_structurer_005's
+  bequests while the judge scored the test 3.
 - **Newspaper notices (2026-10-04).** A wedding, birth, engagement or
   anniversary notice is `newspaper_announcement`, never the event's own
   record type.
@@ -213,8 +237,10 @@ read images, write the log, or call the calendar tool.
 
 ## 6. Verification
 
-- `extraction_append` rejects a malformed document, shown failing two ways: a
-  smuggled `record_basis`, and a census with no `census` block. It also refuses
+- `extraction_append` rejects a malformed document, shown failing four ways: a
+  smuggled `record_basis`, a census with no `census` block, a residence with a
+  `value` and no `place`, and a census of two or more persons with a person
+  missing `household`. It also refuses
   the whole batch when one document is malformed, and writes nothing.
 - The unit fixtures that start from text reach this agent directly (the
   harness's direct-agent arm, since no skill remains in front of it). They pass

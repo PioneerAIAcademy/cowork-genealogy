@@ -53,7 +53,9 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    bare_tool_name,
     builtin_spawn_denial,
+    main_thread_denial,
     relay_note_context,
     sources_note_hook,
     owned_section_denial,
@@ -1377,6 +1379,14 @@ async def run_skill(
                 }
             )
             return subagent_only_denial(violation)
+        if (never := main_thread_denial(input_data)) is not None:
+            blocked_context_calls.append(
+                {
+                    "tool": bare_tool_name(input_data.get("tool_name") or ""),
+                    "args": dict(input_data.get("tool_input") or {}),
+                }
+            )
+            return never
         # Protected-file lockdown: deny a raw Write/Edit/NotebookEdit to
         # research.json / tree.gedcomx.json — creates included — which must go
         # through the MCP writer tools that validate before persisting (issue

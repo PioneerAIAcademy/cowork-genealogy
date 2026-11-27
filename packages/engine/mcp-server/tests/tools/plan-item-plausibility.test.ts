@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   compoundJurisdictionError,
+  hintsReviewRecordTypeError,
   OUTSIDE_SITE_NAMES,
   outsideSiteJurisdictionError,
   planItemFlags,
@@ -252,6 +253,97 @@ describe("planWindowFlag", () => {
   });
 });
 
+// A disputed-fact question whose plan stopped at the 1910 census: the span flag
+// above stays silent (a death item reaches the window's end), so the census years
+// themselves are named. US federal censuses only, 1890 skipped, none after 1950.
+const GOOCHLAND = "Goochland, Virginia, United States";
+const item = (record_type: string, date_range: string, extra: Record<string, unknown> = {}) => ({
+  record_type, jurisdiction: GOOCHLAND, date_range, status: "planned", ...extra,
+});
+const censusPlan = (items: Record<string, unknown>[], extra: Record<string, unknown> = {}) => ({
+  id: "pl_001", question_id: "q_001", status: "active", items, ...extra,
+});
+
+describe("planWindowFlag — US federal census years the plan leaves out", () => {
+  it("names each census year in the window no census item covers (the c7m shape)", () => {
+    const msg = planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1870"), item("census", "1880"), item("census", "1900"),
+      item("census", "1910"), item("vital_record", "1900-1960"),
+    ])]);
+    expect(msg).toMatch(/q_001: no item covers 1860, 1920, 1930, 1940, 1950 — US federal census years/);
+    expect(msg).toMatch(/ in its date window 1852–1952\. Add a census item whose date_range covers each\.$/);
+  });
+
+  it("skips 1890 and never names a year after 1950", () => {
+    expect(planWindowFlag(q("1880-1900"), [censusPlan([item("census", "1880"), item("census", "1900")])])).toBeNull();
+    const msg = planWindowFlag(q("1930-1990"), [censusPlan([
+      item("census", "1930"), item("census", "1940"), item("vital_record", "1930-1990"),
+    ])]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1950");
+  });
+
+  it("counts a ranged census item as covering every census year inside it", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1860-1880"), item("census", "1900-1950"),
+    ])])).toBeNull();
+  });
+
+  it("acts only when the plan has a US federal census item", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([item("vital_record", "1852-1952")])])).toBeNull();
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1861", { jurisdiction: "Essex, England" }), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("state_census", "1925"), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("reads a US jurisdiction written without its country", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900", { jurisdiction: "Goochland County, Virginia" }),
+    ])])).toMatch(/no item covers 1860, 1870, 1880, 1910/);
+  });
+
+  it("has no opinion without a date_window", () => {
+    expect(planWindowFlag(q(), [censusPlan([item("census", "1900")])])).toBeNull();
+  });
+
+  it("leaves out superseded plans, and reads a skipped census item as the stated reason its year is left out", () => {
+    const msg = planWindowFlag(q("1895-1925"), [
+      censusPlan([item("census", "1920", { status: "skipped" })]),
+      censusPlan([item("census", "1910")], { id: "pl_002", status: "superseded" }),
+      censusPlan([item("census", "1900")], { id: "pl_003" }),
+    ]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1910");
+  });
+
+  it("does not act on a plan whose only US federal census item is skipped", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900", { status: "skipped" }), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("reads a range written with an en dash", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900"), item("census", "1860–1950"), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("counts only US federal census items as covering a year", () => {
+    const msg = planWindowFlag(q("1895-1925"), [censusPlan([
+      item("census", "1900"), item("state_census", "1915-1925"),
+      item("census", "1901-1911", { jurisdiction: "Essex, England" }), item("vital_record", "1895-1925"),
+    ])]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1910, 1920");
+  });
+
+  it("gives both notes when the plan also falls short of the window's span", () => {
+    const msg = planWindowFlag(q("1852-1952"), [censusPlan([item("census", "1860"), item("census", "1870")])]);
+    expect(msg).toMatch(/date window is 1852–1952/);
+    expect(msg).toMatch(/no item covers 1880, 1900, 1910/);
+  });
+});
+
 describe("research_append surfaces the date-window flag", () => {
   const WINDOW_Q = [{ id: "q_001", question: "When did he marry?", date_window: "1777-1799" }];
   const withItems = (ranges: string[]) => [{
@@ -269,6 +361,37 @@ describe("research_append surfaces the date-window flag", () => {
   it("is silent when the plan reaches the window", async () => {
     const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
     expect(await append(dir, { ...ITEM, date_range: "1770-1800" })).not.toMatch(/date window/);
+  });
+
+  it("names a census year the plan leaves out, and still writes", async () => {
+    const dir = project({
+      questions: [{ id: "q_001", question: "What given name is on the 1900 census?", date_window: "1852-1952" }],
+      plans: [{
+        id: "pl_001", question_id: "q_001", status: "active",
+        items: [{ ...ITEM, id: "pli_001", record_type: "vital_record", date_range: "1900-1960" }],
+      }],
+    });
+    const text = await append(dir, { ...ITEM, sequence: 2, record_type: "census", jurisdiction: "Goochland, Virginia, United States", date_range: "1860-1910" });
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/no item covers 1920, 1930, 1940, 1950/);
+  });
+
+  it("re-checks the census years on an update that changes an item's record_type", async () => {
+    const dir = project({
+      questions: [{ id: "q_001", question: "What given name is on the 1900 census?", date_window: "1895-1925" }],
+      plans: [{
+        id: "pl_001", question_id: "q_001", status: "active",
+        items: ["1900", "1910", "1920"].map((date_range, i) => ({
+          ...ITEM, id: `pli_00${i + 1}`, sequence: i + 1, record_type: "census",
+          jurisdiction: "Goochland, Virginia, United States", date_range,
+        })),
+      }],
+    });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_003", fields: { record_type: "city_directory" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/no item covers 1920 —/);
   });
 
   it("is silent for a question with no date_window", async () => {
@@ -811,5 +934,90 @@ describe("research_append refuses a FamilySearch plan item whose jurisdiction na
     writeFileSync(join(dir, "external-collections.json"), "{not json", "utf8");
     expect(await append(dir, { ...NEWS, jurisdiction: "Washington, Utah, United States" })).toMatch(/"ok":\s*true/);
     expect(await append(dir, { ...NEWS, jurisdiction: PLI_006 })).toMatch(/'chronicling america'/);
+  });
+});
+
+// #4828: the hints-review item routes to the hints reviewer only on record_type
+// "fs_hints". The two bad writes are copied from eval/runlogs/unit/research-plan
+// v20_2026-11-20_21-09-59 (ut_research_plan_prof, `other`) and
+// v20_2026-11-21_01-04-02 (ut_research_plan_subj, `church`).
+describe("research_append refuses a hints-review plan item whose record_type is not fs_hints", () => {
+  const PROF_OTHER = {
+    sequence: 1, record_type: "other", jurisdiction: "Pottsville, Schuylkill County, Pennsylvania", date_range: "1842-1898",
+    repository: "FamilySearch", fallback_for: null, status: "planned",
+    rationale: "Review pending FamilySearch hints on ZZKR-TH2 before searching; an attached hint may already name Thomas Kerrigan's parents. The FamilySearch profile for Thomas (the project tree lists him with no parents) records a christening on 14 Mar 1842 at St. Patrick's Church, Pottsville, and a death in Pottsville in 1898.",
+  };
+  const SUBJ_CHURCH = {
+    sequence: 1, record_type: "church", jurisdiction: "Schuylkill County, Pennsylvania", date_range: "1870-1873",
+    repository: "FamilySearch", fallback_for: null, status: "planned",
+    rationale: "Review pending FamilySearch hints on ZZKR-BR1 before searching. An attached hint may already answer when and where Bridget was baptized.",
+  };
+  const HINTS = { ...SUBJ_CHURCH, record_type: "fs_hints" };
+  const stored = (item: Record<string, unknown>) => project({ plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [{ ...item, id: "pli_001" }] }] });
+  const update = (dir: string, fields: Record<string, unknown>) => researchAppend({
+    projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields,
+  } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+
+  it("refuses both logged writes on a plan_items append, and writes nothing", async () => {
+    for (const [bad, type] of [[PROF_OTHER, "'other'"], [SUBJ_CHURCH, "'church'"]] as const) {
+      const dir = project({});
+      const text = await append(dir, bad);
+      expect(text).toMatch(/"ok":\s*false/);
+      expect(text).toContain(`record_type is ${type}`);
+      expect(text).toContain('set record_type: \\"fs_hints\\"');
+      expect(JSON.parse(readFileSync(join(dir, "research.json"), "utf8")).plans[0].items ?? []).toEqual([]);
+    }
+  });
+
+  it("refuses the same item inline on a plans append", async () => {
+    const out = await researchAppend({
+      projectPath: project({ plans: [] }), section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...PROF_OTHER, id: "pli_001" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/record_type is 'other'/);
+  });
+
+  it("refuses an update that flips an fs_hints item to church", async () => {
+    expect(await update(stored(HINTS), { record_type: "church" })).toMatch(/record_type is 'church'/);
+  });
+
+  it("refuses an update that rewrites a church item's rationale into the hints-review one", async () => {
+    expect(await update(stored({ ...SUBJ_CHURCH, rationale: "Baptism." }), { rationale: SUBJ_CHURCH.rationale })).toMatch(/record_type is 'church'/);
+  });
+
+  it("refuses the item inline on a plans update that changes its record_type", async () => {
+    const out = await researchAppend({
+      projectPath: stored(HINTS), section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...HINTS, id: "pli_001", record_type: "other" }] },
+    } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+    expect(out).toMatch(/record_type is 'other'/);
+  });
+
+  it("accepts a correct fs_hints item", async () => {
+    expect(await append(project({}), HINTS)).toMatch(/"ok":\s*true/);
+  });
+
+  it("accepts a non-hints item whose rationale mentions hints mid-sentence", async () => {
+    const rationale = "Church registers; also review pending FamilySearch hints on ZZKR-BR1 if any remain.";
+    expect(await append(project({}), { ...SUBJ_CHURCH, rationale })).toMatch(/"ok":\s*true/);
+  });
+
+  it("accepts a status-only update to a legacy bad item", async () => {
+    expect(await update(stored(SUBJ_CHURCH), { status: "in_progress" })).toMatch(/"ok":\s*true/);
+  });
+});
+
+describe("hintsReviewRecordTypeError", () => {
+  it("is anchored to the start of the rationale, case-insensitively, after leading whitespace", () => {
+    const item = (rationale: string, record_type = "church") => ({ rationale, record_type });
+    expect(hintsReviewRecordTypeError(item("  review PENDING familysearch hints on X1"))).toMatch(/record_type is 'church'/);
+    expect(hintsReviewRecordTypeError(item("Check FamilySearch hints on X1"))).toBeUndefined();
+    expect(hintsReviewRecordTypeError(item("Review pending FamilySearch hints on X1", "fs_hints"))).toBeUndefined();
+  });
+
+  it("does not throw on a malformed item", () => {
+    for (const bad of [undefined, null, {}, { rationale: 5 }, { rationale: null }]) {
+      expect(hintsReviewRecordTypeError(bad as never)).toBeUndefined();
+    }
   });
 });
