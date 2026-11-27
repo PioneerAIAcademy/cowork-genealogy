@@ -645,7 +645,9 @@ _NO_REVIEW_RE = re.compile(
     r"no (?:\w+ )?review(?:er)?\b|not (?:yet )?(?:been )?(?:reviewed|requested)|review (?:was|has) not been"
     r"|verdict:?\s*none\b"
     r"|review[^.]{0,40}\bcovers the (?:writing|wording|style|prose)"
-    r"|only (?:\w+ ){0,3}review (?:\w+ ){0,3}is a (?:craft|style|wording)",
+    r"|only (?:\w+ ){0,3}review (?:\w+ ){0,3}is a (?:craft|style|wording)"
+    r"|\b(?:none|no|not|never)\b[^.\n]{0,60}\b(?:review|reviewer|critique)\b"
+    r"|\b(?:review|reviewer|critique)\b[^.\n]{0,60}\b(?:none|not|never|no)\b",
     re.IGNORECASE,
 )
 
