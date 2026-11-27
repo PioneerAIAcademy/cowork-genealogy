@@ -2315,16 +2315,20 @@ def _guard_case_029_shape():
 )
 def test_size_guard_keeps_every_call_main_keeps(build):
     """#4682 case 5: the refill pass only adds calls back, so no run loses a
-    call the guard kept before it. Changing the drop order instead was tried
-    twice and lost evidence both times: the issue's order dropped q4g's only
-    cited call, and sparing writes dropped 029's only Pulaski County survey."""
+    call the guard kept before it (apart from one case 1 no longer counts as
+    cited; these constructions have none). Changing the drop order instead was
+    tried twice and lost evidence both times: the issue's order dropped q4g's
+    only cited call, and sparing writes dropped 029's only Pulaski County
+    survey."""
     calls, needles = build()
     calls = [{**c, "matched": {**c["matched"], "index": i}} for i, c in enumerate(calls)]
     cited = [judge._carries_excerpt(c.get("response"), needles) for c in calls]
     main = _main_kept(calls, cited)
     loop = judge._size_guard_drop_loop(calls, cited)
-    final = judge._size_guard_keep(calls, cited)
+    final = judge._size_guard_keep(calls, cited, needles)
     assert not all(main), "the construction must make the guard drop"
+    if final.count(True) > 1:
+        assert judge._size_guard_fits(calls, final, cited), "refill kept more than the budget holds"
     lost_from_main = [i for i, (m, f) in enumerate(zip(main, final)) if m and not f]
     assert not lost_from_main, f"calls main keeps were dropped: {lost_from_main}"
     lost_from_loop = [i for i, (k, f) in enumerate(zip(loop, final)) if k and not f]
@@ -2333,6 +2337,53 @@ def test_size_guard_keeps_every_call_main_keeps(build):
     assert [c["matched"]["index"] for c in _rendered_calls(rendered)] == [
         i for i, k in enumerate(final) if k
     ]
+
+
+def test_refill_adds_back_newest_first(monkeypatch):
+    """#4682 case 5: when the room left holds one of two dropped calls, the
+    newer one comes back. A stub budget makes the order the only variable."""
+    calls = [_read_call(i) for i in range(6)]
+    monkeypatch.setattr(
+        judge, "_size_guard_drop_loop", lambda tc, cited: [False, False, False, True, True, True]
+    )
+    monkeypatch.setattr(judge, "_size_guard_fits", lambda tc, keep, cited: keep.count(True) <= 4)
+    monkeypatch.setattr(judge, "_render_pass", lambda tc, keep, cited, needles: 0)
+    assert judge._size_guard_keep(calls, [False] * 6) == [False, False, True, True, True, True]
+
+
+def test_refill_never_moves_the_render_past_the_excerpt_passes():
+    """#4682 review: refill measures a live write at its ~250-char omitted
+    form. Re-added, this one's real args (60 ops of 1,900 chars, which the
+    string cap cannot bound) pushed the render past the hard cap, so every
+    excerpt fell away and the write itself showed as an omission marker."""
+    ops = [{"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}} for _ in range(60)]
+    calls = [_live_write_call({"projectPath": "/p", "ops": ops})] + [
+        _wiki_page_call(_page_with(_ROOTS_URL, 6_118)) for _ in range(23)
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls, judge._citation_needles(_ROOTS_URL, ""))
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert "[args omitted by harness" not in rendered
+    pages_shown = rendered.count('"tool": "mcp__genealogy__wiki_read"')
+    assert pages_shown > 0
+    assert rendered.count("[harness excerpt at char 6118 of 20000]") == pages_shown
+
+
+def test_refill_never_cuts_a_write_the_drop_pass_shows_whole():
+    """#4682 review: re-adding an older 45K write pushed the render past the
+    hard cap, and the string-capped pass then cut the agent's final 30K guide,
+    which the guard without refill rendered whole."""
+    final_guide = _live_write_call({"projectPath": "/p", "entry": {"guide_markdown": "A" * 30_000}})
+    older = _live_write_call({"projectPath": "/p", "entry": {"guide_markdown": "B" * 45_000}})
+    calls = (
+        [older]
+        + [_read_call(i) for i in range(8)]
+        + [_read_call(99, 491)]
+        + [_wiki_page_call(_page_with(_ROOTS_URL, 6_118)) for _ in range(20)]
+        + [final_guide]
+    )
+    rendered = judge._render_tool_calls_with_size_guard(calls, judge._citation_needles(_ROOTS_URL, ""))
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert "A" * 30_000 in rendered
 
 
 def test_dropped_marker_counts_the_dropped_calls_that_carried_excerpts():

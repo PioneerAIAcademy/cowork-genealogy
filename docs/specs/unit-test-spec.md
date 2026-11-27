@@ -1737,8 +1737,12 @@ none, so a URL hidden there protects nothing. Excerpts are left out of the drop
 budget, and the guard drops the oldest call that carries no excerpt, keeping a
 cited page until no uncited call is left. That pass drops the agent's writes as
 readily as any uncited call, so a refill pass follows: each dropped call, newest
-first, is added back if the measured view, its marker recounted, still fits.
-Refill only adds, so no call the drop pass keeps is lost. Sparing writes in the
+first, is added back if the measured view, its marker recounted, still fits and
+the real render stays on the same pass below. The measured view stands a live
+call's args in by a short marker, so without that second condition a re-added
+write could push the real render past the hard cap and cost every excerpt, or
+cut another write to the string cap. Refill only adds, and never moves the
+render to a later pass, so nothing the judge saw before is lost. Sparing writes in the
 drop order itself was rejected: it dropped `ut_locality_guide_029`'s only
 Pulaski County `locality_survey` to keep six writes, leaving the judge a Pulaski
 guide with no Pulaski source (#4682). The `_dropped_for_size` marker states how

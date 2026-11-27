@@ -775,7 +775,9 @@ def _size_guard_fits(
 def _size_guard_drop_loop(
     tool_calls: list[dict[str, Any]], cited: list[bool]
 ) -> list[bool]:
-    """The size guard's drop pass, as before #4682. Returns the kept mask."""
+    """The size guard's drop pass: the same victim rule and stop as before
+    #4682 (only the marker it measures is shorter, and `cited` now follows the
+    render). Returns the kept mask."""
     keep = [True] * len(tool_calls)
     while keep.count(True) > 1 and not _size_guard_fits(tool_calls, keep, cited):
         kept = [i for i, k in enumerate(keep) if k]
@@ -792,22 +794,69 @@ def _size_guard_drop_loop(
     return keep
 
 
-def _size_guard_keep(tool_calls: list[dict[str, Any]], cited: list[bool]) -> list[bool]:
+def _render_passes() -> tuple[tuple[Callable[[Any], Any], bool], ...]:
+    """The render passes, in order: (live-args strategy, with excerpts).
+
+    A function, not a module constant: `judge_render`'s walk follows a call
+    and the names a reached function reads, but not the names inside a
+    module-level value, so a tuple constant here left `_live_args_as_is` and
+    `_live_args_string_capped` outside the render hash.
+    """
+    return (
+        (_live_args_as_is, True),
+        (_live_args_string_capped, True),
+        (_live_args_string_capped, False),
+    )
+
+
+def _render_pass(
+    tool_calls: list[dict[str, Any]],
+    keep: list[bool],
+    cited: list[bool],
+    needles: tuple[str, ...],
+) -> int:
+    """Index of the first render pass whose output is within
+    _TOOL_CALLS_HARD_MAX_CHARS; len(_render_passes()) means the measured view."""
+    passes = _render_passes()
+    for n, (live_args, with_excerpts) in enumerate(passes):
+        excerpt_needles = needles if with_excerpts else ()
+        rendered = _render_kept_calls(tool_calls, keep, cited, live_args, excerpt_needles)
+        if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
+            return n
+    return len(passes)
+
+
+def _size_guard_keep(
+    tool_calls: list[dict[str, Any]],
+    cited: list[bool],
+    needles: tuple[str, ...] = (),
+) -> list[bool]:
     """The calls the size guard keeps: the drop pass, then the refill pass.
 
     The refill re-adds dropped calls newest first, each only if the measured
-    view, its marker recounted, still fits. It only adds, so every call the
-    drop pass keeps is kept. The drop pass takes every uncited call before a
-    cited one, the agent's writes among them; in ut_locality_guide_q4m it
-    dropped all four research_append calls although dropping the 44.6K survey
-    alone left room for them.
+    view, its marker recounted, still fits AND the render stays on the pass the
+    drop pass's calls render at. The measured view stands a live call's args in
+    by a short marker, so a re-added write can cost ~250 chars there and 100K in
+    the real render, pushing it to a later pass: every excerpt lost, or another
+    write cut to the string cap. Holding the pass means refill never costs the
+    judge anything it saw before. It only adds, so every call the drop pass
+    keeps is kept. The drop pass takes every uncited call before a cited one,
+    the agent's writes among them; in ut_locality_guide_q4m it dropped all four
+    research_append calls although dropping the 44.6K survey alone left room
+    for them.
     """
     keep = _size_guard_drop_loop(tool_calls, cited)
+    if all(keep):
+        return keep
+    held = _render_pass(tool_calls, keep, cited, needles)
     for i in range(len(keep) - 1, -1, -1):
         if keep[i]:
             continue
         keep[i] = True
-        if not _size_guard_fits(tool_calls, keep, cited):
+        if not (
+            _size_guard_fits(tool_calls, keep, cited)
+            and _render_pass(tool_calls, keep, cited, needles) <= held
+        ):
             keep[i] = False
     return keep
 
@@ -823,7 +872,10 @@ def _render_tool_calls_with_size_guard(
     oldest call once every remaining one carries one). Then add dropped calls
     back, newest first, each only if the view still fits, and prepend a marker
     that counts the calls still dropped and the ones among them that carried an
-    excerpt. The kept calls are then rendered with their real args. If that
+    excerpt. A call is added back only if the render stays on the pass below
+    that the drop pass's calls render at, so the refill never costs the judge
+    an excerpt or a whole write it saw before. The kept calls are then rendered
+    with their real args. If that
     render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args are rendered with
     their strings cut to the per-string cap, and if it still does, as in the
     measured view. Worst case (single call still too large), keep one call and
@@ -839,12 +891,9 @@ def _render_tool_calls_with_size_guard(
         return "(none)"
 
     cited = [_carries_excerpt(c.get("response"), needles) for c in tool_calls]
-    keep = _size_guard_keep(tool_calls, cited)
-    for live_args, excerpt_needles in (
-        (_live_args_as_is, needles),
-        (_live_args_string_capped, needles),
-        (_live_args_string_capped, ()),
-    ):
+    keep = _size_guard_keep(tool_calls, cited, needles)
+    for live_args, with_excerpts in _render_passes():
+        excerpt_needles = needles if with_excerpts else ()
         rendered = _render_kept_calls(tool_calls, keep, cited, live_args, excerpt_needles)
         if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
             return rendered
