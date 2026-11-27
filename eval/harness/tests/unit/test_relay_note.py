@@ -38,7 +38,7 @@ def test_historical_context_gets_the_note_for_its_own_relay_rule():
         assert note != RELAY_NOTE
         assert "above its `### Search implications` heading" in note
         assert "after the final `---`" not in note
-    other = {"tool_name": "Agent", "tool_input": {"subagent_type": "search-records"}}
+    other = {"tool_name": "Agent", "tool_input": {"subagent_type": "source-evaluation"}}
     assert relay_note_context(other) == RELAY_NOTE
     assert relay_note_context({"tool_name": "Agent", "tool_input": "not a dict"}) == RELAY_NOTE
 

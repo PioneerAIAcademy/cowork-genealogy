@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveFamilySearchTarget } from '../familysearch-url'
+import { resolveFamilySearchTarget, imageIdToViewerUrl } from '../familysearch-url'
 
 /**
  * The WEB copy of the destination policy (#1018).
@@ -101,5 +101,39 @@ describe('resolveFamilySearchTarget — web copy', () => {
     expect(resolveFamilySearchTarget('ark:/61903/1:1:MXYZ/../../en/tree')).toBeNull()
     expect(resolveFamilySearchTarget('1:1:MXYZ/../../redirect?to=https://evil.example')).toBeNull()
     expect(resolveFamilySearchTarget('1:1:MXYZ#frag')).toBeNull()
+  })
+})
+
+describe('imageIdToViewerUrl — film viewer from a NUMBER_NUMBER image id (#4582)', () => {
+  it('builds the film-viewer URL with i one less than the page number', () => {
+    // Mirrors the `imageId` branch of the engine's imageViewerUrl: the viewer's `i=`
+    // is zero-indexed, so image 00058 of film 004567123 opens at i=57.
+    expect(imageIdToViewerUrl('004567123_00058')).toBe(
+      'https://www.familysearch.org/search/film/004567123?i=57'
+    )
+  })
+
+  it('keeps the group number leading zeros and drops the sequence leading zeros', () => {
+    expect(imageIdToViewerUrl('004884748_02613')).toBe(
+      'https://www.familysearch.org/search/film/004884748?i=2612'
+    )
+    expect(imageIdToViewerUrl('113551215_00001')).toBe(
+      'https://www.familysearch.org/search/film/113551215?i=0'
+    )
+  })
+
+  it('refuses anything that is not a NUMBER_NUMBER image id', () => {
+    // A bare image-GROUP number (no underscore) is NOT an image id — the issue says
+    // to leave it plain, and this is the gate that does it.
+    expect(imageIdToViewerUrl('113551215')).toBeNull()
+    expect(imageIdToViewerUrl('ark:/61903/3:1:ABCD')).toBeNull()
+    expect(imageIdToViewerUrl('KW7C-X9P')).toBeNull()
+    expect(imageIdToViewerUrl('abc_123')).toBeNull()
+    expect(imageIdToViewerUrl('')).toBeNull()
+    expect(imageIdToViewerUrl(42)).toBeNull()
+  })
+
+  it('refuses a zero sequence, which has no page to open', () => {
+    expect(imageIdToViewerUrl('004567123_00000')).toBeNull()
   })
 })

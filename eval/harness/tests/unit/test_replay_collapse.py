@@ -147,6 +147,10 @@ class Stub:
                 items = [dict(e, tool="changed") for e in items]
         if self.mode != "serves-staged-ref":
             items = [{k: v for k, v in e.items() if k != "staged_ref"} for e in items]
+        if self.mode in ("counts", "counts-edit"):
+            items = [dict(e, assertion_count=0) for e in items]
+        if self.mode == "counts-edit" and "questionId" in args:
+            items = [dict(e, tool="changed") for e in items]
         offset = args.get("offset", 0)
         # The new modes page short only on the replacement call; the walk calls
         # each build answers must stay comparable.
@@ -238,6 +242,15 @@ def test_the_oracle_leaves_out_the_log_fields_the_tool_does_not_serve(tmp_path):
     assert _run(tmp_path, group=g).status == "collapsed"
     with pytest.raises(IntegrityError, match="differs from the oracle"):
         _run(tmp_path, mode="serves-staged-ref", group=g, base_mode="serves-staged-ref")
+
+
+def test_the_oracle_ignores_the_assertion_count_the_tool_computes(tmp_path):
+    """research_query adds `assertion_count` to a log entry (issue #1157). It is
+    computed, not stored, so it is no difference from the oracle — but a stored
+    field changed beside it still is."""
+    assert _run(tmp_path, mode="counts", base_mode="counts").status == "collapsed"
+    with pytest.raises(IntegrityError, match="differs from the oracle"):
+        _run(tmp_path, mode="counts-edit", base_mode="counts")
 
 
 def test_a_candidate_without_the_filter_is_rejected_not_passed(tmp_path):

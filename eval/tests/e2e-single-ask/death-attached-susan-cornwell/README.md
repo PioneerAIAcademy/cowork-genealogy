@@ -20,8 +20,32 @@ row but will almost always fail `forbidden_tools`, since that agent searches wit
 
 ## Expected result today
 
-**FAIL on `save`. Issue #2813 owns it** (this is its "answer already attached" case). Measured 2026-11-16
-in the eight-fixture panel run:
+PASS in 5 of 5 runs on 2026-11-27 (063dbcbc0 to 24f41ec71, Haiku 5.5 low main thread), the whole-panel run on
+24f41ec71 among them:
+
+```
+PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  stop=clean
+    units: none  extraction_append=0
+```
+
+On 9705d7bee, when `attachedSources` carried a `recordId` for each attached record, the main thread read the
+attached index with `record_read` and never called `person_read` (FAIL on `required_tools`). The reply was right,
+but the read was not the one this fixture asks for, and the `recordId` came out again.
+
+Measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread
+(`main-thread.json`), once `project_context` returned `boundedRequest`:
+
+```
+PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  stop=clean
+    units: none  extraction_append=0
+```
+
+The main thread read Susan with `person_read`, called no `record_search` and added no source. On `main`
+84e94e6c9 without the field it failed `required_tools` the same day: it searched nothing but never
+called `person_read` (`units: research`). On `main` 202730796, before that, it bypassed the router and
+handed the ask to search-records, which searched for the attached index.
+
+Measured 2026-11-16, when it failed on `save` in the eight-fixture panel run:
 
 ```
 FAIL death-attached-susan-cornwell  expected=none|search-records  first=none  save=1 new sources, expected none  stop=clean  failed=[save]
