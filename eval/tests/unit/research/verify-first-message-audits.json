@@ -27,11 +27,11 @@
     "stub_skills": [
       {
         "skill": "source-evaluation",
-        "response": "Audit written for I1.\n---\nOf Jean Baptiste Moreau's attached sources, the 1846 Belgian census entry gives his birth as about 1831, ten years after the tree's 1821, and may be another man of the same name."
+        "response": "Audit written for Jean Baptiste Moreau.\n---\nOf Jean Baptiste Moreau's attached sources, the 1846 Belgian census entry gives his birth as about 1831, ten years after the tree's 1821, and may be another man of the same name."
       },
       {
         "skill": "check-warnings",
-        "response": "Warnings read for I1.\n---\nFamilySearch flags one problem on his record: he is listed as a father at age 12 (Henri Moreau, born 1833)."
+        "response": "Warnings read for Jean Baptiste Moreau.\n---\nFamilySearch flags one problem on his record: he is listed as a father at age 12 (Henri Moreau, born 1833)."
       },
       {
         "skill": "question-selection",
