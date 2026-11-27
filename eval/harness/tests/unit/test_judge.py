@@ -2327,6 +2327,7 @@ def test_size_guard_keeps_every_call_main_keeps(build):
     loop = judge._size_guard_drop_loop(calls, cited)
     final = judge._size_guard_keep(calls, cited, needles)
     assert not all(main), "the construction must make the guard drop"
+    assert loop == main, "the drop pass must stop exactly where main's did"
     if final.count(True) > 1:
         assert judge._size_guard_fits(calls, final, cited), "refill kept more than the budget holds"
     lost_from_main = [i for i, (m, f) in enumerate(zip(main, final)) if m and not f]
@@ -2349,7 +2350,61 @@ def test_refill_adds_back_newest_first(monkeypatch):
     )
     monkeypatch.setattr(judge, "_size_guard_fits", lambda tc, keep, cited: keep.count(True) <= 5)
     monkeypatch.setattr(judge, "_render_pass", lambda tc, keep, cited, needles: 0)
-    assert judge._size_guard_keep(calls, [False] * 6) == [False, True, True, True, True, True]
+    assert judge._size_guard_keep(calls, [False] * 6, ()) == [False, True, True, True, True, True]
+
+
+def _sixty_op_write():
+    ops = [{"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}} for _ in range(60)]
+    return _live_write_call({"projectPath": "/p", "ops": ops})
+
+
+def test_drop_pass_stops_where_the_old_marker_stopped_it():
+    """#4682 re-review: the drop pass measured with the new marker, 20-22 chars
+    shorter than main's, so a view landing in that window stopped it one call
+    early. It kept a 60-op write main dropped, the refill's pass hold was taken
+    after that, and the render fell to the measured view: every excerpt main
+    showed was gone. The read in the middle is sized into the window."""
+    needles = judge._citation_needles(_ROOTS_URL, "")
+
+    def build(size):
+        return [_read_call(0), _sixty_op_write(), _read_call(1, size)] + [
+            _wiki_page_call(_page_with(_ROOTS_URL, 6_118)) for _ in range(20)
+        ]
+
+    def views(calls):
+        cited = [judge._carries_excerpt(c.get("response"), needles) for c in calls]
+        keep = [False] + [True] * (len(calls) - 1)
+        new = judge._render_kept_calls(calls, keep, cited, judge._live_args_omitted)
+        marker = new.split("\n", 1)[0] + "\n"
+        return len(new), len(new) - len(marker) + len(_MAIN_DROPPED_MARKER.format(n=1))
+
+    size = 1 + judge._TOOL_CALLS_MAX_CHARS - 5 - views(build(1))[0]
+    calls = build(size)
+    new_len, main_len = views(calls)
+    assert new_len <= judge._TOOL_CALLS_MAX_CHARS < main_len, "construction must sit in the window"
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert "[args omitted by harness" not in rendered
+    pages_shown = rendered.count('"tool": "mcp__genealogy__wiki_read"')
+    assert pages_shown == 20
+    assert rendered.count("[harness excerpt at char 6118 of 20000]") == pages_shown
+
+
+def test_pass_hold_counts_the_excerpts():
+    """#4682 re-review: a pass hold measured without excerpts let a re-added
+    22-op write fit the hard cap only while the excerpts were left out, and the
+    render then dropped all 20 of them. The hold must count them."""
+    ops = [{"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}} for _ in range(22)]
+    calls = (
+        [_live_write_call({"projectPath": "/p", "ops": ops}), _read_call(0, 3_000)]
+        + [_wiki_page_call(_page_with(_ROOTS_URL, 6_118)) for _ in range(20)]
+        + [_read_call(1, 1_500)]
+    )
+    rendered = judge._render_tool_calls_with_size_guard(calls, judge._citation_needles(_ROOTS_URL, ""))
+    assert rendered.startswith("(_dropped_for_size: ")
+    pages_shown = rendered.count('"tool": "mcp__genealogy__wiki_read"')
+    assert pages_shown > 0
+    assert rendered.count("[harness excerpt at char 6118 of 20000]") == pages_shown
 
 
 def test_refill_never_moves_the_render_past_the_excerpt_passes():

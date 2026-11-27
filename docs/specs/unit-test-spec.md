@@ -1710,8 +1710,9 @@ Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the
 judge can only see results 1-3. Prompt size is bounded by the total-size
 guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole calls, oldest uncited first
-and a cited call last, then adds dropped calls back newest first while they
-still fit, with a stated marker that counts the calls still dropped; per-string
+and a cited call last, then adds back, newest first, each dropped call that
+still fits without moving the render to a later pass, with a stated marker
+that counts the calls still dropped; per-string
 and depth caps still apply inside each result. A larger array
 cap was rejected — it only moves the cliff. The drop budget is measured with
 the args of every live call (`matched.kind == "live"`, which is how every writer
@@ -1741,8 +1742,11 @@ first, is added back if the measured view, its marker recounted, still fits and
 the real render stays on the same pass below. The measured view stands a live
 call's args in by a short marker, so without that second condition a re-added
 write could push the real render past the hard cap and cost every excerpt, or
-cut another write to the string cap. Refill only adds, and never moves the
-render to a later pass, so nothing the judge saw before is lost. Sparing writes in the
+cut another write to the string cap. The drop pass measures with the old
+marker's length, so it stops where it stopped before #4682 (measured with the
+shorter marker it could stop one call early and keep a write that pushed the
+render to a later pass). Refill only adds, and never moves the render to a later
+pass, so nothing the judge saw before is lost. Sparing writes in the
 drop order itself was rejected: it dropped `ut_locality_guide_029`'s only
 Pulaski County `locality_survey` to keep six writes, leaving the judge a Pulaski
 guide with no Pulaski source (#4682). The `_dropped_for_size` marker states how
