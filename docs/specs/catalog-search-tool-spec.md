@@ -531,6 +531,11 @@ name `image_search` and `fulltext_search` take**, so a Catalog item hands them
 their input directly rather than leaving the agent at a film number with
 nowhere to go.
 
+The tool description says this in words a researcher's question uses: a film
+note's `imageGroupNumber` **is** its DGS (digital film number), and its
+`filmNumber` is the microfilm number, which is not a DGS. The response shape
+carries no separate `dgs` field; the description is where the equation lives.
+
 A populated `filmNumber` with an empty `imageGroupNumber` means **filmed but
 not digitized**.
 

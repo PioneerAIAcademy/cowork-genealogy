@@ -4,7 +4,7 @@
     "skill": "search-images",
     "name": "In a project with no person, finds a named title in the catalog and returns its DGS numbers without reading pages",
     "type": "positive",
-    "description": "Issue #4135. Direct-agent arm in a project with no person; the delegation carries its projectPath. The message is the tester's from issue #4125: which DGS numbers hold Ayling's Revised Register. The agent must find the item with catalog_search and return its film and DGS numbers after its final `---`. It does not need to read any page. It logs the work once with research_log_append and writes nothing else. The catalog fixtures were captured live on 2026-11-09.",
+    "description": "Issue #4135. Direct-agent arm in a project with no person; the delegation carries its projectPath. The message is the tester's from issue #4125: which DGS numbers hold Ayling's Revised Register. The agent must find the item with catalog_search and return its film and DGS numbers after its final `---`. It does not need to read any page. It logs the work once with research_log_append and writes nothing else. The catalog fixtures were captured live on 2026-11-09, and the image_search fixtures for the seven image groups of both entries on 2026-11-27.",
     "tags": [
       "person-less-project",
       "catalog",
@@ -24,6 +24,13 @@
     "catalog-search-empty-title",
     "catalog-search-empty",
     "volume-search-any",
+    "image-search-ayling-7561840",
+    "image-search-ayling-8650414",
+    "image-search-ayling-7499145",
+    "image-search-ayling-5834045",
+    "image-search-ayling-5834046",
+    "image-search-ayling-5834047",
+    "image-search-ayling-5834048",
     "image-search-any",
     "image-transcribe-any"
   ],
@@ -34,7 +41,8 @@
     "This is the direct-agent arm in a project with no person: the delegation carries its projectPath. One research_log_append at the end is expected; a research_append call is a fault.",
     "catalog_search serves live-captured data. For any title, author or keywords query that names Ayling, it returns the item koha:186990, 'Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866' by Augustus D. Ayling. Its film notes are film 1697872 / DGS 7561840, film 2317643 / DGS 8650414, and film 2319539 / DGS 7499145. A keywords query also returns olib:1880942 'New Hampshire, Civil War records, 1861-1866' FIRST. That collection holds the same register again as DGS 5834045 (introduction to p. 433), 5834046 (p. 434-881), 5834047 (p. 882-1248) and 5834048 (index, p. 1249-1347). Its 200+ other film notes are other Civil War records.",
     "A title query that omits 'Ayling' gets 0 hits from a catch-all fixture (live returns 40, none of them this item). Only fault that if the agent stopped there; retrying with the author's name is correct.",
-    "PASS requires, after the agent's final `---` line, the Ayling register named with its DGS numbers as the catalog gives them: the three of koha:186990 (7561840, 8650414, 7499145), the four of olib:1880942 (5834045-5834048), or both. A set given must be complete: dropping one of its numbers is a fail. Each set must be tied to its own catalog entry. It is a fail to give an olib:1880942 number that is not one of 5834045-5834048 as the register's, to invent a DGS number, or to tell the researcher to search the FamilySearch Catalog themselves.",
+    "PASS requires, after the agent's final `---` line, the Ayling register named with its DGS numbers as the catalog gives them. A title or author query returns koha:186990 alone. Its three numbers (7561840, 8650414, 7499145) with no mention of olib:1880942 are a full pass on Correctness, Completeness and Volume selection. Do not mark the agent down for not running a keywords query. olib:1880942's set (5834045-5834048) is an alternative, not a requirement. A set given must be complete: dropping one of its numbers is a fail. Each set must be tied to its own catalog entry. It is a fail to give an olib:1880942 number that is not one of 5834045-5834048 as the register's, to invent a DGS number, to call a film number (1697872, 2317643, 2319539) a DGS, or to tell the researcher to search the FamilySearch Catalog themselves.",
+    "image_search serves live-captured counts for all seven image groups. koha:186990: 7561840 holds 1,439 page images, 8650414 holds 1,338 and 7499145 holds 484. olib:1880942: 5834045 holds 450, 5834046 holds 450, 5834047 holds 369 and 5834048 holds 101. Telling the researcher that FamilySearch holds no digitized images of the register, or that either set's groups are empty or cannot be viewed, is a fault.",
     "Reading pages is not needed for this ask; do not mark the agent down for reading none. The block after `---` replaces the usual summary_for_user in no-person mode and MAY carry DGS and film numbers."
   ],
   "judge_reads_files": true

@@ -1,0 +1,16 @@
+{
+  "tool": "image_search",
+  "description": "Lists the image IDs inside image group (DGS) 5834045, the part of Ayling's 'Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866' (introduction to p. 433) that catalog entry olib:1880942, 'New Hampshire, Civil War records, 1861-1866', lists. Captured live 2026-11-27 with dev/try-image-search.ts 5834045. Drives ut_search_images_np2: a DGS taken from catalog_search's film notes has real page images, so the agent must not say none are digitized. The substring predicate matches both the bare '5834045' and the zero-padded '005834045'. 450 images.",
+  "args": {
+    "imageGroupNumber": "~5834045"
+  },
+  "response": {
+    "imageCount": 450,
+    "imageIdRanges": [
+      [
+        "005834045_00001",
+        "005834045_00450"
+      ]
+    ]
+  }
+}
