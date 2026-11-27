@@ -31,7 +31,21 @@ found.
 
 ## Expected result today
 
-Not yet measured.
+PASS. Measured 2026-11-27 in the whole-panel run on 24f41ec71, on the Haiku 5.5 low main thread:
+
+```
+PASS children-attached-households-benjamin-phipps  expected=search-records  first=search-records  save=ok  stop=clean
+    units: research > init-project > search-records  extraction_append=0
+```
+
+It passed 7 of 9 runs that day on this rule (063dbcbc0 to 24f41ec71). In one, every FamilySearch search timed out
+and the turn ended on a question about retrying rather than a "Continue with …?" offer. In the other, the main
+thread called no `project_context` before init-project and stopped after it, on the question-selection offer. The
+read came before the search in every run that reached search-records, by search-records itself from the router's
+brief.
+
+On `main`'s own `project-context.ts`, `search-delegations.ts`, `project-create.ts` and `agent_relay_note.py`
+(fb61b8fc2) it fails `read_before_search`: search-records searched before anything attached was read.
 
 ## Starting state
 
@@ -44,4 +58,4 @@ None: an empty folder. init-project creates the project from LTQD-HM6.
 
 ## Cost
 
-Not yet measured.
+About $1.20 to $2.00 a run (2026-11-27), from each run log's cost.

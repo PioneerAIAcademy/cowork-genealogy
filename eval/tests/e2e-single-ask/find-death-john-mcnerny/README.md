@@ -13,7 +13,11 @@ Not graded: "no search for a record already attached to KP9Y-74L" (printed as `m
 
 ## Expected result today
 
-PASS. Re-measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread (`main-thread.json`),
+PASS when FamilySearch's record search answers. On 2026-11-27 (063dbcbc0 to 24f41ec71) all three whole-panel runs
+routed to search-records and failed only `save`: every `record_search` came back an error, logged as
+`record_search/error`, because FamilySearch's record search timed out on each query.
+
+Re-measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread (`main-thread.json`),
 once `project_context` returned `boundedRequest`:
 
 ```

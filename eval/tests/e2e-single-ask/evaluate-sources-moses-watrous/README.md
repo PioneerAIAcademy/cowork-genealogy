@@ -15,7 +15,22 @@ Row B1 of Issue #3571's adjudication on issue #3527 (2026-11-02): alpha feedback
 
 ## Expected result today
 
-PASS. Measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread, once `project_context`
+PASS in 5 of 7 runs on 2026-11-27 (063dbcbc0 to 24f41ec71, Haiku 5.5 low main thread). The whole-panel run on
+24f41ec71 was one of the two that failed:
+
+```
+FAIL evaluate-sources-moses-watrous  expected=source-evaluation  first=none  save=missing log tool=source_evaluation (new log rows: none)  stop=clean  failed=[owner,save]
+    units: none  extraction_append=0
+```
+
+In both failures the main thread reviewed the attached sources itself, with `person_read` and `record_read`,
+and spawned no source-evaluation, though `boundedRequest` names source-evaluation as the owner of a review and
+says the router reads none of them itself. Earlier wordings that day failed the same way, or went on from the
+review to research-plan and question-selection, which the review's own ending in the rule now stops.
+`record_read` stays on the main thread because a transcription needs it, so no tool deny can stop an inline
+review.
+
+Measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread, once `project_context`
 returned `boundedRequest`:
 
 ```
