@@ -1,6 +1,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { readForbidden } from "../utils/fs-forbidden.js";
 import { describeFetchError } from "../utils/http.js";
 import { arkToUrl, toArk } from "../utils/ark.js";
 import { withSessionTree } from "../utils/session-tree.js";
@@ -55,18 +56,7 @@ async function fetchAttachmentMap(
       throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
-      let body: unknown = null;
-      try {
-        body = await response.json();
-      } catch {
-        body = null;
-      }
-      const isWaf =
-        body !== null &&
-        typeof body === "object" &&
-        "errorCode" in body &&
-        (body as { errorCode?: unknown }).errorCode === "15";
-      if (isWaf) {
+      if ((await readForbidden(response)).firewall) {
         throw new Error(
           "FamilySearch attachments blocked by WAF. The User-Agent header " +
           "was rejected — check that the MCP server is running an unmodified build.",
