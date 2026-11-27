@@ -475,15 +475,32 @@ describe("fulltextSearchTool error propagation", () => {
     );
   });
 
-  it("19. throws unmodified-build guidance on 403", async () => {
+  it("19. a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 403,
       statusText: "Forbidden",
+      text: async () => JSON.stringify({ incidentId: "1234-5678", hostName: "x", errorCode: "15", description: "This request was blocked by our security service" }),
     });
-    await expect(fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).rejects.toThrow(
-      /blocked the request/
-    );
+    const msg = ((await fulltextSearchTool({ keywords: "Flynn" }, LOCAL).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
+  });
+
+  it("19b. any other 403 is a refusal that carries the body, not a build fault (#4707)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      text: async () => "Access denied",
+    });
+    const err = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL).catch((e: Error) => e);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/FamilySearch refused this full-text search \(403\)/);
+    expect(msg).toMatch(/NOT an empty result — coverage is unknown/);
+    expect(msg).toContain("(status 403; body: Access denied)");
+    expect(msg).not.toMatch(/WAF|User-Agent|unmodified build/);
   });
 
   it("20. throws query-syntax guidance with body detail on 400", async () => {

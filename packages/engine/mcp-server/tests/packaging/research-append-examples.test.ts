@@ -349,12 +349,15 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
       .map((line) => line.replace(/^\s*\/\/.*$/, "").replace(/\s*\/\/.*$/, ""))
       .join("\n");
 
-  it("`plans` renders the batched call, not a standalone append", () => {
-    const ex = exampleFor("plans", "append") ?? "";
-    expect(ex).toContain("ops: [");
-    expect(ex).toContain('section: "plan_items"');
+  it("`plans` renders the plan form, not a standalone append", () => {
+    const ex = callOnly(exampleFor("plans", "append") ?? "");
+    expect(ex).toContain("plan: {");
+    expect(ex).toContain("planItems: [");
+    expect(ex).not.toContain("ops: [");
+    // The tool assigns the parent id; a planId here would be a prediction to get wrong.
+    expect(ex).not.toContain("planId");
     // The shape that persisted a schema-invalid document.
-    expect(callOnly(ex)).not.toMatch(/"items"\s*:\s*\[\s*\]/);
+    expect(ex).not.toMatch(/"items"\s*:\s*\[\s*\]/);
   });
 
   it("`plan_items` does not hard-code pl_001 as the parent plan", () => {
@@ -380,13 +383,14 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
 
   it("every rendered append example is the call shape its section requires", () => {
     // A one-way guard against the reverse mistake: a section whose example
-    // needs the batch form silently reverting to the single-op form. `plans` is
+    // needs the plan form silently reverting to the single-op form. `plans` is
     // the only such section today; naming it here is what makes a future
     // change to `exampleFor` visible.
-    const BATCH_ONLY = new Set(["plans"]);
+    const PLAN_FORM_ONLY = new Set(["plans"]);
     for (const section of Object.keys(EXAMPLES)) {
       const ex = exampleFor(section, "append") ?? "";
-      expect(ex.includes("ops: ["), `${section} append example`).toBe(BATCH_ONLY.has(section));
+      expect(ex.includes("planItems: ["), `${section} append example`).toBe(PLAN_FORM_ONLY.has(section));
+      expect(ex.includes("ops: ["), `${section} append example`).toBe(false);
     }
   });
 });

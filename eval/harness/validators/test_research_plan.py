@@ -34,6 +34,7 @@ from validators_lib import (
 )
 from validators_lib import existing_plan_changes
 from validators_lib import new_plan_ids as _new_plan_ids
+from validators_lib import research_append_ops
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
 # so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
@@ -691,6 +692,99 @@ def test_enumerative_plan_accounts_for_five_events(before_state, after_state, te
         )
 
 
+# --- Tag-gated: a disputed fact gets a plan for the subject's lifetime -------
+
+# Issue #4579, scenario `mayfield-disputed-given-name`. The question asks what
+# given name is written on a 1900 census page, and the records give it three
+# ways. The plan must reach past that record: census items covering each later
+# census year, and a death or vital item dated after it. Keyed per test id, as
+# _PENSION_REACH_BY_TEST_ID is; the general rule stays in the agent body. Only
+# `record_type` and `date_range` are read: plan items carry no search-key field,
+# and a rationale that names a reading to say it is not searched on is correct,
+# so whether an item is keyed on one reading is left to the judge.
+_DISPUTED_NAME_YEARS_BY_TEST_ID = {
+    "ut_research_plan_c7m": {"record_year": 1900, "later_censuses": (1910, 1920)},
+}
+
+
+def _date_range_span(date_range: object) -> tuple[int, float] | None:
+    """The first and last year a `date_range` covers, parsed as
+    `_date_range_reaches` parses it: a decade ("1910s") spans its ten years,
+    and an open-ended range has no last year."""
+    text = str(date_range or "").strip()
+    found = _DATE_RANGE_YEAR_RE.findall(text)
+    if not found:
+        return None
+    first = min(int(y) for y, _ in found)
+    last = max(int(y) + (9 if decade else 0) for y, decade in found)
+    return first, (float("inf") if _OPEN_ENDED_RE.search(text) else last)
+
+
+def _date_range_covers(date_range: object, year: int) -> bool:
+    span = _date_range_span(date_range)
+    return span is not None and span[0] <= year <= span[1]
+
+
+def test_disputed_name_plan_covers_lifetime(before_state, after_state, test):
+    """Tag-gated: a plan for a fact the records state differently holds a
+    census item whose `date_range` covers each census after the question's
+    record, and a death or vital item dated after that record.
+
+    "Covers" means the year is inside the range, not that the range reaches
+    past it: a single 1870-1880 census item does not cover 1910. One item may
+    cover several years (1870-1920). A `skipped` item covers nothing."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _DISPUTED_NAME_YEARS_BY_TEST_ID or "disputed-name-lifetime-coverage" in tags, (
+        f"{test_id} has a _DISPUTED_NAME_YEARS_BY_TEST_ID entry but no "
+        "'disputed-name-lifetime-coverage' tag - restore the tag or delete the entry"
+    )
+    if "disputed-name-lifetime-coverage" not in tags:
+        pytest.skip("not a disputed-name-lifetime-coverage test")
+    years = _DISPUTED_NAME_YEARS_BY_TEST_ID.get(test_id)
+    assert years, (
+        f"{test_id} carries 'disputed-name-lifetime-coverage' but has no entry in "
+        "_DISPUTED_NAME_YEARS_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [
+        i
+        for p in _new_plans(before, after)
+        for i in (p.get("items") or [])
+        if i.get("status") != "skipped"
+    ]
+    assert items, "no new planned items were written"
+
+    census_items = [i for i in items if _CENSUS_RE.search(str(i.get("record_type") or ""))]
+    uncovered = [
+        y
+        for y in years["later_censuses"]
+        if not any(_date_range_covers(i.get("date_range"), y) for i in census_items)
+    ]
+    assert not uncovered, (
+        f"no census item's date_range covers {', '.join(map(str, uncovered))}, "
+        f"a census after the {years['record_year']} record the question is about. "
+        "Census items: "
+        + (
+            "; ".join(f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}" for i in census_items)
+            or "none"
+        )
+    )
+
+    vital_items = [i for i in items if _VITAL_RECORD_TYPES.search(str(i.get("record_type") or ""))]
+    assert any(_date_range_reaches(i.get("date_range"), years["record_year"] + 1) for i in vital_items), (
+        f"no death or vital item is dated after {years['record_year']}, the record "
+        "the question is about. Vital items: "
+        + (
+            "; ".join(f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}" for i in vital_items)
+            or "none"
+        )
+    )
+
+
 # --- Tag-gated: a pre-1850 parentage plan reaches a child-naming record first -
 
 # Issue #4163. A US federal census before 1850 names only the head of
@@ -858,17 +952,8 @@ def test_research_plan_no_out_of_lane_tools(
 
 
 def _plan_write_ops(args: dict) -> list[dict]:
-    """The ops of one `research_append` call, in either shape the model sends:
-    `ops` as a list or a JSON string, or a single top-level op (same parse as
-    test_universal.py's assertion-update check)."""
-    ops = args.get("ops")
-    if isinstance(ops, str):
-        try:
-            ops = json.loads(ops)
-        except (ValueError, TypeError):
-            ops = None
-    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-    return [op for op in candidates if isinstance(op, dict)]
+    """The ops of one `research_append` call, in any shape the model sends."""
+    return research_append_ops(args)
 
 
 def _pid_tail(value: str) -> str:
