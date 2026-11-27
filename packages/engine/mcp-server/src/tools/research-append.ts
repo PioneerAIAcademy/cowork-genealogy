@@ -9857,6 +9857,26 @@ function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any
   entry.weighed_log_entry_ids = covered;
 }
 
+/** A `search_stop` the op writes cites every log entry the question owns
+ *  (`questionOwnedLogEntries`: each plan's items, every plan, and the uploads
+ *  closing their hand-offs), then any other entry the caller cited, such as an
+ *  ad-hoc search. A caller listing only the active plan's entries left the
+ *  earlier plans' searches out of the declaration. */
+function stampSearchStopLogEntryIds(entry: any, op: ResearchAppendOp, research: any): void {
+  const written: Record<string, unknown> = (op.op === "append" ? op.entry : op.fields) ?? {};
+  if (!Object.prototype.hasOwnProperty.call(written, "search_stop")) return;
+  const stop = entry?.search_stop;
+  if (!stop || typeof stop !== "object" || Array.isArray(stop)) return;
+  const ids: string[] = [];
+  for (const e of questionOwnedLogEntries(research, entry?.id)) {
+    if (typeof e?.id === "string" && !ids.includes(e.id)) ids.push(e.id);
+  }
+  for (const id of Array.isArray(stop.log_entry_ids) ? stop.log_entry_ids : []) {
+    if (typeof id === "string" && !ids.includes(id)) ids.push(id);
+  }
+  if (ids.length > 0 || "log_entry_ids" in stop) stop.log_entry_ids = ids;
+}
+
 function applyOne(
   research: any,
   op: ResearchAppendOp,
@@ -10351,6 +10371,7 @@ function applyOne(
     throw new ResearchAppendError(`unknown op '${op.op}' (expected 'append' or 'update')`);
   }
   if (section === "conflicts") stampWeighedLogEntryIds(resultEntry, op, research);
+  if (section === "questions") stampSearchStopLogEntryIds(resultEntry, op, research);
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
