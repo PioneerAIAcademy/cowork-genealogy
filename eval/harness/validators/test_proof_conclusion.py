@@ -620,7 +620,7 @@ def _claimed_fact_holders(args) -> set[str]:
     for op in _ops_of(args):
         if op.get("section") != "proof_summaries":
             continue
-        body = _decoded(op.get("fields")) or _decoded(op.get("entry"))
+        body = _decoded(op.get("fields")) or _decoded(op.get("entry")) or op
         for c in body.get("claims") or []:
             if not isinstance(c, dict) or c.get("polarity") == "denied" or c.get("proof_tier") not in _PROBABLE_OR_BETTER:
                 continue

@@ -588,6 +588,35 @@ def test_a_stringified_entry_with_a_covering_claim_clears_a_primary_finding():
     standing(calls, ANY)
 
 
+_COUPLE_FACT_WARNING = "Will be refused: relationshipId R1, factId F1: `primary` marks a fact the concluded value of its type"
+_MARRIAGE_CLAIM = {"claim": "marriage", "proof_tier": "probable",
+                   "fact": {"subject": {"person1": "I1", "person2": "I2"}, "fact_type": "Marriage", "date": "1786"}}
+
+
+def test_a_flat_append_op_with_a_couple_fact_claim_clears_a_couple_primary_finding():
+    calls = [
+        _call("tree_edit", {"operation": "add_fact", "relationshipId": "R1", "fact": {"type": "Marriage", "primary": True}},
+              [_COUPLE_FACT_WARNING]),
+        _call("research_append", {"ops": [{"section": "proof_summaries", "op": "append", "question_id": "q_001",
+                                           "tier": "probable", "claims": [_MARRIAGE_CLAIM]}]},
+              results=[{"entryId": "ps_001"}]),
+    ]
+    standing(calls, ANY)
+
+
+def test_a_flat_append_op_without_a_fact_claim_leaves_a_couple_primary_finding_standing():
+    couple_only = {"claim": "couple", "proof_tier": "probable", "relationship": {"type": "Couple", "person1": "I1", "person2": "I2"}}
+    calls = [
+        _call("tree_edit", {"operation": "add_fact", "relationshipId": "R1", "fact": {"type": "Marriage", "primary": True}},
+              [_COUPLE_FACT_WARNING]),
+        _call("research_append", {"ops": [{"section": "proof_summaries", "op": "append", "question_id": "q_001",
+                                           "tier": "probable", "claims": [couple_only]}]},
+              results=[{"entryId": "ps_001"}]),
+    ]
+    with pytest.raises(AssertionError, match="relationshipId R1, factId F1"):
+        standing(calls, ANY)
+
+
 def test_reopening_clears_only_the_capped_finding_and_keeps_the_rest():
     capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
     calls = [
