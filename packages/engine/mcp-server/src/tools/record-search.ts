@@ -1040,13 +1040,15 @@ async function fetchSearchPage(
       throw new SearchSessionRejected(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
-      // Only the firewall's own `errorCode: "15"` body is a User-Agent block.
-      // Any other 403 is FamilySearch refusing this search; the tail is how
-      // those refusals are diagnosed from a feedback bundle (#4707).
+      // Only the firewall's own `errorCode: "15"` body is a firewall block; its
+      // cause is not shown, so the message names none. Any other 403 is
+      // FamilySearch refusing this search. Both carry the body tail, which is
+      // how they are diagnosed from a feedback bundle (#4707).
       const forbidden = await readForbidden(response);
       if (forbidden.firewall) {
         throw new Error(
-          "FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."
+          "FamilySearch's firewall blocked the request (403). This is NOT an empty " +
+            `result — coverage is unknown. (status 403; body: ${forbidden.snippet})`
         );
       }
       throw new Error(

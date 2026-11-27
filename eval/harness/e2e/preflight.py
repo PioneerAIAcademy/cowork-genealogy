@@ -728,9 +728,9 @@ def _check_fs_search(
     if "blocked the request" in text:
         return (
             "FAIL",
-            "FamilySearch search is WAF-blocked from this machine or session. "
-            "Nearly every e2e fixture depends on record_search — do not start "
-            "a run.",
+            "FamilySearch's firewall blocked the test search (403). Nearly "
+            "every e2e fixture depends on record_search — do not start a run. "
+            f"The error: {text[:200]}",
         )
     if "session not accepted" in text:
         return (

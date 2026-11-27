@@ -475,16 +475,17 @@ describe("fulltextSearchTool error propagation", () => {
     );
   });
 
-  it("19. throws unmodified-build guidance only on the firewall's errorCode 15 body", async () => {
+  it("19. a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 403,
       statusText: "Forbidden",
-      text: async () => JSON.stringify({ errorCode: "15", description: "This request was blocked by our security service" }),
+      text: async () => JSON.stringify({ incidentId: "1234-5678", hostName: "x", errorCode: "15", description: "This request was blocked by our security service" }),
     });
-    await expect(fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).rejects.toThrow(
-      /blocked the request\. Check that the MCP server is running an unmodified build/
-    );
+    const msg = ((await fulltextSearchTool({ keywords: "Flynn" }, LOCAL).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
   });
 
   it("19b. any other 403 is a refusal that carries the body, not a build fault (#4707)", async () => {

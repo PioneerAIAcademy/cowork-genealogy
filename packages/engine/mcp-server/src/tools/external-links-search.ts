@@ -77,8 +77,8 @@ async function fetchAll(placeId: string): Promise<FSPlaceExternalResponse> {
     const forbidden = await readForbidden(res);
     if (forbidden.firewall) {
       throw new Error(
-        `FamilySearch rejected the request (403 Forbidden). ` +
-          "This usually means a User-Agent block — check that the MCP server is running an unmodified build."
+        "FamilySearch's firewall blocked the request (403). This is NOT an empty result — " +
+          `which outside sites cover the place is unknown. (status 403; body: ${forbidden.snippet})`
       );
     }
     throw new Error(

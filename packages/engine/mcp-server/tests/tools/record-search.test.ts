@@ -601,16 +601,17 @@ describe("recordSearchTool error propagation", () => {
     );
   });
 
-  it("25. throws the WAF/UA guidance only on the firewall's errorCode 15 body", async () => {
+  it("25. a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 403,
       statusText: "Forbidden",
-      text: async () => JSON.stringify({ errorCode: "15", description: "This request was blocked by our security service" }),
+      text: async () => JSON.stringify({ incidentId: "1234-5678", hostName: "x", errorCode: "15", description: "This request was blocked by our security service" }),
     });
-    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
-      /blocked the request\. The User-Agent header was rejected by the WAF/
-    );
+    const msg = ((await recordSearchTool({ surname: "Lincoln" }, LOCAL).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
   });
 
   // #4707: a 403 that is not the firewall's is FamilySearch refusing the search.

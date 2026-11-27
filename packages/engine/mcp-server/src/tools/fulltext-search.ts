@@ -248,7 +248,8 @@ export async function fulltextSearchTool(
       const forbidden = await readForbidden(response);
       if (forbidden.firewall) {
         throw new Error(
-          "FamilySearch blocked the request. Check that the MCP server is running an unmodified build."
+          "FamilySearch's firewall blocked the request (403). This is NOT an empty " +
+            `result — coverage is unknown. (status 403; body: ${forbidden.snippet})`
         );
       }
       throw new Error(

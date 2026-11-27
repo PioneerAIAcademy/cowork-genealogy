@@ -965,13 +965,13 @@ def test_fs_search_fails_on_waf_block(monkeypatch, tmp_path):
     status, detail = pf._check_fs_search(
         caller=lambda: (
             True,
-            "FamilySearch search blocked the request. The User-Agent header "
-            "was rejected by the WAF — check that the MCP server is running "
-            "an unmodified build.",
+            "FamilySearch's firewall blocked the request (403). This is NOT an "
+            "empty result — coverage is unknown. (status 403; body: "
+            '{"incidentId":"1234-5678","errorCode":"15"})',
         )
     )
     assert status == "FAIL"
-    assert "WAF" in detail
+    assert "firewall" in detail
 
 
 def test_fs_search_warns_on_a_non_firewall_refusal(monkeypatch, tmp_path):

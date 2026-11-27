@@ -271,11 +271,12 @@ describe("externalLinksSearchTool — error handling", () => {
     mockFetch.mockReset();
   });
 
-  it("throws the User-Agent guidance only on the firewall's errorCode 15 body", async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({ errorCode: "15" }, 403));
-    await expect(
-      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/403 Forbidden.*User-Agent block/is);
+  it("a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ incidentId: "1234-5678", errorCode: "15" }, 403));
+    const msg = ((await externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 }).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
   });
 
   it("any other 403 is a refusal that carries the body, not a build fault (#4707)", async () => {
