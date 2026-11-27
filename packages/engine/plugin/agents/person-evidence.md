@@ -249,7 +249,8 @@ In this mode:
   nothing. Open your verdict with that score and judge the tier from it and
   the person's other links, as Step 3 does: 0.80 or above with no open
   conflict keeps `confident`; at that score a Moderate correlation is enough,
-  Strong is not required. Do not write the score onto the entry.
+  Strong is not required. A person minted from this record is not scored;
+  its tier is `probable` (Step 5). Do not write the score onto the entry.
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
   context (other pe entries for the same assertion or person; the

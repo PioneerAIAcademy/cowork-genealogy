@@ -169,6 +169,48 @@ describe("research_append — a stub's own record links it at probable (#4749)",
     expect(errs(await call(link("a_005", "I4", "speculative")))).not.toMatch(RULE);
   });
 
+  // A census role several people share names more than one person.
+  it("is silent when the record gives the stub's role more than one name", async () => {
+    await setup(research({}, { a_007: { record_role: "heir_2" } }));
+    expect(errs(await call(link("a_006", "I4", "speculative")))).not.toMatch(RULE);
+  });
+
+  it("reads the persona by record_persona_id when the assertions carry one", async () => {
+    await setup(research({}, {
+      a_005: { record_persona_id: "P2" },
+      a_006: { record_persona_id: "P2" },
+      a_007: { record_role: "heir_2", record_persona_id: "P3" },
+    }));
+    expect(errs(await call(link("a_006", "I4", "speculative")))).toMatch(RULE);
+  });
+
+  it("is silent on another persona's fact that shares the stub's role", async () => {
+    await setup(research({}, {
+      a_005: { record_persona_id: "P2" },
+      a_006: { record_persona_id: "P3" },
+      a_007: { record_role: "heir_2", record_persona_id: "P3" },
+    }));
+    expect(errs(await call(link("a_006", "I4", "speculative")))).not.toMatch(RULE);
+  });
+
+  it("matches a value that carries the name's suffix", async () => {
+    await setup(
+      research({}, { a_005: { structured_value: null, value: "James Flynn Jr." } }),
+      { ...tree(), persons: [tree().persons[0], { ...tree().persons[1], names: [{ id: "N4", given: "James", surname: "Flynn", suffix: "Jr.", sources: [{ ref: "S4" }] }] }] },
+    );
+    expect(errs(await call(link("a_005", "I4", "speculative")))).toMatch(RULE);
+  });
+
+  it("matches a structured value that holds the given name only", async () => {
+    await setup(research({}, { a_005: { structured_value: { given: "James" } } }));
+    expect(errs(await call(link("a_005", "I4", "speculative")))).toMatch(RULE);
+  });
+
+  it("reads two ARK spellings of one record as one record", async () => {
+    await setup(research({}, { a_006: { record_id: `https://www.familysearch.org/${WILL}` } }));
+    expect(errs(await call(link("a_005", "I4", "speculative")))).toMatch(RULE);
+  });
+
   it("is silent on a two-party assertion of the same persona", async () => {
     await setup();
     expect(errs(await call(link("a_009", "I4", "speculative")))).not.toMatch(RULE);

@@ -2860,19 +2860,53 @@ function refLessAddedPersonInvariants(
 const normName = (s: unknown): string =>
   typeof s === "string" ? s.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim() : "";
 
+/** The name a `name` assertion gives: its `structured_value` given and surname
+ *  when it holds either, else its human-readable `value`. */
+function assertedName(assertion: any): string {
+  const sv = assertion?.structured_value;
+  if (sv && typeof sv === "object" && (normName(sv.given) !== "" || normName(sv.surname) !== "")) {
+    return normName(`${sv.given ?? ""} ${sv.surname ?? ""}`);
+  }
+  return normName(assertion?.value);
+}
+
 /** Whether `assertion`, a `name` assertion, gives the name one of the person's
- *  names carries. Reads `structured_value` when it holds a given name or a
- *  surname, else the human-readable `value` against "given surname". */
+ *  names carries. A structured value is compared on the parts it holds; a
+ *  `value` against the name with and without its prefix and suffix. */
 function nameAssertionNamesPerson(assertion: any, person: any): boolean {
   const names = (Array.isArray(person?.names) ? person.names : []) as any[];
   const sv = assertion?.structured_value;
-  const structured = sv && typeof sv === "object" && (normName(sv.given) !== "" || normName(sv.surname) !== "");
-  return names.some((n) =>
-    structured
-      ? normName(n?.given) === normName(sv.given) && normName(n?.surname) === normName(sv.surname)
-      : normName(assertion?.value) !== "" &&
-        normName(assertion.value) === normName(`${n?.given ?? ""} ${n?.surname ?? ""}`),
-  );
+  const given = sv && typeof sv === "object" ? normName(sv.given) : "";
+  const surname = sv && typeof sv === "object" ? normName(sv.surname) : "";
+  const value = normName(assertion?.value);
+  return names.some((n) => {
+    if (given !== "" || surname !== "") {
+      return (given === "" || normName(n?.given) === given) && (surname === "" || normName(n?.surname) === surname);
+    }
+    if (value === "") return false;
+    const core = `${n?.given ?? ""} ${n?.surname ?? ""}`;
+    return [core, `${core} ${n?.suffix ?? ""}`, `${n?.prefix ?? ""} ${core}`, `${n?.prefix ?? ""} ${core} ${n?.suffix ?? ""}`]
+      .some((form) => normName(form) === value);
+  });
+}
+
+/** Whether every record this person's refs reach is `recordId`, compared as one
+ *  record whatever ARK spelling each assertion carries. `mintedFromThisRecord`
+ *  compares the strings, so two spellings of one record read as two records. */
+function mintedFromRecordAlone(
+  personId: string,
+  recordId: string,
+  research: any,
+  tree: any,
+  startingPersonIds: ReadonlySet<string>,
+): boolean {
+  if (importedPerson(personId, research, startingPersonIds)) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person) return false;
+  const refs = personSourceRefs(person);
+  if (refs.size === 0) return false;
+  const { recordIds } = refsReach(refs, research);
+  return recordIds.size > 0 && [...recordIds].every((r) => sameRecord(r, recordId));
 }
 
 /** #4749: a person minted from a record is the persona that record names, so
@@ -2888,7 +2922,8 @@ function nameAssertionNamesPerson(assertion: any, person: any): boolean {
  *  `blankAddedPerson`). Silent for a person with a namesake (the namesake cap lowers links on
  *  purpose), a link declaring `core_identifier_conflict` (accepted only at
  *  `speculative`), an attachment link, negative evidence, a two-party assertion,
- *  and a person no live name assertion of that persona names. */
+ *  a person no live name assertion of that persona names, and a role the record
+ *  gives more than one name. */
 export function mintedStubTierInvariants(
   entry: any,
   research: any,
@@ -2914,19 +2949,25 @@ export function mintedStubTierInvariants(
   const role = assertion.record_role;
   if (typeof recordId !== "string" || recordId === "" || typeof role !== "string" || role === "") return [];
   if (role === "absent" || recordBasisOf(assertion) === "absent") return [];
-  if (!mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)) return [];
+  if (!mintedFromRecordAlone(personId, recordId, research, tree, startingPersonIds)) return [];
   if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return [];
   if (derivedNamesakePairs(tree, personId).length > 0) return [];
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
-  const mintedFromPersona = pool.some(
+  // The persona: its record_persona_id when the linked assertion carries one,
+  // else its role. A role several people share (a census `child`) names more
+  // than one person, and then which of them the stub is cannot be read here.
+  const personaId = typeof assertion.record_persona_id === "string" && assertion.record_persona_id !== ""
+    ? assertion.record_persona_id
+    : null;
+  const personaNames = pool.filter(
     (a: any) =>
       a.fact_type === "name" &&
-      a.record_role === role &&
       sameRecord(a.record_id, recordId) &&
       recordBasisOf(a) !== "absent" &&
-      nameAssertionNamesPerson(a, person),
+      (personaId !== null ? a.record_persona_id === personaId : a.record_role === role),
   );
-  if (!mintedFromPersona) return [];
+  if (new Set(personaNames.map(assertedName).filter((n) => n !== "")).size !== 1) return [];
+  if (!personaNames.some((a: any) => nameAssertionNamesPerson(a, person))) return [];
   return [
     `person_evidence links '${entry.assertion_id}' to '${personId}' at '${tier}', but '${personId}' was ` +
       `minted from this record's ${role}, so every one-party fact of that ${role} is linked to it at ` +

@@ -81,7 +81,7 @@ for (const slug of readdirSync(E2E)) {
 
 // --- unit ------------------------------------------------------------------
 const unitHits: Hit[] = [];
-let unitRuns = 0, unitLinks = 0, unitSkipped = 0;
+let unitRuns = 0, unitLinks = 0, unitSkipped = 0, unitJudgeable = 0;
 const UNIT = join(ROOT, "eval", "runlogs", "unit");
 const SCEN = join(ROOT, "eval", "fixtures", "scenarios");
 for (const suite of readdirSync(UNIT)) {
@@ -108,7 +108,9 @@ for (const suite of readdirSync(UNIT)) {
         applyDiff(research, changes["research.json"]?.diff);
         applyDiff(tree, changes["tree.gedcomx.json"]?.diff);
         unitRuns += 1;
-        unitLinks += judge(`unit ${suite}/${f} ${t.test_id} run ${run.run_index}`, research, tree, start, unitHits);
+        const n = judge(`unit ${suite}/${f} ${t.test_id} run ${run.run_index}`, research, tree, start, unitHits);
+        unitLinks += n;
+        if (start.size > 0) unitJudgeable += n;
       }
     }
   }
@@ -117,7 +119,7 @@ for (const suite of readdirSync(UNIT)) {
 const byTier = (hits: Hit[]) =>
   hits.reduce<Record<string, number>>((m, h) => ((m[h.tier] = (m[h.tier] ?? 0) + 1), m), {});
 console.log(`e2e:  ${e2eRuns} final states, ${e2eLinks} live links, ${e2eHits.length} refused ${JSON.stringify(byTier(e2eHits))}`);
-console.log(`unit: ${unitRuns} runs that wrote person_evidence, ${unitLinks} live links, ${unitHits.length} refused ${JSON.stringify(byTier(unitHits))}; ${unitSkipped} runs skipped (no scenario)`);
+console.log(`unit: ${unitRuns} runs that wrote person_evidence, ${unitLinks} live links, ${unitHits.length} refused ${JSON.stringify(byTier(unitHits))}; ${unitJudgeable} of the links had a starting-tree baseline the rule needs; ${unitSkipped} runs skipped (no scenario)`);
 const groups = new Map<string, number>();
 for (const h of [...e2eHits, ...unitHits]) {
   const key = h.where.replace(/ run \d+$/, "").replace(/^(unit \S+)\/v[^ ]+ (\S+)$/, "$1 $2").replace(/^(e2e [^/]+)\/.*$/, "$1");
