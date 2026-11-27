@@ -25,8 +25,11 @@ Not covered, by construction: a live tool's imports beyond its entry module;
 third-party packages; the data files closure modules read
 (`docs/specs/schemas/*.json`, through `ownership` and `schema_validator`); and the
 compiled engine validator `ts_validator` loads. A change there can move a verdict
-without moving this fingerprint. ``ast.dump`` output is specific to the Python
-minor version, so a bump from 3.12 re-hashes every suite.
+without moving this fingerprint. ``ast.dump`` is pinned to 3.12's shape
+(``canonical_dump``: from 3.13 it omits empty lists and ``None`` fields unless
+``show_empty`` is passed), so the digest is the same on 3.12 and later. A future
+version that ADDS an AST field would still move it; the golden test in
+``test_instrument.py`` fails when that happens.
 
 Stdlib-only: `check_runlogs.py` imports this on a bare interpreter.
 """
@@ -406,6 +409,16 @@ def _normalise_locals(tree: ast.Module) -> None:
         fn.body = [renamer.visit(stmt) for stmt in fn.body]
 
 
+def canonical_dump(tree: ast.AST) -> str:
+    """``ast.dump`` in 3.12's shape on every interpreter.
+
+    3.13 made ``show_empty=False`` the default, dropping empty lists and ``None``
+    fields; 3.12 rejects the keyword, so it is passed only from 3.13 on.
+    """
+    extra: dict[str, Any] = {"show_empty": True} if sys.version_info >= (3, 13) else {}
+    return ast.dump(tree, annotate_fields=True, include_attributes=False, **extra)
+
+
 def canonical_module(source: str) -> str:
     """A validator file's decision-bearing structure, as text.
 
@@ -416,7 +429,7 @@ def canonical_module(source: str) -> str:
     tree = ast.parse(source)
     tree = _DropMessages().visit(tree)
     _normalise_locals(tree)
-    return ast.dump(tree, annotate_fields=True, include_attributes=False)
+    return canonical_dump(tree)
 
 
 # Keyed on the source text: rule 2c fingerprints every suite in one process, and

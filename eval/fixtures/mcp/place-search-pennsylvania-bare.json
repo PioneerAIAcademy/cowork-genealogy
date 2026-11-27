@@ -1,0 +1,106 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'Pennsylvania', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts.",
+  "args": {
+    "placeName": "Pennsylvania"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Pennsylvania, United States",
+        "type": "State",
+        "dateRange": "+1776/",
+        "latitude": 40.75,
+        "longitude": -77.75,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=338",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pennsylvania"
+      },
+      {
+        "standardPlace": "Pennsylvania, British Colonial America",
+        "type": "Colony",
+        "dateRange": "+1681/+1776",
+        "latitude": 40.296,
+        "longitude": -75.509,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=10703580",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Province_of_Pennsylvania"
+      },
+      {
+        "standardPlace": "Washington, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1781/",
+        "latitude": 40.189,
+        "longitude": -80.247,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Washington&focusedId=393177",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Washington_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Luzerne, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1786/",
+        "latitude": 41.176,
+        "longitude": -75.975,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne&focusedId=393188",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Luzerne_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Westmoreland, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1776/",
+        "latitude": 40.308,
+        "longitude": -79.47,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Westmoreland&focusedId=393180",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Westmoreland_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "York, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1776/",
+        "latitude": 39.9481,
+        "longitude": -76.7036,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=York&focusedId=393170",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/York_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Montgomery, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1784/",
+        "latitude": 40.211,
+        "longitude": -75.368,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Montgomery&focusedId=393195",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Montgomery_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Somerset, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1795/",
+        "latitude": 40.00694,
+        "longitude": -79.08139,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Somerset&focusedId=393169",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Somerset_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Lehigh, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1812/",
+        "latitude": 40.609,
+        "longitude": -75.577,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Lehigh&focusedId=393187",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Lehigh_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Mercer, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1800/",
+        "latitude": 41.298,
+        "longitude": -80.257,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Mercer&focusedId=393183",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Mercer_County,_Pennsylvania"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Pennsylvania, United States",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

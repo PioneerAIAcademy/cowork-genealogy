@@ -22,7 +22,8 @@
   "mcp_fixtures": [
     "wiki-search-guardianship-own-children",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-any"
   ],
   "judge_context": [
     "Must explain that a minor with a legal claim to an inheritance or estate share needed a court-appointed legal guardian to manage it, and that it was routine for the minor's own living parent to be appointed to that role — this is not evidence the child was orphaned, estranged from the petitioner, or not the petitioner's biological child",

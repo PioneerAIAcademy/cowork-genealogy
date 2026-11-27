@@ -287,14 +287,21 @@ ul.file-list {
 }
 
 @media (max-width: 720px) {
-  .new-file,
+  .new-file {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
   .new-file.with-pane {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .file-pages {
     flex-direction: row;
+    flex-wrap: wrap;
     border-right: 0;
+    border-bottom: 1px solid var(--color-border-primary, var(--fallback-line));
   }
 
   .new-file.with-pane .file-main,

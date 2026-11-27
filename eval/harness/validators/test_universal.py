@@ -58,6 +58,7 @@ from harness.schema_validator import (
 )
 from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions, is_attachment_link
 from harness.ts_validator import validate_parsed
+from validators_lib import research_append_ops
 
 
 # The research.json sections the diff-aware tests below iterate —
@@ -895,14 +896,7 @@ def _caller_notes_update_ids(tool_calls) -> set[str]:
         args = call.get("args")
         if not isinstance(args, dict):
             continue
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (ValueError, TypeError):
-                ops = None
-        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-        for op in candidates:
+        for op in research_append_ops(args):
             if not isinstance(op, dict) or op.get("section") != "assertions" or op.get("op") != "update":
                 continue
             fields = op.get("fields")
@@ -990,17 +984,7 @@ def _wrote_project_status(tool_calls) -> bool:
     for c in tool_calls or []:
         if not str(c.get("tool", "")).endswith("research_append"):
             continue
-        args = c.get("args") or {}
-        candidates = [args]
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (TypeError, ValueError):
-                ops = None
-        if isinstance(ops, list):
-            candidates = ops
-        for op in candidates:
+        for op in research_append_ops(c.get("args") or {}):
             if not isinstance(op, dict) or op.get("section") != "project":
                 continue
             for key in ("fields", "entry"):
@@ -1254,14 +1238,7 @@ def _claims_changed(tool_calls) -> bool:
         args = call.get("args")
         if not isinstance(args, dict):
             continue
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except (ValueError, TypeError):
-                ops = None
-        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in candidates):
+        if any(isinstance(op, dict) and op.get("section") == "proof_summaries" for op in research_append_ops(args)):
             return True
     return False
 
@@ -1293,6 +1270,8 @@ def _corrected_assertion_ids(tool_calls) -> set[str]:
             except (ValueError, TypeError):
                 ops = None
         candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        if _bare_tool_name(call.get("tool", "")) == "research_append":
+            candidates = research_append_ops(args)
         for op in candidates:
             if not isinstance(op, dict):
                 continue
@@ -1816,7 +1795,9 @@ PROJECT_WRITER_TOOLS = {
 # edit. It writes on a narrower condition still (only when the search found
 # nothing), but nil-ness is not visible in the call's args, and the projectPath
 # test is the one this guard can actually make.
-CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"}
+# `image_transcribe` joins them at issue #4721: in a project it logs its own page
+# read, keyed on the response for the same reason as record_search.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search", "image_transcribe"}
 
 #: Of the conditional writers, the ones whose write is decided by the RESPONSE,
 #: not the args, with the response keys that prove the write happened.
@@ -1829,11 +1810,18 @@ CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url", "record_search"
 #: cites (tree-edit ut_012). A guard that cannot fail in the case it exists to
 #: catch reads as coverage and is worse than none.
 #:
+#: `build_external_search_url` writes its in-flight entry unless the call carries
+#: `awaitingCapture: false`, and returns the entry's `logId` only when it wrote.
+#:
 #: `logId` only, never `nilLogRefused`: a refusal means the entry was NOT
 #: written, so it legitimizes no project-file change. Both keys survive into the
 #: committed run log (`orchestrator._MOCK_ENRICHED_KEYS`), so this reads the same
 #: post hoc as it does live.
-RESPONSE_KEYED_PROJECT_WRITERS = {"record_search": ("logId",)}
+RESPONSE_KEYED_PROJECT_WRITERS = {
+    "record_search": ("logId",),
+    "image_transcribe": ("logId",),
+    "build_external_search_url": ("logId",),
+}
 
 
 def _is_project_writer_call(call: dict) -> bool:

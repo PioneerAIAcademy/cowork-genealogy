@@ -7,7 +7,7 @@ and their reasoning*, and check any mechanic against the live source first:
 
 | For | Read instead |
 |---|---|
-| Run-log naming, release/candidate/active, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| Run-log naming, retention, the active state, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md) "Run log naming" and "Snapshot model" |
 | What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now eight blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
 | The skill-improvement loop | [`docs/skill-lifecycle.md`](skill-lifecycle.md) |
 
@@ -118,7 +118,7 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 ### 2.4 Tests are mutable; content hash auto-excludes from comparison
 
-> **Superseded by `docs/plan/eval-runlog-versioning.md` §A2/A4/A7.**
+> **Superseded by `eval/CLAUDE.md` "Snapshot model".**
 > The per-test `test_content_hash` field is gone. The whole-snapshot
 > model replaces it: each run log embeds a sha256 digest of every
 > skill-side file used in the run, and the comparison view diffs the
@@ -178,13 +178,9 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 
 ### 2.8 GitHub Action: runlog discipline
 
-> **Superseded by `docs/plan/eval-runlog-versioning.md` §C6.**
-> The "≤1 added run log per skill" rule becomes "≤1 *newly-added-or-
-> renamed-into-place* released `v{N}.json` per skill" (the rename
-> matters because release is a candidate → released git rename — the
-> earlier `--diff-filter=A`-only check missed it). Two new blocking
-> rules join Rule 1: the run log the PR adds (else the latest full-skill
-> run log) must be active on skill-side files (snapshot matches working
+> **Superseded by `eval/CLAUDE.md` "GitHub Action rules".**
+> There is no per-skill run-log count. The run log the PR adds (else the
+> latest full-skill run log) must be active on skill-side files (snapshot matches working
 > tree) and its `.ann.json` must have an entry for every dimension **of
 > the sampled tests** — five
 > chosen picks plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the count varies by run; see
@@ -214,10 +210,9 @@ Personnel — who's in the volunteer pool, response-time expectations, training 
 
 ### 2.10 Cross-PR comparison: side-by-side display, senior judges
 
-> **Superseded by `docs/plan/eval-runlog-versioning.md` §B3.**
-> The auto-pick-two-most-recent default is gone. The new comparison
-> page accepts arbitrary `(recent, previous)` run-log ids (default:
-> latest candidate vs latest released) and compares **corrected**
+> **Superseded by `docs/specs/eval-crud-ui-spec.md` (comparison view).**
+> The comparison page accepts arbitrary `(recent, previous)` run-log
+> ids (default: the two newest run logs) and compares **corrected**
 > scores from `.ann.json`, with snapshot-aware per-test exclusion and
 > a "what changed" panel diffing the two snapshots. The 0.3
 > within-variance advisory persists. Senior judges, no statistical gate.

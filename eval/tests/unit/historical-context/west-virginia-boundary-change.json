@@ -24,15 +24,17 @@
     "wikipedia-search-west-virginia-statehood",
     "wiki-search-any",
     "wiki-read-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-west-virginia-united-states",
+    "place-search-any"
   ],
   "judge_context": [
     "Must explain that West Virginia separated from Virginia in 1863 during the Civil War — the ancestor almost certainly did not move",
     "Optional: credit a reply that says county boundaries also changed, and research should focus on the county level; never mark down any dimension when it does not.",
-    "Must say that pre-1863 county records (deeds, wills, court orders) stay with the county that created them, whose courthouse is now in West Virginia if the county became part of West Virginia. A reply that sends the researcher to a Virginia county courthouse for those records is a Correctness error. Naming the Library of Virginia for state-level records or state copies (Land Office grants, tax lists, 1853–1863 vital registers) is correct. Sending the researcher to the county that covered the land before the ancestor's county was formed is correct for records older than that county, whichever state that county is in now.",
+    "Must say that pre-1863 county records (deeds, wills, court orders) stay with the county that created them, whose courthouse is now in West Virginia if the county became part of West Virginia. A reply that sends the researcher to a Virginia county courthouse for those records is a Correctness error. Naming the Library of Virginia for state-level records or state copies (Land Office grants, tax lists, 1853–1863 vital registers) is correct. Sending the researcher to the county that covered the land before the ancestor's county was formed is correct for records older than that county, whichever state that county is in now. Not naming the Library of Virginia is not an error.",
     "Optional: credit a reply that directs the researcher to consult historical boundary maps (e.g. Historical Map Works or the FamilySearch locality guide) to identify the correct county before searching any record repository; never mark down any dimension when it does not.",
     "Should mention specific record types held at county level: land and property records, tax lists, probate and court records",
     "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results. A flag covers a claim only when it is in the same paragraph as that claim; a closing note alone does not cover it. A passage with no flag gets no such allowance.",
-    "Grade Citation completeness only against the pages the narrative actually drew on. A page a tool returned that the narrative did not use needs no bullet, and its absence lowers nothing; a page listed by a section-anchor URL of that page counts as listed. When several returned pages carry the same text, listing any one of them is enough. Content taken from a search result may be cited by that result's URL."
+    "Grade Citation completeness only against the pages the narrative actually drew on. A page a tool returned that the narrative did not use needs no bullet, and its absence lowers nothing; a page listed by a section-anchor URL of that page counts as listed. When several returned pages carry the same text, listing any one of them is enough. Content taken from a search result may be cited by that result's URL. A small difference in a listed page's title or section anchor is not an error when it is the page the narrative used."
   ]
 }

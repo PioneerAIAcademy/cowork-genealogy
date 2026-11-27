@@ -1,0 +1,2698 @@
+{
+  "project": {
+    "id": "rp_kenneth_quass_death",
+    "objective": "When and where did Kenneth Werner Quass die?",
+    "subject_person_ids": [
+      "KNS4-P6W"
+    ],
+    "status": "active",
+    "created": "2026-06-15",
+    "updated": "2026-06-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Kenneth Werner Quass (born 4 December 1917, Iowa; FamilySearch KNS4-P6W) die?",
+      "rationale": "The objective is a single event (the death) with two attributes, date and place, so it is restated with identifying detail rather than split. The tree holds no death fact for the subject, and the pre-provided captures (a Texas death certificate and a Find a Grave memorial) are not yet extracted, so no answer is yet on record. The tree also gives conflicting birth places for the subject (Sumner, Bremer per the birth fact; Independence, Buchanan per a family life sketch), which the death search should not depend on. Sources to test: the uploaded Texas death certificate and Find a Grave memorial first, then other death indexes for the period.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1940-2026",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-26"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-26",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Unknown until the capture is read (file name names Texas; not treated as evidence)",
+          "date_range": "1940-2026",
+          "repository": "Ancestry (researcher upload, local file)",
+          "rationale": "The uploaded file uploads/ancestry-texas-death-cert-quass.pdf has no extracted text in the project, so its contents are unknown to this plan. Its file name names Texas, which is a label only. Extraction must read it before any search is chosen. If it records a date and place of death, the state of death is identified and that state's vital records series becomes the next plan; if not, the remaining items run.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "cemetery",
+          "jurisdiction": "Unknown until the memorial is read (burial place not yet known)",
+          "date_range": "1917-2026",
+          "repository": "Find a Grave (researcher upload, local file)",
+          "rationale": "The uploaded file uploads/findagrave-quass-54602333.pdf has no extracted text in the project. A memorial can state a death date and a burial place, which would answer both parts of the question if the memorial is sourced. Extraction must read it; a memorial alone is a derivative lead to verify against a death record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1940-2014",
+          "repository": "FamilySearch",
+          "rationale": "United States, Social Security Death Index (collection 1202535) is name-searchable and is the national death index covering the later years of the period. It can give a death date and last residence ZIP, which narrows the state of death. The tree records a move to Los Angeles, California on 2 July 1962, so a death after that date is plausible, but no place of death is implied. A negative result is not evidence that he did not die.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1936-2007",
+          "repository": "FamilySearch",
+          "rationale": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007 (collection 5000016) is name-searchable. Its death-related content is not confirmed by the survey, so this item checks whether it carries a death date or a place of death for the subject. Run alongside the Social Security Death Index, not after it.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "1970-2024",
+          "repository": "FamilySearch",
+          "rationale": "United States, Residence Database, 1970-2024 (collection 5000290) and United States, Public Records, 1970-2009 (collection 2199956) are both name-searchable. They can show the subject's last known residence, which is the most likely place of death if no certificate turns up. They do not record a death, so a residence is a lead to a state or county for a death record, not an answer.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1950-1950",
+          "repository": "FamilySearch",
+          "rationale": "United States, Census, 1950 (collection 4464515) is name-searchable and shows the subject alive in 1950. It fixes his residence before the years of likely death and so narrows the state to search. It does not record a death. The 1940 census shows him alive too, and the tree already records his 1940 residence in Madelia, Minnesota, so the 1950 entry is the next residence check.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "newspaper",
+          "jurisdiction": "United States",
+          "date_range": "1940-2023",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch obituary collections (United States, Obituary Records, 2014-2023, collection 5000145; GenealogyBank obituary collections 2860782 and 2333694, also indexed on FamilySearch) are name-searchable. An obituary often gives a death date, a place of death and the survivors. It is a derivative lead to verify against a death record. The 2024-2026 period has no obituary collection in the survey, so it is not covered here.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "cemetery",
+          "jurisdiction": "United States",
+          "date_range": "1917-2026",
+          "repository": "Ancestry (paid)",
+          "rationale": "U.S. Find a Grave Index on Ancestry is an index only and paid. It is the fallback if the uploaded memorial in pli_002 cannot be read or does not settle the death date or place. A burial index gives a death date only when the memorial states it, so it is a lead to verify against a death record.",
+          "fallback_for": "pli_002",
+          "status": "planned"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1940-1961",
+          "repository": "FamilySearch",
+          "rationale": "U.S. Deaths and Burials 1867-1961 on FamilySearch is index only. It ends before the years of likely death, since the subject was born in 1917 and may have died later, so a negative result is not evidence he did not die. It is checked only for a death before 1962.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:22:16.630Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "5000016",
+        "birthYearFrom": 1915,
+        "birthYearTo": 1920,
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 21,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 21,
+      "notes": "NUMIDENT (5000016). 21 returned, none is Kenneth Werner Quass; ranker scored all 21 at or below 0.01 (real negative for subject). Quass-surnamed hits are Ralph K Quass (possibly the subject's father, role Other) and Vivian Katherinequass Quass (b. 1917 Whitewater, WI, not a match). No death date or place of death for the subject surfaced. Subject's own NUMIDENT record not located under this spelling and birth-year window.",
+      "staged_ref": "results/.staging/37a53616-a725-4005-9bb4-c4a9f5becc83.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-26T13:22:17.451Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave",
+        "givenName": "Kenneth Werner",
+        "surname": "Quass",
+        "birthYear": 1917,
+        "deathYear": 1982,
+        "memorialId": "54602333",
+        "recordType": "memorial page capture (uploaded PDF)"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?firstname=Kenneth+Werner&lastname=Quass&birthyear=1917&deathyear=1982",
+        "capture_received": true,
+        "capture_filename": "findagrave-quass-54602333.pdf"
+      },
+      "results_ref": null,
+      "notes": "Triage of researcher upload uploads/findagrave-quass-54602333.pdf (Find a Grave memorial 54602333, captured 6/15/26, 3 pages; the URL above is the search that reaches this subject, built after the capture arrived, so the entry closes no in-flight row). Memorial for Kenneth Werner Quass Sr., birth 4 Dec 1917 Buchanan County, Iowa; death given as 17 Sep 1982, Grapevine, Tarrant County, Texas; burial Riverside Cemetery, Madelia, Watonwan County, Minnesota. Compiled, user-contributed source (contributor G R Wise Gittens, memorial added 7 Jul 2010), a lead only. The memorial's own text says the death-certificate place of death is false: the subject reportedly died en route from Miami to San Diego on a commercial airline, was found dead in a lavatory, and the body was unloaded at the Dallas downtown airport, with no autopsy; cause of death is stated as unknown. The informant's account is hearsay from a son who says he resided in Minnesota, and the memorial text itself says the informant's signature was forged on the certificate. Photographed headstones (Kenneth W, Dec 4 1917 - Sept 1982) are images of an artifact, weaker than the text only in what they show. Points to verify: the death certificate itself (state of Texas Vital Records if the place of death is Texas), any airline or coroner record of a death in flight, and the Dallas or Miami airport death. Family links here (parents Ralph Kennedy Quass and Emma Wilhelmina Nehls; spouse Ivyl Phylena Greenley m. 1938; children Donald Wendell and Alice Jeanette) match the project tree. The file name's 54602333 matches the memorial id on the capture."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-26T13:22:24.328Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Texas Death Certificates, 1903-1982 (collection 2272)",
+        "givenName": "Kenneth",
+        "surname": "Quass",
+        "birthYear": 1917,
+        "birthPlace": "Iowa",
+        "deathYear": 1982,
+        "deathPlace": "Texas",
+        "captureOf": "single record page, record 99712"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/2272?name=Kenneth_Quass&birth=1917&birthplace=Iowa&death=1982&deathplace=Texas",
+        "capture_received": true,
+        "capture_filename": "ancestry-texas-death-cert-quass.pdf"
+      },
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Capture of one Ancestry record page (Texas, U.S., Death Certificates, 1903-1982, record 99712, certificate number 76852), read from the uploaded PDF. Transcribed fields: Kenneth Quass, male, white, age 64, born 4 Dec 1917 in Iowa; death 17 Sep 1982, Grapevine, Tarrant, Texas, USA; father Ralph K Quass, mother Emma Nehls, spouse Ivyl Greenley; residence abt 1982, San Diego, California. Parents and spouse match the project's subject and his tree family. The record is an Ancestry transcription of the Texas certificate: a derivative lead, to be verified against the certificate image itself. It settles the state of death (Texas) and gives a death date and county. The residence in San Diego, California, abt 1982 is not explained by the record and is open. Search was not handed off in-flight; the URL was built on results_in_hand and logged here."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:22:28.422Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "5000016",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 33,
+      "notes": "Given-name variant (middle name dropped), NUMIDENT, no year filter. 33 returned; no Kenneth Quass or Kenneth Werner Quass. Ranker: all 33 at or below 0.01, real negative for subject. Quass-surnamed rows: Ralph K Quass (role Other) only. No death date or place for the subject surfaced.",
+      "staged_ref": "results/.staging/f5f44e94-1c10-4375-8746-834aa0173514.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:22:28.425Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quasse",
+        "givenName": "Kenneth Werner",
+        "collectionId": "5000016",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 30,
+      "notes": "Surname spelling variant (Quass to Quasse), given name kept, birth window 1912-1922, NUMIDENT. 30 returned; no Kenneth Werner Quass. Ranker: all 30 at or below 0.01, real negative for subject. Nearest surname hits (Quasney, Quasny, Quidas, Quasne) are different surnames and different given names. Ralph K Quass appears again, role Other.",
+      "staged_ref": "results/.staging/64a7976f-224b-4efe-90ba-2fdbc26c0798.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-26T13:22:36.482Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "1202535",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 25,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 25,
+      "notes": "SSDI, full given name. 25 hits, all Quass or near-Quass names; no Kenneth W Quass. Subject scored 0.01 floor, real negative for this query. Subject birth 1917 Sumner, Iowa; SSDI carries no birthplace so cannot be checked against it.",
+      "staged_ref": "results/.staging/6d646b26-2f11-4252-ab5d-58a42e149901.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-26T13:22:36.484Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "collectionId": "1202535",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 2,
+      "notes": "SSDI, given name Kenneth, birth 1912-1922. Two hits, Kaas and Kaveckas surnames, none Quass. No subject match.",
+      "staged_ref": "results/.staging/6bfb8f85-7f5e-42eb-88ab-63b50b5d7780.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-26T13:22:36.485Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "collectionId": "1202535",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 978,
+      "notes": "SSDI, surname Quass only, no given name or date. 978 hits; read the first 50 (offset 0). None is Kenneth. Remaining 928 not read; a Kenneth Quass could sit deeper. Partial because the pool was not read to the end.",
+      "staged_ref": "results/.staging/61ff89bf-bdfc-478b-ab67-43dd8bb33617.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-26T13:22:36.487Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quaas",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "collectionId": "1202535",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "positive",
+      "results_examined": 18,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 18,
+      "notes": "Surname spelling variant. One candidate: Kenneth M Quaas, SSDI, born 25 December 1914. Needs-review, not adopted. Birth year 1914 is 3 years from the subject's 1917; middle initial M does not match the subject's W. Cannot be ruled out (Quaas is a spelling of Quass, and SSDI carries no birthplace). Not written as a namesake. The other 17 hits are unrelated surnames (Wisniewski, Wisnoskie, Kwasniewska and similar) and do not match the subject.",
+      "staged_ref": "results/.staging/13d8d628-05ef-47d3-864a-f8da7114a9ef.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-26T13:23:05.976Z",
+      "tool": "image_transcribe",
+      "query": {
+        "file": "uploads/ancestry-texas-death-cert-quass.pdf"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "written_by": "image_transcribe",
+      "staged_ref": "results/.staging/734e7907-e91f-4fee-bdc7-df8c79128484.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-26T13:23:15.784Z",
+      "tool": "image_transcribe",
+      "query": {
+        "file": "uploads/findagrave-quass-54602333.pdf"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "written_by": "image_transcribe",
+      "staged_ref": "results/.staging/253d9c2b-93f7-4548-b2c0-3f33cb9885a1.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-11-26T13:27:11.663Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:J5WM-8Z2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "staged_ref": "results/.staging/a91f1a97-c7d5-472c-88c8-a1af4a768842.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-26T13:27:44.488Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "5000290",
+        "residenceYearFrom": 1970,
+        "residenceYearTo": 2024,
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 146,
+      "notes": "Residence Database 1970-2024 (collection 5000290). 146 total; top 50 ranked. Top match row ark:/61903/1:1:6YJ9-NVFJ, \"Kenneth Quass\", born December 1917, Residence Sep 1982, no place given; matchScore 0.92; birth month and year agree with subject (4 Dec 1917). Needs-review: no place in the stub, single residence, and the index gives no link to the subject's parents or spouse. Other rows are different-named or different-birth-year persons (e.g. Kenneth Quass born 1914 flagged birthYearConflict; Kenneth Quass Jr 1938; Kenneth Quass III 1974; Kenneth Quass 1960, Las Vegas). Outcome set to partial pending record read of the top row. Surname variants on the pool (Quasney, Kaas, Kaleas, Qassim) are not the subject's surname.",
+      "staged_ref": "results/.staging/49e5daa7-5618-469c-8ee7-8a2dcf97b29a.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-26T13:27:46.874Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "2199956",
+        "residenceYearFrom": 1970,
+        "residenceYearTo": 2009,
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 184,
+      "notes": "Public Records 1970-2009 (collection 2199956). 184 total; top 50 ranked. Ranking reports no candidate above matchScore 0.01 and subjectResolvable false, so this is a real negative for this query. Kenneth Quass rows present (Minneapolis, born 1959; Pine River, born 1938, Kenneth W Quass Jr) and not the subject on birth-year grounds (1938 gap of about 21 years; 1959 gap of about 42). Other Quass-surname rows are not the subject. Pool not paged further.",
+      "staged_ref": "results/.staging/71f6e44b-de3f-41de-8faa-a30384af10eb.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:28:01.282Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "collectionId": "5000016",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 30,
+      "notes": "NUMIDENT (5000016), full given name, birth 1912-1922. 30 results, none is Kenneth Werner Quass. Ranker: no candidate above 0.01 floor, so real negative for this query. Nearest surname hits are Ralph K Quass (Other, likely the father, not the subject) and Vivian Katherinequass Quass (b. 1917 Whitewater, Wisconsin; not the subject on birthplace and given name). Other rows carry surnames not on the subject (Quasney, Quasman, Kaas, Kaushas), each needs-review at most.",
+      "staged_ref": "results/.staging/b07db17d-634f-46a0-bd2b-8ac5cc7d96af.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:28:01.284Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "collectionId": "5000016",
+        "subjectId": "KNS4-P6W"
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 33,
+      "notes": "Given-name truncation variant: surname Quass, given name Kenneth alone, no date filter, NUMIDENT. 33 results, no Kenneth Quass born near 1917. Kenneth Quasney (b. 1930 Brooklyn, Maryland) is a different surname and birth year. Ranker: no candidate above 0.01 floor. No death date or place of death is visible for the subject in this collection. Ralph K Quass appears again as Other, not the subject.",
+      "staged_ref": "results/.staging/ff591194-ead5-4000-af56-7a9858ee0623.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:28:06.056Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "recordType": "census",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 55,
+      "notes": "1950 census residence check for Kenneth Werner Quass (b. 1917, Sumner, Bremer, Iowa). totalMatches 55; page 1 of 50 examined. Ranker: no candidate scored above the 0.01 floor, so the subject is not resolvable against this pool. No row carries the given name Kenneth Werner with surname Quass. Closest same-surname rows, none matching: Kenneth M Quas (b. 1915, Spring Grove Twp, Linn, Iowa, farmer, married; 2-year gap and a different middle initial; needs-review, not adopted). Ralph K Quass (b. 1892, Center Twp, Fayette, Iowa) and Emma W Quass (b. 1896, same dwelling) are consistent with the tree's parents by name and age only; they were not used to place the subject. Spelling variants were not run in this search.",
+      "staged_ref": "results/.staging/ada64b06-9ab3-4f8c-abf9-44992e44b8ba.json"
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:28:06.063Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "recordType": "census",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "United States",
+        "offset": 50,
+        "count": 5
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 55,
+      "notes": "Page 2 (offset 50) of the same 1950 census search; the last 5 of 55 rows. Ranker: no candidate above the 0.01 floor. No Kenneth Werner Quass. Nothing here ties the subject to a 1950 residence.",
+      "staged_ref": "results/.staging/da51c9aa-6114-4508-8795-86b20f246dea.json"
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:28:25.061Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kennith Werner",
+        "recordType": "census",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 55,
+      "notes": "Given-name spelling variant (Kennith) after Kenneth Werner nilled. 55 matches, first 50 examined. Ranker: no candidate above the 0.01 floor; no Kennith or Kenneth Werner Quass. Same closest rows as before (Kenneth M Quas, Ralph K Quass, Kennith Quass b. 1939 Minnesota) none tied to the subject.",
+      "staged_ref": "results/.staging/93263800-043b-492a-aca7-dc6ecc38863a.json"
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:28:25.070Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quas",
+        "givenName": "Kenneth Werner",
+        "recordType": "census",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 55,
+      "notes": "Surname spelling variant (Quas) after Quass nilled. 55 matches, first 50 examined. Ranker: no candidate above the 0.01 floor. Kenneth M Quas (b. 1915, Spring Grove Twp, Linn, Iowa) is the only Kenneth-given-name row near the subject's dates; a 2-year birth gap, a middle initial M not W, and a different county from the subject's birthplace make him needs-review, not adopted, and no tie to the subject's parents or wife is in the tree. Nothing else in the pool is Kenneth Werner.",
+      "staged_ref": "results/.staging/e302c678-73d5-4526-b724-bb1da656f285.json"
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": null,
+      "performed": "2026-11-26T13:28:59.431Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6YJ9-NVFJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "staged_ref": "results/.staging/7a5bfbfd-f516-44ae-9682-cf8744007e7a.json"
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:29:27.967Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "recordCountry": "United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 55,
+      "notes": "Subject not found under 'Kenneth Werner Quass', 1950 census, 55 total matches, 50 read. Ranker: no candidate scored above 0.01 (real negative for this pool). Parents appear in the pool: Ralph K Quass (b.1892 Iowa, Center Township, Fayette, Iowa) and Emma W Quass (b.1896 Iowa, same dwelling), both matching the tree's parents by name, age and place; Kenneth not named in those indexed rows. Other Quass-like names (Kenneth M Quas b.1915 Spring Grove, Linn, Iowa, married farmer; Kenneth M Quasles; Kenneth Quassy) do not fit the subject's birth year and place. No record in this pool shows the subject's 1950 residence or death. Surname-only and given-name variants still to run.",
+      "staged_ref": "results/.staging/9acff592-cd86-47e7-aa3e-259dfad4a337.json"
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:29:34.078Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000016",
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 30,
+      "notes": "NUMIDENT (5000016), subject KNS4-P6W. Ranker: no candidate above 0.01 floor, real negative for this query. Subject's own NUMIDENT entry not in pool. Surname-Quass rows: Ralph K Quass (6K7B-QS1Z, role Other, not the subject); Vivian Katherinequass Quass b. 16 Jun 1917 Whitewater WI (female, different birthplace, not the subject). Other rows carry surnames not on the subject (Quasny, Kaas, Kaushas, etc.) and are needs-review at most. No death date or place of death for the subject recovered.",
+      "staged_ref": "results/.staging/c9710850-f271-441d-84d7-6ec5cc423eef.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:29:34.080Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000016",
+        "surname": "Quass",
+        "givenName": "Kenneth"
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 33,
+      "notes": "Variant: given name Kenneth alone, no date filter, NUMIDENT. Ranker: no candidate above 0.01 floor. Only Quass-surname hits are Ralph K Quass (6K7B-QS1Z, Other) and a bare Quass entry (6K4Q-NRGJ, Other, no given name); neither is established as the subject. Kenneth Quasney b. 1930 Brooklyn MD is a different surname and birth. No death date or place recovered for the subject.",
+      "staged_ref": "results/.staging/ef686235-3083-46cb-92f5-a848b77ca46c.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:29:37.086Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "recordCountry": "United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 6,
+      "notes": "Variant: given name shortened to Kenneth, birth range 1912-1922. Only 6 matches in 1950 census, none the subject: Kenneth M Quas (b.1915, Spring Grove, Linn, Iowa, married farmer) is the nearest name; the subject is not in the pool. Ranker: no candidate above 0.01. Real negative for this pool.",
+      "staged_ref": "results/.staging/6cb75053-a7d3-4b18-9bcb-fc75b3bf3007.json"
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_009",
+      "performed": "2026-11-26T13:29:45.137Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "recordCountry": "United States",
+        "recordType": "death",
+        "deathYearFrom": 1940,
+        "deathYearTo": 1961,
+        "offset": 0
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 254,
+      "notes": "pli_009, page 1 of 254 (ranked against KNS4-P6W). No principal record of Kenneth Werner Quass dying 1940-1961 in the top 50. Top rows are relatives or other people: Kenneth Werner Quass as Father on a son's obituary entry (5000145), Ralph K Quass as Father (5000145), and a Principal 'Quass' obituary, Little Rock 1958, with no given name shown (2860782, needs-review, not adopted). Iowa Death Records 1904-1951 (2531337) returned only John W Quass burial rows, not the subject. The index covers the death years but not the years after 1961, so this nil does not show he survived. Index only; originals not examined.",
+      "staged_ref": "results/.staging/490d9ec4-7437-4c3e-bc4f-496bd5c2ebec.json"
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_009",
+      "performed": "2026-11-26T13:29:45.141Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth Werner",
+        "recordCountry": "United States",
+        "recordType": "death",
+        "deathYearFrom": 1940,
+        "deathYearTo": 1961,
+        "offset": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 254,
+      "notes": "pli_009, page 2 (offset 50) of the same search. Ranker: no candidate scored above 0.01, a real negative for this pool. Rows are variant surnames (Quas, Qugas, Kaas, Katsulas) and unrelated people. Not triaged further by hand.",
+      "staged_ref": "results/.staging/382a6143-d29c-41a0-bcb6-106f9a3398e2.json"
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-26T13:29:45.955Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quas",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "recordCountry": "United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 6,
+      "notes": "Surname spelling variant Quas, given name Kenneth, birth range 1912-1922, 1950 census. Same six rows as the prior Kenneth search; subject not present. Real negative for this variant. Ranker: no candidate above 0.01.",
+      "staged_ref": "results/.staging/6cf46b8d-6518-4510-ba75-daea2c2c1b7f.json"
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:29:50.218Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000016",
+        "surname": "Quaas",
+        "givenName": "Kenneth"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 145,
+      "notes": "Surname spelling variant Quaas, given name Kenneth, NUMIDENT, first page of 145 (not paged further). Ranker: no candidate above 0.01 floor. Kenneth M Quaas, b. 25 Dec 1914 Alburnett, Linn, Iowa (6KWS-NYYH), is a same-named person not tied to the subject: birth date 3 years and different middle initial from Kenneth W Quass b. 4 Dec 1917 Sumner, Iowa; ground recorded as a namesake. Remaining rows carry other surnames, needs-review at most.",
+      "staged_ref": "results/.staging/72c2bcb9-3f8d-41c5-b4f4-4a4a42df82f9.json"
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-26T13:29:50.221Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000016",
+        "surname": "Quass",
+        "givenName": "Ken",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "results_available": 12,
+      "notes": "Given-name variant Ken, surname Quass, birth 1912-1922, NUMIDENT. Ranker: no candidate above 0.01 floor. Pool is Quass-family and Kaas-family rows only; subject's own NUMIDENT entry not present. No death date or place recovered.",
+      "staged_ref": "results/.staging/8fadc14a-8a65-43df-bb39-00b552d38c26.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Texas, U.S., Death Certificates, 1903-1982, Certificate Number 76852 (accessed 2026-11-26).",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Texas, U.S., Death Certificates, 1903-1982",
+        "when_created": "unknown",
+        "when_accessed": "2026-11-26",
+        "where": "Ancestry",
+        "where_within": "Certificate Number 76852"
+      },
+      "source_classification": "derivative",
+      "repository": "Ancestry",
+      "access_date": "2026-11-26",
+      "log_entry_id": "log_010",
+      "notes": "read from an index entry. Ancestry index record as transcribed; the certificate image itself was not browsed.",
+      "transcription": "**Kenneth Quass**\nin the Texas, U.S., Death Certificates, 1903-1982\n\n| | |\n| :--- | :--- |\n| **Name** | Kenneth Quass |\n| **Gender** | Male |\n| **Race** | White |\n| **Death Age** | 64 |\n| **Birth Date** | 4 Dec 1917 |\n| **Birth Place** | Iowa |\n| **Residence Date** | Abt 1982 |\n| **Residence Place** | San Diego, San Diego, California, USA |\n| **Death Date** | 17 Sep 1982 |\n| **Death Place** | Grapevine, Tarrant, Texas, USA |\n| **Father** | Ralph K Quass |\n| **Mother** | Emma Nehls |\n| **Spouse** | Ivyl Greenley |\n| **Certificate Number** | 76852 |",
+      "image_filename": "uploads/ancestry-texas-death-cert-quass.pdf",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Find a Grave memorial 54602333, Kenneth Werner Quass Sr., G R Wise Gittens (contributor 47132213), Jul 7, 2010, Memorial ID 54602333 (accessed 2026-11-26).",
+      "citation_detail": {
+        "who": "G R Wise Gittens (contributor 47132213)",
+        "what": "Find a Grave memorial 54602333, Kenneth Werner Quass Sr.",
+        "when_created": "Jul 7, 2010",
+        "when_accessed": "2026-11-26",
+        "where": "Find a Grave",
+        "where_within": "Memorial ID 54602333"
+      },
+      "source_classification": "derivative",
+      "repository": "Find a Grave",
+      "access_date": "2026-11-26",
+      "log_entry_id": "log_011",
+      "notes": "read from a transcript of the record. User-contributed memorial page. Cites Riverside Cemetery, Madelia, Watonwan County, Minnesota; accessed June 15, 2026.",
+      "transcription": "### [Page 1]\n\n**[Headstone 1]**\nALICE JEANETTE\n\"JEANNE\"\nDEC. 6, 1940 \u2014 FEB. 3, 1955\nPhoto added by D. A. Greeley\n\n**[Headstone 2]**\nKENNETH W.\nDEC. 4, 1917 \u2014 SEPT. 17, 1982\nAdded by D. A. Greeley\n\n**[Headstone 3]**\nIVYL P.\nMAY 26, 1914 \u2014 MAY 24, 2005\nAdded by D. A. Greeley\n\n---\n\n## Kenneth Werner Quass Sr.\n\n**BIRTH** 4 Dec 1917\nBuchanan County, Iowa, USA\n**DEATH** 17 Sep 1982 (aged 64)\nGrapevine, Tarrant County, Texas, USA\n**BURIAL** Riverside Cemetery\nMadelia, Watonwan County, Minnesota, USA\n**MEMORIAL ID** 54602333\n\nThe information on the death certificate as place of death is false. Kenneth Werner died en-route from Miami, Florida to his home in San Diego, California, on a commercial airline. He was found dead in the rear toilet of the plane and his remains were placed in the last seat of the plane covered with a blanket until the plane landed at the downtown Dallas airport. I confirmed this with the airline he was the passenger on to thank them for their respectful treatment of my father's remains. He was dead upon arrival, but the coroner did not do an autopsy as required. He called Ken's son, the author of this bit of information, after talking with Ken's wife and asked some health questions as well as Kenneth W Quass' occupation. Kenneth was a national sales representative for several foreign auto parts manufacturers and was returning home from an extended visit with foreign auto parts suppliers and vehicle repair shops along the east coast of the USA. As a national sales representative, he had many friends and acquaintances in the USA. The coroner glibly put down as Ken's occupation as in 'auto sales' implying not of much importance an never performed an autopsy as federal law requires when one passes on a commercial airline. The coroner simply made an assumption as to the cause of death and noted the place of death as though it happened on the ground in Dallas. He then forged my signature on the death certificate as the informant. I resided in Minnesota at that time. In effect, Ken's cause of death is unknown. At his funeral, a close friend of the family aske me if an autopsy had been performed. I said no,, and he replied you may wish one had been done, for he was well aware of my father's\n\n---\n\n### [Page 2]\n\nhealth. A year or so later a Minnesota based foreign auto parts supplier approached me to ask if I knew what my father died of. I said no, He replied if I had ever thought of foul play. He proceeded to offer 'facts' that would support foul play at the Miami airport. I won't go into that with this bit of information, but it proved quite plausible.\n\n### Family Members\n\n**Parents**\n* Ralph Kennedy Quass\n  1891\u20131968\n* Emma Wilhelmina *Nehls* Quass\n  1894\u20131991\n\n**Spouse**\n* Ivyl Phylena *Greenley* Quass\n  1914\u20132005 (m. 1938)\n\n**Siblings**\n* Norman H Quass\n  1920\u20131939\n* Lucille E. *Quass* Clemens\n  1924\u20132013\n* Bernice Henrietta *Quass* Wegner\n  1926\u20132010\n* Louis Wayne Quass\n  1929\u20132009\n* Dorothy Ruth *Quass* Ostrander\n  1933\u20132005\n\n**Children**\n* Donald Wendell Quass\n  1940\u20132024\n* Alice Jeanette \"Jeanne\" Quass\n  1940\u20131955\n\n**Created by:** G R Wise Gittens\n**Added:** Jul 7, 2010\n\n---\n\n### [Page 3]\n\nFind a Grave Memorial ID: 54602333\n\n*Find a Grave*, database and images\n(https://www.findagrave.com/memorial/54602333/kenneth_werner-[illegible]quass: accessed June 15, 2026), memorial page for Kenneth Werner Quass Sr. (4 Dec 1917\u201317 Sep 1982), Find a Grave Memorial ID 54602333, citing Riverside Cemetery, Madelia, Watonwan County, Minnesota, USA; Maintained by G R Wise Gittens (contributor 47132213).",
+      "image_filename": "uploads/findagrave-quass-54602333.pdf",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:C5ML-R3Z : 10 January 2021), Kenneth M Quaas, 18 Jul 2001; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Kenneth M Quaas, \"United States, Social Security Death Index\"",
+        "when_created": "2001",
+        "when_accessed": "2026-11-26",
+        "where": "United States, Social Security Death Index",
+        "where_within": "ark:/61903/1:1:J5WM-8Z2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-26",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:C5ML-R3Z",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, Residence Database, 1970-2024\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YJ9-NVFJ : Tue Mar 10 03:55:34 UTC 2026), Entry for Kenneth Quass, Sep 1982.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Kenneth Quass, \"United States, Residence Database, 1970-2024\"",
+        "when_created": "1917",
+        "when_accessed": "2026-11-26",
+        "where": "United States, Residence Database, 1970-2024",
+        "where_within": "ark:/61903/1:1:6YJ9-NVFJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-26",
+      "log_entry_id": "log_021",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HWYR-6PZM",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Kenneth Quass",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth",
+        "surname": "Quass"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "64",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "4 Dec 1917",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "4 Dec 1917",
+      "place": "Iowa",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_006",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Abt 1982",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Abt 1982",
+      "place": "San Diego, San Diego, California, USA",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001",
+      "standard_place": "San Diego, San Diego, California, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 Sep 1982",
+      "place": "Grapevine, Tarrant, Texas, USA",
+      "source_id": "src_001",
+      "standard_place": "Grapevine, Tarrant, Texas, United States"
+    },
+    {
+      "id": "a_008",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Ralph K Quass",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ralph K",
+        "surname": "Quass"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Emma Nehls",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Nehls",
+        "type": "birth"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "spouse_1",
+      "fact_type": "name",
+      "value": "Ivyl Greenley",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ivyl",
+        "surname": "Greenley",
+        "type": "birth"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ralph K Quass",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Emma Nehls",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:ancestry-texas-death-quass-76852",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Ivyl Greenley",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse_1"
+      },
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Kenneth Werner Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth Werner",
+        "surname": "Quass"
+      },
+      "informant_bias_notes": "Headstone reads Kenneth W.; memorial title reads Sr.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "4 Dec 1917",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "4 Dec 1917",
+      "place": "Buchanan County, Iowa, USA",
+      "source_id": "src_002",
+      "standard_place": "Buchanan, Iowa, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "death",
+      "value": "17 Sep 1982",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 Sep 1982",
+      "place": "Grapevine, Tarrant County, Texas, USA",
+      "informant_bias_notes": "Place as given in the memorial's header fields. The memorial's narrative states this place is false (see the death fact below).",
+      "source_id": "src_002",
+      "standard_place": "Grapevine, Tarrant, Texas, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "death",
+      "value": "Aboard a commercial airline en route from Miami, Florida to San Diego, California; plane landed at the downtown Dallas airport",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Aboard a commercial airline en route from Miami, Florida to San Diego, California; plane landed at the downtown Dallas airport",
+      "informant_bias_notes": "Contributor's narrative: the death occurred en route, not on the ground in Dallas. Body reportedly found in the rear toilet of the plane. Contributor states the certificate's place of death is false and that the coroner recorded the place as if on the ground in Dallas. Contributor also states the death was undetermined as to cause, no autopsy was performed, and the contributor signed as informant without his knowledge. Contributor is the decedent's son, per the memorial text. Stated by the contributor; not confirmed by the airline or a record.",
+      "source_id": "src_002",
+      "standard_place": "San Diego Township, San Diego, California, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "burial",
+      "value": "Riverside Cemetery, Madelia, Watonwan County, Minnesota, USA",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Riverside Cemetery, Madelia, Watonwan County, Minnesota, USA",
+      "source_id": "src_002",
+      "standard_place": "Riverside Cemetery, Madelia Township, Watonwan, Minnesota, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "occupation",
+      "value": "national sales representative for several foreign auto parts manufacturers (per contributor; the certificate gives auto sales)",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "father_1",
+      "fact_type": "name",
+      "value": "Ralph Kennedy Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ralph Kennedy",
+        "surname": "Quass"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "father_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "father_1",
+      "fact_type": "death",
+      "value": "1968",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1968",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "mother_1",
+      "fact_type": "name",
+      "value": "Emma Wilhelmina Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Emma Wilhelmina",
+        "surname": "Quass",
+        "type": "birth"
+      },
+      "informant_bias_notes": "Memorial gives Nehls as maiden name",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "mother_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "mother_1",
+      "fact_type": "death",
+      "value": "1991",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1991",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Ivyl Phylena Greenley",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ivyl Phylena",
+        "surname": "Greenley",
+        "type": "birth"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "1938",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1938",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "wife",
+      "fact_type": "death",
+      "value": "2005",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "2005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Donald Wendell Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Donald Wendell",
+        "surname": "Quass"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "child_1",
+      "fact_type": "death",
+      "value": "2024",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "2024",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "child of Ralph Kennedy Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_1"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "child of Emma Wilhelmina Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_1"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Kenneth Werner Quass",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "principal"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "capture:findagrave-memorial-54602333",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "spouse of Ivyl Phylena Greenley",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:J5WM-8Z2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Kenneth M Quaas",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth M",
+        "surname": "Quaas"
+      },
+      "record_persona_id": "p_12981070220",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:C5ML-R3Z"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:J5WM-8Z2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "18 Jul 2001",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "18 Jul 2001",
+      "place": "Topeka, Shawnee, Kansas",
+      "record_persona_id": "p_12981070220",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:C5ML-R3Z",
+      "standard_place": "Forbes Field Air National Guard Base, Shawnee, Kansas, United States"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:J5WM-8Z2",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "25 Dec 1914",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 Dec 1914",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_12981070220",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:C5ML-R3Z"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6YJ9-NVFJ",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Kenneth Quass",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_021",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Kenneth",
+        "surname": "Quass"
+      },
+      "record_persona_id": "p_304407358667",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HWYR-6PZM"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6YJ9-NVFJ",
+      "record_role": "child",
+      "fact_type": "residence",
+      "value": "Sep 1982",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_021",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Sep 1982",
+      "record_persona_id": "p_304407358667",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HWYR-6PZM"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6YJ9-NVFJ",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "Dec 1917",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_021",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Dec 1917",
+      "record_persona_id": "p_304407358667",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:HWYR-6PZM"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Date check: 4 Dec 1917 (birth; stated age 64 in 1982) vs tree birth 4 Dec 1917: gap 0 years. Residence check: Grapevine, Texas, 1982 vs none attested (tree holds no residence for this person): no residence cap. same_person score 0.714. Name Kenneth Quass, Iowa birth, age 64, parents Ralph K Quass and Emma Nehls, and spouse Ivyl Greenley all agree with the tree. The death-place disagreement with the Find a Grave record is a conflict for conflict-resolution, not an identity conflict. same_person warned that this record's 1982 residence and death would be impossible if written onto the tree person; not materialized, to be checked.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Same persona and identity basis as a_001 (Texas death certificate, deceased persona; same_person score 0.714; date check gap 0 years; residence check none attested). Sex agrees with the tree.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Same persona as a_001 (score 0.714; date check gap 0; residence check none attested). Race entry does not bear on identity; identity rests on name, birth, age, parents and spouse agreeing with the tree.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Date check: stated age 64 in 1982 implies birth 1917-1918 vs tree birth 4 Dec 1917: gap 0 years. Residence check: 1982 vs none attested. Same persona as a_001 (score 0.714).",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Date check: 4 Dec 1917 vs tree birth 4 Dec 1917: gap 0 years. Residence check: none attested. Record gives Iowa; tree birth place Sumner, Bremer, Iowa, consistent at state level. Same persona as a_001 (score 0.714).",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Residence check: San Diego, California, about 1982 vs none attested in the tree before this run; the record's own residence is not a tree residence. Same persona as a_001 (score 0.714). This residence is a record claim not yet supported by another record.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Date check: death 17 Sep 1982 is not a birth fact; birth gap 0 (tree birth 4 Dec 1917). Residence check: Grapevine, Texas, 1982 vs none attested. Same persona as a_001 (score 0.714). The death place (Grapevine, Texas) conflicts with the Find a Grave account (en route aboard an airliner); conflict-resolution to adjudicate. Linked on identity, not on place.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_013",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Relationship assertion naming the father. Subject-side link: same persona as a_001 (score 0.714); date check gap 0 (tree birth 4 Dec 1917). Residence check: none attested. Child of Ralph K Quass agrees with tree parentage.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_013",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "probable",
+      "match_score": 0.3519867,
+      "rationale": "Father-side link of a_013 (record father persona, scored 0.352 with recordRole father). Date check: none stated for the father's birth vs tree. Residence check: none attested. Name Ralph K Quass vs tree Ralph Kennedy Quass (initial expands, same surname); tree death 1968 is not contradicted. Score is low because the record persona is thin (name and sex only); probable, not confident.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_014",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Relationship assertion naming the mother. Subject-side link: same persona as a_001 (score 0.714); date check gap 0. Residence check: none attested. Child of Emma Nehls agrees with tree parentage.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_014",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.019684289,
+      "rationale": "Mother-side link of a_014 (record mother persona scored 0.020 with recordRole mother). Date check: none stated for the mother's birth. Residence check: none attested. Name Emma Nehls matches the tree's maiden name for Emma Wilhelmina Nehls and sex agrees; the record gives no other identifying detail. The score is very low and the persona is thin, so speculative only. Her identity rests on the subject's parentage, not on this record alone.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_015",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "match_score": 0.7144649,
+      "rationale": "Relationship assertion naming the spouse. Subject-side link: same persona as a_001 (score 0.714); date check gap 0; residence check none attested. Spouse Ivyl Greenley agrees with tree spouse Ivyl Phylena Greenley.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_015",
+      "person_id": "KWZP-4Q8",
+      "confidence": "probable",
+      "match_score": 0.16742931,
+      "rationale": "Spouse-side link of a_015 (record spouse persona scored 0.167 with recordRole spouse_1). Date check: none stated for spouse's birth. Residence check: none attested. Name Ivyl Greenley matches tree Ivyl Phylena Greenley (middle name absent in record, not a conflict). Score low because the persona is thin; probable.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_008",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "probable",
+      "match_score": 0.3519867,
+      "rationale": "Date check: none stated for the father's birth vs tree. Residence check: none attested. Name Ralph K Quass vs tree Ralph Kennedy Quass (same surname; initial K matches the middle name). Persona thin (name and sex only), so score 0.352 is low; the tree's father of the subject, died 1968 per tree, is not contradicted. Probable.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_009",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "probable",
+      "match_score": 0.3519867,
+      "rationale": "Same persona as a_008 (score 0.352). Sex agrees (male). Probable for the same reason as a_008.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_010",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.019684289,
+      "rationale": "Date check: none stated for the mother's birth. Residence check: none attested. Same persona as a_014 (score 0.020). Name Emma Nehls matches tree maiden name; persona carries only name and sex. Speculative.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_011",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.019684289,
+      "rationale": "Same persona as a_010 (score 0.020). Sex agrees (female). Speculative for the same reason.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "KWZP-4Q8",
+      "confidence": "probable",
+      "match_score": 0.16742931,
+      "rationale": "Date check: none stated for the spouse's birth. Residence check: none attested. Name Ivyl Greenley (birth surname) matches tree Ivyl Phylena Greenley; spouse of the subject agrees with the tree marriage. Score 0.167 low because the persona is name-only; probable.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Date check: 4 Dec 1917 vs tree birth 4 Dec 1917: gap 0 years. Residence check: none attested. same_person score 0.909 (Find a Grave principal persona). Full name Kenneth Werner Quass matches the tree; spouse Ivyl Phylena Greenley, parents Ralph Kennedy Quass and Emma Wilhelmina Nehls, and children Donald and the memorial's other child all agree. Reservation: the memorial title reads 'Sr.', an element no record in the project accounts for and the tree does not carry; this is an unexplained name element, so the link is probable, not confident, until a record explains it. Death-place disagreement with the Texas certificate is for conflict-resolution.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Same persona as a_016 (score 0.909). Sex agrees. Probable for the Sr. reservation named in a_016.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Date check: 4 Dec 1917 vs tree 4 Dec 1917: gap 0 years. Residence check: none attested. Same persona as a_016 (score 0.909). Birth place Buchanan County, Iowa, is in the same state as the tree's Sumner, Bremer, Iowa birth (county-level difference, not an identity conflict). Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Residence check: Grapevine, Texas, 1982 vs none attested. Same persona as a_016 (score 0.909). Death date 17 Sep 1982 agrees with the Texas certificate. The memorial's place is disputed by its own narrative and by the Texas certificate's contrary account; conflict-resolution to adjudicate. Linked on identity. Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Same persona as a_016 (score 0.909). Contributor's narrative (the decedent, a son of the subject, died aboard an airliner en route Miami to San Diego, landing in Dallas) is informant-stated and unconfirmed; it bears on the place of death, not identity. Contributor is named as the decedent's son and signed informant. Probable for the Sr. reservation; conflict with the Texas certificate's place is for conflict-resolution.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Same persona as a_016 (score 0.909). Burial in Riverside Cemetery, Madelia, Minnesota, is recorded with no residence in the tree to check it against (residence check: none attested). Burial is not contradicted by any other record in the project. Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Same persona as a_016 (score 0.909). Occupation (national sales representative, per contributor) is an informant-stated occupation; it does not decide identity. Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_036",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Relationship assertion naming the father. Subject-side link: same persona as a_016 (score 0.909); date check gap 0; residence check none attested. Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_036",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "confident",
+      "match_score": 0.9300039,
+      "rationale": "Father-side link of a_036 (Find a Grave father_1 persona, scored 0.930 with recordRole father_1). Name Ralph Kennedy Quass matches the tree exactly; death 1968 agrees with the tree's death year. Date check: none stated for the father's birth. Residence check: none attested. Strong correlation across name, death year and parentage of the subject.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_037",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Relationship assertion naming the mother. Subject-side link: same persona as a_016 (score 0.909); date check gap 0; residence check none attested. Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_037",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.14534011,
+      "rationale": "Mother-side link of a_037 (Find a Grave mother_1 persona, scored 0.145 with recordRole mother_1). Persona gives the maiden name Nehls only in its notes and the married name Quass; date check none stated; residence check none attested. Score is low and the persona thin, so speculative only.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_038",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Relationship assertion from the child persona naming the principal as parent. Subject-side link: same principal persona as a_016 (score 0.909, recordRole principal). Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_038",
+      "person_id": "KW4T-D9J",
+      "confidence": "confident",
+      "match_score": 0.95664185,
+      "rationale": "Child-side link (Find a Grave child_1 persona Donald Wendell Quass, scored 0.957). Name matches the tree; death 2024 agrees with the tree's death year. Date check: none stated for the child's birth. Residence check: none attested. Parentage to the principal and spouse agrees with the tree.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_039",
+      "person_id": "KNS4-P6W",
+      "confidence": "probable",
+      "match_score": 0.90921634,
+      "rationale": "Relationship assertion naming the spouse. Subject-side link: same principal persona as a_016 (score 0.909). Probable for the Sr. reservation.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_039",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "match_score": 0.7410369,
+      "rationale": "Spouse-side link of a_039 (Find a Grave wife persona, scored 0.741 with recordRole wife). Full name Ivyl Phylena Greenley matches the tree exactly; marriage 1938 and death 2005 agree with the tree. Date check: none stated for her birth. Residence check: none attested.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_023",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "confident",
+      "match_score": 0.9300039,
+      "rationale": "Date check: none stated for the father's birth vs tree. Residence check: none attested. same_person score 0.930. Name Ralph Kennedy Quass matches exactly; death 1968 agrees with the tree. Parentage of the principal matches the Texas certificate's father.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_024",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "confident",
+      "match_score": 0.9300039,
+      "rationale": "Same persona as a_023 (score 0.930). Sex agrees (male).",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_025",
+      "person_id": "KFYQ-1Y2",
+      "confidence": "confident",
+      "match_score": 0.9300039,
+      "rationale": "Same persona as a_023 (score 0.930). Death year 1968 agrees with the tree's death year for Ralph Kennedy Quass.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_026",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.14534011,
+      "rationale": "Date check: none stated for the mother's birth. Residence check: none attested. Same persona as a_037 (score 0.145). Name Emma Wilhelmina Quass with the maiden name Nehls in notes matches the tree's Emma Wilhelmina Nehls; score is low and the persona thin. Speculative.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_027",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.14534011,
+      "rationale": "Same persona as a_026 (score 0.145). Sex agrees (female). Speculative.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_028",
+      "person_id": "KNSY-35C",
+      "confidence": "speculative",
+      "match_score": 0.14534011,
+      "rationale": "Same persona as a_026 (score 0.145). Death year 1991 agrees with the tree's death year for Emma Wilhelmina Nehls. Speculative because the persona otherwise lacks identifying detail.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_029",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "match_score": 0.7410369,
+      "rationale": "Date check: none stated for her birth. Residence check: none attested. same_person score 0.741. Full name Ivyl Phylena Greenley matches the tree exactly; spouse of the principal agrees with the tree's marriage.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_030",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "match_score": 0.7410369,
+      "rationale": "Same persona as a_029 (score 0.741). Sex agrees (female).",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_031",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "match_score": 0.7410369,
+      "rationale": "Same persona as a_029 (score 0.741). Marriage 1938 is a couple event for the Couple relationship; linked here as the wife's persona assertion, not written as a person-level fact. Marriage year is not contradicted by the tree.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_032",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "match_score": 0.7410369,
+      "rationale": "Same persona as a_029 (score 0.741). Death year 2005 agrees with the tree's death year for Ivyl Phylena Greenley.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_033",
+      "person_id": "KW4T-D9J",
+      "confidence": "confident",
+      "match_score": 0.95664185,
+      "rationale": "Date check: none stated for the child's birth. Residence check: none attested. same_person score 0.957. Name Donald Wendell Quass matches the tree exactly; death 2024 agrees with the tree's death year.",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_034",
+      "person_id": "KW4T-D9J",
+      "confidence": "confident",
+      "match_score": 0.95664185,
+      "rationale": "Same persona as a_033 (score 0.957). Sex agrees (male).",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_035",
+      "person_id": "KW4T-D9J",
+      "confidence": "confident",
+      "match_score": 0.95664185,
+      "rationale": "Same persona as a_033 (score 0.957). Death 2024 agrees with the tree's death year.",
+      "created": "2026-11-26"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Kenneth Quass (KNS4-P6W) death place, 17 Sep 1982: Grapevine, Tarrant, Texas per the Texas death certificate transcription (a_007) and the Find a Grave header field (a_019), versus a commercial flight from Miami toward San Diego that landed at the downtown Dallas airport, with the body found in a rear toilet, per the memorial narrative (a_020). The memorial narrative says the certificate's place is false.",
+      "disputed_attribute": "death_place",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_007",
+        "a_019",
+        "a_020"
+      ],
+      "independence_analysis": "Two of the three assertions are not independent of each other. a_019 is the Find a Grave header place, and the same memorial's narrative (a_020) explicitly disowns that place, so a_019 adds no separate witness: it repeats the contested certificate place from the same submitted memorial. a_020 and a_019 share the contributor as their only known origin. a_007 comes from a separate source (the Ancestry capture of the Texas death record) and is the only assertion that does not trace to the memorial contributor, so it is the one independent line of evidence. The certificate itself is the underlying record for a_007 and the memorial's header field may simply be copied from it, so even a_007 and a_019 may be one informational chain; the memorial's contributor is the only source for the claim that the certificate is wrong.",
+      "weighing_analysis": "a_007 is an official record created by the certifying official under legal duty, which weighs in favor of its place. It is a transcription, however, and the page image was not checked against the transcription here. a_020 is a later, unsourced narrative by the decedent's son, who says he signed as informant without knowledge, that no autopsy was done, and that cause was undetermined. That is a claim against the official record with a personal motive and no airline, coroner, or flight record behind it. Its specifics (flight route, toilet, Dallas landing) are concrete enough to be checked, and the claim that the coroner recorded a place as if on the ground is itself unverified. Neither side can be set aside on the four defensible rationales yet: the official record is a single source, and the contributor account is a single uncorroborated source, so the conflict turns on evidence not in the file.",
+      "resolution_rationale": "The problem: the place of death for Kenneth Quass in 1982 is disputed. It matters because it determines which jurisdiction's death record and coroner's file to search and whether the death was on the ground at all. The evidence: the Texas death record, captured from Ancestry, gives Grapevine, Tarrant County; the Find a Grave memorial repeats that place in its header, while its narrative, by the decedent's son, says the death occurred on a commercial flight from Miami to San Diego that landed in Dallas. The record favors Grapevine on its face because it is an official record made by a certifying official in the course of duty. The son is the only source for the flight account, is a family member with a motive to dispute the certificate, says he signed as informant without knowing what he was signing, and gives no documentary support. Neither side meets a defensible rationale for setting the other aside, so the conflict stays open. The narrower reason the two accounts diverge may be that a death aboard an aircraft, reported to a Texas county on arrival, would be recorded at the landing point; the coroner's entry could then name Dallas-area or Grapevine jurisdiction without the death having occurred on the ground there. That explanation is a hypothesis, not a finding.",
+      "preferred_assertion_id": null,
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "United States",
+      "for_place": "United States (national record sets; the place of death is not yet known)",
+      "time_period": "1940-2026",
+      "jurisdictions": [
+        {
+          "name": "United States",
+          "date_range": "from 1776"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2000219",
+          "title": "United States, Census, 1940",
+          "date_range": "1940-1940",
+          "person_count": 134826560,
+          "record_count": 134826560,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "4464515",
+          "title": "United States, Census, 1950",
+          "date_range": "1950-1950",
+          "person_count": 157892854,
+          "record_count": 157892854,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000016",
+          "title": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+          "date_range": "1936-2007",
+          "person_count": 151308217,
+          "record_count": 63700462,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2199956",
+          "title": "United States, Public Records, 1970-2009",
+          "date_range": "1970-2009",
+          "person_count": 958395164,
+          "record_count": 875600505,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000290",
+          "title": "United States, Residence Database, 1970-2024",
+          "date_range": "1970-2024",
+          "person_count": 413857768,
+          "record_count": 413857768,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "5000145",
+          "title": "United States, Obituary Records, 2014-2023",
+          "date_range": "2014-2023",
+          "person_count": 306490178,
+          "record_count": 1,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2333694",
+          "title": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015",
+          "date_range": "1980-2015",
+          "person_count": 272579000,
+          "record_count": 28662107,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2860782",
+          "title": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+          "date_range": "1815-2013",
+          "person_count": 191522581,
+          "record_count": 31808037,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1861144",
+          "title": "United States, World War II Draft Registration Cards, 1942",
+          "date_range": "1942-1942",
+          "person_count": 15714765,
+          "record_count": 12217993,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "2028680",
+          "title": "United States, World War II Army Enlistment Records, 1938-1946",
+          "date_range": "1938-1946",
+          "person_count": 9038920,
+          "record_count": 9038844,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133,
+          "availability": "name-searchable"
+        },
+        {
+          "id": "1339071",
+          "title": "United States, World War II Draft Registration Cards, 1942",
+          "date_range": "1942-1942",
+          "person_count": 0,
+          "record_count": 0,
+          "availability": "browse-only"
+        }
+      ],
+      "quirks": [
+        "The national survey returned no death certificates. Death certificates are held by the state or county where the death occurred, so the place of death must be known before a certificate can be requested. Read the state Vital Records page for the state of death once it is identified.",
+        "The national death indexes on the FamilySearch Wiki end before the likely death years: U.S. Deaths and Burials 1867-1961 (FamilySearch, index only) and U.S. Deaths & Burials 1833-1970 (Findmypast, index only, paid). A man born 1917 may have died after those dates, so a negative result there is not evidence he did not die.",
+        "The Social Security Death Index on FamilySearch (collection 1202535, 1875-2014) is the national death index covering the later years of the period; it is name-searchable. A negative search is not evidence of no death, since the index is incomplete and name variants apply.",
+        "The national survey did not return volume data: the volumes part timed out, so no digitized volume counts are reported for this jurisdiction.",
+        "The FamilySearch Wiki question page timed out during this survey, so no Wiki section on the question was read; the pages listed are the home, getting-started, online-records and research-tips pages only.",
+        "Find a Grave and the other cemetery indexes on Ancestry, MyHeritage and Findmypast are paid indexes, as the FamilySearch Wiki link text marks them. The Find a Grave upload for this subject was not read by this survey.",
+        "The 1940 census (collection 2000219) and the 1950 census (collection 4464515) show the subject alive at those dates; they can narrow the residence before death but do not record a death.",
+        "Obituary collections cover 1815-2013 (GenealogyBank historical, collection 2860782), 1980-2015 (GenealogyBank births, marriages and obituaries, collection 2333694) and 2014-2023 (FamilySearch Obituary Records, collection 5000145). The 2024-2026 period has no obituary collection in this survey's results."
+      ],
+      "registration_start": [],
+      "record_types": [
+        {
+          "type": "census",
+          "level": "national",
+          "held_at": null,
+          "summary": "FamilySearch has United States, Census, 1940 (collection 2000219) and United States, Census, 1950 (collection 4464515), both name-indexed. They show the subject alive in those years; they do not record a death. The survey did not return other federal census years for this period.",
+          "source_url": "https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "2000219",
+            "4464515"
+          ]
+        },
+        {
+          "type": "vital_record",
+          "level": null,
+          "held_at": null,
+          "summary": "Death certificates are kept by state and local offices, not nationally. The national FamilySearch Wiki lists only index collections: U.S. Deaths and Burials 1867-1961 on FamilySearch (index only) and U.S. Deaths & Burials 1833-1970 on Findmypast (index only, paid). The state of death must be identified before its Vital Records series can be searched; the survey did not read any state's page.",
+          "source_url": "https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1202535"
+          ]
+        },
+        {
+          "type": "probate",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey returned no probate tool result for the national jurisdiction. Probate is kept at county level; the survey did not confirm whether wills (testate) or administrations (intestate) apply, so not confirmed by this survey.",
+          "source_url": null,
+          "access": "unknown"
+        },
+        {
+          "type": "land",
+          "level": "national",
+          "held_at": null,
+          "summary": "Only the Bureau of Land Management Tract Books, 1800-c. 1955 (collection 2074276) appeared. They predate any death in the period after 1956 and are not death sources.",
+          "source_url": null,
+          "access": "unknown"
+        },
+        {
+          "type": "church",
+          "level": null,
+          "held_at": null,
+          "summary": "The FamilySearch Wiki United States Church Records page lists denominations and state church-record articles; the survey did not read any denomination's burial or death registers, so church death records are not confirmed by this survey. Parish registers are kept by the parish or congregation itself, not the civil office.",
+          "source_url": "https://www.familysearch.org/en/wiki/United_States_Church_Records",
+          "access": "unknown"
+        },
+        {
+          "type": "military",
+          "level": "national",
+          "held_at": null,
+          "summary": "World War II Draft Registration Cards, 1942 (collection 1861144) and World War II Army Enlistment Records, 1938-1946 (collection 2028680) show service, not death. For a veteran's death, the Wiki lists U.S. Veterans' Gravesites 1775-2019 (Ancestry, index only, paid) and United States, Veterans Burials 1763-onward (MyHeritage, index, paid).",
+          "source_url": "https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records",
+          "access": "unknown",
+          "collection_ids": [
+            "1861144",
+            "2028680",
+            "1339071"
+          ]
+        },
+        {
+          "type": "newspaper",
+          "level": null,
+          "held_at": null,
+          "summary": "Obituary collections: GenealogyBank Historical Newspaper Obituaries 1815-2013 (collection 2860782), GenealogyBank Obituaries, Births, and Marriages 1980-2015 (collection 2333694), and FamilySearch United States, Obituary Records, 2014-2023 (collection 5000145). The survey did not confirm the newspapers or local titles behind them.",
+          "source_url": null,
+          "access": "unknown",
+          "collection_ids": [
+            "5000145",
+            "2333694",
+            "2860782"
+          ]
+        },
+        {
+          "type": "cemetery",
+          "level": null,
+          "held_at": null,
+          "summary": "Wiki-listed cemetery indexes: U.S. Find a Grave Index (Ancestry, index only, paid), U.S. Cemetery and Funeral Home Collection 1847-forward (Ancestry, index only, paid), U.S. Index of Gravestones 1900-2018 and U.S. Index of Burials 1900-2019 (MyHeritage, index only, paid). Burial records and cemetery office files are local; the survey did not confirm any.",
+          "source_url": "https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records",
+          "access": "unknown"
+        },
+        {
+          "type": "tax",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey returned nothing on tax lists for the national jurisdiction. Not confirmed by this survey.",
+          "source_url": null,
+          "access": "unknown"
+        },
+        {
+          "type": "immigration",
+          "level": "national",
+          "held_at": null,
+          "summary": "Border crossing collections (Mexico 1903-1957, collection 1803932; Canada 1895-1956, collection 1803785) record entries, not deaths. This survey did not confirm any immigration record of a death.",
+          "source_url": null,
+          "access": "unknown"
+        },
+        {
+          "type": "court",
+          "level": null,
+          "held_at": null,
+          "summary": "This survey returned no court tool result for the national jurisdiction. Not confirmed by this survey.",
+          "source_url": null,
+          "access": "unknown"
+        },
+        {
+          "type": "other",
+          "level": "national",
+          "held_at": null,
+          "summary": "FamilySearch United States, Social Security Death Index, 1875-2014 (collection 1202535, 93,945,885 persons) is the national death index covering the later years of the period. United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007 (collection 5000016) and United States, Public Records, 1970-2009 (collection 2199956) are also name-indexed; the survey did not confirm what each records about death. City directories (collection 3754697) can show a residence before death.",
+          "source_url": null,
+          "access": "unknown"
+        }
+      ],
+      "repositories": [
+        {
+          "name": "FamilySearch",
+          "holds": "Name-indexed national collections: 1940 and 1950 censuses, Social Security Death Index 1875-2014, NUMIDENT 1936-2007, Public Records 1970-2009, Residence Database 1970-2024, Obituary Records 2014-2023, City and Business Directories",
+          "access": "free",
+          "url": null
+        },
+        {
+          "name": "Findmypast",
+          "holds": "U.S. Deaths & Burials 1833-1970 (index only)",
+          "access": "paid",
+          "url": "https://search.findmypast.com/search-world-Records/united-states-deaths-and-burials-1833-1970"
+        },
+        {
+          "name": "Ancestry",
+          "holds": "U.S. Find a Grave Index; U.S. Veterans' Gravesites 1775-2019; U.S. Cemetery and Funeral Home Collection; U.S. Cemetery Index from Selected States",
+          "access": "paid",
+          "url": "https://search.ancestry.com/search/db.aspx?dbid=60525"
+        },
+        {
+          "name": "MyHeritage",
+          "holds": "United States, Index of Gravestones 1900-2018; United States, Index of Burials 1900-2019; United States, Veterans Burials 1763-onward",
+          "access": "paid",
+          "url": "https://www.myheritage.com/research/collection-10788/united-states-index-of-burials-1900-2019"
+        },
+        {
+          "name": "GenealogyBank",
+          "holds": "Historical newspaper obituaries 1815-2013 and obituaries, births and marriages 1980-2015 (both also indexed on FamilySearch)",
+          "access": null,
+          "url": null
+        }
+      ],
+      "losses": [],
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/United_States_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/United_States_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "catalog": [
+        {
+          "id": "koha:1163206",
+          "title": "Holy Angels Darboy, 1850-2000 : time gone by, time yet to be...",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:483514",
+          "title": "\"The barrens\" of Scott County, Illinois/ by Thomas Bowman Gibbs",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "HSB (Headquarters Storage Building)"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:960771",
+          "title": "1900 census of Dorchester County, Maryland/ compiled by Patricia Slacum-Leyendecker [and] Kathleen M. Heffner",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 1
+        },
+        {
+          "id": "koha:1047025",
+          "title": "1850 census of Hyde County, North Carolina : a compilation of all census schedules taken in the year 1850/ abstracted and indexed by Seth D. Carawan ; Sandra S. Carawan",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:480870",
+          "title": "1840 census of Meigs County, Ohio/ by Homer C. Pierce",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:4584430",
+          "title": "\"A Chapel of Ease\" : St. John's Episcopal Church, Queen Caroline Parish, Howard County, Maryland/ [compiled by Elva Trueblood Hewett]",
+          "place": "United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:4594191",
+          "title": "The chronicles of Comanche County",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:4440546",
+          "title": "Your city and you : the story of Kansas City/ [by] Emma Serl, Alice Lanterman [and] Virginia Sheaff. Illustrated by students of Kansas City high schools.",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:1008793",
+          "title": "Pike County cemeteries/ located by Marsha Dunn Boutwell",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:1001094",
+          "title": "Holy Cross Cemetery, Fairview Heights, Illinois, 1907-2000/ [St. Clair County Genealogical Society]",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": 0
+        },
+        {
+          "id": "koha:2588835",
+          "title": "Nixa eagle",
+          "place": "United States",
+          "repository_calls": [],
+          "film_count": null
+        },
+        {
+          "id": "koha:1210455",
+          "title": "1805 Georgia land lottery, fortunate drawers and grantees/ compiled by Paul K. Graham",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:686047",
+          "title": "Fred Hart Williams Genealogical Society : a quarterly publication of the Fred Hart Genealogical Society",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1399490",
+          "title": "Hope has a name - Texas : the emigration to America from villages Bordovice and Lichnov during 1860-1914/ Josef \u0160im\u00ed\u010dek",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4589057",
+          "title": "\"The Heritage of a century\" : a history of the Elim Lutheran Church, Scandia, Minnesota.",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1167076",
+          "title": "\"The Hoss\" : officer biographies and rosters of the Stuart Horse Artillery Battalion/ Robert J. Trout",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4587766",
+          "title": "Jews in South Carolina/ by Barnett Abraham Elzas",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4519557",
+          "title": "An index to a history of the Silverton country/ by Robert Horace Down",
+          "place": "United States",
+          "repository_calls": [
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4590790",
+          "title": "\"The ledger tells the story\", 1811-1879 : the history of the Irwin family of Putnam County, Ohio/ by Marjorie Featheringill Waterfield",
+          "place": "United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:150327",
+          "title": "Muster lists of Confederates soldiers and other army records/ Sherman Lee Pompey",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library",
+            "Los Angeles California FamilySearch Library",
+            "HSB (Headquarters Storage Building)",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:1106640",
+          "title": "That mighty band of maidens : a history of Potter College for young ladies, Bowling Green, Kentucky, 1889-1909/ Lynn E. Niedermeier",
+          "place": "United States",
+          "repository_calls": [
+            "HSB (Headquarters Storage Building)",
+            "FamilySearch Library",
+            "Online"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4598042",
+          "title": "Blue mountain heritage v. 1 index",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:4598044",
+          "title": "Blue mountain heritage v. 2 index",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:718349",
+          "title": "... Of days past : special to the Stillwater NewsPress, Payne County, Oklahoma/ by Mahlon G. Erickson",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        },
+        {
+          "id": "koha:566584",
+          "title": "[The pastor's life record, 1910-1975]",
+          "place": "United States",
+          "repository_calls": [
+            "FamilySearch Library"
+          ],
+          "film_count": null
+        }
+      ],
+      "created": "2026-11-26",
+      "guide_markdown": "# Locality Guide: United States (national record sets; the place of death is not yet known) (1940-2026)\n\n## Jurisdiction overview\n- **Formed:** the United States is a country; the survey's place record gives a date range from 1776.\n- **County seat / administrative center:** not applicable at national level; death records are held by the state and county where the death occurred.\n- **Parent jurisdiction:** none (national level).\n- **Population during period:** the survey's population figures run from about 132 to 135 million in 1940 to about 349 million in 2026 (projected figure in the survey).\n- **Economy:** not covered by this survey.\n- **Ethnic composition:** not covered by this survey.\n- **Religious denominations:** the FamilySearch Wiki United States Church Records page covers denominations by state; no denomination was read for this survey.\n- **Key historical events:** not covered by this survey.\n- **Coverage of this survey:** the volumes part timed out, so no digitized volume counts are reported. The Catalog returned 309,380 national hits, none specific to death records for this period. The external links part returned 1,998 curated links without listing them.\n\n## Boundary changes\n- The survey found no national boundary change relevant to death records for 1940-2026.\n- Death records follow the state or county where the death occurred, not the national collections. Once the place of death is known, check that state's jurisdiction as a separate locality guide.\n- The FamilySearch Wiki United States Genealogy page states that genealogy records are kept at the state level in the United States.\n\n## Research tips\n- **Search order:** First, search the FamilySearch Social Security Death Index (collection 1202535, 1875-2014), which is free and covers the later years of the period. Second, search the Social Security NUMIDENT (collection 5000016) and the Obituary Records (collection 5000145) for a date and residence. Third, identify the state of death and request its death certificate from the state's Vital Records office. The Wiki's national death indexes (1867-1961 on FamilySearch; 1833-1970 on Findmypast) end before the likely death years.\n- The FamilySearch Wiki's United States Online Genealogy Records page lists national death indexes and cemetery indexes; the [United States Online Genealogy Records](https://www.familysearch.org/en/wiki/United_States_Online_Genealogy_Records) page is the source for the index dates above.\n- The [United States Research Tips and Strategies](https://www.familysearch.org/en/wiki/United_States_Research_Tips_and_Strategies) page advises that a death record often gives parents' names; the 1940 and 1950 census can show residence before death.\n- Alternative sources when the death record is not found: obituaries (GenealogyBank collections 2860782 and 2333694), cemetery indexes (Find a Grave, paid, on Ancestry), and the Veterans' Gravesites index if the subject served in the military.\n- The survey did not read the state Vital Records pages, the county probate pages, or the Find a Grave and Texas death certificate uploads for this subject. The place of death is unresolved, so the next step is to read the uploaded leads and then the matching state's death-record series."
+    }
+  ],
+  "namesakes": [
+    {
+      "id": "ns_001",
+      "person_id": "KNS4-P6W",
+      "name": "Kenneth M Quaas",
+      "place": "Alburnett, Linn, Iowa, United States",
+      "time_period": "born 25 December 1914",
+      "record_ids": [
+        "ark:/61903/1:1:6KWS-NYYH"
+      ],
+      "log_entry_ids": [
+        "log_029"
+      ],
+      "notes": "Not the subject. Birth date 25 Dec 1914 conflicts with subject's 4 Dec 1917 by about three years; birthplace Alburnett, Iowa vs Sumner, Iowa; middle initial M vs W. Ground: birth date and birthplace conflict on the record's own indexed facts.",
+      "created": "2026-11-26",
+      "record_persona_ids": {
+        "ark:/61903/1:1:6KWS-NYYH": "p_298308877118"
+      },
+      "birth_year": 1914
+    }
+  ]
+}

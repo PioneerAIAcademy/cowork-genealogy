@@ -1537,21 +1537,20 @@ export async function recordSearchTool(
   // and the cut runs whether or not ranking did, so `results` never exceeds
   // `count` (issue #4067).
   if (expandedPool) out.results = out.results.slice(offset, offset + count);
-  // A ranked expansion cannot page (offset is refused above), and its ranking
-  // summary was computed over the whole pool: make both describe the page.
-  if (expandedPool && rankedPool) {
-    out.hasMore = false;
-    if (out.ranked) {
-      out.ranked.returnedCount = out.results.length;
-      const note = buildRelativeTermNote(out.results);
-      if (note) out.ranked.relativeTermNote = note;
-      else delete out.ranked.relativeTermNote;
-      if (out.ranked.diagnostic) {
-        out.ranked.diagnostic = out.ranked.diagnostic.replace(
-          PAGE_DEEPER_ADVICE,
-          "raise `count` (up to 100) or narrow the query",
-        );
-      }
+  // A ranked expansion's ranking summary was computed over the whole pool: make
+  // it describe the page. `hasMore` stays what the merged list says, that rows
+  // exist past the ones shown. The way to them is a larger `count`: `offset` is
+  // refused above, and its message says so.
+  if (expandedPool && rankedPool && out.ranked) {
+    out.ranked.returnedCount = out.results.length;
+    const note = buildRelativeTermNote(out.results);
+    if (note) out.ranked.relativeTermNote = note;
+    else delete out.ranked.relativeTermNote;
+    if (out.ranked.diagnostic) {
+      out.ranked.diagnostic = out.ranked.diagnostic.replace(
+        PAGE_DEEPER_ADVICE,
+        "raise `count` (up to 100) or narrow the query",
+      );
     }
   }
 

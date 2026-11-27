@@ -69,6 +69,28 @@ def test_batch_log_append_ops_get_the_implied_section():
     assert r.unmodelled == {}
 
 
+def test_a_plan_form_and_flat_ops_replay_as_the_tool_wrote_them():
+    """research_append's plan form (`plan` + `planItems`) and flat ops (#4866):
+    read as a single op, the plan form replayed as a bare log entry and a flat
+    op's fields were dropped."""
+    resp = (
+        '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": ['
+        '{\\"section\\": \\"plans\\", \\"entryId\\": \\"pl_001\\"}, '
+        '{\\"section\\": \\"plan_items\\", \\"entryId\\": \\"pli_001\\"}]}"}]'
+    )
+    args = {"plan": {"question_id": "q_001", "status": "active"}, "planItems": [{"sequence": 1, "record_type": "census"}]}
+    r = replay([_call("research_append", args, resp)])
+    [plan] = r.research["plans"]
+    assert plan["id"] == "pl_001" and plan["question_id"] == "q_001"
+    assert [(i["id"], i["record_type"]) for i in plan["items"]] == [("pli_001", "census")]
+    assert "log" not in r.research
+
+    flat = {"ops": [{"section": "questions", "op": "append", "question": "who?"}]}
+    resp_q = '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": [{\\"section\\": \\"questions\\", \\"entryId\\": \\"q_001\\"}]}"}]'
+    r = replay([_call("research_append", flat, resp_q)])
+    assert [(q["id"], q.get("question")) for q in r.research["questions"]] == [("q_001", "who?")]
+
+
 def test_an_already_logged_re_send_is_not_a_second_append():
     """A re-sent staged ref answers with the existing id and writes nothing."""
     first = '[{"type": "text", "text": "{\\"ok\\": true, \\"logId\\": \\"log_001\\"}"}]'

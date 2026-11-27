@@ -70,6 +70,8 @@ const COMPONENTS = join(
  * grows past a dozen, the lint is asking the wrong question.
  */
 const NOT_RENDERED: Record<string, string> = {
+  "project.verify_request":
+    "Routing input, not a finding: the researcher's opening words asking to verify one conclusion, read by project_context to name the first question's forget. The objective already shows the researcher's goal.",
   "conflict.weighed_log_entry_ids":
     "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
   "source.image_ark":

@@ -371,8 +371,9 @@ incidents, and what the probe retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
-The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
-Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
+The plugin's hooks are the **only** guardrails that reach Cowork and the connector:
+the guard, `guard_project_files.py`, and the step gate, `step_gate_hook.py`, both on
+`PreToolUse`. `hooks=` is an SDK argument the hosted control plane can set and Cowork
 cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. The hosted
 path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 `"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
@@ -400,6 +401,15 @@ pinned by `test_the_sources_sentence_is_the_one_the_plugin_hook_adds` and
 as `UserPromptSubmit` context (`context_policy.sources_note_hook`), since they measure the
 hosted main thread, and not the conditional no-project sentence.
 
+**The step gate, `step_gate_hook.py`,** holds one step per turn on the connector and in
+Cowork: a second `PreToolUse` entry on `Agent|Task|Skill` and a second `UserPromptSubmit`
+entry. It imports `step_boundary.py`, which stays a library (lead, 2026-11-24), keeps the
+turn in a per-session state file under a lockfile, and denies every out-of-group
+main-thread spawn, never halting. It gates only this plugin's research steps: the plugin's
+hooks load in Claude Code too, so any other agent or skill is left alone. It is silent under `GENEALOGY_HOSTED_PLANE`: the web app
+and the prototype gate in process. `make hook-smoke` drives the hosted loader, where it is
+silent, so only a live connector or Cowork session proves it binds.
+
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
@@ -409,6 +419,22 @@ ours, so the hook denies the call there. Change one, change both. On the hosted 
 (`claude`, `general-purpose`, `Explore`, `Plan`, `web-fetch`; `BUILTIN_SUBAGENT_TYPES`),
 which runs a step the same way; Cowork and Desktop may spawn them. Both harnesses mirror the
 hosted deny.
+
+**Auto-memory is off on every path whose environment we set.** The same three
+builders as above — serving the hosted path, both harnesses and the prototype
+worker — set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`: otherwise a
+researcher's remark is saved as a memory file under the session's `~/.claude` —
+outside the project, unreviewed, and loaded into later sessions. **The value is
+`"1"`, and the `CLAUDE_CODE_FORK_SUBAGENT` line directly above it is `"0"`**: on
+this variable a falsy value is not a weaker disable, it is `forced_on`, which
+overrides even a settings-level `autoMemoryEnabled: false`. Copying the
+neighbour's value turns memory on everywhere with every dict assertion still
+green, so `eval/harness/tests/unit/test_auto_memory_off.py` captures the CLI's
+own system prompt keylessly and pins both the binding and the polarity. A new
+SDK entrypoint sets this key too. Cowork gets no memory hook arm until a live
+Cowork session shows auto-memory writing a file (Richard, 2026-11-25); the next
+Cowork census records whether "remember to …" produces a Write under
+`~/.claude/projects/*/memory/`.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
@@ -441,7 +467,9 @@ shipped hook already does it: it routes `research_append` by caller identity
 denies the main thread every tool only agents hold (`AGENT_ONLY_TOOLS`), naming
 the agents to delegate to; a tool only agents hold goes on that map or on
 `MAIN_THREAD_OK` with its reason, **by hand, never derived** (lead, 2026-10-20),
-and `plugin-hooks.test.ts` fails until it does. Grant a new tool to an agent and
+and `plugin-hooks.test.ts` fails until it does. A tool no agent holds that the main
+thread must never call goes on `MAIN_THREAD_DENIED` with its deny text
+(`person_search`). Grant a new tool to an agent and
 you owe that line, plus the `hooks.json` matcher if it is denied. The one arm
 still harness-only is `image_read`, which no agent holds; porting it was
 **declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006

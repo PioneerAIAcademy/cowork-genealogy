@@ -23,7 +23,8 @@
   "mcp_fixtures": [
     "wiki-search-guardianship-stepchildren",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "place-search-any"
   ],
   "judge_context": [
     "Must give the STEPFATHER reading as the LEADING one and tie it to the TIMING — the marriage to Sarah Barlow shortly before the appointment is why the bond happened, the new husband taking charge of property the children inherited from their deceased father. A run that does not lead with the step reading, or leads on something other than the remarriage timing, FAILS this bullet.",
@@ -33,6 +34,6 @@
     "Must NOT read the guardianship appointment as evidence the children were orphaned or that they were unrelated to Josiah — guardianship was routinely granted over a minor's property, including to a parent or step-parent.",
     "Should give a direct, weighted determination rather than listing step / uncle / foster / other possibilities as equally likely, while stopping short of asserting the step reading as proven before the corroborating records are checked.",
     "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results. A passage with no flag gets no such allowance.",
-    "Grade Citation completeness only against the pages the narrative actually drew on. A page a tool returned that the narrative did not use needs no bullet, and its absence lowers nothing; a page listed by a section-anchor URL of that page counts as listed. When several returned pages carry the same text, listing any one of them is enough. Content taken from a search result may be cited by that result's URL."
+    "Grade Citation completeness only against the pages the narrative actually drew on. A page a tool returned that the narrative did not use needs no bullet, and its absence lowers nothing; a page listed by a section-anchor URL of that page counts as listed. When several returned pages carry the same text, listing any one of them is enough. Content taken from a search result may be cited by that result's URL. A small difference in a listed page's title or section anchor is not an error when it is the page the narrative used."
   ]
 }

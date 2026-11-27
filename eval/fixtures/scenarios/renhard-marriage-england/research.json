@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find whom Charles Renhard (b. about 1866, Germany) married, and when",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-25",
+    "updated": "2026-11-25"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Charles Renhard marry, and when and where?",
+      "rationale": "He was in Liverpool, Lancashire, with a family by 1901; his marriage names his wife.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-11-25",
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-25",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "England",
+          "date_range": "1895-1897",
+          "repository": "FamilySearch",
+          "rationale": "His first child was born about 1898 in Liverpool, so the marriage most likely took place in England in the years just before it; an English marriage index names the bride.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

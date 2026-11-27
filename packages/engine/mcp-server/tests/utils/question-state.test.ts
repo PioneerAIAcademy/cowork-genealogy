@@ -32,9 +32,14 @@ const doc = (extra: Record<string, unknown> = {}) => ({
 
 describe("questionStatus — the state ladder", () => {
   it("framed: a question with no plan", () => {
-    const s = questionStatus(doc(), question());
+    const s = questionStatus(doc({ localities: [{ id: "loc_001" }] }), question());
     expect(s.state).toBe("framed");
     expect(s.nextStep).toBe("research-plan");
+  });
+
+  it("framed with no place surveyed yet: the plan step opens with locality-guide", () => {
+    expect(questionStatus(doc(), question()).nextStep).toBe("locality-guide, then research-plan");
+    expect(questionStatus(doc({ localities: [] }), question()).nextStep).toBe("locality-guide, then research-plan");
   });
 
   it("planned: a plan exists for this question", () => {
@@ -154,6 +159,34 @@ describe("questionStatus — the state ladder", () => {
           ]),
         ],
         log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
+    });
+
+    it.each(["positive", "partial"])(
+      "a %s page image_transcribe logged itself is a read, not a find to extract (#4721)",
+      (outcome) => {
+        const d = doc({
+          plans: [
+            plan([
+              { id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" },
+              { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+            ]),
+          ],
+          log: [
+            { id: "log_1", plan_item_id: "pli_1", tool: "image_search", outcome: "negative" },
+            { id: "log_2", plan_item_id: "pli_1", tool: "image_transcribe", outcome, written_by: "image_transcribe" },
+          ],
+        });
+        expect(questionStatus(d, question()).nextStep).not.toMatch(/^extraction/);
+        expect(questionStatus(d, question()).nextStep).toMatch(/^search-records/);
+      },
+    );
+
+    it("a page an agent logged by hand still routes to extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" }])],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "image_transcribe", outcome: "positive" }],
       });
       expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
     });
@@ -535,7 +568,7 @@ describe("questionStatus — a question with no linked assertion routes to perso
   });
 
   it("a question with no assertions yet is not affected", () => {
-    expect(questionStatus(doc(), question()).nextStep).toBe("research-plan");
+    expect(questionStatus(doc({ localities: [{ id: "loc_001" }] }), question()).nextStep).toBe("research-plan");
   });
 });
 
@@ -990,6 +1023,74 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
 });
 
 /**
+ * Issue #4692: a partly-linked question none of whose links reaches the project
+ * subject routes to person-evidence (ut_research_pe7, flynn-household-skeleton).
+ */
+describe("questionStatus — a partly-linked question that never reaches the subject", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const load = (scenario: string): { research: any; tree: any } => ({
+    research: JSON.parse(readFileSync(join(SCENARIOS, scenario, "research.json"), "utf-8")),
+    tree: JSON.parse(readFileSync(join(SCENARIOS, scenario, "tree.gedcomx.json"), "utf-8")),
+  });
+  const PE7 = "flynn-household-skeleton";
+  const UNREACHED = /^person-evidence — \d+ of this question's \d+ assertions are unlinked/;
+  const step = (research: any, tree: any): string | null =>
+    questionStatus(research, research.questions[0], tree).nextStep;
+
+  it("fires on pe7: six of seven unlinked and the one link is the head, not the subject", () => {
+    const { research, tree } = load(PE7);
+    expect(step(research, tree)).toBe(
+      "person-evidence — 6 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+  });
+
+  it("is silent on a partly-linked household once a link names the subject", () => {
+    const { research, tree } = load(PE7);
+    research.person_evidence.push({ ...research.person_evidence[0], id: "pe_900", assertion_id: "a_002", person_id: "I1" });
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every assertion is linked, though the subject is still absent from the record", () => {
+    const { research, tree } = load(PE7);
+    for (const a of research.assertions.slice(1)) {
+      research.person_evidence.push({ ...research.person_evidence[0], id: `pe_${a.id}`, assertion_id: a.id, person_id: "I2" });
+    }
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("stops once every leftover assertion is rejected against the subject, so it cannot loop", () => {
+    const { research, tree } = load(PE7);
+    const leftovers = research.assertions.slice(1);
+    research.rejected_links = [{ id: "rj_1", assertion_id: leftovers[0].id, person_id: "I1", created: "2026-11-24" }];
+    expect(step(research, tree)).toBe(
+      "person-evidence — 5 of this question's 7 assertions are unlinked and none of its " +
+        "links reaches the project subject (I1)",
+    );
+    research.rejected_links = leftovers.map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I1", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+
+  it("still fires when the leftover assertions are rejected against someone other than the subject", () => {
+    const { research, tree } = load(PE7);
+    research.rejected_links = research.assertions.slice(1).map((a: any, i: number) => ({
+      id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I2", created: "2026-11-24",
+    }));
+    expect(step(research, tree)).toMatch(UNREACHED);
+  });
+
+  it("is silent when no subject is a tree person", () => {
+    const { research, tree } = load(PE7);
+    research.project.subject_person_ids = ["PID-TODO"];
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+    research.project.subject_person_ids = null;
+    expect(step(research, tree)).not.toMatch(UNREACHED);
+  });
+});
+
+/**
  * Section B's "not exhaustive" choice.
  *
  * The search stopped on RESOURCES rather than on a finding, so neither
@@ -1404,6 +1505,84 @@ describe("questionStatus — a conflict that wants new evidence (section E)", ()
       conflicts: [analysed()],
     });
     expect(questionStatus(d, question()).nextStep).toMatch(/^extraction /);
+  });
+});
+
+describe("questionStatus — an item searched with nothing found is not searched again", () => {
+  const conflict = {
+    id: "cf_1",
+    status: "unresolved",
+    blocks_question_ids: [Q],
+    independence_analysis: "The certificate and the memorial disagree on the place.",
+  };
+  const plans = (items: Record<string, unknown>[]) => [{ id: "pl_1", question_id: Q, status: "active", items }];
+  const searched = (id: string, ...outcomes: string[]) =>
+    outcomes.map((outcome, n) => ({ id: `log_${id}_${n}`, plan_item_id: id, tool: "record_search", outcome }));
+
+  it("a conflict whose evidence searches all came back empty disposes of them, then goes to exhaustiveness", () => {
+    // kenneth-quass-death, 2026-11-26: pli_004 was searched nine times because the
+    // conflict arm kept naming the in_progress item search-records leaves after a nil.
+    const d = doc({
+      plans: plans([
+        { id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" },
+        { id: "pli_6", status: "in_progress", sequence: 6, repository: "FamilySearch" },
+      ]),
+      log: [...searched("pli_4", "negative", "negative"), ...searched("pli_6", "negative")],
+      conflicts: [conflict],
+    });
+    // Disposed first: an in_progress item holds the declaration, hasOpenWork, the
+    // unsettled-conflict ending and the new-question gate.
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "research-plan — dispose of pli_4, pli_6 (searched, nothing found), then research-exhaustiveness and proof-conclusion",
+    );
+  });
+
+  it("names the next item still to search, past one searched with nothing found", () => {
+    const d = doc({
+      plans: plans([
+        { id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" },
+        { id: "pli_7", status: "planned", sequence: 7, repository: "Ancestry" },
+      ]),
+      log: searched("pli_4", "negative"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_7 (Ancestry)");
+  });
+
+  it("an item whose search errored is searched again", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative", "error"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("an fs_hints item searched with nothing found still goes back to search-hints", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_h", status: "in_progress", sequence: 1, record_type: "fs_hints", repository: "FamilySearch" }]),
+      log: searched("pli_h", "negative"),
+      conflicts: [conflict],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-hints — pli_h");
+  });
+
+  it("with no conflict, a question whose only item was searched with nothing found disposes of it first", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "in_progress", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative"),
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "research-plan — dispose of pli_4 (searched, nothing found), then research-exhaustiveness and proof-conclusion",
+    );
+  });
+
+  it("once the searched-out items are disposed of, the question goes to exhaustiveness", () => {
+    const d = doc({
+      plans: plans([{ id: "pli_4", status: "completed", sequence: 4, repository: "FamilySearch" }]),
+      log: searched("pli_4", "negative"),
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("research-exhaustiveness, then proof-conclusion");
   });
 });
 

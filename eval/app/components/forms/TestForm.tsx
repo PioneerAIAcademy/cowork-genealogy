@@ -314,7 +314,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                 />
                 <Switch
                   label="Hold out from the skill-improver"
-                  description="Reserve this test as a generalization check. The body-optimizer won't read or tune against it when proposing SKILL.md edits — it only checks afterward whether the edit helped. The harness still runs, grades, and releases it like any other test. Mark ~2–3 diverse, representative tests and keep them stable."
+                  description="Reserve this test as a generalization check. The body-optimizer won't read or tune against it when proposing SKILL.md edits — it only checks afterward whether the edit helped. The harness still runs and grades it like any other test. Mark ~2–3 diverse, representative tests and keep them stable."
                   checked={!!form.values.test.holdout}
                   onChange={(e) => form.setFieldValue('test.holdout', e.currentTarget.checked)}
                 />

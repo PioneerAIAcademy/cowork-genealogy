@@ -1,0 +1,109 @@
+{
+  "tool": "place_search",
+  "description": "Live place_search response for 'Schuylkill County, Pennsylvania', captured 2026-11-24 with packages/engine/mcp-server/dev/try-place-search.ts. Schuylkill County comes first, then same-named townships and boroughs.",
+  "args": {
+    "placeName": "~Schuylkill County"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1811/",
+        "latitude": 40.707,
+        "longitude": -76.185,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=393167",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania",
+        "matchedName": {
+          "name": "Schuylkill County",
+          "lang": "en"
+        }
+      },
+      {
+        "standardPlace": "Schuylkill Township, Schuylkill, Pennsylvania, United States",
+        "type": "Township",
+        "dateRange": "+1811/",
+        "latitude": 40.7917,
+        "longitude": -75.9997,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill%20Township&focusedId=4832668",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_Township,_Schuylkill_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Schuylkill Haven, Schuylkill, Pennsylvania, United States",
+        "type": "Borough",
+        "dateRange": "+1840/",
+        "latitude": 40.6306,
+        "longitude": -76.1711,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill%20Haven&focusedId=4837979",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_Haven,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Schuylkill Township, Chester, Pennsylvania, United States",
+        "type": "Township",
+        "dateRange": "+1826/",
+        "latitude": 40.1114,
+        "longitude": -75.5097,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill%20Township&focusedId=4840241",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_Township,_Chester_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Schuylkill, Philadelphia, Pennsylvania, United States",
+        "type": "Neighborhood or suburb",
+        "dateRange": "+1776/",
+        "latitude": 39.9422,
+        "longitude": -75.1875,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=4982994",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill,_Philadelphia"
+      },
+      {
+        "standardPlace": "Schuylkill, Philadelphia, Philadelphia, Pennsylvania, British Colonial America",
+        "type": "Neighborhood or suburb",
+        "dateRange": "/+1776",
+        "latitude": 39.9422,
+        "longitude": -75.1875,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=4982995",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill,_Philadelphia"
+      },
+      {
+        "standardPlace": "East Falls, Philadelphia, Pennsylvania, United States",
+        "type": "Neighborhood or suburb",
+        "dateRange": "+1854/",
+        "latitude": 40.0144,
+        "longitude": -75.1919,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=East%20Falls&focusedId=4946368",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/East_Falls,_Philadelphia"
+      },
+      {
+        "standardPlace": "Pottsville, Schuylkill, Pennsylvania, United States",
+        "type": "City",
+        "dateRange": "+1828/",
+        "latitude": 40.6857,
+        "longitude": -76.1956,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pottsville&focusedId=4838254",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pottsville,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Tuckerton, Muhlenberg Township, Berks, Pennsylvania, United States",
+        "type": "Village",
+        "dateRange": "+1838/",
+        "latitude": 40.4047,
+        "longitude": -75.9372,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Tuckerton&focusedId=8586630",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Muhlenberg_Township,_Berks_County,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Southwest Center City, Philadelphia, Pennsylvania, United States",
+        "type": "Neighborhood or suburb",
+        "latitude": 39.9408,
+        "longitude": -75.18,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Southwest%20Center%20City&focusedId=4982988",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Devil's_Pocket,_Philadelphia"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

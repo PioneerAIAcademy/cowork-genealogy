@@ -134,7 +134,7 @@ describe("project_create", () => {
     });
 
     expect(r.ok).toBe(true);
-    if (!r.ok) return;
+    if (!r.ok || !("counts" in r)) throw new Error("expected a create summary");
     expect(r.filesWritten).toEqual([
       "tree.gedcomx.json",
       "research.json",
@@ -456,6 +456,21 @@ describe("project_create", () => {
     expect(await exists("tree.gedcomx.json")).toBe(false);
   });
 
+  it.each([
+    ["a person FamilySearch does not hold", "Person KWCJ-RN4 not found in the FamilySearch Family Tree."],
+    ["an ended session", "Your FamilySearch session has ended. Call the login tool to authenticate."],
+    ["FamilySearch failing", "FamilySearch tree API error: 503"],
+  ])("returns a failed read (%s) as the create's refusal, in the read's own words, and writes NEITHER file", async (_label, message) => {
+    const r = await runProjectCreate(
+      { projectPath: dir, objective: "Identify the parents of Patrick Flynn", personId: "KWCJ-RN4" } as never,
+      { readPerson: async () => { throw new Error(message); } },
+      LOCAL,
+    );
+    expect(r).toEqual({ ok: false, errors: [message] });
+    expect(await exists("research.json")).toBe(false);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
   it("accepts a subject person that IS in the read", async () => {
     const r = await projectCreate({
       projectPath: dir,
@@ -491,6 +506,7 @@ describe("project_create", () => {
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { attachedSources } from "../../src/utils/search-delegations.js";
 
 const FAMILY = JSON.parse(
   readFileSync(
@@ -658,8 +674,55 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       { id: "I5", name: "Michael Flynn", relationship: "father" },
       { id: "I6", name: "Bridget Flynn", relationship: "sibling" },
     ]);
+    // The subject's attached sources, as project_context lists them: the
+    // Family Tree source left out (#4791).
+    expect(result.subjectSources).toEqual(attachedSources(expected, "I1"));
     expect(result.idMap).toBeUndefined();
     expect(JSON.stringify(result).length).toBeLessThanOrEqual(2000);
+  });
+
+  it("lists the subject's attached sources by tree id and title, without the Family Tree source (#4791)", async () => {
+    const read = structuredClone(FAMILY);
+    read.persons[0].sources = [{ ref: "MMM9-1QF" }];
+    const result: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, read);
+    expect(result.ok).toBe(true);
+    const tree = await readJson("tree.gedcomx.json");
+    const s2 = tree.sources.find((s: any) => s.title === src("MMM9-1QF").title);
+    expect(result.subjectSources).toEqual([{ id: s2.id, title: s2.title }]);
+    expect(result.subjectSources).toEqual(attachedSources(tree, "I1"));
+  });
+
+  it("stores verifyRequest as project.verify_request, named as the objective is, and omits a blank one (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "  Verify LZNY-BRF's parents. " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project.verify_request).toBe("Verify Patrick Flynn's parents.");
+  });
+
+  it("writes no verify_request when verifyRequest is blank (#4791)", async () => {
+    const result: any = await createWith(
+      { projectPath: dir, objective: "x", personId: "LZNY-BRF", verifyRequest: "   " },
+      structuredClone(FAMILY),
+    );
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project).not.toHaveProperty("verify_request");
+  });
+
+  it("never trims the subject's attached sources, even past the summary cap (#4791)", async () => {
+    const read = structuredClone(FAMILY);
+    const extra = Array.from({ length: 40 }, (_, i) => ({
+      id: `X${i}`,
+      title: `Patrick Flynn, "Pennsylvania, County Marriages and Probate Records, 1683-1950", entry ${i}`,
+    }));
+    read.sources.push(...extra);
+    read.persons[0].sources = extra.map((x: any) => ({ ref: x.id }));
+    const result: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, read);
+    expect(result.ok).toBe(true);
+    expect(result.subjectSources).toHaveLength(40);
+    expect(result.omitted?.subjectSources).toBeUndefined();
+    expect(JSON.stringify(result).length).toBeGreaterThan(2000);
   });
 
   it("cites every relative's facts to a FamilySearch-tree source that names no one person's page", async () => {

@@ -170,9 +170,58 @@ def test_both_copies_agree_on_this_vector(label, log, expected):
     assert _python_answer(log) == _typescript_answer(log)
 
 
+# The hosted planes post each row's URL to the chat (issue #4660), so the ROWS must agree,
+# not only the plan items they hold open: a hand-off with no plan item is a row and an id
+# set never shows it. `performed` is TS-only (project_context's display) and not compared.
+_ROW_KEYS = (("log_id", "logId"), ("site", "site"), ("url_generated", "urlGenerated"),
+             ("plan_item_id", "planItemId"))
+
+
+def _python_rows(log: list) -> list[dict]:
+    return [{ts: row[py] for py, ts in _ROW_KEYS} for row in sb.awaiting_hand_offs({"log": log})]
+
+
+def _typescript_rows(log: list) -> list[dict]:
+    keys = json.dumps([ts for _, ts in _ROW_KEYS])
+    script = (
+        f'import {{ awaitingUserHandOffs }} from "{_TS_BUILD.as_uri()}";\n'
+        "let input = '';\n"
+        "process.stdin.on('data', (d) => (input += d));\n"
+        "process.stdin.on('end', () => {\n"
+        f"  const keys = {keys};\n"
+        "  const rows = awaitingUserHandOffs(JSON.parse(input))\n"
+        "    .map((r) => Object.fromEntries(keys.map((k) => [k, r[k]])));\n"
+        "  process.stdout.write(JSON.stringify(rows));\n"
+        "});\n"
+    )
+    done = subprocess.run(
+        ["node", "--input-type=module", "--eval", script],
+        input=json.dumps(log),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+    )
+    assert done.returncode == 0, f"node failed: {done.stderr[:400]}"
+    return json.loads(done.stdout)
+
+
+def test_the_python_rows_carry_what_the_host_posts():
+    """The row the chat shows: id, site, url and item, a no-item hand-off included."""
+    rows = sb.awaiting_hand_offs({"log": [_hand_off("log_001", URL, "partial", False, item_id=None)]})
+    assert rows == [{"log_id": "log_001", "site": "ancestry", "url_generated": URL, "plan_item_id": None}]
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize("label,log,expected", VECTORS, ids=[v[0] for v in VECTORS])
+def test_both_copies_agree_on_the_rows_of_this_vector(label, log, expected):
+    assert _python_rows(log) == _typescript_rows(log)
+
+
 def test_the_python_copy_was_actually_loaded():
     """A parity test over an unloaded copy passes vacuously."""
     assert callable(getattr(sb, "awaiting_upload_item_ids", None))
+    assert callable(getattr(sb, "awaiting_hand_offs", None))
 
 
 @pytest.mark.requires_engine_build

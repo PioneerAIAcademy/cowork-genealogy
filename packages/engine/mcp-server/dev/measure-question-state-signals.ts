@@ -1,7 +1,8 @@
 /**
  * How often do `unregisteredDisagreements`, `competingParentSets`, the
- * no-linked-assertion rung (`nextStep` starting `person-evidence`) and the
- * unlinked-kin rung fire on the committed corpus?
+ * no-linked-assertion rung (`nextStep` starting `person-evidence — none of`),
+ * the unlinked-kin rung and the subject-unreached rung fire on the committed
+ * corpus?
  *
  * The project-context spec quotes these rates, and a rate whose method is not
  * committed cannot be re-derived by the next reviewer, so this is committed
@@ -22,12 +23,16 @@
  *
  * Unlinked kin is counted twice: `raw` is `unlinkedKin` non-empty on a question
  * that is not resolved (the ladder skips resolved ones); `shipped` is a
- * `nextStep` that names it, which a higher rung can mask.
+ * `nextStep` that names it, which a higher rung can mask. The subject-unreached
+ * rung is counted the same way: `raw` is `subjectUnreached` non-null on a
+ * question that is not resolved, has no proof summary and has a linked
+ * assertion; `shipped` is a `nextStep` that names it.
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { questionStates, unlinkedKin } from "../src/utils/question-state.js";
+import { questionStates, subjectUnreached, unlinkedKin } from "../src/utils/question-state.js";
+import { countsForLinkedRung } from "../src/utils/tree-person.js";
 import { questionAssertions } from "../src/utils/assertion-liveness.js";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
@@ -69,8 +74,8 @@ for (const slug of existsSync(E2E) ? readdirSync(E2E) : []) {
 }
 
 const tally = {
-  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0 },
-  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0 },
+  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0, unreachedRaw: 0, unreachedShipped: 0 },
+  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0, kinRaw: 0, kinShipped: 0, unreachedRaw: 0, unreachedShipped: 0 },
 };
 const hits: string[] = [];
 for (const d of docs) {
@@ -90,7 +95,7 @@ for (const d of docs) {
         hits.push(`parent-set    ${d.label} ${s.id}: ${p.personId} <- ${p.parentIds.join(", ")}`);
       }
     }
-    if (s.nextStep?.startsWith("person-evidence")) {
+    if (s.nextStep?.startsWith("person-evidence — none of")) {
       t.noneLinked++;
       hits.push(`none-linked   ${d.label} ${s.id}`);
     }
@@ -104,6 +109,22 @@ for (const d of docs) {
         if (shipped) t.kinShipped++;
         hits.push(`unlinked-kin  ${d.label} ${s.id}: ${kin.join(", ")}${shipped ? "" : " (masked)"}`);
       }
+      const assertions = questionAssertions(d.research, s.id);
+      const linked = new Set(
+        (Array.isArray(d.research.person_evidence) ? d.research.person_evidence : [])
+          .filter(countsForLinkedRung)
+          .map((pe: any) => pe?.assertion_id),
+      );
+      const hasSummary = (Array.isArray(d.research.proof_summaries) ? d.research.proof_summaries : [])
+        .some((x: any) => x?.question_id === s.id);
+      const anyLinked = assertions.some((a: any) => linked.has(a?.id));
+      const unreached = hasSummary || !anyLinked ? null : subjectUnreached(d.research, d.tree, assertions, linked);
+      if (unreached) {
+        t.unreachedRaw++;
+        const shipped = s.nextStep?.includes("none of its links reaches the project subject") ?? false;
+        if (shipped) t.unreachedShipped++;
+        hits.push(`unreached     ${d.label} ${s.id}: ${unreached.unlinked} of ${assertions.length} unlinked${shipped ? "" : " (masked)"}`);
+      }
     }
   }
 }
@@ -114,5 +135,6 @@ console.log(`unregistered disagreements: ${tally.e2e.disagreements} e2e question
 console.log(`competing parent sets:      ${tally.e2e.parentSets} e2e question-runs, ${tally.scenario.parentSets} scenario questions`);
 console.log(`no linked assertion:         ${tally.e2e.noneLinked} e2e question-runs, ${tally.scenario.noneLinked} scenario questions`);
 console.log(`unlinked kin:                ${tally.e2e.kinRaw} e2e question-runs (${tally.e2e.kinShipped} in nextStep), ${tally.scenario.kinRaw} scenario questions (${tally.scenario.kinShipped} in nextStep)`);
+console.log(`subject unreached:           ${tally.e2e.unreachedRaw} e2e question-runs (${tally.e2e.unreachedShipped} in nextStep), ${tally.scenario.unreachedRaw} scenario questions (${tally.scenario.unreachedShipped} in nextStep)`);
 console.log(`unreadable files dropped: ${unreadable}`);
 if (LIST) for (const h of hits.sort()) console.log(h);

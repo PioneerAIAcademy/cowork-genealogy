@@ -19,6 +19,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import {
   ANSWER_CHAR_BUDGET,
+  attachFilmForYear,
   catalogSearchSchema,
   catalogSearchTool,
   FILM_FIELDS,
@@ -3333,10 +3334,10 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     expect(() => parseCatalogId("koha:1 koha:2")).toThrow(/catalogId is/);
   });
 
-  it("refuses beside it every advertised input but count and hydrate", async () => {
+  it("refuses beside it every advertised input but count, hydrate and filmYear", async () => {
     // Derived from the schema, so a filter added later is refused too.
     const fields = Object.keys(catalogSearchSchema.inputSchema.properties).filter(
-      (k) => !["catalogId", "count", "hydrate"].includes(k),
+      (k) => !["catalogId", "count", "hydrate", "filmYear"].includes(k),
     );
     expect(fields.length).toBeGreaterThanOrEqual(11);
     for (const field of fields) {
@@ -3445,5 +3446,45 @@ describe("catalog_search — catalogId opens one entry (#4586)", () => {
     respond({ totalHits: 1, searchHits: [hit("olib:2333650")] }, marylebone());
     await catalogSearchTool({ keywords: "Alberta" }, LOCAL);
     expect(String(mockFetch.mock.calls[1][0])).toBe(`${ITEM}olib:2333650`);
+  });
+});
+
+describe("filmYear: the film covering a year, as a line to relay (#4721)", () => {
+  const ochtrup = JSON.parse(
+    readFileSync(new URL("../../../../../eval/fixtures/mcp/catalog-search-ochtrup.json", import.meta.url), "utf-8"),
+  ).response as CatalogSearchResult;
+  const hit = (r: CatalogSearchResult, id: string) => r.hits.find((h) => h.id === id)!;
+
+  it("names the film whose note covers the year, with where it can be viewed", () => {
+    const kb = hit(attachFilmForYear(ochtrup, 1836), "koha:202974");
+    expect(kb.filmForYear).toMatchObject({ filmNumber: "876540", imageGroupNumber: "8109455" });
+    expect(kb.filmForYear!.line).toBe(
+      'FamilySearch has filmed this register: "Kirchenbuch, 1667-1875", film 876540 ' +
+        "(Taufen, Heiraten, Tote 1804-1865). It is viewable only at a FamilySearch Center or an affiliate library.",
+    );
+  });
+
+  it("takes the boundary year, a lone year, and the online and unknown cases", () => {
+    const note = (text: string): CatalogFilmNote => ({ filmNumber: "1", imageGroupNumber: "2", text });
+    const r = (availableOnline: boolean | undefined, text: string) =>
+      attachFilmForYear(
+        { totalHits: 1, returned: 1, placeResolved: true, hydrationTimedOut: false, hydrateRequested: 1,
+          hits: [{ title: "T", repositoryCalls: [], hydrated: true, availableOnline, filmNotes: [note(text)] } as CatalogHit] },
+        1865,
+      ).hits[0].filmForYear;
+    expect(r(false, "Tote 1804-1865")?.filmNumber).toBe("1");
+    expect(r(true, "Heiraten 1865")?.line).toMatch(/film 1 \(Heiraten 1865\)\. It can be read online at FamilySearch\.$/);
+    expect(r(undefined, "Taufen 1804–1866")?.line).toMatch(/\(Taufen 1804–1866\)\.$/);
+    expect(r(false, "Taufen 1866-1875")).toBeUndefined();
+    expect(r(false, "Pages 18650-18700")).toBeUndefined();
+  });
+
+  it("changes nothing without a filmYear", () => {
+    expect(attachFilmForYear(ochtrup, undefined)).toBe(ochtrup);
+    expect(attachFilmForYear(ochtrup, "1836")).toBe(ochtrup);
+  });
+
+  it("is allowed beside catalogId and advertised in the schema", () => {
+    expect((catalogSearchSchema.inputSchema.properties as Record<string, unknown>).filmYear).toBeDefined();
   });
 });

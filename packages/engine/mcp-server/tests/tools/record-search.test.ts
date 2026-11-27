@@ -3723,11 +3723,26 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
       const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, projectPath: dir, subjectId: "I1" }, LOCAL);
       expect(out.results).toHaveLength(10);
       expect(out.ranked?.returnedCount).toBe(10);
-      expect(out.hasMore).toBe(false);
       // Nobody scores above the floor here, so the no-match advice fires: it must
       // not tell the agent to page with an offset the tool refuses.
       expect(out.ranked?.diagnostic).toMatch(/raise `count` \(up to 100\) or narrow the query/);
       expect(out.ranked?.diagnostic).not.toMatch(/page deeper/);
+    });
+
+    it("says hasMore on a ranked expansion whenever rows exist past the ones shown", async () => {
+      // Each name is read to `count`, so 20 rows are merged and scored and the best 10
+      // shown, with 20 more unread. `hasMore: false` beside `scoredCount: 20` read as a
+      // contradiction to the model (2026-11-26).
+      byPlace[PERIOD] = ids("PER", 20);
+      byPlace[MODERN] = ids("MOD", 20);
+      const some = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(some.returned).toBe(10);
+      expect(some.ranked?.scoredCount).toBe(20);
+      expect(some.hasMore).toBe(true);
+      // Raising `count`, the remedy, shows them all, and then nothing more exists.
+      const all = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 50, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(all.returned).toBe(40);
+      expect(all.hasMore).toBe(false);
     });
 
     it("refuses offset on a ranked expansion, which could skip a record between pages", async () => {
