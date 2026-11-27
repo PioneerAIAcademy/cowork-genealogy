@@ -36,7 +36,7 @@ Usage, from the repo root (needs `make engine-build` and `make e2e-login`):
 
   uv run --project eval/harness python packages/engine/mcp-server/dev/measure-hint-decisions.py \
       key  --out <dir>                          # the answer key: <dir>/key.json
-  uv run ... run --out <dir> --model claude-haiku-5-5 --effort medium [--limit N] [--jobs 4]
+  uv run ... run --out <dir> --model claude-haiku-5-5 --effort low [--limit N] [--jobs 4]
   uv run ... report --out <dir>
 
 Everything is written under --out: key.json, runs/<model>-<effort>.jsonl (one
@@ -510,7 +510,7 @@ def main() -> None:
     ap.add_argument("cmd", choices=["key", "run", "report"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="claude-haiku-5-5")
-    ap.add_argument("--effort", default="medium")
+    ap.add_argument("--effort", default="low")
     ap.add_argument("--cap", type=int, default=10)
     ap.add_argument("--min-confidence", type=int, default=4)
     ap.add_argument("--jobs", type=int, default=4)

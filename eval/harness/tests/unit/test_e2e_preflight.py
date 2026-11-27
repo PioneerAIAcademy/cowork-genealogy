@@ -965,13 +965,44 @@ def test_fs_search_fails_on_waf_block(monkeypatch, tmp_path):
     status, detail = pf._check_fs_search(
         caller=lambda: (
             True,
-            "FamilySearch search blocked the request. The User-Agent header "
-            "was rejected by the WAF — check that the MCP server is running "
-            "an unmodified build.",
+            "FamilySearch's firewall blocked the request (403). This is NOT an "
+            "empty result — coverage is unknown. (status 403; body: "
+            '{"incidentId":"1234-5678","errorCode":"15"})',
         )
     )
     assert status == "FAIL"
-    assert "WAF" in detail
+    assert "firewall" in detail
+
+
+def test_fs_search_warns_on_a_non_firewall_refusal(monkeypatch, tmp_path):
+    """#4707: a 403 without the firewall body is one refused search, not a block."""
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (
+            True,
+            "FamilySearch refused this record search (403). This is NOT an "
+            "empty result — coverage is unknown. The same search may be "
+            "answered if tried again later. (status 403; body: Access denied)",
+        )
+    )
+    assert status == "WARN"
+    assert "re-run preflight" in detail.lower()
+    assert "Access denied" in detail
+
+
+def test_fs_search_warns_on_a_search_timeout(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (
+            True,
+            "FamilySearch record search timed out after 25s and was not "
+            "retried. This is a transient failure, NOT an empty result — "
+            "coverage is unknown.",
+        )
+    )
+    assert status == "WARN"
+    # Its own branch, not the generic fallback, which would also echo "timed out".
+    assert detail.startswith("FamilySearch did not answer the test search")
 
 
 def test_fs_search_fails_on_auth_rejection(monkeypatch, tmp_path):
@@ -993,7 +1024,7 @@ def test_fs_search_warns_on_transient_failure(monkeypatch, tmp_path):
         caller=lambda: (
             True,
             "FamilySearch record search did not complete after retries "
-            "(network timeout or transient error): timeout. This is a "
+            "(network or transient error): fetch failed. This is a "
             "transient failure, NOT an empty result — coverage is unknown.",
         )
     )
@@ -1067,6 +1098,7 @@ def test_fs_search_classifier_matches_the_tool_s_wording() -> None:
         / "packages/engine/mcp-server/src/tools/record-search.ts"
     ).read_text(encoding="utf-8")
     for marker in ("blocked the request", "session not accepted",
+                   "refused this record search", "record search timed out",
                    "did not complete after retries"):
         assert marker in src, (
             f"preflight check 8 classifies on {marker!r}, which record-search.ts "

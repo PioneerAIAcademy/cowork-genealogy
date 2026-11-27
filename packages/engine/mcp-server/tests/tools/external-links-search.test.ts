@@ -27,6 +27,7 @@ function jsonResponse(body: unknown, status = 200): Response {
     status,
     statusText: status === 200 ? "OK" : `Status ${status}`,
     json: async () => body,
+    text: async () => JSON.stringify(body),
     headers: new Headers(),
   } as unknown as Response;
 }
@@ -270,11 +271,23 @@ describe("externalLinksSearchTool — error handling", () => {
     mockFetch.mockReset();
   });
 
-  it("throws on 403 with WAF message", async () => {
+  it("a 403 with the firewall's errorCode 15 body says the firewall blocked it, names no cause, and carries the body", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ incidentId: "1234-5678", errorCode: "15" }, 403));
+    const msg = ((await externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 }).catch((e: Error) => e)) as Error).message;
+    expect(msg).toContain("blocked the request");
+    expect(msg).toContain("1234-5678");
+    expect(msg).not.toMatch(/User-Agent|unmodified build/);
+  });
+
+  it("any other 403 is a refusal that carries the body, not a build fault (#4707)", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({}, 403));
-    await expect(
-      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/403 Forbidden/i);
+    const err = await externalLinksSearchTool({
+      standardPlace: "France", startYear: 1900, endYear: 1950,
+    }).catch((e: Error) => e);
+    const msg = (err as Error).message;
+    expect(msg).toMatch(/FamilySearch refused this external-links request \(403\)/);
+    expect(msg).toContain("(status 403; body: {})");
+    expect(msg).not.toMatch(/WAF|User-Agent|unmodified build/);
   });
 
   it("recovers from a transient 429 and returns the result", async () => {

@@ -983,3 +983,57 @@ export function findFulltextHit(
   );
   return i === -1 ? null : { row: results[i] as FulltextHitRow, hitIndex: i + 1 };
 }
+
+// ─── record ids a sidecar names ──────────────────────────────────────────────
+
+/**
+ * The bare record ids a search's sidecar lists: each row's `id` for a
+ * `fulltext_search`, its `recordId` otherwise. An unreadable sidecar lists
+ * nothing. Shared by extraction_append's plan-item completion and
+ * research_query's `assertion_count`.
+ */
+export async function sidecarHitIds(projectPath: string, ref: string, tool: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  const key = tool === "fulltext_search" ? "id" : "recordId";
+  try {
+    for (const r of (await readStagedResults(projectPath, ref)) as any[]) {
+      if (typeof r?.[key] === "string") ids.add(arkToBareId(r[key]));
+    }
+  } catch {
+    // An unreadable sidecar lists nothing.
+  }
+  return ids;
+}
+
+/**
+ * Bare record id -> every persona ARK (bare) of the `record_read` sidecar that
+ * lists it, itself included. A record is extracted under the ARK of the persona
+ * that requested it, so the father in a baptism and the child name the same
+ * record by two ids; widening by the sidecar's `persons[].ark` makes them one.
+ * An unreadable sidecar adds nothing.
+ */
+export async function personaGroups(projectPath: string, research: any): Promise<Map<string, Set<string>>> {
+  const groups = new Map<string, Set<string>>();
+  const log: any[] = Array.isArray(research?.log) ? research.log : [];
+  for (const e of log) {
+    if (e?.tool !== "record_read" || typeof e?.results_ref !== "string") continue;
+    let rows: any[];
+    try {
+      rows = (await readStagedResults(projectPath, e.results_ref)) as any[];
+    } catch {
+      continue;
+    }
+    for (const row of rows) {
+      const ids = new Set<string>();
+      if (typeof row?.recordId === "string") ids.add(arkToBareId(row.recordId));
+      for (const person of Array.isArray(row?.gedcomx?.persons) ? row.gedcomx.persons : []) {
+        if (typeof person?.ark === "string") ids.add(arkToBareId(person.ark));
+      }
+      if (ids.size < 2) continue;
+      const merged = new Set<string>(ids);
+      for (const id of ids) for (const x of groups.get(id) ?? []) merged.add(x);
+      for (const id of merged) groups.set(id, merged);
+    }
+  }
+  return groups;
+}

@@ -21,7 +21,8 @@ vi.mock('@genealogy/viewer-ui', () => ({
   ViewerBody: () => null,
   ResearchDataProvider: ({ children }: { children?: unknown }) => children,
   useResearchDataOptional: () => null,
-  resolveFamilySearchTarget: () => null
+  resolveFamilySearchTarget: () => null,
+  imageIdToViewerUrl: () => null
 }))
 
 vi.mock('../../auth', () => ({

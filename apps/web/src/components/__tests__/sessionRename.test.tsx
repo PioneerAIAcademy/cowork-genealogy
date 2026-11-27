@@ -14,7 +14,8 @@ vi.mock('@genealogy/viewer-ui', () => ({
   },
   ResearchDataProvider: ({ children }: { children?: unknown }) => children,
   useResearchDataOptional: () => null,
-  resolveFamilySearchTarget: () => null
+  resolveFamilySearchTarget: () => null,
+  imageIdToViewerUrl: () => null
 }))
 
 vi.mock('../../transport/makeSessionConnection', () => ({
