@@ -1,0 +1,51 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Ann",
+          "surname": "Tyler",
+          "type": "BirthName"
+        },
+        {
+          "id": "N2",
+          "given": "Antone",
+          "surname": "Lightfoot",
+          "type": "AlsoKnownAs"
+        },
+        {
+          "id": "N3",
+          "given": "Anthony",
+          "surname": "Tyler",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "Apr 1853",
+          "place": "Virginia"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1900",
+          "place": "Cunningham District, Fluvanna, Virginia, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "value": "Midwife"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

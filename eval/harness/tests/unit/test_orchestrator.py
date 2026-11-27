@@ -3461,3 +3461,37 @@ def test_a_test_without_na_dimensions_is_untouched():
     coerce_review_dimensions_to_na(dims, spec=_na_spec(), warnings=warnings)
     assert dims == before
     assert warnings == []
+
+
+def _candidate_refused(args=None):
+    """A record_search the tool refused for excluding a found candidate (#4580)."""
+    return {
+        "tool": "mcp__genealogy__record_search",
+        "args": args if args is not None else {"surname": "Tyler", "subjectId": "I1", "birthYearFrom": 1848},
+        "matched": {"kind": "candidate_excluded_refused", "index": None},
+        "response": {"error": "Refused: the birth range 1848–… excludes a candidate"},
+    }
+
+
+def test_a_candidate_refusal_is_not_counted_as_a_missing_fixture():
+    """Refused before any predicate lookup, so no fixture can cover it; beside a
+    genuine miss the shortfall reports only the miss, and the unknown-argument
+    advisory does not fire."""
+    refused = _candidate_refused()
+    unmatched = {"tool": "mcp__genealogy__record_search", "args": {"surname": "Ohio"},
+                 "matched": {"kind": "none", "index": None}}
+    out = _build_warnings(
+        [refused, unmatched],
+        attempted_mcp_calls=[{"tool": c["tool"], "args": c["args"]} for c in (refused, unmatched)],
+    )
+    kinds = [w["kind"] for w in out]
+    assert "unknown_args_refused" not in kinds
+    shortfall = next(w for w in out if w["kind"] == "uncovered_tool_call")
+    assert shortfall["advisory"].startswith("1 of 1 "), shortfall["advisory"]
+    assert refused["args"] not in shortfall.get("attempted", [])
+
+
+def test_a_candidate_refusal_alone_raises_no_fixture_warning():
+    refused = _candidate_refused()
+    out = _build_warnings([refused], attempted_mcp_calls=[{"tool": refused["tool"], "args": refused["args"]}])
+    assert "uncovered_tool_call" not in [w["kind"] for w in out]

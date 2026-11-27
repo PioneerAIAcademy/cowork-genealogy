@@ -1821,12 +1821,18 @@ def test_found_candidate_not_excluded(tool_calls, test):
     candidate for the subject (b. about 1853). The session's next search
     (log_100) kept birthYearFrom 1848 / birthYearTo 1858, which excludes her,
     and its nil was read as a finding. Every record_search this test makes must
-    carry no birth range or one that includes 1833; and there must be one.
+    carry no birth range or one that includes 1833; and there must be one. A
+    call record_search refused for excluding her ran no search, so it is not
+    counted.
     """
     if "candidate-not-excluded" not in test.get("tags", []):
         pytest.skip("not a found-candidate scenario")
     candidate_year = 1833
-    calls = [_as_mapping(c.get("args")) for c in _record_search_calls(tool_calls)]
+    calls = [
+        _as_mapping(c.get("args"))
+        for c in _record_search_calls(tool_calls)
+        if (c.get("matched") or {}).get("kind") != "candidate_excluded_refused"
+    ]
     assert calls, "no record_search was made for the 1870 census plan item"
     excluding = []
     for args in calls:

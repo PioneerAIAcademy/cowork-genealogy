@@ -480,7 +480,7 @@
           "additionalProperties": false,
           "properties": {
             "kind": { "enum": ["predicate", "none", "live", "staged_ref_refused",
-            "unknown_args_refused"] },
+            "unknown_args_refused", "candidate_excluded_refused"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },

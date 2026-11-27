@@ -159,3 +159,30 @@ def test_range_including_1833_passes(args):
 def test_no_search_fails():
     with pytest.raises(AssertionError, match="no record_search"):
         candidate_check([], CANDIDATE_TAGS)
+
+
+def refused(args):
+    """A record_search call the tool refused for excluding a found candidate (#4580)."""
+    return {
+        "tool": "mcp__genealogy__record_search",
+        "args": args,
+        "response": {"error": "Refused: the birth range 1848–1858 excludes a candidate"},
+        "matched": {"kind": "candidate_excluded_refused", "index": None},
+    }
+
+
+def test_a_refused_excluding_call_beside_an_including_one_passes():
+    candidate_check(
+        [refused({**TIGHT, "givenName": "An*"}), rs({"surname": "Tyler", "givenName": "An*", "birthYearFrom": 1830}, 1)],
+        CANDIDATE_TAGS,
+    )
+
+
+def test_refused_calls_alone_fail_as_no_search():
+    with pytest.raises(AssertionError, match="no record_search"):
+        candidate_check([refused({**TIGHT, "givenName": "An*"}), refused(TIGHT)], CANDIDATE_TAGS)
+
+
+def test_an_unrefused_excluding_call_beside_a_refused_one_still_fails():
+    with pytest.raises(AssertionError, match="excludes 1833"):
+        candidate_check([refused({**TIGHT, "givenName": "An*"}), rs({**TIGHT, "givenName": "Ann"})], CANDIDATE_TAGS)

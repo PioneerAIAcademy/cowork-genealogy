@@ -51,15 +51,16 @@ first message with no project runs init-project first, then its deliverable
 step. Never send the same delegation twice: an agent's return is that step's
 report, even one that says nothing changed. After it returns:
 
-1. report what that step found: relay everything after its final `---`
+1. when you have `show_project` and the step that ran has a card below, call
+   `show_project({ projectPath, show: <card>, questionId })` with the question
+   the step worked on, before you write any of your reply. In a turn with two
+   agents, call it once, after the second returns;
+2. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
    research-exhaustiveness; from historical-context, everything above its
    `### Search implications` heading; from init-project in a bounded turn, leave out its
    sentence naming the next step. In a turn with two agents, relay each one's
    report in turn, in full: never condense, merge or shorten either;
-2. when you have `show_project` and the step that ran has a card below, call
-   `show_project({ projectPath, show: <card>, questionId })` with the question
-   the step worked on, after the report;
 3. end with **"Continue with `<label>`?"**, using the exact label below.
    That line is the reply's last;
 4. end your turn.

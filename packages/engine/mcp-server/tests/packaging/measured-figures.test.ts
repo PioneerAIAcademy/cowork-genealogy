@@ -334,6 +334,13 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
+    1240,
+    {
+      reason: "the logged record_search ops the candidate-exclusion replay could not pair with their search: dev/measure-candidate-exclusions.ts, a corpus replay with no probe verdict, date-stamped in the spec (2026-11-26 at 46e26c861). Keyed by EXACT value: re-key it whenever the replay is re-run",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
+  ],
+  [
     1998,
     {
       reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 4322 notes corpus above; re-key both together. Re-derived 2026-10-03 (was 1867)",

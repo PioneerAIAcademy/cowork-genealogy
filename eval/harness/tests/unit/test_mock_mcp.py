@@ -3765,3 +3765,127 @@ def test_image_transcribe_puts_the_held_records_index_beside_the_reading(tmp_pat
     assert body.get("staged"), body.get("stagingError")
     assert body["indexReadings"] == [{"sourceId": sid, "recordId": "r", "role": "head", "name": "Tyler"}]
     assert "one machine reading" in body["readingNote"]
+
+
+# --- record_search's candidate-exclusion refusal (#4580) -----------------------
+# The mock runs the COMPILED `candidateExclusionRefusal` before any predicate
+# lookup, against the workspace's own research.json, sidecars and tree, as
+# `recordSearchTool` does before any request.
+
+
+def _tyler_candidate_workspace(tmp_path):
+    import shutil
+
+    scenario = REPO_ROOT / "eval/fixtures/scenarios/tyler-fluvanna-midwife-1870-candidate"
+    workspace = tmp_path / "workspace"
+    shutil.copytree(scenario, workspace)
+    return workspace
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_excluding_the_found_candidate_is_refused_before_any_fixture(tmp_path):
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    result = _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "An*", "subjectId": "I1",
+        "birthYearFrom": 1848, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+
+    assert result["is_error"] is True
+    error = _extract_response_dict(result)["error"]
+    assert "excludes a candidate" in error
+    assert "Antoine Tyler" in error and "1833" in error
+    assert call_log[-1]["matched"] == {"kind": "candidate_excluded_refused", "index": None}
+    assert call_log[-1]["response_fixture"] is None
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_with_no_subject_id_is_judged_for_the_subject_it_names(tmp_path):
+    # The failing run's shape: an "Ann" search for 1848-1858 with no subjectId.
+    # Ann is I1's given name and the range holds her tree birth, 1853, so it is
+    # judged as a search for I1; the same name for 1878-1884 is a daughter's.
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    refused = _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "Ann",
+        "birthYearFrom": 1848, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+    assert refused["is_error"] is True
+    assert "names no subjectId" in _extract_response_dict(refused)["error"]
+    assert call_log[-1]["matched"] == {"kind": "candidate_excluded_refused", "index": None}
+
+    _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "Ann",
+        "birthYearFrom": 1878, "birthYearTo": 1884, "projectPath": str(workspace),
+    })
+    assert call_log[-1]["matched"]["kind"] != "candidate_excluded_refused"
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_including_the_found_candidate_matches_a_fixture(tmp_path):
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "givenName": "An*", "subjectId": "I1",
+        "birthYearFrom": 1830, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+
+    assert call_log[-1]["matched"]["kind"] == "predicate"
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize(
+    "names",
+    [
+        {"givenName": "Margaret"},
+        {"givenNameAlt": "Margaret"},
+        {"motherGivenName": "Ann"},
+        {"fatherGivenName": "Job"},
+        {"fatherSurname": "Lightfoot"},
+        {"motherSurname": "Tyler"},
+        {"parentGivenName": "Ann"},
+        {"parentSurname": "Tyler"},
+    ],
+    ids=[
+        "another-given-name",
+        "another-given-name-alt",
+        "child-by-mother-name",
+        "child-by-father-given-name",
+        "child-by-father-surname",
+        "child-by-mother-surname",
+        "child-by-parent-given-name",
+        "child-by-parent-surname",
+    ],
+)
+def test_record_search_for_someone_else_under_the_subject_id_matches_a_fixture(tmp_path, names):
+    # The mock forwards the given names and the parent names to the guard, as
+    # production passes its whole input: a Margaret search, or a search for I1's
+    # child by her name, is not judged against Antoine.
+    workspace = _tyler_candidate_workspace(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server(
+        ["record-search-tyler-1870-tight-birth-nil", "record-search-tyler-1870-antoine-household"],
+        FIXTURES_DIR,
+        workspace=workspace,
+    )
+
+    _invoke(tools_by_name, "record_search", {
+        "surname": "Tyler", "subjectId": "I1", **names,
+        "birthYearFrom": 1848, "birthYearTo": 1858, "projectPath": str(workspace),
+    })
+
+    assert call_log[-1]["matched"]["kind"] == "predicate"

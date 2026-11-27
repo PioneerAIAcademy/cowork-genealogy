@@ -442,6 +442,14 @@ candidates; you still confirm the top ones:
   (spouse, children, later residences, FAN network). Absent that, flag it
   `needs-review`, keep the plan item `in_progress`, and do not hand the record or
   its parents to extraction as the subject's.
+  **Exception for an indexed age, however wide the gap:** when the record's
+  birth year comes from an age (a census), whatever the subject's date, a month
+  and year included, and nothing else separates them (a full birth date on the
+  record, another birthplace, other parents or spouse, the subject found
+  elsewhere in the same record set), it is not a namesake signal. Present it as `needs-review — the subject or a
+  relative`, name the gap and the record that would settle it, and never call
+  it probably, likely or very likely someone else, nor recommend against
+  linking it. `research_append` refuses its namesake row.
   **Exception for civil death registrations:** ages on death certificates are
   frequently estimates provided by whoever reported the death — non-family
   informants (a neighbour, a burial agent, a hospital official) are commonly
@@ -462,16 +470,16 @@ candidates; you still confirm the top ones:
   **Do not offer extraction as a next step — not even as a question.** "Shall I
   proceed with extraction?" hands the judgment back to a user who is trusting
   you to have made it, and a user who says yes has just adopted a namesake's
-  parents. State the conclusion instead: this is very likely a different
-  same-named person; name the anchor that would settle it (a baptism in the
-  expected year window, a matching spouse or child, a later residence); propose
+  parents. State the conclusion instead: after a disqualifying conflict, this
+  is very likely a different same-named person; name the anchor that would
+  settle it (a baptism in the expected year window, a matching spouse or child, a later residence); propose
   **that narrower search** as the next step. Extraction is available again only
   once an independent anchor confirms identity.
   **Record each same-named person you conclude is not the subject** (Step 6b),
   whatever the search was for (a search for a relative that turns up a person
   of the subject's name counts), on a stated ground: the tool's
-  `birthYearConflict`, a precise date that cannot be his, other parents than
-  `subject.parents` or another spouse, or a second candidate when another result
+  `birthYearConflict` (not on an indexed age alone), a precise date that cannot
+  be his, other parents than `subject.parents` or another spouse, or a second candidate when another result
   is the subject. Other parents are no ground when `subject` arrived without
   `parents`.
   Anywhere in the jurisdiction the search covered counts. An age that rules him

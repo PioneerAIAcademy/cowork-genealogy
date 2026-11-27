@@ -1,38 +1,22 @@
 {
-  "run_log": "v59_2026-11-26_11-50-28.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v59_2026-11-26_22-45-56.json",
+  "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "There is no evidence in the MCP tool calls that proof-conclusion was actually invoked"
     },
     {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill claims it ran proof-conclusion, but no such tool call appears in the MCP record. "
     },
     {
       "test_id": "ut_research_005",
@@ -43,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_023",
+      "test_id": "ut_research_tlb",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -51,31 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_023",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_023",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_b4i",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_b4i",
+      "test_id": "ut_research_tlb",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_b4i",
+      "test_id": "ut_research_tlb",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -94,9 +54,9 @@
       "test_id": "ut_research_bv1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_bv1",
@@ -115,36 +75,12 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_fsr",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_fsr",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_fsr",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "negative"
+      "comment": "The correct call was to decline and route to research exhaustiveness. "
     },
     {
       "test_id": "ut_research_rpn",
@@ -152,7 +88,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "negative"
+      "comment": "The skill should have declined and been routed to research exhaustiveness."
     },
     {
       "test_id": "ut_research_rpn",
@@ -163,15 +99,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_iv1",
+      "test_id": "ut_research_iv2",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The skill does not call 'Ann Tone' a variant or rendering of another name, which is required. "
     },
     {
-      "test_id": "ut_research_iv1",
+      "test_id": "ut_research_iv2",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -179,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_iv1",
+      "test_id": "ut_research_iv2",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -187,23 +123,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_vr1",
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "This is factually wrong behavior: the skill should have entered the routing table and run one step."
     },
     {
-      "test_id": "ut_research_vr1",
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "It ran zero research steps and produced no GPS routing table entry"
     },
     {
-      "test_id": "ut_research_vr1",
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -211,23 +147,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_wp1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "There is a factual error in its response"
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_wp1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The per-test context explicitly requires the turn to end with one 'Continue with …?' line for whatever comes next"
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_wp1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -235,23 +171,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_up1",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "This negative test"
     },
     {
-      "test_id": "ut_research_up1",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "This negative test"
     },
     {
-      "test_id": "ut_research_up1",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -259,23 +195,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_hts",
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill did not spawn research plans as instructed, but the no-browse invariant was not violated."
     },
     {
-      "test_id": "ut_research_hts",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_hts",
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -283,95 +211,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_pl2",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_pl2",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_pl2",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_fl1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_fl1",
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The skill did not spawn a research plan and instead answered the planning question directly with a detailed strategy. "
     },
     {
-      "test_id": "ut_research_fl1",
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "There is a factual error here"
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The paragraph covers the objective. It omits mention of the five unworked sources."
+    },
+    {
+      "test_id": "ut_research_025",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -384,15 +248,15 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The router does not call extraction_append or spawn record-structurer."
     },
     {
       "test_id": "ut_research_si4",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response ends with a question rather than confidently completing the hand-off, suggesting the router may not have fully committed to the delegation."
     },
     {
       "test_id": "ut_research_si4",
@@ -403,23 +267,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_pr2",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_pr2",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The per-test override instructs grading whether the router 'added nothing to the two summaries but its closing line."
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_pr2",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -427,124 +291,244 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "negative"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "negative"
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "negative"
-    },
-    {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "negative"
-    },
-    {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_nm1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_nm1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_nm1",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_js1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_js1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_js1",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "investigate partials later"
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "investigate partials later"
+      "comment": "The tool calls show only project_context reads, not any proof-conclusion delegation."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "no proof-conclusion agent was spawned, no research step was executed."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response states, 'All 11 hits of log_017 came back as Matches,' and summarizes them collectively rather than reporting each hit individually."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response does not report each hit individually "
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The framing misrepresents the stub's output as incomplete when the router's job was just to relay it."
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_np3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply states, 'The review was read-only, so nothing was recorded in the project. This is accurate, and it does not claim a state change."
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_sr1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_sr1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_sr1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response incorrectly states the file 'has no text layer' as a reason it hasn't read the contents, which is accurate per the tool response (hasText: false), but then uses this to cast doubt on the handoff rather than simply confirming the delegation. "
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The required closing prompt for the next step is absent, making the response incomplete per the test's explicit requirement."
+    },
+    {
+      "test_id": "ut_research_up1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response does note the record is 'unidentified' and that it has 'no record number."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_vr1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply incorrectly characterizes the post-forget project_context result as a contradiction."
+    },
+    {
+      "test_id": "ut_research_vr1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "It omits the required statement that undoing the forget means starting a new project—the per-test override explicitly requires this."
+    },
+    {
+      "test_id": "ut_research_vr1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

@@ -730,6 +730,63 @@ def _guard_unknown_args(
     return guarded
 
 
+_CANDIDATE_EXCLUSION_JS = _MCP_BUILD / "utils" / "candidate-exclusion.js"
+
+# Every record_search argument `CandidateExclusionInput` reads. The parent names
+# mark a search for the subject's child, whose range the guard does not judge, so
+# dropping one here makes the mock refuse a call production allows.
+_CANDIDATE_EXCLUSION_KEYS = (
+    "subjectId",
+    "givenName",
+    "givenNameAlt",
+    "birthYearFrom",
+    "birthYearTo",
+    "fatherGivenName",
+    "fatherSurname",
+    "motherGivenName",
+    "motherSurname",
+    "parentGivenName",
+    "parentSurname",
+)
+
+
+def _candidate_exclusion_refusal(workspace: Path, args: dict[str, Any]) -> str | None:
+    """Production's refusal of a record_search birth range that excludes a
+    candidate an earlier logged search for the same subject returned (#4580),
+    or None. Calls the COMPILED `candidateExclusionRefusal`, which
+    `recordSearchTool` runs before any request, against the workspace's own
+    research.json and sidecars. Fails OPEN with a warning, like the
+    unknown-argument guard."""
+    if not _compiled_module_present(
+        _CANDIDATE_EXCLUSION_JS,
+        "record_search birth ranges will NOT be checked against earlier candidates",
+    ):
+        return None
+    script = (
+        f"import {{ candidateExclusionRefusal }} from '{_node_module_url(_CANDIDATE_EXCLUSION_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { refusal: (await candidateExclusionRefusal(input)) ?? null }));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        **{k: args[k] for k in _CANDIDATE_EXCLUSION_KEYS if k in args},
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout).get("refusal")
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"candidate-exclusion guard failed ({e}); the call was NOT checked. "
+            "A harness fault must not read as the model behaving.",
+            stacklevel=2,
+        )
+        return None
+
+
 def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> dict[str, Any] | None:
     """The hint for a nil `record_search` with no projectPath — the one path that
     spawns no node process of its own. None when it does not apply or node fails
@@ -2071,7 +2128,23 @@ def create_mock_server(
             if ref_error is not None:
                 entry["matched"] = {"kind": "staged_ref_refused", "index": None}
                 response = {"error": "staged_ref_not_found", "tool": _name, "message": ref_error}
-            for i, (predicate, resp, src) in enumerate(_predicated if ref_error is None else []):
+            candidate_refusal = (
+                _candidate_exclusion_refusal(_workspace, args)
+                if (
+                    ref_error is None
+                    and _name == "record_search"
+                    and _workspace is not None
+                    and isinstance(args.get("projectPath"), str)
+                    and args["projectPath"].strip()
+                )
+                else None
+            )
+            if candidate_refusal is not None:
+                entry["matched"] = {"kind": "candidate_excluded_refused", "index": None}
+                response = {"error": candidate_refusal}
+            for i, (predicate, resp, src) in enumerate(
+                _predicated if ref_error is None and candidate_refusal is None else []
+            ):
                 if matches(predicate, args):
                     entry["matched"] = {"kind": "predicate", "index": i}
                     entry["expected_args"] = dict(predicate)
@@ -2499,6 +2572,8 @@ def create_mock_server(
             # A fixture marked `is_error` stands for a THROWN tool error, which
             # production's catch arms return with `isError: true` beside `{error}`.
             if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            if entry["matched"]["kind"] == "candidate_excluded_refused":
                 envelope["is_error"] = True
             return envelope
 

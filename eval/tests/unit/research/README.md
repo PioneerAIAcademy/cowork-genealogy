@@ -348,10 +348,19 @@ to verify a person's facts and relationships, and gets setup then the broad audi
 from the opening request init-project recorded, on a bare "Continue.";
 `ut_research_bv1` (`broad-verify-audits.json`, `broad-verify-audits`) runs
 source-evaluation then check-warnings for a broad verify, removes nothing and offers
-each finding as a new project; and
-`ut_research_rp1` (`relays-proof-conclusion-without-a-summary.json`,
-`relays-only:`) adds nothing after proof-conclusion's relayed report. The
-validators are pinned in
+each finding as a new project. `ut_research_rp1`
+(`relays-proof-conclusion-without-a-summary.json`, `relays-only:`), which checked
+that the reply adds nothing after proof-conclusion's relayed report, was deleted in
+PR #4780 after failing 6 of 10 runs, main's state included; issue #4660 owns its
+restore, and `test_reply_adds_nothing_after_the_relay` runs on no test until then.
+`ut_research_030` (`relay-survey-handback-no-completeness-claim.json`,
+`every-mention-survey-relay`), which checked that relaying search-records' every-mention
+survey of the surname Czelusniak never calls it complete or the hits ready to extract,
+was deleted in the same PR after passing 6 of 17 graded runs (6 partial, 5 failed, all
+5 on the branch, whose one difference, `search-records.md`, the test stubs); issue #4660
+owns its restore too, and
+`test_survey_handback_relay_has_no_completeness_claim` runs on no test until then.
+The validators are pinned in
 `eval/harness/tests/unit/test_research_setup_stops_validators.py`.
 
 `ut_research_ia1` (`bounded-interpretive-ask.json`) and `ut_research_ia2`

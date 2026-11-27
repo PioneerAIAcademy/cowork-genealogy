@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Hosted: the plan turn relays both summaries, then draws the plan card",
     "type": "positive",
-    "description": "The hosted pair of ut_research_pr2. project_list answers hosted with the Elijah Wilkins project, and the message names him, so the router continues it. locality-guide and research-plan are stubbed with canned reports. The harness serves show_project, as the connector does, so after relaying both reports the router draws the plan card at the listed projectPath, then ends on its closing line.",
+    "description": "The hosted pair of ut_research_pr2. project_list answers hosted with the Elijah Wilkins project, and the message names him, so the router continues it. locality-guide and research-plan are stubbed with canned reports. The harness serves show_project, as the connector does, so once both agents return the router draws the plan card at the listed projectPath, then relays both reports and ends on its closing line.",
     "tags": [
       "routing",
       "routes-to:locality-guide",

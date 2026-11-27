@@ -377,7 +377,11 @@ differ, and the tool server accepts none of them:
   buttons, which send `pad`, so on the tool server each answers the unknown-argument
   refusal.
 - **The research router.** `skills/research/SKILL.md`, "One step per turn", calls
-  `show_project` after each step's report, with the card its table names. A step whose card
+  `show_project` when each step returns, before its reply, with the card its table names.
+  The call comes first so the reply is one message after it: placed between the report
+  and the closing line, Haiku 5.5 at low effort wrote the whole reply and skipped the card
+  (ut_research_hpc, 1 of 8 runs, 2026-11-27), and the card now renders above the report.
+  A step whose card
   is not built yet draws the question's `latest` card (`cardKind` in
   `apps/mcp-viewer/src/cards/registry.ts`).
 
