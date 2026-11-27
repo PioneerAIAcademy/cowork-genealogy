@@ -554,12 +554,12 @@ record-extraction consolidation; see
   conflict settled, so a stale declaration cannot end the research on evidence that
   has moved. A write carrying neither leaves it as it was.
 - **`search_stop.log_entry_ids` stamp (questions).** A question write that sets
-  `search_stop` gets `log_entry_ids` filled with every entry the question owns
+  `search_stop` with a non-null `stopped_because` gets `log_entry_ids` filled with every entry the question owns
   (`questionOwnedLogEntries`: the entries on every plan's items, superseded plans
   included, and each upload closing one of their hand-offs), in log order, followed
   by any other entry the caller cited, such as an ad-hoc search logged with no plan
   item. Another question's entries are never added. A write that does not set
-  `search_stop` leaves the list as it was. The caller's list only ever grows: a
+  `search_stop`, or clears it (`stopped_because: null`), leaves the list as sent. The caller's list only ever grows: a
   research-exhaustiveness decline in `ut_research_exhaustiveness_001` listed only the
   active plan's entries in 4 of 5 runs (`make eval-health`, 2026-11-26), though the
   agent body asks for every plan's.

@@ -138,6 +138,12 @@ describe("research_append: search_stop.log_entry_ids covers every plan", () => {
     expect(stored().log_entry_ids).toEqual(["log_001", "log_002", "log_003", "log_005"]);
   });
 
+  it("leaves a cleared stop (stopped_because null) citing nothing", async () => {
+    const r = await writeStop({ ...STOP });
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect(stored().log_entry_ids).toEqual([]);
+  });
+
   it("leaves search_stop alone on a write that does not touch it", async () => {
     const r = await researchAppend({
       projectPath: dir,

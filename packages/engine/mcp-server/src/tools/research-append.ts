@@ -9857,7 +9857,7 @@ function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any
   entry.weighed_log_entry_ids = covered;
 }
 
-/** A `search_stop` the op writes cites every log entry the question owns
+/** A `search_stop` the op writes with a `stopped_because` cites every log entry the question owns
  *  (`questionOwnedLogEntries`: each plan's items, every plan, and the uploads
  *  closing their hand-offs), then any other entry the caller cited, such as an
  *  ad-hoc search. A caller listing only the active plan's entries left the
@@ -9867,6 +9867,7 @@ function stampSearchStopLogEntryIds(entry: any, op: ResearchAppendOp, research: 
   if (!Object.prototype.hasOwnProperty.call(written, "search_stop")) return;
   const stop = entry?.search_stop;
   if (!stop || typeof stop !== "object" || Array.isArray(stop)) return;
+  if (stop.stopped_because == null) return;
   const ids: string[] = [];
   for (const e of questionOwnedLogEntries(research, entry?.id)) {
     if (typeof e?.id === "string" && !ids.includes(e.id)) ids.push(e.id);
