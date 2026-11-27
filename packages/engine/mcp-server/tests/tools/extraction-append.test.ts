@@ -1459,12 +1459,12 @@ describe("extraction_append: personId extracts and links a person's attachments"
     it("on the network, names the record, its cause and how to retry it", async () => {
       const r = await read(blip);
       expect(r.records.find((o: any) => o.status === "read_failed")!.summary).toContain("ECONNRESET");
-      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+      expect(r.summary).toContain("call extraction_append again with the same personId");
     });
 
     it("with a 5xx past record_read's retries, says how to retry it", async () => {
       const r = await read(() => new Error("FamilySearch recapi error: 503"));
-      expect(r.summary).toContain("call extraction_append again with personId 'I1'");
+      expect(r.summary).toContain("call extraction_append again with the same personId");
     });
 
     it("otherwise, points to the record's own summary for what to do", async () => {
@@ -1579,7 +1579,8 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(anna.length).toBeGreaterThan(0);
     expect(anna.every((pe: any) => pe.person_id === "I2" && isAttachmentLink(pe))).toBe(true);
     expect(r.linkedPersons).toEqual({ I2: anna.length });
-    expect(r.summary).toMatch(/to I2/);
+    expect(r.summary).toMatch(/of them \d+ to John Boyer\./);
+    expect(r.summary).not.toMatch(/\bI\d+\b/);
   });
 
   it("(b) links neither when two tree persons attach the same persona's id", async () => {

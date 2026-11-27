@@ -47,6 +47,7 @@ import {
   type ExtractResult,
 } from "../utils/record-extract.js";
 import { readProjectJson } from "../utils/project-io.js";
+import { preferredDisplayName } from "../utils/name-helpers.js";
 import {
   listStagedEnvelopes,
   checkStagedResults,
@@ -652,6 +653,8 @@ async function personIdMode(
   const relationshipOnly = [...viaRelationship.keys()].filter((b) => !sourceIdByBare.has(b));
   const skippedNote =
     skipped > 0 ? ` ${skipped} attached source${skipped === 1 ? " is" : "s are"} not indexed records; not extracted.` : "";
+  const treePersons = new Map((Array.isArray(tree?.persons) ? tree.persons : []).map((p: any) => [p?.id, p]));
+  const nameOf = (id: string): string => preferredDisplayName(treePersons.get(id)) ?? "an unnamed person";
   if (sourceIdByBare.size === 0 && relationshipOnly.length === 0) {
     return {
       ok: true,
@@ -659,7 +662,7 @@ async function personIdMode(
       extracted: 0,
       linked: 0,
       skipped,
-      summary: `${person.id}: no attached indexed record exists on the person or the person's relationships, so nothing was extracted or linked.${skippedNote}`,
+      summary: `${nameOf(person.id)}: no attached indexed record exists on the person or the person's relationships, so nothing was extracted or linked.${skippedNote}`,
     };
   }
 
@@ -857,13 +860,13 @@ async function personIdMode(
   const extracted = extraction.records.filter((o) => o.status === "extracted").length;
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const parts = [
-    `${person.id}: ${plural(sourceIdByBare.size, "attached indexed record", "attached indexed records")}` +
+    `${nameOf(person.id)}: ${plural(sourceIdByBare.size, "attached indexed record", "attached indexed records")}` +
       (relationshipOnly.length > 0 ? ` and ${relationshipOnly.length} more on the person's relationships` : ""),
     `${extracted} extracted`,
     `${plural(linked, "assertion", "assertions")} linked as unverified attachments`,
   ];
   const others = Object.entries(linkedPersons);
-  if (others.length > 0) parts.push(`of them ${others.map(([id, n]) => `${n} to ${id}`).join(", ")}`);
+  if (others.length > 0) parts.push(`of them ${others.map(([id, n]) => `${n} to ${nameOf(id)}`).join(", ")}`);
   if (alreadyLinked > 0) parts.push(`${plural(alreadyLinked, "persona", "personas")} left as linked already`);
   if (unlinkable > 0) parts.push(`${plural(unlinkable, "record", "records")} extracted but not linked (no persona to link)`);
   if (ambiguous > 0) parts.push(`${plural(ambiguous, "persona", "personas")} not linked, because their claims conflict`);
@@ -881,7 +884,7 @@ async function personIdMode(
     parts.push(
       `${plural(passing.length, "record", "records")} could not be read (${passing.join(", ")}), so nothing from ` +
         `${them(passing.length)} extracted or linked: call extraction_append again with ` +
-        `personId '${person.id}' to retry ${passing.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
+        `the same personId to retry ${passing.length === 1 ? "it" : "them"}; what this call wrote is not written twice`,
     );
   }
   if (lasting.length > 0) {
