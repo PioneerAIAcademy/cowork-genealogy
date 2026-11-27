@@ -1,40 +1,77 @@
 // How many live assertions each research-log entry led to (issue #1157). An
 // assertion counts toward an entry when its `log_entry_id` is the entry's id, or
-// when its `record_id` is a record the entry's query named (`recordId` /
-// `recordIds`), so a record read under one entry and extracted under a sibling
-// still counts. A tool that cannot yield an assertion gets no count at all, and
-// neither does a page `image_transcribe` logged itself: that is a read, not a find.
+// when its `record_id` is a record the entry named: one its `query` read
+// (`recordId` / `recordIds`), or, for a search, one of the hits its sidecar
+// holds. Extraction logs its own `record_read` and cites that entry, never the
+// search that found the record, so without the hits a search whose find was
+// extracted would read 0. Only a tool that can return a record gets a count, and
+// a page `image_transcribe` logged itself does not: that is a read, not a find.
 
 import { liveAssertions } from "./assertion-liveness.js";
 import { arkToBareId } from "./ark.js";
 import { isToolLoggedRead } from "./tool-logged-read.js";
+import { readStagedResults } from "./results-staging.js";
+import { mapWithConcurrency } from "./place-resolver.js";
 
-/** Tools whose answer is a listing of collections, volumes or images, never a record. */
-export const NO_ASSERTION_TOOLS: ReadonlySet<string> = new Set([
-  "external_links_search",
-  "collections_search",
-  "catalog_search",
-  "volume_search",
-  "image_search",
+/** Tools whose log entry can lead to an assertion. */
+export const RECORD_TOOLS: ReadonlySet<string> = new Set([
+  "record_search",
+  "record_read",
+  "fulltext_search",
+  "image_transcribe",
+  "image_read",
+  "external_site",
+  "person_record_matches",
+  "user_provided",
 ]);
+
+/** Searches whose sidecar rows name the records they found: `recordId` on a
+ *  record_search row, `id` on a fulltext_search one. */
+const HIT_TOOLS: ReadonlySet<string> = new Set(["record_search", "fulltext_search"]);
 
 const bare = (v: unknown): string | undefined =>
   typeof v === "string" && v.trim() !== "" ? arkToBareId(v) : undefined;
 
-function namedRecords(entry: any): string[] {
+function namedRecords(entry: any, hits: ReadonlyMap<string, string[]>): string[] {
   const q = entry?.query;
-  if (!q || typeof q !== "object") return [];
-  const raw = [q.recordId, ...(Array.isArray(q.recordIds) ? q.recordIds : [])];
+  const raw: unknown[] =
+    q && typeof q === "object" ? [q.recordId, ...(Array.isArray(q.recordIds) ? q.recordIds : [])] : [];
+  raw.push(...(hits.get(entry?.id) ?? []));
   return [...new Set(raw.map(bare).filter((r): r is string => r !== undefined))];
 }
 
 /** Whether an entry can carry a count. */
 export function countsAssertions(entry: any): boolean {
-  return !NO_ASSERTION_TOOLS.has(entry?.tool) && !isToolLoggedRead(entry);
+  return RECORD_TOOLS.has(entry?.tool) && !isToolLoggedRead(entry);
+}
+
+/** Each search entry's hit record ids, read from its sidecar. An entry whose
+ *  sidecar is missing or unreadable has none, so it counts by log id alone. */
+export async function searchHits(projectPath: string, entries: any[]): Promise<Map<string, string[]>> {
+  const searches = entries.filter(
+    (e) => HIT_TOOLS.has(e?.tool) && typeof e?.id === "string" && typeof e?.results_ref === "string",
+  );
+  const hits = new Map<string, string[]>();
+  await mapWithConcurrency(searches, 8, async (e) => {
+    let rows: unknown[];
+    try {
+      rows = await readStagedResults(projectPath, e.results_ref);
+    } catch {
+      return;
+    }
+    const ids = rows
+      .map((r: any) => (e.tool === "fulltext_search" ? r?.id : r?.recordId))
+      .filter((v): v is string => typeof v === "string");
+    if (ids.length > 0) hits.set(e.id, ids);
+  });
+  return hits;
 }
 
 /** A function giving each countable entry its assertion count, undefined otherwise. */
-export function logAssertionCounter(research: any): (entry: any) => number | undefined {
+export function logAssertionCounter(
+  research: any,
+  hits: ReadonlyMap<string, string[]> = new Map(),
+): (entry: any) => number | undefined {
   const byEntry = new Map<string, Set<unknown>>();
   const byRecord = new Map<string, Set<unknown>>();
   const add = (m: Map<string, Set<unknown>>, k: string, a: unknown) => {
@@ -50,19 +87,7 @@ export function logAssertionCounter(research: any): (entry: any) => number | und
   return (entry) => {
     if (!countsAssertions(entry)) return undefined;
     const found = new Set<unknown>(byEntry.get(entry?.id) ?? []);
-    for (const r of namedRecords(entry)) for (const a of byRecord.get(r) ?? []) found.add(a);
+    for (const r of namedRecords(entry, hits)) for (const a of byRecord.get(r) ?? []) found.add(a);
     return found.size;
   };
-}
-
-/** Every countable log entry's count, keyed by its id. The eval harness's
- *  validator reads this from the build, so the rule is never restated in Python. */
-export function logAssertionCounts(research: any): Record<string, number> {
-  const count = logAssertionCounter(research);
-  const out: Record<string, number> = {};
-  for (const e of Array.isArray(research?.log) ? research.log : []) {
-    const n = count(e);
-    if (n !== undefined && typeof e?.id === "string") out[e.id] = n;
-  }
-  return out;
 }

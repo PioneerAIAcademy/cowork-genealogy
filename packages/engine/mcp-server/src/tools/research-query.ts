@@ -34,7 +34,7 @@ import { unregisteredDisagreements, type UnregisteredDisagreement } from "../uti
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
-import { logAssertionCounter } from "../utils/log-assertion-count.js";
+import { logAssertionCounter, searchHits } from "../utils/log-assertion-count.js";
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { settledBirthDisputes } from "../utils/settled-birth-disputes.js";
 import { unlinkedPartyRows, type UnlinkedPartyRow } from "../utils/unlinked-parties.js";
@@ -1033,7 +1033,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       section === "person_evidence" ? await unlinkedPartiesTree(projectPath, ordered) : null;
 
     const questionId = activeFilters.find((f) => f.key === "questionId")?.values[0];
-    const assertionCount = section === "log" ? logAssertionCounter(research) : () => undefined;
+    const assertionCount =
+      section === "log"
+        ? logAssertionCounter(research, await searchHits(projectPath, ordered))
+        : () => undefined;
     return pageAt(ordered.length, input.offset ?? 0, (start, end) => {
       const page: OkPage = {
         ok: true as const,
@@ -1124,9 +1127,9 @@ export const researchQuerySchema = {
     "reason for research-exhaustiveness; every item of the active plan keeps its " +
     "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`, " +
     "and gains `assertion_count`: the live assertions extracted under it or from a " +
-    "record its query named. A `positive` entry at 0 found something nothing was " +
-    "extracted from. Absent for a listing tool (collections, catalog, volumes, " +
-    "images) and for a page `image_transcribe` logged itself.\n" +
+    "record it read or, for a search, found. A `positive` entry at 0 found something " +
+    "nothing was extracted from. Absent for a tool that cannot return a record (wiki, " +
+    "Wikipedia, listings, checks) and for a page `image_transcribe` logged itself.\n" +
     "\n" +
     "`assertions` items are grouped by persona: each run of consecutive assertions " +
     "sharing `record_id`, `record_persona_id`, `record_role`, `source_id` and " +

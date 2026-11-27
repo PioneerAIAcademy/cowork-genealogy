@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, writeFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, rm, mkdir } from "fs/promises";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -1452,32 +1452,56 @@ describe("research_query — fields no caller reads are left out", () => {
 
   describe("log: assertion_count (issue #1157)", () => {
     const REC = "ark:/61903/1:1:ABCD-123";
+    const PAGE = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+    // As extraction writes them: the search's hit is extracted under the
+    // record_read extraction logs, never under the search itself.
     const log = [
-      { id: "log_001", tool: "record_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_001", tool: "record_search", outcome: "positive", plan_item_id: "pli_005", results_ref: "results/log_001.json" },
       { id: "log_002", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordId: "ABCD-123" } },
-      { id: "log_003", tool: "record_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_003", tool: "record_search", outcome: "positive", plan_item_id: "pli_005", results_ref: "results/log_003.json" },
       { id: "log_004", tool: "image_search", outcome: "positive", plan_item_id: "pli_005" },
       { id: "log_005", tool: "image_transcribe", outcome: "positive", plan_item_id: "pli_005", written_by: "image_transcribe" },
       { id: "log_006", tool: "record_read", outcome: "positive", plan_item_id: "pli_005", query: { recordIds: [REC, "ZZZZ-999"] } },
+      { id: "log_007", tool: "wiki_search", outcome: "positive", plan_item_id: "pli_005" },
+      { id: "log_008", tool: "fulltext_search", outcome: "positive", plan_item_id: "pli_005", results_ref: "results/log_008.json" },
+      { id: "log_009", tool: "record_search", outcome: "positive", plan_item_id: "pli_005", results_ref: "results/log_009.json" },
     ];
     const assertions = [
-      // Extracted under log_001; its record is the one log_002 and log_006 read.
-      { id: "a_001", log_entry_id: "log_001", record_id: REC },
-      { id: "a_002", log_entry_id: "log_001", record_id: REC },
-      // A re-extraction retired this one: it no longer counts toward log_003.
-      { id: "a_003", log_entry_id: "log_003", record_id: "ark:/61903/1:1:QQQQ-111", superseded_by: "a_004" },
+      { id: "a_001", log_entry_id: "log_002", record_id: REC },
+      { id: "a_002", log_entry_id: "log_002", record_id: REC },
+      // A re-extraction retired this one: it no longer counts toward log_003's hit.
+      { id: "a_003", log_entry_id: "log_010", record_id: "ark:/61903/1:1:QQQQ-111", superseded_by: "a_004" },
+      { id: "a_005", log_entry_id: "log_011", record_id: PAGE },
     ];
+    async function sidecar(id: string, tool: string, results: unknown[]) {
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(
+        join(dir, "results", `${id}.json`),
+        JSON.stringify({ log_id: id, tool, payload: { results } }),
+        "utf-8",
+      );
+    }
+    async function seed() {
+      await writeResearch({ plans: PLANS, log, assertions });
+      await sidecar("log_001", "record_search", [{ recordId: "ark:/61903/1:1:OTHR-001" }, { recordId: REC }]);
+      await sidecar("log_003", "record_search", [{ recordId: "ark:/61903/1:1:QQQQ-111" }]);
+      await sidecar("log_008", "fulltext_search", [{ id: PAGE }]);
+      // log_009's sidecar is missing: it counts by log id alone.
+    }
     const counts = (items: any[]) => Object.fromEntries(items.map((e) => [e.id, e.assertion_count]));
 
-    it("counts live assertions by log id or by a record the entry read, and none for a listing or a tool-logged page", async () => {
-      await writeResearch({ plans: PLANS, log, assertions });
+    it("counts live assertions by log id, a record read, or a search's hit, and none for a tool that returns no record", async () => {
+      await seed();
       for (const args of [{}, { questionId: "q_001" }, { planItemId: "pli_005" }]) {
         const r = await researchQuery({ projectPath: dir, section: "log", ...args });
         if (!r.ok) throw new Error(r.errors.join(" "));
         expect(counts(r.items)).toEqual({
-          log_001: 2, log_002: 2, log_003: 0, log_004: undefined, log_005: undefined, log_006: 2,
+          log_001: 2, log_002: 2, log_003: 0, log_004: undefined, log_005: undefined,
+          log_006: 2, log_007: undefined, log_008: 1, log_009: 0,
         });
-        expect(r.items.filter((e: any) => !("assertion_count" in e)).map((e: any) => e.id)).toEqual(["log_004", "log_005"]);
+        expect(r.items.filter((e: any) => !("assertion_count" in e)).map((e: any) => e.id)).toEqual([
+          "log_004", "log_005", "log_007",
+        ]);
       }
     });
 
@@ -1493,7 +1517,7 @@ describe("research_query — fields no caller reads are left out", () => {
     });
 
     it("is in the answer only, never in research.json", async () => {
-      await writeResearch({ plans: PLANS, log, assertions });
+      await seed();
       await researchQuery({ projectPath: dir, section: "log" });
       const stored = JSON.parse(readFileSync(join(dir, "research.json"), "utf-8"));
       expect(stored.log).toEqual(log);
