@@ -1,0 +1,106 @@
+{
+  "tool": "place_search",
+  "description": "Luzerne County, Pennsylvania, in the current place_search shape (standardPlace), recorded live 2026-11-24 with dev/try-place-search.ts \"Luzerne County, Pennsylvania\". For the competing-fathers parentage test, whose contested 1845 baptism is at Wilkes-Barre, Luzerne County.",
+  "args": {
+    "placeName": "~Luzerne"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Luzerne, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1786/",
+        "latitude": 41.176,
+        "longitude": -75.975,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne&focusedId=393188",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Luzerne_County,_Pennsylvania",
+        "matchedName": {
+          "name": "Luzerne County",
+          "lang": "en"
+        }
+      },
+      {
+        "standardPlace": "Susquehanna, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1810/",
+        "latitude": 41.83293,
+        "longitude": -75.78808,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Susquehanna&focusedId=393163",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Susquehanna_County,_Pennsylvania",
+        "matchedName": {
+          "name": "Luzerne County",
+          "lang": "en"
+        }
+      },
+      {
+        "standardPlace": "Luzerne, Luzerne, Pennsylvania, United States",
+        "type": "Borough",
+        "dateRange": "+1882/",
+        "latitude": 41.2856,
+        "longitude": -75.9014,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne&focusedId=4835310",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Luzerne,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Luzerne Township, Fayette, Pennsylvania, United States",
+        "type": "Township",
+        "latitude": 39.95056,
+        "longitude": -79.924999,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne%20Township&focusedId=4839363",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Luzerne,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Luzerne, Luzerne Township, Fayette, Pennsylvania, United States",
+        "type": "Hamlet",
+        "dateRange": "+1850/",
+        "latitude": 39.9992,
+        "longitude": -79.9631,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne&focusedId=8589740"
+      },
+      {
+        "standardPlace": "Plains Township, Luzerne, Pennsylvania, United States",
+        "type": "Township",
+        "latitude": 41.2667,
+        "longitude": -75.7417,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Plains%20Township&focusedId=4839526"
+      },
+      {
+        "standardPlace": "Hazle Township, Luzerne, Pennsylvania, United States",
+        "type": "Township",
+        "latitude": 40.98591,
+        "longitude": -75.96457,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Hazle%20Township&focusedId=4839530"
+      },
+      {
+        "standardPlace": "Kingston, Luzerne, Pennsylvania, United States",
+        "type": "Borough",
+        "dateRange": "+1776/",
+        "latitude": 41.2623,
+        "longitude": -75.897,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kingston&focusedId=4838069",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Kingston,_Pennsylvania"
+      },
+      {
+        "standardPlace": "Luzerne MM, Fayette, Pennsylvania, United States",
+        "type": "Place of Worship",
+        "latitude": 39.91666,
+        "longitude": -79.933329,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Luzerne%20MM&focusedId=8082088"
+      },
+      {
+        "standardPlace": "Plymouth, Luzerne, Pennsylvania, United States",
+        "type": "Borough",
+        "dateRange": "+1866/",
+        "latitude": 41.241939,
+        "longitude": -75.949439,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Plymouth&focusedId=4838082",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Plymouth,_Pennsylvania"
+      }
+    ],
+    "matchType": "exact",
+    "verdict": {
+      "standardPlace": "Luzerne, Pennsylvania, United States",
+      "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it"
+    }
+  }
+}

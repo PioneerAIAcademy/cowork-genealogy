@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_init_project_vq2",
+    "skill": "init-project",
+    "name": "A first message asking to verify the parents records the request",
+    "type": "positive",
+    "description": "Issue #4791 (lead, 2026-11-26): a first message that asks to verify one particular relationship of the subject is stored, in the user's words, as project.verify_request through project_create's verifyRequest, so the first question's turn removes the doubted parents before choosing the question.",
+    "tags": [
+      "initialization",
+      "familysearch",
+      "verify-request:parents",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Start a new research project for Patrick Flynn, FamilySearch person ID LZNY-BRF. I think the parents attached to him are wrong; verify his parents.\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "mcp_fixtures": [
+    "person-read-flynn-family"
+  ],
+  "judge_context": [
+    "The stored verify_request is checked by test_verify_request_recorded. Do not re-grade it.",
+    "The request to verify the parents is recorded beside the objective, not in place of it. Grade the setup report as for any new project."
+  ],
+  "judge_reads_files": true
+}

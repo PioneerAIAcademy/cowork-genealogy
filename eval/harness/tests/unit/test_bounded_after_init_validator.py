@@ -126,6 +126,21 @@ def test_relaying_the_next_step_sentence_fails():
              text="The next step is the first research question: the single fact we go after first.\n\n" + OFFER)
 
 
+@pytest.mark.parametrize("sentence", [
+    "The next step is the first research question.",
+    "It is the single fact we go after first.",
+])
+def test_either_half_of_the_next_step_sentence_fails(sentence):
+    with pytest.raises(AssertionError, match="next-step sentence"):
+        _run(["init-project", "search-records"], text=sentence + "\n\n" + OFFER)
+
+
+def test_the_routers_own_sentence_about_the_offered_step_passes():
+    _run(["init-project", "search-records"],
+         text="The project still needs its first research question, written from the objective, "
+              "before any records can be searched.\n\n" + OFFER)
+
+
 def test_no_offer_line_fails():
     with pytest.raises(AssertionError, match="offer"):
         _run(["init-project", "search-records"], text="Nothing new turned up for Patrick Flynn.")

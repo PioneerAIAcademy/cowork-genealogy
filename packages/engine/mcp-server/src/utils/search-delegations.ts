@@ -9,6 +9,7 @@
 
 import { awaitingUploadItemIds } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 
 /** At most this many search agents run in one step (research/SKILL.md). */
 export const MAX_SEARCH_SPAWNS = 4;
@@ -135,13 +136,14 @@ export function attachedSources(tree: any, subjectId: string): { id: string; tit
     .map((s) => ({ id: s.id as string, title: s.title as string }));
 }
 
-/** A fallback item runs only after its primary has run and found nothing. */
+/** A fallback item runs only after its primary has run and found nothing. A page
+ *  read the tool logged itself is not a find (`isToolLoggedRead`). */
 function fallbackDue(item: any, items: any[], log: any[]): boolean {
   const primaryId = str(item?.fallback_for);
   if (!primaryId) return true;
   const primary = items.find((i) => i?.id === primaryId);
   if (primary && (primary.status === "planned" || primary.status === "in_progress")) return false;
-  const entries = log.filter((e) => e?.plan_item_id === primaryId);
+  const entries = log.filter((e) => e?.plan_item_id === primaryId && !isToolLoggedRead(e));
   return entries.length > 0 && entries.every((e) => e?.outcome === "negative");
 }
 

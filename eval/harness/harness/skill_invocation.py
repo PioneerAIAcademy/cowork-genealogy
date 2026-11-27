@@ -40,6 +40,7 @@ from collections import Counter
 from typing import Any
 
 from harness.context_policy import bare_tool_name
+from harness.research_append_ops import canonical_op, is_plan_form, plan_form_ops
 
 #: The rationale `extraction_append({ personId })` writes on every link it makes
 #: from a FamilySearch attachment. A literal because this plane is Python;
@@ -109,10 +110,13 @@ def invoked_skill_name(tool: str, args: dict[str, Any] | None) -> str | None:
 
 
 def _iter_ops(args: dict[str, Any]) -> list[dict[str, Any]]:
-    """Normalize a tool call's single-op vs batch-op (`ops: [...]`) form."""
+    """Normalize a tool call's single-op vs batch-op (`ops: [...]`) form, with a
+    research_append flat op or plan form read as the tool writes it."""
+    if is_plan_form(args):
+        return plan_form_ops(args)
     ops = args.get("ops")
     if isinstance(ops, list):
-        return [op for op in ops if isinstance(op, dict)]
+        return [canonical_op(op) for op in ops if isinstance(op, dict)]
     return [args]
 
 

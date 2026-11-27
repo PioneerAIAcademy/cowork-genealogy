@@ -40,6 +40,7 @@ import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { isToolLoggedRead } from "./tool-logged-read.js";
 
 export type QuestionState =
   | "framed"
@@ -88,7 +89,9 @@ const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 /**
  * Positive or partial log entries no assertion cites by `log_entry_id`. An
  * external-site entry whose capture has not come back is an open hand-off, not
- * something to extract.
+ * something to extract. Nor is a page `image_transcribe` logged itself (#4721):
+ * it records a read, not a find — a browsed page, a cut-off read, a hint page
+ * since rejected — and `extraction_append` cites it when the page is extracted.
  */
 function pendingExtraction(research: any, logs: any[]): any[] {
   const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
@@ -96,6 +99,7 @@ function pendingExtraction(research: any, logs: any[]): any[] {
     (e) =>
       (e?.outcome === "positive" || e?.outcome === "partial") &&
       !cited.has(e?.id) &&
+      !isToolLoggedRead(e) &&
       !(e?.tool === "external_site" && e?.external_site?.capture_received !== true),
   );
 }
@@ -128,10 +132,45 @@ function searchStepFor(item: any): string {
  *  arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const searchedOut = searchedOutItemIds(research, plans);
   const items = openItems(plans)
-    .filter((i) => !waitingOnUpload.has(i?.id))
+    .filter((i) => !waitingOnUpload.has(i?.id) && !searchedOut.has(i?.id))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
+}
+
+/** The step once nothing is left to search. Items searched with nothing found
+ *  are still `in_progress`, and every gate reads that as unfinished work: the
+ *  declaration, `hasOpenWork`, the unsettled-conflict ending and the new-question
+ *  gate. So research-plan's Dispose mode closes them first (it completes a search
+ *  that ran, even when it found nothing), and only then does the question go to
+ *  research-exhaustiveness and proof-conclusion (lead, 2026-11-26). */
+function searchSpentStep(research: any, plans: any[]): string {
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const ids = [...searchedOutItemIds(research, plans)].filter((id) => !waitingOnUpload.has(id)).sort();
+  return ids.length > 0
+    ? `research-plan — dispose of ${ids.join(", ")} (searched, nothing found), then ` +
+        "research-exhaustiveness and proof-conclusion"
+    : "research-exhaustiveness, then proof-conclusion";
+}
+
+/** `in_progress` items already searched with nothing found: every entry they own
+ *  is `negative`. search-records leaves such an item `in_progress`
+ *  for re-planning, so it is executed, not due again; picking it re-ran the same
+ *  searches turn after turn and the question never reached a conclusion
+ *  (kenneth-quass-death, 2026-11-26: one item searched 9 times). A `fs_hints`
+ *  item is never searched out: search-hints finishes it. */
+function searchedOutItemIds(research: any, plans: any[]): Set<any> {
+  const entries = arr(research?.log);
+  const out = new Set<any>();
+  for (const item of openItems(plans)) {
+    if (item?.status !== "in_progress" || item?.record_type === "fs_hints") continue;
+    const own = entries.filter((e) => e?.plan_item_id === item?.id);
+    if (own.length > 0 && own.every((e) => e?.outcome === "negative")) {
+      out.add(item?.id);
+    }
+  }
+  return out;
 }
 
 /** The `planned`/`in_progress` items on a plan that is active or status-less. */
@@ -307,6 +346,37 @@ export function competingParentSets(
   return [...parents]
     .filter(([, s]) => s.size > 2)
     .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
+}
+
+/** The person-evidence rung for a partly-linked question: some of its
+ *  assertions are linked and some are not, yet no live link reaches a project
+ *  subject. Null when every assertion is linked or rejected against a subject
+ *  (`rejected_links`; person-evidence has nothing left to do, so the rung
+ *  cannot loop), when a link already names a subject,
+ *  or when no subject is a tree person. `linkedAssertionIds` holds the links
+ *  `countsForLinkedRung` admits. */
+export function subjectUnreached(
+  research: any,
+  tree: any,
+  assertions: readonly any[],
+  linkedAssertionIds: ReadonlySet<unknown>,
+): { unlinked: number; subjects: string[] } | null {
+  if (!tree) return null;
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  const subjects = arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+  if (subjects.length === 0) return null;
+  const rejected = new Set(
+    arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
+  );
+  const unlinked = assertions.filter((a) => !linkedAssertionIds.has(a?.id) && !rejected.has(a?.id)).length;
+  if (unlinked === 0 || unlinked === assertions.length) return null;
+  const ids = new Set(assertions.map((a) => a?.id));
+  const reaches = arr(research?.person_evidence).some(
+    (pe) => countsForLinkedRung(pe) && ids.has(pe?.assertion_id) && subjects.includes(pe?.person_id),
+  );
+  return reaches ? null : { unlinked, subjects };
 }
 
 /** Tree persons linked to this question's assertions whom nothing ties to a
@@ -885,6 +955,9 @@ export function questionStatus(
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   const kin = resolved ? [] : unlinkedKin(research, tree, qid, assertionIds);
+  const unreached = resolved || summaries.length > 0 || noneLinked
+    ? null
+    : subjectUnreached(research, tree, assertions, linkedAssertionIds);
   if (attachedBirthPairs.length > 0) {
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
@@ -922,9 +995,9 @@ export function questionStatus(
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Unreachable — `hasOpenWork`'s items are a subset of the picker's and
-        // both apply the same upload skip.
-        : "research-exhaustiveness, then proof-conclusion";
+        // Every open item is waiting on an upload or was searched with nothing
+        // found: the conflict's evidence search is over (lead, 2026-11-26).
+        : searchSpentStep(research, plans);
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -945,6 +1018,12 @@ export function questionStatus(
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (kin.length > 0) {
     nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+  } else if (unreached) {
+    // Below the kin rung, so it changes no step that rung sets. Some links but
+    // none reaching the subject: the record was linked around them, not to them.
+    nextStep =
+      `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
+      `are unlinked and none of its links reaches the project subject (${unreached.subjects.join(", ")})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
@@ -972,7 +1051,11 @@ export function questionStatus(
     // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
-    nextStep = "research-plan";
+    // A project with no localities entry at all has surveyed no place, so the plan
+    // step opens with locality-guide (issue #4791, stop 3). Whether an entry covers
+    // this question's own place is research-plan's to judge, and it hands back.
+    const surveyed = Array.isArray(research?.localities) && research.localities.length > 0;
+    nextStep = surveyed ? "research-plan" : "locality-guide, then research-plan";
   } else if (state === "evidence-gathered") {
     // Not preempted by an uncited positive/partial entry: agents log
     // inconclusive searches as `partial` and link lists as `positive`, and those
@@ -1010,8 +1093,7 @@ export function questionStatus(
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
     const item = nextUnexecutedItem(research, plans);
-    if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
-    else nextStep = searchStepFor(item);
+    nextStep = item ? searchStepFor(item) : searchSpentStep(research, plans);
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

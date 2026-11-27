@@ -23,10 +23,6 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   tools: ToolChip[]
-  // A user message the HOST sent for the researcher under "Keep going" -- rendered
-  // as theirs, because it is their run, but marked so a reader can tell which
-  // messages they chose and which the run sent on their behalf.
-  auto?: boolean
   // Arrival order of text and chips. `text` accumulates into one string and `tools`
   // into one array, so the order BETWEEN them is lost -- which is why every chip in a
   // turn renders above every paragraph, 36 of them in one stretch of the captured
@@ -136,11 +132,10 @@ export const SPEND_CAP_LABEL =
 // `turn_done.options`; the browser shows one button per phrase and nothing else, so
 // a phrase it does not recognise is still shown. What it must NOT do is invent one:
 // each button sends its phrase verbatim, and `step_mode(text)` reads it back on the
-// other side. That ignores case and trailing punctuation, so "keep going!" would still
-// start a job, but a reworded label ("Carry on") would be an ordinary message.
+// other side. That ignores case and trailing punctuation, so "wrap it up!" would still
+// start a wrap-up, but a reworded label ("Finish") would be an ordinary message.
 export const REPLY_LABELS: Record<string, string> = {
   'Continue.': 'Continue',
-  'Keep going.': 'Keep going',
   'Wrap it up.': 'Wrap it up',
   'Search more.': 'Search more'
 }

@@ -1021,7 +1021,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
-| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/specs/research-step-mode-spec.md`). Omitted means no boundary, which is what every committed test runs under except the few `test_step_mode_wiring.DECLARING_TESTS` lists |
+| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `wrapup`; decision 25, `docs/specs/research-step-mode-spec.md`). Omitted means no boundary, which is what every committed test runs under except the few `test_step_mode_wiring.DECLARING_TESTS` lists |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -2101,13 +2101,12 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # candidate (full skill run)
-eval/runlogs/unit/<skill-name>/v{N}.json                        # released
+eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # full skill run, committed
 ```
 
 The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
-The scheme (released, candidate, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`.
+The scheme (committed `v{N}_<ts>` run logs, of which the harness keeps the newest 5 per skill, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`; `eval/CLAUDE.md` "Run log naming" describes it.
 
 **Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
@@ -2344,11 +2343,11 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
   **The size trade, both halves.** Omitting plain predicate matches is the
   saving; retaining `live` is the cost, and `live` is the majority — as of
   2026-08-26, 4,399 of 7,796 recorded calls against 3,381 predicate. **Re-measure
-  before requoting:** retention keeps only the newest 5 candidates per skill, so
+  before requoting:** retention keeps only the newest 5 run logs per skill, so
   the corpus churns under these numbers — this same count read 7,718 on 08-24 and
   7,773 earlier on 08-26. There is no per-field cap here,
   unlike `builtin_tool_calls`' 200-char argument cut or the e2e capture strip.
-  What bounds growth instead is unit retention: the newest 5 candidates per skill
+  What bounds growth instead is unit retention: the newest 5 run logs per skill
   (`prune_old_candidates`), which caps the corpus regardless of per-log size.
   State that when quoting a size figure — the largest committed run log is
   1.8 MB, and this field grows it.
@@ -2746,7 +2745,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `added`: IDs in `after` but not in `before` — emit the full new object.
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
-3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
+3. **`project` and `researcher_profile` are single objects, not arrays.** Each is treated as a one-entry array for diffing purposes. `project` is keyed by its own `id` field, as any array entry would be. `researcher_profile` has no `id` field (`docs/specs/schemas/research.schema.json`, `$defs/researcher_profile`), so it is keyed on the section name itself, `"researcher_profile"` — the same synthetic `entryId` `research_append` echoes for a singleton-section write. A future single-object section added to the schema only needs adding to `diff.py`'s `_SINGLETON_SECTIONS`; it is keyed by its own `id` field if it has one, else falls back to its section name automatically.
 4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file an agent writes in the working folder) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.

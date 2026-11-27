@@ -21,6 +21,7 @@ import {
   standardPlaceToRepId,
 } from "../utils/place-resolver.js";
 import type {
+  CatalogFilmForYear,
   CatalogFilmNote,
   CatalogHit,
   CatalogSearchInput,
@@ -909,7 +910,7 @@ async function lookupCatalogItem(
  *  to it. Derived from the schema, so a filter added there is refused beside
  *  `catalogId` with no second edit; read at call time, after the schema below
  *  is defined. */
-const LOOKUP_ALLOWS = new Set(["catalogId", "count", "hydrate"]);
+const LOOKUP_ALLOWS = new Set(["catalogId", "count", "hydrate", "filmYear"]);
 function lookupRefuses(): (keyof CatalogSearchInput)[] {
   return Object.keys(catalogSearchSchema.inputSchema.properties).filter(
     (k) => !LOOKUP_ALLOWS.has(k),
@@ -1027,7 +1028,12 @@ export async function catalogSearchTool(
   }
   // count and hydrate are still checked above, so a bad value is refused the
   // same way on both paths; past that they do nothing to a lookup.
-  if (catalogId !== undefined) return lookupCatalogItem(catalogId, principal, deadline);
+  if (input.filmYear !== undefined && (!Number.isInteger(input.filmYear) || (input.filmYear as number) < 1000)) {
+    throw new Error(`filmYear is ${show(input.filmYear)}; it must be a four-digit year, or omitted.`);
+  }
+  if (catalogId !== undefined) {
+    return attachFilmForYear(await lookupCatalogItem(catalogId, principal, deadline), input.filmYear);
+  }
 
   // The REP id, never the place id: standardPlaceToPlaceId("Maine, United
   // States") is 16, which the Catalog reads as Timor-Leste and answers.
@@ -1227,8 +1233,52 @@ export async function catalogSearchTool(
     placeResolved: place ? Boolean(repId) : true,
     hydrationTimedOut,
     hydrateRequested: hydrate,
-    hits,
+    hits: attachFilmForYear({ hits } as CatalogSearchResult, input.filmYear).hits,
   });
+}
+
+/** A year range ("1804-1865") or a lone year in a film note's text. */
+const NOTE_YEARS = /\b(\d{4})(?:\s*[-–]\s*(\d{4}))?\b/g;
+
+function noteCovers(text: string | undefined, year: number): boolean {
+  if (typeof text !== "string") return false;
+  for (const m of text.matchAll(NOTE_YEARS)) {
+    const from = Number(m[1]);
+    const to = m[2] === undefined ? from : Number(m[2]);
+    if (from <= year && year <= to) return true;
+  }
+  return false;
+}
+
+/** The sentence a caller relays for a hit's film covering the year: written
+ *  here so the film number reaches the researcher as the Catalog gives it. */
+export function filmLine(hit: Pick<CatalogHit, "title" | "availableOnline">, note: CatalogFilmNote): string {
+  const reel = note.filmNumber ? `film ${note.filmNumber}` : `image group ${note.imageGroupNumber}`;
+  const covers = note.text ? ` (${note.text})` : "";
+  const head = `FamilySearch has filmed this register: "${hit.title}", ${reel}${covers}.`;
+  if (hit.availableOnline === false) return `${head} It is viewable only at a FamilySearch Center or an affiliate library.`;
+  if (hit.availableOnline === true) return `${head} It can be read online at FamilySearch.`;
+  return head;
+}
+
+/** Each hit with a film note covering `filmYear` gets `filmForYear`. Pure, and
+ *  exported so the eval mock runs it over a canned answer. */
+export function attachFilmForYear(result: CatalogSearchResult, filmYear: unknown): CatalogSearchResult {
+  if (typeof filmYear !== "number" || !Number.isInteger(filmYear)) return result;
+  return {
+    ...result,
+    hits: result.hits.map((hit) => {
+      const note = (hit.filmNotes ?? []).find(
+        (n) => (n.filmNumber || n.imageGroupNumber) && noteCovers(n.text, filmYear),
+      );
+      if (!note) return hit;
+      const filmForYear: CatalogFilmForYear = { line: filmLine(hit, note) };
+      if (note.filmNumber) filmForYear.filmNumber = note.filmNumber;
+      if (note.imageGroupNumber) filmForYear.imageGroupNumber = note.imageGroupNumber;
+      if (note.text) filmForYear.text = note.text;
+      return { ...hit, filmForYear };
+    }),
+  };
 }
 
 export const catalogSearchSchema = {
@@ -1301,6 +1351,13 @@ export const catalogSearchSchema = {
         maximum: 200,
         description:
           "Hits to return. Default 25, max 200. Has no effect with catalogId.",
+      },
+      filmYear: {
+        type: "integer",
+        description:
+          "The year you need a film for (e.g. 1836). Filters nothing: each hit whose film " +
+          "notes cover that year gets `filmForYear`, with a `line` naming the register, " +
+          "the film and where it can be viewed. Relay that line word for word.",
       },
       hydrate: {
         type: "integer",

@@ -8,16 +8,23 @@
 // gitignored, cpSync'd into the .mcpb stage and COPY'd into the E2B image, so
 // the stamp reaches every artifact from this single write. The running server
 // reads it back through src/utils/build-info.ts (`dev` fallback when absent).
+//
+// `--engine <dir>` names an engine folder that is not this repo's: the tool server's
+// image (apps/server/proto/tools/Dockerfile) compiles at /app. A checkout always
+// answers for itself; only when git has no answer does BUILD_SHA speak (`envStamp`).
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildVersion, gitStamp } from "./build-stamp.mjs";
+import { parseArgs } from "node:util";
+import { buildVersion, envStamp, gitStamp } from "./build-stamp.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ENGINE = join(ROOT, "packages", "engine", "mcp-server");
+const { values } = parseArgs({ options: { engine: { type: "string" } } });
+const ENGINE = values.engine ? resolve(values.engine) : join(ROOT, "packages", "engine", "mcp-server");
 
 const base = JSON.parse(readFileSync(join(ENGINE, "package.json"), "utf8")).version;
-const stamp = gitStamp(ROOT);
+const fromGit = gitStamp(ROOT);
+const stamp = fromGit.sha ? fromGit : (envStamp() ?? fromGit);
 const info = {
   version: buildVersion(base, stamp),
   base,

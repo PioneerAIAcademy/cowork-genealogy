@@ -34,6 +34,7 @@ from validators_lib import (
 )
 from validators_lib import existing_plan_changes
 from validators_lib import new_plan_ids as _new_plan_ids
+from validators_lib import research_append_ops
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
 # so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
@@ -689,6 +690,164 @@ def test_enumerative_plan_accounts_for_five_events(before_state, after_state, te
                 for i in plan.get("items") or []
             )
         )
+
+
+# --- Tag-gated: a disputed fact gets a plan for the subject's lifetime -------
+
+# Issue #4579, scenario `mayfield-disputed-given-name`. The question asks what
+# given name is written on a 1900 census page, and the records give it three
+# ways. The plan must reach past that record: census items covering each later
+# census year, and a death or vital item dated after it. Keyed per test id, as
+# _PENSION_REACH_BY_TEST_ID is; the general rule stays in the agent body. Only
+# `record_type` and `date_range` are read: plan items carry no search-key field,
+# and a rationale that names a reading to say it is not searched on is correct,
+# so whether an item is keyed on one reading is left to the judge.
+_DISPUTED_NAME_YEARS_BY_TEST_ID = {
+    "ut_research_plan_c7m": {"record_year": 1900, "later_censuses": (1910, 1920)},
+}
+
+
+def _date_range_span(date_range: object) -> tuple[int, float] | None:
+    """The first and last year a `date_range` covers, parsed as
+    `_date_range_reaches` parses it: a decade ("1910s") spans its ten years,
+    and an open-ended range has no last year."""
+    text = str(date_range or "").strip()
+    found = _DATE_RANGE_YEAR_RE.findall(text)
+    if not found:
+        return None
+    first = min(int(y) for y, _ in found)
+    last = max(int(y) + (9 if decade else 0) for y, decade in found)
+    return first, (float("inf") if _OPEN_ENDED_RE.search(text) else last)
+
+
+def _date_range_covers(date_range: object, year: int) -> bool:
+    span = _date_range_span(date_range)
+    return span is not None and span[0] <= year <= span[1]
+
+
+def test_disputed_name_plan_covers_lifetime(before_state, after_state, test):
+    """Tag-gated: a plan for a fact the records state differently holds a
+    census item whose `date_range` covers each census after the question's
+    record, and a death or vital item dated after that record.
+
+    "Covers" means the year is inside the range, not that the range reaches
+    past it: a single 1870-1880 census item does not cover 1910. One item may
+    cover several years (1870-1920). A `skipped` item covers nothing."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _DISPUTED_NAME_YEARS_BY_TEST_ID or "disputed-name-lifetime-coverage" in tags, (
+        f"{test_id} has a _DISPUTED_NAME_YEARS_BY_TEST_ID entry but no "
+        "'disputed-name-lifetime-coverage' tag - restore the tag or delete the entry"
+    )
+    if "disputed-name-lifetime-coverage" not in tags:
+        pytest.skip("not a disputed-name-lifetime-coverage test")
+    years = _DISPUTED_NAME_YEARS_BY_TEST_ID.get(test_id)
+    assert years, (
+        f"{test_id} carries 'disputed-name-lifetime-coverage' but has no entry in "
+        "_DISPUTED_NAME_YEARS_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [
+        i
+        for p in _new_plans(before, after)
+        for i in (p.get("items") or [])
+        if i.get("status") != "skipped"
+    ]
+    assert items, "no new planned items were written"
+
+    census_items = [i for i in items if _CENSUS_RE.search(str(i.get("record_type") or ""))]
+    uncovered = [
+        y
+        for y in years["later_censuses"]
+        if not any(_date_range_covers(i.get("date_range"), y) for i in census_items)
+    ]
+    assert not uncovered, (
+        f"no census item's date_range covers {', '.join(map(str, uncovered))}, "
+        f"a census after the {years['record_year']} record the question is about. "
+        "Census items: "
+        + (
+            "; ".join(f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}" for i in census_items)
+            or "none"
+        )
+    )
+
+    vital_items = [i for i in items if _VITAL_RECORD_TYPES.search(str(i.get("record_type") or ""))]
+    assert any(_date_range_reaches(i.get("date_range"), years["record_year"] + 1) for i in vital_items), (
+        f"no death or vital item is dated after {years['record_year']}, the record "
+        "the question is about. Vital items: "
+        + (
+            "; ".join(f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}" for i in vital_items)
+            or "none"
+        )
+    )
+
+
+# --- Tag-gated: a pre-1850 parentage plan reaches a child-naming record first -
+
+# Issue #4163. A US federal census before 1850 names only the head of
+# household, so a parentage plan needs a record that can name a child, planned
+# ahead of every census item from those years. Whether a rationale *frames* the
+# census as placement or as proof stays with the judge: a phrase match fails
+# sound rationales ("confirm I1's residence") as often as it catches a bad one.
+_CHILD_NAMING_RECORD_TYPES = re.compile(
+    r"probate|(?<!real[_ ])estate|\bwills?\b|land|deed|church|parish|vital|town",
+    re.IGNORECASE,
+)
+_FIRST_YEAR_RE = re.compile(r"\b(1[6-9]\d\d)\b")
+
+
+def _is_pre1850_census(item: dict) -> bool:
+    if not _CENSUS_RE.search(str(item.get("record_type") or "")):
+        return False
+    first = _FIRST_YEAR_RE.search(str(item.get("date_range") or ""))
+    return bool(first) and int(first.group(1)) < 1850
+
+
+def test_pre1850_parentage_plan_puts_child_naming_record_first(
+    before_state, after_state, test
+):
+    """Tag-gated: every new plan has an item of a record type that can name a
+    child, sequenced ahead of every census item whose date range starts before
+    1850."""
+    if "pre1850-census" not in (test.get("tags") or []):
+        pytest.skip("not a pre1850-census test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+
+    for plan in plans:
+        items = [i for i in plan.get("items") or [] if i.get("status") != "skipped"]
+        naming = [
+            i.get("sequence")
+            for i in items
+            if _CHILD_NAMING_RECORD_TYPES.search(str(i.get("record_type") or ""))
+            and isinstance(i.get("sequence"), int)
+        ]
+        census = [
+            i.get("sequence")
+            for i in items
+            if _is_pre1850_census(i) and isinstance(i.get("sequence"), int)
+        ]
+        listing = "; ".join(
+            f"{i.get('id')} seq {i.get('sequence')} {i.get('record_type')} {i.get('date_range')}"
+            for i in items
+        )
+        assert naming, (
+            f"{plan.get('id')} plans no record type that can name a child "
+            f"(probate, land or deeds, church, vital or town records). Items: {listing}"
+        )
+        if census:
+            assert min(naming) < min(census), (
+                f"{plan.get('id')} plans a pre-1850 census (sequence {min(census)}) "
+                f"ahead of every record that can name a child (first at sequence "
+                f"{min(naming)}). Items: {listing}"
+            )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
@@ -793,17 +952,8 @@ def test_research_plan_no_out_of_lane_tools(
 
 
 def _plan_write_ops(args: dict) -> list[dict]:
-    """The ops of one `research_append` call, in either shape the model sends:
-    `ops` as a list or a JSON string, or a single top-level op (same parse as
-    test_universal.py's assertion-update check)."""
-    ops = args.get("ops")
-    if isinstance(ops, str):
-        try:
-            ops = json.loads(ops)
-        except (ValueError, TypeError):
-            ops = None
-    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-    return [op for op in candidates if isinstance(op, dict)]
+    """The ops of one `research_append` call, in any shape the model sends."""
+    return research_append_ops(args)
 
 
 def _pid_tail(value: str) -> str:
@@ -1220,7 +1370,18 @@ _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
     r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
-    r"for\s+(?:this|the)\s+\w+)\b",
+    r"entries|files?|pages?|documents?|for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# The same adjective after its noun ("estate files not yet indexed on
+# FamilySearch") describes those files. Issue #4163: ut_research_plan_csn,
+# v17_2026-11-07_11-50-41, pli_008, "for unindexed entries" charged to 1500692
+# (personCount > 0); ut_research_plan_hoh, 2026-11-10, pli_012, "Berkshire County
+# estate files not yet indexed on FamilySearch" charged to 3155889 (81433).
+# "records" is left out: "its records are not indexed" is a collection claim.
+_NON_COLLECTION_NOUN_THEN_ADJ_RE = re.compile(
+    r"\b(?:entries|files?|pages?|documents?)\s+"
+    r"(?:(?:that\s+)?(?:are|were)\s+)?(?:not\s+(?:yet\s+)?indexed|un-?indexed)\b",
     re.I,
 )
 # An availability adjective describes the nearest identifier before it. When
@@ -1334,9 +1495,11 @@ def test_research_plan_availability_claim_matches_counts(
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
                 claims_indexed = _claim_on_collection(
-                    _INDEXED_RE, claim_text, cid
-                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
-                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                    _INDEXED_RE, _UNINDEXED_RE.sub(" ", claim_text), cid
+                )
+                about_collection = _NON_COLLECTION_NOUN_THEN_ADJ_RE.sub(
+                    " ", _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                )
                 claims_browse = _claim_on_collection(
                     _BROWSE_ONLY_RE, about_collection, cid
                 ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)

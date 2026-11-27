@@ -2,7 +2,7 @@
 
 Schema v3: one run log per harness invocation, per skill. Wraps a list
 of per-test entries in an envelope carrying version + snapshot +
-metadata. See docs/plan/eval-runlog-versioning.md.
+metadata. See eval/CLAUDE.md, "Run log naming".
 
 Pieces this module exposes:
 
@@ -536,7 +536,6 @@ def build_run_log(
     schema_version: int = 3,
     skill: str,
     version: int | None,
-    released: bool,
     releasable: bool,
     invocation: str,
     timestamp: str,
@@ -592,7 +591,6 @@ def build_run_log(
         "schema_version": schema_version,
         "skill": skill,
         "version": version,
-        "released": released,
         "releasable": releasable,
         "invocation": invocation,
         "timestamp": timestamp,
@@ -726,13 +724,11 @@ def prune_old_candidates(
     annotations. Returns what was removed.
 
     Called on every write, so the cap holds by construction — no CI rule, no
-    step for the junior to remember, and the corpus cannot re-accumulate. The
-    versioning plan left this tier manual and it was never once performed:
-    312 candidates, 0 released, 205 MB (GitHub issue #985).
+    step for the junior to remember, and the corpus cannot re-accumulate
+    (GitHub issue #985).
 
-    Released `v{N}.json` are never pruned, and a skill's newest candidate is
-    never pruned, so this cannot change which run log `check_runlogs` rule 2
-    evaluates. Scratch and partial logs are gitignored local artifacts and are
+    A skill's newest candidate is never pruned, so this cannot change which
+    run log `check_runlogs` rule 2 evaluates. Scratch and partial logs are gitignored local artifacts and are
     left alone.
     """
     try:
