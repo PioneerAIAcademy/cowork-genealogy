@@ -16,9 +16,9 @@ import { tmpdir } from "os";
 import {
   researchAppend,
   researchAppendFromCaller,
-  CATALOG_READ_BUDGET_MS,
   LOCALITY_COLLECTIONS_FILL_MAX,
 } from "../../src/tools/research-append.js";
+import { CATALOG_READ_BUDGET_MS } from "../../src/utils/collection-catalog.js";
 import { markFsRefusal } from "../../src/utils/fs-budget.js";
 import { clearCollectionsCache, collectionCatalogLoader } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
