@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -649,13 +650,24 @@ def _live_fs_search(entry: Path | str) -> tuple[bool, str]:
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                result = await session.call_tool(
-                    "record_search", {"surname": "Smith"}
-                )
-                text = "\n".join(
-                    c.text for c in result.content if hasattr(c, "text")
-                )
-                return (bool(result.isError), text)
+                # Every tool but a few needs a project (issue #4686): make a
+                # person-less one in a temp folder, which reads nothing from FamilySearch.
+                with tempfile.TemporaryDirectory(prefix="preflight-project-") as project:
+                    created = await session.call_tool(
+                        "project_create",
+                        {"projectPath": project, "objective": "Preflight: is live search working?"},
+                    )
+                    if created.isError:
+                        return (True, "project_create failed: " + ("\n").join(
+                            c.text for c in created.content if hasattr(c, "text")
+                        ))
+                    result = await session.call_tool(
+                        "record_search", {"surname": "Smith", "projectPath": project}
+                    )
+                    text = ("\n").join(
+                        c.text for c in result.content if hasattr(c, "text")
+                    )
+                    return (bool(result.isError), text)
 
     return _run_bounded(
         lambda: asyncio.run(

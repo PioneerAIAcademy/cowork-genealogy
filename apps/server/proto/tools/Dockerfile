@@ -11,6 +11,13 @@ WORKDIR /app
 COPY packages/engine/mcp-server/package.json packages/engine/mcp-server/package-lock.json packages/engine/mcp-server/tsconfig.json ./
 COPY packages/engine/mcp-server/src ./src
 RUN npm ci --ignore-scripts && npx tsc
+# The build id `auth_status` and `project_context` report. The context has no .git, so the
+# commit arrives as a build argument; with none, the id stays `<version>+dev`. After tsc,
+# so a new commit rebuilds this layer and not the compile.
+COPY scripts/build-stamp.mjs scripts/write-build-info.mjs /stamp/
+ARG GIT_SHA=
+ARG GIT_DIRTY=
+RUN BUILD_SHA="$GIT_SHA" BUILD_DIRTY="$GIT_DIRTY" node /stamp/write-build-info.mjs --engine /app
 
 # The MCP App page, built to one HTML file. --ignore-scripts keeps electron's postinstall
 # out, and with it the root preinstall, so scripts/ need not be here. No CI job builds this

@@ -25,6 +25,7 @@ import { disputeGroups, isResearcherReading, liveSuccessorId } from "../utils/pa
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import {
   compoundJurisdictionError,
+  hintsReviewRecordTypeError,
   outsideSiteJurisdictionError,
   planItemFlags,
   planWindowFlag,
@@ -54,16 +55,16 @@ import {
   unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
-import {
-  atomicWriteJson,
-  atomicWriteBoth,
-  readProjectJson,
-  formatIssues,
-  withProjectLock,
-  NoProjectError,
-  noProjectResult,
-} from "../utils/project-io.js";
+import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
+import {
+  canonicalOps,
+  isPlanForm,
+  planFormError,
+  planFormMessage,
+  planFormOps,
+  resolvePlanFormPlanId,
+} from "./research-append-forms.js";
 import {
   readMatchScores,
   findRecordedScore,
@@ -72,6 +73,7 @@ import {
   type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
+import { normalizeString } from "../utils/string-similarity.js";
 import {
   birthPlacesAgree,
   recordIdOf,
@@ -85,6 +87,7 @@ import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import {
   placeSegments,
   canonicalCountry,
+  UK_CONSTITUENTS,
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
@@ -146,6 +149,8 @@ import { GUIDE_SECTION_MAX_CHARS, LOCALITY_GUIDE_OUTLINE, mergeGuideSection } fr
 import { normalizeRegistrationStart, normalizeRowLevels } from "../utils/registration-level.js";
 import { fillRecordTypeRows } from "../utils/locality-record-types.js";
 import {
+  collectionScopeMatcher,
+  collectionScopeTerms,
   isCoreNationalCollection,
   localityNationalCountry,
   nationalCollectionScope,
@@ -202,6 +207,7 @@ import { claimRuleFindings, questionCapFindings } from "../validation/claim-rule
 import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
 import { clearUnclaimedPrimary, primaryTarget, type PrimaryClearResult } from "../utils/primary-claim.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -3115,9 +3121,13 @@ function treeSourceIsEntry(
 
 export interface CircularVerdict {
   refused: boolean;
-  kind: "relationship" | "subject";
+  kind: "relationship" | "subject" | "audit";
   /** The linked assertion's record. */
   record: string;
+  /** Audit arm only: the question that marks the record's entry as an audit,
+   *  and whether the record's assertions name it (`named`) or name no question
+   *  while it is open (`open`). */
+  auditQuestion?: { id: string; by: "named" | "open" };
   /** Each role-matched parent or spouse the baseline holds, and whether the
    *  sources on that relationship are all this entry (`circular`) or a new source
    *  or record clears it (`cleared`). Empty for the subject-alone arm. */
@@ -3126,8 +3136,10 @@ export interface CircularVerdict {
 
 /** The verdict on one live probable or confident link, or null when the gate
  *  does not apply: no baseline, a person the baseline does not hold, an
- *  assertion with no record, negative evidence, or a two-party assertion. `tree` is the live tree,
- *  which can only clear a refusal; `baseline` decides circularity. */
+ *  assertion with no record, negative evidence, or a two-party assertion the
+ *  audit arm does not judge. `tree` is the live tree, which can only clear a
+ *  refusal; `baseline` decides circularity. The audit arm runs only where the
+ *  role arms allow. */
 export function circularCorroborationVerdict(entry: any, research: any, tree: any, baseline: any): CircularVerdict | null {
   if (!baseline || !isStrongConfidence(entry?.confidence) || entry.superseded_by) return null;
   const personId = entry.person_id;
@@ -3135,14 +3147,36 @@ export function circularCorroborationVerdict(entry: any, research: any, tree: an
   if (!subject) return null;
   const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
   const linked = assertions.find((a) => a?.id === entry.assertion_id);
-  // A two-party assertion (a relationship or a marriage) names the person it is
-  // linked to, not its own party, so its role says nothing about who that person
-  // is on the record.
-  if (!linked || recordBasisOf(linked) === "absent" || isTwoParty(linked.fact_type)) return null;
+  if (!linked || recordBasisOf(linked) === "absent") return null;
   const here = sameEntryOf(research, linked);
   if (!here) return null;
   const record = arkToBareId(linked.record_id);
+  // A two-party assertion (a relationship or a marriage) names the person it is
+  // linked to, not its own party, so its role says nothing about who that person
+  // is on the record. Only the audit arm, which reads no role, judges it.
+  if (isTwoParty(linked.fact_type)) {
+    const audit = auditVerdict(entry, research, baseline, subject, here, record);
+    return audit?.refused ? audit : null;
+  }
+  const verdict = roleVerdict(entry, research, tree, baseline, subject, assertions, linked, here, record);
+  return verdict.refused ? verdict : (auditVerdict(entry, research, baseline, subject, here, record) ?? verdict);
+}
 
+type EntryIds = { records: Set<string>; sources: Set<string>; descriptions: Set<string> };
+
+/** The relationship and subject-alone arms of `circularCorroborationVerdict`. */
+function roleVerdict(
+  entry: any,
+  research: any,
+  tree: any,
+  baseline: any,
+  subject: any,
+  assertions: any[],
+  linked: any,
+  here: EntryIds,
+  record: string,
+): CircularVerdict {
+  const personId = entry.person_id;
   const partyOf = capPartyKeyer(assertions);
   const own = partyOf(linked);
   const subjectRole = normalizedRole(linked.record_role);
@@ -3203,8 +3237,175 @@ export function circularCorroborationVerdict(entry: any, research: any, tree: an
   return { refused: circular && entry.confidence === "confident", kind: "subject", record, relatives };
 }
 
+/** The question that puts a record entry on an audit of the tree, or null: one
+ *  its live assertions name that carries `audits_tree`, or, when they name none,
+ *  an unresolved question carrying it (only one question is open at a time).
+ *  Read over the whole entry so every link from one record gets one answer. */
+function entryOnAuditQuestion(research: any, here: EntryIds): { id: string; by: "named" | "open" } | null {
+  const questions = (Array.isArray(research?.questions) ? research.questions : []) as any[];
+  const named = new Set<string>();
+  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+    if (!isLiveAssertion(a) || typeof a.record_id !== "string" || !here.records.has(arkToBareId(a.record_id))) continue;
+    for (const q of Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : []) {
+      if (typeof q === "string") named.add(q);
+    }
+  }
+  const hit =
+    named.size > 0
+      ? questions.find((q) => named.has(q?.id) && q.audits_tree === true)
+      : questions.find((q) => q?.audits_tree === true && q.status !== "resolved");
+  return hit && typeof hit.id === "string" ? { id: hit.id, by: named.size > 0 ? "named" : "open" } : null;
+}
+
+const AUDIT_YEAR_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism", "death", "burial", "marriage"]);
+const AUDIT_PLACE_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism", "death", "burial", "residence", "census"]);
+
+/** A place's county and the level above it (a US county and state; an English
+ *  county and England), or null for a place that names no county. A trailing
+ *  country is dropped first, so a place written with or without it keys alike;
+ *  England, Scotland, Wales and Northern Ireland stay, as the level above a
+ *  British county. */
+function auditCountyKey(place: unknown): string | null {
+  const parts = placeSegments(String(place ?? ""));
+  while (parts.length > 0) {
+    const country = canonicalCountry(parts[parts.length - 1]);
+    if (country === null || UK_CONSTITUENTS.has(country)) break;
+    parts.pop();
+  }
+  const levels = parts.map((p) => normalizeString(p)).filter((p) => p !== "");
+  return levels.length < 2 ? null : `${levels[levels.length - 2]}\u0000${levels[levels.length - 1]}`;
+}
+
+/** The years two assertions give for one kind of event, or null when they are
+ *  not the same kind of dated event or either gives no year. */
+function auditEventYears(a: any, b: any): [number, number] | null {
+  const ta = String(a?.fact_type ?? "").toLowerCase();
+  if (ta !== String(b?.fact_type ?? "").toLowerCase() || !AUDIT_YEAR_FACTS.has(ta)) return null;
+  const ya = yearOf(a?.date);
+  const yb = yearOf(b?.date);
+  return ya === null || yb === null ? null : [ya, yb];
+}
+
+/** Whether two assertions give different years for one kind of event, both
+ *  stated: a year inferred from an age is approximate and contradicts nothing. */
+function auditYearsConflict(a: any, b: any): boolean {
+  const years = auditEventYears(a, b);
+  return years !== null && years[0] !== years[1] && recordBasisOf(a) !== "inferred" && recordBasisOf(b) !== "inferred";
+}
+
+/** Whether two assertions state the same year for one kind of event, or the
+ *  same county for life facts (#4430); the caller sets aside a record whose
+ *  stated years conflict (`auditYearsConflict`) before asking. Places agree as
+ *  recorded, or as standardized when both carry one. */
+function auditFactsAgree(a: any, b: any): boolean {
+  const years = auditEventYears(a, b);
+  if (years !== null && years[0] === years[1]) return true;
+  const ta = String(a?.fact_type ?? "").toLowerCase();
+  const tb = String(b?.fact_type ?? "").toLowerCase();
+  if (!AUDIT_PLACE_FACTS.has(ta) || !AUDIT_PLACE_FACTS.has(tb)) return false;
+  const sameCounty = (x: unknown, y: unknown) => {
+    const key = auditCountyKey(x);
+    return key !== null && key === auditCountyKey(y);
+  };
+  const filled = (v: unknown) => typeof v === "string" && v.trim() !== "";
+  return (
+    sameCounty(a?.place, b?.place) ||
+    (filled(a?.standard_place) && filled(b?.standard_place) && sameCounty(a.standard_place, b.standard_place))
+  );
+}
+
+/** The audit arm (#4430), or null when it does not apply: on a question that
+ *  audits the tree, a `confident` link to a starting-tree person who already
+ *  cites this entry (on the person, a name, a fact or a relationship of theirs)
+ *  is refused unless another record, cited by no starting-tree person or
+ *  relationship, has an assertion linked live to the person that agrees with
+ *  this entry's linked party on an event year or a life fact's county. */
+function auditVerdict(
+  entry: any,
+  research: any,
+  baseline: any,
+  subject: any,
+  here: EntryIds,
+  record: string,
+): CircularVerdict | null {
+  if (entry.confidence !== "confident") return null;
+  const auditQuestion = entryOnAuditQuestion(research, here);
+  if (auditQuestion === null) return null;
+  const personId = entry.person_id;
+  const descriptions = new Map<string, any>(
+    ((Array.isArray(baseline.sources) ? baseline.sources : []) as any[]).filter((s) => s && typeof s.id === "string").map((s) => [s.id, s]),
+  );
+  const asRefs = (refs: Iterable<string>): TreeSourceRef[] =>
+    [...refs]
+      .map((ref) => (ref.startsWith("#") ? ref.slice(1) : ref))
+      .map((ref) => ({ ref, description: descriptions.get(ref) }))
+      .filter((s) => s.description === undefined || !isTreeAsSource(s.description));
+  const relationships = (Array.isArray(baseline.relationships) ? baseline.relationships : []) as any[];
+  const ownRefs = [
+    ...asRefs(personSourceRefs(subject)),
+    ...relationships
+      .filter((r) => [r?.parent, r?.child, r?.person1, r?.person2].includes(personId))
+      .flatMap((r) => asRefs(sourceRefsOf(r))),
+  ];
+  if (!ownRefs.some((s) => treeSourceIsEntry(s, here, research))) return null;
+
+  const treeRefs = [
+    ...((Array.isArray(baseline.persons) ? baseline.persons : []) as any[]).flatMap((p) => asRefs(personSourceRefs(p))),
+    ...relationships.flatMap((r) => asRefs(sourceRefsOf(r))),
+  ];
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
+  const byId = new Map<string, any>(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const partyOf = capPartyKeyer(assertions);
+  const inHere = (a: any) => typeof a?.record_id === "string" && here.records.has(arkToBareId(a.record_id));
+  const linkedParties = new Set<string>();
+  const others: any[] = [];
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e) || e.person_id !== personId) continue;
+    const a = byId.get(e.assertion_id);
+    if (!a || typeof a.record_id !== "string" || a.record_id === "" || recordBasisOf(a) === "absent") continue;
+    // A two-party assertion is linked to the person it names, so another
+    // record's marriage linked here is this person's; this record's own linked
+    // party is read from its one-party assertions only.
+    if (!inHere(a)) others.push(a);
+    else if (!isTwoParty(a.fact_type)) linkedParties.add(partyOf(a));
+  }
+  const mine = assertions.filter((a) => inHere(a) && recordBasisOf(a) !== "absent" && linkedParties.has(partyOf(a)));
+  // A record that states another year for an event this one dates disagrees
+  // with it, and clears nothing whatever else of it agrees.
+  const disagreeing = new Set<string>();
+  for (const o of others) {
+    if (mine.some((m) => auditYearsConflict(o, m))) disagreeing.add(arkToBareId(o.record_id));
+  }
+  const citedByTree = new Map<string, boolean>();
+  const cleared = others.some((o) => {
+    const key = arkToBareId(o.record_id);
+    if (disagreeing.has(key) || !mine.some((m) => auditFactsAgree(o, m))) return false;
+    if (!citedByTree.has(key)) {
+      const theirs = sameEntryOf(research, o);
+      citedByTree.set(key, theirs !== null && treeRefs.some((s) => treeSourceIsEntry(s, theirs, research)));
+    }
+    return !citedByTree.get(key);
+  });
+  return { refused: !cleared, kind: "audit", record, relatives: [], auditQuestion };
+}
+
 function circularCorroborationRefusal(entry: any, verdict: CircularVerdict): string {
   const p = entry.person_id;
+  if (verdict.kind === "audit") {
+    const q = verdict.auditQuestion;
+    const why =
+      q?.by === "open"
+        ? `record '${verdict.record}' names no question, and the open question '${q.id}' audits the tree`
+        : `record '${verdict.record}' was extracted for question '${q?.id}', which audits the tree`;
+    return (
+      `confidence 'confident' is not available on link '${entry.id}' to '${p}': ${why}, and '${p}' already ` +
+      `cites the record in the starting tree, so the ` +
+      `tree's facts about '${p}' may have come from it and cannot confirm it. 'probable' is available. ` +
+      `'confident' needs another record, cited by no one in the starting tree and linked to '${p}', that gives the ` +
+      `same year for one of the record's events or the same county for one of its life facts. Otherwise lower ` +
+      `confidence to 'probable' or 'speculative'.`
+    );
+  }
   const settle = `Find a record independent of '${verdict.record}' that corroborates it, or lower confidence to 'speculative'.`;
   if (verdict.kind === "subject") {
     return (
@@ -7231,7 +7432,8 @@ function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
   return (
     `the last open question is resolved, so the minted persons no relationship connects to an ` +
     `imported person were removed from the tree: ${parts.join("; ")}. Tell the researcher, by ` +
-    `name, which persons were removed.`
+    `name, which persons were removed. They are gone: name none of them in a claim, a tree edit ` +
+    `or a later write, and do not add them back.`
   );
 }
 
@@ -7394,7 +7596,7 @@ function planItemLogAttributionInvariants(
   // `e &&`: a legacy `log: [null]` must not take the writer down — the same
   // guard planActiveInvariants and hypothesisSupportedInvariants carry.
   const named = (Array.isArray(research?.log) ? research.log : []).some(
-    (e: any) => e && e.plan_item_id === pid,
+    (e: any) => e && e.plan_item_id === pid && !isToolLoggedRead(e),
   );
   if (named) return [];
   // The remedy names a move the agent can actually make. `research_log_append`
@@ -7426,7 +7628,8 @@ function planItemLogAttributionInvariants(
     ];
   }
   return [
-    `plan_items[${pid}]: no log[] entry names ${pid}, so completing it would claim a search ` +
+    `plan_items[${pid}]: no log[] entry names ${pid} (a page image_transcribe logged itself is ` +
+      `a read, not the item's search), so completing it would claim a search ` +
       `nothing in the document records. Log the search that satisfies this item with ` +
       `research_log_append({ planItemId: "${pid}", ... }) before completing it — ` +
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
@@ -7492,7 +7695,7 @@ export function planItemCompletionRecordTypeInvariants(entry: any, research: any
   const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
   if (!terms) return []; // record_type outside the starter table — structural check only
   const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
-    (e: any) => e && e.plan_item_id === pid,
+    (e: any) => e && e.plan_item_id === pid && !isToolLoggedRead(e),
   );
   if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
   const haystack = attributed
@@ -7703,6 +7906,7 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
     const tool = e.tool;
     if (
       e.plan_item_id === pid &&
+      !isToolLoggedRead(e) &&
       (tool === "external_site" ||
         (e.outcome === "positive" && tool !== "external_links_search"))
     ) {
@@ -7876,6 +8080,18 @@ function outsideSiteRuleInputsChanged(stored: any, next: any): boolean {
 
 function outsideSiteJurisdictionInvariants(item: any, storedLinkTexts: readonly string[]): string[] {
   const error = outsideSiteJurisdictionError(item ?? {}, storedLinkTexts);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
+/** A hints-review item carries `record_type: "fs_hints"` (`hintsReviewRecordTypeError`,
+ *  #4828). Checked on an append and on a change to `rationale` or `record_type`
+ *  only, so an item written before the rule stays editable by a status change. */
+function hintsReviewRuleInputsChanged(stored: any, next: any): boolean {
+  return stored?.rationale !== next?.rationale || stored?.record_type !== next?.record_type;
+}
+
+function hintsReviewRecordTypeInvariants(item: any): string[] {
+  const error = hintsReviewRecordTypeError(item ?? {});
   return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
@@ -8241,8 +8457,13 @@ export interface ResearchAppendInput {
   // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
-  // to later ops (the allocators scan the live document).
+  // to later ops (the allocators scan the live document). An op may also carry
+  // its payload beside `section`/`op` instead of in `entry`/`fields`
+  // (research-append-forms.ts).
   ops?: ResearchAppendOp[];
+  // Plan form — one new plan and its items, converted into the batch above.
+  plan?: Record<string, unknown>;
+  planItems?: Record<string, unknown>[];
   // Composite persist: create the tree.gedcomx.json `S` entry for this call's
   // single sources append op and stamp its `gedcomx_source_description_id`.
   sourceDescription?: SourceDescriptionInput;
@@ -8343,13 +8564,17 @@ export interface ExtractionEcho {
 export type ResearchAppendResult =
   | SingleSuccess
   | BatchSuccess
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; opsReceived?: number; reason?: "no_project" };
+  | { ok: false; errors: string[]; opsReceived?: number };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
+/** The refusal a `questions` append gets in a project with no person. */
+const NO_PERSON_QUESTIONS_REFUSAL =
+  "This project has no person, so it holds no research questions: a question is research on " +
+  "a person, and that starts a new project from a FamilySearch person ID. Ask the researcher " +
+  "for the ID, then start init-project with it. A log entry, a source and a locality still " +
+  "write here.";
+
 class ResearchAppendError extends Error {
   errors: string[];
   constructor(errors: string | string[]) {
@@ -8363,10 +8588,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — the outer catch turns it into
-    // noProjectResult(). Flattening it into ResearchAppendError here would lose
-    // the `reason` discriminator and ship it with isError.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -10159,6 +10380,16 @@ function applyOne(
     // of the same transition — see questionResolvedInvariants. Omitting it here
     // would leave the gate reachable only through one of the two fields.
     const fields = op.fields ?? {};
+    // A project with no person refuses research questions (lead, 2026-11-19):
+    // research on a person starts a new project from a FamilySearch person ID.
+    // Only an append is refused, so an older project that already holds a question
+    // with no subject still validates and updates.
+    if (op.op === "append") {
+      const subjects = research?.project?.subject_person_ids;
+      if (!Array.isArray(subjects) || subjects.length === 0) {
+        invariantErrors.push(NO_PERSON_QUESTIONS_REFUSAL);
+      }
+    }
     const resolutionTouchedThisOp =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(fields, "status") ||
@@ -10176,6 +10407,17 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
+    }
+    // `audits_tree` is set once: a caller whose confident link the audit arm
+    // refused must not unmark the question and send the link again.
+    if (op.op === "update" && Object.prototype.hasOwnProperty.call(fields, "audits_tree")) {
+      const before = ((preCallResearch?.questions ?? []) as any[]).find((q) => q?.id === resultEntry?.id);
+      if (before?.audits_tree === true && resultEntry?.audits_tree !== true) {
+        invariantErrors.push(
+          `question ${resultEntry.id}: audits_tree is true and cannot be changed; a question that audits the ` +
+            `tree stays one. Leave audits_tree out of the update.`,
+        );
+      }
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
@@ -10327,6 +10569,9 @@ function applyOne(
         if (item && outsideSiteRuleInputsChanged(storedItem, item)) {
           invariantErrors.push(...outsideSiteJurisdictionInvariants(item, storedLinkTexts));
         }
+        if (item && hintsReviewRuleInputsChanged(storedItem, item)) {
+          invariantErrors.push(...hintsReviewRecordTypeInvariants(item));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         invariantErrors.push(...planItemVoidSearchInvariants(item, research, fulltextSearchable));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -10421,6 +10666,9 @@ function applyOne(
     }
     if (op.op === "append" || outsideSiteRuleInputsChanged(storedItem, resultEntry)) {
       invariantErrors.push(...outsideSiteJurisdictionInvariants(resultEntry, storedLinkTexts));
+    }
+    if (op.op === "append" || hintsReviewRuleInputsChanged(storedItem, resultEntry)) {
+      invariantErrors.push(...hintsReviewRecordTypeInvariants(resultEntry));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
@@ -11612,25 +11860,33 @@ const COLLECTION_TITLE_TYPE_WORD =
  * places the titles sort as 16 naming the place, 165 naming no part of the scope,
  * and 150 naming another part.
  */
-function titleNamesElsewhere(title: string, scope: string, ownTerms: readonly RegExp[]): boolean {
+function titleNamesElsewhere(title: string, isScopePart: (part: string) => boolean, ownTerms: readonly RegExp[]): boolean {
   if (ownTerms.some((re) => re.test(title))) return false;
-  const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
   const rest = title
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p !== "" && !scopeParts.has(p.toLowerCase()) && !/^[\d\s–-]+$/.test(p));
+    .filter((p) => p !== "" && !isScopePart(p) && !/^[\d\s–-]+$/.test(p));
   return rest.length >= 2 && !COLLECTION_TITLE_TYPE_WORD.test(rest[0]);
 }
 
-/** One whole-word matcher per part of the entry's places below `scope`. */
-function ownPlaceTerms(names: readonly unknown[], scope: string): RegExp[] {
+/** Whether a comma-separated part of a title or place is the scope `name` derives:
+ *  for a United Kingdom place, a part that starts with one of its
+ *  `collectionScopeTerms` (`England and Wales`, `Great Britain`); elsewhere, one of
+ *  the scope's own parts. */
+function scopePartTest(name: string, scope: string): (part: string) => boolean {
+  if (collectionScopeTerms(name) !== null) return collectionScopeMatcher(name);
   const scopeParts = new Set(scope.split(",").map((p) => p.trim().toLowerCase()));
+  return (part) => scopeParts.has(part.toLowerCase());
+}
+
+/** One whole-word matcher per part of the entry's places below the scope. */
+function ownPlaceTerms(names: readonly unknown[], isScopePart: (part: string) => boolean): RegExp[] {
   const terms = new Set<string>();
   for (const name of names) {
     if (typeof name !== "string") continue;
     for (const raw of name.split(",")) {
       const part = raw.replace(/\([^()]*\)/g, " ").trim();
-      if (part.length < 3 || scopeParts.has(part.toLowerCase()) || part === "United States") continue;
+      if (part.length < 3 || isScopePart(part) || part === "United States") continue;
       terms.add(part);
     }
   }
@@ -11669,9 +11925,11 @@ function fillLocalityCollections(
       const scope = standardPlaceToCollectionsQuery(name);
       const needle = scope.toLowerCase();
       if (needle === "" || nationalCollectionScope(scope) === scope) continue;
-      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && c.title.toLowerCase().includes(needle));
+      const titleInScope = collectionScopeMatcher(name);
+      const inScope = [...catalog].filter(([, c]) => typeof c.title === "string" && titleInScope(c.title));
       if (inScope.length === 0 && !SURVEY_WIKI_COLLECTIONS.get(op)?.length) continue;
-      const own = ownPlaceTerms([...names, entry.for_place], scope);
+      const isScopePart = scopePartTest(name, scope);
+      const own = ownPlaceTerms([...names, entry.for_place], isScopePart);
       const sent: unknown[] = entry.collections ?? [];
       const sentIds = new Set(sent.map((c: any) => (c && typeof c === "object" ? String(c.id) : "")));
       const linkedIds = new Set(SURVEY_WIKI_COLLECTIONS.get(op) ?? []);
@@ -11682,12 +11940,12 @@ function fillLocalityCollections(
       // when its title sits under this scope and names another part of it (`New York, Yonkers, …`).
       const underScope = (title: string) => title.toLowerCase().startsWith(`${needle},`);
       const missing = [
-        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, scope, own)),
+        ...inScope.filter(([id, c]) => !sentIds.has(id) && !titleNamesElsewhere(c.title as string, isScopePart, own)),
         ...linked.filter(
-          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, scope, own)),
+          ([id, c]) => !sentIds.has(id) && !(underScope(c.title as string) && titleNamesElsewhere(c.title as string, isScopePart, own)),
         ),
       ];
-      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, scope, own)).length;
+      const elsewhere = inScope.filter(([id, c]) => !sentIds.has(id) && titleNamesElsewhere(c.title as string, isScopePart, own)).length;
       const room = Math.max(0, LOCALITY_COLLECTIONS_FILL_MAX - sent.length);
       const added = missing.slice(0, room).map(([id, c]) => ({
         id,
@@ -13794,7 +14052,14 @@ export async function researchAppendFromCaller(
   // `input.ops` itself, so writing it back made a batch stringified twice arrive there
   // still a string, which it decoded a second time, after this guard had read the
   // string as an empty list. It is a string after one decode and so is refused.
-  const decodedOps = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  const plan = decodeArg(input.plan);
+  const planItems = decodeArg(input.planItems);
+  const planForm =
+    isPlanForm(input) && planFormError({ ops: input.ops, section: input.section, plan, planItems }) === null;
+  const rawOps = planForm
+    ? planFormOps(plan as Record<string, unknown>, planItems as Record<string, unknown>[])
+    : decodeArg(input.ops);
+  const decodedOps = (Array.isArray(rawOps) ? canonicalOps(rawOps).ops : rawOps) as ResearchAppendOp[] | undefined;
   const decodedFields = decodeArg(input.fields) as Record<string, unknown> | undefined;
   const isBatch = decodedOps !== undefined;
   const ops = isBatch
@@ -13842,12 +14107,30 @@ export async function researchAppend(
 ): Promise<ResearchAppendResult> {
   const { projectPath } = input;
 
+  input.plan = decodeArg(input.plan) as Record<string, unknown> | undefined;
+  input.planItems = decodeArg(input.planItems) as Record<string, unknown>[] | undefined;
+  if (isPlanForm(input)) {
+    const formError = planFormError(input);
+    if (formError) return { ok: false, errors: [formError] };
+    const { plan, planItems, ...rest } = input;
+    const result = await researchAppend({ ...rest, ops: planFormOps(plan!, planItems!) }, options);
+    if (result.ok) return result;
+    return { ok: false, errors: result.errors.map(planFormMessage) };
+  }
+
   // Recover object/array args the model serialized as JSON strings (see
   // coerceJsonArg) before any shape checks, so a correct-but-stringified batch
   // isn't rejected as "`ops` must be a non-empty array" and driven into a slow
   // one-op-per-call fallback. Once: a value still a string after one decode is
   // not recovered, and is refused.
   input.ops = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  if (Array.isArray(input.ops)) {
+    const canonical = canonicalOps(input.ops);
+    if (canonical.errors.length > 0) {
+      return { ok: false, errors: canonical.errors, opsReceived: input.ops.length };
+    }
+    input.ops = canonical.ops as ResearchAppendOp[];
+  }
   input.entry = decodeArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = decodeArg(input.fields) as Record<string, unknown> | undefined;
   input.edits = decodeArg(input.edits) as NarrativeEdit[] | undefined;
@@ -13874,6 +14157,7 @@ export async function researchAppend(
     const research = await readJson(projectPath, "research.json");
     const stale = options.precondition?.(research);
     if (stale) return fail([stale]);
+    resolvePlanFormPlanId(input.ops, nextResearchId(Array.isArray(research.plans) ? research.plans : [], "pl_"));
     // Snapshot BEFORE any op in this call/batch applies — see
     // proofSummaryInvariants. Must be taken here, not read off `research`
     // later, since applyOne mutates `research` in place per op.
@@ -14174,7 +14458,13 @@ export async function researchAppend(
     const removalWarnings: string[] = [];
     let removedPersons = false;
     if (closesLastOpenQuestion(beforeResearch, research)) {
-      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
+      const writtenSummaryIds = new Set(applied.filter((a) => a.section === "proof_summaries").map((a) => a.entryId));
+      const unanchored = unanchoredMintedPersonIds(
+        tree,
+        research,
+        (id) => pidOrStartingPerson(id, prep.startingPersonIds),
+        writtenSummaryIds,
+      );
       if (unanchored.length > 0) {
         removalWarnings.push(unanchoredRemovalMessage(removeUnanchoredPersons(tree, research, unanchored)));
         removedPersons = true;
@@ -14184,7 +14474,8 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
+    const recordArks = await namesakeRowRecordArks({ research: beforeResearch }, { research }, applied, readResults);
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree, recordArks);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -14238,7 +14529,8 @@ export async function researchAppend(
     // A plan short of its question's date window (issue #2424). Judged once per
     // question on the call's end state, so op order in a batch cannot matter, and
     // only on an op that can change coverage — a search agent's status-only item
-    // update leaves the span alone and must not re-warn on every search.
+    // update leaves the span alone and must not re-warn on every search. The
+    // census-years note also reads record_type and jurisdiction.
     const endPlans: any[] = Array.isArray(research?.plans) ? research.plans : [];
     const planQuestion = (planId: unknown) => endPlans.find((p) => p?.id === planId)?.question_id;
     const windowQuestionIds = new Set<string>();
@@ -14249,7 +14541,9 @@ export async function researchAppend(
         else if (o.fields && "items" in o.fields) qid = planQuestion(o.entryId);
       } else if (o.section === "plan_items") {
         const f = o.op === "append" ? null : (o.fields ?? {});
-        if (!f || "date_range" in f || f.status === "skipped") qid = planQuestion(o.planId);
+        if (!f || "date_range" in f || "record_type" in f || "jurisdiction" in f || f.status === "skipped") {
+          qid = planQuestion(o.planId);
+        }
       }
       if (typeof qid === "string") windowQuestionIds.add(qid);
     }
@@ -14419,7 +14713,6 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchAppendError) {
       // Single-op path (and pre-pass throws): the section is only known when
       // the caller used the non-batch form.
@@ -14637,6 +14930,245 @@ export function namesakeRowLogCheck(
   return findings;
 }
 
+/** The upper-cased `n:n:ID` core of a FamilySearch ARK in any form, or null. */
+function arkCore(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const m = /^ark:\/61903\/(\d:\d:[A-Za-z0-9.-]+)$/.exec(toArk(v));
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** A record id's core when it is a record persona's (1:1:), else null: an
+ *  image or full-text id names a page, which can hold several people. */
+function personaArkCore(v: unknown): string | null {
+  const core = arkCore(v);
+  return core !== null && core.startsWith("1:1:") ? core : null;
+}
+
+/** The rows a call appended, or whose `record_ids` it changed, each with the
+ *  last op that wrote it. A row the call leaves listing the same records is
+ *  not judged again. */
+function namesakeRowsWritten(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+): Array<{ row: any; index: number }> {
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const was = (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []) as any[];
+  const lastOp = new Map<string, number>();
+  applied.forEach((a, i) => {
+    if (a.section === "namesakes" && !a.noop) lastOp.set(a.entryId, i);
+  });
+  const cores = (r: any) =>
+    JSON.stringify([...new Set((Array.isArray(r?.record_ids) ? r.record_ids : []).map(personaArkCore).filter(Boolean))].sort());
+  const out: Array<{ row: any; index: number }> = [];
+  for (const [id, index] of lastOp) {
+    const row = rows.find((r) => r && r.id === id);
+    if (!row) continue;
+    const prior = was.find((r) => r && r.id === id);
+    if (prior && cores(prior) === cores(row)) continue;
+    out.push({ row, index });
+  }
+  return out;
+}
+
+/** Per persona (by ARK core) of a call's written namesake rows, the 1:2 records
+ *  its own search hits place it in (`records`, a hit's `recordArk`), and, for
+ *  those whose persons include a second person of the row's given name, how many
+ *  people of that given name each holds (`shared`). */
+export type NamesakeSidecarRecords = ReadonlyMap<
+  string,
+  { records: ReadonlySet<string>; shared: ReadonlyMap<string, number> }
+>;
+
+/** Reads `NamesakeSidecarRecords` from the rows' own search sidecars. */
+export async function namesakeRowRecordArks(
+  before: { research: any },
+  after: { research: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<Map<string, { records: Set<string>; shared: Map<string, number> }>> {
+  const out = new Map<string, { records: Set<string>; shared: Map<string, number> }>();
+  const logById = logIndex(after.research);
+  for (const { row } of namesakeRowsWritten(before, after, applied)) {
+    const wanted = new Set((Array.isArray(row.record_ids) ? row.record_ids : []).map(personaArkCore).filter(Boolean));
+    if (wanted.size === 0) continue;
+    const given = rowGivenWords(row.name);
+    for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+      const entry = logById.get(logId);
+      if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+      for (const hit of (await readResults(entry.results_ref)) ?? []) {
+        const persona = personaArkCore(hit?.recordId);
+        const record = arkCore(hit?.recordArk);
+        if (persona === null || record === null || !wanted.has(persona)) continue;
+        if (!out.has(persona)) out.set(persona, { records: new Set(), shared: new Map() });
+        const links = out.get(persona)!;
+        links.records.add(record);
+        const persons = (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []) as any[];
+        const named = given.words.size > 0 ? persons.filter((p) => sharesRowGivenName(p, given)).length : 0;
+        if (named > 1) links.shared.set(record, Math.max(named, links.shared.get(record) ?? 0));
+      }
+    }
+  }
+  return out;
+}
+
+/** The 1:2 records whose live name assertions give two or more people of the
+ *  row's given name, each with how many, a person in a record being its
+ *  `record_persona_id`, else its `record_role`. */
+function recordsSharingGivenName(assertions: readonly any[], given: RowGiven): Map<string, number> {
+  const people = new Map<string, Set<string>>();
+  for (const a of assertions) {
+    if (a?.fact_type !== "name" || typeof a?.value !== "string") continue;
+    const record = arkCore(a?.record_document_id);
+    if (record === null) continue;
+    const words = rowGivenWords(a.value).words;
+    if (![...words].some((w) => given.words.has(w))) continue;
+    const who = `${arkCore(a?.record_id) ?? ""}|${a?.record_persona_id ?? a?.record_role ?? ""}`;
+    if (!people.has(record)) people.set(record, new Set());
+    people.get(record)!.add(who);
+  }
+  return new Map([...people].filter(([, who]) => who.size > 1).map(([record, who]) => [record, who.size]));
+}
+
+/** A namesake row records someone the tree does not hold (issue #2475, the row
+ *  from feedback issue #4660). One finding per row the call wrote that lists a
+ *  record persona the tree already cites on another person sharing the row's
+ *  given name, or that another row for the same `person_id` already lists. The
+ *  row's own subject is never the holder: they often appear in the same record
+ *  in another role. A record reaches the tree through the 1:2 records its
+ *  assertions were read from (`record_document_id`), the row's own search hits
+ *  (`recordArks`), or a tree source whose url is the persona itself. A 1:2
+ *  record that holds a second person of the row's given name (a father and son
+ *  both John) is not followed: the tree may cite it for that other person. */
+export function namesakeKnownRecordCheck(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string; noop?: boolean }>,
+  recordArks: NamesakeSidecarRecords = new Map(),
+): Array<{ index: number; message: string }> {
+  const written = namesakeRowsWritten(before, after, applied);
+  if (written.length === 0) return [];
+  const research = after.research;
+  const tree = after.tree;
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
+  const documents = new Map<string, Set<string>>();
+  for (const a of assertions) {
+    const persona = personaArkCore(a?.record_id);
+    const record = arkCore(a?.record_document_id);
+    if (persona === null || record === null) continue;
+    if (!documents.has(persona)) documents.set(persona, new Set());
+    documents.get(persona)!.add(record);
+  }
+  const sourceUrl = new Map<string, string>();
+  for (const s of (Array.isArray(tree?.sources) ? tree.sources : []) as any[]) {
+    const core = arkCore(s?.url);
+    if (typeof s?.id === "string" && core !== null) sourceUrl.set(s.id, core);
+  }
+  const citing = ((Array.isArray(tree?.persons) ? tree.persons : []) as any[])
+    .filter((p) => p && typeof p.id === "string")
+    .map((p) => {
+      const cites = new Map<string, string>();
+      for (const node of [...(Array.isArray(p.facts) ? p.facts : []), ...(Array.isArray(p.names) ? p.names : [])]) {
+        for (const ref of bareRefsOf(node)) {
+          const core = sourceUrl.get(ref);
+          if (core !== undefined && !cites.has(core)) cites.set(core, ref);
+        }
+      }
+      return { person: p, cites };
+    })
+    .filter((c) => c.cites.size > 0);
+  const nameOf = (p: any) => {
+    const n = (Array.isArray(p?.names) ? p.names : [])[0];
+    return [n?.given, n?.surname].filter((x) => typeof x === "string" && x !== "").join(" ");
+  };
+  // Each tree person's live links, as `<1:2 record>|<record_persona_id>`.
+  const assertionById = new Map(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const linkedPersonas = new Map<string, Set<string>>();
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const a = assertionById.get(e.assertion_id);
+    const record = arkCore(a?.record_document_id);
+    if (record === null || typeof a?.record_persona_id !== "string") continue;
+    if (!linkedPersonas.has(e.person_id)) linkedPersonas.set(e.person_id, new Set());
+    linkedPersonas.get(e.person_id)!.add(`${record}|${a.record_persona_id}`);
+  }
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  const findings: Array<{ index: number; message: string }> = [];
+  for (const { row, index } of written) {
+    const given = rowGivenWords(row.name);
+    const about = [row.name, row.place, row.time_period].filter((x) => typeof x === "string" && x !== "");
+    const label = `The namesakes row${about.length > 0 ? ` for ${about.join(", ")}` : ""}`;
+    const listed = (Array.isArray(row.record_ids) ? row.record_ids : []) as unknown[];
+    const held: string[] = [];
+    const repeated: string[] = [];
+    const sharedByAssertions = recordsSharingGivenName(assertions, given);
+    for (const id of listed) {
+      const persona = personaArkCore(id);
+      if (persona === null) continue;
+      const sidecar = recordArks.get(persona);
+      const shared = new Map(sharedByAssertions);
+      for (const [r, n] of sidecar?.shared ?? []) shared.set(r, Math.max(n, shared.get(r) ?? 0));
+      const viaRecord = [...(documents.get(persona) ?? []), ...(sidecar?.records ?? [])];
+      const records = new Set([persona, ...viaRecord.filter((r) => !shared.has(r))]);
+      const stamped = row.record_persona_ids?.[String(id)];
+      const subject = citing.find((c) => c.person.id === row.person_id);
+      const subjectNamed = subject !== undefined && sharesRowGivenName(subject.person, given);
+      // A record holding two or more people of the row's given name counts for a
+      // holder linked to the row's own persona in it; one holding exactly two
+      // also when the row's same-named subject cites it, being the other one.
+      const heldIn = (c: { person: any; cites: Map<string, string> }) => [
+        ...[...records].filter((r) => c.cites.has(r)),
+        ...viaRecord.filter(
+          (r) => shared.has(r) && c.cites.has(r) && (
+            (shared.get(r) === 2 && subjectNamed && subject!.cites.has(r)) ||
+            (typeof stamped === "string" && (linkedPersonas.get(c.person.id)?.has(`${r}|${stamped}`) ?? false))
+          ),
+        ),
+      ];
+      const holders = citing.filter(
+        (c) => c.person.id !== row.person_id && given.words.size > 0 && sharesRowGivenName(c.person, given) &&
+          heldIn(c).length > 0,
+      );
+      if (holders.length > 0) {
+        held.push(
+          `'${String(id)}' is cited on ` +
+            holders
+              .map((c) => {
+                const ref = c.cites.get(heldIn(c)[0]);
+                return `tree person '${c.person.id}' (${nameOf(c.person)}, source '${ref}')`;
+              })
+              .join(" and "),
+        );
+      }
+      const other = rows.find(
+        (r) => r && r.id !== row.id && r.person_id === row.person_id &&
+          (Array.isArray(r.record_ids) ? r.record_ids : []).some((x: unknown) => personaArkCore(x) === persona),
+      );
+      if (other) repeated.push(`'${String(id)}' is already on namesakes row '${other.id}'`);
+    }
+    if (held.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} records someone the tree does not hold, yet ${held.join("; ")}. Nothing was written. ` +
+          `If the record is that tree person's, leave it off this row: a person in the tree is not an unknown ` +
+          `namesake of '${row.person_id}'. If the tree cites it on them by mistake, return \`Hand-back: tree-edit\` ` +
+          `so the citation is corrected first.`,
+      });
+    }
+    if (repeated.length > 0) {
+      findings.push({
+        index,
+        message:
+          `${label} repeats a record another row for '${row.person_id}' lists: ${repeated.join("; ")}. ` +
+          `Nothing was written. A record persona is one person, so update that row instead, adding this ` +
+          `search's log entry to its log_entry_ids.`,
+      });
+    }
+  }
+  return findings;
+}
+
 /** The namesake cap's findings on a call, each labelled with the batch index of the op
  *  it is keyed to. `applied` is in step with the findings' own indexes. */
 function namesakeMessages(
@@ -14646,9 +15178,11 @@ function namesakeMessages(
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
   startingTree: SimplifiedGedcomX | null,
+  recordArks: NamesakeSidecarRecords = new Map(),
 ): string[] {
   return [
     ...namesakeRowLogCheck(before, after, applied),
+    ...namesakeKnownRecordCheck(before, after, applied, recordArks),
     ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>
@@ -14832,6 +15366,7 @@ async function everyOpFailure(c: {
     }
     const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
     await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
+    const recordArks = await namesakeRowRecordArks({ research: before.research }, { research: doc }, applied, c.readResults);
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },
@@ -14839,7 +15374,7 @@ async function everyOpFailure(c: {
     );
     const found = documentFailure({
       validation,
-      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree),
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree, recordArks),
       doc,
       ops: applied.map((a) => ops[a.opIndex]),
       applied,
@@ -15002,6 +15537,9 @@ export const researchAppendSchema = {
           "fields/edits/planId are ignored. Use this to persist a whole record at once.",
         items: {
           type: "object",
+          description:
+            "One mutation: section, op, and the entry's fields (append) or the changed " +
+            "fields (update) directly beside them.",
           properties: {
             section: {
               type: "string",
@@ -15024,6 +15562,19 @@ export const researchAppendSchema = {
           },
           required: ["section", "op"],
         },
+      },
+      plan: {
+        type: "object",
+        description:
+          "A new research plan: its plans entry (question_id, status, created), WITHOUT " +
+          "an id. Send with `planItems`, and without `ops` or `section`.",
+      },
+      planItems: {
+        type: "array",
+        description:
+          "The new plan's items in sequence order, each a plan_items entry WITHOUT an id " +
+          "or planId: the tool attaches every item to the plan it creates.",
+        items: { type: "object" },
       },
       sourceDescription: {
         type: "object",

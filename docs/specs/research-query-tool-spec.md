@@ -89,6 +89,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `questions` | `questionId` | `id` | exact |
 | | `status` | `status` | exact |
 | `plans` | `questionId` | `question_id` | exact |
+| | `planItemId` | `items[].id`: the plan holding that item | plan item |
 | | `status` | `status` | exact |
 | `log` | `planItemId` | `plan_item_id` | exact |
 | | `questionId` | `plan_item_id` ∈ the item ids of every plan whose `question_id` is the value | via plan |
@@ -254,10 +255,23 @@ reworded: proof-conclusion 26 (23 pass, 3 partial, no fail) and gps-mentor 2
 (2 pass).
 
 person-evidence's two `research_query` lines ("group the items by `record_id` +
-`record_role`", and paging "until you hold `count` items") were left as they
-are, though both read stale against groups. On `ut_person_evidence_027`
-(Haiku 5.5 low), main's text linked a_012 `confident` in 4 of 7 runs, and any
-edit to either line did so in 0 of 22, on the flat and grouped builds alike.
+`record_role`", and paging "until you hold `count` items") have now been
+changed, since the 0 of 22 reds measured against them (below) turned out to
+be entangled with a separate defect: `ut_person_evidence_027`'s mock answered
+`same_person` from the wrong record persona (a 1850-census child role at
+0.2415, via a wildcard fixture) rather than the death certificate's `deceased`
+role the test actually links, which gave the agent a low, wrong-persona score
+to reason from regardless of either line's wording. Fixing the fixture
+first (a `deceased`-role response at 0.86, matching pe_005's own a_013 score),
+then re-measuring: edit 1 alone (the `record_id` + `record_role` line) still
+regressed `ut_person_evidence_027` (partial, fail, pass), but both lines
+together passed 6 of 6 across two `--runs-per-test 3` rounds, each naming
+`a_012` `confident`. The lines above are the "each item is one persona…" and
+"until `truncated` is false…" wording now in place; both must change together,
+not edit 1 alone. Before the fixture fix, on `ut_person_evidence_027` (Haiku
+5.5 low), the prior text linked a_012 `confident` in 4 of 7 runs, and
+any edit to either line did so in 0 of 22, on the flat and grouped builds
+alike.
 
 **Two fields are left out of `items`.** An item of a plan that is not active
 (`superseded` or `completed`) carries no `rationale`, except a `skipped` item
@@ -695,7 +709,7 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 | A string on one of those keys that starts with `[` but is not a JSON array of non-empty strings | `{ ok: false, errors }` — never read as one id |
 | Two list-valued filters in one call | `{ ok: false, errors }` naming both |
 | A list repeats an id | collapses silently: one `countById` key, each item once |
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `server.ts`'s gate refuses the call first, naming `project_create` and init-project (`guardrail-enforcement-spec.md` §5); called directly the tool fails with `NO_PROJECT_REFUSAL`, marked `isError`, with no `reason`. |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
 | An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes`, `rejected_links` and `hit_verdicts`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded, and `hit_verdicts` only once a search hit is evaluated. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |

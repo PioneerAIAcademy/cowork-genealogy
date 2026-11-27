@@ -150,6 +150,25 @@ def test_every_validator_file_canonicalises():
         canonical_module(path.read_text(encoding="utf-8"))
 
 
+def test_canonical_module_is_pinned_to_the_3_12_dump():
+    """Issue #4741: the dump is 3.12's on every interpreter, so a bump does not re-hash.
+
+    The expected text is 3.12's literal output, not a hash, so a failure diff names
+    the field that moved. 3.13+ drop the empty lists (``posonlyargs=[]``,
+    ``type_params=[]``) unless ``show_empty`` is passed; a later version that ADDS
+    an AST field fails here too.
+    """
+    src = "@decorator\ndef f(a, b=None):\n    return g(a, key=[])\n"
+    assert canonical_module(src) == (
+        "Module(body=[FunctionDef(name='f', args=arguments(posonlyargs=[], "
+        "args=[arg(arg='a'), arg(arg='b')], kwonlyargs=[], kw_defaults=[], "
+        "defaults=[Constant(value=None)]), body=[Return(value=Call(func=Name(id='g', "
+        "ctx=Load()), args=[Name(id='a', ctx=Load())], keywords=[keyword(arg='key', "
+        "value=List(elts=[], ctx=Load()))]))], decorator_list=[Name(id='decorator', "
+        "ctx=Load())], type_params=[])], type_ignores=[])"
+    )
+
+
 # --- validators_fingerprint -------------------------------------------------------
 
 

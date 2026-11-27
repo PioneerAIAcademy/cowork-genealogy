@@ -1,12 +1,8 @@
 name: Check runlog discipline
 
-# Enforces the per-PR runlog contract per docs/plan/eval-runlog-versioning.md §C6:
+# Enforces the per-PR runlog contract (eval/CLAUDE.md, "GitHub Action rules"):
 #
-#   Rule 1 (blocking): At most one newly-added-or-renamed-into-place
-#   v{N}.json (released) per eval/runlogs/unit/<skill>/ per PR.
-#
-#   Rule 2 (blocking): The run log this PR adds per touched skill (a
-#   released v{N}.json it adds, else its newest candidate) must be "active
+#   Rule 2 (blocking): The newest run log this PR adds per touched skill must be "active
 #   on skill-side files": its embedded snapshot matches the current
 #   PR-branch state of all snapshot-tracked files. A PR that adds no run
 #   log is held to the run log that landed on main last instead, and that
@@ -132,13 +128,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$|^packages/engine/mcp-server/src/|^packages/engine/mcp-server/(package\.json|package-lock\.json|tsconfig\.json)$'
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$|^packages/engine/mcp-server/src/|^packages/engine/mcp-server/(package\.json|package-lock\.json|tsconfig\.json)$|^packages/engine/plugin/main-thread\.json$'
           # The subset that can put a suite in front of rule 2c, which reads the
           # engine's tool catalog. A docs-only PR matches PATTERNS but grades no
           # suite, so it skips the engine build. Fails closed: a path that reached
           # the catalog without matching here would make the gate error naming the
           # missing build, never pass silently.
-          ENGINE_PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^packages/engine/mcp-server/'
+          ENGINE_PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^packages/engine/mcp-server/|^packages/engine/plugin/main-thread\.json$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

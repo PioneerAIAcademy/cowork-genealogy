@@ -2809,9 +2809,9 @@ def test_na_dimensions_reach_the_recorded_run(tmp_path, monkeypatch):
 
     base = load_test(WIKI_TEST_PATH)
     # The runnability gate wants a tag-gated validator beside `na_dimensions`;
-    # `no-project` gates one in test_search_wikipedia.py.
+    # `not-found` gates one in test_search_wikipedia.py.
     spec = dataclasses.replace(
-        base, na_dimensions=("Reply economy",), tags=[*base.tags, "no-project"]
+        base, na_dimensions=("Reply economy",), tags=[*base.tags, "not-found"]
     )
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")

@@ -279,6 +279,25 @@ _guard = _load_guard()
 #: hook's map, not a copy.
 AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
 
+
+def builtin_spawn_denial(input_data: dict[str, Any]) -> dict[str, Any] | None:
+    """The shipped hook's deny of a main-thread spawn of a built-in agent type, else None.
+
+    As on a hosted plane: both harnesses measure the main thread those planes run."""
+    tool_input = input_data.get("tool_input")
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    tool_name = str(input_data.get("tool_name") or "")
+    name = _guard.builtin_spawn_denied(tool_name, tool_input, input_data, hosted=True)
+    if name is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": _guard.BUILTIN_SPAWN_REASON.format(tool=tool_name, name=name),
+        }
+    }
+
 _ROUTE_HOOK_PATH = _GUARD_HOOK_PATH.with_name("no_project_route.py")
 
 
@@ -301,6 +320,35 @@ _route = _load_route_hook()
 SOURCES_NOTE = _route.SOURCES_NOTE
 
 
+def _load_relay_hook():
+    """Import the shipped `agent_relay_note.py` by file path, as `_load_route_hook` does."""
+    path = _GUARD_HOOK_PATH.parent / "agent_relay_note.py"
+    spec = importlib.util.spec_from_file_location("_genealogy_agent_relay_note", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+#: The note a hosted plane's main thread gets on each agent return; both harnesses
+#: add it, as they measure that main thread. The hook's text, not a copy.
+_relay = _load_relay_hook()
+RELAY_NOTE = _relay.RELAY_NOTE
+
+
+def relay_note_context(input_data: dict[str, Any]) -> str | None:
+    """The hook's note for a main-thread agent return, else None."""
+    return _relay.note_for(input_data) if _relay.applies(input_data or {}) else None
+
+
+async def relay_note_hook(input_data, tool_use_id, context):
+    """PostToolUse: the shipped relay note on a main-thread agent return."""
+    note = relay_note_context(input_data)
+    if note is None:
+        return {}
+    return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": note}}
+ROUTING_NOTE = _route.ROUTING_NOTE
+
+
 async def sources_note_hook(input_data, tool_use_id, context):
     """UserPromptSubmit: add `SOURCES_NOTE`, skipping a subagent hand-back by the
     shipped hook's own test."""
@@ -309,7 +357,7 @@ async def sources_note_hook(input_data, tool_use_id, context):
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": SOURCES_NOTE,
+            "additionalContext": f"{SOURCES_NOTE}\n\n{ROUTING_NOTE}",
         }
     }
 
@@ -324,6 +372,24 @@ async def route_note_hook(input_data, tool_use_id, context):
 #: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
 #: OWNED_SECTIONS below.
 SUBAGENT_ONLY_TOOLS = _HARNESS_ONLY_SUBAGENT_TOOLS | frozenset(AGENT_ONLY_TOOLS)
+
+#: The shipped hook's MAIN_THREAD_DENIED: tools the main thread may never call,
+#: with their deny text. Same import-don't-copy discipline as AGENT_ONLY_TOOLS.
+MAIN_THREAD_DENIED = _guard.MAIN_THREAD_DENIED
+
+
+def main_thread_denial(input_data: dict[str, Any]) -> dict[str, Any] | None:
+    """The shipped hook's deny of a MAIN_THREAD_DENIED tool on the main thread, or None."""
+    reason = _guard.main_thread_denied(str(input_data.get("tool_name") or ""), input_data)
+    if reason is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
 
 
 #: research.json sections the shipped hook routes to a named agent, mapped to

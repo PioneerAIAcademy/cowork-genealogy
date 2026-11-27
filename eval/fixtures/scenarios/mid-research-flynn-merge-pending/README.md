@@ -23,7 +23,10 @@ complex mutating operations (merge, create-person + relationship).
 - `t_002` — timeline for `I3` with one event (1880 co-residence).
 - `q_003` — research question about whether I3 ≡ KWCJ-JAM7.
 - `ps_002` — proof_summary at `probable` tier, vehicle `argument`, narrative
-  confirming the identity. **This is the proof gate that authorizes the merge.**
+  confirming the identity. It carries no `claims`, so it records no identity
+  claim: under Decision 13 of `docs/plan/conclusion-tree.md` it authorizes
+  nothing on its own, and `merge_tree_persons` asks for a justification (the
+  user's instruction) before merging I3 into I4.
 
 **New research.json state supporting a create-sibling:**
 - `q_004` — research question about whether Mary Flynn is Patrick's sister.
@@ -37,10 +40,14 @@ complex mutating operations (merge, create-person + relationship).
 
 ## Tests using this scenario
 
-- **`ut_tree_edit_006`** — merge I3 into I4 (full reference rewrite + keep
-  both conflicting birth dates).
-- **`ut_tree_edit_010`** — create Mary as person I5 + ParentChild Thomas → Mary
-  per ps_003.
+- **`ut_tree_edit_020`** — the user instructs the merge of I3 into I4; no edge
+  joins them and no identity claim covers them, so the merge proceeds with the
+  user's instruction quoted as its justification.
+- **`ut_research_m8t`** — research routes a confirmed merge.
+
+`ut_tree_edit_006` and `ut_tree_edit_010` moved to
+`mid-research-flynn-merge-concluded`, the same project with `q_003` and `q_004`
+resolved (#4849).
 
 ## Cross-references that a merge of I3 → I4 must rewrite
 

@@ -16,7 +16,7 @@
 
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
-import type { ExtractDocument, RecordType } from "./record-extract.js";
+import { normalizeFactType, type ExtractDocument, type RecordType } from "./record-extract.js";
 
 export const DOCUMENT_RECORD_TYPES: readonly RecordType[] = [
   "census",
@@ -132,9 +132,11 @@ const isStr = (v: unknown) => typeof v === "string" && v.trim() !== "";
  * Every problem with `doc`, each naming its JSON path. An empty list means valid.
  * Refuses, per §11.7: any unknown key at any depth (the classification fields
  * included); an out-of-enum `recordType` or `documentForm`; a census without
- * `census`, or `census` on anything else; a person with no name, or a name with
- * neither part; a relationship naming an unknown id or one person twice; a
- * `computed` entry naming an attribute its fact does not carry; no persons.
+ * `census`, or `census` on anything else; a census of two or more persons on
+ * which any person lacks a non-empty string `household`; a person with no name,
+ * or a name with neither part; a relationship naming an unknown id or one person
+ * twice; a `computed` entry naming an attribute its fact does not carry; no
+ * persons.
  */
 export function validateStructuredDocument(doc: unknown, path = "document"): string[] {
   const errs: string[] = [];
@@ -163,6 +165,22 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
       unknownKeys(doc.census, KEYS.census, `${path}.census`);
       if (!isStr(doc.census.jurisdiction)) errs.push(`${path}.census.jurisdiction: required`);
       if (typeof doc.census.year !== "number" || !Number.isInteger(doc.census.year)) errs.push(`${path}.census.year: must be an integer year`);
+    }
+    // Roles are assigned per household, so a page sent with none files a second
+    // dwelling's head into the first family. One person cannot be misfiled.
+    // Runs before the per-person checks, so it names each person from its own
+    // fields and never looks one up by id.
+    if (Array.isArray(doc.persons) && doc.persons.length >= 2) {
+      const missing = doc.persons.flatMap((p, i) =>
+        isObj(p) && !isStr(p.household) ? [isStr(p.id) ? personLabel(p.id as string, p.names) : `persons[${i}]`] : [],
+      );
+      if (missing.length > 0) {
+        errs.push(
+          `${path}.persons: a census with more than one person needs \`household\` on every person, as a string: ` +
+            `the family number the page gives, else its dwelling number, else "1", "2", … by household in page order. ` +
+            `Missing, empty, or not a string, on: ${missing.join(", ")}.`,
+        );
+      }
     }
   } else if (doc.census !== undefined) {
     errs.push(`${path}.census: only a census carries a census block`);
@@ -223,6 +241,9 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
           if (!isObj(f)) return errs.push(`${fat}: must be an object`);
           unknownKeys(f, KEYS.fact, fat);
           if (!isStr(f.type)) errs.push(`${fat}.type: required`);
+          else if (normalizeFactType(f.type) === "residence" && isStr(f.value) && !isStr(f.place)) {
+            errs.push(`${fat}.place: required on a residence: put the place the text gives in place (a date goes in date)`);
+          }
           if (f.computed !== undefined) {
             if (!Array.isArray(f.computed)) errs.push(`${fat}.computed: must be a list of attributes`);
             else
@@ -367,7 +388,13 @@ export function probateDecedentOrDefault(doc: StructuredDocument): string | unde
 
 /** `p1 (Paul Meacham)`, for an error that names a party. */
 export function partyName(doc: StructuredDocument, id: string): string {
-  const n = doc.persons.find((p) => p.id === id)?.names[0];
+  return personLabel(id, doc.persons.find((p) => p.id === id)?.names);
+}
+
+/** `partyName`'s label from an id and a `names` value of any shape: the first
+ *  name is read only when it is an object in a list. */
+function personLabel(id: string, names: unknown): string {
+  const n = Array.isArray(names) && isObj(names[0]) ? names[0] : undefined;
   return `${id} (${[n?.given, n?.surname].filter((x) => typeof x === "string" && x).join(" ")})`;
 }
 

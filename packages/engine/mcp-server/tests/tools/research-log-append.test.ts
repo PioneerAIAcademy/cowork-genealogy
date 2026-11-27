@@ -1996,6 +1996,21 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count a page image_transcribe logged itself as a positive search (#4721)", async () => {
+    const read = (n: number) => ({ ...pos(n), tool: "image_transcribe", written_by: "image_transcribe" });
+    await write(baseResearch([read(1), read(2), read(3)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+  });
+
   it.each([
     "wiki_search",
     "wiki_read",
@@ -2017,7 +2032,7 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     },
   );
 
-  it.each(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"])(
+  it.each(["source_evaluation", "check_warnings", "translation", "validate_schema"])(
     "tells the agent to return the %s report it just logged (#3524)",
     async (tool) => {
       await write(baseResearch([]));
@@ -2029,6 +2044,26 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
       expect((batch as any).next).toMatch(/return the report you just logged, in full/);
     },
   );
+
+  it("hands a convert_dates report back as `replyStart`, to paste as the reply (#4846)", async () => {
+    await write(baseResearch([]));
+    const op = { tool: "convert_dates", query: { dates: ["15 Feb 1749/50"] }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: "  Original: 15 Feb 1749/50. Converted: 26 Feb 1750.  " };
+    const single = await researchLogAppend({ projectPath: dir, ...op });
+    expect(single.ok).toBe(true);
+    expect((single as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((single as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    const batch = await researchLogAppend({ projectPath: dir, ops: [op] });
+    expect((batch as any).replyStart).toBe("Original: 15 Feb 1749/50. Converted: 26 Feb 1750.\n\n---");
+    expect((batch as any).next).toMatch(/starts with `replyStart`, pasted whole and unchanged/);
+    // No notes to echo: the older reminder, and no `replyStart`.
+    const bare = await researchLogAppend({ projectPath: dir, ...op, notes: null });
+    expect((bare as any).next).toMatch(/return the report you just logged, in full/);
+    expect(bare).not.toHaveProperty("replyStart");
+    // Another report tool is not echoed.
+    const other = await researchLogAppend({ projectPath: dir, ...op, tool: "translation" });
+    expect((other as any).next).toMatch(/return the report you just logged, in full/);
+    expect(other).not.toHaveProperty("replyStart");
+  });
 
   it("carries no report reminder for a record search or a reference lookup (#3524)", async () => {
     await write(baseResearch([]));
@@ -2459,6 +2494,12 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
   });
 
+  it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+    const read = nil(3, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 });
+    await write(project([nil(1), nil(2), read]));
+    expect(((await logNil()) as any).escalationDue).toMatch(ESCALATE);
+  });
+
   it("does not count a search that had results it left unexamined", async () => {
     await write(project([nil(1), nil(2, { results_available: 450 })]));
     expect(((await logNil()) as any).escalationDue).toBeUndefined();
@@ -2611,6 +2652,11 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     it("stays silent when the plan item has already found something", async () => {
       await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
       expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("is not silenced by a page image_transcribe logged itself (#4721)", async () => {
+      await write(project([nil(1, { tool: "image_transcribe", written_by: "image_transcribe", outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
     });
 
     it("stays silent for a search that had results it left unexamined", async () => {
@@ -3668,4 +3714,331 @@ describe("research_log_append — pinned zero-hit record_search names its unpinn
       expect(reads()).toBe(3);
     });
   }
+});
+
+describe("research_log_append — a negative search whose rows include a record the tree cites on its subject (#4667)", () => {
+  let dir: string;
+  // The Phipps session: I1 cites S4, Benj Phillips in the 1860 census.
+  const CITED = "ark:/61903/1:1:MHR9-JWT";
+  const CENSUS_1860 = {
+    recordId: CITED,
+    collectionId: "1473181",
+    events: [
+      { type: "Race", value: "White" },
+      { type: "Census", date: "1860", place: "Thompson, Windham, Connecticut, United States" },
+    ],
+  };
+  const OTHER_ROW = {
+    recordId: "ark:/61903/1:1:MH51-GM3",
+    collectionId: "1473181",
+    events: [{ type: "Census", date: "1860", place: "Pomfret, Windham, Connecticut, United States" }],
+  };
+  const SENT_1860 = {
+    surname: "Phipps",
+    givenName: "Benjamin",
+    residenceYearFrom: 1860,
+    residenceYearTo: 1860,
+    residencePlace: "Thompson, Windham, Connecticut, United States",
+    recordType: "census",
+    projectPath: "/project",
+    subjectId: "I1",
+  };
+  function treeWith(
+    personSources: any[] = [{ ref: "S4" }],
+    factSources: any[] = [],
+    url = `https://familysearch.org/${CITED}`,
+  ) {
+    return {
+      persons: [
+        {
+          id: "I1",
+          names: [{ given: "Benjamin Fairbanks", surname: "Phipps" }],
+          facts: [{ type: "Residence", date: "1860", place: "Thompson", sources: factSources }],
+          sources: personSources,
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S4", title: "Benj Phillips, United States Census, 1860", url }],
+    };
+  }
+  async function setup(tree: any = treeWith()) {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4667-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function stage(query: Record<string, unknown> = SENT_1860, results: any[] = [CENSUS_1860, OTHER_ROW]) {
+    const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { query, results } });
+    return handle!.resultsRef;
+  }
+  const op = (ref: string | null, outcome = "negative", extra: Record<string, unknown> = {}) => ({
+    tool: "record_search",
+    outcome,
+    resultsExamined: 2,
+    resultsAvailable: 2,
+    planItemId: null,
+    stagedResultsRef: ref,
+    ...extra,
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+  const logOf = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+  const { residenceYearFrom: _f, residenceYearTo: _t, ...NO_WINDOW } = SENT_1860;
+
+  it("refuses the Phipps shape, naming the record and the tree source, and writes nothing", async () => {
+    await setup();
+    const ref = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+    expect(errorsOf(r)).toContain("`S4`");
+    expect(errorsOf(r)).toContain("`I1`");
+    expect(errorsOf(r)).toMatch(/Log this search `positive` or `partial`/);
+    expect(errorsOf(r)).not.toMatch(/outcome other than/);
+    expect(errorsOf(r)).toMatch(/as the record the project tree already cites for the subject/);
+    expect(errorsOf(r)).toMatch(/indexed differently does not leave the record unfound/);
+    // A tree citation does not show whose record it is (an unverified attachment, or a relative's entry).
+    expect(errorsOf(r)).not.toMatch(/someone else|as the subject's record|this person's record/);
+    expect(errorsOf(r)).toMatch(/record_read/);
+    expect(await logOf()).toHaveLength(0);
+    expect(await fileExists(dir, ref)).toBe(true);
+  });
+
+  it("refuses the whole batch when one op is the Phipps shape", async () => {
+    await setup();
+    const good = await stage(SENT_1860, [OTHER_ROW]);
+    const bad = await stage();
+    const r = await researchLogAppend({ projectPath: dir, ops: [op(good), op(bad)] } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(/^ops\[1\]: /);
+    expect(errorsOf(r)).not.toMatch(/ops\[0\]/);
+    expect(await logOf()).toHaveLength(0);
+  });
+
+  it("refuses on a matching collectionId when the search sent no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1473181" })) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses when an anyYear window holds the row's event year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, anyYearFrom: 1849, anyYearTo: 1878 })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses when the subject cites the source on a fact rather than at the person level", async () => {
+    await setup(treeWith([], [{ ref: "S4" }]));
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("`S4`");
+  });
+
+  it("accepts a death search that returns the subject's cited census", async () => {
+    await setup();
+    const ref = await stage({
+      surname: "Phipps",
+      givenName: "Benjamin",
+      deathYearFrom: 1893,
+      deathYearTo: 1893,
+      deathPlace: "Thompson, Windham, Connecticut, United States",
+      projectPath: "/project",
+      subjectId: "I1",
+    });
+    const r = await researchLogAppend({ projectPath: dir, ...op(ref) } as any);
+    expect(r.ok).toBe(true);
+    expect(await logOf()).toHaveLength(1);
+  });
+
+  it("accepts a residence window that misses the cited row's year", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...SENT_1860, residenceYearFrom: 1850, residenceYearTo: 1850 })),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  // The committed umbelina-azevedo-death / joao-sousa-death / ciriaco-bardales-spouse
+  // e2e shape: a vital-event search pinned to a collection that returns the
+  // subject's cited record in another role or of another type, rightly negative.
+  for (const window of [
+    { deathYearFrom: 1920, deathYearTo: 1990 },
+    { marriageYearFrom: 1850, marriageYearTo: 1870 },
+    { birthYearFrom: 1814 },
+  ]) {
+    it(`accepts a same-collection cited row when the search sent ${Object.keys(window)[0].replace(/From|To/, "")}`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, ...window, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("refuses the Phipps shape logged error: a search that staged rows did not error", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), "error") } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toContain("logged `error`");
+    expect(errorsOf(r)).toContain(CITED);
+  });
+
+  it("refuses a same-collection cited row when the search named recordType census", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(await stage({ ...NO_WINDOW, recordType: "Census", collectionId: "1473181" })),
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  // A death or marriage search pinned to a mixed collection, with no year window:
+  // the subject's cited record in that collection is not what it was for.
+  for (const recordType of ["death", "marriage", "cemetery"]) {
+    it(`accepts a same-collection cited row when the search named recordType ${recordType} and no window`, async () => {
+      await setup();
+      const r = await researchLogAppend({
+        projectPath: dir,
+        ...op(await stage({ ...NO_WINDOW, recordType, collectionId: "1473181" })),
+      } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts a different collectionId with no year window", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...NO_WINDOW, collectionId: "1438024" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts the Phipps shape when the staged query names no subjectId", async () => {
+    await setup();
+    const { subjectId: _s, ...noSubject } = SENT_1860;
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage(noSubject)) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a hand-typed negative with no stagedResultsRef", async () => {
+    await setup();
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...op(null, "negative", { query: { surname: "Phipps", residenceYearFrom: 1860, residenceYearTo: 1860 } }),
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const outcome of ["positive", "partial"]) {
+    it(`accepts the Phipps shape logged ${outcome}`, async () => {
+      await setup();
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage(), outcome) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+
+  it("accepts when the subjectId is not a tree person", async () => {
+    await setup();
+    const r = await researchLogAppend({ projectPath: dir, ...op(await stage({ ...SENT_1860, subjectId: "I99" })) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  for (const [label, url] of [
+    ["no url", ""],
+    ["a url that is not an ARK", "https://example.com/census/MHR9-JWT"],
+  ]) {
+    it(`accepts when the cited source has ${label}`, async () => {
+      await setup(treeWith([{ ref: "S4" }], [], url));
+      const r = await researchLogAppend({ projectPath: dir, ...op(await stage()) } as any);
+      expect(r.ok).toBe(true);
+    });
+  }
+});
+
+describe("research_log_append — a page image_transcribe logged itself (#4721)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-4721-"));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const log = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log as any[];
+
+  /** The entry image_transcribe writes for its own read: positive, no plan item. */
+  async function toolLoggedPage(writtenBy: string | null = "image_transcribe") {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: { query: { imageId: "004884748_02613" }, results: [{ id: "004884748_02613", transcription: "page" }] },
+    });
+    const first = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: handle!.resultsRef,
+      planItemId: null, outcome: "positive", resultsExamined: 1,
+      ...(writtenBy ? { writtenBy } : {}),
+    });
+    expect(first.ok).toBe(true);
+    return { ref: handle!.resultsRef, logId: (first as any).logId as string };
+  }
+
+  it("a hand-log naming another outcome and plan item returns the tool's entry and writes nothing", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).alreadyLogged).toBe(true);
+    expect((again as any).logId).toBe(logId);
+    expect((again as any).validation.warnings.join(" ")).toMatch(/logged by image_transcribe itself.*outcome 'negative'/);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("carries back a note it could not store, rather than dropping it behind ok", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      outcome: "positive", resultsExamined: 1, notes: "Mary E. named as daughter of Benjamin F.",
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).validation.warnings.join(" ")).toContain('this note was not stored: "Mary E. named as daughter of Benjamin F."');
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("does the same inside a batch", async () => {
+    const { ref, logId } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", stagedResultsRef: ref, planItemId: "pli_007", outcome: "negative", resultsExamined: 1 } as any],
+    });
+    expect(again.ok).toBe(true);
+    expect((again as any).results[0]).toMatchObject({ logId, alreadyLogged: true });
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a re-send under another tool", async () => {
+    const { ref } = await toolLoggedPage();
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "record_read", stagedResultsRef: ref, outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("still refuses a differing re-send of a page an agent logged by hand", async () => {
+    const { ref } = await toolLoggedPage(null);
+    const again = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", stagedResultsRef: ref,
+      planItemId: "pli_007", outcome: "negative", resultsExamined: 1,
+    });
+    expect(again.ok).toBe(false);
+    expect((again as any).errors.join(" ")).toMatch(/already logged as log_001/);
+  });
 });

@@ -46,8 +46,8 @@ If there is no `rubric.md`, there is nothing to audit — say so and stop.
 Check and state these before dispatching. Neither blocks the run; both
 bound how strong a conclusion the agent can draw.
 
-- **How many run logs / versions exist.** Count the `v{N}*.json` files
-  (ignore `scratch_*.json`). Variance and trend *across versions* is this
+- **How many run logs exist.** Count the `v{N}_*.json` files
+  (ignore `scratch_*.json`). Variance *across run logs* is this
   agent's strongest signal — a single run supports only a low-confidence
   read, and the agent will say so.
 - **Whether `.ann.json` siblings exist.** Without them the judge-vs-human

@@ -5,7 +5,8 @@ description: >-
   conventions, migration patterns, record availability by era, cultural
   practices, and historical events that affect records. Outputs narrative
   context to the user, and logs it to the research log inside a project. Use when the user says
-  "what was happening in [place] in [year]?", "boundary changes", "naming
+  "what was happening in [place] in [year]?", "which town was settled
+  first?", "boundary changes", "naming
   conventions", "why would [thing] appear in a record?", "migration patterns",
   "explain this record's context", "what does [historical term] mean?", or when
   understanding historical context is needed to interpret a record correctly. Do
@@ -14,7 +15,7 @@ description: >-
   search-records), wants to translate a non-English record (use translation),
   wants to convert a date between calendar systems (use convert-dates), or wants
   to formally resolve conflicting evidence (use conflict-resolution).
-model: claude-sonnet-4-6
+model: claude-sonnet-5-5
 effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -56,7 +57,7 @@ tools:
 
 # Historical Context
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to a one-line preamble per action.
 
 You provide the historical background needed to correctly interpret
 genealogical records. Records were created by specific institutions, in specific
@@ -69,8 +70,8 @@ state.
 
 You are reached by a delegation carrying the context question — a bare phrase, a
 quoted user turn, or a labelled parameter. Resolve the question from whatever it
-gives you and ask nothing back. `projectPath`, when given, is the absolute
-project-folder path; absent, skip Step 4.
+gives you and ask nothing back. `projectPath` is the absolute
+project-folder path.
 
 ## Scope — decide it yourself, every time
 
@@ -289,18 +290,17 @@ Two `research_log_append` calls, in order, each with `projectPath`.
 **You must actually call them — do not just describe them in your response.**
 
 1. **The lookups.** One call with an `ops` list, one op per `wiki_search`,
-   `wiki_read` and `wikipedia_search` call you made: `tool` (that tool's name),
+   `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all` and
+   `place_population` call you made: `tool` (that tool's name),
    `query` (the arguments you sent), `planItemId: null`, `outcome` (`positive`
    when it returned content, `negative` when it returned nothing, `error` when
    it errored or 404'd), `resultsExamined` (results returned; 1 for a page read;
    0 on `negative` or `error`), `notes: null`. With no lookups, skip to call 2.
-   - `reason: "no_project"` → stop logging; make no second call.
 2. **The overview.** One op: `tool: "historical_context"`, `query: {topic,
    places}` (the question in a few words and the places it concerns),
    `planItemId: null`, `outcome: "positive"`, `resultsExamined` (pages and
    articles read), `notes` set to the **full** overview exactly as you return
    it, including Sources consulted, never a summary.
-   - `reason: "no_project"` → stop logging.
    - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) →
      rewrite `notes` as instructed, use the same text in your return, and
      re-send. Never drop the overview entry.
@@ -325,17 +325,27 @@ governance, laws, and regulations.
 
 ### 1. Boundary and jurisdictional factors
 
-- Political boundaries (counties, states, countries) change over time. Records
-  usually stay with the office that created them: a county that passes to a new
-  state keeps its earlier records in its own courthouse, which is now in the new
-  state, and records made before a county was formed are with the county that
-  covered the land then, in whichever state it now lies.
+- Political boundaries change over time. Records usually stay with the office
+  that created them: when a county moves into a new state, its earlier records
+  stay in that same county's courthouse, now under the new state. Say which
+  state that courthouse is in today and what kinds of records it created (such as
+  deeds, probate, court orders and tax lists).
 - A person who appears to have been "born in two different places" may have been
   born in one location whose jurisdiction changed.
 - Always verify which jurisdiction held authority over a location at the date of
-  the event, not the modern jurisdiction.
+  the event: that tells you which office made the record. For county records the
+  office is the county itself, wherever its courthouse lies now, unless a tool
+  result shows the records were moved. For any other office, say where its
+  records are kept today only if a tool result shows it.
 - County formation dates determine which courthouse holds a record: for a record
-  older than its county, search the parent county.
+  older than its county, search the parent county, which may now lie in another
+  state. When the person's county is not yet known, tell the researcher to first
+  find which county held the land at the date of the record, since some
+  present-day counties were formed later.
+- A state boundary moving does not change which county holds a record: the same
+  county keeps its earlier records in its current state. Look to another county
+  when the land belonged to it at the date of the record, as when this county
+  was formed later or the land was annexed.
 
 ### 2. Migration factors
 
@@ -597,7 +607,8 @@ surname is a **married** name, the children are most likely hers and the step
 reading leads. If it is her **maiden** name, they may instead be her brother's
 orphans — the same bond, with the guardian an **uncle by marriage**. The bond
 does not distinguish these; her prior marriage, or the children's father's
-estate, does.
+estate, does. Always name both readings, and keep the second open until a
+record shows whose surname it is.
 
 **When the record does not say which it is, the step reading still
 leads.** A marriage record gives her name *at marriage* and settles
@@ -898,7 +909,20 @@ Applying this:
   not confirm this from the wiki; verify it before relying on it"). Never
   present training-knowledge claims in the same register as tool-verified
   facts. Open each paragraph or bullet that contains such a claim with
-  "(general knowledge)"; a flag in another paragraph does not cover it. In a
+  "(general knowledge)"; a flag in another paragraph does not cover it. A
+  paragraph that explains how a law, legal status or custom of the period
+  worked — such as what a married woman, a minor or a guardian could do at law
+  — is such a claim: open it with "(general knowledge)" unless a tool result
+  stated that rule. Keep the two apart: a paragraph built on a tool result
+  holds only what the tool results say. When you want to add a point no tool
+  result states — a legal rule, who held authority, or how things were usually
+  done — end that paragraph and put the point in a new paragraph that opens
+  with "(general knowledge)". Put such points in the General knowledge section
+  of your return; above that section, write only what the tool results say. A
+  statement about which records survive, were lost, or cover a period is a
+  claim like any other: write it only from a tool result that says so, or open
+  its paragraph with "(general knowledge)". Credit a statement to a page only
+  when that page's text, as a tool returned it, contains the statement. In a
   Search implications bullet, put it right after the label. Do not present an
   unverified historical pattern as the reason this family emigrated or as
   evidence of where they came from.
@@ -923,12 +947,21 @@ question is a second overview entry, never an edit of the first.
 ## Return contract
 
 Return, for the caller, the historical-context narrative itself — the specific
-answer, its research implications, and (when any wiki/Wikipedia tool was called)
+answer, its research implications (for a jurisdiction question, name the kinds
+of records that office kept, such as deeds, probate, court orders and tax
+lists) (use each date the question or project gives — birth, arrival, death —
+to name the record classes it opens; a death date opens death records and
+obituaries), and
+(when any wiki/Wikipedia tool was called)
 the **Sources consulted** list — then this block:
 
 ```
+### General knowledge
+<every point no tool result states — a legal rule, who held authority, how common a practice was, why people did something — one bullet each, each opening with "(general knowledge)"; if there are none, write "(general knowledge) None needed.">
+
 ### Search implications
-- hypothesis-tracking: <one candidate explanation per line, to test as a hypothesis>
+<for a jurisdiction question: the county courthouse to search, the state it is in today, and the kinds of records it created (deeds, probate, court orders and tax lists)>
+- hypothesis-tracking: (general knowledge) <one candidate explanation per line, to test as a hypothesis; replace "(general knowledge)" with the title of the page only when a tool result stated that explanation>
 - research-plan: <one fact per line that changes where or when to search>
 ```
 
@@ -945,12 +978,17 @@ paragraphs of plain prose with **no label, heading or field name**:
    question was looked into and, in plain language, what the tool results mean
    for their family history, with no general-knowledge claim, flagged or not
    (build it only from paragraphs that do not open with "(general knowledge)")
-   (where the tools said little, say so); when the question asks why something
-   happened and no tool result gave the reason, say that the sources consulted
-   did not give one and name none. Use no identifiers, file names, tool names
-   or field names. On a hand-back, say instead that this question is
-   handled by another part of the research and is being passed there.
+   (where the tools said little, say so). Use no identifiers, links, file
+   names, or tool, agent or field names. Except on a hand-back, begin this
+   paragraph with the words "The sources consulted show" and continue with what
+   the tool results showed about the records; put no background about the
+   period in this paragraph. Give a
+   reason for an event only if a tool result stated it; if the question asked
+   why and no tool result gave the reason, say that the sources consulted did
+   not give one. On a hand-back, say instead that this question is handled by
+   another part of the research and is being passed there.
 2. One sentence: what happens next, in plain language.
 
-The caller prints everything after that `---` verbatim and nothing above it. No
-closing essay.
+The caller prints everything after that `---` verbatim and nothing above it, or,
+from research, everything above `### Search implications` instead. No closing
+essay.

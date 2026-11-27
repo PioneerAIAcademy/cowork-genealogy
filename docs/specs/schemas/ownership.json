@@ -213,7 +213,7 @@
       "artifact": "research.json",
       "section": "log",
       "owner": null,
-      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`, and `record_search` appends a nil search's own entry the same way, so the logged query is the call's arguments rather than one the agent re-typed. No single skill owns the section; the permitted writers are listed in `callers`.",
+      "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`, and `record_search` appends a nil search's own entry the same way, so the logged query is the call's arguments rather than one the agent re-typed. `image_transcribe` appends every page it reads in a project the same way (`written_by: \"image_transcribe\"`, issue #4721), so a page the main thread reads is on record without a second call. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
         "agent:search-records",
         "agent:search-external-sites",
@@ -228,7 +228,8 @@
         "agent:check-warnings",
         "agent:translation",
         "agent:convert-dates",
-        "agent:validate-schema"
+        "agent:validate-schema",
+        "agent:where-else-to-search"
       ],
       "agentCallers": [
         {
@@ -240,20 +241,23 @@
         {
           "agent": "agent:search-images",
           "tools": [
-            "research_log_append"
+            "research_log_append",
+            "image_transcribe"
           ]
         },
         {
           "agent": "agent:search-external-sites",
           "tools": [
             "research_log_append",
-            "build_external_search_url"
+            "build_external_search_url",
+            "image_transcribe"
           ]
         },
         {
           "agent": "agent:search-hints",
           "tools": [
-            "research_log_append"
+            "research_log_append",
+            "image_transcribe"
           ]
         },
         {
@@ -296,7 +300,8 @@
         {
           "agent": "agent:translation",
           "tools": [
-            "research_log_append"
+            "research_log_append",
+            "image_transcribe"
           ]
         },
         {
@@ -329,7 +334,8 @@
         "research_log_append",
         "extraction_append",
         "build_external_search_url",
-        "record_search"
+        "record_search",
+        "image_transcribe"
       ],
       "enforceableAt": [
         "unit",

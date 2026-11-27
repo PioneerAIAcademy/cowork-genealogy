@@ -30,17 +30,16 @@ export const PERSON_READ_REF_REMOVED =
   "and project_create reads the person and builds the starting tree itself. Do not " +
   "call person_read first.";
 
-/** `project_create` with no `personId`: a project always starts from one. */
+/** `project_create` with a blank `personId`. Omitting it is for an activity with no person. */
 export const PERSON_ID_REQUIRED =
-  "personId is required: a project always starts from a FamilySearch person ID, such as " +
-  "\"KWCJ-RN4\". Ask the researcher for the FamilySearch ID of the person they are " +
-  "researching; with none, create no project. A surname survey needs no project: invoke " +
-  "the survey-surname agent with no projectPath.";
+  "personId is blank: pass the FamilySearch person ID, such as \"KWCJ-RN4\", or omit it for an " +
+  "activity with no person in it. Ask the researcher for the FamilySearch ID of the person " +
+  "they are researching; with none, create no project for that research.";
 
 /** `project_create`'s removed `tree`. */
 export const PROJECT_TREE_REMOVED =
   "tree is no longer accepted: a project always starts from a FamilySearch person ID, and " +
-  "project_create builds the starting tree from FamilySearch. Pass personId alone; add a " +
+  "project_create builds the starting tree from FamilySearch. Pass personId alone (or none, for an activity with no person); add a " +
   "person who is not among the relatives it returns afterwards with tree-edit. " +
   PERSON_ID_REQUIRED.slice(PERSON_ID_REQUIRED.indexOf("Ask the researcher"));
 

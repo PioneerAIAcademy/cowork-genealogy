@@ -20,7 +20,7 @@
  */
 
 import { LOCAL } from "../src/auth/principal.js";
-import { imageTranscribeMcpTool } from "../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../src/tools/image-transcribe-mcp.js";
 import { sidecarRead } from "../src/tools/sidecar-read.js";
 import { isMemoryArtifactUrl } from "../src/utils/fs-image-fetch.js";
 import { memoryPageId } from "../src/utils/memories.js";
@@ -69,10 +69,6 @@ const result = await imageTranscribeMcpTool({
   projectPath,
 }, LOCAL);
 
-if ("ok" in result) {
-  console.log("No project here:", result.errors.join(" "));
-  process.exit(0);
-}
 if (result.metadata) console.log("Memory artifact:", result.metadata.memoryArtifactUrl);
 if (result.found) console.log("Found:", result.found);
 console.log("Staged:", JSON.stringify(result.staged), result.stagingError ?? "");

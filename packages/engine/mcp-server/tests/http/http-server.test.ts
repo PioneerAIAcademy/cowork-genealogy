@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { START_PROJECT_RULE } from "../../src/utils/project-io.js";
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -69,7 +70,10 @@ import {
   type ReadyReport,
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
-import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import { HOSTED_REAUTH_INSTRUCTION, getMatcherSettings } from "../../src/auth/config.js";
+import { connectorPrincipal } from "../../src/auth/principal.js";
+import { configFromEnv } from "../../src/hosted-config-env.js";
+import { CONNECTOR_REFUSAL_NOTE } from "../../src/tool-result.js";
 import { processImageTokens } from "../../src/utils/image-tokens.js";
 import { pageUri } from "../../src/tools/project-view.js";
 import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
@@ -159,12 +163,23 @@ const lookupConnector = vi.fn(async (tokenSha256: string) => {
   return null;
 });
 /** No row: a fresh id, free for the first write to claim. */
+const OWNED_BY: Map<string, string> = new Map();
 const projectOwner = vi.fn(
-  async (_projectId: string): Promise<{ exists: boolean; ownerId: string | null }> => ({
-    exists: false,
-    ownerId: null,
-  }),
+  async (projectId: string): Promise<{ exists: boolean; ownerId: string | null }> => {
+    const ownerId = OWNED_BY.get(projectId);
+    return ownerId === undefined ? { exists: false, ownerId: null } : { exists: true, ownerId };
+  },
 );
+
+/** A seeded project the user owns, as the connector's `projectPath` for it. Every
+ *  tool but six refuses a call with no project, so a case that wants a tool to run
+ *  names one. */
+async function ownedConnectorPath(userId: string = TEST_USER_ID): Promise<string> {
+  const id = `proj_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+  await seedProject(new ScopedFsStore(root, id, `/${id}`), `/${id}`, "Owned");
+  OWNED_BY.set(id, userId);
+  return `/${id}`;
+}
 
 /** The caller owns nothing unless a case says otherwise. */
 const ownedProjects = vi.fn(async (_userId: string): Promise<OwnedProjectIds> => ({ ids: [], truncated: false }));
@@ -308,15 +323,20 @@ describe("tool server over Streamable HTTP", () => {
     bindStore.mockClear();
     const client = await connect();
     const { projectPath: _omit, ...noPath } = createArgs("Nobody");
+    // Both are refusals, and a connector caller's refusal is an ordinary result under a
+    // note (test 2c): nothing ran, and the result says so without the error mark.
     const created = await client.callTool({ name: "project_create", arguments: noPath });
-    expect(created.isError).toBe(true);
+    expect(created.isError ?? false).toBe(false);
+    expect(JSON.parse(textOf(created)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
 
+    // Every tool but six needs a project, so even a store-less lookup refuses with none.
     const converted = await client.callTool({
       name: "convert_calendar",
       arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
     });
-    expect(converted.isError, textOf(converted)).not.toBe(true);
-    expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
+    expect(converted.isError ?? false).toBe(false);
+    expect(JSON.parse(textOf(converted)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
+    expect(textOf(converted)).toContain("No project:");
 
     expect(bindStore).not.toHaveBeenCalled();
     // Nothing reached the file backend either.
@@ -642,6 +662,38 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
+  it("2c. a refusal reaches a connector caller as an ordinary result with a note, and the worker as an error", async () => {
+    // In chat a result marked isError is a red error box in front of the user, and a
+    // refusal is the tools working (lead, 2026-11-26). The worker keeps the mark.
+    const connector = await connect();
+    const projectPath = await ownedConnectorPath();
+
+    // A writer tool's own refusal: { ok: false, errors }.
+    const write = await connector.callTool({
+      name: "research_append",
+      arguments: { projectPath, section: "questions", op: "append", entry: {} },
+    });
+    expect(write.isError ?? false).toBe(false);
+    const refused = JSON.parse(textOf(write));
+    expect(Object.keys(refused)[0]).toBe("refused");
+    expect(refused.refused).toBe(CONNECTOR_REFUSAL_NOTE);
+    expect(refused.ok).toBe(false);
+    expect(refused.errors.length).toBeGreaterThan(0);
+
+    // The dispatcher's own refusal: an argument that is not a parameter.
+    const stray = await connector.callTool({ name: "auth_status", arguments: { bogus: 1 } });
+    expect(stray.isError ?? false).toBe(false);
+    const strayBody = JSON.parse(textOf(stray));
+    expect(strayBody.refused).toBe(CONNECTOR_REFUSAL_NOTE);
+    expect(strayBody.error).toContain("bogus");
+
+    // The worker's copy of the same refusal is what it always was.
+    const worker = await connect({ [PROJECT_HEADER]: `refusal-${randomUUID()}` });
+    const workerStray = await worker.callTool({ name: "auth_status", arguments: { bogus: 1 } });
+    expect(workerStray.isError).toBe(true);
+    expect(Object.keys(JSON.parse(textOf(workerStray)))).toEqual(["error"]);
+  });
+
   it("3. a FamilySearch token the upstream refuses gets the connector's sign-in message, never the desktop's or the worker's", async () => {
     // Self-hosted beta E3: a tool error the model relays, and the connector
     // stays connected. This server has no public URL, so the message names the
@@ -649,7 +701,7 @@ describe("tool server over Streamable HTTP", () => {
     const client = await connect();
     const result = await client.callTool({
       name: "record_read",
-      arguments: { recordId: "QVS9-DHDB" },
+      arguments: { recordId: "QVS9-DHDB", projectPath: await ownedConnectorPath() },
     });
     expect(result.isError).toBe(true);
     const body = JSON.parse(textOf(result)) as { error: string };
@@ -677,7 +729,10 @@ describe("tool server over Streamable HTTP", () => {
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
     try {
       const client = await connect(undefined, `http://127.0.0.1:${address.port}`);
-      const refused = await client.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } });
+      const refused = await client.callTool({
+        name: "record_read",
+        arguments: { recordId: "QVS9-DHDB", projectPath: await ownedConnectorPath() },
+      });
       expect(refused.isError).toBe(true);
       expect((JSON.parse(textOf(refused)) as { error: string }).error).toBe(
         "FamilySearch session not accepted. Sign in again at https://beta.example/auth/familysearch/login, " +
@@ -721,9 +776,11 @@ describe("tool server over Streamable HTTP", () => {
       connect({ Authorization: "Bearer connector-token-A" }),
       connect({ Authorization: "Bearer connector-token-B" }),
     ]);
+    const pathA = await ownedConnectorPath("u_A");
+    const pathB = await ownedConnectorPath("u_B");
     const [ra, rb] = await Promise.all([
-      a.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } }),
-      b.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } }),
+      a.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB", projectPath: pathA } }),
+      b.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB", projectPath: pathB } }),
     ]);
     // The mocked upstream answers 401, which record_read reports as an error —
     // what matters is which token each request carried there.
@@ -761,16 +818,16 @@ describe("tool server over Streamable HTTP", () => {
     const refusedA = await a.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
     expect(refusedA.isError).toBe(true);
     expect(textOf(refusedA)).toMatch(/Image cap reached/);
-    // No projectPath: still counted against A's bound project, through its anchorPath.
+    // No projectPath: refused by the gate, before any fetch.
     const refusedBare = await a.callTool({ name: "image_read", arguments: { imageId: next } });
-    expect(textOf(refusedBare)).toMatch(/Image cap reached/);
+    expect(textOf(refusedBare)).toContain("No project:");
     expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-A")).toHaveLength(0);
 
     const fetchedB = await b.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
     expect(textOf(fetchedB)).not.toMatch(/Image cap reached/);
     expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-B").length).toBeGreaterThan(0);
-    // B's bare call on a new image: counted against B's own project, never A's full group.
-    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022` } });
+    // B's next image: counted against B's own project, never A's full group.
+    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022`, projectPath: SCOPED_ANCHOR } });
     expect(textOf(bareB)).not.toMatch(/Image cap reached/);
   });
 
@@ -1036,7 +1093,10 @@ describe("tool server over Streamable HTTP", () => {
       let line: string | undefined;
       try {
         // record_read reaches FamilySearch; the mocked upstream answers 401.
-        const res = await rpc(call("record_read", { recordId: "QVS9-DHDB" }), connectorHeaders());
+        const res = await rpc(
+          call("record_read", { recordId: "QVS9-DHDB", projectPath: await ownedConnectorPath() }),
+          connectorHeaders(),
+        );
         await res.text();
         // The door writes this line in handleMcpPost's `finally`, which runs
         // AFTER the response is sent — so reading it straight after the body
@@ -1155,6 +1215,32 @@ describe("tool server over Streamable HTTP", () => {
       expect(own.openRouterApiKey).toBe("patron-key");
     });
 
+    it("leaves a connector caller on FamilySearch's matcher when the deployment names no service", async () => {
+      // The config the door builds, read by the getter ranking uses. On malachi,
+      // which sets no MATCHER_URL, this pair failed every ranked search.
+      const caller = { userId: "u_1", familySearchToken: "fs", openRouterApiKey: null };
+      const none = connectorPrincipal({
+        accessToken: "fs",
+        userId: "u_1",
+        config: connectorConfig(configFromEnv({}, { hosted: true }), caller),
+      });
+      await expect(getMatcherSettings(none)).resolves.toEqual({ backend: "familysearch" });
+
+      const service = connectorPrincipal({
+        accessToken: "fs",
+        userId: "u_1",
+        config: connectorConfig(
+          configFromEnv({ MATCHER_URL: "https://matcher.example/", MATCHER_API_KEY: "matcher-key" }, { hosted: true }),
+          caller,
+        ),
+      });
+      await expect(getMatcherSettings(service)).resolves.toEqual({
+        backend: "service",
+        url: "https://matcher.example",
+        apiKey: "matcher-key",
+      });
+    });
+
     it.each([
       ["an array", ["/proj_0123456789abcdef"]],
       ["a number", 42],
@@ -1264,7 +1350,7 @@ describe("tool server over Streamable HTTP", () => {
         expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
         expect(body.message).toBe(
           "No project yet: pass newProjectPath as projectPath to start one. " +
-            "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill.",
+            START_PROJECT_RULE,
         );
       });
 
@@ -1368,7 +1454,7 @@ describe("tool server over Streamable HTTP", () => {
         const res = await rpc(call("tree_query", {}), connectorHeaders());
         expect(res.status).toBe(200);
         const text = await res.text();
-        expect(text).toContain("This call named no project");
+        expect(text).toContain("No project:");
         expect(ownedProjects).not.toHaveBeenCalled();
         expect(bindStore).not.toHaveBeenCalled();
       });
@@ -2269,11 +2355,15 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
       rpc(call("project_context", { projectPath: projPath("f", i) }), userA),
     );
     let answer!: Promise<Response>;
+    // The waiting call names a project that exists (every tool but six needs one).
+    const waitPath = projPath("f", 4);
+    await seedProject(new ScopedFsStore(root, waitPath.slice(1), waitPath), waitPath, "Waiter");
+    OWNED_BY.set(waitPath.slice(1), "u_A");
     try {
       await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 0 }));
       // record_read reaches FamilySearch (the mocked upstream) with whatever
       // token the call's principal carries.
-      answer = rpc(call("record_read", { recordId: "QVS9-WAIT" }), userA);
+      answer = rpc(call("record_read", { recordId: "QVS9-WAIT", projectPath: waitPath }), userA);
       await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
       // The web tier replaced the user's FamilySearch token while the call waited.
       lookupConnector.mockImplementationOnce(async () => ({

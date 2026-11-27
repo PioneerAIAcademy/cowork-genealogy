@@ -46,6 +46,7 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { NOT_YOUR_PROJECT_MESSAGE, startHttpServer } from "../../src/http-server.js";
+import { CONNECTOR_REFUSAL_NOTE } from "../../src/tool-result.js";
 import {
   authorizeAttempt,
   createPgS3Backend,
@@ -707,20 +708,14 @@ if (!DSN || !ENDPOINT) {
         expect(rows).toHaveLength(MAX_LISTED_PROJECTS + 1);
       }, 60_000);
 
-      it("project_list then person_read then project_create builds a project the caller owns and the next project_list returns it", async () => {
+      it("project_list then project_create then person_read builds a project the caller owns and the next project_list returns it", async () => {
         const a = await seedConnector();
         const first = toolBody(await connCall(a.token, "project_list", {}));
         expect(pathsOf(first)).toEqual([]);
         const projectPath = first.newProjectPath as string;
         seededProjects.push(projectPath.slice(1));
 
-        const read = toolBody(
-          await connCall(a.token, "person_read", { personId: upstream.personId, projectPath }),
-        );
-        expect(read.stagingError).toBeUndefined();
-        expect(read.staged).not.toBeNull();
-        expect(await ownerOf(projectPath)).toEqual([a.userId]);
-
+        // Every tool but a few refuses a call with no project, so the project comes first.
         const created = toolBody(
           await connCall(a.token, "project_create", {
             projectPath,
@@ -729,6 +724,13 @@ if (!DSN || !ENDPOINT) {
           }),
         );
         expect(created.ok, JSON.stringify(created)).toBe(true);
+        expect(await ownerOf(projectPath)).toEqual([a.userId]);
+
+        const read = toolBody(
+          await connCall(a.token, "person_read", { personId: upstream.personId, projectPath }),
+        );
+        expect(read.stagingError).toBeUndefined();
+        expect(read.staged).not.toBeNull();
         expect(await ownerOf(projectPath)).toEqual([a.userId]);
 
         const next = toolBody(await connCall(a.token, "project_list", {}));
@@ -1067,7 +1069,7 @@ if (!DSN || !ENDPOINT) {
         await expectForbidden({ projectId: id, turnId: turn, epoch: 2, bearer: oldTok }, "old token, fence 2");
       });
 
-      it("no project header: no U4 check, and convert_calendar works — now on the CONNECTOR door", async () => {
+      it("no project header: no U4 check, store-less project_list answers and convert_calendar is refused — on the CONNECTOR door", async () => {
         // A request with no project header used to skip every check and run
         // store-less. Under one front door (E1) it is a connector request, so
         // it needs a connector token; `tokA` is a worker bearer and would be a
@@ -1091,12 +1093,20 @@ if (!DSN || !ENDPOINT) {
           [createHash("sha256").update(token, "utf8").digest("hex"), userId],
         );
         const client = await connect({ bearer: token });
-        const converted = await client.callTool({
+        // convert_calendar needs a project now; project_list is a store-less tool that
+        // still answers with no project.
+        const listed = await client.callTool({ name: "project_list", arguments: {} });
+        expect(listed.isError, textOf(listed)).not.toBe(true);
+        expect(JSON.parse(textOf(listed))).toMatchObject({ mode: "hosted", projects: [] });
+        const refused = await client.callTool({
           name: "convert_calendar",
           arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
         });
-        expect(converted.isError, textOf(converted)).not.toBe(true);
-        expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
+        // A refusal, and this is the connector door: an ordinary result under the note,
+        // with no error mark (connectorToolResult, src/tool-result.ts).
+        expect(refused.isError ?? false).toBe(false);
+        expect(JSON.parse(textOf(refused)).refused).toBe(CONNECTOR_REFUSAL_NOTE);
+        expect(textOf(refused)).toContain("No project:");
       });
 
       it("an unmigrated turns.bearer_sha256: /healthz answers 503 with a schema label", async () => {

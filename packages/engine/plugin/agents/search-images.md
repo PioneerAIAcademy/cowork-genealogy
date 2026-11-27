@@ -10,7 +10,7 @@ description: >-
   search-records), full-text transcript search (use search-full-text), external
   repositories like Ancestry (use search-external-sites), planning what to browse
   (use research-plan), or extracting facts from an image already in hand (use
-  the record-structurer agent). With no project, reads a record set and returns
+  the record-structurer agent). With a project that has no person, reads a record set and returns
   its names, cited by image, or finds the catalog item and DGS numbers for a
   named title, or compares a page's names with FamilySearch's index of that page.
 model: claude-haiku-5-5
@@ -71,7 +71,7 @@ You are invoked with a delegation message naming what to browse:
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `projectPath` | no | The absolute project-folder path. Absent, or `project_context` returns `reason: "no_project"`: follow **No project** below. |
+| `projectPath` | yes | The absolute project-folder path. When the project has no person (`subjectPersonIds` empty) and the delegation carries no plan item: follow **No person** below. |
 | `standardPlace` | one of these | The place to find a volume for, with a year range when known. |
 | `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
@@ -154,7 +154,7 @@ Browse only when the volume is **digitized but not searchable** —
 `volume_search` reports `recordSearchablePercent: 0` (or very low) and
 `fulltextSearchable: false`. If it's indexed use search-records; if full-text
 transcribed use search-full-text (both are faster than reading pages). A
-re-index of one page is the exception (**No project**).
+re-index of one page is the exception (**No person**).
 
 | MCP tool | Input | Purpose |
 |----------|-------|---------|
@@ -163,7 +163,7 @@ re-index of one page is the exception (**No project**).
 | `volume_bisect` | `imageGroupNumber` (split name), `targetYear`, `readings`, `projectPath` | Read ONE probe page per call toward a year; returns `bracket`, `reading`, `nextImageId` or `stopped` |
 | `catalog_search` | `title`, `keywords`, `standardPlace` | Find a filmed record set in the FamilySearch Catalog; a hit's `filmNotes[].imageGroupNumber` goes to `image_search` |
 | `image_index` | `imageId`, `collectionId`, `offset` | The records FamilySearch indexed on ONE page: `entries[].personas[].name`; `nextOffset` while more remain; `ordered: false`, so list position is not page order |
-| `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text. With no `projectPath`, returns `transcription` inline and stages nothing |
+| `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text; read it with `sidecar_read` |
 | `sidecar_read` | `projectPath`, `ref` | Read a staged page's text by its `staged.resultsRef` |
 
 **`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
@@ -173,24 +173,24 @@ mistake — an `imageId` names one page and goes to `image_transcribe`, not to
 `offset`, `limit`, `imageIndex`, or `imageId` parameter, so never re-query to
 "get more."
 
-## No project
+## No person
 
-When the delegation carries no `projectPath`, or `project_context` returns
-`reason: "no_project"`, this section replaces steps 1 and 6–9 and the return
-contract:
+When the project has no person and the delegation carries no plan item, this
+section replaces steps 1 and 6–9 and the return contract:
 
-- Do not call `research_query`, `research_log_append`,
-  `research_append` or `sidecar_read`. Ignore any tool text telling you to log.
+- Call no `research_append`. Log the work once, at the end, with
+  `research_log_append({ projectPath, ... })`; a search that read nothing is
+  logged `negative`.
 - Find the record set: `catalog_search` by `keywords` (a title, a publication
   number, a unit or place name), taking `imageGroupNumber` from the matching
   hit's `filmNotes[]`; or `volume_search` by place and years, with
   `omitSearchable: true`. Then `image_search` that group.
-- Read pages with `image_transcribe({ imageId })` and no `projectPath`. The page
-  text comes back as `transcription`. Read the pages the ask needs, not the
-  whole film.
+- Read pages with `image_transcribe({ projectPath, imageId })`, then
+  `sidecar_read({ projectPath, ref: staged.resultsRef })` for the text. Read the
+  pages the ask needs, not the whole film.
 - **Re-index one page** (compare a page with FamilySearch's index of it): call
-  `image_index({ imageId })`, again with each `nextOffset` until it is absent;
-  then `image_transcribe({ imageId })` once. Pair an index entry with a
+  `image_index({ projectPath, imageId })`, again with each `nextOffset` until it is absent;
+  then `image_transcribe({ projectPath, imageId })` once. Pair an index entry with a
   transcribed line when their given names or their surnames are the same or
   differ by a letter or two (Mila/Milo, Barry/Berry); a line left between two
   paired lines pairs with the one entry left between them, even when no name
@@ -215,7 +215,7 @@ contract:
     each fact followed by the image id it came from (e.g. `004567123_00058`).
     State which pages were read and which were not. No other line in it is
     only `---`. This block replaces `summary_for_user` and may carry image ids.
-- Never state a name, rank or date that is not in a `transcription` or an
+- Never state a name, rank or date that is not in a staged page's text or an
   `image_index` entry you received.
 
 ## Steps
@@ -313,8 +313,9 @@ suffix raised by k, zero-padded. Read only ids inside a returned range.
 
 ### 4. Read pages with `image_transcribe`
 
-Call `image_transcribe({ imageId, projectPath })` — one call per page — adding
-`lookingFor` when you were given a `looking_for`. `lookingFor` names only who
+Call `image_transcribe({ imageId, projectPath, planItemId })` — one call per
+page, `planItemId` null for an ad-hoc browse — adding `lookingFor` when you were
+given a `looking_for`. The tool logs each page itself; never log a page read. `lookingFor` names only who
 or what the record is about: the names, the event, the year. Never put a
 navigation target in it ("title page", "year boundary", "name index S
 section", "first entry", "or 1854 start") — any token of it can match and
@@ -518,7 +519,7 @@ Two browses of one volume produce two log entries — that is correct.
 
 ## Return contract
 
-With no project, return as **No project** says. Otherwise return **≤11 lines**
+With no person, return as **No person** says. Otherwise return **≤11 lines**
 to the caller, in this order:
 
 - the volume(s) browsed — `imageGroupNumber`, `imageCount`, and why this group

@@ -206,6 +206,7 @@ millions of hits.
 | `availability` | string | `q.availability` | The service matches **exactly**: `Online` → 472 (473 re-measured in review), `online` and `ONLINE` → 0, with no error. A clean zero reads to the agent as "the Catalog holds nothing", so the tool **normalises any capitalisation of `online` to `Online`**. Only that one value is normalised — it is the only one measured live; anything else passes through unchanged rather than being guessed at |
 | `count` | integer, 1–200 | `count` | the tool sends 25 when omitted; max 200 (201 → 400). The *service's* default was never measured — every probe query passes `count` |
 | `hydrate` | integer, 0–25 | — | item calls to make, default 10; `0` skips hydration |
+| `filmYear` | integer | — | filters nothing: each hit with a film note whose text covers that year (a range `1804-1865` or a lone year) gets `filmForYear` (**`filmForYear`** below). Allowed beside `catalogId` |
 | `catalogId` | string (a whole number accepted) | item endpoint | opens **one** entry; no search is made. See **Opening one entry by its id**. No other query field may be given with it; `count` and `hydrate` are range-checked as usual and otherwise have no effect |
 
 Everything ANDs: place id 333 + `exactPlace` → 803; plus `keywords=census` → 54.
@@ -351,6 +352,20 @@ not which reel it is. `imageStartNumber`, the Catalog's `item_image_start_no`, w
 absent from every film note in those same answers. `indexed` is the Catalog's
 `fs_indexed`. No plugin body, validator or recorded fixture reads any of the
 three, so notes that differ only in one of them are one reel.
+
+### `filmForYear`
+
+With `filmYear`, a hit gets `filmForYear: { filmNumber?, imageGroupNumber?, text?, line }`
+for the first of its film notes whose `text` holds a year range or a lone year
+covering `filmYear`. `line` is the finished sentence a caller relays word for word:
+`FamilySearch has filmed this register: "<title>", film <filmNumber> (<text>).`, then
+"It is viewable only at a FamilySearch Center or an affiliate library." when
+`availableOnline` is false, or "It can be read online at FamilySearch." when it is
+true. The tool writes it so the film number reaches the researcher as the Catalog
+gives it: search-external-sites, told to compose that sentence itself, dropped the
+number in 2 of 2 runs of `ut_search_external_sites_mcc`. A hit with no covering note
+gets no field. Computed in the pure, exported `attachFilmForYear`, which the eval mock
+runs over its canned answers.
 
 ### `filmNotesTotal` and `filmNotesHint`
 

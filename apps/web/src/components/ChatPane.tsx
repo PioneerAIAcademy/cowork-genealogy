@@ -419,8 +419,7 @@ export default function ChatPane({
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
   // Step mode: the replies this turn admits, from `turn_done.options`. Empty whenever
-  // the turn made no offer -- and whenever the host answered for the researcher under
-  // "Keep going", because then there is no choice left to put to them.
+  // the turn made no offer.
   const [options, setOptions] = useState<string[]>([])
   const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
@@ -501,29 +500,11 @@ export default function ChatPane({
     const off = conn.on((msg: WsMessage) => {
       if (msg.type === 'agent_event') applyEvent(msg.event as Record<string, unknown>)
       else if (msg.type === 'user_msg') {
-        if (msg.auto === true) {
-          // The host answered for the researcher under "Keep going", so the same
-          // transition a typed reply makes applies -- and no tab sent this one, so
-          // nothing else will make it. `busy` is the single thing that retires the
-          // offer; the server also leaves `options` off a turn it answered itself,
-          // so the buttons never appear for the researcher to race.
-          setOutcome(null)
-          setOutcomeKind(null)
-          setBusy(true)
-        }
         // Replayed transcript on (re)connect — the server only sends user_msg
-        // during history replay; live input is added locally in send(). The one
-        // LIVE user_msg is the host's own reply (`auto`), which no tab sent and so
-        // has no local bubble: it must be drawn here, or a run of step turns shows
-        // the agent answering messages nobody can see.
+        // during history replay; live input is added locally in send().
         setMessages((prev) => [
           ...prev,
-          {
-            role: 'user',
-            text: stripOpeningTurn(String(msg.text ?? '')),
-            tools: [],
-            auto: msg.auto === true
-          }
+          { role: 'user', text: stripOpeningTurn(String(msg.text ?? '')), tools: [] }
         ])
       } else if (msg.type === 'status' && msg.state === 'chat_ready') {
         setReady(true)
@@ -681,13 +662,8 @@ export default function ChatPane({
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`${m.role === 'user' ? 'msgUser' : 'msgAssistant'}${m.auto ? ' msgAuto' : ''}`}
+              className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}
             >
-              {/* The host answered for the researcher under "Keep going". It keeps the
-                  user bubble -- it is their message and their run -- but a reader
-                  scrolling back must be able to tell what they chose from what the run
-                  sent on their behalf, and the bubble alone cannot say. */}
-              {m.auto && <div className="msgAutoNote">sent automatically</div>}
               {/* Chips render WHERE THEY ARRIVED, not all above the prose. `blocks`
                   carries arrival order; without it a turn stacks every chip above
                   every paragraph -- 36 in one stretch of the captured session. Older

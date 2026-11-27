@@ -15,6 +15,9 @@ household skeleton and must build it.
 - **I1 Patrick Flynn** (b. ~1845, Ireland) — the subject, already linked as
   Thomas's child (edge **R1**, sourced to the 1908 death certificate S3).
 
+`starting-tree.gedcomx.json` — the same persons; every one pre-existed this
+research (the baseline `project_create` writes in production).
+
 `research.json` — one 1850-census source (`src_001` → tree source **S1**) whose
 seven assertions describe Thomas's household:
 

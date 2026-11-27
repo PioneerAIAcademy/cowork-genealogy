@@ -21,9 +21,6 @@ import { useSelectedSkill } from '@/lib/useSelectedSkill';
 import type { RunLogListEntry } from '@/lib/types';
 
 function kindBadge(entry: RunLogListEntry) {
-  if (entry.released) {
-    return <Badge color="green" variant="filled">v{entry.version} released</Badge>;
-  }
   if (entry.kind === 'candidate') {
     return <Badge color="blue" variant="light">v{entry.version} candidate</Badge>;
   }
@@ -33,17 +30,8 @@ function kindBadge(entry: RunLogListEntry) {
   return <Badge color="gray">other</Badge>;
 }
 
-/**
- * "Current candidate" = unreleased candidate whose version is above the
- * latest released version for its skill (or no release exists yet).
- * Only current candidates are bulk-deletable from the UI. Historical
- * candidates can still be removed by hand.
- */
-function isCurrentCandidate(entry: RunLogListEntry, latestReleased: number | null): boolean {
-  if (entry.released) return false;
-  if (entry.kind !== 'candidate') return false;
-  if (entry.version == null) return false;
-  return latestReleased == null || entry.version > latestReleased;
+function isDeletable(entry: RunLogListEntry): boolean {
+  return entry.kind === 'candidate';
 }
 
 export default function ResultsPage() {
@@ -72,20 +60,6 @@ export default function ResultsPage() {
     return Array.from(byskill.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [query.data]);
 
-  const latestReleasedBySkill = useMemo(() => {
-    const m = new Map<string, number | null>();
-    for (const [skill, runs] of skillsWithRuns) {
-      const max = runs
-        .filter((r) => r.released && r.version != null)
-        .reduce<number | null>((acc, r) => {
-          const v = r.version as number;
-          return acc == null || v > acc ? v : acc;
-        }, null);
-      m.set(skill, max);
-    }
-    return m;
-  }, [skillsWithRuns]);
-
   const toggleId = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -108,7 +82,7 @@ export default function ResultsPage() {
 
   const deleteSelectedForSkill = async (skill: string, ids: string[]) => {
     if (ids.length === 0) return;
-    if (!confirm(`Delete ${ids.length} candidate(s) for ${skill}? Each .json and .ann.json will be removed.`)) {
+    if (!confirm(`Delete ${ids.length} run log(s) for ${skill}? Each .json and .ann.json will be removed.`)) {
       return;
     }
     setDeleting(true);
@@ -185,9 +159,8 @@ export default function ResultsPage() {
       {skillsWithRuns
         .filter(([s]) => selectedSkill && s === selectedSkill)
         .map(([skill, runs]) => {
-          const latestRel = latestReleasedBySkill.get(skill) ?? null;
           const deletableIds = runs
-            .filter((r) => isCurrentCandidate(r, latestRel))
+            .filter(isDeletable)
             .map((r) => r.id);
           const selectedForSkill = deletableIds.filter((id) => selectedIds.has(id));
           const allSelected = deletableIds.length > 0 && selectedForSkill.length === deletableIds.length;
@@ -209,9 +182,6 @@ export default function ResultsPage() {
                       Delete {selectedForSkill.length} selected
                     </Button>
                   ) : null}
-                  <Anchor component={Link} href={`/results/trend?skill=${skill}`}>
-                    trend ↗
-                  </Anchor>
                 </Group>
               </Group>
               <Table striped>
@@ -220,7 +190,7 @@ export default function ResultsPage() {
                     <Table.Th style={{ width: 36 }}>
                       {deletableIds.length > 0 ? (
                         <Checkbox
-                          aria-label={`select all current candidates for ${skill}`}
+                          aria-label={`select all run logs for ${skill}`}
                           checked={allSelected}
                           indeterminate={someSelected}
                           onChange={(e) =>
@@ -238,7 +208,7 @@ export default function ResultsPage() {
                 </Table.Thead>
                 <Table.Tbody>
                   {runs.map((r) => {
-                    const selectable = isCurrentCandidate(r, latestRel);
+                    const selectable = isDeletable(r);
                     return (
                       <Table.Tr key={r.id}>
                         <Table.Td>

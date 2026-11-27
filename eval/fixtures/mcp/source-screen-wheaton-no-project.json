@@ -1,0 +1,13 @@
+{
+  "tool": "source_screen",
+  "description": "Real source_screen answer for LZPF-WMT in the person-less-project scenario, whose tree holds no person: the person is not in tree.gedcomx.json. Produced by calling the real sourceScreenTool (src/tools/source-screen.ts) on a temp copy of the scenario, 2026-11-24 (#4686); no matcher call was made.",
+  "args": {
+    "personId": "LZPF-WMT"
+  },
+  "response": {
+    "ok": false,
+    "errors": [
+      "Person 'LZPF-WMT' not found in tree.gedcomx.json."
+    ]
+  }
+}
