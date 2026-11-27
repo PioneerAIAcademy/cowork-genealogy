@@ -13,7 +13,23 @@ Not graded: "no search for a record already attached to KP9Y-74L" (printed as `m
 
 ## Expected result today
 
-PASS. Measured 2026-11-02:
+PASS when FamilySearch's record search answers. On 2026-11-27 (063dbcbc0 to 24f41ec71) all three whole-panel runs
+routed to search-records and failed only `save`: every `record_search` came back an error, logged as
+`record_search/error`, because FamilySearch's record search timed out on each query.
+
+Re-measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread (`main-thread.json`),
+once `project_context` returned `boundedRequest`:
+
+```
+PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  stop=clean
+    units: search-records  extraction_append=0
+```
+
+On `main` 202730796 without the field the router walked "Objective but no questions" that day: the
+baseline, then `question-selection` (FAIL on `owner`, `no_research_job` and `save`). Three later runs routed
+to search-records and failed only `save`, because FamilySearch's record search timed out on every query.
+
+Measured 2026-11-02:
 
 ```
 PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  delivered=yes  stop=clean

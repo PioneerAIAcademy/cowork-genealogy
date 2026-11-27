@@ -970,7 +970,8 @@ hands a merge set to proof-conclusion to fold. For a household record:
    from the tree) is **absent from the record**, flag that absence as an
    identity question — it may indicate a death, separation, enumeration
    elsewhere, or a different person entirely. On a household record only
-   (the "Edges:" line says write), call `project_context` and read the
+   (the "Edges:" line says write), call `project_context` with
+   `include: ["persons"]` and read the
    head's `spouseIds` and `childIds` and each one's `diedByYear`. Then, before any
    write, write one line in your reply: "Household check: [each spouse and
    child of the head with no `diedByYear` before the record's year] — present as [role] / absent." Every "absent" is raised as that identity
