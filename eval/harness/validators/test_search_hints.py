@@ -1,11 +1,12 @@
 """Suite-specific validators for the search-hints agent (issue #2029).
 
 search-hints reviews the FamilySearch hints on one tree person. Review asks
-`person_record_matches` for the PENDING matches only, reads each hint, reads the
-record image before deciding against a hint, decides each hint itself, logs each
-accept and reject, and completes its plan item. Record mode logs one
-`research_log_append` entry per verdict the researcher stated, then completes
-the item.
+`person_record_matches` for the PENDING matches at confidence 4 and up only,
+reads each hint, reads the record image before deciding against a hint, decides
+each hint itself and logs each reject and each accept, except an accept of a
+record the project already extracted. Record mode logs one `research_log_append`
+entry per verdict the researcher stated, with the same exception. Either mode
+completes the plan item when one was handed over.
 
 These are the mechanical checks; whether a recommendation is genealogically
 sound lives in the rubric. Each check reads a deterministic artifact — the call
