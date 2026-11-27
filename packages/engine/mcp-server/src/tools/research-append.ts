@@ -58,6 +58,14 @@ import {
 import { atomicWriteJson, atomicWriteBoth, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
 import {
+  canonicalOps,
+  isPlanForm,
+  planFormError,
+  planFormMessage,
+  planFormOps,
+  resolvePlanFormPlanId,
+} from "./research-append-forms.js";
+import {
   readMatchScores,
   findRecordedScore,
   readsAsFetched,
@@ -7448,7 +7456,8 @@ function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
   return (
     `the last open question is resolved, so the minted persons no relationship connects to an ` +
     `imported person were removed from the tree: ${parts.join("; ")}. Tell the researcher, by ` +
-    `name, which persons were removed.`
+    `name, which persons were removed. They are gone: name none of them in a claim, a tree edit ` +
+    `or a later write, and do not add them back.`
   );
 }
 
@@ -8472,8 +8481,13 @@ export interface ResearchAppendInput {
   // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
-  // to later ops (the allocators scan the live document).
+  // to later ops (the allocators scan the live document). An op may also carry
+  // its payload beside `section`/`op` instead of in `entry`/`fields`
+  // (research-append-forms.ts).
   ops?: ResearchAppendOp[];
+  // Plan form — one new plan and its items, converted into the batch above.
+  plan?: Record<string, unknown>;
+  planItems?: Record<string, unknown>[];
   // Composite persist: create the tree.gedcomx.json `S` entry for this call's
   // single sources append op and stamp its `gedcomx_source_description_id`.
   sourceDescription?: SourceDescriptionInput;
@@ -14062,7 +14076,14 @@ export async function researchAppendFromCaller(
   // `input.ops` itself, so writing it back made a batch stringified twice arrive there
   // still a string, which it decoded a second time, after this guard had read the
   // string as an empty list. It is a string after one decode and so is refused.
-  const decodedOps = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  const plan = decodeArg(input.plan);
+  const planItems = decodeArg(input.planItems);
+  const planForm =
+    isPlanForm(input) && planFormError({ ops: input.ops, section: input.section, plan, planItems }) === null;
+  const rawOps = planForm
+    ? planFormOps(plan as Record<string, unknown>, planItems as Record<string, unknown>[])
+    : decodeArg(input.ops);
+  const decodedOps = (Array.isArray(rawOps) ? canonicalOps(rawOps).ops : rawOps) as ResearchAppendOp[] | undefined;
   const decodedFields = decodeArg(input.fields) as Record<string, unknown> | undefined;
   const isBatch = decodedOps !== undefined;
   const ops = isBatch
@@ -14110,12 +14131,30 @@ export async function researchAppend(
 ): Promise<ResearchAppendResult> {
   const { projectPath } = input;
 
+  input.plan = decodeArg(input.plan) as Record<string, unknown> | undefined;
+  input.planItems = decodeArg(input.planItems) as Record<string, unknown>[] | undefined;
+  if (isPlanForm(input)) {
+    const formError = planFormError(input);
+    if (formError) return { ok: false, errors: [formError] };
+    const { plan, planItems, ...rest } = input;
+    const result = await researchAppend({ ...rest, ops: planFormOps(plan!, planItems!) }, options);
+    if (result.ok) return result;
+    return { ok: false, errors: result.errors.map(planFormMessage) };
+  }
+
   // Recover object/array args the model serialized as JSON strings (see
   // coerceJsonArg) before any shape checks, so a correct-but-stringified batch
   // isn't rejected as "`ops` must be a non-empty array" and driven into a slow
   // one-op-per-call fallback. Once: a value still a string after one decode is
   // not recovered, and is refused.
   input.ops = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  if (Array.isArray(input.ops)) {
+    const canonical = canonicalOps(input.ops);
+    if (canonical.errors.length > 0) {
+      return { ok: false, errors: canonical.errors, opsReceived: input.ops.length };
+    }
+    input.ops = canonical.ops as ResearchAppendOp[];
+  }
   input.entry = decodeArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = decodeArg(input.fields) as Record<string, unknown> | undefined;
   input.edits = decodeArg(input.edits) as NarrativeEdit[] | undefined;
@@ -14142,6 +14181,7 @@ export async function researchAppend(
     const research = await readJson(projectPath, "research.json");
     const stale = options.precondition?.(research);
     if (stale) return fail([stale]);
+    resolvePlanFormPlanId(input.ops, nextResearchId(Array.isArray(research.plans) ? research.plans : [], "pl_"));
     // Snapshot BEFORE any op in this call/batch applies — see
     // proofSummaryInvariants. Must be taken here, not read off `research`
     // later, since applyOne mutates `research` in place per op.
@@ -14447,7 +14487,13 @@ export async function researchAppend(
     const removalWarnings: string[] = [];
     let removedPersons = false;
     if (closesLastOpenQuestion(beforeResearch, research)) {
-      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
+      const writtenSummaryIds = new Set(applied.filter((a) => a.section === "proof_summaries").map((a) => a.entryId));
+      const unanchored = unanchoredMintedPersonIds(
+        tree,
+        research,
+        (id) => pidOrStartingPerson(id, prep.startingPersonIds),
+        writtenSummaryIds,
+      );
       if (unanchored.length > 0) {
         removalWarnings.push(unanchoredRemovalMessage(removeUnanchoredPersons(tree, research, unanchored)));
         removedPersons = true;
@@ -14512,7 +14558,8 @@ export async function researchAppend(
     // A plan short of its question's date window (issue #2424). Judged once per
     // question on the call's end state, so op order in a batch cannot matter, and
     // only on an op that can change coverage — a search agent's status-only item
-    // update leaves the span alone and must not re-warn on every search.
+    // update leaves the span alone and must not re-warn on every search. The
+    // census-years note also reads record_type and jurisdiction.
     const endPlans: any[] = Array.isArray(research?.plans) ? research.plans : [];
     const planQuestion = (planId: unknown) => endPlans.find((p) => p?.id === planId)?.question_id;
     const windowQuestionIds = new Set<string>();
@@ -14523,7 +14570,9 @@ export async function researchAppend(
         else if (o.fields && "items" in o.fields) qid = planQuestion(o.entryId);
       } else if (o.section === "plan_items") {
         const f = o.op === "append" ? null : (o.fields ?? {});
-        if (!f || "date_range" in f || f.status === "skipped") qid = planQuestion(o.planId);
+        if (!f || "date_range" in f || "record_type" in f || "jurisdiction" in f || f.status === "skipped") {
+          qid = planQuestion(o.planId);
+        }
       }
       if (typeof qid === "string") windowQuestionIds.add(qid);
     }
@@ -15518,6 +15567,9 @@ export const researchAppendSchema = {
           "fields/edits/planId are ignored. Use this to persist a whole record at once.",
         items: {
           type: "object",
+          description:
+            "One mutation: section, op, and the entry's fields (append) or the changed " +
+            "fields (update) directly beside them.",
           properties: {
             section: {
               type: "string",
@@ -15540,6 +15592,19 @@ export const researchAppendSchema = {
           },
           required: ["section", "op"],
         },
+      },
+      plan: {
+        type: "object",
+        description:
+          "A new research plan: its plans entry (question_id, status, created), WITHOUT " +
+          "an id. Send with `planItems`, and without `ops` or `section`.",
+      },
+      planItems: {
+        type: "array",
+        description:
+          "The new plan's items in sequence order, each a plan_items entry WITHOUT an id " +
+          "or planId: the tool attaches every item to the plan it creates.",
+        items: { type: "object" },
       },
       sourceDescription: {
         type: "object",

@@ -27,7 +27,7 @@ import pytest
 
 from harness.skill_runner import agent_return_text
 from test_universal import _bare_tool_name, _healer_normalized, _tool_reported_removal
-from validators_lib import continue_offers
+from validators_lib import continue_offers, research_append_ops
 
 
 # --- Tool allowlist ---
@@ -1087,14 +1087,7 @@ def _proof_summary_update_ops(tool_calls, entry_id):
     for tc in tool_calls:
         if "research_append" not in tc.get("tool", ""):
             continue
-        args = tc.get("args") or {}
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except ValueError:
-                ops = None
-        for op in ops if isinstance(ops, list) else [args]:
+        for op in research_append_ops(tc.get("args") or {}):
             if (
                 isinstance(op, dict)
                 and op.get("section") == "proof_summaries"

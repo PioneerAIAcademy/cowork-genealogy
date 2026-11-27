@@ -260,13 +260,13 @@ Write only proof_summaries, questions and project in research.json — never upd
 
 ```
 research_append({ projectPath, ops: [
-  { section: "proof_summaries", op: "append", entry },        // no id — the tool assigns ps_NNN
+  { section: "proof_summaries", op: "append", ...entry },     // no id — the tool assigns ps_NNN
   { section: "questions", op: "update", entryId: "q_NNN",
-    fields: { status: "resolved", resolved: "<today>", resolution_assertion_ids: [ ... ] } },
+    status: "resolved", resolved: "<today>", resolution_assertion_ids: [ ... ] },
 ] })
 ```
 
-The tool validates the whole project and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
+Each op carries its fields directly beside `section` and `op`, with no `entry` or `fields` wrapper. The tool validates the whole project and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
 
 **Required fields in `entry`:** `question_id` (the `q_` this conclusion answers), `tier` (lowercase enum from §2), `vehicle` (lowercase enum from §3: `statement` / `summary` / `argument`), `supporting_assertion_ids` (array of `a_` ids that ground the conclusion), `resolved_conflict_ids` (array of `c_` ids this conclusion **accounts for**, not settles — each must already be `resolved` or `moot`; citing an `unresolved` conflict is refused — may be empty `[]`), `exhaustive_search_summary` (one-paragraph string describing what was searched and what wasn't, even at probable/possible tiers), `shortfall` (see below), and `narrative_markdown` (the self-contained narrative from §4). Omitting any of these causes the project schema validation to reject the entry and `research_append` writes nothing.
 
