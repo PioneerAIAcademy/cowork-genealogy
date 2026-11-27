@@ -21,7 +21,8 @@ skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
 
 It also denies the main thread the tools only agents hold (AGENT_ONLY_TOOLS,
-issue #3528), naming the agents to delegate to, and denies a fork.
+issue #3528), naming the agents to delegate to, the tools no step may call there
+(MAIN_THREAD_DENIED), and a fork.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent
@@ -236,6 +237,16 @@ AGENT_ONLY_TOOLS = {
         "search-full-text",
     ),
     "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
+}
+
+# Tools the main thread may never call, each with its deny text. Not on
+# AGENT_ONLY_TOOLS: no agent holds them, so there is no agent to delegate to.
+# hooks.json's matcher must name every key here.
+MAIN_THREAD_DENIED = {
+    "person_search": (
+        "Ask the researcher for the FamilySearch person ID; a project never "
+        "starts from a name search."
+    ),
 }
 
 # Tools held only by agents that the main thread may still call, each with the
@@ -810,20 +821,51 @@ def _with_payloads_decoded(op: dict) -> dict:
     return out
 
 
+_OP_KEYS = frozenset(
+    {"section", "op", "entry", "entryId", "fields", "edits", "guideSection", "surveyRef", "planId",
+     "projectPath", "resolveStandardPlace", "sourceDescription"}
+)
+
+
+def _canonical(op: dict) -> dict:
+    """`op` with any payload carried beside `section`/`op` moved under `entry`
+    (append) or `fields` (update), as `research-append-forms.ts` does. Merged
+    into a wrapper already present rather than refused: the tool refuses that
+    op, and a gate must still see every field it carries."""
+    wrapper = {"append": "entry", "update": "fields"}.get(op.get("op"))
+    loose = {k: v for k, v in op.items() if k not in _OP_KEYS}
+    if wrapper is None or not loose:
+        return op
+    out = {k: v for k, v in op.items() if k in _OP_KEYS}
+    present = out.get(wrapper)
+    out[wrapper] = {**present, **loose} if isinstance(present, dict) else loose
+    return out
+
+
 def _ops(tool_input: dict):
-    """Every op in a `research_append` call, batch or single.
+    """Every op in a `research_append` call, batch, single or plan form.
 
     A batch puts them in `ops`; a single call carries `section` at the top
-    level. Both shapes reach the same sections, so both are walked. Each is read
-    after `_decoded`, as the tool reads it.
+    level; the plan form sends `plan` and `planItems`, which the tool turns
+    into a `plans` append and one `plan_items` append per item. All reach the
+    same sections, so all are walked. Each is read after `_decoded`, as the
+    tool reads it, and in canonical form (`_canonical`).
     """
-    ops = _decoded((tool_input or {}).get("ops"))
+    tool_input = tool_input or {}
+    plan = _decoded(tool_input.get("plan"))
+    items = _decoded(tool_input.get("planItems"))
+    if plan is not None or items is not None:
+        yield {"section": "plans", "op": "append", "entry": plan if isinstance(plan, dict) else {}}
+        for item in items if isinstance(items, list) else []:
+            item = _decoded(item)
+            yield {"section": "plan_items", "op": "append", "entry": item if isinstance(item, dict) else {}}
+    ops = _decoded(tool_input.get("ops"))
     if isinstance(ops, list):
         for op in ops:
             op = _decoded(op)
             if isinstance(op, dict):
-                yield _with_payloads_decoded(op)
-    elif tool_input:
+                yield _canonical(_with_payloads_decoded(op))
+    elif tool_input and plan is None and items is None:
         yield _with_payloads_decoded(tool_input)
 
 
@@ -1022,6 +1064,16 @@ def agent_only_denied(tool_name: str, payload: dict) -> str | None:
     return bare if bare in AGENT_ONLY_TOOLS else None
 
 
+def main_thread_denied(tool_name: str, payload: dict) -> str | None:
+    """The deny text when a main-thread call reaches MAIN_THREAD_DENIED, else None.
+
+    Told apart and matched as `agent_only_denied` does.
+    """
+    if "agent_id" in payload:
+        return None
+    return MAIN_THREAD_DENIED.get(_basename(tool_name.replace("__", "/")))
+
+
 def agent_only_reason(tool: str) -> str:
     """The deny text for a main-thread call to an AGENT_ONLY_TOOLS member.
 
@@ -1133,6 +1185,16 @@ def decision(payload: dict, env: dict | None = None) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": agent_only_reason(tool),
+            },
+        }
+
+    never = main_thread_denied(tool_name, payload)
+    if never is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": never,
             },
         }
 

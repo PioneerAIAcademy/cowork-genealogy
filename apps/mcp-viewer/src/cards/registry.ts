@@ -4,7 +4,6 @@ import { latestKind, type CardKind, type CardView } from './kit/view'
 import { LinkCard } from './LinkCard'
 import { SearchCard } from './SearchCard'
 import { SetupCard } from './SetupCard'
-import { StubCard } from './StubCard'
 
 export type { CardKind, CardView }
 
@@ -16,20 +15,21 @@ export interface CardProps {
   onSeeResults?: (logId: string) => void
 }
 
-/** Every step card. A card's PR replaces its stub here and touches nothing else. */
-export const CARDS: Record<CardKind, ComponentType<CardProps>> = {
+/** The built step cards. A new card's PR adds its entry here; until then its step draws `latest`. */
+export const CARDS: Partial<Record<CardKind, ComponentType<CardProps>>> = {
   setup: SetupCard,
-  plan: StubCard,
   search: SearchCard,
   link: LinkCard,
-  conflict: StubCard,
-  hypothesis: StubCard,
-  assess: StubCard,
   conclusion: ConclusionCard
 }
 
-/** The card a `show` value draws. `latest`, and `file` until the case file, follow the question's state. */
+/** The card a `show` value draws. `latest`, `file`, and a step with no card yet follow the question's state. */
 export function cardKind(show: unknown, view: CardView): CardKind {
   if (typeof show === 'string' && Object.hasOwn(CARDS, show)) return show as CardKind
   return latestKind(view.status)
+}
+
+/** The component that draws `kind`; `latestKind` only ever names a built card. */
+export function cardFor(kind: CardKind): ComponentType<CardProps> {
+  return CARDS[kind] ?? SetupCard
 }

@@ -351,7 +351,7 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
 
 
 def _runlogs(skill: str | None) -> list[Path]:
-    """Every committed candidate/released log, in no meaningful order — the scan
+    """Every committed run log, in no meaningful order — the scan
     visits all of them and selects no "newest", so #1629's `v10`-sorts-before-`v2`
     bug is not inherited here.
 
@@ -387,7 +387,7 @@ def _runlogs(skill: str | None) -> list[Path]:
             sorted(
                 p
                 for p in d.glob("*.json")
-                if classify(p.name).kind in ("released", "candidate")
+                if classify(p.name).kind == "candidate"
             )
         )
     return out

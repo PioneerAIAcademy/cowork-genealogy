@@ -27,6 +27,7 @@ const STEP_WORDS: Array<[RegExp, string]> = [
   [/^conflict-resolution\b/, 'Weigh the evidence that disagrees.'],
   [/^extraction\b/, 'Read the records the searches found.'],
   [/^research-plan\b/, 'Plan the searches.'],
+  [/^locality-guide\b/, 'Plan the searches.'],
   [/^search-hints\b/, "Review FamilySearch's record hints."],
   [/^search-records\b/, "Search FamilySearch's records."],
   [/^search-external-sites\b/, 'Search another website.'],

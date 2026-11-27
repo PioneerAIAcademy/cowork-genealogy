@@ -1,0 +1,16 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe on the researcher's uploaded PDF of a Find a Grave memorial search with no results, uploads/findagrave-search-abner-hollis-1874.pdf in the findagrave-header-only-capture scenario. Find a Grave prints a search that finds nothing as its site header alone, so the page holds only the logo and a divider line. The transcription is modelled on what production's image_transcribe returned for three such captures in feedback issue #4745 (log_216 in that bundle), reworded only where it named that researcher's files. No text layer was stored for those PDFs, so a hosted project_context lists the upload with hasText: false and readWith image_transcribe (`utils/upload-read-plan.ts`). `metadata` is what production returns for a `file` read: the file echoed, the sniffed content type, and the scenario PDF's real size.",
+  "args": {
+    "file": "uploads/findagrave-search-abner-hollis-1874.pdf"
+  },
+  "response": {
+    "transcription": "The provided image contains only the \"Find a Grave\" logo and a horizontal divider line; there are no records, names, dates, or other genealogical entries to transcribe.",
+    "metadata": {
+      "file": "uploads/findagrave-search-abner-hollis-1874.pdf",
+      "contentType": "application/pdf",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 313
+    }
+  }
+}

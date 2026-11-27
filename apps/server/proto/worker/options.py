@@ -50,7 +50,6 @@ identifiers reach it through a closure, never a global.
 from __future__ import annotations
 
 import dataclasses
-import importlib.util
 import json
 import os
 import re
@@ -81,6 +80,8 @@ from app.agent.continue_policy import (
     wants_status_before,
 )
 from app.agent.main_thread import MainThread, load_main_thread
+from app.agent.plugin_lib import default_plugin_dir as _default_plugin_dir  # noqa: F401 - re-exported
+from app.agent.plugin_lib import load_step_boundary  # noqa: F401 - re-exported
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import MAX_BUFFER_BYTES, direct_project_file_write
@@ -470,36 +471,12 @@ STOP_REASON = "Stopped by the researcher."
 
 # ── The step boundary (decision 25) ──────────────────────────────────────────────
 #
-# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
-# `context_policy.py` loads `guard_project_files.py`. It is not a hook anywhere:
-# this worker is the only plane that ENFORCES the boundary, and it does so from
-# its own `PreToolUse` below.
-
-def _default_plugin_dir() -> Path:
-    """Where the plugin is. ``ENGINE_PLUGIN_DIR`` in the deployed image, which the
-    worker's predeploy hook puts at ``/opt/genealogy/plugin``; the checkout otherwise.
-    Read the same way ``worker.py`` reads it, so the two cannot point at different
-    copies."""
-    env = os.environ.get("ENGINE_PLUGIN_DIR")
-    if env:
-        return Path(env)
-    return Path(__file__).resolve().parents[4] / "packages" / "engine" / "plugin"
-
-
-def load_step_boundary(path: Path | None = None):
-    """Import the plugin's step boundary. Raises if it is missing.
-
-    A checkout always has the file and the worker bundle ships the plugin, so an image
-    without it is broken in a way that must be LOUD -- the alternative is a turn that
-    silently enforces no boundary, which looks exactly like the feature working.
-    """
-    target = Path(path) if path is not None else _default_plugin_dir() / "hooks" / "step_boundary.py"
-    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", target)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load the step boundary at {target}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, by the loader in
+# `app/agent/plugin_lib.py`, which both planes share (issue #4660). It is not a hook
+# anywhere: this worker enforces the boundary from its own `PreToolUse` below, as the web
+# app does from its own. `load_step_boundary` and `_default_plugin_dir` are
+# re-exported from here for `proto/steps.py`, `worker.py` and the tests that read them
+# off this module (`test_step_gate.py`, `test_step_mode_wiring.py`).
 
 
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
@@ -892,6 +869,10 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        # "1" is OFF. The neighbour above is "0" on purpose; on THIS variable a
+        # falsy value means forced_on (bundled CLI 2.1.308), so copying it would
+        # turn auto-memory ON.
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,

@@ -322,7 +322,7 @@ has nothing to compare to.
 
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — a handful of tests per run get reviewed, not all of them,
-and the Release button only waits on those. Five are chosen for you, and **every
+and the annotation gate (rule 3) only waits on those. Five are chosen for you, and **every
 test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning is added**, so a run
 with a low score anywhere is more than five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
@@ -980,7 +980,7 @@ these to follow the flow above:
 |---|---|
 | Skill architecture — how skills, agents, and tools bind | [`docs/architecture.md`](architecture.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
-| Per-PR review + run-log versioning mechanics | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| Per-PR review + run-log naming and retention | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`eval/CLAUDE.md`](../eval/CLAUDE.md) "Run log naming" |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
 | The e2e fixture format and judge contract | [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) |
 | The feedback-case contract (baseline, marker file, lints) | [`docs/specs/feedback-case-spec.md`](specs/feedback-case-spec.md) |

@@ -270,13 +270,13 @@ Write only proof_summaries, questions and project in research.json — never upd
 
 ```
 research_append({ projectPath, ops: [
-  { section: "proof_summaries", op: "append", entry },        // no id — the tool assigns ps_NNN
+  { section: "proof_summaries", op: "append", ...entry },     // no id — the tool assigns ps_NNN
   { section: "questions", op: "update", entryId: "q_NNN",
-    fields: { status: "resolved", resolved: "<today>", resolution_assertion_ids: [ ... ] } },
+    status: "resolved", resolved: "<today>", resolution_assertion_ids: [ ... ] },
 ] })
 ```
 
-The tool validates the whole project and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
+Each op carries its fields directly beside `section` and `op`, with no `entry` or `fields` wrapper. The tool validates the whole project and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
 
 **Required fields in `entry`:** `question_id` (the `q_` this conclusion answers), `tier` (lowercase enum from §2), `vehicle` (lowercase enum from §3: `statement` / `summary` / `argument`), `supporting_assertion_ids` (array of `a_` ids that ground the conclusion), `resolved_conflict_ids` (array of `c_` ids this conclusion **accounts for**, not settles — each must already be `resolved` or `moot`; citing an `unresolved` conflict is refused — may be empty `[]`), `exhaustive_search_summary` (one-paragraph string describing what was searched and what wasn't, even at probable/possible tiers), `shortfall` (see below), and `narrative_markdown` (the self-contained narrative from §4). Omitting any of these causes the project schema validation to reject the entry and `research_append` writes nothing.
 
@@ -363,7 +363,8 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with setting up the project?"; you wrote the summary with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with choosing the question?"; you wrote the summary with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **A conclusion the researcher asked to verify** (the question's `rationale` says so) and that is not proved: say that it stays out of this project's tree and that FamilySearch's tree is unchanged.
 - **What would advance the tier**, when it is `probable`, `possible` or `not_proved`, unless the research has ended on an unsettled conflict: one line naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo) — and naming **research-plan** as where that search would be planned. Never question-selection: advancing a tier is a search on the question already answered. Say it even when the project is complete, where it is what more would take rather than the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 

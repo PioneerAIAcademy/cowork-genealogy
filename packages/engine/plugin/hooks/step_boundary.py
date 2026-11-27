@@ -6,13 +6,12 @@ and gets the same answer. The one exception is a turn init-project opens: the
 step after it is the turn's real step (spec section H), so a bounded first
 message runs its deliverable in the turn that created the project.
 
-**This is a LIBRARY, not a registered hook** (lead, 2026-10-21). The prototype
-worker and both eval harnesses load it with
+**This is a LIBRARY, not a registered hook** (lead, 2026-11-24). The prototype
+worker, the web app and both eval harnesses load it with
 ``importlib.util.spec_from_file_location``, the way
-``eval/harness/harness/context_policy.py`` loads ``guard_project_files.py``.
-Cowork ships no step hook under decision 25, so there is no ``hooks.json`` entry
-and no ``GENEALOGY_STEP_HOST``: one copy, loaded directly, so no parity test is
-needed.
+``eval/harness/harness/context_policy.py`` loads ``guard_project_files.py``, and
+``step_gate_hook.py`` beside it imports it for the connector and Cowork: one
+copy, loaded directly, so no parity test is needed.
 
 Stdlib only, and no I/O of its own -- every caller passes the parsed documents
 in, because the planes read ``research.json`` by different means (the worker with
@@ -35,7 +34,8 @@ ROUTER = "research"
 # (`eval/harness/tests/unit/test_step_boundary.py`) fails when one is in none, so a new agent cannot ship without a decision about what may
 # follow it in a turn.
 GROUPS: dict[str, tuple[str, ...]] = {
-    "setup": ("init-project", "question-selection", "locality-guide"),
+    "setup": ("init-project",),
+    "question": ("question-selection",),
     "plan": ("research-plan", "locality-guide"),
     "search": (
         "search-records",
@@ -49,7 +49,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "hypothesis": ("hypothesis-tracking",),
     "assess": ("research-exhaustiveness", "research-plan"),
     "conclude": ("proof-conclusion",),
-    "forget": ("forget-and-rederive", "init-project", "record-structurer"),
+    "forget": ("forget-and-rederive", "init-project", "record-structurer", "question-selection"),
 }
 
 # One member each: every other agent the router can spawn. A turn one of these
@@ -82,10 +82,17 @@ for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
 del _solo
 
+# A broad verify: the audit of the attached sources, then the warnings, in one turn.
+GROUPS["source-evaluation"] = ("source-evaluation", "check-warnings")
+
 # A turn this step opens is grouped by the step AFTER it (spec section H): project
 # creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
-# and a job its question in the turn that created the project.
+# in the turn that created the project.
 UNGROUPED_OPENER = "init-project"
+
+# Never in a turn `UNGROUPED_OPENER` opened, at any point: a job stops after setup,
+# so the researcher can say what to verify before a question is chosen or planned.
+_NOT_AFTER_SETUP = frozenset({"question-selection", "research-plan"})
 
 # A step that OPENS a turn uses its home group. The overlaps above only admit a
 # follower -- they never change what a step means when it comes first. So a turn
@@ -93,8 +100,10 @@ UNGROUPED_OPENER = "init-project"
 # assess step, and a turn opened by record-structurer is a search step.
 HOME_GROUP: dict[str, str] = {
     "research-plan": "plan",
-    "locality-guide": "setup",
+    "locality-guide": "plan",
     "init-project": "setup",
+    "question-selection": "question",
+    "check-warnings": "check-warnings",
     "record-structurer": "search",
 }
 
@@ -118,6 +127,7 @@ WRAPUP_ORDER: tuple[str, ...] = (
 # plan, search and link.
 STEP_LABELS: dict[str, str] = {
     "setup": "setting up the project",
+    "question": "choosing the question",
     "plan": "planning the searches",
     "search": "running the searches",
     "link": "linking the records to people in this project",
@@ -179,21 +189,19 @@ def home_group(step: str) -> str | None:
 def normalize_reply(text: str | None) -> str:
     """A message as the reply phrases are compared: case and trailing punctuation
     ignored. One normalizer, so `step_mode` and every report that classifies a reply
-    agree on what "Keep going!" is."""
+    agree on what "Wrap it up!" is."""
     return str(text or "").strip().lower().rstrip(".!? \t\n")
 
 
 def step_mode(text: str) -> str:
-    """`job`, `wrapup` or `step`, from the researcher's message.
+    """`wrapup` or `step`, from the researcher's message.
 
     Exact-phrase only, case and trailing punctuation ignored, so a typed
-    "Keep going!" starts the same thing on every plane. Anything else is a step
-    turn -- a steer, a question and an upload all run one step.
+    "Wrap it up!" starts the same thing on every plane. Anything else is a step
+    turn -- "Continue.", "Keep going.", a steer, a question and an upload all run
+    one step.
     """
-    t = normalize_reply(text)
-    if t == "keep going":
-        return "job"
-    if t == "wrap it up":
+    if normalize_reply(text) == "wrap it up":
         return "wrapup"
     return "step"
 
@@ -208,17 +216,6 @@ def opening_step(steps: list[str] | None) -> str | None:
     if taken[:1] == [UNGROUPED_OPENER]:
         taken = taken[1:]
     return taken[0] if taken else None
-
-
-def gate_mode(turn_mode: str) -> str:
-    """The mode a hosted plane's `StepGate` enforces for a turn of `turn_mode`.
-
-    On the hosted planes a `job` message runs as a STEP turn: "Keep going" means
-    the host answers each boundary, not that the boundary goes away. Only Cowork,
-    which has no host to answer, runs a turn in mode `job`. `turn_mode` itself
-    stays `job`, because that is what `next_auto_reply` keys a reply on.
-    """
-    return "step" if turn_mode == "job" else (turn_mode or "step")
 
 
 def _wrapup_allowed(steps: list[str], name: str, ctx: dict | None) -> bool:
@@ -252,8 +249,6 @@ def step_allowed(
     steps = [bare_name(s) for s in (turn_steps or [])]
     steps = [s for s in steps if s and s != ROUTER]
 
-    if mode == "job":
-        return True
     if mode == "wrapup":
         return _wrapup_allowed(steps, name, ctx)
 
@@ -262,6 +257,8 @@ def step_allowed(
     if name in steps:
         # A step may always repeat itself: the search step fans out.
         return True
+    if steps[0] == UNGROUPED_OPENER and name in _NOT_AFTER_SETUP:
+        return False
 
     opener = opening_step(steps)
     if opener is None:
@@ -290,12 +287,17 @@ def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = No
     up" there would re-run a wrap-up on a question already concluded.
 
     A record-structurer stopped in a turn a search-hit review opened names the
-    extraction that review offers, not "running the searches".
+    extraction that review offers, not "running the searches". A step stopped in a
+    turn init-project opened offers choosing the question, the step a job takes
+    next, when init-project ran alone or the step was one that turn never admits.
     """
     name = bare_name(candidate)
     taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
     done = "proof-conclusion" in taken
     key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
+    if mode != "wrapup" and taken[:1] == [UNGROUPED_OPENER] \
+            and (opening_step(taken) is None or name in _NOT_AFTER_SETUP):
+        key = "question"
     if mode != "wrapup" and name == "record-structurer" \
             and opening_step(taken) == "evaluate-search-results":
         key = "extract-matches"
@@ -316,18 +318,20 @@ def _closes_hand_off(entry: dict, url: str) -> bool:
     return ext is not None and ext.get("url_generated") == url and entry.get("outcome") != "partial"
 
 
-def awaiting_upload_item_ids(research: dict) -> set[str]:
-    """Plan items waiting only on a capture the researcher owes us.
+def awaiting_hand_offs(research: dict) -> list[dict]:
+    """Hand-offs still waiting on the researcher, in log order.
 
     The Python mirror of `awaitingUserHandOffs` (`src/utils/awaiting-hand-offs.ts`): an
     `external_site` entry with `outcome: "partial"` and `capture_received: false`
     that no LATER entry closes. Keyed on `partial`, not on `capture_received`
     alone -- a `positive` entry logged with `capture_received: false` already had
-    its results in hand (alpha feedback #2864) and waits on nobody.
+    its results in hand (alpha feedback #2864) and waits on nobody. Each row carries
+    `log_id`, `site`, `url_generated` and `plan_item_id` (None when absent). The hosted
+    planes post each new row's URL to the chat (issue #4660).
     """
     log = research.get("log") if isinstance(research, dict) else None
     entries = log if isinstance(log, list) else []
-    waiting: set[str] = set()
+    rows: list[dict] = []
     for i, entry in enumerate(entries):
         ext = _external_site_of(entry)
         if ext is None or entry.get("outcome") != "partial" or ext.get("capture_received") is not False:
@@ -339,9 +343,20 @@ def awaiting_upload_item_ids(research: dict) -> set[str]:
         if any(_closes_hand_off(later, url) for later in entries[i + 1:]):
             continue
         item_id = entry.get("plan_item_id")
-        if isinstance(item_id, str):
-            waiting.add(item_id)
-    return waiting
+        site = ext.get("site")
+        rows.append({
+            "log_id": entry["id"],
+            "site": site if isinstance(site, str) else "",
+            "url_generated": url,
+            "plan_item_id": item_id if isinstance(item_id, str) else None,
+        })
+    return rows
+
+
+def awaiting_upload_item_ids(research: dict) -> set[str]:
+    """Plan items waiting only on a capture the researcher owes us: the plan items of
+    `awaiting_hand_offs`."""
+    return {row["plan_item_id"] for row in awaiting_hand_offs(research) if row["plan_item_id"] is not None}
 
 
 def current_question(research: dict) -> dict | None:
@@ -361,11 +376,11 @@ def current_question(research: dict) -> dict | None:
     return None
 
 
-def _active_plan_items(research: dict, question_id) -> list:
+def active_plan_items(research: dict, question_id) -> list:
     """Every item dict on the ACTIVE plan for `question_id`, plan order then item
-    order. Shared by `step_ctx` (open items not awaiting upload) and
-    `_touched_items_count` (how many have left `planned`), so "what counts as
-    the active plan" has exactly one definition."""
+    order. Shared by `step_ctx` (open items not awaiting upload) and the e2e
+    driver's reply picker (how many have left `planned`), so "what counts as the
+    active plan" has exactly one definition."""
     plans = research.get("plans") if isinstance(research, dict) else None
     items = []
     for plan in plans if isinstance(plans, list) else []:
@@ -394,65 +409,27 @@ def step_ctx(research: dict) -> dict:
     waiting = awaiting_upload_item_ids(research)
     open_items = any(
         item.get("status") in ("planned", "in_progress") and item.get("id") not in waiting
-        for item in _active_plan_items(research, question_id)
+        for item in active_plan_items(research, question_id)
     )
     return {"open_items": open_items, "question_id": question_id}
 
 
-# ---------------------------------------------------------------------------
-# "Keep going": the host replies for the researcher (section A2)
-# ---------------------------------------------------------------------------
-
 # Each button sends its exact phrase, and `step_mode` reads them back, so these
 # are the single spelling of each reply.
 REPLY_CONTINUE = "Continue."
-REPLY_KEEP_GOING = "Keep going."
 REPLY_WRAP_UP = "Wrap it up."
 REPLY_SEARCH_MORE = "Search more."
 
 # The offer only the researcher can answer.
 WRAP_UP = "wrap-up"
 
-# How many replies one run may send.
-MAX_AUTO_REPLIES = 30
 
-# A research-plan turn following one of these is the ordinary first plan, not a
-# re-plan, so it does not spend the run's one planning round.
-_PLANNING_EXEMPT = frozenset(GROUPS["setup"]) | frozenset(GROUPS["plan"])
-
-
-def _has_proof_summary(research: dict, question_id) -> bool:
+def has_proof_summary(research: dict, question_id) -> bool:
     summaries = research.get("proof_summaries")
     for summary in summaries if isinstance(summaries, list) else []:
         if isinstance(summary, dict) and summary.get("question_id") == question_id:
             return True
     return False
-
-
-def _last_question_id(research: dict):
-    """The most recently CREATED question, regardless of status.
-
-    `proof-conclusion` resolves the question it concludes in the same batch as
-    writing its summary (its own contract), so by the time this reads
-    `research.json` back, a successful conclusion's question is no longer
-    `current_question`'s "last unresolved entry" -- `current_question` has
-    already moved past it, to a different question or to None. Array order is
-    creation order (`current_question`'s own docstring), and question-selection
-    only appends, so the last entry names the question this turn worked on in
-    the ordinary case.
-
-    Known gap (issue #4601): this assumes the question just concluded is also
-    the most recently CREATED one. `question-selection.md`'s own exemption
-    lets a second question open while an earlier one sits unresolved with a
-    `not_proved` summary (an identity conflict); if THAT earlier question is
-    later re-concluded in place, array order no longer names it. Bounded
-    impact -- the gate falls through to "keep going" one extra turn instead of
-    ending immediately, backstopped by `MAX_AUTO_REPLIES` -- not fixed here."""
-    questions = research.get("questions") if isinstance(research, dict) else None
-    if not isinstance(questions, list) or not questions:
-        return None
-    last = questions[-1]
-    return last.get("id") if isinstance(last, dict) else None
 
 
 # The verdict research-exhaustiveness opens a `resources_spent` justification with.
@@ -476,7 +453,7 @@ def _is_low_risk_choice(question, research: dict) -> bool:
     justification = stop.get("justification")
     if not isinstance(justification, str) or not _LOW_OVERTURN_RISK.match(justification):
         return False
-    return not _has_proof_summary(research, question.get("id"))
+    return not has_proof_summary(research, question.get("id"))
 
 
 # The read side of `deny_reason`. That function renders STEP_LABELS[key] where
@@ -516,8 +493,8 @@ def offered_step(text: str | None) -> str | None:
 
     Only the last line, because that is where the router is told to put it; a
     line naming no entry is no offer, which is how a step that ended on a
-    question for the researcher ends a "Keep going" run. Trailing lines that are
-    only a link are read past (`_LINK_ONLY_RE`).
+    question for the researcher shows no buttons. Trailing lines that are only a
+    link are read past (`_LINK_ONLY_RE`).
     """
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
     while lines and _LINK_ONLY_RE.match(lines[-1]):
@@ -554,136 +531,16 @@ def reply_options(offered_step, research: dict | None = None) -> list[str]:
 
     research = research if isinstance(research, dict) else {}
     question = current_question(research)
-    options = [REPLY_CONTINUE, REPLY_KEEP_GOING]
+    options = [REPLY_CONTINUE]
 
     # Not beside proof-conclusion (Continue already concludes), and not beside
-    # question-selection (the offer after a wrap-up, where the current question
-    # may be one a conflict held open).
-    if question is not None and offer not in ("conclude", "setup"):
+    # question-selection (the offer after setup or a wrap-up, where the current
+    # question may be one a conflict held open).
+    if question is not None and offer not in ("conclude", "setup", "question"):
         options.append(REPLY_WRAP_UP)
     if offer == "conclude" and _is_low_risk_choice(question, research):
         options.append(REPLY_SEARCH_MORE)
     return options
-
-
-def _auto_reply_state(state: dict | None) -> tuple[int, int, list, int]:
-    state = state if isinstance(state, dict) else {}
-    replies = state.get("replies")
-    rounds = state.get("planning_rounds")
-    answered = state.get("answered")
-    touched = state.get("touched_items")
-    return (
-        replies if isinstance(replies, int) and replies > 0 else 0,
-        rounds if isinstance(rounds, int) and rounds > 0 else 0,
-        [tuple(pair) for pair in answered if isinstance(pair, (list, tuple))]
-        if isinstance(answered, list)
-        else [],
-        touched if isinstance(touched, int) and touched > 0 else 0,
-    )
-
-
-def _touched_items_count(research: dict, question_id) -> int:
-    """How many of the current question's ACTIVE plan items are no longer
-    `planned` -- a count, not a boolean, so growth between turns is visible."""
-    return sum(
-        1 for item in _active_plan_items(research, question_id)
-        if item.get("status") != "planned"
-    )
-
-
-def next_auto_reply(
-    state: dict | None,
-    turn_mode: str,
-    prev_step,
-    turn_step,
-    offered_step,
-    outcome: str,
-    *,
-    research: dict | None = None,
-) -> dict:
-    """The reply the host sends for the researcher, or None to end the run.
-
-    Returns ``{"reply": str | None, "state": dict}``. Pure: the caller persists
-    the returned state and never mutates the one it passed in.
-
-    Ends the run when the turn did not finish cleanly, made no offer, offered
-    `wrap-up` (only the researcher answers that), ran proof-conclusion and the
-    question it worked already has a proof summary (or `research` could not be
-    read), repeated a (step, offer) pair already answered since the last
-    planning round or since the current question's active-plan items last grew
-    in count, or hit `MAX_AUTO_REPLIES`.
-    """
-    replies, rounds, answered, touched = _auto_reply_state(state)
-    step = bare_name(turn_step) if turn_step else ""
-    offer = offer_key(offered_step)
-    prev = bare_name(prev_step) if prev_step else ""
-
-    # `rounds`/`answered`/`touched` are read fresh on every call -- none of them
-    # is ever reassigned from inside `done`, so Python resolves each as a free
-    # variable against `next_auto_reply`'s current locals, never a value frozen
-    # at `done`'s own definition. A call after `rounds += 1`/`answered = []`
-    # sees the updated value with nothing to re-pass.
-    def done(reply):
-        return {
-            "reply": reply,
-            "state": {
-                "replies": replies + (1 if reply else 0),
-                "planning_rounds": rounds,
-                "answered": [list(pair) for pair in answered],
-                "touched_items": touched,
-            },
-        }
-
-    # Only a "keep going." turn -- the researcher's own or a host reply -- gets
-    # a reply, so a "Continue." or "Wrap it up." turn ends the run.
-    if turn_mode != "job":
-        return done(None)
-    if outcome not in ("ok", "completed"):
-        return done(None)
-    if not offer or offer == WRAP_UP:
-        return done(None)
-    if step == "proof-conclusion":
-        # The LAST-created question, not `step_ctx`'s "current" one: a
-        # successful conclusion resolves this turn's question in the same
-        # batch as its summary, so by now `current_question` has already moved
-        # past it (to a different question, or to None) -- array order still
-        # names it, since question-selection only appends. Deliberately a
-        # DIFFERENT "which question" than the growth check just below, which
-        # wants the CURRENT (not-yet-resolved) one -- don't collapse the two
-        # into one lookup (issue #4601 names the known gap in this one).
-        if research is None or _has_proof_summary(research, _last_question_id(research)):
-            return done(None)
-        # else: blocked proof-conclusion, no proof written -- fall through
-    if replies >= MAX_AUTO_REPLIES:
-        return done(None)
-
-    # A planning round bounds both loops: a second "not exhaustive" round and a
-    # conflict's second evidence round.
-    if step == "research-plan" and prev and prev not in _PLANNING_EXEMPT:
-        if rounds >= 1:
-            return done(None)
-        rounds += 1
-        answered = []
-
-    if research is not None:
-        # The CURRENT question, not the proof-conclusion gate's last-created
-        # one above -- this tracks ongoing plan progress on whichever question
-        # is actually open now.
-        question = current_question(research)
-        current = _touched_items_count(research, question.get("id") if question else None)
-        if current > touched:
-            answered = []
-        touched = current
-
-    pair = (step, offer)
-    if pair in answered:
-        # A link-and-assess cycle that never plans.
-        return done(None)
-    answered = answered + [pair]
-
-    if offer == "plan" and rounds >= 1:
-        return done(REPLY_WRAP_UP)
-    return done(REPLY_KEEP_GOING)
 
 
 # What a step arrives as. Cowork's spawn tool is `Agent`; the SDK path uses `Task`;
@@ -826,9 +683,9 @@ class StepGate:
         if decision == "halt" and self.halt_offer is None:
             self.halt_offer = self._b.offered_step(reason)
         if self._log is not None:
-            # Rider 2: log EVERY halt. The router prose is identical on both planes,
+            # Rider 2: log EVERY halt. The router prose is identical on every plane,
             # so this rate is how often a run tries to cross a boundary it was told
-            # to stop at -- the only measure we get of Cowork, which has no hook.
+            # to stop at.
             self._log(ev="step_boundary", turn_id=self._turn_id, decision=decision,
                       candidate=name, opened_with=self.first_step, mode=self.mode,
                       denials=self.denials)

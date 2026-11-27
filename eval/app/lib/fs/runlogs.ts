@@ -2,8 +2,7 @@
  * Read run logs under `eval/runlogs/unit/<skill>/<filename>`.
  *
  * Schema v3 — no legacy model-dir or per-test file format. Filenames
- * are classified via `lib/versioning.ts` into released / candidate /
- * scratch / other.
+ * are classified via `lib/versioning.ts` into candidate / scratch / other.
  *
  * Lazy active-state detection is implemented here: walk a skill's run
  * logs newest-first; the first releasable full-skill run log whose
@@ -14,7 +13,7 @@ import path from 'node:path';
 import { resolveWithin, PathEscapeError } from './safe-path';
 import { repoRoot, runlogsUnitDir } from '../paths';
 import { diffSnapshotVsDisk, hashFile } from '../snapshot';
-import { classify, sortNewestFirst } from '../versioning';
+import { annFilenameFor, classify, sortNewestFirst } from '../versioning';
 import { isAnnotationComplete as sharedIsAnnotationComplete } from './annotations';
 import type { RunLogFile, RunLogListEntry, AnnotationFile } from '../types';
 
@@ -91,7 +90,7 @@ async function isAnnotated(filePath: string): Promise<boolean> {
  *
  * Delegates to `annotations.ts` rather than reimplementing the rule. A private
  * copy lived here and silently kept the old every-dimension definition, so the
- * run-log list badge would have contradicted the release gate on the same
+ * run-log list badge would have contradicted the review page on the same
  * file. `null` annotation is still incomplete — an unreviewed run is not a
  * complete one, whatever the sample says. */
 function isAnnotationComplete(log: RunLogFile, ann: AnnotationFile | null): boolean {
@@ -153,7 +152,6 @@ export async function listRunLogs(opts: ListRunLogsOptions = {}): Promise<ListRu
       skill: log.skill,
       kind: c.kind,
       version: log.version,
-      released: log.released,
       releasable: log.releasable,
       invocation: log.invocation,
       timestamp: log.timestamp,
@@ -181,7 +179,7 @@ export async function readRunLogById(
   id: string,
 ): Promise<{ runLog: RunLogFile; filePath: string } | null> {
   // `id` is built from catch-all URL segments and reaches a read whose parsed
-  // contents are returned. Same containment as the write side in release.ts.
+  // contents are returned. Same containment as `deleteCandidate` below.
   let filePath: string;
   try {
     filePath = resolveWithin(runlogsUnitDir(), `${id}.json`);
@@ -198,6 +196,25 @@ export async function readRunLogById(
   } catch {
     return null;
   }
+}
+
+/**
+ * Delete a run log (and its sibling annotation) from disk.
+ */
+export async function deleteCandidate(runLogId: string): Promise<void> {
+  const [skill, ...rest] = runLogId.split('/');
+  if (!skill || rest.length === 0) {
+    throw new Error(`invalid run log id: ${runLogId}`);
+  }
+  const filename = `${rest.join('/')}.json`;
+  // Both `skill` and `filename` come from catch-all URL segments and reach
+  // `fs.rm`. Contained before either removal — a delete needs the check more
+  // than a read does, because it leaves nothing to diagnose from afterwards.
+  const dir = resolveWithin(runlogsUnitDir(), skill);
+  const filePath = resolveWithin(dir, filename);
+  const annPath = resolveWithin(dir, annFilenameFor(filename));
+  await fs.rm(filePath, { force: true });
+  await fs.rm(annPath, { force: true });
 }
 
 /**
@@ -355,14 +372,4 @@ export async function listRunLogsForSkillWithActive(skill: string): Promise<Skil
  */
 export function runLogWeightedMean(log: RunLogFile): number | null {
   return weightedMean(log);
-}
-
-export function runLogHistogram(log: RunLogFile): { 1: number; 2: number; 3: number } {
-  const h: { 1: number; 2: number; 3: number } = { 1: 0, 2: 0, 3: 0 };
-  for (const t of log.tests) {
-    for (const d of t.outcome_summary.aggregated_dimensions) {
-      if (d.score !== null) h[d.score] += 1;
-    }
-  }
-  return h;
 }

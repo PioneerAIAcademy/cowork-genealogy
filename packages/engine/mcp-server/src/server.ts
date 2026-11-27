@@ -12,6 +12,7 @@ import type { Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
+  type CallToolRequest,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
@@ -36,9 +37,9 @@ import { localitySurveyTool } from "./tools/locality-survey.js";
 import type { LocalitySurveyInput } from "./types/locality-survey.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
-import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "./tools/image-transcribe-mcp.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
-import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { ImageTranscribeInput, ImageTranscribeToolResponse } from "./types/image-transcribe.js";
 import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchToolResponse } from "./types/record-search.js";
@@ -105,9 +106,10 @@ import {
   buildExternalSearchUrlTool,
   type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
+import { projectLinks } from "./utils/project-links.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
-import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
+import { treeForgetTool, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
   researchAppendFromCaller,
   type ResearchAppendInput,
@@ -152,7 +154,7 @@ import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variant
 import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
-import { writerToolResult, type OkFalseResult } from "./tool-result.js";
+import { connectorToolResult, markRefusal, writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 import { rejectUnknownArgs } from "./utils/unknown-args.js";
 import { projectGateRefusal } from "./utils/project-gate.js";
@@ -200,7 +202,7 @@ export function createServer(principal: Principal): Server {
   // auto-compaction cycle that makes the agent re-fetch what it already had.
   // Nothing downstream parses the formatting; a human debugging a transcript can
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const callTool = async (request: CallToolRequest) => {
     // `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so these two check
     // their own arguments. Every other surface falls through to `Unknown tool`.
     if (view && isProjectViewTool(request.params.name)) {
@@ -216,10 +218,10 @@ export function createServer(principal: Principal): Server {
     // refused here, before any arm, instead of being dropped by the handler.
     const unknownArgs = rejectUnknownArgs(request.params.name, request.params.arguments);
     if (unknownArgs !== null) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
+      return markRefusal({
+        content: [{ type: "text" as const, text: JSON.stringify({ error: unknownArgs }) }],
         isError: true
-      };
+      });
     }
 
     // The one project gate (utils/project-gate.ts): every tool but the six that manage projects or sign-in, and tree_gaps, that
@@ -230,10 +232,10 @@ export function createServer(principal: Principal): Server {
       ? await projectGateRefusal(request.params.name, request.params.arguments)
       : null;
     if (noProject !== null) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: noProject }) }],
+      return markRefusal({
+        content: [{ type: "text" as const, text: JSON.stringify({ error: noProject }) }],
         isError: true
-      };
+      });
     }
 
     if (request.params.name === "wikipedia_search") {
@@ -464,10 +466,9 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
-        const result = await imageTranscribeMcpTool(args, principal);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }],
-        };
+        // A document writer since issue #4721 (it logs its own read).
+        const result: ImageTranscribeToolResponse & OkFalseResult = await imageTranscribeMcpTool(args, principal);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -838,7 +839,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "build_external_search_url") {
       try {
         const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
-        const result = await buildExternalSearchUrlTool(args);
+        const result = await buildExternalSearchUrlTool(args, await projectLinks(principal));
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -868,7 +869,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "tree_forget") {
       try {
         const args = request.params.arguments as unknown as TreeForgetInput;
-        const result = await treeForget(args);
+        const result = await treeForgetTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -991,6 +992,12 @@ export function createServer(principal: Principal): Server {
       }
     }
     throw new Error(`Unknown tool: ${request.params.name}`);
+  };
+  // A connector caller's refusals are ordinary results (`connectorToolResult`): a host
+  // draws `isError` as a red error box in front of the user. Every other surface is as it was.
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const result = await callTool(request);
+    return connector ? connectorToolResult(result) : result;
   });
   return server;
 }

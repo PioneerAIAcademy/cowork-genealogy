@@ -7,7 +7,7 @@
  * validation is the hand-maintained Zod schema in lib/fs/annotations.ts.
  *
  * Run log schema v3: one envelope per harness invocation, wrapping a
- * list of per-test entries. See docs/plan/eval-runlog-versioning.md.
+ * list of per-test entries. See eval/CLAUDE.md, "Run log naming".
  */
 
 export type UnitTestType = 'positive' | 'negative';
@@ -130,7 +130,7 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the
  * single definition: a private second copy in `lib/fs/runlogs.ts` is exactly
- * what let the run-log list badge and the release gate disagree on one file.
+ * what let the run-log list badge and the review page disagree on one file.
  *
  * Lives here rather than in `lib/fs/` because the scoring page is a client
  * component and must not pull in `node:fs`.
@@ -156,8 +156,8 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // Fail CLOSED on anything untrustworthy, mirroring `check_runlogs.py`'s
   // THREE guards. Failing open here is worse than in CI: an untrusted sample
   // renders every test `not sampled`, makes `unreviewedDimensions` return
-  // nothing, and reports the annotation complete — so the UI green-lights a
-  // release that CI then rejects. That is the same UI-vs-CI split deleting the
+  // nothing, and reports the annotation complete — so the UI shows complete a
+  // run log that CI then rejects. That is the same UI-vs-CI split deleting the
   // duplicate `isAnnotationComplete` was meant to end, and shipping two of the
   // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
@@ -394,7 +394,7 @@ export interface RunLogFile {
   schema_version: 3;
   skill: string;
   version: number | null;
-  released: boolean;
+  released?: boolean;
   releasable: boolean;
   invocation: RunInvocation;
   timestamp: string;
@@ -555,15 +555,14 @@ export interface UnitTestListEntry {
 }
 
 /**
- * Run-log classification: released / candidate / scratch / other.
+ * Run-log classification: candidate / scratch / other.
  *
- * - `released` — `v{N}.json`, version is N
  * - `candidate` — `v{N}_<ts>.json`, version is N, timestamp is the ISO
  *   timestamp string (YYYY-MM-DD_HH-MM-SS)
  * - `scratch` — `scratch_<ts>.json`, no version, timestamp set
  * - `other` — unrecognized filename
  */
-export type RunLogKind = 'released' | 'candidate' | 'scratch' | 'other';
+export type RunLogKind = 'candidate' | 'scratch' | 'other';
 
 export interface RunLogClassification {
   kind: RunLogKind;
@@ -582,7 +581,6 @@ export interface RunLogListEntry {
   /** File classification. */
   kind: RunLogKind;
   version: number | null;
-  released: boolean;
   releasable: boolean;
   invocation: RunInvocation;
   timestamp: string;

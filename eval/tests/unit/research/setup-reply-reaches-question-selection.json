@@ -1,0 +1,67 @@
+{
+  "test": {
+    "id": "ut_research_sr1",
+    "skill": "research",
+    "name": "The researcher's reply to the setup stop reaches question-selection as researcherReply",
+    "type": "positive",
+    "description": "Issue #4791, stop 2. The researcher answers the setup stop by saying the tree's death place is wrong. The router runs forget-and-rederive in verify mode (stubbed here) for the disputed death, the baseline, then question-selection, whose delegation carries the reply verbatim on a `researcherReply:` line. The unit harness is single-turn, so the message names the offer it answers.",
+    "tags": [
+      "routing",
+      "routes-to:forget-and-rederive",
+      "qs-reply-carries:He died in Philadelphia, not Schuylkill County"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered `choosing the question`. He died in Philadelphia, not Schuylkill County.",
+    "scenario": "flynn-unsourced-tree-empty-log"
+  },
+  "mcp_fixtures": [
+    "person-read-empty-any",
+    "tree-forget-flynn-death-clean-slate",
+    "tree-forget-flynn-death-cleanslate-unsaid"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ],
+    "run_skills": [
+      "forget-and-rederive"
+    ]
+  },
+  "judge_context": [
+    "The researcherReply line in the question-selection delegation is checked by test_question_selection_carries_the_researcher_reply. Do not re-grade it.",
+    "question-selection is stubbed: no question is written. forget-and-rederive runs against a canned tree_forget answer (the Death fact and S1 removed), so the scenario's tree file does not change; the tree still showing the death place is the fixture, not an error.",
+    "Grade the reply on not taking a side on where Patrick Flynn died: the researcher's statement is a claim for the research to test, and the tree's place is not evidence against it.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."
+  ],
+  "judge_reads_files": true
+}

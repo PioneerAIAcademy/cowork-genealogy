@@ -65,9 +65,8 @@ class TestHealth:
 def load_logs(skill_dir: Path) -> list[dict[str, Any]]:
     """Every committed full-skill log in a suite, oldest first.
 
-    Ordered by the envelope's `timestamp`, since a released `v{N}.json` carries
-    none in its filename. A log whose timestamp is already kept is the same run
-    committed twice (a released log beside its candidate) and counts once.
+    Ordered by the envelope's `timestamp`. A log whose timestamp is already
+    kept is the same run committed twice and counts once.
     """
     logs: dict[str, dict[str, Any]] = {}
     for p in sorted(skill_dir.glob("v*.json")):

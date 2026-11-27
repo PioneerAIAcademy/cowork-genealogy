@@ -1,7 +1,7 @@
 """Direct tests for `test_bounded_plan_first_message_stops_after_init_project` (#2813).
 
 A bounded research-plan ask with a PID and no project runs init-project alone and
-ends on "Continue with `setting up the project`?". These pin the validator against
+ends on "Continue with `choosing the question`?". These pin the validator against
 each way that can go wrong, and against the legitimate shapes it must still accept.
 """
 
@@ -22,7 +22,7 @@ from test_research import (  # noqa: E402
 )
 
 TEST = {"skill": "research", "tags": ["routing", "routes-to:init-project", "bounded-plan-after-init"]}
-OFFER = "The project for Patrick Flynn is set up.\n\nContinue with `setting up the project`?"
+OFFER = "The project for Patrick Flynn is set up.\n\nContinue with `choosing the question`?"
 AFTER = {"research_json": {"project": {"subject_person_ids": ["I1"]}, "questions": [], "plans": []}}
 
 
@@ -38,13 +38,13 @@ def _run(names, *, text=OFFER, test=TEST, after=AFTER):
     )
 
 
-def test_init_project_alone_offering_setup_passes():
+def test_init_project_alone_offering_the_question_passes():
     _run(["init-project"])
 
 
 def test_the_url_on_the_offer_line_and_a_bold_label_pass():
     _run(["init-project"], text=OFFER + " https://example.test/p/1")
-    _run(["init-project"], text="Set up.\n\nContinue with **setting up the project**?")
+    _run(["init-project"], text="Set up.\n\nContinue with **choosing the question**?")
 
 
 def test_a_project_with_no_question_or_plan_keys_passes():

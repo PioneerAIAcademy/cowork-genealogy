@@ -4,13 +4,12 @@ import os from 'node:os'
 import path from 'node:path'
 import { readFixture } from '../../lib/fs/fixtures'
 import { readAnnotation, writeAnnotation } from '../../lib/fs/annotations'
-import { readRunLogById, readSnapshotFiles } from '../../lib/fs/runlogs'
+import { deleteCandidate, readRunLogById, readSnapshotFiles } from '../../lib/fs/runlogs'
 import { diffSnapshotVsDisk } from '../../lib/snapshot'
 import { repoRoot } from '../../lib/paths'
-import { deleteCandidate, releaseRunLog } from '../../lib/release'
 import { writeTest, nextTestId } from '../../lib/fs/tests'
 import { readScenario } from '../../lib/fs/scenarios'
-import { makeFixtureTree, buildRunLog } from '../helpers/fixtureTree'
+import { makeFixtureTree } from '../helpers/fixtureTree'
 import { listRunLogsForSkill } from '../../lib/fs/runlogs'
 import { readSkill } from '../../lib/skills'
 
@@ -67,37 +66,6 @@ describe('path containment at each sink', () => {
       const out = await readSnapshotFiles({ [rel]: 'whatever' })
       expect(out[rel]).toBeUndefined()
     })
-  })
-
-  it('releaseRunLog refuses to rename outside the runlogs/unit directory', async () => {
-    // `skill` is a catch-all URL segment, and `classify()` only vets the
-    // FILENAME. `..` with a valid candidate filename classifies cleanly, so
-    // containment is the only thing between this call and an fs.rename outside
-    // runlogs/unit. The PR body claimed this sink had a test; it did not —
-    // stripping its guards left all 191 green.
-    const handle = await makeFixtureTree({ runlogs: [] })
-    process.env.EVAL_DIR = handle.root
-    const outside = path.join(handle.root, 'runlogs')
-    await fs.mkdir(outside, { recursive: true })
-    const fname = 'v9_2026-05-18_10-30-00.json'
-    await fs.writeFile(
-      path.join(outside, fname),
-      JSON.stringify(buildRunLog({ skill: 'x', version: 9, timestamp: '2026-05-18_10-30-00' })),
-      'utf8',
-    )
-    await fs.writeFile(
-      path.join(outside, 'v9_2026-05-18_10-30-00.ann.json'),
-      JSON.stringify({ run_log: fname, annotator: 'a', corrections: [] }),
-      'utf8',
-    )
-    try {
-      await expect(releaseRunLog('../v9_2026-05-18_10-30-00')).rejects.toThrow()
-      // The file is still where it was: the rename never happened.
-      await expect(fs.access(path.join(outside, fname))).resolves.toBeUndefined()
-    } finally {
-      delete process.env.EVAL_DIR
-      await handle.cleanup()
-    }
   })
 
   it('readAnnotation does not read outside the runlogs directory', async () => {
@@ -163,16 +131,17 @@ describe('path containment at each sink', () => {
   })
 
   it('deleteCandidate refuses a traversing SKILL on its own guard', async () => {
-    // Isolates release.ts:113. Neither sibling above reaches it: both put the
-    // traversal somewhere the FILENAME guard on the next line catches first, so
-    // 113 is never the deciding check and its removal changes nothing the suite
-    // can see. The shape that isolates it is a single-segment skill of `..` with
-    // a filename that still classifies as a candidate — then 113 is the only
-    // thing between this call and an fs.rm one level above runlogs/unit.
+    // Isolates the `skill` guard in deleteCandidate. Neither sibling above
+    // reaches it: both put the traversal somewhere the FILENAME guard on the
+    // next line catches first, so the skill guard is never the deciding check
+    // and its removal changes nothing the suite can see. The shape that isolates
+    // it is a single-segment skill of `..` with a filename that still classifies
+    // as a candidate — then that guard is the only thing between this call and
+    // an fs.rm one level above runlogs/unit.
     //
-    // 114 cannot cover it: resolveWithin(dir, filename) proves the filename
-    // stayed inside whatever `dir` already is, and confirms containment inside
-    // an escaped dir just as happily.
+    // The filename guard cannot cover it: resolveWithin(dir, filename) proves
+    // the filename stayed inside whatever `dir` already is, and confirms
+    // containment inside an escaped dir just as happily.
     const handle = await makeFixtureTree({ runlogs: [] })
     process.env.EVAL_DIR = handle.root
     const victim = path.join(handle.root, 'runlogs', 'v9_2026-05-18_10-30-00.json')
@@ -189,10 +158,8 @@ describe('path containment at each sink', () => {
 
   it('deleteCandidate refuses a traversing FILENAME, not just a traversing skill', async () => {
     // The test above puts the traversal in `skill`, which the first guard
-    // catches. `classify()` returns kind 'other' for a traversing filename and
-    // deleteCandidate only rejects 'released', so the filename guard is the only
-    // thing between this call and an fs.rm outside the base — and nothing
-    // exercised it.
+    // catches. deleteCandidate does not classify the filename, so the filename
+    // guard is the only thing between this call and an fs.rm outside the base.
     const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'containment-del-'))
     const victim = path.join(outside, 'victim.json')
     await fs.writeFile(victim, '{"keep":true}', 'utf8')

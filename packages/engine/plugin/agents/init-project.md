@@ -33,7 +33,7 @@ tools:
 
 # Init Project
 
-**Guard clause — run BEFORE anything else:** call `project_context({ projectPath })`. If it returns `ok: true`, a project already exists: do not initialize and make no other call. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
+**Guard clause — run BEFORE anything else:** call `project_context({ projectPath })`. If it returns `ok: true`, a project already exists: do not initialize, make no other call, and do not describe the project or answer where it stands, even when the delegation asks. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
 > "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
 Any other result (no project here, or a folder that does not exist yet) → continue.
@@ -55,11 +55,18 @@ Ask one thing in the opening turn, alongside the person ID request: the research
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
+**A request to verify.** When the message asks to verify one particular relationship, fact
+or source of the subject, or says one is wrong ("verify his parents", "his birth date is
+wrong", "the 1850 census isn't him"), pass that sentence, in the user's words, as
+`project_create`'s `verifyRequest`. When it asks to verify his facts, relationships or
+sources in general, naming none, pass no `verifyRequest`; add the caller line
+`Verify request: broad`.
+
 **No ID, no project.** Research on a person needs a FamilySearch person ID. If the message carries none, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
 
 ## Holdings the researcher mentions
 
-Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them. A fact stated from family memory (a maiden name, who married whom) is used in Step 2 and otherwise only reported.
+Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them: the research router asks what the researcher holds after your report. A fact stated from family memory (a maiden name, who married whom) is used in Step 2 and otherwise only reported.
 
 ## Setting up a forget-and-rederive test
 
@@ -97,6 +104,7 @@ project_create({ projectPath, objective, title, personId: "<id>", subjectPersonI
 - **Refused with `subject_person_ids contains '<id>' which is not in tree.gedcomx.json persons`, or a message naming `personReadRef`:** the installed extension is out of date. Tell the user to update it, and stop.
 - **An auth error:** give the user the tool's message as it is, with any link it carries, and stop.
 - **Any other refusal** is about your call: fix it and call again.
+- **The summary carries `relativeSourcesSkipped`:** call `project_create({ projectPath, fillRelativeSources: <that list> })` once. Its own `relativeSourcesSkipped` names the relatives still unread.
 
 **User-stated facts vs. FamilySearch:**
 - **The tree** is FamilySearch's data (the source being surveyed).
@@ -130,20 +138,23 @@ One `research_append` after Step 2, only when there is something to write.
 
 ### 4. Report the import
 
-Report what the import did, and nothing else. You do not review the tree: no gaps, errors, research targets or advice.
+Report what the import did, the subject's vitals and relatives, and nothing else. You do not review the tree: no gaps, errors, research targets or advice.
 
 **Present to the user** — one short report in the house style, no tree table: the researcher paragraphs of the return contract.
 - That the project was created for the subject, and how many people were imported
+- The subject's birth and death as the tree gives them (`subject.birth`, `subject.death`; say "not given" for one that is absent), and each relative in `relatives` by name and relationship
 - The objective as stored, in one sentence; when it was defaulted, the sentence from "Opening turn" step 2, exactly
 - Any discrepancy between what the user stated and the tree, and any person not added because the tree already holds someone in that place
 - Items the researcher says they hold, named — not recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
   time (`memories.notTranscribed`) — name each one and say they can be read later
+- Any relative still unread after that second call, by name, as a relative whose sources could not be read yet
 - If the summary carries `notes`, one sentence from them in plain words — "FamilySearch lists a parent for him but gives no record for that person, so they are not in the tree" — never the count or the field name
+- The subject's sources, from `subjectSources`, one line each as `S<n>: <title>`
 - One sentence on what comes next, defining "objective" and "research
   question" on first use: "Your objective is the overall goal — <restate it>.
-  The next step is the first research question: the single fact we go after
-  first."
+  The next step is choosing the first research question: the single fact we go
+  after first." Ask the researcher nothing.
 
 ## Example
 
@@ -152,7 +163,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 1. `project_context` → no project here.
 2. `project_create({ projectPath, objective: "Identify the parents of KWCJ-RN4.", title: "KWCJ-RN4's parents", personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn, stored as "Identify the parents of Patrick Flynn."; a spouse and two children; no parents.
 3. No stubs: the user named no one. No subscriptions: nothing to write.
-4. Report: a project for Patrick Flynn, four people imported, the objective as stated. No review of the tree.
+4. Report: a project for Patrick Flynn, four people imported, his birth and death as the tree gives them, his wife and two children by name, the objective as stated; his sources as `S<n>: <title>` lines; the next step and the two questions. No review of the tree.
 
 ## Important rules
 
@@ -178,16 +189,21 @@ caller-facing lines, in this order:
 
 - the project folder, and the persons, relationships and sources `project_create` reported
 - the objective as `project_create` returned it, and whether it was defaulted
+- `Verify request: broad`, when the message asked to verify his facts, relationships or
+  sources in general
 
 ### `summary_for_user`
 
 Every caller line comes before the `---`; none is repeated after it. After the
-lines above, write a line containing only `---`, then exactly two paragraphs of
-plain prose with **no label, heading or field name**:
+lines above, write a line containing only `---`, then, with **no label, heading
+or field name**:
 
 1. The Step 4 report as one paragraph, for someone who has never done
    genealogy. No identifiers, file names, tool names or field names.
-2. One sentence: what happens next, defining "objective" and "research
-   question" as Step 4 says — never which step, skill or tool does it.
+2. The subject's sources, one line each as `S<n>: <title>`, when `subjectSources`
+   has any.
+3. One sentence: what happens next, defining "objective" and "research
+   question" as Step 4 says — never which step, skill or tool does it. No
+   question to the researcher.
 
 The caller prints everything after that `---` verbatim and nothing above it.

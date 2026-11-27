@@ -777,7 +777,7 @@ export const RESEARCH_SHAPES = {
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
-    "created", "updated",
+    "created", "updated", "verify_request",
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
@@ -972,6 +972,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   checkAllowedKeys(p, RESEARCH_SHAPES.project, "project objects", projPath, report);
   if ("title" in p && typeof p.title !== "string") {
     addError(report, projPath, "'title' must be a string — omit it if there is none");
+  }
+  if ("verify_request" in p && (typeof p.verify_request !== "string" || p.verify_request.trim() === "")) {
+    addError(report, projPath, "'verify_request' must be a non-empty string — omit it if there is none");
   }
   if ("id" in p) {
     checkIdPrefix(p.id, ID_PREFIXES.project, projPath, report);

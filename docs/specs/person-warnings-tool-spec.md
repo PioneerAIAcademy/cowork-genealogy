@@ -1313,7 +1313,7 @@ Grep for `calculateWarnings` when sizing the blast radius.
   same predicate at the same severity evaluated from a different anchor, so
   splitting a pair means one write refuses and an identical one does not.
   Stated here as prose the rule was silently broken by four pairs, one of them
-  refusing a write in a released run log, so it is now derived from
+  refusing a write in a committed run log, so it is now derived from
   `ALL_WARNING_TAGS` and asserted by `person-warnings-spec-drift.test.ts`
   rather than maintained by hand.
 
