@@ -1,11 +1,12 @@
 """Suite-specific validators for the search-hints agent (issue #2029).
 
 search-hints reviews the FamilySearch hints on one tree person. Review asks
-`person_record_matches` for the PENDING matches only, reads each hint, reads the
-record image before deciding against a hint, decides each hint itself, logs each
-accept and reject, and completes its plan item. Record mode logs one
-`research_log_append` entry per verdict the researcher stated, then completes
-the item.
+`person_record_matches` for the PENDING matches at confidence 4 and up only,
+reads each hint, reads the record image before deciding against a hint, decides
+each hint itself and logs each reject and each accept, except an accept of a
+record the project already extracted. Record mode logs one `research_log_append`
+entry per verdict the researcher stated, with the same exception. Either mode
+completes the plan item when one was handed over.
 
 These are the mechanical checks; whether a recommendation is genealogically
 sound lives in the rubric. Each check reads a deterministic artifact — the call
@@ -13,7 +14,8 @@ log, the after-state's `log[]`, or the agent's machine-readable `Hint <ark>:
 <verdict>` lines — never the judge's reading of the prose.
 
 See test_universal.py module docstring for the validator function-signature
-contract. Checks other than the pending-only one are tag-gated.
+contract. Checks other than the pending-only and confidence-floor ones are
+tag-gated.
 """
 
 from __future__ import annotations
@@ -51,6 +53,16 @@ def _status_of(args: dict) -> object:
         except ValueError:
             return status
     return status
+
+
+def _min_confidence_of(args: dict) -> object:
+    floor = (args or {}).get("minConfidence")
+    if isinstance(floor, str):
+        try:
+            return int(floor)
+        except ValueError:
+            return floor
+    return floor
 
 
 def _reply(agent_returns, text_response, test) -> str:
@@ -101,6 +113,22 @@ def test_hint_list_asks_for_pending_only(tool_calls, test):
     assert not wrong, (
         "a hints list must ask for pending matches only (status: [\"pending\"]); got "
         f"{len(wrong)} call(s) with {[ (a or {}).get('status') for a in wrong ]}"
+    )
+
+
+def test_hint_list_asks_for_confidence_four_and_up(tool_calls, test):
+    """Every `person_record_matches` call sends `minConfidence: 4`.
+
+    A hint is a pending match FamilySearch posts, at confidence 4 or 5. The
+    tool's default floor is 1, so a call without it lists confidence 1 to 3
+    matches as hints. Read off the call log: the mock fixtures ignore
+    minConfidence, so the response looks the same either way.
+    """
+    calls = _calls(tool_calls, "person_record_matches")
+    wrong = [c.get("args") for c in calls if _min_confidence_of(c.get("args") or {}) != 4]
+    assert not wrong, (
+        "a hints list must ask for confidence 4 and up (minConfidence: 4); got "
+        f"{len(wrong)} call(s) with {[ (a or {}).get('minConfidence') for a in wrong ]}"
     )
 
 

@@ -19,6 +19,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_search_hints import (  # noqa: E402
     test_extracted_unlinked_hint_is_triaged as check_unlinked,
     test_hint_already_in_the_project_is_named as check_in_project,
+    test_hint_list_asks_for_confidence_four_and_up as check_confidence,
     test_hint_list_asks_for_pending_only as check_pending,
     test_hints_item_ends_as_tagged as check_ending,
     test_image_read_before_reject as check_image,
@@ -61,7 +62,7 @@ def _state(log):
 # --- pending only -------------------------------------------------------
 
 def test_pending_passes_a_pending_call():
-    check_pending([_call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence=1)], TRIAGE)
+    check_pending([_call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence=4)], TRIAGE)
 
 
 def test_pending_accepts_a_stringified_status():
@@ -85,6 +86,50 @@ def test_pending_fails_a_triage_that_never_listed_hints():
 
 def test_pending_ignores_a_record_mode_run_with_no_listing():
     check_pending([], RECORD)
+
+
+# --- confidence 4 and up ------------------------------------------------
+
+def test_confidence_passes_a_call_with_the_floor():
+    check_confidence([_call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence=4)], TRIAGE)
+
+
+def test_confidence_accepts_a_stringified_floor():
+    check_confidence([_call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence="4")], TRIAGE)
+
+
+def test_confidence_fails_a_call_without_the_floor():
+    with pytest.raises(AssertionError, match="confidence 4 and up"):
+        check_confidence([_call("person_record_matches", id="LZNY-BRF", status=["pending"])], TRIAGE)
+
+
+@pytest.mark.parametrize("floor", [1, 3, 5, "1", None, True, "four"])
+def test_confidence_fails_any_other_floor(floor):
+    with pytest.raises(AssertionError, match="confidence 4 and up"):
+        check_confidence(
+            [_call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence=floor)], TRIAGE
+        )
+
+
+def test_confidence_fails_when_one_of_two_listings_drops_the_floor():
+    calls = [
+        _call("person_record_matches", id="LZNY-BRF", status=["pending"], minConfidence=4),
+        _call("person_record_matches", id="LZNY-BRF", status=["pending"]),
+    ]
+    with pytest.raises(AssertionError, match="got 1 call"):
+        check_confidence(calls, TRIAGE)
+
+
+def test_confidence_ignores_a_log_entry_naming_the_tool():
+    log = _call(
+        "research_log_append", tool="person_record_matches", query={"id": "LZNY-BRF", "recordId": M80C_ARK},
+        outcome="negative", resultsExamined=1,
+    )
+    check_confidence([log], RECORD)
+
+
+def test_confidence_ignores_a_record_mode_run_with_no_listing():
+    check_confidence([], RECORD)
 
 
 # --- triage writes only its item's status -------------------------------
