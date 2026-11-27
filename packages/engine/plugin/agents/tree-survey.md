@@ -13,7 +13,7 @@ description: >-
   named person's records (use search-records), to plan searches for a chosen
   question (use research-plan), or to start a project for a person the user has
   already chosen (use init-project).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -90,18 +90,13 @@ Suggest the holes in rank order, up to 5, and at least one whenever `gaps` is no
 - the person: the hole's `personId`, never the person you surveyed from unless the hole is on them
 - the hole in plain words
 - what FamilySearch has that could fill it
-- **one research question** that meets all three of: a single fact (one parentage, one
-  spouse, or one date or place of one event, never several events), a named person, and a
-  testable scope (place and years). "Who were the parents of Hannah
-  Pruitt, born about 1862 in Lancaster, Pennsylvania?", not "research the Pruitt
-  family".
+- **one research question**: the hole's `question`, word for word.
 
 Never suggest a living person. Never create a project.
 
 ## Return contract
 
-Return, in this order, starting with the first suggestion line. Never open with
-the surveyed person's ID or any heading:
+Return, in this order. The first character of your reply is your first suggestion's `personId`, or, when `gaps` is empty, the line saying how far the tree was read:
 
 - one line per suggestion: the hole's `personId`, then the research
   question — what the caller hands to `init-project` as the objective
