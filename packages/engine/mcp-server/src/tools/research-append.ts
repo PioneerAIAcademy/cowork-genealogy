@@ -2857,6 +2857,85 @@ function refLessAddedPersonInvariants(
   ];
 }
 
+const normName = (s: unknown): string =>
+  typeof s === "string" ? s.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim() : "";
+
+/** Whether `assertion`, a `name` assertion, gives the name one of the person's
+ *  names carries. Reads `structured_value` when it holds a given name or a
+ *  surname, else the human-readable `value` against "given surname". */
+function nameAssertionNamesPerson(assertion: any, person: any): boolean {
+  const names = (Array.isArray(person?.names) ? person.names : []) as any[];
+  const sv = assertion?.structured_value;
+  const structured = sv && typeof sv === "object" && (normName(sv.given) !== "" || normName(sv.surname) !== "");
+  return names.some((n) =>
+    structured
+      ? normName(n?.given) === normName(sv.given) && normName(n?.surname) === normName(sv.surname)
+      : normName(assertion?.value) !== "" &&
+        normName(assertion.value) === normName(`${n?.given ?? ""} ${n?.surname ?? ""}`),
+  );
+}
+
+/** #4749: a person minted from a record is the persona that record names, so
+ *  every one-party fact of that persona is linked to it at `probable`: not
+ *  `speculative` (the record names the person; doubt about whether the stub is
+ *  someone else in the tree belongs in the rationale), and not `confident` (no
+ *  other record yet; once a second record is linked and materialized onto the
+ *  person it is no longer minted from this one alone). `mode` "assert" judges an
+ *  append, a re-point or a revival; "raise" judges an update that raises the tier,
+ *  which can only over-reach to `confident`. An update that lowers a tier is never
+ *  judged. Silent for a person with a namesake (the namesake cap lowers links on
+ *  purpose), a link declaring `core_identifier_conflict` (accepted only at
+ *  `speculative`), an attachment link, negative evidence, a two-party assertion,
+ *  and a person no live name assertion of that persona names. */
+export function mintedStubTierInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  startingPersonIds: ReadonlySet<string> | undefined,
+  batchAssertions: Map<string, any> | undefined,
+  mode: "assert" | "raise",
+): string[] {
+  const personId = entry?.person_id;
+  if (typeof personId !== "string" || entry.superseded_by || isAttachmentLink(entry)) return [];
+  if (typeof entry.core_identifier_conflict === "string" && entry.core_identifier_conflict.trim() !== "") return [];
+  const tier = entry.confidence;
+  if (tier === "probable" || (mode === "raise" && tier !== "confident")) return [];
+  const pool = [
+    ...((research?.assertions ?? []) as any[]),
+    ...(batchAssertions ? [...batchAssertions.values()] : []),
+  ].filter((a) => a && isLiveAssertion(a));
+  const assertion =
+    batchAssertions?.get(entry.assertion_id) ?? pool.find((a: any) => a?.id === entry.assertion_id);
+  if (!assertion || isTwoParty(assertion.fact_type)) return [];
+  const recordId = assertion.record_id;
+  const role = assertion.record_role;
+  if (typeof recordId !== "string" || recordId === "" || typeof role !== "string" || role === "") return [];
+  if (role === "absent" || recordBasisOf(assertion) === "absent") return [];
+  if (!mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)) return [];
+  if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return [];
+  if (derivedNamesakePairs(tree, personId).length > 0) return [];
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  const mintedFromPersona = pool.some(
+    (a: any) =>
+      a.fact_type === "name" &&
+      a.record_role === role &&
+      sameRecord(a.record_id, recordId) &&
+      recordBasisOf(a) !== "absent" &&
+      nameAssertionNamesPerson(a, person),
+  );
+  if (!mintedFromPersona) return [];
+  return [
+    `person_evidence links '${entry.assertion_id}' to '${personId}' at '${tier}', but '${personId}' was ` +
+      `minted from this record's ${role}, so every one-party fact of that ${role} is linked to it at ` +
+      `'probable': the record names this person, and no other record corroborates them yet. ` +
+      (tier === "confident"
+        ? `'confident' opens once a second record is linked and materialized onto '${personId}'.`
+        : `Doubt about whether '${personId}' is someone already in the tree goes in the rationale, ` +
+          `not in the tier.`) +
+      ` Write it at 'probable'.`,
+  ];
+}
+
 /** Every source ref a tree person carries. Person-level refs count too (#2696):
  *  "only source ref" means every ref the person carries, and person_read
  *  attaches FamilySearch's at this level. */
@@ -10797,6 +10876,17 @@ function applyOne(
     if ((reRaising || raisedFromSpeculative) && !resultEntry.superseded_by) {
       invariantErrors.push(
         ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
+      );
+    }
+    const raisedTier =
+      op.op === "update" &&
+      !!priorPair &&
+      (CONFIDENCE_RANK[resultEntry.confidence] ?? -1) > (CONFIDENCE_RANK[String(priorPair.confidence)] ?? -1);
+    if ((reRaising || raisedTier) && !attachmentLink) {
+      invariantErrors.push(
+        ...mintedStubTierInvariants(
+          resultEntry, research, tree, startingPersonIds, batchAssertions, reRaising ? "assert" : "raise",
+        ),
       );
     }
     // An attachment link is only ever superseded. Raising it in place would skip
