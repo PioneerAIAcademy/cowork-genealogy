@@ -1,0 +1,104 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "",
+          "surname": "Mayfield",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "April 1852",
+          "place": "Virginia",
+          "sources": []
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1900",
+          "place": "Byrd District, Goochland, Virginia",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Isaac",
+          "surname": "Mayfield",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "about 1874",
+          "place": "Virginia",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Henry",
+          "surname": "Mayfield",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I3",
+      "person2": "I1",
+      "sources": []
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "sources": []
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I2",
+      "sources": []
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "United States Census, 1900"
+    },
+    {
+      "id": "S2",
+      "title": "United States Census, 1880"
+    }
+  ]
+}
