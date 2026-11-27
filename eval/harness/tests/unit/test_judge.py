@@ -2340,15 +2340,16 @@ def test_size_guard_keeps_every_call_main_keeps(build):
 
 
 def test_refill_adds_back_newest_first(monkeypatch):
-    """#4682 case 5: when the room left holds one of two dropped calls, the
-    newer one comes back. A stub budget makes the order the only variable."""
+    """#4682 case 5: when the room left holds two of three dropped calls, the
+    two newer ones come back, so the pass neither walks oldest-first nor stops
+    after one call. A stub budget makes the order the only variable."""
     calls = [_read_call(i) for i in range(6)]
     monkeypatch.setattr(
         judge, "_size_guard_drop_loop", lambda tc, cited: [False, False, False, True, True, True]
     )
-    monkeypatch.setattr(judge, "_size_guard_fits", lambda tc, keep, cited: keep.count(True) <= 4)
+    monkeypatch.setattr(judge, "_size_guard_fits", lambda tc, keep, cited: keep.count(True) <= 5)
     monkeypatch.setattr(judge, "_render_pass", lambda tc, keep, cited, needles: 0)
-    assert judge._size_guard_keep(calls, [False] * 6) == [False, False, True, True, True, True]
+    assert judge._size_guard_keep(calls, [False] * 6) == [False, True, True, True, True, True]
 
 
 def test_refill_never_moves_the_render_past_the_excerpt_passes():
