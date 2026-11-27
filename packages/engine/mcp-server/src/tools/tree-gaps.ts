@@ -79,7 +79,9 @@ export const treeGapsToolSchema = {
     "was under 34 though she lived past 40, a deceased adult with no " +
     "spouse, a wife with no surname, a deceased person with no birth date " +
     "or place, a deceased person with no death date. Each hole gives the " +
-    "person's ID, name, life years, the year range and place to search, and " +
+    "person's ID, name, life years, the year range and place to search, " +
+    "`question`: one research question for the hole (a single fact, the " +
+    "person named, scoped by its place and years), and " +
     "`coverage`: catalog collections that could hold the record, census " +
     "years inside the window, and how specific the place is, and " +
     "`pendingHints`: how many of FamilySearch's pending record hints for " +

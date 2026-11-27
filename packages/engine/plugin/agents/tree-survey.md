@@ -96,7 +96,7 @@ Never suggest a living person. Never create a project.
 
 ## Return contract
 
-Return, in this order. The first character of your reply is the first hole's own `personId`:
+Return, in this order. The first character of your reply is your first suggestion's `personId`, or, when `gaps` is empty, the line saying how far the tree was read:
 
 - one line per suggestion: the hole's `personId`, then the research
   question — what the caller hands to `init-project` as the objective

@@ -175,14 +175,18 @@ fields alone:
 | Hole | Question |
 |---|---|
 | `missing_parents` | Who were the parents of X — or the father, or the mother, when `detail` says only one is missing — born in P between Y1 and Y2? |
-| `missing_surname` | What was the maiden surname of X, wife of S, married in P between Y1 and Y2? (no "wife of" with no spouse) |
+| `missing_surname` | What was the maiden surname of X, wife of S, of P between Y1 and Y2? (no "wife of" with no spouse; "of P", since P may be a birth or death place, not the marriage's) |
 | `no_spouse` | Whom did X marry in P between Y1 and Y2? |
 | `no_children`, `child_gap`, `early_last_child` | Who were the children born to X and S in P between Y1 and Y2? |
-| `no_birth_info` | When was X born in P between Y1 and Y2? — or, when only the place is missing, Where was X born between Y1 and Y2? |
+| `no_birth_info` | When was X, of P, born between Y1 and Y2? ("of P": P may be a death or marriage place) — or, when only the place is missing, Where was X born between Y1 and Y2? |
 | `no_death_date` | When did X, born in P, die between Y1 and Y2? |
 
-X carries the hole's `lifespan` in brackets when it has one. A part whose field
-is null is left out. The eval mock adds `question` to every canned hole with the
+X carries the hole's `lifespan` in brackets only when it gives both years
+(`1861-1934`; never `1850-`, `-1901` or `Deceased`). A part whose field is null
+is left out, with the word that introduced it, so a hole with no place and no
+years asks "Who were the parents of X?". Which parent, and which part of the
+birth, are read from `detail`, whose strings `tree-gap-detect.ts` exports for
+that reason. The eval mock adds `question` to every canned hole with the
 same compiled `withQuestions`, so no fixture carries one.
 
 ## Coverage
