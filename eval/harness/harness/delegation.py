@@ -44,12 +44,23 @@ def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> 
     }
 
 
+#: The plugin's own namespace (`.claude-plugin/plugin.json`'s `name`). Cowork and the
+#: hosted SDK register every plugin agent under `genealogy-research:<agent>`, so a
+#: router that spawns that spelling reaches the same agent in production
+#: (ut_research_hpc, v59_2026-11-27_13-08-45: the stub missed it and handed back
+#: "Step complete." in place of the canned summary).
+PLUGIN_NAMESPACE = "genealogy-research:"
+
+_SPAWN_PREFIXES = (PLUGIN_PREFIX, PLUGIN_NAMESPACE)
+
+
 def without_plugin_prefix(input_data: Mapping[str, Any]) -> dict[str, Any] | None:
-    """`input_data` with a main-thread spawn's `plugin:` dropped, or None when it has none.
+    """`input_data` with a main-thread spawn's `plugin:` or plugin namespace dropped,
+    or None when it has neither.
 
     The harness hooks run the rest of their checks on this, so a stub, a deny and the
-    run-log record see the agent `foreground_rewrite` sends the call to, as the hosted
-    planes do.
+    run-log record see the agent production runs: the one `foreground_rewrite` sends
+    a `plugin:` call to, and the one the plugin registers under its namespace.
     """
     tool_input = input_data.get("tool_input")
     if input_data.get("tool_name") not in DELEGATION_TOOLS or input_data.get("agent_id"):
@@ -57,9 +68,12 @@ def without_plugin_prefix(input_data: Mapping[str, Any]) -> dict[str, Any] | Non
     if not isinstance(tool_input, Mapping):
         return None
     name = tool_input.get("subagent_type")
-    if not (isinstance(name, str) and name.startswith(PLUGIN_PREFIX) and len(name) > len(PLUGIN_PREFIX)):
+    if not isinstance(name, str):
         return None
-    return {**input_data, "tool_input": {**tool_input, "subagent_type": name[len(PLUGIN_PREFIX):]}}
+    for prefix in _SPAWN_PREFIXES:
+        if name.startswith(prefix) and len(name) > len(prefix):
+            return {**input_data, "tool_input": {**tool_input, "subagent_type": name[len(prefix):]}}
+    return None
 
 
 def keeping_the_rewrite(out: dict[str, Any] | None, tool_input: Mapping[str, Any]) -> dict[str, Any]:

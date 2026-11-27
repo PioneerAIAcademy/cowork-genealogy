@@ -803,13 +803,20 @@ def test_post_tool_use_leaves_an_unstubbed_return_alone_but_adds_the_relay_note(
     ]
 
 
-def test_a_plugin_prefixed_spawn_is_stubbed_and_recorded_as_its_agent(tmp_path, monkeypatch):
-    """As the hosted planes' foreground_rewrite drops the `plugin:`, the harness hook
-    checks, stubs and records the spawn under the agent's own name."""
+_SPAWN_PREFIXES = pytest.mark.parametrize(
+    "prefix", ["plugin:", "genealogy-research:"], ids=["plugin", "namespace"]
+)
+
+
+@_SPAWN_PREFIXES
+def test_a_plugin_prefixed_spawn_is_stubbed_and_recorded_as_its_agent(tmp_path, monkeypatch, prefix):
+    """As the hosted planes' foreground_rewrite drops the `plugin:`, and as the plugin
+    registers each agent under its namespace too, the harness hook checks, stubs and
+    records the spawn under the agent's own name (ut_research_hpc)."""
     from harness.skill_stubs import STUB_RUNNER_AGENT
 
     result, returns = _drive_hook(
-        tmp_path, monkeypatch, [_spawn_input("plugin:locality-guide"), _post_input()],
+        tmp_path, monkeypatch, [_spawn_input(f"{prefix}locality-guide"), _post_input()],
         stub_agents={"locality-guide": "CANNED"},
     )
     assert returns[0]["hookSpecificOutput"]["updatedInput"]["subagent_type"] == STUB_RUNNER_AGENT
@@ -817,13 +824,31 @@ def test_a_plugin_prefixed_spawn_is_stubbed_and_recorded_as_its_agent(tmp_path, 
     recorded = [r for r in result.builtin_tool_calls if r.get("tool") in ("Agent", "Task")]
     import json
 
-    assert recorded and all("plugin:" not in json.dumps(r) for r in recorded), recorded
+    assert recorded and all(prefix not in json.dumps(r) for r in recorded), recorded
 
 
-def test_a_plugin_prefixed_live_spawn_runs_the_agent(tmp_path, monkeypatch):
+def test_the_dropped_namespace_is_the_plugins_own_name():
+    import json
+    from pathlib import Path
+
+    from harness.delegation import PLUGIN_NAMESPACE
+
+    manifest = Path(__file__).resolve().parents[4] / "packages/engine/plugin/.claude-plugin/plugin.json"
+    assert PLUGIN_NAMESPACE == json.loads(manifest.read_text(encoding="utf-8"))["name"] + ":"
+
+
+@pytest.mark.parametrize("name", ["genealogy-research:", "other-plugin:locality-guide", "locality-guide"])
+def test_only_this_plugins_prefixes_are_dropped(name):
+    from harness.delegation import without_plugin_prefix
+
+    assert without_plugin_prefix({"tool_name": "Agent", "tool_input": {"subagent_type": name}}) is None
+
+
+@_SPAWN_PREFIXES
+def test_a_plugin_prefixed_live_spawn_runs_the_agent(tmp_path, monkeypatch, prefix):
     spawn = {
         "tool_name": "Agent",
-        "tool_input": {"subagent_type": "plugin:research-plan", "prompt": "p", "run_in_background": False},
+        "tool_input": {"subagent_type": f"{prefix}research-plan", "prompt": "p", "run_in_background": False},
     }
     _, returns = _drive_hook(tmp_path, monkeypatch, [spawn])
     hso = returns[0]["hookSpecificOutput"]
