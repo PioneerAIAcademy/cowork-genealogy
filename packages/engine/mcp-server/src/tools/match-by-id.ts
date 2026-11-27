@@ -51,6 +51,8 @@ interface MatchByIdConfig {
   collection: "records" | "tree";
   expectedPrefix: MatchArkType;
   siblingTool: string;
+  /** The floor when the caller passes no minConfidence. */
+  defaultMinConfidence: number;
 }
 
 async function matchById(
@@ -61,7 +63,7 @@ async function matchById(
 ): Promise<MatchByIdResult> {
   const started = Date.now();
   const queryArk = normalizeId(input.id, cfg);
-  const { minConfidence, status, includeSummary, count } = validateOptions(input);
+  const { minConfidence, status, includeSummary, count } = validateOptions(input, cfg.defaultMinConfidence);
 
   const url = new URL(API_URL);
   url.searchParams.set("collection", cfg.collection);
@@ -300,13 +302,13 @@ function normalizeId(raw: string, cfg: MatchByIdConfig): string {
   );
 }
 
-function validateOptions(input: MatchByIdInput): {
+function validateOptions(input: MatchByIdInput, defaultMinConfidence: number): {
   minConfidence: number;
   status: MatchStatus[];
   includeSummary: boolean;
   count: number;
 } {
-  const minConfidence = input.minConfidence ?? 2;
+  const minConfidence = input.minConfidence ?? defaultMinConfidence;
   if (!Number.isInteger(minConfidence) || minConfidence < 1 || minConfidence > 5) {
     throw new Error("minConfidence must be 1..5.");
   }
@@ -399,24 +401,28 @@ async function throwForBadStatus(
 
 const CFG_PR: MatchByIdConfig = {
   toolName: "person_record_matches",
+  defaultMinConfidence: 1,
   collection: "records",
   expectedPrefix: "4:1:",
   siblingTool: "record_record_matches",
 };
 const CFG_RP: MatchByIdConfig = {
   toolName: "record_person_matches",
+  defaultMinConfidence: 2,
   collection: "tree",
   expectedPrefix: "1:1:",
   siblingTool: "person_person_matches",
 };
 const CFG_PP: MatchByIdConfig = {
   toolName: "person_person_matches",
+  defaultMinConfidence: 2,
   collection: "tree",
   expectedPrefix: "4:1:",
   siblingTool: "record_person_matches",
 };
 const CFG_RR: MatchByIdConfig = {
   toolName: "record_record_matches",
+  defaultMinConfidence: 2,
   collection: "records",
   expectedPrefix: "1:1:",
   siblingTool: "person_record_matches",
@@ -472,6 +478,19 @@ const INPUT_SCHEMA = {
   required: ["id"],
 } as const;
 
+// person_record_matches lists the records a person has: an accepted record at
+// confidence 1 is still attached, so its floor defaults to the API's own, 1.
+const PERSON_RECORD_INPUT_SCHEMA = {
+  ...INPUT_SCHEMA,
+  properties: {
+    ...INPUT_SCHEMA.properties,
+    minConfidence: {
+      ...INPUT_SCHEMA.properties.minConfidence,
+      description: "Lowest match confidence to return (1..5). Default 1: every match.",
+    },
+  },
+} as const;
+
 export const personRecordMatchesSchema = {
   name: "person_record_matches",
   description:
@@ -479,7 +498,7 @@ export const personRecordMatchesSchema = {
     'Input: a tree personId (e.g. "KNDX-MKG") or 4:1: ARK. ' +
     "Returns accepted/pending/rejected record matches by default. " +
     "Requires authentication — call the login tool first if not logged in.",
-  inputSchema: INPUT_SCHEMA,
+  inputSchema: PERSON_RECORD_INPUT_SCHEMA,
 } as const;
 
 export const recordPersonMatchesSchema = {
