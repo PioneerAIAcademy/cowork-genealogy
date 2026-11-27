@@ -183,7 +183,7 @@ When it finishes, you'll see a summary table and a new run log at:
 eval/runlogs/unit/search-wikipedia/v{N}_<timestamp>.json
 ```
 
-This is a **candidate** — a full-skill iteration of v{N} that hasn't been released yet. `v{N}` only increments when a candidate gets released; until then, all your iterations stay on the same version line. On your first run against the skill, you'll see `v1_<ts>.json`.
+Every full-skill run writes one of these, and you commit it. A new run log keeps the skill's highest existing version, so all your iterations stay on the same version line; on a skill with no run logs yet, you'll see `v1_<ts>.json`. The harness keeps the newest 5 per skill and deletes older ones with their annotations — commit those deletions too.
 
 A matching `.ann.json` will appear once you start reviewing scores in the UI (next step).
 
@@ -214,7 +214,7 @@ pnpm --filter cowork-genealogy-eval-app dev
 
 **Then, on both platforms:** go to <http://127.0.0.1:3000/results> in your browser.
 
-You'll see the run logs grouped by skill. Click your latest `search-wikipedia` candidate.
+You'll see the run logs grouped by skill. Click your latest `search-wikipedia` run log.
 
 The detail page shows every test in the run, with:
 
@@ -235,7 +235,7 @@ Review every dimension. Three patterns:
 - `Tab` / `Shift-Tab` — move between dimensions.
 - `?` — show shortcut help.
 
-The completeness counter in the page header — e.g. `8/12 reviewed` — tracks how many dimensions you've explicitly touched. The GH Action requires **every dimension reviewed** before merge; the **Release** button stays disabled until the counter reads `N/N`.
+The completeness counter in the page header — e.g. `8/12 reviewed` — tracks how many dimensions you've explicitly touched. The GH Action requires **every dimension reviewed** before merge, so keep going until the counter reads `N/N`.
 
 Each correction saves to `<runlog>.ann.json` after a short debounce. You'll see "saved" in the header when it lands.
 
@@ -263,7 +263,7 @@ If the scores reveal the skill is doing the wrong thing — bad tool args, missi
 
 Then re-run the harness — `RunTests.bat` again, or `uv run python run_tests.py --skill search-wikipedia` from `eval/harness/`.
 
-The harness picks up the changes via the snapshot and writes a new candidate `v{N}_<ts2>.json`. Open the new one in the UI and review again. The earlier candidate stays on disk (with its `.ann.json`) as history.
+The harness picks up the changes via the snapshot and writes a new run log `v{N}_<ts2>.json`. Open the new one in the UI and review again. The earlier run log stays on disk (with its `.ann.json`) until the keep-newest-5 prune removes it.
 
 Tip: a small skill edit often leaves most dimensions unchanged. The fastest review pattern is to scan the trace, then "Agree with all" on tests that look right, and only manually correct the ones you actually disagree with.
 
@@ -271,12 +271,12 @@ Tip: a small skill edit often leaves most dimensions unchanged. The fastest revi
 
 > ⚠️ **Never push directly to `main`.** Always push to your own feature branch (e.g. `junior-<your-name>-search-wikipedia`). If you ever see `git push origin main` (or `git push -u origin main`) in your terminal, or "Push to main" in GitHub Desktop, **stop** and double-check which branch you're on — in the terminal run `git branch` (the active branch has a `*` next to it); in GitHub Desktop look at the "Current branch" dropdown at the top. Pushes to `main` are blocked by GitHub anyway, but it's a sign you've drifted off your feature branch and your work will land in the wrong place.
 
-Once your latest candidate has every dimension reviewed:
+Once your latest run log has every dimension reviewed:
 
 **GitHub Desktop:**
 
-1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually `packages/engine/plugin/agents/search-wikipedia.md` (if you edited the body) and `eval/runlogs/unit/search-wikipedia/` (the candidate + its `.ann.json`).
-2. Write a summary like `search-wikipedia: candidate v{N}` at the bottom-left, then click "Commit to junior-<your-name>-search-wikipedia".
+1. The left panel shows changed files. Tick the boxes next to the files you intend to commit — usually `packages/engine/plugin/agents/search-wikipedia.md` (if you edited the body) and `eval/runlogs/unit/search-wikipedia/` (the run log + its `.ann.json`, and any pruned deletions).
+2. Write a summary like `search-wikipedia: run log` at the bottom-left, then click "Commit to junior-<your-name>-search-wikipedia".
 3. Click "Push origin" at the top.
 4. Click "Create Pull Request" — that opens GitHub in your browser. Add a one-paragraph description of what you changed and why, then click "Create pull request".
 
@@ -285,12 +285,11 @@ Once your latest candidate has every dimension reviewed:
 ```bash
 git add packages/engine/plugin/agents/search-wikipedia.md
 git add eval/runlogs/unit/search-wikipedia/
-git commit -m "search-wikipedia: candidate v{N}"
+git commit -m "search-wikipedia: run log"
 git push -u origin junior-<your-name>-search-wikipedia
 # Then open the PR via GitHub's web UI or `gh pr create`.
-``` The `check-runlogs` action will run automatically and check three things:
+``` The `check-runlogs` action will run automatically and check two things:
 
-| ✓ | At most one newly added released `v{N}.json` per skill (a candidate PR adds zero). |
 | ✓ | The run log your PR adds is **active** — its embedded snapshot matches the skill files in the PR. (A PR that adds none is checked on the latest full-skill run log.) |
 | ✓ | That run log's `.ann.json` is **complete** — every dimension of each sampled test has a correction entry. |
 
@@ -303,21 +302,20 @@ When the action is green, a senior genealogist will pick up the PR for review.
 Seniors review your PR using:
 
 1. The GitHub diff for skill/test/scenario/fixture changes.
-2. Your latest candidate in the CRUD UI for the corrected scores + rationale.
-3. The compare page (`/results/compare`) to see your candidate vs the last released version side-by-side, with a "what changed" panel showing exactly which files moved between the two snapshots.
+2. Your latest run log in the CRUD UI for the corrected scores + rationale.
+3. The compare page (`/results/compare`) to see your run log vs the previous one side-by-side, with a "what changed" panel showing exactly which files moved between the two snapshots.
 
 If they disagree with a specific correction, they'll click the 📋 button next to that dimension in the UI, paste the markdown into a PR comment, and add their reasoning. Address their comments by adjusting the correction (or pushing back on the comment with a reply); re-push when ready.
 
-When the senior accepts, they'll click **Release** on your latest candidate in the UI. That renames `v{N}_<ts>.json` → `v{N}.json` and the matching `.ann.json` — a final dev iteration becomes the canonical released version. They push the rename to your branch, then approve the PR.
+When the senior accepts your corrections, they approve the PR.
 
-The project owner merges. Your skill is shipped at v{N}.
+The project owner merges.
 
 ## Common stumbles
 
-- **"Annotation incomplete" on push.** The completeness counter isn't `N/N`. Open the candidate in the UI and review the remaining dimensions. The `📋 PR comment` button stays visible; "Agree with all" is the fastest way to clear tests you've eyeballed.
-- **"Run log is not active" on push.** You edited a skill file after the last harness run, so the snapshot embedded in the candidate doesn't match your working tree anymore. Re-run `uv run python run_tests.py --skill <skill>` and commit the fresh candidate.
-- **"v{N} already exists."** Someone else released the same version on main while you were working. Pull, rebase, re-run the harness; your candidate becomes `v{N+1}_<ts>.json` automatically.
-- **Wanted to test one specific test.** `uv run python run_tests.py --test ut_xxx` produces a `scratch_<ts>.json` run log — gitignored, local-only. It can't be released and won't show up in compare/trend; that's intentional. Use it for debugging; do a full `--skill` run before pushing.
+- **"Annotation incomplete" on push.** The completeness counter isn't `N/N`. Open the run log in the UI and review the remaining dimensions. The `📋 PR comment` button stays visible; "Agree with all" is the fastest way to clear tests you've eyeballed.
+- **"Run log is not active" on push.** You edited a skill file after the last harness run, so the snapshot embedded in the run log doesn't match your working tree anymore. Re-run `uv run python run_tests.py --skill <skill>` and commit the fresh run log.
+- **Wanted to test one specific test.** `uv run python run_tests.py --test ut_xxx` produces a `scratch_<ts>.json` run log — gitignored, local-only. It won't show up in compare; that's intentional. Use it for debugging; do a full `--skill` run before pushing.
 
 ## Files you'll touch
 

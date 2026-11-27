@@ -67,7 +67,7 @@ function CompareInner() {
     [runlogs.data, skill],
   );
 
-  // Auto-pick: latest released as previous, latest candidate as recent. Derived
+  // Auto-pick: the two newest run logs (the list is sorted newest-first). Derived
   // during render, with the manual picks above taking precedence. The previous
   // effect-based version wrote straight into the pick state on every change of
   // `runsForSkill`, so a background refetch of /api/runlogs silently reset both
@@ -75,11 +75,9 @@ function CompareInner() {
   // changes.
   const autoPick = useMemo(() => {
     if (!skill || runsForSkill.length === 0) return { recent: null, previous: null };
-    const released = runsForSkill.find((r) => r.kind === 'released');
-    const candidate = runsForSkill.find((r) => r.kind === 'candidate');
     return {
-      recent: candidate?.id ?? runsForSkill[0]?.id ?? null,
-      previous: released?.id ?? runsForSkill[1]?.id ?? null,
+      recent: runsForSkill[0]?.id ?? null,
+      previous: runsForSkill[1]?.id ?? null,
     };
   }, [skill, runsForSkill]);
 
@@ -96,7 +94,7 @@ function CompareInner() {
 
   const runOptions = runsForSkill.map((r) => ({
     value: r.id,
-    label: `${r.kind === 'released' ? `v${r.version} (released)` : r.kind === 'candidate' ? `v${r.version} candidate` : 'scratch'} — ${r.timestamp}`,
+    label: `${r.kind === 'candidate' ? `v${r.version} candidate` : 'scratch'} — ${r.timestamp}`,
   }));
 
   const compare = useQuery<CompareResponse>({

@@ -74,6 +74,17 @@ only the lead deploys to it. There is no test server, so everyone tests their ow
 branch, in their own Claude account, before it reaches anyone else. A plugin you upload
 belongs to your account alone: nobody else sees it.
 
+**Once, on your Claude account,** add the connector. A `make plugin` zip carries none.
+
+1. Ask the lead to put your FamilySearch account's email on the server's allowlist.
+2. Open [the add-connector page](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Genealogy%20Research&connectorUrl=https%3A%2F%2Fmalachi.taild68f1b.ts.net%2Fmcp),
+   keep the name exactly `Genealogy Research`, then connect and sign in with FamilySearch.
+3. In Settings → Connectors → Genealogy Research, set each of its tool groups to "Always allow".
+
+The connector stays connected, and keeps "Always allow", when you swap plugin zips. The
+landing page's steps are for the one-install zip from `make plugin-connector`, which
+brings its own connector.
+
 | You changed | Test it here |
 |---|---|
 | A skill, an agent or a hook | Your own plugin on the connector. `make plugin` builds `releases/genealogy-plugin.zip` from your branch. Upload it at Customize → Plugins, removing the copy that is there first, and use an ordinary chat in Desktop or at claude.ai. A chat runs your account's plugin, its agents and its hook in a cloud session, and the connector reads and writes only your own projects. Upload the release zip again when you are done. |
@@ -747,9 +758,9 @@ uv run python run_tests.py --skill search-wikipedia           # run one skill's 
 uv run python run_tests.py --test ut_search_wikipedia_001     # run a single test
 ```
 
-Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}.json` (released),
-`v{N}_<ts>.json` (candidate), or `scratch_<ts>.json` (partial `--test`/`--tag` runs,
-gitignored). There is no `<model>` directory; the model is recorded in the run-log
+Run logs land under `eval/runlogs/unit/<skill>/<filename>` — `v{N}_<ts>.json` (full-skill
+runs, committed; the newest 5 per skill are kept) or `scratch_<ts>.json` (partial
+`--test`/`--tag` runs, gitignored). There is no `<model>` directory; the model is recorded in the run-log
 JSON's `model` field. The harness has its own unit-test suite:
 
 ```bash

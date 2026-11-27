@@ -416,6 +416,44 @@ def test_question_selection_one_new_question(before_state, after_state, test):
     )
 
 
+# --- Tag-gated: what the researcher's reply puts in the question (#4791) ---
+
+_QUESTION_OMITS_PREFIX = "question-omits:"
+_RATIONALE_RECORDS_PREFIX = "rationale-records:"
+
+
+def _tag_values(test: dict, prefix: str) -> list[str]:
+    return [t[len(prefix):] for t in test.get("tags", []) if t.startswith(prefix) and len(t) > len(prefix)]
+
+
+def test_new_question_follows_the_researchers_reply(before_state, after_state, test):
+    """Tag-gated (``question-omits:<words>``, ``rationale-records:<word>``). Every new
+    question's text leaves out a tree fact the researcher says is wrong, and its
+    `rationale` records what the delegation's `researcherReply:` or
+    `statedQuestion:` line said (issue #4791)."""
+    omits = _tag_values(test, _QUESTION_OMITS_PREFIX)
+    records = _tag_values(test, _RATIONALE_RECORDS_PREFIX)
+    if not omits and not records:
+        pytest.skip("not a researcher-reply question test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "no question was written"
+    for q in new:
+        text = str(q.get("question") or "").casefold()
+        rationale = str(q.get("rationale") or "").casefold()
+        for words in omits:
+            assert words.casefold() not in text, (
+                f"{q.get('id')}'s question assumes {words!r}, which the researcher says is wrong: {q.get('question')!r}"
+            )
+        for word in records:
+            assert word.casefold() in rationale, (
+                f"{q.get('id')}'s rationale does not record {word!r}: {q.get('rationale')!r}"
+            )
+
+
 # --- Tag-gated: new question's selection_basis ------------------------
 
 def test_selection_basis_objective_decomposition(before_state, after_state, test):

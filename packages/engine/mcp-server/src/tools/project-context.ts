@@ -35,6 +35,7 @@ import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { waitingPages, type WaitingPage } from "../utils/waiting-pages.js";
 import { projectLinks } from "../utils/project-links.js";
+import { uploadReadPlan, type UploadRow } from "../utils/upload-read-plan.js";
 import { connectorSignInUrl } from "../auth/config.js";
 import { connectorSession } from "../utils/session-check.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -280,14 +281,10 @@ async function exhaustedGroupsWithPlanItems(
   return groups.map((g) => ({ ...g, planItemIds: byGroup.get(g.imageGroup) ?? [] }));
 }
 
-/** One file the user uploaded to the project through the web tier. */
-export interface ProjectContextUpload {
-  name: string;
-  /** ISO time the store recorded for the upload. */
-  uploaded: string;
-  /** Whether the upload's text layer (`uploads/<name>.txt`) exists. */
-  hasText: boolean;
-}
+/** One file the user uploaded to the project: `name`, `uploaded` (the ISO time the
+ *  store recorded) and `hasText` (whether its text layer `uploads/<name>.txt`
+ *  exists), plus, on a stored project, the tool that reads it. */
+export type ProjectContextUpload = UploadRow;
 
 /** The project's uploads, newest first, ties by name. An entry `X.txt` whose `X` is
  *  also an entry is X's text layer, not an upload; a lone `notes.txt` is an upload.
@@ -349,6 +346,34 @@ async function externalCollectionCounts(
   return out;
 }
 
+/** The project-level `nextStep` of a person project with no question yet (#4791). */
+export const FIRST_QUESTION_NEXT_STEP =
+  "For the research router only; an agent it spawned ignores this and does its own task. " +
+  "No question yet. Not on a bounded request, which gets only what it asked for, and not in the turn " +
+  "that created the project, which ends on init-project's report. When the researcher's reply says a " +
+  "particular relationship, fact or source of the subject is wrong or doubted, first " +
+  "Skill(\"forget-and-rederive\") with mode: verify and the reply verbatim; a reply asking to verify " +
+  "none is the broad audit instead. Then, for each id in subjectPersonIds, extraction_append({ " +
+  "projectPath, personId }) and timeline_build({ projectPath, personId }); then question-selection.";
+
+/**
+ * The first question's `nextStep` (#4791). With a `verify_request` the researcher
+ * made when the project was created, the forget runs on it unless their reply names
+ * something else, so a bare "Continue." still clears what they doubted.
+ */
+export function firstQuestionNextStep(verifyRequest: string | undefined): string {
+  if (!verifyRequest) return FIRST_QUESTION_NEXT_STEP;
+  return (
+    "For the research router only; an agent it spawned ignores this and does its own task. " +
+    "No question yet. Not on a bounded request, which gets only what it asked for, and not in the turn " +
+    "that created the project, which ends on init-project's report. The researcher asked, when the " +
+    `project was created: "${verifyRequest}". First Skill(\"forget-and-rederive\") with mode: verify ` +
+    "and those words verbatim, or the reply verbatim when it names something else to verify. Then, for " +
+    "each id in subjectPersonIds, extraction_append({ projectPath, personId }) and timeline_build({ " +
+    "projectPath, personId }); then question-selection, with that text as researcherReply:."
+  );
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
@@ -373,6 +398,9 @@ export type ProjectContextResult =
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
+      /** firstQuestionNextStep(project.verify_request) on a project with a subject,
+       *  no question and a status other than completed; absent otherwise. */
+      nextStep?: string;
       /** research.researcher_profile.subscriptions, strings only. */
       subscriptions?: string[];
       openQuestions?: ProjectContextQuestion[];
@@ -417,6 +445,9 @@ export type ProjectContextResult =
       unregisteredDisagreementCount: number;
       /** The files the user uploaded through the web tier. */
       uploads?: ProjectContextUpload[];
+      /** Present with uploads: "files" (in the project folder) or "stored" (read
+       *  through the tools, each row saying which). */
+      uploadsAre?: "files" | "stored";
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
       /** The web tier's FamilySearch sign-in page, only for a connector caller
@@ -736,6 +767,17 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       typeof research?.researcher_profile?.narration_guidance === "string"
         ? research.researcher_profile.narration_guidance
         : null,
+    ...(typeof subjectId === "string" &&
+    !(Array.isArray(research?.questions) && research.questions.length > 0) &&
+    projectStatus !== "completed"
+      ? {
+          nextStep: firstQuestionNextStep(
+            typeof research?.project?.verify_request === "string" && research.project.verify_request.trim() !== ""
+              ? research.project.verify_request
+              : undefined,
+          ),
+        }
+      : {}),
     subscriptions: (Array.isArray(research?.researcher_profile?.subscriptions)
       ? research.researcher_profile.subscriptions
       : []
@@ -756,7 +798,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
-    uploads,
+    ...uploadReadPlan(uploads, typeof links.uploadUrl === "string"),
     ...links,
     ...(signInUrl ? { signInUrl } : {}),
   }) as Extract<ProjectContextResult, { ok: true }>;
@@ -875,7 +917,8 @@ export const projectContextSchema = {
     "and storedStatus " +
     "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
     "proof summary while its storedStatus is still 'in_progress'; that is not a " +
-    "contradiction. questionStatuses is ADVISORY: it reports what the " +
+    "contradiction. A top-level nextStep, present only on a project with a subject and " +
+    "no question yet, names the steps that write its first question. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
     "question needs nothing further. awaitingUser [{logId, site, urlGenerated, " +
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
@@ -917,7 +960,9 @@ export const projectContextSchema = {
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
     "a problem. uploads [{name, uploaded, hasText}] lists the files the " +
-    "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
+    "user uploaded, newest first; hasText says a text layer exists. uploadsAre says how to " +
+    "read them: \"files\" are files in the project folder; \"stored\" ones are read with the " +
+    "tool each row names in readWith (ref is the sidecar_read ref). uploadUrl, when present, " +
     "is the page where the user uploads a file; give it to the user when they want to add a " +
     "document. signInUrl, when present, means the user's FamilySearch session has ended: " +
     "give them that link to sign in again, then continue. Writes nothing.",

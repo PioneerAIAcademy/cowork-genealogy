@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listRunLogsForSkill, readRunLogById, readSnapshotFiles } from '@/lib/fs/runlogs';
+import { deleteCandidate, readRunLogById, readSnapshotFiles } from '@/lib/fs/runlogs';
 import { readAnnotation, annPathForRunLog } from '@/lib/fs/annotations';
-import { deleteCandidate, releaseRunLog } from '@/lib/release';
 
 /**
  * Run-log endpoint:
  *
  *   GET  /api/runlogs/<...id>  — read run log + annotation
- *   POST /api/runlogs/<...id>  — body `{action: "release"|"delete"}`
+ *   POST /api/runlogs/<...id>  — body `{action: "delete"}`
  *                                (Next.js catch-all routes can't have sibling
  *                                 paths underneath, so we dispatch on action
  *                                 in the request body instead of sub-paths.)
@@ -36,17 +35,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
-  // Used by the client to decide whether Delete is offered: only candidates
-  // whose version is above the latest release are deletable from the UI.
-  // Historical candidates can still be removed by hand.
-  const { runs } = await listRunLogsForSkill(found.runLog.skill);
-  const latestReleasedVersion = runs
-    .filter((r) => r.log.released && r.log.version != null)
-    .reduce<number | null>((acc, r) => {
-      const v = r.log.version as number;
-      return acc == null || v > acc ? v : acc;
-    }, null);
-
   // schema_version 3 snapshots hold digests, not content — the review panes
   // need the bytes, so read them fresh from disk for this run log only.
   const snapshotFiles = await readSnapshotFiles(found.runLog.snapshot);
@@ -55,7 +43,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     runLog: found.runLog,
     annotation,
     id: runLogId,
-    latestReleasedVersion,
     snapshotFiles,
   });
 }
@@ -75,14 +62,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   const action = body.action;
 
-  if (action === 'release') {
-    try {
-      const result = await releaseRunLog(runLogId);
-      return NextResponse.json({ ok: true, ...result });
-    } catch (e) {
-      return NextResponse.json({ error: (e as Error).message }, { status: 400 });
-    }
-  }
   if (action === 'delete') {
     try {
       await deleteCandidate(runLogId);

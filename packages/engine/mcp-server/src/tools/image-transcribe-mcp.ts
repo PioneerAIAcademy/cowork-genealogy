@@ -115,7 +115,9 @@ export const imageTranscribeToolSchema = {
     "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
     "comes back inline only when staging failed (`stagingError`). In a project " +
     "it also returns `readingNote`, and `indexReadings`, the held records' " +
-    "indexed names for that page: follow the note. Use this for large scans that " +
+    "indexed names for that page: follow the note. A page this project already " +
+    "read in full is not read again: its stored reading is staged and `reusedFrom` " +
+    "names the earlier log entry. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +

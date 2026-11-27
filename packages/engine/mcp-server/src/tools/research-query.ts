@@ -308,6 +308,7 @@ interface FilterRule {
     | "place-or-enclosing"
     | "contains-substring-ci"
     | "plan-question"
+    | "plan-item"
     | "question-conflict";
 }
 
@@ -325,6 +326,10 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   },
   plans: {
     questionId: { field: "question_id", mode: "exact" },
+    // The plan holding that item: a delegation carries a `pli_` id, and with no
+    // filter for it the agent sent it as `questionId` and was refused
+    // (ut_search_external_sites_ulr, 8 of 10 runs on Haiku).
+    planItemId: { field: "items", mode: "plan-item" },
     status: { field: "status", mode: "exact" },
   },
   log: {
@@ -670,6 +675,10 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
   if (rule.mode === "plan-question") {
     const id = item?.[fields[0]];
     return typeof id === "string" && scope !== undefined && scope.has(id);
+  }
+  if (rule.mode === "plan-item") {
+    const items = item?.[fields[0]];
+    return Array.isArray(items) && items.some((i) => i?.id === value);
   }
   if (rule.mode === "question-conflict") {
     const blocks = item?.[fields[0]];
@@ -1078,7 +1087,7 @@ export const researchQuerySchema = {
     "`offset: nextOffset`.\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
-    "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
+    "(questionId, planItemId — the plan holding that item, status), `log` (planItemId, questionId — every entry for any plan item " +
     "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
@@ -1187,7 +1196,7 @@ export const researchQuerySchema = {
         items: { type: "string" },
         description: "conflicts: matches the conflict's own id (c_NNN).",
       },
-      planItemId: { type: "string", description: "log: matches plan_item_id." },
+      planItemId: { type: "string", description: "log: matches plan_item_id. plans: the plan holding that item." },
       status: {
         type: "string",
         description: "questions/plans/conflicts/hypotheses: matches status.",

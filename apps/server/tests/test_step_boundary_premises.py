@@ -8,8 +8,8 @@ fails here rather than in a billed run.
 **These premises outlived the design that prompted them.** When this was written
 the boundary was to be a `PreToolUse` deny. Phase 0 falsified that: denied at the
 boundary the model reports the refusal and carries on (`dev/probe_step_deny.py`,
-run 2). Under decision 25 the boundary is a **halt**, built on the FamilySearch
-prototype only -- Cowork gets no hook and the alpha gets nothing. The facts below
+run 2). Under decision 25 the boundary is a deny and then a **halt**, built on the
+prototype and the web app (#4791). The facts below
 are unaffected, because they are about `DELEGATION_TOOLS`, `foreground_rewrite`
 and `is_blocked_call`, which both instruments pass through.
 
@@ -171,20 +171,15 @@ async def test_blocking_a_delegation_by_name_is_a_no_op_end_to_end(tool):
     assert _is_foregrounded(out), out
 
 
-# ── premise 4: the two planes are asymmetric, and the alpha is the gap ───────
+# ── premise 4: a halt ends the turn; the alpha's deny hook does not ──────────
 
 
-async def test_the_prototype_can_end_a_turn_from_the_hook_and_the_alpha_cannot():
-    """The two planes are asymmetric: only the prototype can end a turn from a
-    hook. Under decision 25 that asymmetry is accepted rather than closed -- the
-    halt is built on the prototype only and the alpha gets nothing -- so this
-    pins the gap as a standing fact, not as work owed.
-
-    The prototype's `halt` returns the SDK's turn-ending pair; the alpha's hook
-    has no equivalent and says so deliberately (`real_agent.py:428-430`: "No
-    `stopReason` -- a denied write is a recoverable mistake. The turn
-    continues"). This asserts the asymmetry rather than leaving it in prose,
-    because it is the single fact that decides how much PR 1 owes on the alpha.
+async def test_the_prototype_halt_ends_a_turn_and_the_alphas_deny_hook_does_not():
+    """The prototype's `halt` returns the SDK's turn-ending pair. The alpha's
+    `_pretool_hook` has no equivalent and says so deliberately ("No `stopReason`
+    -- a denied write is a recoverable mistake. The turn continues"); the alpha
+    ends a turn at a step boundary from its own step hook instead
+    (`test_alpha_turn_hooks.py`).
     """
     halted = await _proto_hook(halt=lambda **_: "STEP BOUNDARY")(
         {"tool_name": "Agent", "tool_input": {"prompt": "go"}}, "tu_1", None

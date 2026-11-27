@@ -80,7 +80,7 @@ _ID_FIELDS = (
 # The engine runs `coerceJsonArg` on these, so a stringified one is decoded and
 # APPLIED. A recorder that does not decode them records the write as empty -- a
 # stringified research_append update came out as {"section": "", "op": "append", "ids": []}.
-_JSON_ARGS = ("ops", "entry", "fields", "merges")
+_JSON_ARGS = ("ops", "entry", "fields", "merges", "plan", "planItems")
 
 
 def _decoded(value: Any) -> Any:
@@ -93,7 +93,7 @@ def _decoded(value: Any) -> Any:
 
 
 def _with_json_args(value: Any) -> Any:
-    """Decode ONLY the four keys the engine coerces.
+    """Decode ONLY the keys the engine coerces.
 
     Not every field: an id like "12345" would become a number, and a value that
     explodes under inspection must still be swallowed rather than decoded.
@@ -153,6 +153,15 @@ def writer_record(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
             return None
         tool_input = _with_json_args(tool_input)
         implicit_section, default_op = entry
+
+        # research_append's plan form (`plan` + `planItems`) carries no `ops` and
+        # no `section`: it writes one plan and its items.
+        if "plan" in tool_input or "planItems" in tool_input:
+            items = tool_input.get("planItems")
+            ids = _id_of(tool_input.get("plan")) + _id_of(tool_input)
+            for item in items if isinstance(items, list) else []:
+                ids.extend(_id_of(item))
+            return {"section": "plans,plan_items", "op": "append", "ids": list(dict.fromkeys(ids))}
 
         ops = tool_input.get("ops")
         if isinstance(ops, list) and ops:

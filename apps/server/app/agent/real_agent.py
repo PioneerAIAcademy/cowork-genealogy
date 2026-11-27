@@ -284,6 +284,11 @@ _PRETOOL_MATCHER = "|".join(
 # `_PRETOOL_MATCHER`, so its research.json reads never run on any other call.
 _DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
 
+# The step boundary's matcher: every tool that can start a step, which is the plugin's
+# `step_boundary.STEP_TOOLS`. Wider than `_DELEGATION_MATCHER`, since a skill such as
+# question-selection is a step too. Pinned to STEP_TOOLS by test_alpha_turn_hooks.py.
+_STEP_MATCHER = "^(Agent|Skill|Task)$"
+
 # The hand-off seed's matcher (issue #4660): every call `opens_hand_offs` accepts, so the
 # turn is seeded before such a call runs and its research.json read runs on no other call.
 _HAND_OFF_MATCHER = _DELEGATION_MATCHER + "|" + "|".join(f".*__{t}$" for t in sorted(HAND_OFF_LOG_TOOLS))
@@ -695,11 +700,51 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
+def _new_step_gate(text: str, project_dir: Path | None):
+    """``(StepGate, boundary module)`` for a turn whose researcher message is ``text``,
+    or ``(None, None)`` when the boundary cannot be loaded -- logged, because a turn that
+    enforces nothing looks exactly like one that crossed no boundary. ``ctx`` is lazy:
+    only a research-plan candidate reads research.json, and no file means no ctx, which
+    denies that follower rather than running an unasked plan."""
+    try:
+        boundary = load_step_boundary(Path(_PLUGIN_DIR) / "hooks" / "step_boundary.py")
+        gate = boundary.StepGate(
+            boundary=boundary,
+            mode=boundary.step_mode(text),
+            ctx=lambda: boundary.step_ctx(
+                (read_research_json(project_dir) if project_dir is not None else None) or {}
+            ),
+            log=lambda **kw: _log(f"[agent] step boundary {kw}"),
+        )
+        return gate, boundary
+    except Exception as exc:  # noqa: BLE001 - a broken boundary must not deny the researcher their turn
+        _log(f"[agent] step gate unavailable, this turn is unbounded: {type(exc).__name__}: {exc}")
+        return None, None
+
+
+def _halt_offer_line(counter: dict | None, last_text: str | None) -> str | None:
+    """The offer line to end a step-halted turn on, or None: only when this turn's gate
+    halted and the turn's last text offers no step. ``stopReason`` never reaches the
+    browser on this plane, so without it a halted turn ends on no offer."""
+    gate = (counter or {}).get("step_gate")
+    boundary = (counter or {}).get("step_boundary")
+    halt_offer = getattr(gate, "halt_offer", None)
+    if not halt_offer or boundary is None:
+        return None
+    try:
+        if boundary.offered_step(last_text):
+            return None
+        return boundary.offer_line(halt_offer)
+    except Exception as exc:  # noqa: BLE001 - never fail a finished turn over its offer
+        _log(f"[agent] halt offer failed: {type(exc).__name__}: {exc}")
+        return None
+
+
 def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
-    session; ``PostToolUse`` ends the turn when a proof-conclusion call completes the
-    project. No ``Stop`` hook: a step-mode turn ends at its boundary on purpose
-    (docs/specs/research-step-mode-spec.md, Phase 2).
+    session, and holds the turn's step boundary; ``PostToolUse`` ends the turn when a
+    proof-conclusion call completes the project. No ``Stop`` hook: a step-mode turn ends
+    at its boundary on purpose (docs/specs/research-step-mode-spec.md, Phase 2).
 
     The counter lives here rather than on a module global, so two sandboxes in one
     process cannot read each other's state."""
@@ -709,6 +754,11 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         # proof-conclusion call, by tool_use_id, and the summary to show.
         "status_before": {},
         "completion_summary": None,
+        # The step boundary (decision 25): this turn's `StepGate` and the module it came
+        # from, built in `_begin_turn_hook_state` from the turn's own text.
+        "project_dir": project_dir,
+        "step_gate": None,
+        "step_boundary": None,
     }
     # Published so `handle_turn` can clear the per-TURN state at the turn boundary. The
     # dict outlives the turn because the SDK client is built once and cached
@@ -777,6 +827,39 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             _log(f"[agent] completion status read failed: {type(exc).__name__}: {exc}")
         return {}
 
+    async def step_boundary(_input_data, _tool_use_id, _ctx):
+        """PreToolUse, step tools only: this turn's ``StepGate`` (decision 25). Main thread
+        only, by membership as ``count_only`` tests it: work inside a step is that step
+        running. The first out-of-group step is denied with the instruction to report and
+        end the turn; a second attempt ends the turn and denies the call it stops, since
+        the halt fields alone end the turn only after the call runs. A deny here outranks
+        ``_pretool_hook``'s foreground rewrite. Never raises."""
+        data = _input_data or {}
+        gate = counter.get("step_gate")
+        if gate is None:
+            return {}
+        try:
+            verdict = gate.check(
+                str(data.get("tool_name") or ""), data.get("tool_input") or {},
+                subagent="agent_id" in data,
+            )
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            _log(f"[agent] step boundary failed, allowing: {type(exc).__name__}: {exc}")
+            return {}
+        if verdict is None:
+            return {}
+        decision, reason = verdict
+        deny = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            },
+        }
+        if decision == "halt":
+            return {"continue": False, "stopReason": reason, **deny}
+        return deny
+
     async def completion_halt(_input_data, _tool_use_id, _ctx):
         """PostToolUse: end the turn after the main-thread proof-conclusion call that
         completes the project, on the agent's own ``summary_for_user``. The main thread's
@@ -812,6 +895,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
                 hooks=[_pretool_hook],
                 timeout=_PRETOOL_TIMEOUT_S,
             ),
+            HookMatcher(matcher=_STEP_MATCHER, hooks=[step_boundary], timeout=_PRETOOL_TIMEOUT_S),
             HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
@@ -1474,15 +1558,17 @@ class RealAgent:
             self._client_key = key
         return self._client
 
-    def _begin_turn_hook_state(self) -> None:
-        """Clear the per-TURN half of the hook counter. Called at the turn boundary.
+    def _begin_turn_hook_state(self, text: str | None = None) -> None:
+        """Clear the per-TURN half of the hook counter, and build the turn's ``StepGate``
+        from its own ``text``. Called at the turn boundary, BEFORE the turn's query, so no
+        hook of the turn can fire against the previous turn's gate.
 
         The hooks dict is built once per SESSION, because the SDK client is cached
         (`if self._client is None`), so per-turn state must be cleared here. A method
         rather than inline lines so it can be driven by a test. `continuations` is the
         cost report's count of overridden
         stops, always 0 since the Stop hook was deleted (step mode phase 2). `turn_tool_calls`
-        is the pending-message halt's one-call guard.
+        is the pending-message halt's one-call guard. With no ``text`` the turn has no gate.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
@@ -1494,6 +1580,9 @@ class RealAgent:
             # read before this turn's proof-conclusion calls.
             counter["completion_summary"] = None
             counter["status_before"] = {}
+            counter["step_gate"], counter["step_boundary"] = (
+                (None, None) if text is None else _new_step_gate(text, counter.get("project_dir"))
+            )
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1671,9 +1760,9 @@ class RealAgent:
         try:
             # The per-turn hook state, BEFORE the query: the SDK's reader can run this
             # turn's first PreToolUse while `client.query` is still awaited, and its writes
-            # (`status_before`, the hand-off seed) must land in this turn's state, not be
-            # cleared after or go to the previous turn's tracker.
-            self._begin_turn_hook_state()
+            # (the step gate, `status_before`, the hand-off seed) must land in this turn's
+            # state, not be cleared after or go to the previous turn's tracker.
+            self._begin_turn_hook_state(text)
             # Per turn; the PreToolUse seed (`_seed_hand_offs`) reads it off the agent.
             links = self._hand_off_links = HandOffLinks()
             await client.query(text)
@@ -1682,6 +1771,9 @@ class RealAgent:
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
             error_emitted = False
+            # The main thread's last text this turn, which a step halt's offer stands in
+            # for when it offers nothing.
+            last_text = None
             async for message in client.receive_response():
                 for ev in map_message(
                     message, self._tool_names, self._tasks, self._live_tasks,
@@ -1699,6 +1791,7 @@ class RealAgent:
                     # message's parent, not the event's label, which a subagent's text lacks
                     # once its task is popped.
                     if ev.get("kind") == "text" and not getattr(message, "parent_tool_use_id", None):
+                        last_text = ev.get("text")
                         counter_now = getattr(self, "_hook_counter", None)
                         if counter_now and counter_now.get("completion_summary"):
                             counter_now["completion_summary"] = None
@@ -1808,6 +1901,11 @@ class RealAgent:
                     hook_counter = getattr(self, "_hook_counter", None)
                     if hook_counter and hook_counter.get("completion_summary"):
                         yield _event("text", text=hook_counter["completion_summary"])
+                    # A step halt ends the turn before the model writes its offer, so when
+                    # the turn's last line offers nothing, the offer the halt named is shown
+                    # as that line, as the prototype worker does.
+                    elif (offer := _halt_offer_line(hook_counter, last_text)) is not None:
+                        yield _event("text", text=offer)
                     yield _event(
                         "usage",
                         cost_usd=d_cost,

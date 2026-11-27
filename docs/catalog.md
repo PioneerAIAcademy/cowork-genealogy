@@ -69,7 +69,7 @@ way project state changes.
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being, and a project always starts from a FamilySearch person: `personId` is required. It reads the person from FamilySearch, builds the starting tree, writes the house profile and the transcribed memories, and returns a short summary | FamilySearch |
+| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being, and a project always starts from a FamilySearch person: `personId` is required. It reads the person from FamilySearch, builds the starting tree, writes the house profile and the transcribed memories, and returns a short summary. When it lists relatives whose attached sources it could not read (`relativeSourcesSkipped`), a second call with `fillRelativeSources` reads them into the existing project's tree | FamilySearch |
 | `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/`, a text upload under `uploads/`, a staged transcription under `results/`, or one full-text hit's transcript, title, date and place by `results/<file>#<hit id>` (`#hits` lists the hits) — one file, or several at once by `refs`. Refuses any other search or record result, images, `research.json` and the tree with a pointer to the tool that serves each | None |
@@ -79,7 +79,7 @@ way project state changes.
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
-| `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run, or, with `cleanSlate`, forget-and-rederive's verify mode: everything the removal cuts off from the subjects and every source cited on what went (project-start only; refused once a plan exists) | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
 | `merge_warnings` | Pre-merge conflict report for two tree persons | None |
 | `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the disagreements between attached sources: the field, the differing values, and each source's link (the `url` `person_read` returns) | OAuth |

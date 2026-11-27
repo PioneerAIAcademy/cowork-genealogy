@@ -835,15 +835,15 @@ def test_a_stubbed_return_carries_the_relay_note_too(tmp_path, monkeypatch):
     from harness.context_policy import RELAY_NOTE
 
     _, returns = _drive_hook(
-        tmp_path, monkeypatch, [_spawn_input("locality-guide"), _post_input()],
-        stub_agents={"locality-guide": "CANNED"},
+        tmp_path, monkeypatch, [_spawn_input("search-records"), _post_input()],
+        stub_agents={"search-records": "CANNED"},
     )
     post = returns[1]["hookSpecificOutput"]
     assert post["updatedToolOutput"]["content"] == [{"type": "text", "text": "CANNED"}]
     assert post["additionalContext"] == RELAY_NOTE
 
 
-@pytest.mark.parametrize("agent", ["historical-context", "init-project"])
+@pytest.mark.parametrize("agent", ["historical-context", "init-project", "locality-guide"])
 def test_a_stubbed_return_gets_the_relay_note_of_the_agent_the_model_named(tmp_path, monkeypatch, agent):
     """The stub runs as STUB_RUNNER_AGENT, so the post hook sees that name; the note
     must be the one production gives the agent the model spawned."""
