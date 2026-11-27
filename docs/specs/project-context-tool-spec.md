@@ -744,7 +744,12 @@ answer and on the `no_project` answer, addressed to the router as the `nextStep`
 above is. It says what a bounded request is by example: one record (a birth,
 marriage, death or census entry, or when or where one event happened), a person's
 children or siblings or whether they are complete, a transcription, a letter, a
-review of attached sources. Its owning agent runs in the
+review of attached sources. A message that asks to research something else instead of
+the project's current question is not one: it is a different question, which
+`research/SKILL.md` handles under "A genuinely different question" (offer to wrap the
+current one up). Without that sentence the when-or-where example took "I want to find
+out where Patrick Flynn is buried instead", on a project with a question in progress,
+for a record ask and ran search-records (`ut_research_dq1`, 2026-11-27). Its owning agent runs in the
 same turn, after init-project in a folder with no project, and that turn never runs
 question-selection. A bounded request that asks for more than one thing runs only the
 first one's agent and names the rest, as `research/SKILL.md` says. For a record, or

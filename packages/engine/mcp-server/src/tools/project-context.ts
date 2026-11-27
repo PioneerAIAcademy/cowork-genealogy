@@ -54,7 +54,9 @@ export const BOUNDED_REQUEST_RULE =
   "For the research router only; an agent it spawned ignores this and does its own task. A researcher " +
   "message asking for one thing (one record such as a birth, marriage, death or census entry, or when or " +
   "where one event happened; a person's children or siblings, or whether they are complete; a " +
-  "transcription; a letter; a review of attached sources) is a bounded request. Its owning agent runs in " +
+  "transcription; a letter; a review of attached sources) is a bounded request. A message that asks to " +
+  "research something else instead of the project's current question is not one: it is a different question " +
+  "(research/SKILL.md, \"A genuinely different question\"). A bounded request's owning agent runs in " +
   "this turn, after init-project when there is no project yet, and the turn never runs question-selection. " +
   "A bounded request that asks for more than one thing runs only the first one's agent this turn and names " +
   "the rest. For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +

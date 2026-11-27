@@ -1175,6 +1175,10 @@ describe("project_context", () => {
       expect(BOUNDED_REQUEST_RULE).toContain("For a record, or for a person's children or siblings, that agent is search-records");
       expect(BOUNDED_REQUEST_RULE).toContain('its turn ends on search-records\' "Continue with …?" offer');
       expect(BOUNDED_REQUEST_RULE).toContain(
+        "A message that asks to research something else instead of the project's current question is not one: it is " +
+          "a different question (research/SKILL.md, \"A genuinely different question\").",
+      );
+      expect(BOUNDED_REQUEST_RULE).toContain(
         "A bounded request that asks for more than one thing runs only the first one's agent this turn and names the rest.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
