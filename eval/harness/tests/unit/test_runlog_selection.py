@@ -201,9 +201,8 @@ def test_run_date_parses_a_unit_runlog_filename():
     assert run_date(Path("eval/runlogs/unit/citation/v12_2026-06-01_00-00-00.json")) == date(2026, 6, 1)
 
 
-def test_run_date_is_none_for_a_released_runlog():
-    """A released `v{N}.json` carries no timestamp; filter_since must keep it
-    rather than age out the one tier the retention rule keeps forever."""
+def test_run_date_is_none_for_a_filename_without_a_date():
+    """A filename with no date is kept rather than silently dropped."""
     p = Path("eval/runlogs/unit/citation/v3.json")
     assert run_date(p) is None
     assert filter_since([p], date(2026, 7, 20)) == [p]

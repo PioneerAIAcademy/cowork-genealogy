@@ -1126,7 +1126,7 @@ malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 80
 	$(MALACHI) up
 
 .PHONY: malachi-check
-malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+malachi-check: ## Health, routes, deployed sha, disk, and tool calls signed in as the env file's CHECK_EMAIL: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
 	$(MALACHI) check
 
 .PHONY: malachi-logs
@@ -1726,7 +1726,7 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
 	# thread's busiest moment. Removes reports whose run log was pruned (same
 	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
-	# rewrites them (needed after a log is rehashed or released under a new name).
+	# rewrites them (needed after a log is rehashed).
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 

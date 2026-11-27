@@ -68,6 +68,8 @@ from test_search_external_sites import (  # noqa: E402
     test_the_log_is_append_only as check_v8,
     test_the_url_logged_is_the_url_presented as check_v4,
     test_triage_closes_its_open_handoff as check_triage,
+    test_header_only_capture_is_a_nil as check_header_only,
+    test_correction_names_the_entry_it_corrects as check_correction,
     test_archion_browse_handoff as check_archion,
     test_base_url_is_the_plan_items_collection_url as check_collection_url,
     report_collection_scoped_url_with_no_backed_collection_id as check_2521,
@@ -79,6 +81,7 @@ from test_search_external_sites import (  # noqa: E402
     test_no_transcription_of_an_upload_with_text as check_no_text_transcribe,
     test_closing_capture_filename_is_the_upload as check_capture_filename,
     test_hosted_upload_is_read_with_the_tools as check_upload_read,
+    DIGEST_EXCERPT_CHARS,
     test_refused_transcription_leaves_the_handoff_open as check_refused_open,
     test_folder_mode_upload_is_read_with_read as check_folder_read,
     test_blm_outside_coverage_refusal_is_the_answer as check_blm_refusal,
@@ -637,8 +640,17 @@ ARCHION = {"type": "positive", "tags": ["archion-browse"]}
 PARISH = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn"
 
 
-def _build(**args):
-    return {"tool": "mcp__genealogy__build_external_search_url", "args": args}
+def _build(logged=True, **args):
+    """A builder call. `logged` is whether the tool wrote the in-flight entry and
+    returned its `logId`; `False` is a refusal or an `awaitingCapture: false` build."""
+    response = {"ok": True, "url": "https://example.org/", "logId": "log_001"} if logged else {"ok": True, "url": "https://example.org/"}
+    return {"tool": "mcp__genealogy__build_external_search_url", "args": args, "response": response}
+
+
+def test_archion_quiet_when_a_refused_first_build_is_retried():
+    refused = {**_build(site="archion", baseUrl=PARISH, attributes={}, projectPath="/p"), "response": {"ok": False, "reason": "invalid_base_url"}}
+    calls = [refused, _build(site="archion", baseUrl=PARISH, attributes={}, projectPath="/p")]
+    expect_passes(lambda: check_archion(calls, ARCHION))
 
 
 def test_archion_quiet_on_the_parish_page_with_projectpath():
@@ -652,9 +664,9 @@ def test_archion_quiet_on_the_parish_page_with_projectpath():
         ([], "no build_external_search_url call with site 'archion'"),
         ([_build(site="ancestry", attributes={"surname": "Seeger"}, projectPath="/p")], "site 'archion'"),
         ([_build(site="archion", attributes={}, projectPath="/p")], "no Archion parish page"),
-        ([_build(site="archion", baseUrl=PARISH, attributes={})], "omitted projectPath"),
+        ([_build(logged=False, site="archion", baseUrl=PARISH, attributes={}, projectPath="/p", awaitingCapture=False)], "returned a logId"),
     ],
-    ids=["no_call", "wrong_site", "no_baseurl", "no_projectpath"],
+    ids=["no_call", "wrong_site", "no_baseurl", "not_logged"],
 )
 def test_archion_fires(calls, match):
     expect_fires(lambda: check_archion(calls, ARCHION), match)
@@ -722,7 +734,7 @@ def test_browse_catalog_skips_untagged_tests():
     [
         ([_matricula()], GOOD_TAIL, "no catalog_search call"),
         ([_catalog()], GOOD_TAIL, "browse-site link was dropped"),
-        ([_catalog(), _matricula(projectPath=None)], GOOD_TAIL, "omitted projectPath"),
+        ([_catalog(), _matricula(logged=False, awaitingCapture=False)], GOOD_TAIL, "returned a logId"),
         ([_catalog(), _matricula()], "Film 876540 is at a FamilySearch Center.\n---\nOpen the Matricula link.", "names none of the center-only films"),
         ([_catalog(), _matricula()], GOOD_TAIL.replace("film 876540", "film 8765401"), "names none of the center-only films"),
         ([_catalog(), _matricula()], GOOD_TAIL + " I can read image group 008109455 for you.", "offers a read"),
@@ -1311,6 +1323,37 @@ def test_upload_read_fires_on_form_3_when_the_staged_page_is_unread():
     expect_fires(lambda: check_upload_read({}, calls, [], PNG_TEST), "never read")
 
 
+def _short_page(chars):
+    return {"staged": {"resultsRef": STAGED}, "digest": {"id": "capture:x", "chars": chars, "excerpt": "Find a Grave logo"}}
+
+
+@pytest.mark.parametrize("chars", [168, DIGEST_EXCERPT_CHARS])
+def test_upload_read_passes_form_3_when_the_digest_holds_the_whole_page(chars):
+    """#4745's header-only page is 168 characters: the digest is the page, and
+    its staged ref holds nothing more to read."""
+    calls = [_context([_row(f"{STEM}.png")]), _transcribe(f"uploads/{STEM}.png", _short_page(chars))]
+    expect_passes(lambda: check_upload_read({}, calls, [], PNG_TEST))
+
+
+@pytest.mark.parametrize("digest", [
+    {"id": "capture:x", "chars": DIGEST_EXCERPT_CHARS + 1, "excerpt": "x"},
+    {"id": "capture:x", "chars": "168", "excerpt": "x"},
+    {"id": "capture:x", "excerpt": "x"},
+    None,
+], ids=["one_past_the_cap", "chars_as_string", "no_chars", "no_digest"])
+def test_upload_read_fires_on_form_3_when_the_digest_may_be_partial(digest):
+    response = {"staged": {"resultsRef": STAGED}, "digest": digest}
+    calls = [_context([_row(f"{STEM}.png")]), _transcribe(f"uploads/{STEM}.png", response)]
+    expect_fires(lambda: check_upload_read({}, calls, [], PNG_TEST), "never read")
+
+
+def test_digest_excerpt_cap_matches_the_typescript_source():
+    source = (_HARNESS.parents[1] / "packages" / "engine" / "mcp-server" / "src" / "utils" / "staged-compaction.ts")
+    match = re.search(r"export const DIGEST_EXCERPT_CHARS = (\d+);", source.read_text(encoding="utf-8"))
+    assert match, "DIGEST_EXCERPT_CHARS is no longer declared in staged-compaction.ts"
+    assert int(match.group(1)) == DIGEST_EXCERPT_CHARS
+
+
 def test_upload_read_fires_on_form_3_never_transcribed():
     calls = [_context([_row(f"{STEM}.png")]), _sidecar(f"uploads/{STEM}.png")]
     expect_fires(lambda: check_upload_read({}, calls, [], PNG_TEST), "no image_transcribe")
@@ -1886,3 +1929,110 @@ def test_blm_refusal_passes_a_logged_follow_up_search_on_another_site():
     }
     before, after = _states(before_log=_open_log(), after_log=_open_log() + [deeds])
     expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL))
+
+
+# --- #4745: a header-only Find a Grave capture is a nil -----------------
+
+HEADER_ONLY = {"type": "positive", "tags": ["header-only-capture"]}
+FAG_URL = "https://www.findagrave.com/memorial/search?firstname=Abner&lastname=Hollis&deathyear=1874"
+
+
+def _fag(entry_id, outcome, capture):
+    return {
+        "id": entry_id, "tool": "external_site", "outcome": outcome,
+        "external_site": {"site": "findagrave", "url_generated": FAG_URL, "capture_received": capture},
+    }
+
+
+def _header_only(outcome="negative", tail="No memorial matched Abner Hollis."):
+    before, after = _states(
+        before_log=[_fag("log_001", "partial", False)],
+        after_log=[_fag("log_001", "partial", False), _fag("log_002", outcome, True)],
+    )
+    returns = [{"subagent_type": "search-external-sites", "text": f"Triage.\n---\n{tail}"}]
+    return lambda: check_header_only(before, after, "Relayed.", HEADER_ONLY, agent_returns=returns)
+
+
+@pytest.mark.parametrize("tail", [
+    "No memorial matched Abner Hollis.",
+    "This isn't a blank capture: Find a Grave shows only its header when a search finds nothing.",
+    "No need to resave it — Find a Grave prints an empty search as its header alone.",
+    "You don't have to re-upload anything; try the search again without the death year.",
+    "There is nothing to recapture.",
+])
+def test_header_only_quiet_on_a_nil_with_no_resave_ask(tail):
+    expect_passes(_header_only(tail=tail))
+
+
+@pytest.mark.parametrize("outcome", ["error", "positive"])
+def test_header_only_fires_when_the_nil_is_logged_otherwise(outcome):
+    expect_fires(_header_only(outcome=outcome), "no-results page, a nil")
+
+
+@pytest.mark.parametrize("tail", [
+    "Could you re-save the page and upload it again?",
+    "Please re-upload the capture after the page loads.",
+    "The page did not load, so please recapture it, scrolling to the bottom first.",
+    "Save the page again once it has finished loading.",
+])
+def test_header_only_fires_on_a_resave_ask(tail):
+    expect_fires(_header_only(tail=tail), "asks for the capture again")
+
+
+def test_header_only_fires_when_nothing_closes_the_handoff():
+    before, after = _states(
+        before_log=[_fag("log_001", "partial", False)],
+        after_log=[_fag("log_001", "partial", False)],
+    )
+    returns = [{"subagent_type": "search-external-sites", "text": "---\nNothing found."}]
+    expect_fires(
+        lambda: check_header_only(before, after, "", HEADER_ONLY, agent_returns=returns),
+        "no new external_site entry closes",
+    )
+
+
+# --- #4747: a correction supersedes the entry it corrects ---------------
+
+CORRECTION = {"type": "positive", "tags": ["report-correction"]}
+CA_URL = "https://www.loc.gov/collections/chronicling-america/?dl=page&q=Abner+Hollis&dates=1874%2F1875&fa=location_state:ohio"
+
+
+def _ca(entry_id, outcome, notes="", url=CA_URL):
+    return {
+        "id": entry_id, "tool": "external_site", "outcome": outcome, "notes": notes,
+        "external_site": {"site": "chronicling_america", "url_generated": url, "capture_received": False},
+    }
+
+
+def _correction(new):
+    before, after = _states(
+        before_log=[_ca("log_001", "negative", "Unconfirmed pending a capture.")],
+        after_log=[_ca("log_001", "negative", "Unconfirmed pending a capture."), new],
+    )
+    return lambda: check_correction(before, after, CORRECTION)
+
+
+@pytest.mark.parametrize("notes", [
+    "Corrects log_001: the page timed out, so the search never ran.",
+    "The researcher reports the page timed out; this supersedes log_001.",
+    "Supersedes (log_001). Timed out.",
+])
+def test_correction_quiet_on_an_error_entry_naming_the_old_one(notes):
+    expect_passes(_correction(_ca("log_002", "error", notes)))
+
+
+def test_correction_fires_when_logged_negative():
+    expect_fires(_correction(_ca("log_002", "negative", "Corrects log_001.")), "never a finding")
+
+
+def test_correction_fires_when_the_notes_name_no_entry():
+    expect_fires(_correction(_ca("log_002", "error", "The page timed out.")), "do not name log_001")
+
+
+def test_correction_fires_on_a_longer_id_that_only_contains_the_old_one():
+    expect_fires(_correction(_ca("log_002", "error", "Corrects log_0010.")), "do not name log_001")
+
+
+def test_correction_fires_when_the_url_was_rebuilt_differently():
+    rebuilt = CA_URL.replace("dates=1874%2F1875&", "")
+    expect_fires(_correction(_ca("log_002", "error", "Corrects log_001.", url=rebuilt)), "nothing supersedes it")

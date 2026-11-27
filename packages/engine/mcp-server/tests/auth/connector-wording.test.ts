@@ -123,12 +123,13 @@ describe("login and logout for a connector caller", () => {
 });
 
 describe("a missing OpenRouter key", () => {
-  it("tells a connector caller it is turned on per account, and names no settings page or file", async () => {
+  it("tells a connector caller it is turned on per account, rules out the browser, and names no settings page or file", async () => {
     await expect(getOpenRouterApiKey(connector())).rejects.toThrow(CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE);
     expect(CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE).toBe(
       "Reading images is not turned on for this account, so this image was not transcribed. " +
         "Tell the user it is turned on per account by the beta's administrator, and carry on " +
-        "without this image. Do not ask the user to paste a key into the chat.",
+        "without this image. Do not read the image any other way, such as through a web browser: " +
+        "nothing read that way is saved to the project. Do not ask the user to paste a key into the chat.",
     );
     for (const banned of [/config\.json/, /Claude Desktop/, /Extensions/, /openrouter\.ai/]) {
       expect(CONNECTOR_OPENROUTER_KEY_MISSING_MESSAGE).not.toMatch(banned);

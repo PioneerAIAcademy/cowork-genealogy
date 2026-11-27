@@ -1,0 +1,13 @@
+{
+  "tool": "tree_forget",
+  "description": "tree_forget's refusal of a writing call that leaves cleanSlate unsaid (CLEAN_SLATE_UNSAID, tree-forget.ts), listed after the clean-slate fixture so a call that sends cleanSlate: true matches that one first (#4791).",
+  "args": {
+    "forget": "~death-of"
+  },
+  "response": {
+    "ok": false,
+    "errors": [
+      "Nothing was written: a tree_forget call that writes must say cleanSlate. Send cleanSlate: true for the research router's verify step (forget-and-rederive in verify mode), cleanSlate: false for a practice run."
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_question_selection_rr1",
+    "skill": "question-selection",
+    "name": "A researcher's reply disputing the tree's death place frames the question without it",
+    "type": "positive",
+    "description": "Issue #4791, stop 2. The delegation carries the researcher's reply to the setup stop on a `researcherReply:` line: Patrick Flynn died in Philadelphia, not Schuylkill County as the tree and the objective say. The question written is the objective's parentage question, its text does not assume the disputed death place, and its rationale records what the researcher said, so research-plan reads it.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "first-question",
+      "question-selection-one-new-question",
+      "question-omits:Schuylkill",
+      "rationale-records:Philadelphia",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nresearcherReply: You offered `choosing the question`. He died in Philadelphia, not Schuylkill County.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The researcher says the tree's death place (Schuylkill County) is wrong and that Patrick Flynn died in Philadelphia. That the question leaves Schuylkill County out and the rationale records Philadelphia is checked by test_new_question_follows_the_researchers_reply; do not re-grade it.",
+    "The researcher's statement is a claim for the research to test, not a fact: a question or rationale that states Philadelphia as established is a partial. One that treats the tree's Schuylkill County death as established fails.",
+    "The objective is Patrick Flynn's parents, a single fact, so one parentage question is the expected outcome; the death place is context for finding him in records."
+  ]
+}

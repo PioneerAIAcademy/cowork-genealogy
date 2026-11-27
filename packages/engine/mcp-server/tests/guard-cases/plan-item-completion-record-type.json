@@ -352,6 +352,47 @@
           }
         ]
       }
+    },
+    {
+      "id": "probate-completed-off-land-search-plus-page-read",
+      "expect": "fire",
+      "shape": "probate-off-land-page-read",
+      "why": "The only search attributed to the probate item is a deed/land search. The other attributed entry is a page image_transcribe logged itself (written_by: image_transcribe), which is a read, not the item's search, so its probate wording does not satisfy the item.",
+      "write": "pli_006",
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Pennsylvania Land Records",
+            "query": {
+              "keywords": "+Flynn"
+            }
+          },
+          {
+            "plan_item_id": "pli_006",
+            "tool": "image_transcribe",
+            "written_by": "image_transcribe",
+            "notes": "probate inventory page",
+            "query": {
+              "imageId": "004884748_02613"
+            }
+          }
+        ]
+      }
     }
   ]
 }

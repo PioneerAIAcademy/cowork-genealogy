@@ -33,6 +33,7 @@ from harness.instrument import (
     _normalise_locals,
     _resolve_harness_module,
     _sha,
+    canonical_dump,
 )
 
 
@@ -253,7 +254,7 @@ def _judge_render_hash_cached(validators_dir: str) -> str:
     module = _DropMessages().visit(module)
     _normalise_locals(module)
     keys = [f"{mod}:{name}" for mod, name, _ in nodes]
-    dumped = ast.dump(module, annotate_fields=True, include_attributes=False)
+    dumped = canonical_dump(module)
     return _sha("\n".join(keys) + "\n" + dumped)
 
 

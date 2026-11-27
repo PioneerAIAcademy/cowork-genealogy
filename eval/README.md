@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/skill-mcp-testing-plan.md`](../docs/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
+Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/skill-mcp-testing-plan.md`](../docs/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`eval/CLAUDE.md`](CLAUDE.md) "Run log naming" for run-log naming and retention.
 
 New to how skills are built, tested, and improved? Start with the lifecycle map: [`docs/skill-lifecycle.md`](../docs/skill-lifecycle.md).
 
@@ -179,23 +179,20 @@ pnpm --filter cowork-genealogy-eval-app typecheck   # tsc --noEmit
 
 Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is no model dir. The run log's envelope `model` field is the harness default, not what ran. Each thread's model is in `runs[].main_thread.models` and `runs[].subagents[].models`. An agent suite's main thread runs the harness default and the agent its own `model:` frontmatter; a `SKILL.md` suite runs the skill's `model:` when set.
 
-Filenames classify into three kinds:
+Filenames classify into two kinds:
 
 | Pattern | Kind | Notes |
 |---|---|---|
-| `v{N}.json` + `v{N}.ann.json` | **released** | Senior-blessed; the canonical version. Immutable. |
-| `v{N}_{YYYY-MM-DD_HH-MM-SS}.json` + matching `.ann.json` | **candidate** | A full-skill iteration of v{N} that hasn't been released yet. Multiple per version are normal during iteration. |
+| `v{N}_{YYYY-MM-DD_HH-MM-SS}.json` + matching `.ann.json` | **run log** | Written by every full-skill run and committed. A new run log takes the skill's highest existing version (or v1); filenames sort by (version, timestamp). The harness keeps the newest 5 per skill. |
 | `scratch_{YYYY-MM-DD_HH-MM-SS}.json` | **scratch** | Partial / single-test / multi-skill runs. Gitignored — never committed. Local-only debugging. |
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag` filter — that's the only invocation that exercises the complete test suite for one skill. Everything else writes a `scratch_` file.
-
-The release flow is: junior iterates with `--skill X` → harness writes `v{N}_<ts>.json` candidates → junior reviews scores in the CRUD UI → senior pulls the PR branch and clicks **Release** on the active candidate → file renames to `v{N}.json`.
 
 ## Reading a run log
 
 Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schema.json`](../docs/specs/schemas/run-log.schema.json). One envelope per harness invocation, per skill, containing every test that ran. Key fields:
 
-- `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
+- `schema_version` (currently `3`), `skill`, `version`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
 - `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on `validators.suite` and warns on the rest.
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures, and plugin agents — a full-body key for an agent the run executes, a `packages/engine/plugin/agents/<name>.md#frontmatter` key, digesting only `name`/`description`/`tools`/`disallowedTools`, for every other staged agent in a routing suite like `research`, named in its SKILL.md or not). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
@@ -210,9 +207,8 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 ## CRUD UI day-to-day
 
 - **`/results`** — every committed run log grouped by skill, with version badges and annotation status.
-- **`/results/<skill>/<filename-without-ext>`** — integrated test-centric view: per-test trace (input, scenario card, tool calls + fixtures, output) and grade block with per-dimension correction + comment + 📋 "copy as PR comment" button. Activate / Release / Delete actions live in the header. The "active" indicator marks the run log whose snapshot matches the working tree.
-- **`/results/compare`** — arbitrary pair picker (default: latest released vs latest candidate). Headline weighted-mean delta + per-side histograms; per-test rows with edited-test exclusion; "what changed" panel diffing the two snapshots.
-- **`/results/trend?skill=<skill>`** — per-skill plot of corrected weighted-mean over released versions, with test count + "tests changed since previous version" markers.
+- **`/results/<skill>/<filename-without-ext>`** — integrated test-centric view: per-test trace (input, scenario card, tool calls + fixtures, output) and grade block with per-dimension correction + comment + 📋 "copy as PR comment" button. Activate / Delete actions live in the header. The "active" indicator marks the run log whose snapshot matches the working tree.
+- **`/results/compare`** — arbitrary pair picker (default: the two newest run logs). Headline weighted-mean delta + per-side histograms; per-test rows with edited-test exclusion; "what changed" panel diffing the two snapshots.
 - **`/tests`, `/scenarios`, `/fixtures`** — authoring surfaces for the underlying corpus.
 
 `.ann.json` files are **sparse** — entries only for dimensions the annotator has explicitly reviewed. The per-test "Agree with all" button populates entries with `corrected_score == llm_score` and no comment, marking them reviewed. A senior reviewing a PR uses the 📋 button on dimensions they disagree with to copy a markdown block straight to a PR comment — no separate senior UI; PR comments are the disagreement channel.
@@ -220,20 +216,20 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 ## Walkthroughs
 
 - **[`eval/JUNIOR-WALKTHROUGH.md`](JUNIOR-WALKTHROUGH.md)** — your first PR as a junior genealogist: edit a skill, run the harness, review scores, push.
-- **[`eval/SENIOR-WALKTHROUGH.md`](SENIOR-WALKTHROUGH.md)** — reviewing a PR + releasing: pull, compare, dispute via PR comments, click Release.
+- **[`eval/SENIOR-WALKTHROUGH.md`](SENIOR-WALKTHROUGH.md)** — reviewing a PR: pull, compare, dispute via PR comments, approve.
 - **[`docs/alpha-user-guide.md`](../docs/alpha-user-guide.md)** — what alpha testers actually do: real research in the hosted web app, then feedback. They do **not** author fixtures or run the harness (that changed 2026-07-18; the old ALPHA-WALKTHROUGH described a fixture-authoring role no alpha tester has).
 
 ## Workflow
 
-See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/per-pr-review-workflow.md`](../docs/per-pr-review-workflow.md) for the per-PR cadence. Short version:
+See [`eval/CLAUDE.md`](CLAUDE.md) "Run log naming" for run logs and the active state, and [`docs/per-pr-review-workflow.md`](../docs/per-pr-review-workflow.md) for the per-PR cadence. Short version:
 
 1. Junior edits a skill / tests / scenarios / fixtures.
-2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
-3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest candidate — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so a run with a low score anywhere is more than 5 (measured 2026-09-11 over the 117 committed logs carrying a sample: median 5, at most 13 as committed; median 6, at most 15 recomputed with no prior cursor). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
-4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file; the run log this PR adds (else the latest full-skill run log) is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
+2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` run log. The harness also **prunes that skill down to its 5 newest run logs**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). The newest run log is never pruned.
+3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest run log — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so a run with a low score anywhere is more than 5 (measured 2026-09-11 over the 117 committed logs carrying a sample: median 5, at most 13 as committed; median 6, at most 15 recomputed with no prior cursor). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
+4. Junior commits the run log + annotation + any pruned deletions, pushes the PR.
+5. GH Action enforces (blocking): the run log this PR adds (else the latest full-skill run log) is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
-7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
+7. Senior agrees or disputes the junior's corrections and approves the PR.
 8. Project owner merges.
 
 ## Cosmetic-change exemption (skip the re-run for a minor wording change)
@@ -475,7 +471,6 @@ the lid open unless you're on power with an external display.
 
 ## Related specs
 
-- `docs/plan/eval-runlog-versioning.md` — Run-log versioning + active/release workflow (canonical).
 - `docs/specs/unit-test-spec.md` — Unit-test JSON format + harness behavior.
 - `docs/specs/e2e-test-spec.md` — E2e test format + judge contract.
 - `docs/specs/eval-crud-ui-spec.md` — CRUD UI design.

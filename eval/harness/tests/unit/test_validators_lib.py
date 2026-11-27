@@ -379,3 +379,55 @@ def test_continue_offers_catches_an_offer(line):
 )
 def test_continue_offers_ignores_prose(text):
     assert continue_offers(text) == []
+
+
+# --- research_append_ops: every call shape, read as the tool reads it (#4866) ---
+
+from validators_lib import research_append_ops  # noqa: E402
+
+
+def test_research_append_ops_reads_a_wrapped_batch_unchanged():
+    ops = [{"section": "questions", "op": "update", "entryId": "q_001", "fields": {"priority": "low"}}]
+    assert research_append_ops({"projectPath": "/p", "ops": ops}) == ops
+
+
+def test_research_append_ops_wraps_a_flat_op_by_its_kind():
+    got = research_append_ops({"ops": [
+        {"section": "plan_items", "op": "append", "planId": "pl_001", "sequence": 1},
+        {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "edits": [], "tier": "probable"},
+    ]})
+    assert got == [
+        {"section": "plan_items", "op": "append", "planId": "pl_001", "entry": {"sequence": 1}},
+        {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "edits": [], "fields": {"tier": "probable"}},
+    ]
+
+
+def test_research_append_ops_merges_a_payload_sent_both_ways():
+    got = research_append_ops({"ops": [
+        {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "fields": {}, "narrative_markdown": "x"},
+    ]})
+    assert got[0]["fields"] == {"narrative_markdown": "x"}
+
+
+def test_research_append_ops_expands_the_plan_form():
+    got = research_append_ops({
+        "plan": '{"question_id": "q_001", "status": "active"}',
+        "planItems": [{"sequence": 1}, "not an item", {"sequence": 2}],
+    })
+    assert [(o["section"], o["entry"]) for o in got] == [
+        ("plans", {"question_id": "q_001", "status": "active"}),
+        ("plan_items", {"sequence": 1}),
+        ("plan_items", {"sequence": 2}),
+    ]
+
+
+@pytest.mark.parametrize("args, expected", [
+    ({"section": "project", "op": "update", "fields": {"status": "completed"}},
+     [{"section": "project", "op": "update", "fields": {"status": "completed"}}]),
+    ({"ops": '[{"section": "plans", "op": "update", "entryId": "pl_001", "status": "completed"}]'},
+     [{"section": "plans", "op": "update", "entryId": "pl_001", "fields": {"status": "completed"}}]),
+    ({"ops": "not json"}, []),
+    ("not a mapping", []),
+])
+def test_research_append_ops_reads_single_and_stringified_calls(args, expected):
+    assert research_append_ops(args) == expected

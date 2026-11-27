@@ -512,7 +512,7 @@ async def test_a_new_users_plain_sign_in_is_refused_and_writes_no_row(connector_
     users = dict(store.users)
     async with _client(store) as c:
         r = await _plain_sign_in(c)
-    assert r.status_code == 403 and "no account here yet" in r.text and "connector in Claude" in r.text
+    assert r.status_code == 403 and "no account here yet" in r.text and "from its Connectors tab" in r.text
     assert store.users == users and store.grants == {} and auth.COOKIE_NAME not in r.cookies
 
 
@@ -588,3 +588,101 @@ def test_the_spa_reserves_the_connector_paths():
     from web import spa
 
     assert {"authorize", "token", "connect"} <= spa.RESERVED
+
+
+# ── seeding image reading at first connect (OPENROUTER_SEED_AT_CONNECT) ───────────
+
+SEED_KEY = "sk-or-v1-seed"
+
+
+async def test_seeding_on_gives_a_user_the_consent_creates_the_key_as_ciphertext(connector_on):
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", "true")
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    _fake_fs(connector_on, email=NEW_EMAIL, fs_id="NEW-1")
+    store = _store()
+    async with _client(store) as c:
+        await _to_code(c)
+    user = next(u for u in store.users.values() if u.email == NEW_EMAIL)
+    stored = store.openrouter_keys[user.id]
+    assert SEED_KEY not in stored, "only ciphertext reaches the store"
+    assert auth.decrypt(stored) == SEED_KEY
+
+
+@pytest.mark.parametrize("switch", [None, "false"])
+async def test_seeding_off_gives_nobody_a_key_even_with_one_in_the_environment(connector_on, switch):
+    if switch is not None:
+        connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", switch)
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    _fake_fs(connector_on, email=NEW_EMAIL, fs_id="NEW-1")
+    store = _store()
+    async with _client(store) as c:
+        await _to_code(c)
+    assert any(u.email == NEW_EMAIL for u in store.users.values())
+    assert store.openrouter_keys == {}
+
+
+async def test_seeding_never_writes_an_existing_users_key(connector_on):
+    """One who has a key keeps it, and one whose key was cleared stays cleared: only the
+    insert carries the seed."""
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", "true")
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    _fake_fs(connector_on)  # USER_A, who already has a row
+    store = _store()
+    async with _client(store) as c:
+        await _to_code(c)
+    assert store.openrouter_keys == {}
+    store.openrouter_keys[USER_A.id] = "their-own-ciphertext"
+    async with _client(store) as c:
+        await _to_code(c)
+    assert store.openrouter_keys == {USER_A.id: "their-own-ciphertext"}
+
+
+async def test_a_plain_sign_in_seeds_nobody_even_where_it_creates_users(connector_on):
+    """With the chat on, a browser sign-in creates the user. Only the connector's consent seeds."""
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", "true")
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    connector_on.delenv("OAUTH_ISSUER")
+    connector_on.setenv("GENEALOGY_CHAT", "true")
+    connector_on.setenv("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/1/q")
+    _fake_fs(connector_on, email=NEW_EMAIL, fs_id="NEW-1")
+    store = _store()
+    async with _client(store) as c:
+        r = await _plain_sign_in(c)
+    assert r.status_code in (302, 303, 307), r.text
+    assert any(u.email == NEW_EMAIL for u in store.users.values())
+    assert store.openrouter_keys == {}
+
+
+def test_seeding_on_with_no_key_refuses_to_start(connector_on):
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", "true")
+    with pytest.raises(RuntimeError, match="OPENROUTER_SEED_AT_CONNECT is true, but OPENROUTER_SEED_KEY is empty"):
+        auth.preflight()
+    connector_on.setenv("OPENROUTER_SEED_KEY", "   ")
+    with pytest.raises(RuntimeError, match="OPENROUTER_SEED_KEY is empty"):
+        auth.preflight()
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    auth.preflight()
+    assert auth.openrouter_seed_key() == SEED_KEY
+
+
+@pytest.mark.parametrize("value", ["yes", "1", "on", "TRUE "])
+def test_a_seeding_switch_that_is_not_true_or_false_refuses_to_start_or_reads_strictly(connector_on, value):
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", value)
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    if value.strip().lower() == "true":
+        assert auth.openrouter_seed_key() == SEED_KEY
+    else:
+        with pytest.raises(RuntimeError, match="OPENROUTER_SEED_AT_CONNECT"):
+            auth.preflight()
+
+
+@pytest.mark.parametrize("missing", ["SESSION_SECRET", "FS_TOKEN_ENC_KEY"])
+def test_seeding_on_refuses_a_default_secret_even_over_http_with_sign_in_off(connector_on, missing):
+    """The seed key is real whatever else is off, so it is never encrypted under a public string."""
+    connector_on.delenv("OAUTH_ISSUER")
+    connector_on.delenv("FAMILYSEARCH_WEB_ENABLED")
+    connector_on.setenv("OPENROUTER_SEED_AT_CONNECT", "true")
+    connector_on.setenv("OPENROUTER_SEED_KEY", SEED_KEY)
+    connector_on.delenv(missing)
+    with pytest.raises(RuntimeError, match=f"(?s)OPENROUTER_SEED_AT_CONNECT is on.*{missing}"):
+        auth.preflight()

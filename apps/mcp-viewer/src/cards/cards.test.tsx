@@ -1,16 +1,17 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { ProjectDocument } from '../contract'
+import { SHOW_VALUES, type ProjectDocument } from '../contract'
 import { leftoverIds } from '../rules/id-check'
 import { cardView } from './kit/view'
-import { CARDS, cardKind } from './registry'
+import { CARDS, cardFor, cardKind } from './registry'
+import { SearchCard } from './SearchCard'
 import { COMPOUND_DOC, FLYNN_DOC, FLYNN_PARENT_CONFLICT, FLYNN_WITH_STATED_CONFLICT, MCANDREW_DOC, status } from './test-views'
 
 afterEach(cleanup)
 
 function drawn(document: ProjectDocument, input: Record<string, unknown>, heightLimit?: number) {
   const view = cardView(document, input)
-  const Card = CARDS[cardKind(input.show, view)]
+  const Card = cardFor(cardKind(input.show, view))
   const { container } = render(<Card view={view} heightLimit={heightLimit} />)
   const text = (container.textContent ?? '').replace(/\s+/g, ' ').trim()
   return {
@@ -116,12 +117,12 @@ describe('the search card', () => {
   it('a logId input picks that search, and offers its results only when it has them', () => {
     const seen: string[] = []
     const view = cardView(COMPOUND_DOC(), { show: 'search', logId: 'log_002' })
-    const { container, rerender } = render(<CARDS.search view={view} onSeeResults={(id) => seen.push(id)} />)
+    const { container, rerender } = render(<SearchCard view={view} onSeeResults={(id) => seen.push(id)} />)
     expect(container.textContent).toContain('This search')
     expect(container.textContent).toContain('It found something.')
     ;(container.querySelector('button') as HTMLButtonElement).click()
     expect(seen).toEqual(['log_002'])
-    rerender(<CARDS.search view={cardView(COMPOUND_DOC(), { logId: 'log_001' })} onSeeResults={() => {}} />)
+    rerender(<SearchCard view={cardView(COMPOUND_DOC(), { logId: 'log_001' })} onSeeResults={() => {}} />)
     expect(container.querySelector('button')).toBeNull()
   })
 
@@ -206,14 +207,24 @@ describe('the registry', () => {
     expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe('Linking records to people')
   })
 
-  it('every step has a card, and a stub names the question', () => {
+  it('every built card draws with no id left in it', () => {
     for (const show of Object.keys(CARDS)) {
       const card = drawn(COMPOUND_DOC(), { show })
       expect(card.title).toBeTruthy()
       expect(leftoverIds(card.text)).toEqual([])
       cleanup()
     }
-    expect(drawn(COMPOUND_DOC(), { show: 'hypothesis' }).text).toContain('Where was Elizabeth Mariah Barker')
+  })
+
+  it('a step with no card yet draws what latest draws', () => {
+    const unbuilt = SHOW_VALUES.filter((show) => show !== 'latest' && show !== 'file' && !Object.hasOwn(CARDS, show))
+    expect(unbuilt).toContain('question')
+    for (const show of unbuilt) {
+      const latest = drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title
+      cleanup()
+      expect(drawn(FLYNN_DOC(), { show, questionId: 'q_002' }).title).toBe(latest)
+      cleanup()
+    }
   })
 
   it('a value that is no step, even an inherited name, follows latest', () => {

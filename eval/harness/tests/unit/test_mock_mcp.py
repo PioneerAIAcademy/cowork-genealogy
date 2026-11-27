@@ -983,6 +983,22 @@ def test_wiki_search_fails_open_without_the_build(tmp_path, monkeypatch):
     assert out == response
 
 
+@pytest.mark.requires_engine_build
+def test_catalog_search_film_year_adds_production_line(tmp_path):
+    """With `filmYear`, the canned answer gains production's `filmForYear` (#4721);
+    without it, the fixture is served as recorded."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["catalog-search-ochtrup"], FIXTURES_DIR, workspace=tmp_path
+    )
+    args = {"standardPlace": "Ochtrup, Kreis Steinfurt, Westphalia, Prussia, Germany"}
+    with_year = _extract_response_dict(_invoke(tools_by_name, "catalog_search", {**args, "filmYear": 1836}))
+    kb = next(h for h in with_year["hits"] if h["id"] == "koha:202974")
+    assert kb["filmForYear"]["filmNumber"] == "876540"
+    assert "viewable only at a FamilySearch Center" in kb["filmForYear"]["line"]
+    plain = _extract_response_dict(_invoke(tools_by_name, "catalog_search", dict(args)))
+    assert all("filmForYear" not in h for h in plain["hits"])
+
+
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
     """The mock's gate restates the tool's condition: it selects the response
     rather than transforming a staged one, and the tool exports no function for
@@ -3284,13 +3300,38 @@ def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
     # keeps the model and the size.
     assert "metadata" not in body
     assert "nameExpansion" not in body
-    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    # The tool logs its own read (#4721), which moves the staged file to its sidecar.
+    envelope = json.loads((tmp_path / "results" / f"{body['logId']}.json").read_text(encoding="utf-8"))
     assert envelope["tool"] == "image_transcribe"
     assert envelope["payload"]["query"] == _WILL_ARGS
     [element] = envelope["payload"]["results"]
     assert element["id"] == "007936749_00008"
     assert element["source"] == {"imageId": "007936749_00008"}
     assert element["transcription"] == full
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_logs_its_own_read_as_production_does(tmp_path):
+    """Issue #4721: the mock writes the entry production's `imageTranscribeMcpTool`
+    writes, through the same compiled `researchLogAppend` and `readOutcome`: one
+    entry, `written_by: "image_transcribe"`, under the call's plan item, its query
+    the staged echo, its outcome from `found`."""
+    body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path), "planItemId": "pli_004"})
+    assert body.get("staged"), body.get("stagingError")
+    assert body.get("logId"), body.get("logRefused")
+    log = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))["log"]
+    [entry] = [e for e in log if e.get("written_by") == "image_transcribe"]
+    assert entry["id"] == body["logId"]
+    assert {k: entry[k] for k in ("tool", "plan_item_id", "outcome", "results_examined", "staged_ref", "results_ref", "query")} == {
+        "tool": "image_transcribe",
+        "plan_item_id": "pli_004",
+        # The canned page carries no `found`, so a `lookingFor` with none is partial.
+        "outcome": "partial",
+        "results_examined": 1,
+        "staged_ref": body["staged"]["resultsRef"],
+        "results_ref": f"results/{body['logId']}.json",
+        "query": _WILL_ARGS,
+    }
 
 
 @pytest.mark.requires_engine_build
@@ -3356,10 +3397,10 @@ def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_
     )
     assert body.get("staged"), body.get("stagingError")
     cleaned = "Name\nAnna Weber\n\n===\nPeter Weber"
-    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    envelope = json.loads((tmp_path / "results" / f"{body['logId']}.json").read_text(encoding="utf-8"))
     assert envelope["payload"]["results"][0]["transcription"] == cleaned
     assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
-    assert sorted(body) == ["digest", "found", "readingNote", "staged"]
+    assert sorted(body) == ["digest", "found", "logId", "readingNote", "staged"]
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):

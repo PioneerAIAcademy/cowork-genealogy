@@ -76,6 +76,10 @@ export const OK_FALSE_IS_FAILURE = [
   // `writerToolResult` changes nothing now and surfaces a failure correctly if
   // it ever gains one. A search WITH results still stages and is agent-logged.
   "record_search",
+  // Issue #4721: every staged read in a project writes its own log entry
+  // (`written_by: "image_transcribe"`), so the tool is a document writer. A
+  // refused write keeps the read and reports `logRefused`; no `ok: false` today.
+  "image_transcribe",
   "research_query",
   "project_context",
   "tree_query",
@@ -125,6 +129,62 @@ export function writerToolResult(result: OkFalseResult): McpToolResult {
   const envelope: McpToolResult = {
     content: [{ type: "text", text: JSON.stringify(result) }],
   };
-  if (result?.ok === false && result?.reason !== "no_project") envelope.isError = true;
+  if (result?.ok === false && result?.reason !== "no_project") {
+    envelope.isError = true;
+    markRefusal(envelope);
+  }
   return envelope;
+}
+
+/**
+ * The envelopes a connector caller gets as REFUSALS: the tool did nothing and
+ * said why. Three makers tag one: `writerToolResult`, for any `ok: false` a
+ * listed tool RETURNS, and the dispatcher's unknown-argument and no-project
+ * guards. The tag rides on the envelope and is never read back out of its text,
+ * so a thrown error's `{ error }` and an `ok: false` that is a tool's answer
+ * (`merge_warnings`) are never taken for one.
+ *
+ * A returned `ok: false` is usually a rule the call broke (reword the note,
+ * check the id, sign in again), but a tool may return a fault the same way.
+ * `project_create` returns every failed FamilySearch read as its refusal, a 5xx
+ * as much as a mistyped id (`project-create-tool-spec.md`, "Refusals"), and
+ * several tools return a failed project read so. Nothing here can tell the two
+ * apart, so the note below claims only what holds for both: nothing was written.
+ */
+const refusals = new WeakSet<object>();
+
+export function markRefusal<T extends object>(envelope: T): T {
+  refusals.add(envelope);
+  return envelope;
+}
+
+/** The first key of a connector caller's refusal, so the model reads it before the errors. */
+export const CONNECTOR_REFUSAL_NOTE =
+  "Refused, and nothing was written or changed. " +
+  "Fix what the message below names and send the call again.";
+
+/**
+ * What a CONNECTOR caller gets for a refusal: the same body under a `refused`
+ * note, with no `isError`.
+ *
+ * In claude.ai and Desktop Chat a result marked `isError` is drawn as a red
+ * "Error" box holding the raw JSON, in front of the user. A refusal is the
+ * writer tools working as designed, and about one call in ten is one, so a
+ * researcher saw errors all through a run in which nothing had gone wrong
+ * (lead, 2026-11-26). The mark exists so the model and the harness's detectors
+ * cannot read a refused write as a success (issue #1282); on this surface the
+ * note does that job for the model, and the worker, the desktop and the harness
+ * keep the mark. Anything not tagged a refusal is returned as it is.
+ */
+export function connectorToolResult<T extends object>(envelope: T): T | McpToolResult {
+  if (!refusals.has(envelope)) return envelope;
+  const text = (envelope as Partial<McpToolResult>).content?.[0]?.text;
+  let body: unknown;
+  try {
+    body = JSON.parse(text ?? "");
+  } catch {
+    return envelope;
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) return envelope;
+  return { content: [{ type: "text", text: JSON.stringify({ refused: CONNECTOR_REFUSAL_NOTE, ...body }) }] };
 }

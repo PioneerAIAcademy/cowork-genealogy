@@ -313,8 +313,9 @@ suffix raised by k, zero-padded. Read only ids inside a returned range.
 
 ### 4. Read pages with `image_transcribe`
 
-Call `image_transcribe({ imageId, projectPath })` — one call per page — adding
-`lookingFor` when you were given a `looking_for`. `lookingFor` names only who
+Call `image_transcribe({ imageId, projectPath, planItemId })` — one call per
+page, `planItemId` null for an ad-hoc browse — adding `lookingFor` when you were
+given a `looking_for`. The tool logs each page itself; never log a page read. `lookingFor` names only who
 or what the record is about: the names, the event, the year. Never put a
 navigation target in it ("title page", "year boundary", "name index S
 section", "first entry", "or 1854 start") — any token of it can match and

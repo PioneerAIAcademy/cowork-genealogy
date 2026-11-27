@@ -19,6 +19,7 @@
 
 import { join } from "path";
 import { getProjectStore } from "../store/project-store.js";
+import { isToolLoggedRead } from "../utils/tool-logged-read.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -82,7 +83,7 @@ function logWithoutPersistenceWarning(research: any): string | null {
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
   const positives = log.filter(
-    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool) && !isToolLoggedRead(e),
   ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
@@ -126,8 +127,28 @@ const REPORT_REPLY_NEXT =
   "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. " +
   "Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.";
 
-function reportReplyNext(tools: unknown[]): { next?: string } {
-  return tools.some((t) => typeof t === "string" && REPORT_TOOLS.has(t)) ? { next: REPORT_REPLY_NEXT } : {};
+/** Report tools whose logged `notes` come back as `replyStart`, to paste rather
+ *  than write again. convert-dates on Haiku reworded its short report between
+ *  the log call and the reply (4 of 51 runs), so the two no longer matched. */
+const REPORT_ECHO_TOOLS = new Set(["convert_dates"]);
+export const REPORT_ECHO_NEXT =
+  "Your reply now starts with `replyStart`, pasted whole and unchanged: it is the report you logged and the --- line. " +
+  "Below it comes the part for the researcher. Write no other version of the report and no other ---.";
+
+/** The log entries this call added, as stored (a note the tool appended included). */
+function appendedEntries(before: { log?: unknown }, after: { log?: unknown }): unknown[] {
+  const was = Array.isArray(before?.log) ? before.log.length : 0;
+  return Array.isArray(after?.log) ? after.log.slice(was) : [];
+}
+
+function reportReplyNext(ops: unknown[]): { next?: string; replyStart?: string } {
+  const logged = ops.filter(
+    (op): op is { tool: string; notes?: unknown } =>
+      !!op && typeof op === "object" && typeof (op as { tool?: unknown }).tool === "string",
+  );
+  if (!logged.some((op) => REPORT_TOOLS.has(op.tool))) return {};
+  const echoed = logged.find((op) => REPORT_ECHO_TOOLS.has(op.tool) && typeof op.notes === "string" && op.notes.trim() !== "");
+  return echoed ? { next: REPORT_ECHO_NEXT, replyStart: `${(echoed.notes as string).trim()}\n\n---` } : { next: REPORT_REPLY_NEXT };
 }
 
 /** Question statuses under which the question is still open: every status but
@@ -200,7 +221,7 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
     .filter((id): id is string => typeof id === "string");
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils < NIL_ESCALATION_THRESHOLD) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
@@ -264,7 +285,7 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
   );
   const notes: string[] = [];
   for (const pli of touched) {
-    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const entries = log.filter((e) => e?.plan_item_id === pli && !isToolLoggedRead(e));
     const nils = entries.filter(isNilFsSearch).length;
     if (nils !== newNils.filter((e) => e.plan_item_id === pli).length) continue;
     if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial")) continue;
@@ -343,6 +364,8 @@ export type ResearchLogAppendResult =
       planRationale?: string;
       /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
       next?: string;
+      /** The logged `notes` of a `REPORT_ECHO_TOOLS` entry and the `---` line, to paste as the reply's start. */
+      replyStart?: string;
     } & ResearchLogAppendOpResult)
   | {
       ok: true;
@@ -353,6 +376,7 @@ export type ResearchLogAppendResult =
       escalationDue?: string;
       planRationale?: string;
       next?: string;
+      replyStart?: string;
     }
   | { ok: false; errors: string[] };
 
@@ -2924,6 +2948,24 @@ export async function researchLogAppend(
         differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
       }
       if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      // Issue #4721. `image_transcribe` logs its own read, so a later hand-log
+      // of that page is the same read, whatever outcome or plan item it names.
+      // Refusing it would send the caller to read the page again — the double
+      // read the tool's write exists to end. Its staged file is consumed, so a
+      // note it adds cannot become an entry of its own; the warning carries it
+      // back rather than dropping it behind `ok: true`.
+      const toolWrote =
+        isToolLoggedRead(prior) &&
+        op.writtenBy === undefined &&
+        (!sent(op.tool) || canonicalToolName(op.tool) === "image_transcribe");
+      if (toolWrote) {
+        const note = typeof op.notes === "string" ? op.notes.trim() : "";
+        const extra: string[] = [];
+        if (differs.length > 0) extra.push(`it was logged by image_transcribe itself, so this re-send's ${differs.join(", ")} was not applied`);
+        if (note !== "" && !String(prior.notes ?? "").includes(note)) extra.push(`this note was not stored: "${note}"`);
+        if (extra.length > 0) opWarnings.push(`${ref} is ${found.logId}: ${extra.join("; ")}.`);
+        return found;
+      }
       if (differs.length > 0) {
         // An image_transcribe entry with no ref is refused (`imageToolEntryRefusal`),
         // so a correction to a logged page needs a page of its own, not no ref.
@@ -3126,7 +3168,7 @@ export async function researchLogAppend(
         ok: true,
         results,
         ...escalation(),
-        ...reportReplyNext(input.ops.map((op) => op?.tool)),
+        ...reportReplyNext(appendedEntries(beforeResearch, research)),
         filesWritten: ["research.json", ...sidecarsCreated],
         validation: {
           valid: true,
@@ -3226,7 +3268,7 @@ export async function researchLogAppend(
       ok: true,
       ...result,
       ...escalation(),
-      ...reportReplyNext([singleOp.tool]),
+      ...reportReplyNext(appendedEntries(beforeResearch, research)),
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: {
         valid: true,

@@ -1,9 +1,8 @@
 """The worker's step boundary: deny first, halt only on a second attempt.
 
-This worker is the ONLY plane that enforces the boundary (decision 25). Cowork
-ships no hook and the alpha gets nothing, so what is tested here is the whole
-enforcement story -- and the halt rate it logs is the only measure we get of how
-often a run tries to cross a boundary it was told to stop at.
+The worker's half of decision 25's enforcement; the web app's is in
+`test_alpha_turn_hooks.py`. The halt rate the gate logs is the measure of how often
+a run tries to cross a boundary it was told to stop at.
 
 `StepGate` is the stateful half: the pure predicate lives in the plugin's
 `step_boundary.py` and is tested in `eval/harness/tests/unit/test_step_boundary.py`.
@@ -191,10 +190,12 @@ def test_without_the_seed_a_resumed_attempt_would_let_a_second_step_through(boun
 # ── modes ───────────────────────────────────────────────────────────────────────
 
 
-def test_job_mode_allows_every_step(boundary):
-    g = gate(boundary, mode="job")
+def test_a_keep_going_message_runs_one_step(boundary):
+    """#4791: "Keep going." is a step turn like "Continue.", so its second step is denied."""
+    assert boundary.step_mode("Keep going.") == "step"
+    g = gate(boundary, mode=boundary.step_mode("Keep going."))
     g.check(*spawn("search-records"), subagent=False)
-    assert g.check(*spawn("proof-conclusion"), subagent=False) is None
+    assert g.check(*spawn("proof-conclusion"), subagent=False)[0] == "deny"
 
 
 def test_wrapup_mode_follows_its_order(boundary):

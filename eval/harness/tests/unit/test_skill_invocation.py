@@ -112,6 +112,13 @@ def test_exhaustive_declaration_true_owned_by_research_exhaustiveness():
     assert owning_skills("mcp__genealogy__research_append", args) == ["research-exhaustiveness"]
 
 
+def test_a_flat_op_declaring_a_stop_is_owned_by_research_exhaustiveness():
+    # research_append's flat op: the payload sits beside section/op (#4866).
+    stop = {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}
+    args = {"ops": [{"section": "questions", "op": "update", "entryId": "q_001", "search_stop": stop}]}
+    assert owning_skills("mcp__genealogy__research_append", args) == ["research-exhaustiveness"]
+
+
 def test_questions_update_without_declaring_true_owns_nothing():
     args = {"section": "questions", "op": "update", "entryId": "q_001", "fields": {"priority": "low"}}
     assert owning_skills("mcp__genealogy__research_append", args) == []

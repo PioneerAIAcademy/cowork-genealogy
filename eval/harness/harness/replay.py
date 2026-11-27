@@ -57,6 +57,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from harness.research_append_ops import canonical_op, is_plan_form, plan_form_ops
 from harness.research_sections import SINGLETON_SECTIONS as _SINGLETON_SECTIONS
 
 # The research.json writers. Tree writers are deliberately out of scope for now:
@@ -301,9 +302,11 @@ def _ops_from_args(args: dict, tool: str = "") -> list[dict]:
             if isinstance(args.get("ops"), list)
             else [args]
         )
-        return [o if o.get("section") else dict(o, section="evaluations") for o in raw]
+        return [canonical_op(o) if o.get("section") else canonical_op(dict(o, section="evaluations")) for o in raw]
+    if is_plan_form(args):
+        return plan_form_ops(args)
     if isinstance(args.get("ops"), list):
-        return [o for o in args["ops"] if isinstance(o, dict)]
+        return [canonical_op(o) for o in args["ops"] if isinstance(o, dict)]
     if args.get("section"):
         return [args]
     return [dict(args, section="log")]
