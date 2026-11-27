@@ -85,3 +85,27 @@ export function resolveFamilySearchTarget(input: unknown): string | null {
 
   return null
 }
+
+/** A digitized-image id: `NUMBER_NUMBER` (image group, underscore, image sequence). */
+const IMAGE_ID_RE = /^(\d+)_(\d+)$/
+
+/**
+ * The FamilySearch film-viewer URL for a digitized-image id, or `null`.
+ *
+ * Mirrors the `imageId` branch of the engine's `imageViewerUrl`
+ * (`packages/engine/mcp-server/src/utils/ark.ts`) — the web side cannot import
+ * the engine, so the formula is duplicated here, the same way `resolveFamilySearchTarget`
+ * above mirrors `arkToUrl`. Change one, change the other.
+ *
+ * The viewer's `i=` is **zero-indexed**: image `00058` of film `004567123` opens at
+ * `i=57` (verified against the engine, 2026-10-01). The group number keeps its
+ * leading zeros; the sequence loses them through `parseInt`.
+ */
+export function imageIdToViewerUrl(input: unknown): string | null {
+  if (typeof input !== 'string') return null
+  const m = IMAGE_ID_RE.exec(input.trim())
+  if (!m) return null
+  const imageNumber = parseInt(m[2], 10)
+  if (imageNumber < 1) return null
+  return `${FS_BASE}search/film/${m[1]}?i=${imageNumber - 1}`
+}
