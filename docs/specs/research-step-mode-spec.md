@@ -213,7 +213,7 @@ stops (decision 29) and the main thread's `person_search` deny
 
 | Step | Runs | Ends with |
 |---|---|---|
-| Setup: init-project alone | a new project, on a job | the subject's birth and death as the tree gives them, the relatives, the attached sources as `S<n>: <title>`, "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?", then "Continue with choosing the question?" |
+| Setup: init-project alone | a new project, on a job | the subject's birth and death as the tree gives them, the relatives, the attached sources by title, one per line, "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?", then "Continue with choosing the question?" |
 | Question: forget-and-rederive's verify mode when the reply disputes a conclusion or source, the attached-records baseline (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `research-append-tool-spec.md` §11.8), then question-selection | always | what was removed (counts), the timeline, the question in full with its place and period, then "Continue with planning the searches?" |
 | Plan: locality-guide if the place is unsurveyed, then research-plan | always | locality-guide's findings and the plan, each in full, then "Continue with running the searches?" |
 | Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records to people in this project?"; when a steer opened the step and the previous turn offered linking, the sentence before that line says linking can wait and another search can be named |

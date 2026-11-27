@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A job's first message with a person ID stops after init-project and asks what to verify",
     "type": "positive",
-    "description": "Issue #4791, stop 1. A research job with a FamilySearch ID and no project runs init-project alone, reads no attached record, lists the subject's sources as `S<n>: <title>` (init-project's report, from project_create's subjectSources), asks what the researcher wants to verify or research and whether anything is wrong or missing, and ends on \"Continue with `choosing the question`?\". init-project runs live on the Moreau fixture, whose subject cites three sources at the person level.",
+    "description": "Issue #4791, stop 1. A research job with a FamilySearch ID and no project runs init-project alone, reads no attached record, lists the subject's sources by title (init-project's report, from project_create's subjectSources), asks what the researcher wants to verify or research and whether anything is wrong or missing, and ends on \"Continue with `choosing the question`?\". init-project runs live on the Moreau fixture, whose subject cites three sources at the person level.",
     "tags": [
       "routing",
       "routes-to:init-project",
@@ -56,7 +56,7 @@
     ]
   },
   "judge_context": [
-    "Stop 1 of a research job (issue #4791): the turn that creates the project runs init-project and nothing else, then shows the researcher what they can act on. The hand-offs, the absence of any attached-record read, the `S<n>: <title>` source lines, the verify-or-research question and the closing \"Continue with `choosing the question`?\" line are checked by test_job_setup_stops_after_init_project. Do not re-grade them.",
+    "Stop 1 of a research job (issue #4791): the turn that creates the project runs init-project and nothing else, then shows the researcher what they can act on. The hand-offs, the absence of any attached-record read, the source titles, the verify-or-research question and the closing \"Continue with `choosing the question`?\" line are checked by test_job_setup_stops_after_init_project. Do not re-grade them.",
     "Grade the reply on what it tells the researcher: Jean Baptiste Moreau's birth (12 March 1821, Bastogne) and death (3 October 1889, Bastogne) as the tree gives them, his relatives by name and relationship (Marie Dubois; children Henri and Josephine), and his three attached sources by title. A reply that leaves out the vitals or the relatives is incomplete.",
     "No question is chosen and nothing is planned or searched in this turn: that is correct, not missing work.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-offs and the fields named above are asserted deterministically from the hook records, which you cannot see. Grade only the router's own reply: whether it is honest about what it ran and delegated, and whether it reports what the steps returned without inventing anything."

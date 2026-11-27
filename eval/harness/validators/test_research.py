@@ -1750,7 +1750,11 @@ def _mcp_named(calls, name: str) -> list[tuple[int, dict]]:
 
 _SETUP_STOP_TAG = "setup-stop"
 _VERIFY_ASK = re.compile(r"what\s+do\s+you\s+want\s+to\s+verify\s+or\s+research", re.IGNORECASE)
-_SOURCE_LINE = re.compile(r"^\W*S\d+\W*:\s*\S", re.MULTILINE)
+_MOREAU_SOURCES = (
+    "Belgium, Luxembourg Province, Civil Registration, 1796-1910",
+    "Belgium, Luxembourg Province, Church Records, 1601-1948",
+    "Belgium, Census Records, 1846-1900",
+)
 
 
 def test_job_setup_stops_after_init_project(
@@ -1758,8 +1762,8 @@ def test_job_setup_stops_after_init_project(
 ):
     """Tag-gated (``setup-stop``). A job's first message with a FamilySearch ID and
     no project runs init-project alone (issue #4791, stop 1): no attached record is
-    read, the subject's sources are listed as ``S<n>: <title>`` (init-project's
-    report, from ``project_create``'s ``subjectSources``), the reply asks what to
+    read, the subject's three sources are listed by title (init-project's report,
+    from ``project_create``'s ``subjectSources``; the Moreau fixture's titles), the reply asks what to
     verify or research, and it ends on "Continue with `choosing the question`?"."""
     from harness.skill_runner import load_step_boundary
 
@@ -1774,7 +1778,9 @@ def test_job_setup_stops_after_init_project(
     })
     assert not read, f"the setup turn read attached records: {read}"
     text = (text_response or "").replace("`", "")
-    assert len(_SOURCE_LINE.findall(text)) >= 2, "the reply lists no sources as `S<n>: <title>`"
+    flat = " ".join(re.sub(r"[\"*_\u201c\u201d]", "", text).split()).lower()
+    missing = [t for t in _MOREAU_SOURCES if t.lower() not in flat]
+    assert not missing, f"the reply does not list the subject's sources by title: {missing}"
     assert _VERIFY_ASK.search(text), "the reply does not ask what the researcher wants to verify or research"
     offered = load_step_boundary().offered_step(text_response)
     assert offered == "question", f"the reply must end on \"Continue with `choosing the question`?\"; it offers {offered!r}"
