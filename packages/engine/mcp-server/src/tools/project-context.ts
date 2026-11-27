@@ -57,7 +57,8 @@ export const BOUNDED_REQUEST_RULE =
   "transcription; a letter; a review of attached sources) is a bounded request. Its owning agent runs in " +
   "this turn, after init-project when there is no project yet, and the turn never runs question-selection. " +
   "For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +
-  "on search-records' \"Continue with …?\" offer. A requested record that " +
+  "on search-records' \"Continue with …?\" offer. For a review of attached sources that agent is " +
+  "source-evaluation, which reads them: the router reads none of them itself. A requested record that " +
   "attachedSources already lists is not searched for: read it with person_read and name it. A children or " +
   "siblings ask starts from what is attached: before any search, read the person with person_read, then " +
   "read each census among its sources with record_read, passing that source's url as recordId, name the " +

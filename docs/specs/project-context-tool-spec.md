@@ -756,10 +756,14 @@ and stopped after init-project (`children-attached-households-benjamin-phipps`,
 before any search the router reads the person with `person_read`, reads each census
 among its sources with `record_read`, passing that source's `url` (a 1:1 persona ARK
 `record_read` takes as `recordId`), names the household, and hands search-records the
-rest. The record links are not in `attachedSources`: with a `recordId` on every
-attached source the router read the attached records itself, some of them more than
-once, instead of handing the review to source-evaluation
-(`evaluate-sources-moses-watrous`, 2026-11-26). A requested record that
+rest. A review of attached sources goes to source-evaluation, which reads them, and
+the router reads none of them itself: without that sentence the router took the
+children clause's reads as the way to review sources, reading a project's attached
+records itself, some more than once, instead of handing the review to
+source-evaluation (`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). The
+record links are not in `attachedSources`: with a `recordId` on every entry the
+router also read an attached death index with `record_read` and never `person_read`
+(`death-attached-susan-cornwell`, 2026-11-26). A requested record that
 `attachedSources` already lists is read with `person_read` and named, not searched
 for. A research plan is left out: one asked for in a folder with no project ends
 after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says

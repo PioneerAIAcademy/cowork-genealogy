@@ -1175,6 +1175,9 @@ describe("project_context", () => {
       expect(BOUNDED_REQUEST_RULE).toContain("For a record, or for a person's children or siblings, that agent is search-records");
       expect(BOUNDED_REQUEST_RULE).toContain('its turn ends on search-records\' "Continue with …?" offer');
       expect(BOUNDED_REQUEST_RULE).toContain(
+        "For a review of attached sources that agent is source-evaluation, which reads them: the router reads none of them itself.",
+      );
+      expect(BOUNDED_REQUEST_RULE).toContain(
         "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
