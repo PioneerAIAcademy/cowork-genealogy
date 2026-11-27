@@ -122,6 +122,13 @@ describe('findFamilySearchTargets (#4582)', () => {
     expect(hit.href).toBe(`${FS}search/film/004567123?i=57`)
   })
 
+  it('never links a look-alike host that only starts with familysearch.org', () => {
+    // Pins the `/` after `.org` in SCHEMELESS_FS_URL_RE — the guard that keeps every
+    // scheme-less link on familysearch.org. Remove that `/` and this becomes a live
+    // link to https://familysearch.org.evil.com/login.
+    expect(find('see familysearch.org.evil.com/login there')).toEqual([])
+  })
+
   it('links a scheme-less familysearch.org address', () => {
     const [hit] = find('open familysearch.org/search/film/004567123?i=57 to see it')
     expect(hit.href).toBe(`${FS.replace('www.', '')}search/film/004567123?i=57`)

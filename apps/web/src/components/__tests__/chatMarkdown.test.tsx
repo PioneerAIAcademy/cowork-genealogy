@@ -4,7 +4,7 @@ import { render, within } from '@testing-library/react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { joinTextBlocks } from '../chatEvents'
-import { SchemaIdText } from '../SchemaIdText'
+import { chatMarkdownComponents } from '../chatMarkdownComponents'
 
 // Renders through the same <Markdown remarkPlugins={[remarkGfm]}> as the chat
 // bubble (ChatPane.tsx). Guards issue #1458: the global reset zeroes every
@@ -65,34 +65,9 @@ describe('chat markdown rendering (#1458 / #1524)', () => {
 
 const FS = 'https://www.familysearch.org/'
 
-// Mirrors ChatPane's markdown override: string children go through SchemaIdText, parsed
-// nodes (links) pass through untouched. With no project, no `onOpen` is supplied.
-const noProjectComponents = {
-  p: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-    <p>
-      {React.Children.map(children, (child) =>
-        typeof child === 'string' ? <SchemaIdText text={child} onOpen={undefined} /> : child
-      )}
-    </p>
-  ),
-  li: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-    <li>
-      {React.Children.map(children, (child) =>
-        typeof child === 'string' ? <SchemaIdText text={child} onOpen={undefined} /> : child
-      )}
-    </li>
-  ),
-  code: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-    <code>{typeof children === 'string' ? <SchemaIdText text={children} /> : children}</code>
-  ),
-  strong: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-    <strong>
-      {React.Children.map(children, (child) =>
-        typeof child === 'string' ? <SchemaIdText text={child} onOpen={undefined} /> : child
-      )}
-    </strong>
-  )
-}
+// ChatPane's own overrides, with no project: no `onOpen` is supplied. Using the shared
+// factory (not a copy) is what makes these tests fail when ChatPane drops an override.
+const noProjectComponents = chatMarkdownComponents()
 
 function renderReply(md: string): HTMLElement {
   return render(

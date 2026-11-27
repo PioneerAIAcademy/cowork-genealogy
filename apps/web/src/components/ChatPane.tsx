@@ -3,7 +3,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import React from 'react'
 import { useResearchDataOptional } from '@genealogy/viewer-ui'
-import { SchemaIdText } from './SchemaIdText'
+import { chatMarkdownComponents } from './chatMarkdownComponents'
 import { DecisionCard } from './DecisionCard'
 import { toolLabel, humanizeToolNames } from './toolLabel'
 import { chipTarget } from './chipTarget'
@@ -286,59 +286,10 @@ export default function ChatPane({
     [research]
   )
   const hasSchemaId = research?.hasId
-  // react-markdown hands a paragraph's children through; only the STRING children are
-  // prose. Non-string children are already-parsed nodes (emphasis, code, links) and
-  // are passed through untouched, so markdown keeps working exactly as before.
+  // The chat bubble's react-markdown overrides live in one shared factory so the test
+  // exercises ChatPane's own overrides, not a copy that can drift from it (#4582).
   const mdComponents = useMemo(
-    () => ({
-      p: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-        <p>
-          {React.Children.map(children, (child) =>
-            typeof child === 'string' ? (
-              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
-            ) : (
-              child
-            )
-          )}
-        </p>
-      ),
-      li: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-        <li>
-          {React.Children.map(children, (child) =>
-            typeof child === 'string' ? (
-              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
-            ) : (
-              child
-            )
-          )}
-        </li>
-      ),
-      // The model writes ARKs in backticks about as often as bare, so an id in code or
-      // bold must linkify too (#4582). Code gets no `onOpen`: a schema id in a code span
-      // is literal, so only FamilySearch references (which need no project) link there.
-      code: ({
-        children,
-        className
-      }: {
-        children?: React.ReactNode
-        className?: string
-      }): React.JSX.Element => (
-        <code className={className}>
-          {typeof children === 'string' ? <SchemaIdText text={children} /> : children}
-        </code>
-      ),
-      strong: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-        <strong>
-          {React.Children.map(children, (child) =>
-            typeof child === 'string' ? (
-              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
-            ) : (
-              child
-            )
-          )}
-        </strong>
-      )
-    }),
+    () => chatMarkdownComponents(openSchemaId, hasSchemaId),
     [openSchemaId, hasSchemaId]
   )
   // Reasoning blocks are hidden by default: the lay user never asked for the
