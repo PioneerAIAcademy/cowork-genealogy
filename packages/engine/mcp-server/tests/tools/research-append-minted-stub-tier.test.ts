@@ -161,6 +161,14 @@ describe("research_append — a stub's own record links it at probable (#4749)",
     expect(errs(await call(link("a_005", "I4", "speculative")))).toMatch(RULE);
   });
 
+  // ut_person_evidence_c4q's shape: with no baseline, a pre-existing person whose
+  // other refs no research source cites reads as minted from the record.
+  it("is silent when the project has no starting-tree baseline", async () => {
+    await setup();
+    await rm(join(dir, "starting-tree.gedcomx.json"));
+    expect(errs(await call(link("a_005", "I4", "speculative")))).not.toMatch(RULE);
+  });
+
   it("is silent on a two-party assertion of the same persona", async () => {
     await setup();
     expect(errs(await call(link("a_009", "I4", "speculative")))).not.toMatch(RULE);

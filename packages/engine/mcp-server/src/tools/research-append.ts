@@ -2883,7 +2883,9 @@ function nameAssertionNamesPerson(assertion: any, person: any): boolean {
  *  person it is no longer minted from this one alone). `mode` "assert" judges an
  *  append, a re-point or a revival; "raise" judges an update that raises the tier,
  *  which can only over-reach to `confident`. An update that lowers a tier is never
- *  judged. Silent for a person with a namesake (the namesake cap lowers links on
+ *  judged. Silent with no starting-tree baseline, which cannot tell a pre-existing
+ *  person whose other refs no research source cites from one minted here (as
+ *  `blankAddedPerson`). Silent for a person with a namesake (the namesake cap lowers links on
  *  purpose), a link declaring `core_identifier_conflict` (accepted only at
  *  `speculative`), an attachment link, negative evidence, a two-party assertion,
  *  and a person no live name assertion of that persona names. */
@@ -2897,6 +2899,7 @@ export function mintedStubTierInvariants(
 ): string[] {
   const personId = entry?.person_id;
   if (typeof personId !== "string" || entry.superseded_by || isAttachmentLink(entry)) return [];
+  if (!startingPersonIds || startingPersonIds.size === 0) return [];
   if (typeof entry.core_identifier_conflict === "string" && entry.core_identifier_conflict.trim() !== "") return [];
   const tier = entry.confidence;
   if (tier === "probable" || (mode === "raise" && tier !== "confident")) return [];
