@@ -282,6 +282,43 @@ active, as in `question-state.ts`. Every other field of an item is as stored,
 `staged_ref`. Both are left out of the answer only, never out of
 `research.json`.
 
+**One field is added: a `log` entry's `assertion_count`.** It is
+the number of live assertions (no `superseded_by`) that came from the entry:
+those whose `log_entry_id` is its id, or whose `record_id` is a record the entry
+named, compared as bare ARK ids. An entry names the records its `query` read in
+`recordId` or `recordIds`, and a `record_search` or `fulltext_search` entry also
+names its hits: each row's `recordId` (`record_search`) or `id`
+(`fulltext_search`) in the sidecar its `results_ref` points at, read when the
+answer is built, widened to every persona of the hit's record that a
+`record_read` sidecar lists (`personaGroups`, the grouping `extraction_append`
+completes plan items with). Extraction logs its own `record_read` and cites
+that entry, never the search that found the record, and extracts under the
+persona the agent asked for, so without the hits a search whose find was
+extracted would come out at 0. A missing or unreadable sidecar gives no hits,
+and the entry counts by the other two clauses. An assertion that matches more
+than one way counts once. Only an entry whose tool can return a record carries
+the field (`record_search`, `record_read`, `fulltext_search`, `image_transcribe`,
+`image_read`, `external_site`, `person_record_matches`, `user_provided`). It is
+absent, not 0, on every other tool's entry, a wiki or Wikipedia lookup, a
+listing or a check, and on a page `image_transcribe` logged itself, which records
+a read rather than a find (`isToolLoggedRead`, as `owedFindings` treats it).
+Computed in `utils/log-assertion-count.ts`, in the answer only. A `positive`
+entry at 0 found something no assertion was extracted from. Before this,
+nothing joined a log entry to its assertions: `research_query`'s `assertions`
+section has no `logEntryId` filter, and `owedFindings`' `extract` item works at
+question grain, so it goes silent once a question has any assertion.
+`make replay-collapse`'s oracle leaves the field out of its comparison
+(`DERIVED_LOG_FIELDS`), since `research.json` does not hold it.
+
+Measured 2026-11-27 over the 174 completed e2e runs' `.final-research.json`,
+with each search's hits taken from its tool call in the run log, since the
+corpus keeps no sidecars: 230 `positive` entries come out at 0, in 76 runs, and
+53 of 164 questions whose stop is a stop-gate value (32%) cite at least one of
+them in `log_entry_ids`, 126 citations in all. Those are upper bounds: the run
+log keeps only a search's first hits, and 182 of the 510 positive searches
+matched no tool call. Without the hits the same runs give 310 entries and 58
+questions.
+
 **A list call also returns `countById`:** for every requested id, zeros
 included, the number of matching items, counted over the whole match set — not
 the page — so it is identical on every page. `countById[id]` equals the `count`
