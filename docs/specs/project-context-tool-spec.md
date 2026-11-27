@@ -380,8 +380,8 @@ weighed them (an analysed identity conflict naming either record through any
 assertion of the same record party, or an analysed
 fact conflict naming both), `nextStep` is `conflict-resolution — identity: <p>'s
 attached births <a> ('<place>') and <b> ('<place>') cannot both be theirs; <action>,
-blocking <q>`, whether or not the question is resolved. `<p>` is the person's
-preferred name, never their id; the spawn carries the ids on a `personIds:` line
+blocking <q>`, whether or not the question is resolved. `<p>` is the name the
+person's `persons` row gives, never their id; the spawn carries the ids on a `personIds:` line
 (§2.2.2). `<action>` names the
 conflict already registered for a pair (an identity conflict naming either record,
 or a fact conflict naming both, not yet analysed) as `weigh <c> (registered, not yet
@@ -487,7 +487,7 @@ link (`countsForLinkedRung`) and some without, no such link names a
 `subject_person_ids` entry, and at least one subject is a tree person, its
 `nextStep` reads `person-evidence — N of this question's M assertions are unlinked
 and none of its links reaches the project subject (<names>)`, each subject by
-preferred name, as the unlinked-kin step names its people. This is the household
+the name its `persons` row gives, as the unlinked-kin step names its people. This is the household
 record linked around the subject: in `flynn-household-skeleton` the 1850 census
 head is linked and the six children are not, and Patrick is not in that household.
 "Any unlinked assertion" would send the 53 partly-linked concluded households to
@@ -592,7 +592,9 @@ different mothers; two same-named mothers).
 
 **Unlinked kin** also needs the tree, and adds no field: only
 `nextStep` carries it, as `hypothesis-tracking — unlinked kin: <person names>`,
-each person's preferred name or "an unnamed person". No person-naming step names
+each person's `persons` row name or "an unnamed person". A person-naming step
+names each person as their `persons` row does, so a doubted given name gives the
+surname alone (`unsupportedGivenName`). No person-naming step names
 a tree id, because the main thread repeats `nextStep` to the researcher: the
 identity, unregistered-disagreement (`<name>'s <fact> (<assertion ids>)`),
 competing-parent-sets (`<name> (<parent names>)`), unlinked-kin and
@@ -754,8 +756,9 @@ carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
 `projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
 and the `nextStep` text:
 
-- person-evidence: `assertionIds:` every live assertion of the question (the
-  rung fires only when none is linked) and `userPresent: yes`, which the router
+- person-evidence: `assertionIds:` every live assertion of the question; for the
+  unreached-subject step, a `personIds:` line with the subjects' tree ids; and
+  `userPresent: yes`, which the router
   turns to `no` on a wrap-up turn and in an autonomous run;
 - conflict-resolution: one `competingAssertionIds:` line per unregistered
   disagreement, or `conflictIds:` for an open conflict; for the identity step, a

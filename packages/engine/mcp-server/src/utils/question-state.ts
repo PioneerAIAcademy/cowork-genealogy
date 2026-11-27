@@ -363,10 +363,7 @@ export function subjectUnreached(
   linkedAssertionIds: ReadonlySet<unknown>,
 ): { unlinked: number; subjects: string[] } | null {
   if (!tree) return null;
-  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
-  const subjects = arr(research?.project?.subject_person_ids).filter(
-    (id): id is string => typeof id === "string" && persons.has(id),
-  );
+  const subjects = subjectTreeIds(research, tree);
   if (subjects.length === 0) return null;
   const rejected = new Set(
     arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
@@ -380,10 +377,20 @@ export function subjectUnreached(
   return reaches ? null : { unlinked, subjects };
 }
 
-/** Tree persons by preferred name, for a step the researcher is shown. */
-function personNames(tree: any, ids: readonly string[]): string {
+/** The project's subjects that are tree persons. */
+export function subjectTreeIds(research: any, tree: any): string[] {
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  return arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+}
+
+/** Tree persons by name, for a step the researcher is shown: the name
+ *  `project_context`'s persons row gives when `names` is passed (the surname
+ *  alone for a doubted given name), else the preferred name. */
+function personNames(tree: any, ids: readonly string[], names?: ReadonlyMap<string, string | null>): string {
   const byId = new Map(arr(tree?.persons).map((p) => [p?.id, p]));
-  return ids.map((id) => preferredDisplayName(byId.get(id)) ?? "an unnamed person").join(", ");
+  return ids.map((id) => (names ? names.get(id) : preferredDisplayName(byId.get(id))) ?? "an unnamed person").join(", ");
 }
 
 /** Tree persons linked to this question's assertions whom nothing ties to a
@@ -911,6 +918,7 @@ export function questionStatus(
   tree: any = null,
   attachedBirthPairs: readonly AttachedBirthPair[] = [],
   owed?: readonly OwedFinding[],
+  names?: ReadonlyMap<string, string | null>,
 ): QuestionStatus {
   const qid = question?.id;
   // Computed only when an owed-finding arm is reached; questionStates passes it.
@@ -976,7 +984,7 @@ export function questionStatus(
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
     // weighed each pair: a rung below one that names proof-conclusion would loop.
-    const name = (id: string): string => personNames(tree, [id]);
+    const name = (id: string): string => personNames(tree, [id], names);
     nextStep =
       `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs, name)} cannot both ` +
       `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research, name)}, blocking ${qid}`;
@@ -1026,19 +1034,19 @@ export function questionStatus(
     // `conflicts[]` cannot be what routes there — the evidence has to.
     nextStep =
       "conflict-resolution — unregistered disagreement: " +
-      disagreements.map((d) => `${personNames(tree, [d.personId])}'s ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
+      disagreements.map((d) => `${personNames(tree, [d.personId], names)}'s ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
   } else if (parentSets.length > 0) {
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
-      parentSets.map((p) => `${personNames(tree, [p.personId])} (${personNames(tree, p.parentIds)})`).join("; ");
+      parentSets.map((p) => `${personNames(tree, [p.personId], names)} (${personNames(tree, p.parentIds, names)})`).join("; ");
   } else if (kin.length > 0) {
-    nextStep = `hypothesis-tracking — unlinked kin: ${personNames(tree, kin)}`;
+    nextStep = `hypothesis-tracking — unlinked kin: ${personNames(tree, kin, names)}`;
   } else if (unreached) {
     // Below the kin rung, so it changes no step that rung sets. Some links but
     // none reaching the subject: the record was linked around them, not to them.
     nextStep =
       `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
-      `are unlinked and none of its links reaches the project subject (${personNames(tree, unreached.subjects)})`;
+      `are unlinked and none of its links reaches the project subject (${personNames(tree, unreached.subjects, names)})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
@@ -1129,15 +1137,17 @@ export function questionStatus(
 
 /** Every question's state, in document order. `tree` is optional: without it
  *  `competingParentSets` is always empty. `attachedBirthPairs` (by question id)
- *  is optional: without it the identity rung never fires. */
+ *  is optional: without it the identity rung never fires. `names` (by person id)
+ *  is the name each step gives a person; without it, the preferred name. */
 export function questionStates(
   research: any,
   tree: any = null,
   attachedBirthPairs?: ReadonlyMap<string, readonly AttachedBirthPair[]>,
+  names?: ReadonlyMap<string, string | null>,
 ): QuestionStatus[] {
   // The owed list is project-wide: compute it once, not once per question.
   const owed = owedFindings(research, tree);
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed));
+    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed, names));
 }

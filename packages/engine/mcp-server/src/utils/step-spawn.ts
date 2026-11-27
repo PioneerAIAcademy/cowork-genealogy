@@ -8,7 +8,7 @@
 // jurisdiction has had its locality survey, which comes first.
 
 import { questionAssertions } from "./assertion-liveness.js";
-import { unlinkedKin, type AttachedBirthPair, type QuestionStatus } from "./question-state.js";
+import { subjectTreeIds, unlinkedKin, type AttachedBirthPair, type QuestionStatus } from "./question-state.js";
 
 export interface StepSpawn {
   agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking" | "research-exhaustiveness" | "proof-conclusion";
@@ -40,7 +40,9 @@ export function stepSpawn(
     const ids = questionAssertions(research, status.id)
       .map((a: any) => a?.id)
       .filter((id: unknown): id is string => typeof id === "string");
-    lines.push(`assertionIds: ${ids.join(", ")}`, "userPresent: yes");
+    lines.push(`assertionIds: ${ids.join(", ")}`);
+    if (next.includes("reaches the project subject")) lines.push(`personIds: ${subjectTreeIds(research, tree).join(", ")}`);
+    lines.push("userPresent: yes");
   } else if (agent === "conflict-resolution") {
     if (next.startsWith("conflict-resolution — identity")) {
       lines.push(`personIds: ${[...new Set(attachedBirthPairs.map((p) => p.personId))].join(", ")}`);

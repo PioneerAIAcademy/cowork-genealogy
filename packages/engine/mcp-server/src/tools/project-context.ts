@@ -678,7 +678,8 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       .filter((q: any) => q && typeof q === "object" && typeof q.id === "string")
       .map((q: any) => [q.id, q]),
   );
-  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map((status) => {
+  const shownNames = new Map(persons.map((p) => [p.id, p.name ?? null]));
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs, shownNames).map((status) => {
     const { id, ...rest } = status;
     const searches =
       typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
