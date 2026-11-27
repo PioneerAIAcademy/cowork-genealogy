@@ -4028,7 +4028,7 @@ document: {
   persons: [{                          // IN SOURCE ORDER — array order is enumeration order
     id: string,                        // local only; relationships refer to it
     principal?: true,
-    household?: string,                // only when one text covers several households
+    household?: string,                // census of 2+ persons: on every person, the family number the page gives, else its dwelling number, else "1", "2", … by household in page order
     names:  [{ given?: string, surname?: string,  // EVERY name the text gives, the one it shows first first;
                type?: "birth" | "married" | "nickname" | "also_known_as",  // only where the text says which
                uncertain?: true, note?: string }],  // each name is its own `name` assertion, its type in structured_value
@@ -4078,10 +4078,17 @@ tries to classify is refused by the schema. It is not left to a prompt.
 - any unknown key, at any depth — the classification fields above included;
 - `recordType` or `documentForm` outside its enum;
 - `recordType: "census"` without `census`, or `census` on anything else;
+- a census of two or more persons on which any person lacks a non-empty string `household`, naming those persons;
 - a person with no `names[0]`, or a name with neither `given` nor `surname`;
 - a relationship naming an `id` not in `persons`, or naming one person twice;
 - a `computed` entry naming an attribute the fact does not carry;
 - an empty `persons`.
+
+**`household` on a census (2026-11-26).** Roles are assigned per household, and the record-structurer run
+`v6_2026-11-25_15-46-42` (run 0) sent a two-dwelling 1860 page with no `household` on any of its eight
+persons, so the second dwelling's head was written as `household_member_4` of the first; every person of a
+census of two or more therefore needs it, not only where some carry it, while a one-person census is exempt.
+The rule checks only that each value is there: a page of two families sent under one number is not refused.
 
 #### What code decides from the document
 
