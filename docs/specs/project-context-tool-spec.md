@@ -747,27 +747,26 @@ children or siblings or whether they are complete, a transcription, a letter, a
 review of attached sources. Its owning agent runs in the
 same turn, after init-project in a folder with no project, and that turn never runs
 question-selection. A bounded request that asks for more than one thing runs only the
-first one's agent and names the rest, as `research/SKILL.md` says; once the
-closing-offer clause below named only search-records' asks, a source review asked for
-with a plan went on to the plan and question-selection in one of three runs
-(`evaluate-sources-moses-watrous`, 2026-11-27). For a record, or for a person's children or siblings, the agent is
-search-records, and the turn ends on its "Continue with …?" offer; the closing-offer
-clause names only search-records' asks, since a general one made the router add text
-after a final conclusion it must relay bare (`ut_research_rp1`). Without the children
+first one's agent and names the rest, as `research/SKILL.md` says. For a record, or
+for a person's children or siblings, the agent is search-records, and the turn ends on
+its "Continue with …?" offer. For a review of attached sources it is
+source-evaluation, which reads them, and the router reads none of them itself; that
+turn ends on the review and an offer of the next step. The ending clauses name only
+these two agents, since a general one made the router add text after a final
+conclusion it must relay bare (`ut_research_rp1`). Without the source-evaluation
+clause, the router took the children clause's reads as the way to review sources,
+reading a project's attached records itself, some more than once, and a source review
+asked for with a plan went on to the plan and question-selection
+(`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). Without the children
 example the router took "Find all the children of LTQD-HM6" in a new folder for a job
 and stopped after init-project (`children-attached-households-benjamin-phipps`,
-2026-11-26). A children or siblings ask starts from what is attached:
-before any search the router reads the person with `person_read`, reads each census
-among its sources with `record_read`, passing that source's `url` (a 1:1 persona ARK
+2026-11-26). A children or siblings ask starts from what is attached: before any
+search the router reads the person with `person_read`, reads each census among its
+sources with `record_read`, passing that source's `url` (a 1:1 persona ARK
 `record_read` takes as `recordId`), names the household, and hands search-records the
-rest. A review of attached sources goes to source-evaluation, which reads them, and
-the router reads none of them itself: without that sentence the router took the
-children clause's reads as the way to review sources, reading a project's attached
-records itself, some more than once, instead of handing the review to
-source-evaluation (`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). The
-record links are not in `attachedSources`: with a `recordId` on every entry the
-router also read an attached death index with `record_read` and never `person_read`
-(`death-attached-susan-cornwell`, 2026-11-26). A requested record that
+rest. The record links are not in `attachedSources`: with a `recordId` on every entry
+the router also read an attached death index with `record_read` and never
+`person_read` (`death-attached-susan-cornwell`, 2026-11-26). A requested record that
 `attachedSources` already lists is read with `person_read` and named, not searched
 for. A research plan is left out: one asked for in a folder with no project ends
 after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says

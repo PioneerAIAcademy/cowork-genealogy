@@ -1178,7 +1178,8 @@ describe("project_context", () => {
         "A bounded request that asks for more than one thing runs only the first one's agent this turn and names the rest.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
-        "For a review of attached sources that agent is source-evaluation, which reads them: the router reads none of them itself.",
+        "For a review of attached sources that agent is source-evaluation, which reads them: the router reads none of " +
+          "them itself, and its turn ends on that review and an offer of the next step.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
         "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
