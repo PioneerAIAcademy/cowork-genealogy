@@ -26,7 +26,10 @@ Not graded: whether the 1885 Павел (a different family, per the tester) is 
 
 ## Expected result today
 
-PASS. Measured 2026-11-16 in the eight-fixture panel run:
+PASS in all three whole-panel runs on 2026-11-27 (063dbcbc0 to 24f41ec71, Haiku 5.5 low main thread), with the
+children clause in `boundedRequest`: `units: research > init-project > search-records`.
+
+Measured 2026-11-16 in the eight-fixture panel run:
 
 ```
 PASS children-skip-router-aleksiy-ivanov  expected=search-records  first=search-records  save=ok  stop=clean

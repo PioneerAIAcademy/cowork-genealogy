@@ -35,10 +35,18 @@ only when the fixture asks for it:
 - ``stop`` — the turn ended on its own. A turn a cap or watchdog cut off fails
   here: what it saved before the cut is not an answer the patron got. The cost
   cap is not a cut-off (it only labels a finished run), so it does not fail this.
+- ``read_before_search`` — graded only when the fixture sets it: each named tool
+  was called without error before the turn's first search (``SEARCH_TOOLS``), on
+  any thread, or anywhere in a turn that searched nothing. ``required_tools`` asks
+  only whether a call happened; this asks whether it came before the search.
 - ``ends_on_offer`` — graded only when the fixture sets it: the turn's last
   main-thread assistant text ends on a "Continue with …?" line naming a step,
   read with the step boundary's own ``offered_step``. An invented label is no
   offer. The caller extracts the text (``last_main_text``).
+- ``names_unsaved`` — graded only when the fixture sets it: a turn that adds no
+  ``sources`` row says so in that same last main-thread text, by naming what it
+  did not save or that it saved nothing (``UNSAVED_STATEMENT``). A turn that saved
+  a source passes: saving the find is the other half of the rule.
 """
 
 from __future__ import annotations
@@ -86,9 +94,30 @@ def missing_guide_headings(guide: Any) -> list[str]:
             missing.append(heading)
     return missing
 CHECKS = (
-    "owner", "no_research_job", "save", "forbidden_tools", "required_tools", "stop",
-    "ends_on_offer",
+    "owner", "no_research_job", "save", "forbidden_tools", "required_tools",
+    "read_before_search", "stop", "ends_on_offer", "names_unsaved",
 )
+# A reply's statement that something the turn found was not saved, or that it saved
+# nothing: a negated save verb ("did not save", "is not yet saved", "have not written
+# any sources"), a nothing-or-none subject ("Nothing was extracted or attached"), a
+# save verb with a "no" object ("saved no records"), or "unsaved". "Attached" and
+# "recorded" count only after a nothing-or-none subject: negated, they describe the
+# records ("not attached to his profile", "was not recorded in 1850"), not this turn.
+_SAVE_VERB = r"(?:sav(?:e|ed)|extract(?:ed)?|add(?:ed)?|writ(?:e|ten)|stor(?:e|ed)|kept|keep)"
+_NONE_VERB = r"(?:sav(?:e|ed)|extract(?:ed)?|attach(?:ed)?|add(?:ed)?|writ(?:e|ten)|record(?:ed)?|stor(?:e|ed)|kept)"
+_SAVE_NOUN = r"(?:records?|sources?|persons?|people|child(?:ren)?|assertions?|candidates?|finds?|matches?)"
+UNSAVED_STATEMENT = re.compile(
+    r"\b(?:(?:did|do|does|have|has|had|was|were|is|are)\s*(?:not|n't)|not\s+yet|never)\s+(?:yet\s+)?(?:been\s+)?"
+    + _SAVE_VERB + r"\b"
+    + r"|\b(?:nothing|none(?:\s+of\s+(?:them|these|those|it))?|no\s+" + _SAVE_NOUN + r")\s+"
+    + r"(?:was|were|is|are|has\s+been|have\s+been)\s+(?:yet\s+)?" + _NONE_VERB + r"\b"
+    + r"|\b(?:saved|extracted|attached|added|wrote|stored)\s+(?:nothing|no\s+" + _SAVE_NOUN + r")\b"
+    + r"|\bunsaved\b",
+    re.IGNORECASE,
+)
+# The tools that look for a record or a person; `read_before_search` is graded against
+# the first of these. A catalog, collection or volume lookup finds no record.
+SEARCH_TOOLS = frozenset({"record_search", "fulltext_search", "image_search", "person_search"})
 # Set after the fact from the final ResultMessage; the turn was not cut off.
 LABEL_ONLY_STOPS = ("cost_cap",)
 ASYNC_LAUNCH = "Async agent launched"
@@ -105,7 +134,9 @@ class SingleAskSpec:
     must_not: str = ""
     forbidden_tools: tuple[str, ...] = ()
     required_tools: tuple[str, ...] = ()
+    read_before_search: tuple[str, ...] = ()
     ends_on_offer: bool = False
+    names_unsaved: bool = False
     # An open issue that owns this fixture's FAIL ("#2813"): printed KNOWN-FAIL and
     # left out of the panel's exit code, so a new FAIL stands out.
     known_issue: str = ""
@@ -315,6 +346,22 @@ def grade(
         else "none declared",
     )
 
+    if spec.read_before_search:
+        cut = next(
+            (i for i, e in enumerate(tool_calls) if _bare(str(e.get("tool") or "")) in SEARCH_TOOLS),
+            len(tool_calls),
+        )
+        before = {
+            _bare(str(e.get("tool") or "")) for e in tool_calls[:cut] if e.get("is_error") is not True
+        }
+        late = [t for t in spec.read_before_search if t not in before]
+        where = "the first search" if cut < len(tool_calls) else "the end of a turn that searched nothing"
+        checks["read_before_search"] = (
+            not late,
+            f"not called without error before {where}: {', '.join(late)}" if late
+            else f"[{', '.join(spec.read_before_search)}] called before {where}",
+        )
+
     extraction_appends = sum(
         1 for e in tool_calls if _bare(str(e.get("tool") or "")) == "extraction_append"
     )
@@ -341,6 +388,16 @@ def grade(
             offered is not None,
             f"offers {offered}" if offered
             else f"no offer at the end: {str(last_text).strip()[-120:]!r}" if last_text
+            else "no main-thread text",
+        )
+    if spec.names_unsaved:
+        added = _new_rows(starting_research, final_research, "sources")
+        said = UNSAVED_STATEMENT.search(str(last_text or ""))
+        checks["names_unsaved"] = (
+            bool(added) or said is not None,
+            f"saved {len(added)} source(s)" if added
+            else f"says what it did not save: {said.group(0)!r}" if said
+            else "saved no source and the reply does not say so" if last_text
             else "no main-thread text",
         )
     failed = [name for name in CHECKS if name in checks and not checks[name][0]]
@@ -381,7 +438,7 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
         )
     if not g.checks["no_research_job"][0]:
         line += f"\n    research job: {g.checks['no_research_job'][1]}"
-    for name in ("forbidden_tools", "required_tools", "ends_on_offer"):
+    for name in ("forbidden_tools", "required_tools", "read_before_search", "ends_on_offer", "names_unsaved"):
         if name in g.checks and not g.checks[name][0]:
             line += f"\n    {name}: {g.checks[name][1]}"
     if spec.known_issue and g.passed:

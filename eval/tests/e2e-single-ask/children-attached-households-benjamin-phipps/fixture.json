@@ -1,0 +1,29 @@
+{
+  "id": "children-attached-households-benjamin-phipps",
+  "message": "Find all the children of LTQD-HM6, whether recorded in Family Tree or not.",
+  "expected_owner": "search-records",
+  "expected_save": [
+    {
+      "section": "log",
+      "tool": "record_search"
+    }
+  ],
+  "setup_units": [
+    "init-project"
+  ],
+  "read_before_search": [
+    "record_read"
+  ],
+  "ends_on_offer": true,
+  "names_unsaved": true,
+  "must_not": "No report that an attached census household could not be found (the 1860 household is attached, indexed as Benj Phillips)",
+  "caps": {
+    "wall_clock_seconds": 1800,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 80,
+    "max_turns": 80,
+    "max_cost_usd": 4.0
+  },
+  "is_plan_ask": false
+}
