@@ -6,6 +6,10 @@ search-hints reviews the FamilySearch hints on one tree person. A hint is a **pe
 
 Harness note: the fixtures are static. `record_read` returns a fixed persona per hint ark, and `image_transcribe` returns the death certificate's image only for its `imageArk`. Whether `status: ["pending"]` was sent, whether the image was read, whether a hint the project already linked reads `already linked by <pe_ id>`, and the shape of the log entries are checked deterministically (`eval/harness/validators/test_search_hints.py`); do not re-grade those mechanics here.
 
+### Tool Arguments: `minConfidence: 4` on the hints listing is required
+
+The agent's instructions list the hints with `person_record_matches({ id, status: ["pending"], minConfidence: 4 })`: only a pending match at confidence 4 or 5 is a hint. On that `person_record_matches` call, `minConfidence: 4` is a required argument, not a noisy extra one, although no fixture's `expected_args` lists it (a fixture matches on a subset of the arguments). Passing it is no deduction of any size: when it is the only difference from `expected_args`, Tool Arguments is 3, not 2. A `person_record_matches` call that omits it, or sends a value other than 4, has a meaningful argument mismatch and scores Tool Arguments no higher than 2. A `research_log_append` entry whose `tool` field reads `person_record_matches` is a log write, not the listing: it carries no `minConfidence` and owes none.
+
 ## Hint scope
 
 Did the agent review the hints — the pending matches — and only those?
