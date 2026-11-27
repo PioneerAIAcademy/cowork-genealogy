@@ -1857,7 +1857,7 @@ _LIKELIHOOD = re.compile(
 )
 # "a possible relative" is allowed only beside a statement that no record links them.
 _POSSIBLE = re.compile(
-    r"\b(?:possibl[ey]|perhaps|(?:may|might|could) be(?=\s+(?:a|an|the|his|her|their|related|\w+'s)\b|\s*$))\b",
+    r"\b(?:possibl[ey]|perhaps|candidates?|(?:may|might|could) be(?=\s+(?:a|an|the|his|her|their|related|\w+'s)\b|\s*$))\b",
     re.IGNORECASE,
 )
 # A kinship word inside its own clause is a question, not a claim, after one of these.
@@ -1869,7 +1869,8 @@ _KINSHIP_QUESTION = re.compile(
 )
 # A "possible relative" sentence that marks the link as unproven another way.
 _UNPROVEN = re.compile(
-    r"\b(?:lead|anchor|worth\s+(?:checking|pursuing|testing)|unconfirmed|to\s+be\s+(?:tested|confirmed))\b",
+    r"\b(?:lead|anchor|worth\s+(?:checking|pursuing|testing)|unconfirmed|to\s+be\s+(?:tested|confirmed)|"
+    r"only\s+by\s+(?:the\s+)?(?:shared\s+)?(?:surname|name|place))\b",
     re.IGNORECASE,
 )
 _LEAD_WINDOW = 70
@@ -1880,7 +1881,7 @@ _LIST_ONLY = re.compile(
 )
 # ... and is denied after one of these, unless a hedge follows the denial in the clause.
 _KINSHIP_DENIED = re.compile(
-    r"\b(?:no records?|no link|nothing\b[^.;,]{0,40}?\b(?:shows?|shown|links?|connects?|ties?|proves?|proven)|"
+    r"\b(?:no records?|no link|(?:nothing|neither)\b[^.;,]{0,40}?\b(?:shows?|shown|links?|connects?|ties?|proves?|proven)|"
     r"(?:not|never) (?:been )?(?:shown|established|proven|known)|(?:not|never)\b[^.;,]{0,20}?\bprove[ns]?|"
     r"(?:does|did)\s+not\s+(?:say|state|show|name)|"
     r"(?:cannot|can['’]t)\s+(?:confirm|show|prove|establish)|unproven|unknown|unlikely|no evidence)\b",

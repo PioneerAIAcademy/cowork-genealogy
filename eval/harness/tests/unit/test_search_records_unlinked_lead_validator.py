@@ -50,6 +50,10 @@ OVERCLAIMS = [
     "Reuben was not taxed until 1780 and is Asa's older brother.",
     "Reuben does not appear after 1790 and is almost surely Asa's older brother.",
     "Reuben is a possible relative of Asa; he was not taxed until 1780.",
+    "Reuben Whitcomb is the main candidate for Asa's brother.",
+    "Reuben is the best candidate for Asa's kin, and the census is silent on it.",
+    "Neither record was read, but Reuben is probably Asa's brother.",
+    "Reuben is Asa's father, shown only by surname and place.",
 ]
 
 # Correct sentences from the agent's own replies on 2026-11-24 that an earlier version
@@ -67,6 +71,9 @@ REAL_REPLIES_ALLOWED = [
     "Reuben is worth checking as a possible relative, but that needs an anchor such as a shared child or a later record, which the next step would look for.",
     "Anchor that would settle it: a record that names Asa Whitcomb with this Reuben, or a Westmoreland record tying this Reuben to Asa's family.",
     "Reuben is a possible kin lead only.",
+    "Next steps: the unlinked lead Reuben Whitcomb (Westmoreland, 1790) is the main candidate for Asa's kin, but nothing yet connects them.",
+    "Neither record shows that Reuben is related to the Asa who died in 1784.",
+    "- Reuben Whitcomb is a candidate for Asa's father only by surname and place.",
 ]
 
 # The pronoun shape: the lead is named in one sentence and the claim is made in the next.
