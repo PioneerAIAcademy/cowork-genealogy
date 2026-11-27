@@ -116,7 +116,8 @@ for a final conclusion, and for a step that found nothing further to do.
 sources still unsearched, or the record that could settle a conflict. The
 label alone does not tell the researcher what they are agreeing to.
 
-**The researcher's replies.** "Continue." runs the offered step; "Keep going."
+**The researcher's replies.** "Continue." runs the offered step once the
+unregistered-inferred-relationships check in §"What to do" is clean; "Keep going."
 reads as "Continue.". "Wrap it up." runs §"Wrap it up". "Search more" is only
 meaningful at the choice in §"When a search stops short"; anywhere else, say
 in one line that there is nothing to search more of yet and re-offer.
@@ -359,8 +360,9 @@ message.
    **Exhaustiveness/proof-conclusion contract** below.
 
    **Unregistered inferred relationships — check before anything else.**
-   Before consulting the routing table or acting on `project_context.nextStep`,
-   scan every log entry's `notes` field for a note that states or implies a
+   Before consulting the routing table or acting on `project_context.nextStep`
+   or its `searches`, call `research_query({ projectPath, section: "log" })`
+   and scan every entry's `notes` field for a note that states or implies a
    kinship inferred from a shared surname, place, era or given name between
    people that no record in the project links, hedged or flat. If one
    exists and `hypotheses`
@@ -434,8 +436,9 @@ message.
     | All questions are `resolved` and `project.status` still `active` | **Settle the objective's coverage from `project_context` before any `tree_query`, even the Tree-encoding gate's. First check the objective, not the question list, and never the tree: a fact or relationship already in `tree.gedcomx.json` covers nothing unless a resolved question stands behind it.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and spawn `@plugin:question-selection` for it in this turn (with `userPresent: no` on an `--autonomous` run), and do not continue this row — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop — **unless the message carries a new question**, which goes to `@plugin:question-selection` (§"A different question, or a steer") |
 
-   **The search step** is the question's `searches` in `project_context`:
-   one spawn per entry, `@plugin:<agent>` with the entry's `prompt` copied
+   **The search step** runs only after the log check under "Unregistered
+   inferred relationships" is clean. It is the question's `searches` in
+   `project_context`: one spawn per entry, `@plugin:<agent>` with the entry's `prompt` copied
    whole as the delegation, all as parallel tool calls in one assistant
    message, each with `run_in_background: false`. Add nothing to a prompt
    except `userPresent` on a search-external-sites one (`no` on an
