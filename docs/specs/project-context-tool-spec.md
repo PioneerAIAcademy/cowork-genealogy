@@ -73,6 +73,7 @@ is a key this rule can drop:
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
+  boundedRequest: string,                // BOUNDED_REQUEST_RULE, the same sentence on every answer (below)
   subjectPersonIds?: string[],           // research.project.subject_person_ids
   familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
@@ -738,6 +739,55 @@ request and the turn that created the project are not that turn. Why a tool says
 it: on Haiku 5.5 low the router read "no questions" and went straight to
 question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
 
+`boundedRequest` (`BOUNDED_REQUEST_RULE`) is one fixed sentence on every project
+answer and on the `no_project` answer, addressed to the router as the `nextStep`
+above is. It says what a bounded request is by example: one record (a birth,
+marriage, death or census entry, or when or where one event happened), a person's
+children or siblings or whether they are complete, a transcription, a letter, a
+review of attached sources. A message that asks to research something else instead of
+the project's current question is not one: it is a different question, which
+`research/SKILL.md` handles under "A genuinely different question" (offer to wrap the
+current one up). Without that sentence the when-or-where example took "I want to find
+out where Patrick Flynn is buried instead", on a project with a question in progress,
+for a record ask and ran search-records (`ut_research_dq1`, 2026-11-27). Its owning agent runs in the
+same turn, after init-project in a folder with no project, and that turn never runs
+question-selection. A bounded request that asks for more than one thing runs only the
+first one's agent and names the rest, as `research/SKILL.md` says. For a record, or
+for a person's children or siblings, the agent is search-records, and the turn ends on
+its "Continue with …?" offer. For a review of attached sources it is
+source-evaluation, which reads them, and the router reads none of them itself; that
+turn ends on the review and an offer of the next step. The ending clauses name only
+these two agents, since a general one made the router add text after a final
+conclusion it must relay bare (`ut_research_rp1`). Without the source-evaluation
+clause, a source review asked for with a plan went on to the plan and
+question-selection (`evaluate-sources-moses-watrous`, 2026-11-27). Without the children
+example the router took "Find all the children of LTQD-HM6" in a new folder for a job
+and stopped after init-project (`children-attached-households-benjamin-phipps`,
+2026-11-26). A children or siblings ask starts from what is attached: the router's
+brief tells search-records to read each census attached to the person with
+`record_read` before any search, and to name the household each shows; search-records
+holds `tree_query`, which gives each source's `url`, a 1:1 persona ARK `record_read`
+takes as `recordId`. The router reads none of them itself: when the rule told the
+router to do these reads, it took them as the way to review sources too, reading a
+project's attached records itself, some more than once, instead of handing a review to
+source-evaluation (`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). The
+record links are not in `attachedSources`: with a `recordId` on every entry
+the router also read an attached death index with `record_read` and never
+`person_read` (`death-attached-susan-cornwell`, 2026-11-26). A requested record that
+`attachedSources` already lists is read with `person_read` and named, not searched
+for. A research plan is left out: one asked for in a folder with no project ends
+after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says
+it: on Haiku 5.5 low the router sent a record ask to question-selection, on a
+project with no question and after init-project in a new folder, searched for a
+death index the subject already had, and ran a research job after a source review
+it was asked for with a plan; the single-ask panel's `find-death-john-mcnerny`,
+`marriage-victoriana-vasquez`, `death-attached-susan-cornwell` and
+`evaluate-sources-moses-watrous` (2026-11-26). The no-project answer carries it
+because that is the only answer the router reads before init-project in a new
+folder. The same rule in the routing note on the researcher's message left two of
+those three record asks on their old route, one run each. Every caller sees the
+sentence; an agent ignores it as it ignores `nextStep`.
+
 ### 2.2.2 `spawn` — the next agent step, written out
 
 When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
@@ -1169,7 +1219,7 @@ untouched.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, boundedRequest, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
 | `include` is not an array, or names a value outside `"persons"`, `"sources"`, `"status"` and `"historicalContext"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |

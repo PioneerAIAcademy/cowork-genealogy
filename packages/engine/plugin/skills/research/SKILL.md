@@ -730,7 +730,7 @@ When the user asks to evaluate hits of a full-text search log entry ("hits 1,
 `evaluating the search hits` (all hits of the full-text log entry the previous
 turn made):
 
-1. `project_context({ projectPath })`.
+1. `project_context({ projectPath, include: ["persons"] })`.
 2. `sidecar_read({ projectPath, ref: "results/log_012.json#hits" })`. While
    `truncated` is true, call again with `offset: nextOffset`.
 3. Take the named `hitIndex` rows, or all of them, skipping `hasTranscript: false`.
