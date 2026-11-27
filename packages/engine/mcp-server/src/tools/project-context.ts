@@ -62,9 +62,9 @@ export const BOUNDED_REQUEST_RULE =
   "source-evaluation, which reads them: the router reads none of them itself, and its turn ends on that " +
   "review and an offer of the next step. A requested record that " +
   "attachedSources already lists is not searched for: read it with person_read and name it. A children or " +
-  "siblings ask starts from what is attached: before any search, read the person with person_read, then " +
-  "read each census among its sources with record_read, passing that source's url as recordId, name the " +
-  "household it shows, and hand search-records the rest.";
+  "siblings ask starts from what is attached: the brief tells search-records to read each census attached to " +
+  "the person with record_read before any search (tree_query gives each source's url, which record_read takes " +
+  "as recordId) and to name the household each shows.";
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).

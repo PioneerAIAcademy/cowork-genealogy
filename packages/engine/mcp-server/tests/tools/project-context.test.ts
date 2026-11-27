@@ -1185,8 +1185,9 @@ describe("project_context", () => {
         "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
-        "A children or siblings ask starts from what is attached: before any search, read the person with " +
-          "person_read, then read each census among its sources with record_read, passing that source's url as recordId",
+        "A children or siblings ask starts from what is attached: the brief tells search-records to read each census " +
+          "attached to the person with record_read before any search (tree_query gives each source's url, which " +
+          "record_read takes as recordId)",
       );
     });
 

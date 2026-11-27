@@ -15,9 +15,9 @@ tester was told that household "could not be located under any name tried".
 
 `read_before_search: ["record_read"]` is the attached-first check: before the first search, on any thread, a
 record is read. Nothing the turn could read by then is a search hit, so it is an attached household:
-`boundedRequest` tells the router to read the person with `person_read`, then each census among its sources with
-`record_read`, passing that source's url, before handing search-records the rest. One read before the search
-passes; whether all four households
+`boundedRequest` tells the router to have search-records read each attached census with `record_read`, by the
+source's url from `tree_query`, before its first search. One read before the search passes; whether all four
+households
 were read is in the transcript, not graded. `required_tools` would not do: it passes a turn that searches first and
 reads afterwards.
 

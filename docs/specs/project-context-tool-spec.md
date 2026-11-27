@@ -754,17 +754,19 @@ source-evaluation, which reads them, and the router reads none of them itself; t
 turn ends on the review and an offer of the next step. The ending clauses name only
 these two agents, since a general one made the router add text after a final
 conclusion it must relay bare (`ut_research_rp1`). Without the source-evaluation
-clause, the router took the children clause's reads as the way to review sources,
-reading a project's attached records itself, some more than once, and a source review
-asked for with a plan went on to the plan and question-selection
-(`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). Without the children
+clause, a source review asked for with a plan went on to the plan and
+question-selection (`evaluate-sources-moses-watrous`, 2026-11-27). Without the children
 example the router took "Find all the children of LTQD-HM6" in a new folder for a job
 and stopped after init-project (`children-attached-households-benjamin-phipps`,
-2026-11-26). A children or siblings ask starts from what is attached: before any
-search the router reads the person with `person_read`, reads each census among its
-sources with `record_read`, passing that source's `url` (a 1:1 persona ARK
-`record_read` takes as `recordId`), names the household, and hands search-records the
-rest. The record links are not in `attachedSources`: with a `recordId` on every entry
+2026-11-26). A children or siblings ask starts from what is attached: the router's
+brief tells search-records to read each census attached to the person with
+`record_read` before any search, and to name the household each shows; search-records
+holds `tree_query`, which gives each source's `url`, a 1:1 persona ARK `record_read`
+takes as `recordId`. The router reads none of them itself: when the rule told the
+router to do these reads, it took them as the way to review sources too, reading a
+project's attached records itself, some more than once, instead of handing a review to
+source-evaluation (`evaluate-sources-moses-watrous`, 2026-11-26 and 2026-11-27). The
+record links are not in `attachedSources`: with a `recordId` on every entry
 the router also read an attached death index with `record_read` and never
 `person_read` (`death-attached-susan-cornwell`, 2026-11-26). A requested record that
 `attachedSources` already lists is read with `person_read` and named, not searched
