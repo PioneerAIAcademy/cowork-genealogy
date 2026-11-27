@@ -154,7 +154,12 @@ and `next: string`, present only when the call logged a report-only agent's own
 entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
 `validate_schema`): it tells the agent to return the report it just logged, in
 full, as its reply — not a note that it was logged, and not a pointer to text it
-wrote before the call, which the caller never receives.
+wrote before the call, which the caller never receives. A `convert_dates` entry
+with `notes` also carries `replyStart: string`, those stored `notes` and a `---`
+line, and its `next` says to paste `replyStart` whole as the start of the reply:
+on Haiku 5.5 convert-dates wrote its short report a second time in other words
+(4 of 51 runs), so the reply no longer matched the log. The other four report
+tools are not echoed.
 
 **camelCase at the boundary; snake_case on disk.** The tool renames on persist
 (`planItemId → plan_item_id`, `resultsExamined → results_examined`,

@@ -821,20 +821,51 @@ def _with_payloads_decoded(op: dict) -> dict:
     return out
 
 
+_OP_KEYS = frozenset(
+    {"section", "op", "entry", "entryId", "fields", "edits", "guideSection", "surveyRef", "planId",
+     "projectPath", "resolveStandardPlace", "sourceDescription"}
+)
+
+
+def _canonical(op: dict) -> dict:
+    """`op` with any payload carried beside `section`/`op` moved under `entry`
+    (append) or `fields` (update), as `research-append-forms.ts` does. Merged
+    into a wrapper already present rather than refused: the tool refuses that
+    op, and a gate must still see every field it carries."""
+    wrapper = {"append": "entry", "update": "fields"}.get(op.get("op"))
+    loose = {k: v for k, v in op.items() if k not in _OP_KEYS}
+    if wrapper is None or not loose:
+        return op
+    out = {k: v for k, v in op.items() if k in _OP_KEYS}
+    present = out.get(wrapper)
+    out[wrapper] = {**present, **loose} if isinstance(present, dict) else loose
+    return out
+
+
 def _ops(tool_input: dict):
-    """Every op in a `research_append` call, batch or single.
+    """Every op in a `research_append` call, batch, single or plan form.
 
     A batch puts them in `ops`; a single call carries `section` at the top
-    level. Both shapes reach the same sections, so both are walked. Each is read
-    after `_decoded`, as the tool reads it.
+    level; the plan form sends `plan` and `planItems`, which the tool turns
+    into a `plans` append and one `plan_items` append per item. All reach the
+    same sections, so all are walked. Each is read after `_decoded`, as the
+    tool reads it, and in canonical form (`_canonical`).
     """
-    ops = _decoded((tool_input or {}).get("ops"))
+    tool_input = tool_input or {}
+    plan = _decoded(tool_input.get("plan"))
+    items = _decoded(tool_input.get("planItems"))
+    if plan is not None or items is not None:
+        yield {"section": "plans", "op": "append", "entry": plan if isinstance(plan, dict) else {}}
+        for item in items if isinstance(items, list) else []:
+            item = _decoded(item)
+            yield {"section": "plan_items", "op": "append", "entry": item if isinstance(item, dict) else {}}
+    ops = _decoded(tool_input.get("ops"))
     if isinstance(ops, list):
         for op in ops:
             op = _decoded(op)
             if isinstance(op, dict):
-                yield _with_payloads_decoded(op)
-    elif tool_input:
+                yield _canonical(_with_payloads_decoded(op))
+    elif tool_input and plan is None and items is None:
         yield _with_payloads_decoded(tool_input)
 
 

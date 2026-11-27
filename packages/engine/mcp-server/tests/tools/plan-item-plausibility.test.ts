@@ -253,6 +253,97 @@ describe("planWindowFlag", () => {
   });
 });
 
+// A disputed-fact question whose plan stopped at the 1910 census: the span flag
+// above stays silent (a death item reaches the window's end), so the census years
+// themselves are named. US federal censuses only, 1890 skipped, none after 1950.
+const GOOCHLAND = "Goochland, Virginia, United States";
+const item = (record_type: string, date_range: string, extra: Record<string, unknown> = {}) => ({
+  record_type, jurisdiction: GOOCHLAND, date_range, status: "planned", ...extra,
+});
+const censusPlan = (items: Record<string, unknown>[], extra: Record<string, unknown> = {}) => ({
+  id: "pl_001", question_id: "q_001", status: "active", items, ...extra,
+});
+
+describe("planWindowFlag — US federal census years the plan leaves out", () => {
+  it("names each census year in the window no census item covers (the c7m shape)", () => {
+    const msg = planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1870"), item("census", "1880"), item("census", "1900"),
+      item("census", "1910"), item("vital_record", "1900-1960"),
+    ])]);
+    expect(msg).toMatch(/q_001: no item covers 1860, 1920, 1930, 1940, 1950 — US federal census years/);
+    expect(msg).toMatch(/ in its date window 1852–1952\. Add a census item whose date_range covers each\.$/);
+  });
+
+  it("skips 1890 and never names a year after 1950", () => {
+    expect(planWindowFlag(q("1880-1900"), [censusPlan([item("census", "1880"), item("census", "1900")])])).toBeNull();
+    const msg = planWindowFlag(q("1930-1990"), [censusPlan([
+      item("census", "1930"), item("census", "1940"), item("vital_record", "1930-1990"),
+    ])]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1950");
+  });
+
+  it("counts a ranged census item as covering every census year inside it", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1860-1880"), item("census", "1900-1950"),
+    ])])).toBeNull();
+  });
+
+  it("acts only when the plan has a US federal census item", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([item("vital_record", "1852-1952")])])).toBeNull();
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1861", { jurisdiction: "Essex, England" }), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("state_census", "1925"), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("reads a US jurisdiction written without its country", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900", { jurisdiction: "Goochland County, Virginia" }),
+    ])])).toMatch(/no item covers 1860, 1870, 1880, 1910/);
+  });
+
+  it("has no opinion without a date_window", () => {
+    expect(planWindowFlag(q(), [censusPlan([item("census", "1900")])])).toBeNull();
+  });
+
+  it("leaves out superseded plans, and reads a skipped census item as the stated reason its year is left out", () => {
+    const msg = planWindowFlag(q("1895-1925"), [
+      censusPlan([item("census", "1920", { status: "skipped" })]),
+      censusPlan([item("census", "1910")], { id: "pl_002", status: "superseded" }),
+      censusPlan([item("census", "1900")], { id: "pl_003" }),
+    ]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1910");
+  });
+
+  it("does not act on a plan whose only US federal census item is skipped", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900", { status: "skipped" }), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("reads a range written with an en dash", () => {
+    expect(planWindowFlag(q("1852-1952"), [censusPlan([
+      item("census", "1900"), item("census", "1860–1950"), item("vital_record", "1852-1952"),
+    ])])).toBeNull();
+  });
+
+  it("counts only US federal census items as covering a year", () => {
+    const msg = planWindowFlag(q("1895-1925"), [censusPlan([
+      item("census", "1900"), item("state_census", "1915-1925"),
+      item("census", "1901-1911", { jurisdiction: "Essex, England" }), item("vital_record", "1895-1925"),
+    ])]);
+    expect(msg?.match(/no item covers ([\d, ]+) —/)?.[1]).toBe("1910, 1920");
+  });
+
+  it("gives both notes when the plan also falls short of the window's span", () => {
+    const msg = planWindowFlag(q("1852-1952"), [censusPlan([item("census", "1860"), item("census", "1870")])]);
+    expect(msg).toMatch(/date window is 1852–1952/);
+    expect(msg).toMatch(/no item covers 1880, 1900, 1910/);
+  });
+});
+
 describe("research_append surfaces the date-window flag", () => {
   const WINDOW_Q = [{ id: "q_001", question: "When did he marry?", date_window: "1777-1799" }];
   const withItems = (ranges: string[]) => [{
@@ -270,6 +361,37 @@ describe("research_append surfaces the date-window flag", () => {
   it("is silent when the plan reaches the window", async () => {
     const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
     expect(await append(dir, { ...ITEM, date_range: "1770-1800" })).not.toMatch(/date window/);
+  });
+
+  it("names a census year the plan leaves out, and still writes", async () => {
+    const dir = project({
+      questions: [{ id: "q_001", question: "What given name is on the 1900 census?", date_window: "1852-1952" }],
+      plans: [{
+        id: "pl_001", question_id: "q_001", status: "active",
+        items: [{ ...ITEM, id: "pli_001", record_type: "vital_record", date_range: "1900-1960" }],
+      }],
+    });
+    const text = await append(dir, { ...ITEM, sequence: 2, record_type: "census", jurisdiction: "Goochland, Virginia, United States", date_range: "1860-1910" });
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/no item covers 1920, 1930, 1940, 1950/);
+  });
+
+  it("re-checks the census years on an update that changes an item's record_type", async () => {
+    const dir = project({
+      questions: [{ id: "q_001", question: "What given name is on the 1900 census?", date_window: "1895-1925" }],
+      plans: [{
+        id: "pl_001", question_id: "q_001", status: "active",
+        items: ["1900", "1910", "1920"].map((date_range, i) => ({
+          ...ITEM, id: `pli_00${i + 1}`, sequence: i + 1, record_type: "census",
+          jurisdiction: "Goochland, Virginia, United States", date_range,
+        })),
+      }],
+    });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_003", fields: { record_type: "city_directory" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/no item covers 1920 —/);
   });
 
   it("is silent for a question with no date_window", async () => {

@@ -525,6 +525,10 @@ def response_strings(value: Any, _depth: int = 0) -> list[str]:
     return [str(value)]
 
 
+# Shared with the guardrail checks and the replay (harness/research_append_ops.py).
+from harness.research_append_ops import research_append_ops  # noqa: E402,F401
+
+
 def as_mapping(value: Any) -> dict:
     """A tool argument a model may have serialized as a JSON string.
 
