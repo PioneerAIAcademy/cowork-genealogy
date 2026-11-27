@@ -42,4 +42,6 @@ make viewer PROJECT=releases/mcp-viewer-sweep/projects/<end state>
 - `make viewer PROJECT=<folder>` shows it, and the PR carries a screenshot in light and in
   dark;
 - the id check (`leftoverIds`) passes on its rendered text in its tests;
-- no retired row (`superseded_by` set) shows on it: plant one in its test.
+- no retired row (`superseded_by` set) shows on it: plant one in its test; or, when the
+  card reads none of the three sections that have `superseded_by` — `assertions`,
+  `person_evidence`, `evaluations` — the PR says so.

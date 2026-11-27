@@ -1,3 +1,4 @@
+import type { Priority, Question, QuestionStatus } from '@genealogy/schema'
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SHOW_VALUES, type ProjectDocument } from '../contract'
@@ -73,7 +74,7 @@ describe('the conclusion card', () => {
 })
 
 describe('the setup card', () => {
-  it('the goal, the subject as a named link, and the question', () => {
+  it('the goal and the subject as a named link, with the question left to the question card', () => {
     const card = drawn(COMPOUND_DOC(), { show: 'setup' })
     expect(card.title).toBe('The research is set up')
     expect(card.text).toContain('Determine the true birthplace')
@@ -81,6 +82,7 @@ describe('the setup card', () => {
       label: 'Elizabeth Mariah Turnbow',
       href: 'https://www.familysearch.org/tree/person/details/KWJ6-RPH'
     })
+    expect(card.text).not.toContain('Jasper and Smith counties')
     expect(leftoverIds(card.text)).toEqual([])
   })
 
@@ -96,6 +98,112 @@ describe('the setup card', () => {
     const card = drawn(COMPOUND_DOC(), { show: 'setup' })
     expect(card.text).toContain('Where it stands')
     expect(card.text).not.toContain('Next')
+  })
+})
+
+describe('the question card', () => {
+  const labels = (container: HTMLElement) => [...container.querySelectorAll('dt')].map((dt) => dt.textContent)
+
+  it('the question, why it was chosen, and a timeline named by the label that qualifies it', () => {
+    const card = drawn(FLYNN_DOC(), { show: 'question', questionId: 'q_001' })
+    expect(card.title).toBe('Choosing the question')
+    expect(card.text).toContain('Who were the parents of Patrick Flynn')
+    expect(card.text).toContain('4 events, 1845\u20131908')
+    // The count alone would read as settled fact: t_001 is a hypothesis timeline,
+    // and no case-file page lists these events to click through to.
+    expect(card.text).toContain('assuming Thomas Flynn parentage')
+    expect(card.text).toContain('Why this one')
+    expect(card.text).toContain(FLYNN_DOC().research!.questions![0].rationale)
+    expect(leftoverIds(card.text)).toEqual([])
+  })
+
+  it('a hypothesis timeline with no label is left off rather than shown as a bare count', () => {
+    const doc = FLYNN_DOC()
+    const timeline = doc.research!.timelines![0]
+    expect(timeline.hypothesis_id).toBeTruthy()
+    timeline.label = '   '
+    const card = drawn(doc, { show: 'question', questionId: 'q_001' })
+    expect(labels(card.container)).not.toContain('Timeline')
+    expect(card.text).not.toContain('4 events')
+  })
+
+  it('a timeline with no hypothesis behind it still shows, label or not', () => {
+    const doc = FLYNN_DOC()
+    const timeline = doc.research!.timelines![0]
+    timeline.hypothesis_id = null
+    timeline.label = '   '
+    const card = drawn(doc, { show: 'question', questionId: 'q_001' })
+    expect(card.text).toContain('4 events, 1845\u20131908')
+  })
+
+  it('an event spanning years reaches the later one, not just its first', () => {
+    const doc = FLYNN_DOC()
+    doc.research!.timelines![0].events = [
+      { ...doc.research!.timelines![0].events[0], date: '1850-1855' }
+    ]
+    const card = drawn(doc, { show: 'question', questionId: 'q_001' })
+    expect(card.text).toContain('1850\u20131855')
+  })
+
+  it('the timeline is the first subject that has one, skipping subjects without', () => {
+    const doc = FLYNN_DOC()
+    const research = doc.research!
+    const first = research.timelines![0]
+    research.timelines!.push({
+      ...first, id: 't_002', person_ids: ['I2'], label: 'The second subject timeline',
+      events: [{ ...first.events[0], date: '1700' }]
+    })
+    // Both subjects have one: the FIRST id in subject_person_ids wins.
+    research.project!.subject_person_ids = ['I2', 'I1']
+    const both = drawn(doc, { show: 'question', questionId: 'q_001' })
+    expect(both.text).toContain('The second subject timeline')
+    expect(both.text).not.toContain('assuming Thomas Flynn parentage')
+    cleanup()
+
+    // The first id has none: it is skipped rather than ending the search.
+    research.project!.subject_person_ids = ['I9', 'I1']
+    const skipped = drawn(doc, { show: 'question', questionId: 'q_001' })
+    expect(skipped.text).toContain('assuming Thomas Flynn parentage')
+    expect(skipped.text).toContain('4 events, 1845\u20131908')
+  })
+
+  it('a project with no timeline shows no timeline point', () => {
+    const card = drawn(COMPOUND_DOC(), { show: 'question' })
+    expect(labels(card.container)).not.toContain('Timeline')
+    expect(card.text).not.toContain('events,')
+  })
+
+  it('waiting: the current question is not counted, a resolved one never shows, high before low', () => {
+    const doc = FLYNN_DOC()
+    const questions = doc.research!.questions!
+    const extra = (id: string, priority: Priority, status: QuestionStatus, question: string): Question => ({
+      ...questions[0], id, priority, status, resolved: null, question
+    })
+    // q_001 is the current one (high, in_progress); q_002 is resolved.
+    questions.push(extra('q_003', 'low', 'open', 'Where is the low-priority burial recorded?'))
+    questions.push(extra('q_004', 'high', 'open', 'Where is the high-priority marriage recorded?'))
+    questions.push(extra('q_005', 'medium', 'in_progress', 'Where is the medium-priority census entry?'))
+    const card = drawn(doc, { show: 'question', questionId: 'q_001' })
+
+    // three waiting, not four: the current question is excluded, and so is the resolved one.
+    expect(card.text).toContain('3 other questions waiting')
+    expect(card.text).not.toContain('Where was Patrick Flynn in the 1850 census')
+
+    // high sorts before medium; low falls past the two named and is counted instead.
+    const high = card.text.indexOf('high-priority marriage')
+    const medium = card.text.indexOf('medium-priority census')
+    expect(high).toBeGreaterThan(-1)
+    expect(medium).toBeGreaterThan(-1)
+    expect(high).toBeLessThan(medium)
+    expect(card.text).not.toContain('low-priority burial')
+    expect(card.text).toContain('And 1 more.')
+    expect(leftoverIds(card.text)).toEqual([])
+  })
+
+  it('with no question at all, says so instead of drawing a bare title', () => {
+    const card = drawn({ research: {}, derived: { folderName: 'stub' } }, { show: 'question' })
+    expect(card.title).toBe('No question chosen yet')
+    expect(card.text).toContain('has not framed a question yet')
   })
 })
 
@@ -205,6 +313,9 @@ describe('the registry', () => {
   it('latest follows the question: concluded shows the conclusion, evidence gathered the link card', () => {
     expect(drawn(MCANDREW_DOC(), { show: 'latest' }).title).toBe('The conclusion')
     expect(drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title).toBe('Linking records to people')
+    const framed = FLYNN_DOC()
+    framed.derived!.questions = [status('q_001', 'framed')]
+    expect(drawn(framed, { show: 'latest', questionId: 'q_001' }).title).toBe('Choosing the question')
   })
 
   it('every built card draws with no id left in it', () => {
@@ -218,7 +329,8 @@ describe('the registry', () => {
 
   it('a step with no card yet draws what latest draws', () => {
     const unbuilt = SHOW_VALUES.filter((show) => show !== 'latest' && show !== 'file' && !Object.hasOwn(CARDS, show))
-    expect(unbuilt).toContain('question')
+    expect(unbuilt).not.toContain('question')
+    expect(unbuilt.length).toBeGreaterThan(0)
     for (const show of unbuilt) {
       const latest = drawn(FLYNN_DOC(), { show: 'latest', questionId: 'q_002' }).title
       cleanup()

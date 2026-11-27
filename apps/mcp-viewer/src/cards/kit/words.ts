@@ -47,3 +47,8 @@ export function moreInFile(count: number): string | null {
   if (count <= 0) return null
   return count === 1 ? '1 more in the case file.' : `${count} more in the case file.`
 }
+
+/** "1 record" / "2 records". Shared by the cards that count things. */
+export function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`
+}

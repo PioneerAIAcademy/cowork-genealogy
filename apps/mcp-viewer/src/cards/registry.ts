@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from 'react'
 import { ConclusionCard } from './ConclusionCard'
 import { latestKind, type CardKind, type CardView } from './kit/view'
 import { LinkCard } from './LinkCard'
+import { QuestionCard } from './QuestionCard'
 import { SearchCard } from './SearchCard'
 import { SetupCard } from './SetupCard'
 
@@ -18,6 +19,7 @@ export interface CardProps {
 /** The built step cards. A new card's PR adds its entry here; until then its step draws `latest`. */
 export const CARDS: Partial<Record<CardKind, ComponentType<CardProps>>> = {
   setup: SetupCard,
+  question: QuestionCard,
   search: SearchCard,
   link: LinkCard,
   conclusion: ConclusionCard
