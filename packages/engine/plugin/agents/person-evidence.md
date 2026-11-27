@@ -244,6 +244,12 @@ attachments".
 
 In this mode:
 
+- When the entry under review has a null `match_score`, call
+  `same_person({ projectPath, assertionId, treePersonId })` first; it writes
+  nothing. Open your verdict with that score and judge the tier from it and
+  the person's other links, as Step 3 does: 0.80 or above with no open
+  conflict keeps `confident`; at that score a Moderate correlation is enough,
+  Strong is not required. Do not write the score onto the entry.
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
   context (other pe entries for the same assertion or person; the
@@ -255,11 +261,6 @@ In this mode:
 - A person the record names besides the one being reviewed (a parent,
   spouse, child) is only linked when that person has their own `pe_`
   entry. Note explicitly when a named party has none.
-- When the entry under review has a null `match_score`, call
-  `same_person({ projectPath, assertionId, treePersonId })` for it before
-  judging the tier, as Step 2 requires when linking. It changes neither
-  `research.json` nor the tree. Report the score in your analysis; do not
-  write it onto the entry.
 - **Produce a written analysis only.** Do NOT write to `research.json`
   or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
   modify the entry under review (not its `confidence`, not its
@@ -444,12 +445,12 @@ or naturalization assertion with three, written before you choose the tier:
 directly — correlation analysis is the spine of every identity
 decision. A match is *strong* when name, age, place, and relationship
 fit all agree; *moderate* when the core identifiers agree but some are
-missing or only approximate; *weak* when only the name matches or a
-core identifier conflicts. Make the assessment auditable with the
+missing or only approximate; *weak* when only the name matches (see
+**Not Weak** in Step 3) or a core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Call `same_person` BEFORE writing any `pe_` link**, for every serious
+**Call `same_person` BEFORE deciding any `pe_` link, a no-link included**, for every serious
 candidate tree person. Do **not** score a stub you minted from the persona you
 would be scoring: comparing a record persona to a person created out of it is
 circular. Leave `match_score` null there and say so in the rationale. **This
@@ -609,7 +610,7 @@ the `rationale` as a departure; it does not move the tier by itself.
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | none | **No link** (below). |
+| **Weak** — only the name matches, or a core identifier of the focus person conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table); nor a record stating the persona's relationship to a person matching a tree relative (a will's "my son"), even when that relationship is the open question: `probable`. | none | **No link** (below). |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Create the link. The rationale says what matches and what doesn't. |
 | **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | Create the link. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
@@ -660,8 +661,8 @@ and does not warrant downgrading to `probable`. But:
 - A **patronymic mismatch or an unaccounted-for name element is a
   core-identifier conflict**, not a spelling variant: a differing
   patronymic names a *different father*, unless the naming page Step 2
-  fetched shows surnames had become fixed by the record's date. A page not
-  retrieved leaves the conflict standing. A name
+  fetched shows surnames had become fixed by the record's date. Fetch it
+  before you rule; only a failed fetch leaves the conflict standing. A name
   element with no source (an extra middle initial, an added byname)
   stays unexplained until a record accounts for it. Either one **makes
   the match a no-link** and must be **named explicitly in your return** —
@@ -728,8 +729,10 @@ reach and tree-edit to execute.
 Persist links one source at a time: as soon as one source's links are
 decided, write them in ONE batched `research_append({ ops: [...] })` call —
 one `append` op per assertion-person pair, every party of that source in the
-same call — then score the next source. The tool refuses appends from more
-than one source in a call.
+same call — then score the next source. Each op carries the entry's fields
+directly beside `section` and `op`, with no `entry` wrapper:
+`{ section: "person_evidence", op: "append", assertion_id, person_id, confidence, rationale, match_score }`.
+The tool refuses appends from more than one source in a call.
 Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
@@ -825,7 +828,8 @@ not silently ignore this field.
 
 A persona's own facts go to one person: link them to a tree person or mint a
 person for them, never both. A no-link (Step 3) mints nothing for that
-persona unless the delegation asks for a stub. Never mint a person for an arrival because the
+persona unless the delegation asks for a stub. A persona no tree person
+could be is not a no-link: mint it. Never mint a person for an arrival because the
 tree person already lived in that country before it: that arrival is a
 return trip, and it is linked like any other fact on its score.
 
@@ -889,10 +893,8 @@ use instead.
   new person, using the `personId` that `materialize_facts` returned in
   its compact summary
 - **Confidence:** a stub rests on the single record that introduced the
-  person, with no independent corroboration yet, so its `pe_` link is
-  `probable` at most — `speculative` when the persona is only
-  circumstantially named. Do not use `confident` for a brand-new stub;
-  reserve it for after other records corroborate the person.
+  person, so its `pe_` link is `probable`. `confident` waits for a second
+  record.
 
 **When to create a stub vs. skip:**
 - Create a stub for persons who are likely relevant to the research
