@@ -286,35 +286,21 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
- * The `plans` append, as the batched call `agents/research-plan.md` prescribes:
- * the shell, then one `plan_items` op per item carrying the id the tool will
- * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
- * than a third literal, so a schema drift in either is caught once.
+ * The `plans` append, as the plan form `agents/research-plan.md` prescribes:
+ * the plan shell, then its items, which the tool attaches to the plan it
+ * creates. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather than a
+ * third literal, so a schema drift in either is caught once.
  */
 function plansBatchExample(): string {
   const indent = (text: string, pad: string) => text.split("\n").join(`\n${pad}`);
   return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
-  ops: [
-    // Op #1 — the plan shell. Omit "id" AND "items": the tool assigns the id,
-    // and the item ops below create the items. An EMPTY items array is not the
-    // way to satisfy a missing-items refusal — an itemless plan is invalid.
-    {
-      section: "plans",
-      op: "append",
-      entry: ${indent(EXAMPLES.plans, "      ")}
-    },
-    // Ops #2…N — one per plan item, in sequence order. planId is the id the
-    // tool assigns op #1: (highest existing pl_ in research.json) + 1,
-    // zero-padded to 3. Predict it — pl_001/pl_002 existing makes this pl_003.
-    // A hard-coded "pl_001" appends your items to another question's plan and
-    // leaves the plan you just created empty.
-    {
-      section: "plan_items",
-      op: "append",
-      planId: "pl_003",
-      entry: ${indent(EXAMPLES.plan_items, "      ")}
-    }
+  // The plan shell. Omit "id" AND "items": the tool assigns the id and
+  // creates the items from planItems. An itemless plan is invalid.
+  plan: ${indent(EXAMPLES.plans, "  ")},
+  // One per plan item, in sequence order, with no "id" and no planId.
+  planItems: [
+    ${indent(EXAMPLES.plan_items, "    ")}
   ]
 })`;
 }

@@ -11,16 +11,14 @@ Every interpolated value goes through ``html.escape``. A project label comes fro
 agent-written ``research.json``, so an unescaped label would be stored XSS on the page
 that holds the deletion code.
 
-Lines that begin "Placeholder" wait on a decision that is not ours to make here: where
-research runs (the plan's Surface decision), what signing in again looks like (the live
-sittings, issue #3529), where the plugin zip comes from, and the feedback address.
+Lines that begin "Placeholder" wait on something that is not ours to supply here: the
+feedback address.
 """
 
 from __future__ import annotations
 
 from html import escape
 from typing import Any, Literal
-from urllib.parse import quote, urlsplit
 
 CONNECTOR_NAME = "Genealogy Research"
 OPENROUTER_KEYS_URL = "https://openrouter.ai/settings/keys"
@@ -62,58 +60,57 @@ async function postAndReload(path, body, then) {
 """
 
 
-def connector_link(public_url: str) -> str:
-    """claude.ai's prefilled add-connector link for the tool server's ``/mcp``. The edge
-    serves ``/mcp`` at the host root (plan § Architecture; malachi ``nginx.conf``
-    ``location = /mcp``), so only PUBLIC_URL's scheme and host are kept, never a path prefix.
-    The name must stay "Genealogy Research": the agents list their tools under that name."""
-    parts = urlsplit(public_url)
-    mcp = f"{parts.scheme}://{parts.netloc}/mcp"
-    return (
-        "https://claude.ai/customize/connectors?modal=add-custom-connector"
-        f"&connectorName={quote(CONNECTOR_NAME)}&connectorUrl={quote(mcp, safe='')}"
-    )
-
-
-def _setup_steps(public_url: str, step2: str) -> str:
-    """The three setup steps, on both pages. ``step2`` is the sign-in step's HTML."""
+def _setup_steps() -> str:
+    """The setup steps, on both pages (the plan's D4). The plugin brings the connector, so
+    nothing is added by hand, and the connector keeps the one name the agents list their
+    tools under."""
     return f"""<ol>
-<li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
-Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
-<li>{step2}</li>
-<li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
-<span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
+<li>Install the plugin: on Claude's Plugins page, upload the zip you were sent. It follows your Claude
+account, so you do this once.</li>
+<li>On the plugin's Connectors tab, connect <strong>{escape(CONNECTOR_NAME)}</strong> and sign in with
+FamilySearch. That one connection covers claude.ai and Claude Desktop.</li>
+<li>In Claude's settings, open Connectors, then <strong>{escape(CONNECTOR_NAME)}</strong>, and set each of its
+tool groups to <strong>Always allow</strong>. Chosen at a prompt in Claude Desktop it is not saved, and research
+then asks before every step.</li>
 </ol>"""
 
 
-def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] | None) -> str:
-    """Onboarding, the plan's D4. ``sign_in`` picks the step-2 control: FamilySearch when it
-    is configured, the dev-login button locally, or neither (a line saying sign-in is off)."""
+def signed_out_page(*, sign_in: Literal["familysearch", "dev"] | None) -> str:
+    """Onboarding, the plan's D4. ``sign_in`` picks this page's own sign-in control, under
+    the steps: FamilySearch when it is configured, the dev-login button locally, or neither
+    (a line saying sign-in is off). Connecting from Claude creates the account, so the
+    control comes after the steps."""
+    what = "to see your projects, upload a file or download your work."
     if sign_in == "familysearch":
-        step2 = '<a href="auth/familysearch/login">Sign in with FamilySearch</a>.'
+        line = f'Once you have connected, <a href="auth/familysearch/login">sign in here with FamilySearch</a> {what}'
     elif sign_in == "dev":
-        step2 = ('<button type="button" onclick="postAndReload(\'auth/dev-login\', {})">Sign in (local dev)</button>'
-                 + _POST_AND_RELOAD)
+        line = ('Once you have connected, <button type="button" onclick="postAndReload(\'auth/dev-login\', {})">'
+                f"sign in (local dev)</button> {what}" + _POST_AND_RELOAD)
     else:
-        step2 = "Sign in. (Sign-in is not configured on this server.)"
+        line = "Sign-in is not configured on this server."
     return (
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>Genealogy Research beta</h1>
 <h2>Get started</h2>
-{_setup_steps(public_url, step2)}
+{_setup_steps()}
+<p>{line}</p>
 <h2>Before you start</h2>
 <ul>
-<li><strong>Where research runs.</strong> Placeholder: this waits on the Surface decision.</li>
+<li><strong>Where research runs.</strong> In an ordinary chat at claude.ai or in Claude Desktop. Your projects are
+kept on this server, not on your computer.</li>
 <li><strong>A paid Claude plan.</strong> Plugins need one.</li>
 <li><strong>Living people.</strong> Do not store information about living people.</li>
 <li><strong>This is a beta.</strong> Nothing promises your work survives, so download what you want to keep.</li>
 <li><strong>No desktop extension.</strong> Turn the Genealogy Research desktop extension off on that Claude account,
 under Settings → Desktop app → Extensions on each computer, or use a second Claude account.</li>
-<li><strong>Signing in again.</strong> Placeholder: what to expect when FamilySearch ends a session, and when the
-connector itself needs reconnecting (Customize → Connectors), will be written from the live sittings.</li>
+<li><strong>Signing in again.</strong> When FamilySearch ends your session, Claude's reply gives a sign-in link.
+Sign in, go back to the chat and say "continue", and the step that stopped runs again. In Claude Desktop the link
+is plain text, so copy it into a browser. If Claude shows a "Reconnect a connector" card, click Reconnect and
+approve in the browser.</li>
 <li><strong>Feedback.</strong> Email it with the conversation pasted in, because this server does not store your
 conversations. Placeholder: the feedback address has not been supplied yet.</li>
-<li><strong>Team and Enterprise plans.</strong> An Owner adds the connector and makes the plugin available.</li>
+<li><strong>Team and Enterprise plans.</strong> An Owner makes the plugin available, and the connector comes
+with it.</li>
 </ul>
 """
         + _FOOT
@@ -122,7 +119,6 @@ conversations. Placeholder: the feedback address has not been supplied yet.</li>
 
 def signed_in_page(
     *,
-    public_url: str,
     email: str,
     familysearch_id: str | None,
     account_id: str,
@@ -135,7 +131,7 @@ def signed_in_page(
     shows no OpenRouter section at all. ``uploadable`` is the projects that get an Upload
     link: none with UPLOADS_ENABLED off, and only ids the upload page takes. The setup steps
     stay on the page: once sign-out also ends the connector's tokens, "sign out to see them"
-    would undo step 1."""
+    would undo step 2."""
     # A user with no FamilySearch id (dev-login) is not shown as a FamilySearch account.
     who = (f"Signed in with the FamilySearch account {escape(email)} "
            f"(FamilySearch id <code>{escape(familysearch_id)}</code>)." if familysearch_id
@@ -157,7 +153,7 @@ def signed_in_page(
 <p>{who}</p>
 <p><strong>Go back to Claude and say "continue".</strong></p>
 <details><summary>Setup steps</summary>
-{_setup_steps(public_url, "Sign in. You have done this.")}</details>
+{_setup_steps()}</details>
 <h2>Your projects</h2>
 {project_list}
 {_openrouter_section(openrouter_linked)}<h2>Your account</h2>

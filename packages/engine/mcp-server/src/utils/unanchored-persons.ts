@@ -9,7 +9,9 @@
 // a proof summary, timeline, namesake row or warning justification that names
 // it is a conclusion about it. So is a person whose links are the last ones
 // behind a proof summary, which `unlinkedProofInvariants` would otherwise refuse
-// on every later write to that summary. The links to a removed person
+// on every later write to that summary, and a person linked behind a summary
+// this call wrote at probable or proved, whose relationship proof-conclusion
+// writes after this call. The links to a removed person
 // (`person_evidence`, `rejected_links`) go with it, or they would dangle.
 
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
@@ -63,13 +65,35 @@ function lastProofLinkHolders(research: any, removed: Set<string>): string[] {
   return [...holders];
 }
 
+/** The persons a proof summary written in this call at probable or proved
+ *  stands on: every person a proof-gate link ties to its supporting assertions.
+ *  proof-conclusion resolves the question in the same call as the summary and
+ *  writes the concluded relationship after it, so a person it is about to
+ *  connect has no edge yet. A disproved or lower summary keeps no one. */
+const ENCODED_TIERS = new Set(["probable", "proved"]);
+
+function concludedProofPersons(research: any, writtenSummaryIds: ReadonlySet<string>): string[] {
+  const links = list(research?.person_evidence).filter(countsForProofGate);
+  const persons = new Set<string>();
+  for (const ps of list(research?.proof_summaries)) {
+    if (!writtenSummaryIds.has(ps?.id) || !ENCODED_TIERS.has(ps?.tier)) continue;
+    const supporting = new Set(list(ps.supporting_assertion_ids));
+    for (const pe of links) {
+      if (supporting.has(pe?.assertion_id) && typeof pe?.person_id === "string") persons.add(pe.person_id);
+    }
+  }
+  return [...persons];
+}
+
 /** The ids of the minted persons no edge path connects to an anchor, sorted.
  *  Empty when the tree holds no anchor at all: with nothing known to be
- *  imported, every person would read as minted, so nothing is removed. */
+ *  imported, every person would read as minted, so nothing is removed.
+ *  `writtenSummaryIds` names the proof summaries this call wrote. */
 export function unanchoredMintedPersonIds(
   tree: any,
   research: any,
   isImported: (personId: string) => boolean,
+  writtenSummaryIds: ReadonlySet<string> = new Set(),
 ): string[] {
   const ids: string[] = list(tree?.persons)
     .map((p: any) => p?.id)
@@ -90,6 +114,7 @@ export function unanchoredMintedPersonIds(
   for (const wj of list(research?.warning_justifications)) {
     for (const id of list(wj?.person_ids)) if (present.has(id)) anchors.add(id);
   }
+  for (const id of concludedProofPersons(research, writtenSummaryIds)) if (present.has(id)) anchors.add(id);
 
   for (;;) {
     const reached = reachable(tree, anchors);
