@@ -24,6 +24,7 @@ import type {
 } from "../types/tree-gaps.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
+import { withQuestions } from "../utils/tree-gap-question.js";
 
 const API = "https://api.familysearch.org/platform";
 const ACCEPT = "application/x-fs-v1+json";
@@ -509,8 +510,8 @@ export async function treeGapsTool(
   }
 
   return {
-    root: { personId: rootPerson.id, name: rootPerson.name },
-    gaps,
+    root: { name: rootPerson.name },
+    gaps: withQuestions(gaps),
     scanned: {
       ancestorGenerations,
       descendantGenerations,
