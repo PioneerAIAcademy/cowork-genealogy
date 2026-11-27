@@ -203,6 +203,7 @@ import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
+import { CATALOG_READ_BUDGET_MS, readCatalog, type CollectionCatalog } from "../utils/collection-catalog.js";
 import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
 import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
@@ -2854,6 +2855,129 @@ function refLessAddedPersonInvariants(
       `with no source ref on any name, fact or relationship, so nothing records which record it came ` +
       `from. Link it at 'speculative' with its same_person score (a live speculative link to it will ` +
       `do), write the persona onto it with ${persona}, then raise the link to '${entry.confidence}'.${named}`,
+  ];
+}
+
+const normName = (s: unknown): string =>
+  typeof s === "string" ? s.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim() : "";
+
+/** The name a `name` assertion gives: its `structured_value` given and surname
+ *  when it holds either, else its human-readable `value`. */
+function assertedName(assertion: any): string {
+  const sv = assertion?.structured_value;
+  if (sv && typeof sv === "object" && (normName(sv.given) !== "" || normName(sv.surname) !== "")) {
+    return normName(`${sv.given ?? ""} ${sv.surname ?? ""}`);
+  }
+  return normName(assertion?.value);
+}
+
+/** Whether `assertion`, a `name` assertion, gives the name one of the person's
+ *  names carries. A structured value is compared on the parts it holds; a
+ *  `value` against the name with and without its prefix and suffix. */
+function nameAssertionNamesPerson(assertion: any, person: any): boolean {
+  const names = (Array.isArray(person?.names) ? person.names : []) as any[];
+  const sv = assertion?.structured_value;
+  const given = sv && typeof sv === "object" ? normName(sv.given) : "";
+  const surname = sv && typeof sv === "object" ? normName(sv.surname) : "";
+  const value = normName(assertion?.value);
+  return names.some((n) => {
+    if (given !== "" || surname !== "") {
+      return (given === "" || normName(n?.given) === given) && (surname === "" || normName(n?.surname) === surname);
+    }
+    if (value === "") return false;
+    const core = `${n?.given ?? ""} ${n?.surname ?? ""}`;
+    return [core, `${core} ${n?.suffix ?? ""}`, `${n?.prefix ?? ""} ${core}`, `${n?.prefix ?? ""} ${core} ${n?.suffix ?? ""}`]
+      .some((form) => normName(form) === value);
+  });
+}
+
+/** Whether every record this person's refs reach is `recordId`, compared as one
+ *  record whatever ARK spelling each assertion carries. `mintedFromThisRecord`
+ *  compares the strings, so two spellings of one record read as two records. */
+function mintedFromRecordAlone(
+  personId: string,
+  recordId: string,
+  research: any,
+  tree: any,
+  startingPersonIds: ReadonlySet<string>,
+): boolean {
+  if (importedPerson(personId, research, startingPersonIds)) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person) return false;
+  const refs = personSourceRefs(person);
+  if (refs.size === 0) return false;
+  const { recordIds } = refsReach(refs, research);
+  return recordIds.size > 0 && [...recordIds].every((r) => sameRecord(r, recordId));
+}
+
+/** #4749: a person minted from a record is the persona that record names, so
+ *  every one-party fact of that persona is linked to it at `probable`: not
+ *  `speculative` (the record names the person; doubt about whether the stub is
+ *  someone else in the tree belongs in the rationale), and not `confident` (no
+ *  other record yet; once a second record is linked and materialized onto the
+ *  person it is no longer minted from this one alone). `mode` "assert" judges an
+ *  append, a re-point or a revival; "raise" judges an update that raises the tier,
+ *  which can only over-reach to `confident`. An in-place update that lowers a tier
+ *  is never judged; a re-point or revival is judged as a new link. Silent with no starting-tree baseline, which cannot tell a pre-existing
+ *  person whose other refs no research source cites from one minted here (as
+ *  `blankAddedPerson`). Silent for a person with a namesake (the namesake cap lowers links on
+ *  purpose), a link declaring `core_identifier_conflict` (accepted only at
+ *  `speculative`), an attachment link, negative evidence, a two-party assertion,
+ *  a person no live name assertion of that persona names, and a role the record
+ *  gives more than one name. */
+export function mintedStubTierInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  startingPersonIds: ReadonlySet<string> | undefined,
+  batchAssertions: Map<string, any> | undefined,
+  mode: "assert" | "raise",
+): string[] {
+  const personId = entry?.person_id;
+  if (typeof personId !== "string" || entry.superseded_by || isAttachmentLink(entry)) return [];
+  if (!startingPersonIds || startingPersonIds.size === 0) return [];
+  if (typeof entry.core_identifier_conflict === "string" && entry.core_identifier_conflict.trim() !== "") return [];
+  const tier = entry.confidence;
+  if (tier === "probable" || (mode === "raise" && tier !== "confident")) return [];
+  const pool = [
+    ...((research?.assertions ?? []) as any[]),
+    ...(batchAssertions ? [...batchAssertions.values()] : []),
+  ].filter((a) => a && isLiveAssertion(a));
+  const assertion =
+    batchAssertions?.get(entry.assertion_id) ?? pool.find((a: any) => a?.id === entry.assertion_id);
+  if (!assertion || isTwoParty(assertion.fact_type)) return [];
+  const recordId = assertion.record_id;
+  const role = assertion.record_role;
+  if (typeof recordId !== "string" || recordId === "" || typeof role !== "string" || role === "") return [];
+  if (role === "absent" || recordBasisOf(assertion) === "absent") return [];
+  if (!mintedFromRecordAlone(personId, recordId, research, tree, startingPersonIds)) return [];
+  if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return [];
+  if (derivedNamesakePairs(tree, personId).length > 0) return [];
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  // The persona: its record_persona_id when the linked assertion carries one,
+  // else its role. A role several people share (a census `child`) names more
+  // than one person, and then which of them the stub is cannot be read here.
+  const personaId = typeof assertion.record_persona_id === "string" && assertion.record_persona_id !== ""
+    ? assertion.record_persona_id
+    : null;
+  const personaNames = pool.filter(
+    (a: any) =>
+      a.fact_type === "name" &&
+      sameRecord(a.record_id, recordId) &&
+      recordBasisOf(a) !== "absent" &&
+      (personaId !== null ? a.record_persona_id === personaId : a.record_role === role),
+  );
+  if (new Set(personaNames.map(assertedName).filter((n) => n !== "")).size !== 1) return [];
+  if (!personaNames.some((a: any) => nameAssertionNamesPerson(a, person))) return [];
+  return [
+    `person_evidence links '${entry.assertion_id}' to '${personId}' at '${tier}', but '${personId}' was ` +
+      `minted from this record's ${role}, so every one-party fact of that ${role} is linked to it at ` +
+      `'probable': the record names this person, and no other record corroborates them yet. ` +
+      (tier === "confident"
+        ? `'confident' opens once a second record is linked and materialized onto '${personId}'.`
+        : `Doubt about whether '${personId}' is someone already in the tree goes in the rationale, ` +
+          `not in the tier.`) +
+      ` Write it at 'probable'.`,
   ];
 }
 
@@ -10821,6 +10945,17 @@ function applyOne(
         ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
       );
     }
+    const raisedTier =
+      op.op === "update" &&
+      !!priorPair &&
+      (CONFIDENCE_RANK[resultEntry.confidence] ?? -1) > (CONFIDENCE_RANK[String(priorPair.confidence)] ?? -1);
+    if ((reRaising || raisedTier) && !attachmentLink) {
+      invariantErrors.push(
+        ...mintedStubTierInvariants(
+          resultEntry, research, tree, startingPersonIds, batchAssertions, reRaising ? "assert" : "raise",
+        ),
+      );
+    }
     // An attachment link is only ever superseded. Raising it in place would skip
     // same_person: the score gate checks an update only when it writes
     // `match_score`, `assertion_id` or `person_id`, so a confidence edit alone
@@ -11853,10 +11988,6 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
   });
   return out;
 }
-
-/** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
- *  the lock, or `"unavailable"` when that read failed. */
-export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
 
 /** The most collections one locality's fill leaves it holding, place and core
  *  national rows together. The largest place list in 18 surveyed places was New
@@ -13934,30 +14065,6 @@ export function planEntryLinkExpansion(
     }
   }
   return { derived, refusals };
-}
-
-/** How long a caller's write waits on the catalog before stamping null counts. A
- *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
- *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
- *  read keeps running and fills the cache for the next write. */
-export const CATALOG_READ_BUDGET_MS = 20_000;
-
-/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
- *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
-async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<"unavailable">((done) => {
-    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
-  });
-  const read = loadCatalog().catch((err: unknown) => {
-    if (isFsBudgetExhausted(err)) throw err;
-    return "unavailable" as const;
-  });
-  try {
-    return await Promise.race([read, timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /** `research_append` as an MCP caller reaches it. Assertions are written only by

@@ -113,9 +113,15 @@ export interface TreeGap {
   pendingHints: TreeGapHints | null;
 }
 
+// A returned hole carries the one research question for it: a single fact,
+// the person named, scoped by the hole's place and years.
+export interface ReturnedTreeGap extends TreeGap {
+  question: string;
+}
+
 export interface TreeGapsResult {
-  root: { personId: string; name: string };
-  gaps: TreeGap[];
+  root: { name: string };
+  gaps: ReturnedTreeGap[];
   scanned: {
     ancestorGenerations: number;
     descendantGenerations: number;

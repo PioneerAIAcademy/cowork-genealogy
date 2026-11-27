@@ -2465,6 +2465,27 @@ def create_mock_server(
                                 {**response, _advice_key: _ft_advice[_advice_key]}, _advice_key
                             )
 
+            # tree_gaps sets each hole's `question` with the compiled
+            # `withQuestions`, so a canned hole carries the question production
+            # would send and no fixture holds a copy.
+            if (
+                _name == "tree_gaps"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("gaps"), list)
+                and response["gaps"]
+            ):
+                response = {
+                    **response,
+                    "gaps": _call_compiled_pure(
+                        "utils/tree-gap-question.js",
+                        "withQuestions",
+                        [response["gaps"]],
+                        consequence="tree_gaps holes will carry no `question`",
+                        fallback=response["gaps"],
+                    ),
+                }
+
             # Production answers a projectless `planItemId` with a note rather
             # than dropping it (issue #4527), and that is the one branch the
             # `projectPath` gate above cannot reach. Without it a projectless

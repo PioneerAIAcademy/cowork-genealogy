@@ -19,8 +19,20 @@ An empty folder with no `research.json` afterwards is the right ending here, so 
 
 ## Expected result today
 
-**FAIL on `owner`, `forbidden_tools` and `stop`. Issue #2813 owns it** (items 3 and 4; the lead filed this
-very turn there on 2026-10-22). Measured 2026-11-16 in the eight-fixture panel run:
+PASS. `expected_owner` is `[null, "init-project"]`: the ID may be asked for by init-project or by the
+main thread itself, which `project_context`'s no-project answer tells to ask for it and create nothing.
+Measured 2026-11-26 in the whole-panel run, on the Haiku 5.5 low main thread:
+
+```
+PASS birth-no-pid-marie-brigard  expected=none|init-project  first=none  save=ok  stop=clean
+    units: none  extraction_append=0
+```
+
+The main thread called `project_context`, asked for Marie's FamilySearch ID, searched nothing and created
+nothing. It did the same on `main` 202730796 that day, which failed only `owner` while the field named
+init-project alone.
+
+Measured 2026-11-16, when it failed on `owner`, `forbidden_tools` and `stop` in the eight-fixture panel run:
 
 ```
 FAIL birth-no-pid-marie-brigard  expected=init-project  first=search-records  save=ok  stop=max_tool_calls  failed=[owner,forbidden_tools,stop]
