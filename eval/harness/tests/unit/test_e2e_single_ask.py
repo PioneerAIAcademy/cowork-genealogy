@@ -653,6 +653,78 @@ def test_read_before_search_is_not_graded_unless_the_fixture_sets_it():
     assert "read_before_search" not in g.checks
 
 
+# --- names_unsaved: a turn that saved no source says so ------------------------------
+
+UNSAVED = SingleAskSpec(
+    id="children-unsaved",
+    message="Find all the children of X.",
+    expected_owner="search-records",
+    expected_save={"section": "log", "tool": "record_search"},
+    names_unsaved=True,
+)
+
+
+def run_reply(text, final_research=SEARCHED, spec=UNSAVED):
+    g = grade(
+        tool_calls=[agent("search-records"), {**SEARCH, "thread": "sub"}], spec=spec,
+        starting_research=START, final_research=final_research, last_text=text,
+    )
+    return g, format_line(spec, g)
+
+
+@pytest.mark.parametrize("reply", [
+    "Nothing was extracted or attached.",
+    "I have not written any sources, assertions or namesake records.",
+    "Charles H. Phipps (b. 1854) is not yet saved to the project.",
+    "I did not save the 1854 candidate.",
+    "These two finds are unsaved.",
+    "I saved no records this turn.",
+    "None of them was saved.",
+    "No candidates were added.",
+    "The children aren't saved yet.",
+])
+def test_a_turn_that_saved_nothing_and_says_so_passes(reply):
+    g, line = run_reply(f"Found two sons in the 1860 household. {reply}\n\nContinue with `running the searches`?")
+    assert g.passed, line
+    assert g.checks["names_unsaved"][1].startswith("says what it did not save: ")
+
+
+@pytest.mark.parametrize("reply", [
+    "I read the attached census households and found two sons, Charles and George.",
+    "Mary E. is in the tree but not in any attached census household.",
+    "The 1860 household is not attached to his profile.",
+    "Charles was not recorded in the 1850 census.",
+])
+def test_a_turn_that_saved_nothing_and_does_not_say_so_fails(reply):
+    g, line = run_reply(f"{reply}\n\nContinue with `running the searches`?")
+    assert g.failed == ["names_unsaved"], line
+    assert "names_unsaved: saved no source and the reply does not say so" in line
+
+
+def test_a_turn_that_saved_a_source_passes_without_saying_anything():
+    saved = final(log=[{"id": "log_002", "tool": "record_search"}], sources=[{"id": "src_001"}])
+    g, line = run_reply("Found and saved the 1860 household.", final_research=saved)
+    assert g.passed, line
+    assert g.checks["names_unsaved"] == (True, "saved 1 source(s)")
+
+
+def test_names_unsaved_with_no_main_thread_text_fails():
+    g, line = run_reply(None)
+    assert g.checks["names_unsaved"] == (False, "no main-thread text"), line
+
+
+def test_names_unsaved_is_not_graded_unless_the_fixture_sets_it():
+    g, _ = run_reply("Found two sons.", spec=ATTACHED_FIRST)
+    assert "names_unsaved" not in g.checks
+
+
+def test_loader_carries_names_unsaved_and_refuses_a_non_bool(tmp_path):
+    _, spec = load_single_ask_fixture(_write(tmp_path, id="ok-unsaved", names_unsaved=True))
+    assert spec.names_unsaved is True
+    with pytest.raises(FixtureError, match="names_unsaved must be true or false"):
+        load_single_ask_fixture(_write(tmp_path, id="bad-unsaved", names_unsaved="yes"))
+
+
 def test_loader_carries_read_before_search_and_refuses_a_bad_name(tmp_path):
     _, spec = load_single_ask_fixture(_write(tmp_path, id="ok-read", read_before_search=["record_read"]))
     assert spec.read_before_search == ("record_read",)

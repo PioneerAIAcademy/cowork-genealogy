@@ -21,9 +21,13 @@ households
 were read is in the transcript, not graded. `required_tools` would not do: it passes a turn that searches first and
 reads afterwards.
 
+`names_unsaved: true` grades item 5's other half: a turn that saves no source says so in its reply, naming what it
+found and did not save or that it saved nothing. A turn that saved the child passes. The grader reads the turn's last
+main-thread text for that statement (`UNSAVED_STATEMENT` in `single_ask_grade.py`). Item 5's first half, a page the
+main thread reads and never logs, is the tool's job since `image_transcribe` logs its own reads.
+
 Not graded (printed as `must_not`): that the reply names the attached 1860 household rather than reporting it not
-found, and that a child found and not saved is named as not saved. Item 5's other half, a page the main thread
-reads and never logs, is the tool's job since `image_transcribe` logs its own reads.
+found.
 
 ## Expected result today
 

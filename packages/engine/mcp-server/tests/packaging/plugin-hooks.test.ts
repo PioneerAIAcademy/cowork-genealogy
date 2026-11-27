@@ -2006,6 +2006,21 @@ describe("agent_relay_note.py (PostToolUse, hosted planes only)", () => {
     );
   });
 
+  it.each(["search-records", "plugin:search-records", "genealogy-research:search-records"])(
+    "gives %s a note whose closing sentence says what the turn saved and what it found and did not save",
+    (subagent_type) => {
+      const note = runRelayNote(
+        JSON.stringify({ tool_name: "Agent", tool_input: { subagent_type }, tool_response: {} }),
+        true,
+      ).hookSpecificOutput.additionalContext;
+      expect(note).toMatch(/^That was search-records' report\. Give the researcher its text after the final `---` word for word, caveats included/);
+      expect(note).toContain(
+        "That sentence names what this turn saved and anything it found and did not save, the record and the " +
+          "person it was for, or says it saved no record.",
+      );
+    },
+  );
+
   it.each(["locality-guide", "genealogy-research:locality-guide"])(
     "gives %s its own note: its report and research-plan's both relayed word for word",
     (subagent_type) => {

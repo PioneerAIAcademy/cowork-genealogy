@@ -55,7 +55,7 @@ REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
 FIXTURE_KEYS = frozenset({
     *REQUIRED_KEYS, "is_plan_ask", "setup_units", "must_not", "forbidden_tools",
     "required_tools", "model", "caps", "tags", "blocked_tools", "ends_on_offer",
-    "known_issue", "read_before_search",
+    "known_issue", "read_before_search", "names_unsaved",
 })
 KNOWN_ISSUE_RE = re.compile(r"^#[1-9]\d*$")
 STARTING_FILES = ("starting-research.json", "starting-tree.gedcomx.json")
@@ -157,7 +157,7 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     known_issue = raw.get("known_issue", "")
     if not isinstance(known_issue, str) or (known_issue and not KNOWN_ISSUE_RE.match(known_issue)):
         raise FixtureError(f"{fixture_dir.name}: known_issue must be an issue number like \"#2813\"")
-    for key in ("is_plan_ask", "ends_on_offer"):
+    for key in ("is_plan_ask", "ends_on_offer", "names_unsaved"):
         if not isinstance(raw.get(key, False), bool):
             raise FixtureError(f"{fixture_dir.name}: {key} must be true or false")
     if any(alt.get("section") == "plans" and not alt.get("absent") for alt in alternatives) and not raw.get("is_plan_ask"):
@@ -213,6 +213,7 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         setup_units=tuple(setup),
         must_not=str(raw.get("must_not") or ""),
         ends_on_offer=raw.get("ends_on_offer", False),
+        names_unsaved=raw.get("names_unsaved", False),
         known_issue=known_issue,
         **tool_lists,
     )

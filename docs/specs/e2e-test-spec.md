@@ -2806,6 +2806,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
 | `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
 | `read_before_search` | no (`[]`) | bare tool names that must each be called without error before the turn's first search (`record_search`, `fulltext_search`, `image_search` or `person_search`), on any thread; in a turn that searched nothing, anywhere. `required_tools` asks only whether a call happened |
+| `names_unsaved` | no (false) | a turn that adds no `sources` row says so in its last main-thread text: what it found and did not save, or that it saved nothing |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
@@ -2853,8 +2854,8 @@ Memories as sources, so a new source shows nothing about the deliverable
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all eight hold, the
-seventh and eighth only when the fixture asks for them (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all nine hold, the
+seventh to ninth only when the fixture asks for them (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
@@ -2883,6 +2884,12 @@ namespace; it is stripped, as it is from spawned names):
 8. **`read_before_search`** — only with `read_before_search`: each named tool was
    called without error before the turn's first search (`SEARCH_TOOLS`), on any
    thread, or anywhere in a turn that searched nothing.
+9. **`names_unsaved`** — only with `names_unsaved: true`: a turn that adds no
+   `sources` row says so in that same last main-thread text, naming what it did not
+   save or that it saved nothing (`UNSAVED_STATEMENT`: a negated save verb, a
+   nothing-or-none subject, a save verb with a "no" object, or "unsaved"). A turn
+   that saved a source passes. "Attached" and "recorded" count only after a
+   nothing-or-none subject, since negated they describe the records, not the turn.
 
 **A missing final `research.json`.** From a seeded project it fails `save` and
 `no_research_job`. In an empty-folder fixture it means no new rows: it adds no

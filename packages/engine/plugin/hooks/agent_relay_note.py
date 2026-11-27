@@ -10,7 +10,10 @@ its `### Search implications` heading), so it gets its own note: the general one
 the main thread to its plain summary and dropped Sources consulted (ut_research_ia2,
 2 of 4 runs). So does init-project, whose report a bounded first message relays without
 its next-step sentence before running its deliverable in the same turn: the general note
-ended that turn after init-project, or kept the sentence. Only the hosted planes run Haiku and set `GENEALOGY_HOSTED_PLANE`;
+ended that turn after init-project, or kept the sentence. search-records' note makes the one
+sentence before the closing offer say what the turn saved and what it found and did not save:
+research/SKILL.md says so, and in 13 runs of a children ask (children-attached-households-
+benjamin-phipps, 2026-11-26 and 27) three replies did. Only the hosted planes run Haiku and set `GENEALOGY_HOSTED_PLANE`;
 Cowork and Desktop run their own model and get nothing (lead, 2026-11-24). Both
 harnesses add `RELAY_NOTE` themselves, as they measure the hosted main thread.
 
@@ -33,8 +36,15 @@ RELAY_NOTE = (
     "before it."
 )
 
-#: Agents whose relay rule is not "after the final `---`" (research/SKILL.md, "One step per turn").
+#: Agents whose relay rule is not "after the final `---`" (research/SKILL.md, "One step per turn"),
+#: or whose closing sentence must carry something.
 AGENT_NOTES = {
+    "search-records": (
+        "That was search-records' report. Give the researcher its text after the final `---` "
+        "word for word, caveats included, and add nothing to it but the turn's closing offer and "
+        "one sentence before it. That sentence names what this turn saved and anything it found "
+        "and did not save, the record and the person it was for, or says it saved no record."
+    ),
     "locality-guide": (
         "That was locality-guide's report. Keep its text after the final `---` word for "
         "word. When research-plan runs next in this turn, give the researcher both reports "

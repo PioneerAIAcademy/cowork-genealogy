@@ -15,7 +15,8 @@
     "record_read"
   ],
   "ends_on_offer": true,
-  "must_not": "No report that an attached census household could not be found (the 1860 household is attached, indexed as Benj Phillips); no child found and left unsaved without the reply saying so",
+  "names_unsaved": true,
+  "must_not": "No report that an attached census household could not be found (the 1860 household is attached, indexed as Benj Phillips)",
   "caps": {
     "wall_clock_seconds": 1800,
     "inactivity_seconds": 600,
