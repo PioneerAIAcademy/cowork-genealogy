@@ -721,16 +721,13 @@ The top-level `subject` is the same block for `subject_person_ids[0]`, parents
 included, for a brief the router writes itself (a bounded record ask has no
 plan item); the router leaves `parents` out on a parentage ask.
 
-`attachedSources [{id, title, recordId?}]` lists that subject's sources attached on
+`attachedSources [{id, title}]` lists that subject's sources attached on
 FamilySearch when the project was made: `project_create` keeps the read's own
 sources as tree `S2…` and points the person's, names' and facts' refs at them
 (`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
 (`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
 attached on FamilySearch afterwards is not in the tree. A record asked for that
-is already listed is not searched for (ut_research_021). A source whose tree `url`
-is a 1:1 persona ARK carries it as `recordId`, the form `record_read` takes; a 1:2
-record or 3:1 image link gets none. That is how a children or siblings ask reads the
-attached census households before it searches (`boundedRequest`, below).
+is already listed is not searched for (ut_research_021).
 
 A top-level `nextStep` (`FIRST_QUESTION_NEXT_STEP`) is present on a project with a
 subject, no question and a status other than `completed`. It names the steps that
@@ -756,11 +753,15 @@ after a final conclusion it must relay bare (`ut_research_rp1`). Without the chi
 example the router took "Find all the children of LTQD-HM6" in a new folder for a job
 and stopped after init-project (`children-attached-households-benjamin-phipps`,
 2026-11-26). A children or siblings ask starts from what is attached:
-before any search the router reads each census in `attachedSources` that has a
-`recordId` with `record_read`, names the household, and hands search-records the
-rest. A requested record that
-`attachedSources` already lists is read with `person_read` (and with `record_read`
-when it has a `recordId`) and named, not searched for. A research plan is left out: one asked for in a folder with no project ends
+before any search the router reads the person with `person_read`, reads each census
+among its sources with `record_read`, passing that source's `url` (a 1:1 persona ARK
+`record_read` takes as `recordId`), names the household, and hands search-records the
+rest. The record links are not in `attachedSources`: with a `recordId` on every
+attached source the router read the attached records itself, some of them more than
+once, instead of handing the review to source-evaluation
+(`evaluate-sources-moses-watrous`, 2026-11-26). A requested record that
+`attachedSources` already lists is read with `person_read` and named, not searched
+for. A research plan is left out: one asked for in a folder with no project ends
 after init-project (`research/SKILL.md`, "Bounded request or job"). Why a tool says
 it: on Haiku 5.5 low the router sent a record ask to question-selection, on a
 project with no question and after init-project in a new folder, searched for a

@@ -1175,12 +1175,11 @@ describe("project_context", () => {
       expect(BOUNDED_REQUEST_RULE).toContain("For a record, or for a person's children or siblings, that agent is search-records");
       expect(BOUNDED_REQUEST_RULE).toContain('its turn ends on search-records\' "Continue with …?" offer');
       expect(BOUNDED_REQUEST_RULE).toContain(
-        "A requested record that attachedSources already lists is not searched for: read it with person_read, and " +
-          "with record_read when it has a recordId, and name it.",
+        "A requested record that attachedSources already lists is not searched for: read it with person_read and name it.",
       );
       expect(BOUNDED_REQUEST_RULE).toContain(
-        "A children or siblings ask starts from what is attached: before any search, read each census in " +
-          "attachedSources that has a recordId with record_read({ projectPath, recordId })",
+        "A children or siblings ask starts from what is attached: before any search, read the person with " +
+          "person_read, then read each census among its sources with record_read, passing that source's url as recordId",
       );
     });
 

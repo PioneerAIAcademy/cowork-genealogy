@@ -204,24 +204,6 @@ describe("searchDelegations", () => {
     expect(attachedSources(tree, "I9")).toEqual([]);
   });
 
-  it("gives an attached source its recordId only when its url is a 1:1 persona ARK record_read takes", () => {
-    const tree = {
-      persons: [{ id: "I1", sources: ["S2", "S3", "S4", "S5"].map((ref) => ({ ref })) }],
-      sources: [
-        { id: "S2", title: 'Benj Phillips, "United States, Census, 1860"', url: "https://familysearch.org/ark:/61903/1:1:MHR9-JWT" },
-        { id: "S3", title: "1860 Federal Census, Agriculture Schedule", url: "https://familysearch.org/ark:/61903/3:1:3QHJ-1QDY-S9ZM-4" },
-        { id: "S4", title: "A record link", url: "https://familysearch.org/ark:/61903/1:2:QQ9N-2ZRB?view=index" },
-        { id: "S5", title: "A source with no url" },
-      ],
-    };
-    expect(attachedSources(tree, "I1")).toEqual([
-      { id: "S2", title: 'Benj Phillips, "United States, Census, 1860"', recordId: "ark:/61903/1:1:MHR9-JWT" },
-      { id: "S3", title: "1860 Federal Census, Agriculture Schedule" },
-      { id: "S4", title: "A record link" },
-      { id: "S5", title: "A source with no url" },
-    ]);
-  });
-
   it("returns nothing for a question with no active plan", () => {
     const r = { ...research([item("pli_001", 1)]), plans: [] };
     expect(searchDelegations("/p", r, TREE, r.questions[0], new Set())).toEqual([]);

@@ -58,11 +58,10 @@ export const BOUNDED_REQUEST_RULE =
   "this turn, after init-project when there is no project yet, and the turn never runs question-selection. " +
   "For a record, or for a person's children or siblings, that agent is search-records, and its turn ends " +
   "on search-records' \"Continue with …?\" offer. A requested record that " +
-  "attachedSources already lists is not searched for: read it with person_read, and with record_read when it " +
-  "has a recordId, and name it. A children or " +
-  "siblings ask starts from what is attached: before any search, read each census in attachedSources that " +
-  "has a recordId with record_read({ projectPath, recordId }), name the household it shows, then hand " +
-  "search-records the rest.";
+  "attachedSources already lists is not searched for: read it with person_read and name it. A children or " +
+  "siblings ask starts from what is attached: before any search, read the person with person_read, then " +
+  "read each census among its sources with record_read, passing that source's url as recordId, name the " +
+  "household it shows, and hand search-records the rest.";
 
 /** The closed set of lists `include` may name. A list, not `includeX` booleans,
  *  because the conclusion tree (#3032) adds to it (lead, 2026-11-09).
@@ -410,7 +409,7 @@ export type ProjectContextResult =
       boundedRequest: string;
       /** The first subject's sources attached on FamilySearch when the project was
        *  made, as project_create stored them in the tree. */
-      attachedSources?: { id: string; title: string; recordId?: string }[];
+      attachedSources?: { id: string; title: string }[];
       /** research.researcher_profile.narration_guidance verbatim. Every
        *  agent's Narration line reads it, and no other tool returns it (#3836). */
       narrationGuidance?: string;
@@ -947,7 +946,7 @@ export const projectContextSchema = {
     "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
     "pageReadings }). " +
     "subject is the first subject as a search agent's subject: block, a doubted given name already " +
-    "searched as its searchAs; attachedSources [{id, title, recordId?}] are that subject's sources attached on " +
+    "searched as its searchAs; attachedSources [{id, title}] are that subject's sources attached on " +
     "FamilySearch when the project was made. boundedRequest, on this answer and on a no_project one, is " +
     "the rule for routing a researcher message that asks for one thing. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +

@@ -114,21 +114,13 @@ export function subjectBlock(
 /** The tree source project_create writes first, for the Family Tree read itself. */
 const TREE_READ_SOURCE = /^FamilySearch Family Tree \(read from /;
 
-/** A 1:1 persona ARK in a tree source's url: the form `record_read` takes. A 1:2 record
- *  or 3:1 image link is not one. */
-const PERSONA_ARK = /ark:\/61903\/1:1:[A-Z0-9-]+/;
-
 /**
  * The sources attached to the subject on FamilySearch when the project was made:
  * project_create keeps the read's own sources as tree `S2…` and points the
  * person's, names' and facts' refs at them. The Family Tree source itself is
- * left out. A source attached on FamilySearch later is not in the tree. A source
- * whose url is a 1:1 persona ARK carries it as `recordId`, ready for `record_read`.
+ * left out. A source attached on FamilySearch later is not in the tree.
  */
-export function attachedSources(
-  tree: any,
-  subjectId: string,
-): { id: string; title: string; recordId?: string }[] {
+export function attachedSources(tree: any, subjectId: string): { id: string; title: string }[] {
   const person = arr(tree?.persons).find((p) => p && typeof p === "object" && p.id === subjectId);
   if (!person) return [];
   const refs = new Set<string>();
@@ -141,12 +133,7 @@ export function attachedSources(
   return arr(tree?.sources)
     .filter((s) => s && typeof s.id === "string" && refs.has(s.id) && typeof s.title === "string")
     .filter((s) => !TREE_READ_SOURCE.test(s.title))
-    .map((s) => {
-      const recordId = typeof s.url === "string" ? s.url.match(PERSONA_ARK)?.[0] : undefined;
-      return recordId
-        ? { id: s.id as string, title: s.title as string, recordId }
-        : { id: s.id as string, title: s.title as string };
-    });
+    .map((s) => ({ id: s.id as string, title: s.title as string }));
 }
 
 /** A fallback item runs only after its primary has run and found nothing. A page
