@@ -2916,8 +2916,8 @@ function mintedFromRecordAlone(
  *  other record yet; once a second record is linked and materialized onto the
  *  person it is no longer minted from this one alone). `mode` "assert" judges an
  *  append, a re-point or a revival; "raise" judges an update that raises the tier,
- *  which can only over-reach to `confident`. An update that lowers a tier is never
- *  judged. Silent with no starting-tree baseline, which cannot tell a pre-existing
+ *  which can only over-reach to `confident`. An in-place update that lowers a tier
+ *  is never judged; a re-point or revival is judged as a new link. Silent with no starting-tree baseline, which cannot tell a pre-existing
  *  person whose other refs no research source cites from one minted here (as
  *  `blankAddedPerson`). Silent for a person with a namesake (the namesake cap lowers links on
  *  purpose), a link declaring `core_identifier_conflict` (accepted only at
