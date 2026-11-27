@@ -1,4 +1,5 @@
 import type { Assertion, LogEntry, PersonEvidence, Source } from '@genealogy/schema'
+import { imageIdToViewerUrl } from '@genealogy/viewer-ui/familysearch-url'
 import { statusLabel } from '@genealogy/viewer-ui/status-label'
 import type { ResearchDocument } from '../contract'
 import { isLive, list, strings } from '../cards/kit/view'
@@ -177,6 +178,17 @@ function events(row: Record<string, unknown>): string[] {
   )
 }
 
+/** The FamilySearch page a saved page read points at, from the `source` it kept (#4582).
+ *  An imageId has no ARK, so build its film-viewer URL with half 1's converter; an ARK is
+ *  passed through for the display rules to link ("page image on FamilySearch"). An uploaded
+ *  file or memory artifact has neither, so the row stays text-only. */
+function pageSourceLink(source: unknown): string | undefined {
+  const s = (typeof source === 'object' && source !== null ? source : {}) as Record<string, unknown>
+  const imageId = text(s.imageId)
+  if (imageId) return imageIdToViewerUrl(imageId) ?? undefined
+  return text(s.ark) ?? undefined
+}
+
 /** One results file's rows, by the tool that wrote it. */
 export function resultsView(file: unknown): ResultsView {
   const sidecar = (typeof file === 'object' && file !== null ? file : {}) as Record<string, unknown>
@@ -223,7 +235,8 @@ export function resultsView(file: unknown): ResultsView {
     case 'image_transcribe': {
       const one = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown> | undefined
       const transcription = text(one?.transcription)
-      return { rows: transcription ? [{ label: 'The page, as read', detail: [], text: transcription }] : [] }
+      if (!transcription) return { rows: [] }
+      return { rows: [{ label: 'The page, as read', detail: [], text: transcription, familySearch: pageSourceLink(one?.source) }] }
     }
     case 'image_search':
       return {

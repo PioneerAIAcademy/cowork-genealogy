@@ -162,6 +162,17 @@ describe("the question's searches", () => {
     expect(questionSearches(research, 'q_001').map((e) => e.id)).toEqual(['log_001', 'log_002'])
   })
 
+  it('with no question, are the whole log — so a page read shows before any question exists (#4582)', () => {
+    const research = {
+      plans: [],
+      log: [
+        { id: 'log_001', plan_item_id: null, tool: 'image_transcribe', outcome: 'positive', external_site: null },
+        { id: 'log_002', plan_item_id: null, tool: 'record_search', outcome: 'negative', external_site: null }
+      ]
+    } as unknown as ResearchDocument
+    expect(questionSearches(research, undefined).map((e) => e.id)).toEqual(['log_001', 'log_002'])
+  })
+
   it('the first sentence of a note, cut at a word when long', () => {
     expect(firstSentence('Found her. Then more.')).toBe('Found her.')
     expect(firstSentence('In St. Louis (MO) she was found.')).toBe('In St. Louis (MO) she was found.')

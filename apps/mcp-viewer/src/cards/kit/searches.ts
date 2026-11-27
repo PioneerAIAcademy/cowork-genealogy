@@ -9,9 +9,14 @@ function handOffUrl(entry: LogEntry): string | null {
 
 /** The question's searches, as the engine's `ownedLogEntries` reads them: entries on an
  *  item of one of its plans, plus each later entry that closes one of their website
- *  hand-offs (the researcher's upload, which names no plan item). */
+ *  hand-offs (the researcher's upload, which names no plan item).
+ *
+ *  With no question — a project that has one but no person or plan yet, the world #4686
+ *  made ordinary — the card would otherwise read "No searches yet" after a page read. So
+ *  return the whole log: those loose searches ARE the project's searches, and every card
+ *  that has a question passes its id, so this branch only runs when there is none. */
 export function questionSearches(research: ResearchDocument, questionId: string | undefined): LogEntry[] {
-  if (!questionId) return []
+  if (!questionId) return list(research.log)
   const items = new Set<string>()
   for (const plan of list(research.plans)) {
     if (plan.question_id !== questionId) continue
