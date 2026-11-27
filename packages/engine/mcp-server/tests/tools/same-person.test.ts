@@ -366,7 +366,7 @@ describe("samePerson", () => {
         ok: false,
         status: 403,
         statusText: "Forbidden",
-        json: async () => ({ errorCode: "15", description: "This request was blocked by our security service" }),
+        text: async () => JSON.stringify({ errorCode: "15", description: "This request was blocked by our security service" }),
       });
 
       await expect(
