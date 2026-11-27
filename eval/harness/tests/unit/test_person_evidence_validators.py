@@ -2465,6 +2465,9 @@ def test_review_gaps_passes_a_review_naming_both():
     "The record names Thomas Flynn as father, from a non-present son-in-law "
     "informant. Thomas Flynn (I2) has no persona on this record and is not "
     "linked here. pe_005's match score is not disclosed.",
+    # A bare `pe_` as the link noun (scratch_2026-11-27_10-28-20 run 2).
+    "a_013 names Thomas Flynn as father. I2 has no `pe_` for a_013. " + "same_person returned 0.86 for a_013 against I1.",
+    "a_013 names Thomas Flynn as father. I2 has no pe_ for a_013. " + "same_person returned 0.86 for a_013 against I1.",
 ])
 def test_review_gaps_accepts_other_wordings(text):
     _gaps(text)
@@ -2536,6 +2539,10 @@ _SCORE_OK = "The match_score is null and the rationale never says why."
      "match_score"),
     (_I2_OK + "The score is 0.88, and the rationale neither cites it nor says why.",
      "match_score"),
+    # A bare `pe_` followed by a not-a-gap word is not a missing link.
+    ("I made no `pe_` edits to a_013 or to Thomas Flynn's record (I2). " + _SCORE_OK, "I2"),
+    ("I made no pe_ edits to a_013 or to Thomas Flynn's record (I2). " + _SCORE_OK, "I2"),
+    ("a_013 names Thomas Flynn. I2 has a `pe_` for a_013. " + _SCORE_OK, "I2"),
 ])
 def test_review_gaps_fails_a_review_missing_a_point(text, missing):
     with pytest.raises(AssertionError, match=missing):
@@ -2578,6 +2585,8 @@ _NAMES_I2_GAP = {
     "scratch_2026-11-19_16-58-04_run0",
     "scratch_2026-11-19_16-58-04_run1",
     "scratch_2026-11-19_16-58-04_run2",
+    # #4749 baseline: names the gap as "I2 has no `pe_` for a_013.", once missed.
+    "scratch_2026-11-27_10-28-20_run2",
 }
 # v2 and v6: Score discipline raised to 3, but Multi-person awareness was N/A
 # under the rubric of the day, and neither reply names the gap.
