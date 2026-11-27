@@ -38,7 +38,7 @@ All four tools take the same input shape:
 ```typescript
 {
   id: string;                                         // required
-  minConfidence?: 1 | 2 | 3 | 4 | 5;                  // default 2
+  minConfidence?: 1 | 2 | 3 | 4 | 5;                  // default 1 for person_record_matches, 2 for the others
   status?: Array<"accepted" | "pending" | "rejected">; // default all three
   includeSummary?: boolean;                           // default false
   count?: number;                                     // 1..50, default 20
@@ -102,9 +102,13 @@ tree person):
 
 ### `minConfidence` — optional
 
-Integer 1..5. Higher = stronger matches only. FS API default is 1; we
-default to **2** to filter out the weakest noise while still surfacing
-plausible candidates.
+Integer 1..5. Higher = stronger matches only. FS API default is 1.
+`person_record_matches` defaults to **1**: it lists the records a person has,
+and a record accepted at confidence 1 is still attached, so a floor of 2 left
+it out of "what records are attached" with nothing saying so. The other three
+tools default to **2** to filter out the weakest noise while still surfacing
+plausible candidates. A caller that wants only strong matches passes the floor
+(`search-hints` and `tree_gaps` pass 4).
 
 ### `status` — optional
 
@@ -366,7 +370,7 @@ Sent:
 GET https://sg30p0.familysearch.org/search/match/resolutions/match/matches?
   collection=records&
   id=ark:/61903/4:1:KNDX-MKG&
-  minConfidence=2&
+  minConfidence=1&
   status=accepted&status=pending&status=rejected&
   count=20
 ```
