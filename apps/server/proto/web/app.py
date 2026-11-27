@@ -2544,8 +2544,8 @@ def create_app(
             )
         except NoAccount:
             # Only a tier that serves the connector's sign-in can point at it.
-            how = (f"Add the {html.escape(pages.CONNECTOR_NAME)} connector in Claude and connect from there; "
-                   "that creates it." if app.state.connector is not None
+            how = (f"Install the plugin in Claude and connect {html.escape(pages.CONNECTOR_NAME)} from its "
+                   "Connectors tab; that creates it." if app.state.connector is not None
                    else "This server is not creating accounts. Ask the administrator.")
             return HTMLResponse(
                 f"There is no account here yet for <strong>{html.escape(email)}</strong>. {how}", status_code=403,
@@ -3366,7 +3366,7 @@ def create_app(
                 raise
             sign_in = ("familysearch" if auth.familysearch_configured()
                        else "dev" if auth.dev_login_enabled() else None)
-            return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
+            return HTMLResponse(pages.signed_out_page(sign_in=sign_in))
         linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
         projects = await _store(request).list_projects(user.id)
         # Upload links only where the page answers: uploads on and a minted id (a seeded
@@ -3374,7 +3374,7 @@ def create_app(
         uploadable = (frozenset(p["id"] for p in projects if UPLOAD_PAGE_ID_RE.fullmatch(str(p["id"])))
                       if app.state.uploads is True else frozenset())
         return HTMLResponse(pages.signed_in_page(
-            public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
+            email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
             deletion_code=auth.deletion_code(user.id), projects=projects,
             openrouter_linked=linked, uploadable=uploadable,
         ))

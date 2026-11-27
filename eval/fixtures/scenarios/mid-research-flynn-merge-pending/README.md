@@ -40,13 +40,14 @@ complex mutating operations (merge, create-person + relationship).
 
 ## Tests using this scenario
 
-- **`ut_tree_edit_006`** — consolidates I3's names and facts onto I4 without
-  deleting I3 (keep both conflicting birth dates).
 - **`ut_tree_edit_020`** — the user instructs the merge of I3 into I4; no edge
   joins them and no identity claim covers them, so the merge proceeds with the
   user's instruction quoted as its justification.
-- **`ut_tree_edit_010`** — create Mary as person I5 + ParentChild Thomas → Mary
-  per ps_003.
+- **`ut_research_m8t`** — research routes a confirmed merge.
+
+`ut_tree_edit_006` and `ut_tree_edit_010` moved to
+`mid-research-flynn-merge-concluded`, the same project with `q_003` and `q_004`
+resolved (#4849).
 
 ## Cross-references that a merge of I3 → I4 must rewrite
 
