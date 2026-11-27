@@ -355,7 +355,7 @@ def select_review_sample(
     # converged states, so the failing intermediate runs are not in the corpus
     # they came from. The cost therefore scales with how red a run is, which is
     # the intended incentive: a run that expensive to annotate should not be
-    # released.
+    # committed.
     picked.extend(
         tid for tid in ids if is_mandatory(by_id[tid]) and tid not in picked
     )

@@ -18,6 +18,15 @@
 //       holds) and what clears them, which §1 cannot.
 //   §3  planted, then cleared: the §2 edges also carry a source that is another
 //       record, so the gate must refuse none.
+//   §4  the audit arm (#4430), the §1 links with the questions re-marked:
+//       unmarked (every `audits_tree` removed) must judge nothing by the audit
+//       arm and refuse exactly what §1's role arms do;
+//       every question marked is the upper bound, read as the over-fire figure;
+//       questions whose text reads as an audit marked is the realistic bracket,
+//       which undercounts (premise checks are marked too and the text misses
+//       them). Final states see links made after each judged one, and most of
+//       their questions are resolved, so both marked brackets read low against
+//       write time.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -96,6 +105,7 @@ console.log(`measured at ${sha}; ${states.length} committed e2e final states wit
 floor(states.length > 0, "no committed e2e final state with a starting tree was read");
 
 // ─── §1 ─────────────────────────────────────────────────────────────────────
+const section1Refusals: string[] = [];
 {
   let relationships = 0;
   let sourced = 0;
@@ -109,7 +119,7 @@ floor(states.length > 0, "no committed e2e final state with a starting tree was 
   let applicable = 0;
   let relationship = 0;
   let subject = 0;
-  const refusals: string[] = [];
+  const refusals = section1Refusals;
   for (const s of states) {
     for (const e of liveStrong(s.research)) {
       judged += 1;
@@ -117,7 +127,7 @@ floor(states.length > 0, "no committed e2e final state with a starting tree was 
       if (!v) continue;
       applicable += 1;
       if (v.kind === "relationship") relationship += 1;
-      else subject += 1;
+      else if (v.kind === "subject") subject += 1;
       if (v.refused) refusals.push(`${s.slug} ${s.run} ${e.id} ${e.person_id} ${e.confidence} ${v.kind} record ${v.record}`);
     }
   }
@@ -170,6 +180,55 @@ floor(states.length > 0, "no committed e2e final state with a starting tree was 
   floor(reached > 0, "§2 reached no link");
   floor(refused > 0, "§2 refused nothing: the gate is inert on real record shapes");
   floor(clearedNew === reached, "§3 refused a link its edge's other-record source should clear");
+}
+
+// ─── §4 ─────────────────────────────────────────────────────────────────────
+{
+  const AUDIT_TEXT = /confirm or refute|attribut|correctly identified|misattrib/i;
+  const remark = (research: any, mark: (q: any) => boolean): any => ({
+    ...research,
+    questions: ((research?.questions ?? []) as any[]).map((q) => {
+      const { audits_tree: _drop, ...rest } = q ?? {};
+      return mark(q) ? { ...rest, audits_tree: true } : rest;
+    }),
+  });
+  const bracket = (label: string, mark: (q: any) => boolean) => {
+    let marked = 0;
+    let judged = 0;
+    let cleared = 0;
+    const refusals: string[] = [];
+    for (const s of states) {
+      const research = remark(s.research, mark);
+      marked += ((research.questions ?? []) as any[]).filter((q) => q.audits_tree === true).length;
+      for (const e of liveStrong(research)) {
+        const v = circularCorroborationVerdict(e, research, s.finalTree, s.baseline);
+        if (v?.refused) refusals.push(`${s.slug} ${s.run} ${e.id} ${e.person_id} ${e.confidence} ${v.kind} record ${v.record}`);
+        if (v?.kind !== "audit") continue;
+        judged += 1;
+        if (!v.refused) cleared += 1;
+      }
+    }
+    const audit = refusals.filter((r) => r.includes(" audit record "));
+    console.log(
+      `§4  ${label}: questions marked ${marked}; links the audit arm judged ${judged} (confident, on a marked question, ` +
+        `to a person whose starting tree cites the record), refused ${audit.length}, cleared ${cleared}; refused in all ${refusals.length}`,
+    );
+    for (const r of audit) console.log(`    REFUSED ${r}`);
+    return { judged, refusals };
+  };
+  console.log("");
+  const unmarked = bracket("unmarked", () => false);
+  floor(unmarked.judged === 0, "§4 unmarked: the audit arm judged a link on a question nothing marks");
+  // §1 judges the corpus's own markers, so its audit refusals are the only
+  // ones removing every marker may take away.
+  const roleRefusals = section1Refusals.filter((r) => !r.includes(" audit record "));
+  floor(
+    unmarked.refusals.length === roleRefusals.length && unmarked.refusals.every((r, i) => r === roleRefusals[i]),
+    "§4 unmarked refuses other than §1's role-arm refusals: removing the corpus's own markers changed a role verdict",
+  );
+  bracket("realistic (question text reads as an audit)", (q) => AUDIT_TEXT.test(String(q?.question ?? "")));
+  const upper = bracket("upper bound (every question marked)", () => true);
+  floor(upper.judged > 0, "§4 upper bound judged no link: the audit arm is inert on real record shapes");
 }
 
 if (floorsFailed > 0) {

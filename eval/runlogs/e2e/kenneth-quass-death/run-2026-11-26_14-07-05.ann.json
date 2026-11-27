@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "findings_hash": "f3612c5c5d21403deecc7426a0ad3daa9d4233e7a164cc37b63a5c0ce934771e",
+  "blind_bundle_digest": "acbaaaf133f43c6c3e75526c06799c0b9542d2b8e406ffe016d222346729fe7e"
+}

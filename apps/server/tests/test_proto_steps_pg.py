@@ -41,15 +41,12 @@ def _session(dsn: str) -> tuple[str, str]:
 
 def _turn(
     dsn: str, sid: str, pid: str, text: str, *, seq: int, step=None, mode=None,
-    wait_s: int = 0, tokens=(0, 0, 0, 0), auto: bool = False, completed: bool = True,
-    outcome=None,
+    wait_s: int = 0, tokens=(0, 0, 0, 0), completed: bool = True, outcome=None,
 ) -> str:
     """One turn, enqueued `seq` minutes apart so `enqueued_at` orders them, and
     closed `wait_s` after it was enqueued."""
     tid = "turn_" + uuid.uuid4().hex[:10]
     message = {"turn_id": tid, "session_id": sid, "project_id": pid, "text": text}
-    if auto:
-        message["auto"] = True
     sql(
         dsn,
         "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, completed_at, "
@@ -126,44 +123,39 @@ def test_the_reply_each_boundary_got_is_counted_per_step(pg_steps_dsn):
     sid, pid = _session(dsn)
     _turn(dsn, sid, pid, "go", seq=1, step="search-records", wait_s=5)
     _turn(dsn, sid, pid, "Continue.", seq=2, step="person-evidence", wait_s=5)
-    _turn(dsn, sid, pid, "Keep going.", seq=3, step="research-exhaustiveness", wait_s=5, auto=True)
+    _turn(dsn, sid, pid, "Search more.", seq=3, step="research-exhaustiveness", wait_s=5)
     _turn(dsn, sid, pid, "Wrap it up.", seq=4, step="proof-conclusion", wait_s=5)
 
     r = _report(dsn)
     # Each step is labelled by what came NEXT, not by its own message.
     assert r["replies"]["search-records"] == {"Continue.": 1}
-    assert r["replies"]["person-evidence"] == {"Keep going. (host)": 1}, r["replies"]
+    assert r["replies"]["person-evidence"] == {"Search more.": 1}, r["replies"]
     assert r["replies"]["research-exhaustiveness"] == {"Wrap it up.": 1}
     # The last turn has no successor: the run ended there.
     assert r["replies"]["proof-conclusion"] == {"none (run ended)": 1}
 
 
-def test_a_host_wrap_up_is_the_host_s_and_a_typed_phrase_reads_as_step_mode_reads_it(pg_steps_dsn):
-    """The host also sends "Wrap it up." (a second planning round), and that was being
-    counted as the researcher's choice. And `step_mode` ignores case and trailing
-    punctuation, so "Continue?" typed by hand is the Continue reply, not something else."""
+def test_a_typed_phrase_reads_as_step_mode_reads_it(pg_steps_dsn):
+    """`step_mode` ignores case and trailing punctuation, so "Continue?" typed by hand is
+    the Continue reply, not something else."""
     dsn = pg_steps_dsn
     sid, pid = _session(dsn)
-    _turn(dsn, sid, pid, "go", seq=1, step="research-plan", wait_s=5)
-    _turn(dsn, sid, pid, "Wrap it up.", seq=2, step="search-records", wait_s=5, auto=True)
-    _turn(dsn, sid, pid, "continue?", seq=3, step="person-evidence", wait_s=5)
+    _turn(dsn, sid, pid, "go", seq=1, step="search-records", wait_s=5)
+    _turn(dsn, sid, pid, "continue?", seq=2, step="person-evidence", wait_s=5)
 
     r = _report(dsn)
-    assert r["replies"]["research-plan"] == {"Wrap it up. (host)": 1}, r["replies"]
     assert r["replies"]["search-records"] == {"Continue.": 1}, r["replies"]
 
 
 def test_a_superseded_host_reply_is_not_credited_as_the_answer(pg_steps_dsn):
-    """A held `auto` reply the researcher's own message displaced closes
-    `superseded`. It was never sent and nobody saw it, so counting it would
-    report the boundary as answered by a reply that did not happen -- and would
-    hide the researcher's real one, which is the next row after it."""
+    """A turn closed `superseded` -- a host reply the retired automatic chain queued,
+    closed by the researcher's message or by 020_retire_auto_reply.sql -- never
+    ran. Counting it would report the boundary as answered by a reply that did not
+    happen, and hide the researcher's real one, the next row after it."""
     dsn = pg_steps_dsn
     sid, pid = _session(dsn)
     _turn(dsn, sid, pid, "go", seq=1, step="search-records", wait_s=5)
-    # The host queued "Keep going.", the researcher typed over it, and the held
-    # row was superseded.
-    _turn(dsn, sid, pid, "Keep going.", seq=2, auto=True, outcome="superseded")
+    _turn(dsn, sid, pid, "Keep going.", seq=2, outcome="superseded")
     _turn(dsn, sid, pid, "Wrap it up.", seq=3, step="proof-conclusion", wait_s=5)
 
     r = _report(dsn)
@@ -171,15 +163,16 @@ def test_a_superseded_host_reply_is_not_credited_as_the_answer(pg_steps_dsn):
 
 
 def test_a_typed_message_is_not_counted_as_a_reply_phrase(pg_steps_dsn):
-    """Exact-phrase only, as `step_mode` reads it on the way in. A message that
-    merely contains "keep going" started no job turn."""
+    """Exact-phrase only, as `step_mode` reads it on the way in. "Keep going." is no
+    reply phrase (#4791), so it counts as typed, as a steer does."""
     dsn = pg_steps_dsn
     sid, pid = _session(dsn)
     _turn(dsn, sid, pid, "go", seq=1, step="search-records", wait_s=5)
-    _turn(dsn, sid, pid, "keep going but skip the census", seq=2, step="search-records", wait_s=5)
+    _turn(dsn, sid, pid, "Keep going.", seq=2, step="search-records", wait_s=5)
+    _turn(dsn, sid, pid, "continue but skip the census", seq=3, step="search-records", wait_s=5)
 
     r = _report(dsn)
-    assert r["replies"]["search-records"] == {"typed (something else)": 1, "none (run ended)": 1}
+    assert r["replies"]["search-records"] == {"typed (something else)": 2, "none (run ended)": 1}
 
 
 def test_a_wrapup_turn_is_held_out_of_the_per_step_figures(pg_steps_dsn):

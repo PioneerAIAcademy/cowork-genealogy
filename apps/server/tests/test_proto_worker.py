@@ -194,8 +194,6 @@ class FakeCursor:
             return (self.conn.claim_epoch,)
         if "RETURNING message" in sql:  # the 1b claim
             return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
-        if "AND completed_at IS NULL) AS queued" in sql:  # HAS_QUEUED_SQL
-            return (self.conn.held_row_waiting,)
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
             return (self.conn.turn_active,)
         if "SELECT sdk_session_id FROM sessions" in sql:
@@ -241,9 +239,6 @@ class FakeConn:
         self.sdk_session_id = sdk_session_id
         self.usage = usage
         self.research: dict | None = None  # the documents row the Stop hook reads
-        # A held row already waiting: `queue_auto_reply` refuses the host's reply
-        # because the researcher's own message is next (re-review 9).
-        self.held_row_waiting = False
         self.tool_call_count = 0
         # turns.zero_progress_attempts (005_resume_guard.sql): bumped by the RETURNING
         # update, and zeroed by the reset the first tool call of an attempt issues.
@@ -306,11 +301,7 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     conn = FakeConn()
     claimed = worker.claim(conn, TURN, 3)
     assert claimed == worker.Claim(TURN["message"], 2)
-    # The claim, plus section A2's reset of a stale "Keep going" state when the turn is
-    # the researcher's own -- which is not an insert either.
-    [(sql, params)] = [e for e in conn.executed if e[0].startswith("UPDATE turns")]
-    assert not [e for e in conn.executed if e[0].startswith("INSERT")]
-    assert [e[0] for e in conn.executed[1:]] == [worker.RESET_AUTO_REPLY_ON_CLAIM_SQL]
+    [(sql, params)] = conn.executed
     assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
     assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
             "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
@@ -1220,9 +1211,9 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.include_partial_messages is True
     assert opts.max_buffer_size == options.MAX_BUFFER_BYTES > 1024 * 1024
     assert opts.resume is None and opts.session_id is None
-    assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1", "auto-memory off; \"1\" is OFF, \"0\" would force it ON"
     assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
@@ -1317,6 +1308,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
+    assert opts.env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
     off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
     assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
@@ -3073,12 +3065,13 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
         theirs = pricing.MODEL_RATES[model]
         assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
-        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(spend.rates_for(model)["cache_read"]), model
         assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
-        # And a million 1-hour write tokens through the proxy's meter cost exactly the
-        # harness's write rate, which is the 1-hour one.
-        assert spend.price_usd((0, 10**6, 0, 0), model, cache_write_1h=10**6) == \
-            pytest.approx(theirs["cache_creation_input_tokens"]), model
+        # And 100K 1-hour write tokens through the proxy's meter cost exactly the harness's
+        # write rate, which is the 1-hour one (100K: one call no longer is a long prompt).
+        assert spend.price_usd((0, 10**5, 0, 0), model, cache_write_1h=10**5) == \
+            pytest.approx(theirs["cache_creation_input_tokens"] / 10), model
+    assert spend.LONG_PROMPT == pricing.LONG_PROMPT, "the two tables bill long prompts differently"
 
 
 def test_1h_writes_are_clamped_to_the_write_total_and_default_to_none():
@@ -3103,8 +3096,24 @@ def test_a_call_is_priced_at_its_own_models_rates():
     assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
     assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
     assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.price_usd((0, 0, 1_000_000, 0), "claude-sonnet-5-5") == pytest.approx(0.10)
     assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
     assert spend.rates_for(None) is spend.PRICE_PER_MTOK
+
+
+def test_a_haiku_5_5_call_over_100k_prompt_tokens_bills_five_times():
+    """The prompt is input + cache write + cache read; over 100,000 every class bills 5x,
+    the 1-hour write premium included. Output does not count toward the threshold."""
+    from app.agent import spend
+
+    at = (1_000, 9_000, 90_000, 500_000)
+    base = spend.price_usd(at, "claude-haiku-5-5", cache_write_1h=9_000)
+    assert base == pytest.approx((1_000 * 0.10 + 9_000 * 0.20 + 90_000 * 0.01 + 500_000 * 0.50) / 1e6)
+    over = (1_001, 9_000, 90_000, 500_000)
+    assert spend.price_usd(over, "claude-haiku-5-5-20260101", cache_write_1h=9_000) == \
+        pytest.approx(5 * (base + 0.10 / 1e6))
+    assert spend.price_usd(over, "claude-haiku-4-5") == \
+        pytest.approx((1_001 * 1 + 9_000 * 1.25 + 90_000 * 0.1 + 500_000 * 5) / 1e6)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
@@ -4675,6 +4684,7 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     tool result, the same text the alpha and the Cowork hook carry."""
     opts = _options(config_dir=str(tmp_path))
     assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
+    assert options.ROUTING_GUIDANCE in opts.system_prompt["append"]
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
@@ -6330,7 +6340,7 @@ def test_an_odd_tool_name_never_raises_out_of_the_wrapper(turn_env, monkeypatch)
     assert summary["outcome"] == "ok"
 
 
-# ── A/A2: what the close reads off the project and the turn's last line ───────────
+# ── A: what the close reads off the project and the turn's last line ─────────────
 
 _CONCLUDE = "Continue with writing the conclusion?"
 _RESEARCH = {"questions": [{"id": "q_1", "status": "in_progress", "question": "Who were her parents?"}]}
@@ -6350,69 +6360,34 @@ def test_the_turn_offers_its_reply_options_on_turn_done(turn_env):
     turn_env["conn"].research = _RESEARCH
     _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
     payload = _turn_done_payload(turn_env["conn"])
-    assert payload["options"] == ["Continue.", "Keep going."], payload
+    assert payload["options"] == ["Continue."], payload
     # Not Wrap it up: Continue already concludes. Not Search more: the question has no
     # `resources_spent` stop, so this is not the low-risk choice.
 
 
 def test_a_turn_that_makes_no_offer_carries_no_options_key(turn_env):
-    """Left OUT rather than empty, as `reply_follows` is -- a step that ended on a
-    question for the researcher must render no buttons at all."""
+    """Left OUT rather than empty -- a step that ended on a question for the researcher
+    must render no buttons at all."""
     turn_env["conn"].research = _RESEARCH
     _run(turn_env, [_init(), _text("x"), _result(text="I found three. What was her maiden name?")])
     assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
-def test_a_turn_the_host_answers_says_so_and_offers_no_buttons(turn_env):
-    """`reply_follows` (plan A2). The frame says a host reply is coming, so a
-    client can keep its composer busy and render no buttons for a turn the
-    researcher is not being asked to answer. It was described in a worker comment
-    and in the workbench spec and emitted nowhere.
-
-    **Nothing reads it yet.** ChatPane clears busy on every `turn_done` and does
-    not look at this field, so emitting it is the contract catching up with its
-    own documentation, not a behaviour change in the browser.
-
-    The two fields have to agree: a host-answered turn carries `reply_follows`
-    and NO `options`, because the choice has already been made. Buttons there
-    would flicker for the moment between this frame and the reply landing, and a
-    researcher quick enough to click one would send a second message into a run
-    already moving."""
+def test_a_keep_going_message_runs_one_step_and_gets_no_automatic_reply(turn_env):
+    """#4791: "Keep going." is an ordinary message. The turn runs as `step`, its offer
+    gets the researcher's own buttons, and the host queues nothing for them: no held
+    turn row, no transcript message and no `reply_follows` on the frame."""
     turn_env["conn"].research = _RESEARCH
-    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn = {**TURN, "message": {**TURN["message"], "text": "Keep going."}}
     turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
                                     _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     payload = _turn_done_payload(turn_env["conn"])
-    assert payload.get("reply_follows") is True, payload
-    assert "options" not in payload, payload
-
-
-def test_reply_follows_is_absent_when_the_reply_was_refused(turn_env):
-    """Re-review 9. The field used to be set by the CALLER, from the reply it
-    planned. `queue_auto_reply` refuses when a held row already exists (the
-    researcher typed) or Stop is set, and `complete()`'s lock-timeout path
-    retries with the same `detail` and no reply at all -- so the browser was
-    told a reply was coming when none was. It now comes from what was queued."""
-    turn_env["conn"].research = _RESEARCH
-    turn_env["conn"].held_row_waiting = True
-    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
-    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
-                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
-    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
-    payload = _turn_done_payload(turn_env["conn"])
+    assert payload["options"] == ["Continue."], payload
     assert "reply_follows" not in payload, payload
-
-
-def test_a_turn_nobody_answers_for_carries_no_reply_follows_key(turn_env):
-    """Left OUT rather than false, as `options` is. A frame with neither field is
-    a turn that ended with nothing further coming -- which is what the browser
-    needs to stop being busy."""
-    turn_env["conn"].research = _RESEARCH
-    _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
-    payload = _turn_done_payload(turn_env["conn"])
-    assert "reply_follows" not in payload, payload
-    assert payload["options"] == ["Continue.", "Keep going."], payload
+    executed = turn_env["conn"].executed
+    assert not [sql for sql, _ in executed if "INSERT INTO turns" in sql], "the host queued a reply"
+    assert not [sql for sql, _ in executed if "'user_msg'" in sql], "the host wrote a message for the researcher"
 
 
 def test_search_more_appears_only_at_the_low_risk_choice(turn_env):
@@ -6456,12 +6431,12 @@ def test_an_unfinished_project_still_closes_ok(turn_env):
     assert _run(turn_env, _good())["outcome"] == "ok"
 
 
-def test_a_project_with_no_research_json_yet_still_offers_continue_and_keep_going(turn_env):
+def test_a_project_with_no_research_json_yet_still_offers_continue(turn_env):
     """A brand-new project reads no document and that is not a failure: there is no
     current question, so Wrap it up does not apply, but the step still has a next one."""
     turn_env["conn"].research = None
     _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
-    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue."]
 
 
 def test_a_store_that_has_gone_down_closes_ok_with_no_options(turn_env, monkeypatch):
@@ -6477,34 +6452,6 @@ def test_a_store_that_has_gone_down_closes_ok_with_no_options(turn_env, monkeypa
     assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
-def test_a_turn_the_host_answered_offers_the_researcher_nothing(turn_env):
-    """Under "Keep going" the choice is already made. Buttons would flicker between
-    this frame and the reply landing, and a researcher quick enough to click one
-    would send a SECOND message into a run already moving."""
-    turn_env["conn"].research = _RESEARCH
-    # The turn's OWN message is what `step_mode` reads, and only "keep going." puts
-    # the turn in `job` mode -- the mode in which a reply is due at all.
-    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
-    turn_env["client"] = None
-    state = turn_env
-    state["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
-                                 _info(AGENTS, worker.EXPECTED_SKILLS), state)
-    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
-    payload = _turn_done_payload(turn_env["conn"])
-    assert "options" not in payload, payload
-    queued = [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
-    assert queued, "the host should have queued its reply instead"
-
-
-def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
-    """The other side of the same branch: an ordinary `step` turn is the researcher's
-    to answer, so the buttons are the whole point."""
-    turn_env["conn"].research = _RESEARCH
-    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
-    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
-    assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
-
-
 def _parallel_spawn_halt(after_hints: str) -> list[Any]:
     """clark-parents, 2026-11-02: a hints step, then two searches spawned in ONE message.
     Both reach the gate before the model sees a deny, so the second halts and the turn
@@ -6517,32 +6464,22 @@ def _parallel_spawn_halt(after_hints: str) -> list[Any]:
 
 def test_a_step_halt_still_offers_the_step_it_named(turn_env):
     """Without the halt's offer the turn closed `ok` with no offer line: no buttons for the
-    researcher, and under "Keep going" no reply, so the run just ended."""
+    researcher, so the run just ended."""
     turn_env["conn"].research = _RESEARCH
     summary = _run(turn_env, _parallel_spawn_halt("Now dispatching both searches in parallel."))
     assert summary["outcome"] == "ok"
     assert _text_events(turn_env["conn"])[-1] == "Continue with running the searches?"
-    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going.", "Wrap it up."]
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Wrap it up."]
 
 
 def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
     """A model that wrote its own offer before the halted spawn has asked its question;
     a second one from the halt would ask two, which may disagree."""
     turn_env["conn"].research = _RESEARCH
-    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records to people in this project?"))
     texts = _text_events(turn_env["conn"])
-    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records to people in this project?"
     assert "Continue with running the searches?" not in texts
-
-
-def test_a_keep_going_turn_the_step_gate_halted_is_answered(turn_env):
-    turn_env["conn"].research = _RESEARCH
-    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
-    turn_env["client"] = FakeClient(_parallel_spawn_halt("Now dispatching both searches in parallel."),
-                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
-    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
-    assert [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql], \
-        "the host should have answered the halted turn's offer"
 
 
 def test_a_turn_the_gate_only_denied_keeps_its_own_last_line(turn_env):
@@ -6557,11 +6494,9 @@ def test_a_turn_the_gate_only_denied_keeps_its_own_last_line(turn_env):
     assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
-def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatch):
-    """On the hosted planes "Keep going" means the HOST answers each boundary, not that
-    the boundary goes away (plan, mode detection). So the gate enforces `step` while the
-    turn itself stays `job` -- the mode `next_auto_reply` keys the reply on, and the one
-    a redelivered attempt must read back from `turns.mode`."""
+def test_a_keep_going_turn_is_bounded_and_records_step(turn_env, monkeypatch):
+    """#4791: a typed "Keep going." is one step on every plane. The gate and
+    `turns.mode` both read `step`, so the turn's second step is denied."""
     real = worker.load_step_boundary()
     built: list[dict] = []
 
@@ -6585,23 +6520,8 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
     assert built and built[0]["mode"] == "step", built
     gate = real.StepGate(**built[0])
     assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
-    assert recorded == [("research-plan", "job")], recorded
+    assert recorded == [("research-plan", "step")], recorded
     assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
-
-
-def test_plan_auto_reply_accepts_a_research_argument():
-    """A wrong signature here fails SILENTLY (plan_auto_reply swallows every
-    exception and ends the run with a log line) -- this is the regression test for
-    that failure mode, not a behavioral test of next_auto_reply itself."""
-    real = worker.load_step_boundary()
-    conn = FakeConn()
-    turn = {**TURN}
-    research = {"questions": [{"id": "q_001", "status": "in_progress"}]}
-    decision = worker.plan_auto_reply(
-        conn, real, turn, turn_mode="job", outcome="ok",
-        offered="research-exhaustiveness", research=research, log=lambda **kw: None,
-    )
-    assert decision is not None
 
 
 def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
@@ -6631,3 +6551,184 @@ def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
     assert "CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END" in sql
     assert "COALESCE(mode, %s)" in sql
     assert params == ("init-project", "search-records", "step", "t1")
+
+
+# ── the host posts each new search link (issue #4660) ─────────────────────────────────
+#
+# The worker's arm of `continue_policy.hand_off_texts`; the alpha's, and the trigger's
+# edges, are in `test_hand_off_links.py`. Real SDK messages run through the worker's own
+# `map_message` loop; a callable in the stream is the subagent's write landing between
+# its Agent call and the call's result.
+
+_LINK_URL = "https://www.findagrave.com/memorial/search?firstname=Thomas&lastname=Hagell_x"
+
+
+def _link_hand_off(log_id: str, url: str = _LINK_URL) -> dict:
+    return {"id": log_id, "tool": "external_site", "outcome": "partial", "plan_item_id": "pli_001",
+            "external_site": {"site": "findagrave", "url_generated": url, "capture_received": False}}
+
+
+class _ScriptedClient(FakeClient):
+    async def receive_response(self):
+        for m in self.messages:
+            if isinstance(m, ToolCall):
+                await self._fire_pretool(m)
+                continue
+            if callable(m):
+                m()
+                continue
+            yield m
+
+
+def _agent_use(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolUseBlock
+    return AssistantMessage(content=[ToolUseBlock(id=use_id, name="Agent",
+                                                  input={"subagent_type": "search-external-sites"})], model="m")
+
+
+def _agent_result(use_id: str = "toolu_s1"):
+    from claude_agent_sdk import ToolResultBlock, UserMessage
+    return UserMessage(content=[ToolResultBlock(tool_use_id=use_id, content="the agent's report")])
+
+
+def _run_links(turn_env, monkeypatch, research: dict, script: list) -> tuple[list[str], list[dict]]:
+    reads: list[dict] = []
+
+    def read(conn, project_id):
+        reads.append(json.loads(json.dumps(research)))
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    turn_env["client"] = _ScriptedClient(script, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    return _text_events(turn_env["conn"]), reads
+
+
+def _links_only(texts: list[str]) -> list[str]:
+    return [t for t in texts if t.startswith("Search to run")]
+
+
+def test_the_worker_posts_a_link_its_delegation_opened(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result(), _text("The probate file turned up."), _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)], texts
+    assert texts.index(hand_off_link_text(_LINK_URL)) < texts.index("The probate file turned up."), (
+        "posted at the agent's result, before the model's own words")
+
+
+def test_the_worker_does_not_post_a_link_open_before_the_turn(turn_env, monkeypatch):
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(), _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
+def test_a_worker_turn_with_no_delegation_reads_only_at_the_close(turn_env, monkeypatch):
+    """The worker's rule (COMPLETED_LABELLED_SQL): no turn-start read. The close's one read
+    is the only one."""
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [_init(), _text("Hello."), _result()])
+    assert len(reads) == 1
+    assert _links_only(texts) == []
+
+
+def test_a_delegation_that_never_returned_posts_its_link_at_the_close(turn_env, monkeypatch):
+    """The search agent's result never came back (the patron's Stop is one way), but its
+    link was logged: the close's read posts it, and nothing posts it twice."""
+    research = {"project": {"status": "active"}, "log": []}
+    texts, reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _result(num_turns=2),
+    ])
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert len(reads) == 2, "the seed and the close; the sweep reuses the close's read"
+
+
+def test_an_attempt_that_lost_its_grant_lock_posts_its_link_before_it_raises(turn_env, monkeypatch):
+    """The redelivery seeds afresh and would read this attempt's link as already open, so
+    the attempt posts it before raising GrantLockLost."""
+    research = {"project": {"status": "active"}, "log": []}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    turn_env["lock_held"] = lambda asked: asked < 2
+    turn_env["client"] = _ScriptedClient([
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "search-external-sites"}), _agent_use(),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        ToolCall(), ToolCall(), _result(num_turns=2),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(worker.GrantLockLost):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    from app.agent.continue_policy import hand_off_link_text
+    assert _links_only(_text_events(turn_env["conn"])) == [hand_off_link_text(_LINK_URL)]
+
+
+def test_a_worker_seed_that_raises_is_not_retried_by_a_later_call(turn_env, monkeypatch):
+    """/code-review round 3: the first delegation's pretool read raises (not a store error),
+    so its seed never runs. Left unseeded, the second delegation's pretool would seed after
+    the first agent logged log_041, and that link would never be posted. It seeds empty."""
+    from app.agent.continue_policy import hand_off_link_text
+    url_b = "https://www.ancestry.com/search/?name=Thomas_Hagell"
+    research = {"project": {"status": "active"}, "log": []}
+    calls = {"n": 0}
+
+    def read(conn, project_id):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ValueError("a malformed document")
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    delegate = {"subagent_type": "search-external-sites"}
+    turn_env["client"] = _ScriptedClient([
+        _init(), ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s1"),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        _agent_result("toolu_s1"),
+        ToolCall("Agent", tool_input=delegate), _agent_use("toolu_s2"),
+        lambda: research["log"].append(_link_hand_off("log_045", url_b)),
+        _agent_result("toolu_s2"), _result(num_turns=3),
+    ], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert _links_only(_text_events(turn_env["conn"])) == [
+        hand_off_link_text(_LINK_URL), hand_off_link_text(url_b)]
+
+
+def test_a_status_reading_that_raises_after_a_good_read_keeps_the_seed(turn_env, monkeypatch):
+    """Fresh-session review: a proof-conclusion delegation wants both the seed and the
+    status reading from one read. When the read succeeds and the status reading raises, the
+    turn keeps its real seed, so a link open before the turn is not posted again."""
+    def raises(research):
+        raise AttributeError("'str' object has no attribute 'get'")
+
+    monkeypatch.setattr(worker, "status_before_call", raises)
+    research = {"project": {"status": "active"}, "log": [_link_hand_off("log_001")]}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall("Agent", tool_input={"subagent_type": "proof-conclusion"}), _agent_use(),
+        _agent_result(), _result(num_turns=2),
+    ])
+    assert _links_only(texts) == []
+
+
+def test_a_worker_write_that_lands_before_the_stream_reads_the_call_is_posted(turn_env, monkeypatch):
+    """The seed is in `pretool`, which runs before the tool does: a fast main-thread
+    `research_log_append` whose row is in the store before the worker reads its `tool_use`
+    is still new at its result."""
+    from claude_agent_sdk import ToolResultBlock, ToolUseBlock, UserMessage
+    from app.agent.continue_policy import hand_off_link_text
+    tool = "mcp__genealogy__research_log_append"
+    research = {"project": {"status": "active"}, "log": []}
+    texts, _reads = _run_links(turn_env, monkeypatch, research, [
+        _init(), ToolCall(tool),
+        lambda: research["log"].append(_link_hand_off("log_041")),
+        AssistantMessage(content=[ToolUseBlock(id="toolu_l1", name=tool, input={})], model="m"),
+        UserMessage(content=[ToolResultBlock(tool_use_id="toolu_l1", content="logged")]),
+        _result(num_turns=2),
+    ])
+    assert _links_only(texts) == [hand_off_link_text(_LINK_URL)]
+    assert texts.count(hand_off_link_text(_LINK_URL)) == 1

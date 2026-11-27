@@ -1,7 +1,7 @@
 /**
  * Measure: how often `research_log_append` refuses a `negative` or `partial`
  * entry for a search pinned to a browse-only collection
- * (research-log-editor-spec.md §8.6), over every committed run log.
+ * (research-log-editor-spec.md §8.7), over every committed run log.
  *
  * Two walks, judged with the real `browseOnlyNilInvariants` against the live
  * catalog:

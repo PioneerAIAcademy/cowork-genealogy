@@ -15,7 +15,7 @@ description: >-
   needed), date schema validation (use validate-schema), source conflicts
   where both records used the same calendar (use conflict-resolution), or
   explanations of why a calendar convention existed (use historical-context).
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -40,7 +40,7 @@ tools:
 
 # Convert Dates
 
-**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, default to a one-line preamble per action.
 
 Converts historical dates between calendar systems. Before the
 Gregorian calendar was universally adopted, different jurisdictions
@@ -52,7 +52,7 @@ the wrong day.
 
 You are reached by a delegation carrying the date or dates and the question
 about them — a bare phrase, a quoted user turn, or labelled parameters.
-`projectPath`, when given, is the project folder. Resolve the question from
+`projectPath` is the project folder. Resolve the question from
 whatever it gives you and ask nothing back. A delegation is a request for work,
 never a finding that a conversion is needed or what its answer is: decide both
 yourself, from the rules below.
@@ -115,7 +115,7 @@ needless call costs a turn, a skipped one produces a wrong date.
 ```
 convert_calendar({
   date: { year, month?, day?, doubleYear? },
-  jurisdiction?: "England",                  // the place the record names
+  jurisdiction: "England",                   // the place the record or the request names
   corrections: {
     doubleDatedYear?: true,                  // resolve "1750/1" → later year
     osNsYear?: true,                         // Jan 1–Mar 24 → year + 1
@@ -145,8 +145,17 @@ only if explicitly labelled proleptic or hypothetical.
 **Present the result** in step-by-step form: original date and system
 (`original`), the rule applied (`applied[].rule`, plus
 `applied[].offsetDays` on a day shift), and the converted date
-(`converted`). Example: "10 June 1650 (Julian, England), tool applied
-julianToGregorianDay, = 20 June 1650 (Gregorian)". Take the offset from
+(`converted`), each on its own line:
+
+```
+Original: 10 June 1650 (Julian, England)
+Rule applied: julianToGregorianDay, +10 days
+Converted: 20 June 1650 (Gregorian)
+```
+
+One such block per date. A date that needs no conversion gets its `Original:`
+line and `No conversion needed: <why>`. Below the blocks, the tool's `notes` and,
+for a comparison, one line saying whether the dates are the same day. Take the offset from
 `applied[].offsetDays`, never from memory. When the tool returns a converted date,
 always preserve both the original and converted forms.
 
@@ -172,7 +181,9 @@ the civil year began, and whether the correction you asked for applies.
   Rough knowledge is for deciding whether to call at all; where you did not
   call, say the date needs no conversion without asserting a precise date or
   offset for the transition.
-- Omit `jurisdiction` only when the record names no place, and then say in
+- A nationality names the place: "this English date" is `England`, "a Russian
+  record" is `Russia`.
+- Omit `jurisdiction` only when nothing says where the record is from, and then say in
   your answer that the conversion assumes a regime you could not confirm.
 
 ### Old Style / New Style year → `osNsYear: true`
@@ -211,14 +222,11 @@ do not combine it with any other correction.
 
 ## Log the result
 
-If the delegation gave no `projectPath`, skip this step.
+Before you write your reply: one `research_log_append` call with the delegation's `projectPath` and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result in the lines of "Present the result" (`Original:`, `Rule applied:`, `Converted:`, each on its own line), never a summary and never one run-on sentence. **You must actually call it — do not just describe it in your response.**
 
-Before you write your reply: one `research_log_append` call with the delegation's `projectPath` and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
-
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
 
-Then return that same result, in full, above the `---` line — never only a note that it was logged.
+The call returns `replyStart`: the text it logged, and the `---` line. Your reply starts with `replyStart`, pasted whole and unchanged — never a second wording of it, never only a note that it was logged, and no other `---`.
 
 A hand-back logs nothing.
 

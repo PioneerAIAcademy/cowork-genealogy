@@ -124,11 +124,16 @@ def _argv(service: dict) -> str:
     return " ".join(str(p) for p in parts)
 
 
+# A secret whose blank is its off state, so it cannot be a required ${VAR:?}. The shape rule
+# pins where it may sit and what it may be; the web tier refuses seeding on with no key.
+BLANK_WHEN_OFF = {"OPENROUTER_SEED_KEY"}
+
+
 def password_violations(doc: dict) -> list[str]:
     out = []
     for name, service in doc["services"].items():
         for key, value in _env(service).items():
-            if SECRET_NAME.search(key) and not REQUIRED_VALUE.fullmatch(value):
+            if SECRET_NAME.search(key) and key not in BLANK_WHEN_OFF and not REQUIRED_VALUE.fullmatch(value):
                 out.append(f"default password: {name} {key} is not a bare ${{VAR:?}}")
             match = DSN_PASSWORD.search(_required_as_name(value))
             if match and not re.fullmatch(r"<\w+>", match.group(1)):
@@ -191,6 +196,18 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
         if web.get(key) != f"${{{key}:-}}":
             out.append(f"sign-in: web's {key} comes from the env file")
+    # The tool server's build id is the commit this clone deploys, told to its image.
+    build_args = (services["tools"].get("build") or {}).get("args") or {}
+    for key in ("GIT_SHA", "GIT_DIRTY"):
+        if build_args.get(key) != f"${{{key}:-}}":
+            out.append(f"build id: tools' build must take {key} from malachi.sh")
+    # Seeding at first connect is the lead's switch, off unless the env file says true.
+    for key in ("OPENROUTER_SEED_AT_CONNECT", "OPENROUTER_SEED_KEY"):
+        if web.get(key) != f"${{{key}:-}}":
+            out.append(f"seeding: web's {key} comes from the env file, blank by default")
+        for name, service in services.items():
+            if name != "web" and key in _env(service):
+                out.append(f"seeding: only web holds {key}, not {name}")
     # Both tiers print the issuer, and a client compares the two; the web tier's is also
     # what registers Claude's sign-in routes at all (#3997).
     for name, env in (("tools", tools), ("web", web)):
@@ -369,6 +386,19 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "tools' issuer from a second setting", _set_env("tools", "OAUTH_ISSUER", "${OAUTH_ISSUER:-}")),
     ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
     ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
+    ("shape", "a tool server that cannot say which commit it is", _set("tools", "build", {
+        "context": "../../../..", "dockerfile": "apps/server/proto/tools/Dockerfile"})),
+    ("shape", "a build id fixed in the file", _set("tools", "build", {
+        "context": "../../../..", "dockerfile": "apps/server/proto/tools/Dockerfile",
+        "args": {"GIT_SHA": "abc1234", "GIT_DIRTY": "${GIT_DIRTY:-}"}})),
+    ("shape", "seeding the env file cannot turn on", _drop_env("web", "OPENROUTER_SEED_AT_CONNECT")),
+    ("shape", "seeding on for everyone", _set_env("web", "OPENROUTER_SEED_AT_CONNECT", "true")),
+    ("shape", "seeding with no key to give", _drop_env("web", "OPENROUTER_SEED_KEY")),
+    ("shape", "the seed key on the tool server", _set_env("tools", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:-}")),
+    ("shape", "the seed key on the edge", _set_env("edge", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:-}")),
+    ("shape", "a seed key written into the file", _set_env("web", "OPENROUTER_SEED_KEY", "sk-or-v1-x")),
+    ("shape", "a required seed key, which would refuse a stack that seeds nobody",
+     _set_env("web", "OPENROUTER_SEED_KEY", "${OPENROUTER_SEED_KEY:?set in the env file}")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
                                          "postgresql://postgres:${POSTGRES_PASSWORD:?x}@postgres:5432/genealogy")),
@@ -447,7 +477,8 @@ def test_the_template_carries_no_secret_and_no_port():
                   if line and not line.startswith("#"))
     for key in ("POSTGRES_PASSWORD", "DML_PASSWORD", "MINIO_ROOT_PASSWORD", "SESSION_SECRET", "FS_TOKEN_ENC_KEY",
                 "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "FS_REDIRECT_URI",
-                "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY",
+                "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY", "OPENROUTER_SEED_AT_CONNECT",
+                "CHECK_EMAIL",
                 "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         assert values[key] == "", key
     assert values["UPLOADS_ENABLED"] == "false"
@@ -456,8 +487,12 @@ def test_the_template_carries_no_secret_and_no_port():
     assert "EDGE_PORT" not in values
 
 
-def test_no_service_sees_the_seed_key():
-    assert "OPENROUTER_SEED_KEY" not in COMPOSE.read_text(encoding="utf-8")
+def test_only_the_web_tier_holds_the_seed_key_and_only_from_the_env_file():
+    """The web tier encrypts it onto a user its consent creates, when the env file turns
+    that on. It already holds FS_TOKEN_ENC_KEY, which decrypts every stored copy."""
+    services = _load()["services"]
+    holders = {name: _env(s)["OPENROUTER_SEED_KEY"] for name, s in services.items() if "OPENROUTER_SEED_KEY" in _env(s)}
+    assert holders == {"web": "${OPENROUTER_SEED_KEY:-}"}
 
 
 def test_malachi_sh_knows_the_development_keys():
@@ -1192,6 +1227,158 @@ def test_malachi_openrouter_fails_when_the_seed_does(first_run):
     fake = Path(fake_env["PATH"].split(os.pathsep)[0]) / "docker"
     fake.write_text("#!/bin/sh\ncat >/dev/null\nexit 1\n", encoding="utf-8")
     assert _run(["openrouter"], {**fake_env, "EMAIL": "a@example.test"}).returncode != 0
+
+
+# ── signed-in tool calls (signed_in_check.py; its pg half is test_malachi_signed_in_check_pg.py) ──
+
+
+@pytest.fixture
+def check_module():
+    sys.path.insert(0, str(SERVER / "proto"))
+    sys.path.insert(0, str(MALACHI))
+    try:
+        import signed_in_check
+        yield signed_in_check
+    finally:
+        sys.path.remove(str(MALACHI))
+        sys.path.remove(str(SERVER / "proto"))
+
+
+def _check_main(module: Any, monkeypatch: pytest.MonkeyPatch, lines: list[tuple[bool, str]]) -> tuple[int, list[tuple]]:
+    calls: list[tuple] = []
+
+    def run(dsn: str, url: str, email: str, sha: str | None = None) -> list[tuple[bool, str]]:
+        calls.append((dsn, url, email, sha))
+        return lines
+
+    monkeypatch.setenv("PG_DSN", "unused")
+    monkeypatch.setattr(module, "run", run)
+    return module.main(["--email", "a@example.test", "--url", "http://tools:8787/mcp", "--sha", "abc1234567"]), calls
+
+
+def test_the_signed_in_check_prints_malachi_shs_lines_and_passes_when_every_call_did(check_module, monkeypatch, capsys):
+    status, calls = _check_main(check_module, monkeypatch, [(True, "signed in: project_list (2 projects)"),
+                                                           (True, "signed in: auth_status (FamilySearch session live)")])
+    assert status == 0 and calls == [("unused", "http://tools:8787/mcp", "a@example.test", "abc1234567")]
+    assert capsys.readouterr().out == ("  ok    signed in: project_list (2 projects)\n"
+                                       "  ok    signed in: auth_status (FamilySearch session live)\n")
+
+
+def test_one_failed_signed_in_call_fails_the_check_and_is_named(check_module, monkeypatch, capsys):
+    status, _calls = _check_main(check_module, monkeypatch, [(True, "signed in: project_list (2 projects)"),
+                                                            (False, "signed in: auth_status answered an error: boom")])
+    assert status == 1
+    assert "  FAIL  signed in: auth_status answered an error: boom\n" in capsys.readouterr().out
+
+
+def test_a_tool_error_fails_its_line_and_quotes_what_the_tool_said(check_module):
+    class Block:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    class Result:
+        def __init__(self, text: str, is_error: bool) -> None:
+            self.content, self.isError = [Block(text)], is_error
+
+    failed = check_module.line("project_context", Result('{"error":"The matcher setting must be ..."}', True), "(opens)")
+    assert failed == (False, 'signed in: project_context answered an error: {"error":"The matcher setting must be ..."}')
+    assert check_module.line("project_list", Result('{"projects":[]}', False), "(0 projects)") == \
+        (True, "signed in: project_list (0 projects)")
+    long = check_module.line("auth_status", Result("x" * 5000, True), "")
+    assert len(long[1]) < 400, "an error is quoted, not dumped"
+    # A connector caller's refusal has no error mark: a `refused` note over the body.
+    refused = Result('{"refused":"Refused, and nothing was written or changed.","ok":false,"errors":["x"]}', False)
+    assert check_module.line("project_context", refused, "(opens)")[0] is False
+    assert check_module.line("auth_status", Result('{"refused":"Refused.","error":"bogus is not a parameter"}', False), "")[0] is False
+    # And an unmarked ok:false is not a pass either: the no-project answer to a listed project.
+    assert check_module.line("project_context", Result('{"ok":false,"reason":"no_project"}', False), "(opens)")[0] is False
+    assert check_module.line("auth_status", Result('{"loggedIn":false,"buildId":"0.1.0+dev"}', False), "(ended)")[0] is True
+
+
+def test_the_build_id_must_name_the_deployed_commit(check_module):
+    sha = "0123456789abcdef0123456789abcdef01234567"
+    assert check_module.build_line("0.1.0+2026-11-26.01234567", sha) == \
+        (True, "signed in: the tools report build 0.1.0+2026-11-26.01234567")
+    assert check_module.build_line("0.1.0+2026-11-26.01234567.dirty", sha)[0] is True
+    # What every build reported before the image was told its commit.
+    assert check_module.build_line("0.1.0+dev", sha) == \
+        (False, "signed in: the tools report build 0.1.0+dev, not commit 01234567")
+    assert check_module.build_line("0.1.0+2026-11-25.89abcdef", sha)[0] is False, "another commit's build"
+    assert check_module.build_line(None, sha) == (False, "signed in: the tools report build nothing, not commit 01234567")
+
+
+def test_the_signed_in_lines_use_the_scripts_own_prefixes():
+    """main() prints what ok() and bad() print, so the check's output reads as one list."""
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    assert "ok() { printf '  ok    %s\\n' \"$*\"; }" in script
+    assert "printf '  FAIL  %s\\n' \"$*\"" in script
+
+
+def test_the_full_check_ends_with_the_signed_in_calls_and_every_deploy_runs_it():
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    body = script.split("\ncmd_check() {\n", 1)[1].split("\n}\n", 1)[0]
+    assert body.rstrip().splitlines()[-3].strip() == "check_signed_in"
+    makefile = (SERVER.parents[1] / "Makefile").read_text(encoding="utf-8")
+    deploy = makefile.split("\nmalachi-deploy:", 1)[1].split("\n\n", 1)[0]
+    assert "$(MAKE) malachi-check" in deploy
+
+
+@needs_bash
+def test_with_no_check_email_the_signed_in_calls_are_skipped_out_loud(first_run):
+    path, env = first_run
+    result = _run(["check-signed-in"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 0, result.stderr
+    assert "skip  signed-in tool calls: CHECK_EMAIL is blank" in result.stdout
+    assert "signed_in_check.py" not in result.stdout
+
+
+@needs_bash
+def test_with_a_check_email_the_calls_run_in_the_web_image_against_the_tool_server(first_run):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("CHECK_EMAIL=\n", "CHECK_EMAIL=a@example.test\n"),
+                    encoding="utf-8")
+    result = _run(["check-signed-in"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 0, result.stderr
+    assert re.search(r"signed_in_check\.py --email a@example\.test --url http://tools:8787/mcp --sha [0-9a-f]{40}\b",
+                     result.stdout), result.stdout
+    assert " web python " in result.stdout and "skip" not in result.stdout
+
+
+@needs_bash
+def test_a_signed_in_check_that_fails_fails_the_whole_check(first_run):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("CHECK_EMAIL=\n", "CHECK_EMAIL=a@example.test\n"),
+                    encoding="utf-8")
+    fake_env = _with_fake_docker(path.parent, env)
+    fake = Path(fake_env["PATH"].split(os.pathsep)[0]) / "docker"
+    fake.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    result = _run(["check-signed-in"], fake_env)
+    assert result.returncode == 1
+    assert "FAIL  signed-in tool calls: not all passed" in result.stdout
+
+
+# ── the tool server's build id ──────────────────────────────────────────────
+
+
+def test_the_tool_servers_image_stamps_the_commit_after_the_compile():
+    """With no .git in the build context the id read `0.1.0+dev` for every commit, so a
+    tester could not say which build they hit. After tsc, so a new commit reruns one cheap
+    layer and not the compile."""
+    dockerfile = (SERVER / "proto" / "tools" / "Dockerfile").read_text(encoding="utf-8")
+    build_stage = dockerfile.split("\nFROM ")[1]  # the first stage, after the header comment
+    assert build_stage.startswith("node:") and " AS build" in build_stage.splitlines()[0]
+    compile_at = build_stage.index("npx tsc")
+    for needed in ("COPY scripts/build-stamp.mjs scripts/write-build-info.mjs /stamp/", "ARG GIT_SHA=", "ARG GIT_DIRTY=",
+                   'RUN BUILD_SHA="$GIT_SHA" BUILD_DIRTY="$GIT_DIRTY" node /stamp/write-build-info.mjs --engine /app'):
+        assert needed in build_stage and build_stage.index(needed) > compile_at, needed
+    assert "COPY --from=build /app/build ./build" in dockerfile
+
+
+def test_malachi_sh_tells_the_build_the_commit_and_whether_the_tree_was_clean():
+    script = (MALACHI / "malachi.sh").read_text(encoding="utf-8")
+    assert 'GIT_SHA=$(git -C "$ROOT" rev-parse HEAD)' in script
+    assert '[ -z "$(git -C "$ROOT" status --porcelain)" ] || GIT_DIRTY=true' in script
+    assert "export GIT_SHA GIT_DIRTY EDGE_CONF_SHA" in script
 
 
 # ── project_export ───────────────────────────────────────────────────────────

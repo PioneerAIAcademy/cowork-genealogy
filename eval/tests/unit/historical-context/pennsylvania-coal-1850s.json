@@ -5,11 +5,20 @@
     "name": "Pennsylvania anthracite coal mining context",
     "type": "positive",
     "description": "Different region/topic from the seed test (which covered Irish famine migration). Tests whether the skill can produce coal-industry context for a Schuylkill County ancestor whose occupation was mining.",
-    "tags": ["pennsylvania", "coal-mining", "occupation", "1850s", "direct-arm"]
+    "tags": [
+      "pennsylvania",
+      "coal-mining",
+      "occupation",
+      "1850s",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?",
-    "scenario": null
+    "delegation": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
@@ -33,7 +42,8 @@
     "wiki-search-anthracite-coal-records",
     "wikipedia-search-any",
     "wiki-search-any",
-    "wiki-read-any"
+    "wiki-read-any",
+    "place-search-any"
   ],
   "judge_context": [
     "Should connect the historical context to research-useful facts — for example, that mine accident records and union records exist as additional source classes, or that ethnic composition of mining communities (Welsh, Irish, German) varied over time and may affect FAN research",

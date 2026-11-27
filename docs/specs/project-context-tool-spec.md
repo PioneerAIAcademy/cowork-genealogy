@@ -40,14 +40,15 @@ part 2a branch, `owedFindings` included). This tool computes it host-side.
 ## 2. The tool
 
 ```typescript
-project_context({ projectPath: string, include?: ("persons" | "sources" | "status")[] })
+project_context({ projectPath: string, include?: ("persons" | "sources" | "status" | "historicalContext")[] })
 ```
 
 `include` is an optional closed list naming the larger lists to return; an
 unknown value is refused with `{ ok: false, errors, buildId }`, the errors
-reading `include must be an array of: persons, sources, status.` `"persons"` and
-`"sources"` are returned whether or not they are passed (§3, "A projection, not
-a query language"); `"status"` is returned only when named (§2.9).
+reading `include must be an array of: persons, sources, status, historicalContext.`
+`"persons"` and `"sources"` are returned whether or not they are passed (§3, "A
+projection, not a query language"); `"status"` (§2.9) and `"historicalContext"`
+(§2.2.3) are returned only when named.
 
 Read-only: opens `research.json` and `tree.gedcomx.json`, writes nothing,
 never creates a `.bak`. Not a validator — malformed *entries* are skipped
@@ -62,8 +63,9 @@ repo's identifier-casing rule).
 **Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
 is left out, at every level of the answer. Two nulls are answers and stay:
 `questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
-(`research_query` would refuse the section). Every `?` below is a key this rule
-can drop:
+(`research_query` would refuse the section). One exception in meaning: a
+person's `spouseIds`, `parentIds` and `childIds` (see `persons`). Every `?` below
+is a key this rule can drop:
 
 ```typescript
 {
@@ -72,6 +74,7 @@ can drop:
   projectStatus?: string,                // research.project.status
   objective?: string,                    // research.project.objective, verbatim
   subjectPersonIds?: string[],           // research.project.subject_person_ids
+  familyReadPersonIds?: string[],        // persons whose own family was read from Family Tree
   narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
   subscriptions?: string[],              // researcher_profile.subscriptions
   openQuestions?: [{
@@ -99,10 +102,24 @@ can drop:
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
+    searches?: [{                        // only when nextStep is a search — §2.2.1
+      planItemId: string,
+      agent: "search-records" | "search-images" | "search-full-text"
+           | "search-hints" | "search-external-sites",
+      prompt: string,                    //   the whole delegation, sent as it is
+    }],
+    spawn?: {                            // only when nextStep names one of these — §2.2.2
+      agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking"
+           | "research-exhaustiveness" | "proof-conclusion",
+      prompt: string,
+    },
   }],
   persons?: [{
     id: string,                          // I id (or FS id)
-    name?: string,                       // preferred names entry, "Given Surname"
+    name?: string,                       // preferred names entry, "Given Surname";
+                                         //   the surname alone when
+                                         //   unsupportedGivenName flags the given name
+    pid?: string,                        // FamilySearch ID, from a tree-person ark or URL only
     gender?: string,
     spouseIds?: string[],                // I ids joined by a Couple edge
     parentIds?: string[],                // I ids that are this person's ParentChild parent
@@ -164,6 +181,7 @@ can drop:
     ref: string,                         // the staged or logged page
     index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
+      date?: string, place?: string,     // present when the assertion has one (a date equal to value is not repeated): a page that agrees on them sends nothing
     }],
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
@@ -176,7 +194,10 @@ can drop:
     name: string,
     uploaded: string,                    // ISO, from the store's mtime
     hasText: boolean,                    // uploads/<name>.txt exists
+    readWith?: "sidecar_read" | "image_transcribe",  // stored projects only — §2.7
+    ref?: string,                        // with readWith "sidecar_read": the ref to pass
   }],
+  uploadsAre?: "files" | "stored",       // how the uploads are read; absent when none — §2.7
   uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
   signInUrl?: string,                    // FamilySearch sign-in page; only for a connector caller whose session has ended — §2.8
 }
@@ -200,14 +221,23 @@ Projection rules:
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; absent when the
-  person has no names). The `S` ids a person cites are not here: `tree_query`
+  person has no names). `pid` is `treePidOfArk(ark)` (`src/utils/ark.ts`),
+  uppercased: the FamilySearch ID of a tree-person (`4:1:`) ark or a tree person
+  URL. A record or image ark, or no ark, leaves it out, so a record persona id is
+  never shown as a PID. The `S` ids a person cites are not here: `tree_query`
   returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's
   spouse, a `ParentChild` edge lists the parent and child on each other. The
   type matches on its last segment, so the bare name and the
   `http://gedcomx.org/` URI both count; an edge missing either end is
-  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  skipped; ids are distinct, in edge order. For a person not in
+  `familyReadPersonIds`, an absent or short one of these three keys means
+  **not copied** from Family Tree, never none: their parents, other spouses (a
+  stepparent) and children may be there. The description tells the model to say
+  "not in the project tree", to say what Family Tree records only after
+  `person_read` of the person's `pid` and only when the answer depends on it,
+  and that a person with no `pid` cannot be checked. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
   (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.
@@ -273,10 +303,31 @@ Projection rules:
   only). Every skill's Narration line and `search-external-sites` read these;
   no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
   facts are not here: `tree_query` serves them, so this projection does not grow for callers
-  that never need them.
+  that never need them. Lead ruling 2026-11-23: the PID exception to
+  "No identifiers" belongs in the main thread's house text (`HOUSE_RESEARCHER_PROFILE`)
+  only; the plugin agents' "No identifiers" return-contract lines stay unchanged.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
+- **`familyReadPersonIds`** — the tree persons whose own spouses, parents and
+  children were read from Family Tree, in tree order; absent when none were
+  (`familyReadPersonIds` in `src/utils/import-baseline.ts`, shared with
+  `tree_query`). The project tree is a copy of part of Family Tree: the person
+  `project_create` read and that person's own family. A relative in the copy
+  (a spouse, a parent) had their own family left out, so a missing relative of
+  theirs is not copied, not none. The person read is the one whose `ark` carries
+  the PID in the first Family Tree source titled `FamilySearch Family Tree (read
+  from <Name>, <PID>)`, which `buildFromStagedRead` writes as `S1`. Only the
+  first counts, so a later source given the same title (any writer can set a
+  title) cannot add a person whose family was never read. It is anchored on that
+  read and never on `subjectPersonIds`: `project_create` takes the subjects
+  separately, so a caller can make the wife the subject while her family was
+  never read, and a two-subject project has two subjects but one read. A tree
+  with no such source (a project made before the title named the read, or most
+  eval fixtures) gives no key: no person's family is known to have been read in
+  full. A person added later by `tree_edit` or a merge is never in it unless
+  its `ark` carries that PID. One top-level key, rather than a flag on every
+  `persons` row, because `persons` is the largest part of the answer.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
@@ -300,6 +351,10 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+A `framed` question's `nextStep` is `research-plan`, or `locality-guide, then
+research-plan` while the project has no `localities` entry at all: the plan
+step opens with the locality survey.
+
 `critiqued` is reached only when the user asked for a gps-mentor review — the
 mentor is not on the default `/research` path — so it records that a critique
 exists and gates nothing. A superseded verdict does not count — a
@@ -312,6 +367,7 @@ outranks **a conflict that wants evidence already planned**, which
 outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank unlinked kin, which outranks
+a partly-linked question that never reaches the subject, which outranks
 **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
@@ -423,6 +479,31 @@ across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run a
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
 
+**Some links, none reaching the subject, also routes to person-evidence.** When a
+question that is not resolved and has no proof summary has some assertions with a
+link (`countsForLinkedRung`) and some without, no such link names a
+`subject_person_ids` entry, and at least one subject is a tree person, its
+`nextStep` reads `person-evidence — N of this question's M assertions are unlinked
+and none of its links reaches the project subject (<ids>)`. This is the household
+record linked around the subject: in `flynn-household-skeleton` the 1850 census
+head is linked and the six children are not, and Patrick is not in that household.
+"Any unlinked assertion" would send the 53 partly-linked concluded households to
+person-evidence; requiring the subject to be unreached is what separates this case.
+It sits directly below the unlinked-kin rung, so it changes no step that rung sets,
+and it stops once every assertion is linked or rejected against a subject
+(`rejected_links`), so it cannot loop. It is silent until a
+subject is a tree person, as the kin rung is. Measured 2026-11-23 (`npx tsx
+dev/measure-question-state-signals.ts --list`, 568 question entries across 222
+scenarios and 252 e2e final states): it fires on 3 scenario questions and 4 e2e
+question-runs, and is in `nextStep` on 2 of each; the rest are masked by the kin
+rung, `flynn-marriage-only-no-child-link` among them. Spot-checked: pe7 and
+`norwegian-patronymic-nil-recovery` (the subject's own birth unlinked, both parents
+linked) are intended; `maria-vazsan-spouse/run-2026-10-30_13-39-29` is real (the
+links go to four "Maria Vázsan" stubs, none to the subject); `jimmie-jewel-neal/run-2026-07-30_23-05-46`
+q_002 is not (the question is about Martha Wood, who is linked). The false route is
+accepted for the same reason as the kin rung's (lead, 2026-11-19): it is rare and
+costs one hop.
+
 **Before any evidence exists, the next search is named by its repository.** A
 `planned` or `searching` question whose log holds a positive or partial entry no
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
@@ -430,7 +511,17 @@ capture has not come back does not count, because it is an open hand-off. Otherw
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
 decides, skipping any item that waits only on the researcher's upload — the same
 skip the rest of this ladder applies, so a question whose only open item is waiting
-names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
+names no search — and any `in_progress` item (not `fs_hints`) whose own log entries
+are all `negative`. search-records leaves an item `in_progress` after a search that
+found nothing, for re-planning; picking it again re-ran the same searches turn after
+turn (kenneth-quass-death, 2026-11-26: one item nine times). The same picker names the
+search for a conflict that wants new evidence. Once nothing is left to search, a
+question holding such items reports `research-plan — dispose of <ids> (searched,
+nothing found), then research-exhaustiveness and proof-conclusion`: research-plan's
+Dispose mode closes each as `completed`, because every gate reads `in_progress` as
+unfinished work (the declaration, `hasOpenWork`, the unsettled-conflict ending, the
+new-question gate). With none left it reports `research-exhaustiveness, then
+proof-conclusion` (lead, 2026-11-26). A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
@@ -544,8 +635,9 @@ Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `proof-conclusion` resolves the question it concludes, in the same batch as the
 summary (its step 7), and leaves the question open only when its preconditions gate
 blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
-resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
-naming its latest summary. That arm sits below the conflict arms, so while the
+resolved reports `proof-conclusion — concluded while blocked: re-conclude this
+question's proof summary`. It names no summary id, as `owedFindings` names none (§2.9).
+That arm sits below the conflict arms, so while the
 blocking conflict is still open the question routes to `conflict-resolution` instead,
 and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
@@ -576,6 +668,95 @@ projection. Two consequences worth stating so they are not "tidied" later:
 The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
+
+
+### 2.2.1 `searches` — the search step, written out
+
+When a row's `nextStep` starts `search-records`, `search-hints` or
+`search-external-sites`, the row carries `searches`: one entry per open item of
+the question's active plan, lowest `sequence` first, at most four
+(`src/utils/search-delegations.ts`). Each names the agent and the prompt the
+router sends it unchanged:
+
+```
+projectPath: <projectPath>
+questionId: q_001
+planId: pl_001
+planItemId: pli_002
+plan_item: {<the stored item, verbatim>}
+subject: {"subjectId","names","birth","death","parents"}
+```
+
+- **Agent.** `search-hints` for an `fs_hints` item; `search-external-sites`
+  for one whose repository is not FamilySearch (`routesToFamilySearch`);
+  `search-full-text` for "FamilySearch (full-text)" and `search-images` for
+  "FamilySearch (images)", the lanes research-plan writes into `repository`;
+  else `search-records`. The lane is read from the field, never guessed from the
+  rationale's words: "her baptism is unindexed, so search the death index" is a
+  name search. A plan written before the markers has none, and the router reads
+  a browse-only item's rationale itself (research/SKILL.md, the browse row).
+- **Left out:** an item waiting on the researcher's upload (`awaitingUser`), an
+  item in `exhaustedImageGroups`, and a fallback whose primary is still open or
+  found something. A fallback runs once every entry its primary logged is
+  `negative`.
+- **A hints item at the head of the plan goes alone**, with a `personId:` line
+  read from its rationale and no subject: its verdicts can save the searches
+  behind it.
+- **`subject`** is `subject_person_ids[0]` as the tree holds it, on a
+  search-records, search-images or search-full-text entry. `parents` is left out when the question
+  asks about a parent (`parents?|parentage|father|mother`, or `son|daughter|child
+  of`, the same words as the research suite's validator) and when the tree gives
+  more than two. A given name `unsupportedGivenName` flags is replaced by its
+  `searchAs`, and a line after the block names the given name as a reading in
+  doubt.
+- The router adds `userPresent` to a search-external-sites prompt itself; only
+  it knows whether the run is autonomous.
+
+Why a tool writes it: on Haiku 5.5 low the router wrote the delegation as prose,
+dropped the subject block or sent one spawn for two items in four research
+tests. Every field is in the project documents (ADR-0011's first question).
+
+The top-level `subject` is the same block for `subject_person_ids[0]`, parents
+included, for a brief the router writes itself (a bounded record ask has no
+plan item); the router leaves `parents` out on a parentage ask.
+
+`attachedSources [{id, title}]` lists that subject's sources attached on
+FamilySearch when the project was made: `project_create` keeps the read's own
+sources as tree `S2…` and points the person's, names' and facts' refs at them
+(`attachedSources` in `src/utils/search-delegations.ts`). The Family Tree source
+(`S1`, "FamilySearch Family Tree (read from …") is left out, and a source
+attached on FamilySearch afterwards is not in the tree. A record asked for that
+is already listed is not searched for (ut_research_021).
+
+A top-level `nextStep` (`FIRST_QUESTION_NEXT_STEP`) is present on a project with a
+subject, no question and a status other than `completed`. It names the steps that
+write the first question: `Skill("forget-and-rederive")` in verify mode first when
+the researcher's reply (never the objective) disputes a particular
+relationship, fact or source of the subject; then `extraction_append` and
+`timeline_build` for each subject; then question-selection. It says that a bounded
+request and the turn that created the project are not that turn. Why a tool says
+it: on Haiku 5.5 low the router read "no questions" and went straight to
+question-selection, skipping the verify step and the baseline (ut_research_sr1), as it skipped locality-guide until a question's `nextStep` named it.
+
+### 2.2.2 `spawn` — the next agent step, written out
+
+When a row's `nextStep` opens with `conflict-resolution`, `person-evidence`,
+`hypothesis-tracking`, `research-exhaustiveness` or `proof-conclusion`, the row
+carries `spawn: {agent, prompt}` (`src/utils/step-spawn.ts`). The prompt is
+`projectPath:` and `questionId:` lines, then the agent's ids, then `reason:`
+and the `nextStep` text:
+
+- person-evidence: `assertionIds:` every live assertion of the question (the
+  rung fires only when none is linked) and `userPresent: yes`, which the router
+  turns to `no` on a wrap-up turn and in an autonomous run;
+- conflict-resolution: one `competingAssertionIds:` line per unregistered
+  disagreement, or `conflictIds:` for an open conflict;
+- hypothesis-tracking: one `personId:`/`parentIds:` line per competing parent set.
+
+research-plan gets none: its rung does not know whether the question's
+jurisdiction has had its locality survey, which the router runs first. On Haiku
+5.5 low the router read past `nextStep` to another agent, or spawned nothing
+(ut_research_h22, rx4, 9k4).
 
 ### 2.3 `awaitingUser` — what the user was already sent to fetch
 
@@ -624,6 +805,45 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+**Delivery: the host posts the link** (lead, 2026-11-23). A row here
+says the researcher already has the link, and the router never raises it again. That
+held only when the main thread relayed the agent's report, and in the Hagell alpha
+session it rewrote every report and no logged link reached the chat. So on both hosted
+web planes (`real_agent.py`, the alpha, and the prototype worker) the host posts the link
+itself: when a main-thread call that can open a hand-off returns — an `Agent`/`Task`
+delegation, or `research_log_append`, which the main thread may call itself
+(`continue_policy.opens_hand_offs`) — every row of this rule whose `log[].id` was not
+open when the turn's first such call began is written to the chat as its own paragraph
+of the turn's reply: the site's host name, one sentence, and the URL as a markdown
+autolink (a control character, space, `<` or `>` percent-encoded, and `https://` added
+to a bare host name that starts `www.` or ends in a common top-level domain; only an
+http(s) URL is a link, and anything else is shown as code, on one line).
+"Began" is the plane's `PreToolUse` hook (`continue_policy.seed_hand_offs`), which runs
+before the tool does: by the time the host reads the call off the message stream, a fast
+`research_log_append` may already have written its row. If that read fails, the turn
+counts nothing as open, so a link may be posted twice but is never skipped. A link logged by a call that never
+returned (the researcher pressed Stop mid-search) is posted at the end of the turn, and
+a worker attempt that lost its grant lock posts its links before it raises. Each row is
+posted once per turn; a link sent again opens a new row and is posted again. The rule
+is `step_boundary.awaiting_hand_offs`, the Python mirror of `awaitingUserHandOffs`, held
+to it row for row by `test_awaiting_hand_offs_parity.py`; the trigger is
+`continue_policy.hand_off_texts`, shared by both planes. A turn with no such call reads
+nothing for this.
+
+- **Not covered here:** the connector's chat, where `show_project` lists
+  `awaitingUser`, and Cowork and Desktop, which still rely on the relay.
+- **A turn that never reached its end** posts nothing for a call that had not
+  returned, and those rows read as handed over: a process that died, and a worker
+  attempt ended by the store going down, a newer claim superseding it, or a failed
+  transcript write. Catching those would need a stored "shown" flag, which the ruling
+  rejected: a schema change, set by the same relay that fails.
+- **A link logged after its turn ended** is read as open-before by the next turn and
+  never posted. Both planes force every delegation to the foreground
+  (`continue_policy.foreground_rewrite`), so a search agent does not outlive its turn;
+  what is left is an agent the CLI backgrounded in spite of that.
+- The main thread may repeat a link the host already posted. A duplicate is accepted
+  over a drop.
 
 ### 2.4 `externalCollections` — counts of the stored curated collections
 
@@ -707,9 +927,23 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 ### 2.7 `uploads`, `uploadUrl` — the self-hosted beta's web tier
 
 ```typescript
-uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean,
+             readWith?: "sidecar_read" | "image_transcribe", ref?: string }]
+uploadsAre?: "files" | "stored"
 uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
+
+`uploadsAre` says how the uploads are read, so no agent works it out from
+`uploadUrl`, `hasText` and the file name. It is present whenever `uploads` is:
+`"stored"` when the answer carries an `uploadUrl`, `"files"` otherwise. On a
+`"stored"` project each row names its reader: `readWith: "sidecar_read"` with
+`ref: "uploads/<name>.txt"` when `hasText` is true, `"sidecar_read"` with
+`ref: "uploads/<name>"` for a lone `.txt` upload, and `"image_transcribe"` for
+anything else. On a `"files"` project the rows carry neither field: the uploads
+are files in the project folder, and its callers do not agree on one reader for
+an image (search-external-sites reads the file, translation transcribes it).
+One function, `uploadReadPlan` (`src/utils/upload-read-plan.ts`), computes all
+of it, and the eval mock runs the same function after it adds `uploadUrl`.
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
 entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
@@ -795,9 +1029,36 @@ advisory `raise`, `claims` and `frame`. `blocksCompletion` is true for `conclude
 and `hypothesis`; completing a project with one, or with an `encode` item, warns
 (research-append-tool-spec §5.2) and never refuses until Stage 1c. `nextStep`
 keeps the `unit — detail` shape of `questionStatuses`; an `encode` item routes to
-proof-conclusion. It sits before `questionStatuses` in the answer, so a reader
+proof-conclusion. An owed item's `nextStep` names no id: `ref` carries it, and the detail says what
+is owed in words (`proof-conclusion — this question has 2 tied assertion(s) and no
+proof summary`, `proof-conclusion — encode father`). An `encode` or `raise` detail
+still prints the claim's own `claim` text, or `claims[<i>]` when it has none.
+**Decided (lead, 2026-11-19):** the status answer repeats `nextStep` to the
+researcher and must name no id, so an owed item's id lives only in `ref`; no
+separate plain-words field is added. The ruling covers `owedFindings` and the
+concluded-while-blocked arm only; the other `questionStatuses` arms still name ids. It sits before `questionStatuses` in the answer, so a reader
 scoping to that array by its key does not take an owed item's step for a
 question's. Pinned by `docs/specs/schemas/owed-findings-vectors.json`.
+
+### 2.2.3 `historicalContext` — the historical-context step, written out
+
+Only under `include: ["historicalContext"]`, and only when the tree holds
+`subject_person_ids[0]`: `historicalContext: {agent: "historical-context", prompt}`
+(`src/utils/historical-context-spawn.ts`). The prompt is a `projectPath:` line, the
+objective on a line naming it as the researcher's and not a tree fact, then one line
+per person, the subject first and then its parents, spouses and children from the
+tree's Couple and ParentChild edges: name, id, role, and every fact with a date or a
+place as `Type date, place`, or "no dated or placed facts". The prompt's last line
+is a bare `message:`. The router spawns the agent with that prompt as given, the
+researcher's message copied verbatim after that `message:`, and nothing else
+(research/SKILL.md, "Bounded request or job"). The trailing line is there because a
+prompt that ended on the facts left the router to add the `message:` line itself, and
+it sent the prompt alone in 1 of 4 runs of `ut_research_ia2`.
+
+Why a tool writes it: told to call `tree_query` and hand over only the places and
+years it returned, a Haiku 5.5 low router added its own era ranges and a candidate
+answer in 3 of 8 runs of `ut_research_ia2`. Every line is in the project documents
+(ADR-0011's first question).
 
 `status` (only under `include: ["status"]`) lists one row per tree fact and edge
 from `src/utils/conclusion-status.ts` (Decision 6): `{holder, factId?, label,
@@ -816,7 +1077,7 @@ the project has one. Pinned by `docs/specs/schemas/conclusion-status-vectors.jso
 - **A projection, not a query language.** The shape is stable so an agent
   prompt can say "check `persons[].parentIds`"; the only selector is `include`,
   a **closed list** of the larger lists to return (values `"persons"`,
-  `"sources"` and `"status"`), not open-ended field selection. A list rather
+  `"sources"`, `"status"` and `"historicalContext"`), not open-ended field selection. A list rather
   than `includeX` booleans because the conclusion-tree work adds `"status"` and
   `"view"` to the same list (lead, 2026-11-09). Several readers consume the tool
   (the research skill, question-selection, hypothesis-tracking,
@@ -910,7 +1171,7 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. `errors[0]` is `project_context`'s own text (not shared with other tools): it ends with "While no project exists yet, a request about a named FamilySearch person starts a project first, through the research skill." One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
-| `include` is not an array, or names a value other than `"persons"` or `"sources"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
+| `include` is not an array, or names a value outside `"persons"`, `"sources"`, `"status"` and `"historicalContext"` | `{ ok: false, errors, buildId }`, loud. Checked before either file is read, so it is refused even where the folder holds no project |
 | empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
 | person with no names / no preferred flag | `name` falls back to the first names entry, else absent |

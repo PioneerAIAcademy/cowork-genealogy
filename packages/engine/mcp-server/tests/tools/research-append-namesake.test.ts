@@ -19,7 +19,7 @@ import {
   namesakeVerdicts,
 } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
-import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { instructedMerge as mergeTreePersons } from "../helpers/instructed-merge.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { writeProjectFile } from "../helpers/project-files.js";
@@ -1276,6 +1276,208 @@ describe("namesake cap", () => {
         const r = await update({ notes: "Checked again." });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).notes).toBe("Checked again.");
+      });
+    });
+
+    describe("a row naming a record the tree already holds (issue #2475, from #4660)", () => {
+      const HELD = /records someone the tree does not hold/;
+      const REPEATED = /repeats a record another row for/;
+      const VOTER_DOC = "ark:/61903/1:2:VOTR-D0C1";
+      /** The tree with P's father renamed John, who cites `url` on his name. */
+      function treeCiting(url: string, holder = F, given = "John"): Record<string, any> {
+        const t = tree();
+        t.sources.push({ id: "S9", title: "Voter register", url: `https://www.familysearch.org/${url}` });
+        const p = t.persons.find((x: any) => x.id === holder);
+        p.names = [{ id: `${holder}-n1`, given, surname: "Smith", sources: [{ ref: "#S9" }] }];
+        return t;
+      }
+      async function setupHeld(t: Record<string, any>, research_: Record<string, any> = research({ namesakes: [], log: [SEARCH] })) {
+        await setup(research_, t);
+        await mkdir(join(dir, "results"), { recursive: true });
+        const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
+          payload: { query: {}, results: [{ recordId: REC.voter, recordArk: VOTER_DOC, primaryId: "p_555",
+            gedcomx: { persons: [{ id: "p_555", names: JOHN_SMITH }] } }] } };
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+      }
+      const voterRow = () => appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
+
+      it("refuses a row whose record, by its search hit's recordArk, is cited on a same-named tree person, and writes nothing", async () => {
+        await setupHeld(treeCiting(VOTER_DOC));
+        const r = await voterRow();
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toMatch(HELD);
+        expect(errs(r)).toContain(`tree person '${F}' (John Smith, source 'S9')`);
+        expect(errs(r)).toContain("Hand-back: tree-edit");
+        expect((await readResearch()).namesakes).toEqual([]);
+      });
+
+      it("refuses through an assertion's record_document_id when no sidecar names the record", async () => {
+        const withDoc = research({
+          namesakes: [],
+          log: [log("log_001", "record_search", null)],
+          assertions: [...baseAssertions().filter((a) => a.id !== "a_010"),
+            assertion("a_010", "src_002", REC.voter, "principal", "name", "John Smith", { record_document_id: VOTER_DOC })],
+        });
+        await setup(withDoc, treeCiting(VOTER_DOC));
+        const r = await voterRow();
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toMatch(HELD);
+      });
+
+      it("refuses when the tree source's url is the record persona itself", async () => {
+        await setup(research({ namesakes: [], log: [log("log_001", "record_search", null)] }), treeCiting(REC.voter));
+        expect(errs(await voterRow())).toMatch(HELD);
+      });
+
+      /** The voter register holding the row's John (p_555) and a second person,
+       *  p_556, named `given` Smith: the father the tree cites it for. */
+      async function setupTwoInRecord(given: string, research_: Record<string, any> = research({ namesakes: [], log: [SEARCH] })) {
+        await setup(research_, treeCiting(VOTER_DOC));
+        await mkdir(join(dir, "results"), { recursive: true });
+        const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
+          payload: { query: {}, results: [{ recordId: REC.voter, recordArk: VOTER_DOC, primaryId: "p_555",
+            gedcomx: { persons: [{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: [{ given, surname: "Smith" }] }] } }] } };
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+      }
+
+      it("accepts the row when its search hit's record also holds a second person of the row's given name", async () => {
+        await setupTwoInRecord("John");
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      /** Both Johns of the register extracted, and F linked to the one `linked` names. */
+      const linkedTo = (linked: "a_010" | "a_011") => research({
+        namesakes: [],
+        log: [SEARCH],
+        assertions: [...baseAssertions().filter((a) => a.id !== "a_010"),
+          assertion("a_010", "src_002", REC.voter, "principal", "name", "John Smith", { record_document_id: VOTER_DOC, record_persona_id: "p_555" }),
+          assertion("a_011", "src_002", REC.voter, "father", "name", "John Smith", { record_document_id: VOTER_DOC, record_persona_id: "p_556" })],
+        person_evidence: [standing("pe_009", linked, F)],
+      });
+
+      it("refuses when the record holds two of the row's given name and the tree's John is linked to the row's own persona", async () => {
+        await setupTwoInRecord("John", linkedTo("a_010"));
+        const r = await voterRow();
+        expect(errs(r)).toMatch(HELD);
+        expect(errs(r)).toContain(`tree person '${F}' (John Smith, source 'S9')`);
+      });
+
+      it("accepts when the record holds two of the row's given name and the tree's John is linked to the other one", async () => {
+        await setupTwoInRecord("John", linkedTo("a_011"));
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      /** The register cited on both the row's subject P (named `subjectGiven`) and the father F, John. */
+      async function citedOnSubjectToo(persons: Array<Record<string, any>>, subjectGiven = "John") {
+        await setup(research({ namesakes: [], log: [SEARCH] }), (() => {
+          const t = treeCiting(VOTER_DOC);
+          const p = t.persons.find((x: any) => x.id === P);
+          p.names = [{ id: `${P}-n1`, given: subjectGiven, surname: "Smith", sources: [{ ref: "#S9" }] }];
+          return t;
+        })());
+        await mkdir(join(dir, "results"), { recursive: true });
+        const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
+          payload: { query: {}, results: [{ recordId: REC.voter, recordArk: VOTER_DOC, primaryId: "p_555", gedcomx: { persons } }] } };
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+      }
+
+      it("refuses when the record's two Johns are the row's subject and a tree John who both cite it", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }]);
+        const r = await voterRow();
+        expect(errs(r)).toMatch(HELD);
+        expect(errs(r)).toContain(`tree person '${F}' (John Smith, source 'S9')`);
+      });
+
+      it("accepts a record of two Johns when the subject who cites it is not a John, so accounts for neither", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }], "Mary");
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("leaves a record of three Johns cited on the subject and a tree John to the link, and accepts with none", async () => {
+        await citedOnSubjectToo([{ id: "p_555", names: JOHN_SMITH }, { id: "p_556", names: JOHN_SMITH }, { id: "p_557", names: JOHN_SMITH }]);
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("still refuses when the record's second person has another given name", async () => {
+        await setupTwoInRecord("Thomas");
+        expect(errs(await voterRow())).toMatch(HELD);
+      });
+
+      it("accepts the row when the record's assertions give a second person of the row's given name", async () => {
+        const withDoc = research({
+          namesakes: [],
+          log: [log("log_001", "record_search", null)],
+          assertions: [...baseAssertions().filter((a) => a.id !== "a_010"),
+            assertion("a_010", "src_002", REC.voter, "principal", "name", "John Smith", { record_document_id: VOTER_DOC }),
+            assertion("a_011", "src_002", REC.voter, "father", "name", "John Smith", { record_document_id: VOTER_DOC })],
+        });
+        await setup(withDoc, treeCiting(VOTER_DOC));
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("still refuses when a second John is on the persona's own url", async () => {
+        await setupTwoInRecord("John");
+        const t = treeCiting(REC.voter);
+        await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
+        expect(errs(await voterRow())).toMatch(HELD);
+      });
+
+      it("accepts the row when the person citing the record has another given name", async () => {
+        await setupHeld(treeCiting(VOTER_DOC, F, "Thomas"));
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("accepts the row when the only person citing the record is the row's own subject", async () => {
+        await setupHeld(treeCiting(VOTER_DOC, P));
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("accepts a record no tree person cites", async () => {
+        await setupHeld(treeCiting("ark:/61903/1:2:0THR-D0C2"));
+        const r = await voterRow();
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("does not judge an image id, which names a page that can hold several people", async () => {
+        const IMAGE = "ark:/61903/3:1:3QSQ-G9LD-TW1V";
+        await setupHeld(treeCiting(IMAGE));
+        const r = await appendRow({ record_ids: [IMAGE], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("leaves a row written before the rule editable in its other fields", async () => {
+        await setupHeld(treeCiting(VOTER_DOC), research({ log: [SEARCH] }));
+        const r = await researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields: { notes: "Checked again." } } as any);
+        expect(r.ok, errs(r)).toBe(true);
+      });
+
+      it("refuses a second row for the same person listing the same record, and accepts it for another person", async () => {
+        await setupHeld(tree());
+        expect((await voterRow()).ok).toBe(true);
+        const again = await voterRow();
+        expect(again.ok).toBe(false);
+        expect(errs(again)).toMatch(REPEATED);
+        expect(errs(again)).toContain("namesakes row 'ns_001'");
+        const other = await researchAppend({
+          projectPath: dir, section: "namesakes", op: "append",
+          entry: { person_id: C, name: "John Smith", place: ROW.place, time_period: ROW.time_period, notes: null, record_ids: [REC.voter], log_entry_ids: ["log_001"] },
+        } as any);
+        expect(other.ok, errs(other)).toBe(true);
+      });
+
+      it("refuses two rows for the same person listing the same record in one call", async () => {
+        await setupHeld(tree());
+        const row = { section: "namesakes", op: "append", entry: { person_id: P, name: ROW.name, place: ROW.place, time_period: ROW.time_period, notes: null, record_ids: [REC.voter], log_entry_ids: ["log_001"] } };
+        const r = await call(row, row);
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toMatch(REPEATED);
       });
     });
 

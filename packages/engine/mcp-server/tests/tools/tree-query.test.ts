@@ -9,6 +9,10 @@ import { projectContext } from "../../src/tools/project-context.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { runProjectCreate } from "../../src/tools/project-create.js";
 import { __usePlaceTableForTests } from "../../src/utils/place-resolver.js";
+import { treeEdit } from "../../src/tools/tree-edit.js";
+import { createPhippsProject, PIDS } from "../helpers/phipps-read.js";
+
+const lastSeg = (t: unknown): string => String(t).split("/").pop() ?? "";
 
 const TREE = {
   persons: [
@@ -249,8 +253,11 @@ describe("tree_query", () => {
     expect(r.relationships).toHaveLength(1);
   });
 
-  it("returns the no_project answer outside a project and a loud error for an unreadable tree", async () => {
-    expect(await treeQuery({ projectPath: dir })).toMatchObject({ ok: false, reason: "no_project" });
+  it("fails with the project refusal outside a project and loudly for an unreadable tree", async () => {
+    const outside: any = await treeQuery({ projectPath: dir });
+    expect(outside.ok).toBe(false);
+    expect(outside.reason).toBeUndefined();
+    expect(outside.errors.join(" ")).toContain("No project:");
     await writeFile(join(dir, "research.json"), "{}");
     await writeFile(join(dir, "tree.gedcomx.json"), "{not json");
     const r = await treeQuery({ projectPath: dir });
@@ -458,6 +465,103 @@ describe("tree_query on real trees, against the 40,000-character budget", () => 
     for (const e of tree.relationships ?? []) for (const f of e.facts ?? []) for (const x of f.sources ?? []) cited.add(x.ref);
     expect(persons.size).toBe(21);
     expect([...cited].filter((id) => !sources.has(id))).toEqual([]);
+  });
+});
+
+describe("familyReadPersonIds: whose own family was read from Family Tree", () => {
+  let dir: string;
+  beforeAll(() => __usePlaceTableForTests({}));
+  afterAll(() => __usePlaceTableForTests(null));
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-query-family-read-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const idOf = (r: any, pid: string): string => r.persons.find((p: any) => p.ark?.endsWith(pid)).id;
+
+  it("names only the person read: the wife's parents and the father's second wife read as not copied", async () => {
+    await createPhippsProject(dir);
+    const r = await treeQuery({ projectPath: dir });
+    if (!r.ok) throw new Error("not ok");
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+    const mary = idOf(r, PIDS.mary);
+    const peyton = idOf(r, PIDS.peyton);
+    expect(r.familyReadPersonIds).not.toContain(mary);
+    expect(r.familyReadPersonIds).not.toContain(peyton);
+    // The copy holds no parent of Mary and one spouse of Peyton: not copied, not none.
+    expect(r.relationships.some((e: any) => e.child === mary)).toBe(false);
+    expect(r.relationships.filter((e: any) => lastSeg(e.type) === "Couple" && (e.person1 === peyton || e.person2 === peyton))).toHaveLength(1);
+  });
+
+  it("returns the key for the whole tree whatever personIds asks for", async () => {
+    await createPhippsProject(dir);
+    const all = await treeQuery({ projectPath: dir });
+    if (!all.ok) throw new Error("not ok");
+    const r = await treeQuery({ projectPath: dir, personIds: [idOf(all, PIDS.mary)] });
+    if (!r.ok) throw new Error("not ok");
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+  });
+
+  it("anchors on the person read, not on subjectPersonIds", async () => {
+    await createPhippsProject(dir, [PIDS.mary]);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const r = await treeQuery({ projectPath: dir });
+    if (!r.ok) throw new Error("not ok");
+    expect(research.project.subject_person_ids).toEqual([idOf(r, PIDS.mary)]);
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+  });
+
+  it("gives no key for a tree with no read-from source", async () => {
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE));
+    const r = await treeQuery({ projectPath: dir });
+    if (!r.ok) throw new Error("not ok");
+    expect(r).not.toHaveProperty("familyReadPersonIds");
+  });
+
+  it("never names a person added later with tree_edit", async () => {
+    await createPhippsProject(dir);
+    const added = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: { gender: "Female", names: [{ given: "Harriet", surname: "Davis" }] } as any,
+    });
+    if (!added.ok) throw new Error(JSON.stringify(added));
+    const r = await treeQuery({ projectPath: dir });
+    if (!r.ok) throw new Error("not ok");
+    expect(r.persons.some((p: any) => p.names?.[0]?.given === "Harriet")).toBe(true);
+    expect(r.familyReadPersonIds).toEqual(["I1"]);
+  });
+
+  it("is the same list project_context returns, for a person read who is not I1", async () => {
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({ project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" } }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [
+          { id: "I1", ark: `ark:/61903/4:1:${PIDS.mary}`, names: [{ given: "Mary" }] },
+          { id: "I2", ark: `ark:/61903/4:1:${PIDS.peyton}`, names: [{ given: "Peyton" }] },
+          { id: "I3", ark: `ark:/61903/4:1:${PIDS.benjamin}`, names: [{ given: "Benjamin" }] },
+        ],
+        relationships: [],
+        sources: [
+          {
+            id: "S1",
+            title: `FamilySearch Family Tree (read from Benjamin Phipps, ${PIDS.benjamin})`,
+            url: "https://www.familysearch.org/tree",
+          },
+        ],
+      }),
+    );
+    const tq = await treeQuery({ projectPath: dir });
+    const ctx = await projectContext({ projectPath: dir }, LOCAL);
+    if (!tq.ok || !ctx.ok) throw new Error("not ok");
+    expect(tq.familyReadPersonIds).toEqual(["I3"]);
+    expect(ctx.familyReadPersonIds).toEqual(tq.familyReadPersonIds);
   });
 });
 

@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_validate_schema_011",
+    "skill": "validate-schema",
+    "name": "A project with no person validates cleanly",
+    "type": "positive",
+    "description": "Issue #3524, narrowed by issue #4686. The working folder holds a project with no person (an objective and an empty tree). validate_research_schema finds both files valid; the agent says so and logs one entry.",
+    "tags": [
+      "validation",
+      "person-less-project",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
+  },
+  "judge_context": [
+    "The working folder holds a project with no person: both files pass every check. The agent should report that they are valid, and must not invent schema errors or claim there is no project to validate.",
+    "Should log its report with one research_log_append entry; creating no other file is correct."
+  ]
+}

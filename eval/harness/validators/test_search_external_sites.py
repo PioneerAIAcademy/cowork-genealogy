@@ -542,6 +542,98 @@ def test_triage_closes_its_open_handoff(before_state, after_state, test):
     assert closing, "the triage logged no external_site entry with capture_received true"
 
 
+_REDO_CAPTURE = re.compile(
+    r"\b(?:re-?save|re-?upload|re-?capture|re-?print"
+    r"|(?:save|upload|print|capture) (?:it|the page|the capture) again"
+    r"|try (?:capturing|saving|printing|uploading) (?:it |the page )?again)\b",
+    re.IGNORECASE,
+)
+_NOT_ASKED = re.compile(
+    r"\b(?:no need|don't|do not|doesn't|does not|not necessary|nothing to|isn't|is not|without|never)\b",
+    re.IGNORECASE,
+)
+
+
+def _asks_to_redo_the_capture(text):
+    """The first sentence that asks for the capture again, or None. A sentence
+    that negates the ask before it ("no need to resave it") is not one."""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text or ""):
+        for match in _REDO_CAPTURE.finditer(sentence):
+            if not _NOT_ASKED.search(sentence[: match.start()]):
+                return sentence.strip()
+    return None
+
+
+def test_header_only_capture_is_a_nil(before_state, after_state, text_response, test, agent_returns=None):
+    """Tag-gated (header-only-capture), #4745: Find a Grave prints a search with
+    no results as its site header alone, so a capture showing only the header is
+    a captured nil. The entry closing the hand-off is `negative`, and the
+    researcher is not asked to capture the page again. Closure itself is
+    `test_triage_closes_its_open_handoff`'s."""
+    if "header-only-capture" not in test.get("tags", []):
+        pytest.skip("not a header-only-capture scenario")
+    before = before_state.get("research_json")
+    if before is None or after_state.get("research_json") is None:
+        pytest.skip("missing research.json for diff")
+    urls = {(e.get("external_site") or {}).get("url_generated") for e in _open_handoffs(before)}
+    assert urls, "fixture defect: the scenario holds no open hand-off to close"
+    closing = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site"
+        and (e.get("external_site") or {}).get("url_generated") in urls
+        and e.get("outcome") != "partial"
+    ]
+    errors = [
+        f"log[{e.get('id')}] closes the hand-off with outcome {e.get('outcome')!r}: a header-only "
+        f"Find a Grave page is that site's no-results page, a nil (negative)"
+        for e in closing if e.get("outcome") != "negative"
+    ]
+    if not closing:
+        errors.append("no new external_site entry closes the hand-off")
+    ask = _asks_to_redo_the_capture(_researcher_tail(agent_returns, text_response, test))
+    if ask:
+        errors.append(f"the reply asks for the capture again, which would show the same header: {ask!r}")
+    assert not errors, "header-only capture not read as a nil:\n  - " + "\n  - ".join(errors)
+
+
+def test_correction_names_the_entry_it_corrects(before_state, after_state, test):
+    """Tag-gated (report-correction), #4747: the researcher says an earlier
+    report was wrong because the page failed. The log is append-only, so the
+    correction is one new entry for the same `url_generated`, logged `error`,
+    whose notes name the entry it corrects."""
+    if "report-correction" not in test.get("tags", []):
+        pytest.skip("not a report-correction scenario")
+    before = before_state.get("research_json")
+    if before is None or after_state.get("research_json") is None:
+        pytest.skip("missing research.json for diff")
+    reports = {
+        (e.get("external_site") or {}).get("url_generated"): e.get("id")
+        for e in (before.get("log") or [])
+        if isinstance(e, dict) and e.get("tool") == "external_site" and e.get("outcome") != "partial"
+    }
+    assert reports, "fixture defect: the scenario holds no earlier report to correct"
+    corrections = [
+        (e, reports[url])
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site"
+        and (url := (e.get("external_site") or {}).get("url_generated")) in reports
+    ]
+    assert corrections, (
+        f"no new external_site entry carries the url_generated of the entry being corrected "
+        f"({sorted(reports.values())}), so nothing supersedes it"
+    )
+    errors = []
+    for entry, corrected in corrections:
+        if entry.get("outcome") != "error":
+            errors.append(
+                f"log[{entry.get('id')}] corrects {corrected} with outcome {entry.get('outcome')!r}: "
+                f"a page that failed to load is an error, never a finding"
+            )
+        if not re.search(rf"\b{re.escape(corrected)}\b", str(entry.get("notes") or "")):
+            errors.append(f"log[{entry.get('id')}]'s notes do not name {corrected}, the entry it corrects")
+    assert not errors, "correction not logged as a superseding error entry:\n  - " + "\n  - ".join(errors)
+
+
 def test_base_url_is_the_plan_items_collection_url(before_state, tool_calls, test):
     """Tag-gated (collection-url): a plan item that names its curated collection
     (`collection_url`, a row of the stored `external-collections.json`) is searched
@@ -579,7 +671,7 @@ def test_base_url_is_the_plan_items_collection_url(before_state, tool_calls, tes
 
 def test_archion_browse_handoff(tool_calls, test):
     """Tag-gated (archion-browse): the parish page goes to the builder as
-    `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""
+    `baseUrl`, and the tool returns a `logId`: it logged the hand-off."""
     if "archion-browse" not in test.get("tags", []):
         pytest.skip("not an archion-browse scenario")
     calls = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
@@ -589,7 +681,9 @@ def test_archion_browse_handoff(tool_calls, test):
     assert "archion.de" in str(args.get("baseUrl") or ""), (
         f"the archion call carried no Archion parish page as baseUrl: {args.get('baseUrl')!r}"
     )
-    assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
+    assert any(_as_mapping(c.get("response")).get("logId") for c in archion), (
+        "no archion call returned a logId, so the hand-off was not logged by the tool"
+    )
 
 
 def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_returns=None):
@@ -605,7 +699,7 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
     calls = [c for c in (tool_calls or []) if isinstance(c, dict)]
     catalog = [c for c in calls if _bare_tool_name(c.get("tool")) == "catalog_search"]
     builds = [
-        _as_mapping(c.get("args")) for c in calls
+        c for c in calls
         if _bare_tool_name(c.get("tool")) == "build_external_search_url"
         and _as_mapping(c.get("args")).get("site") in ("matricula", "archion")
     ]
@@ -614,8 +708,8 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
         errors.append("no catalog_search call: FamilySearch's filmed copy of the register was never checked")
     if not builds:
         errors.append("no build_external_search_url call for matricula or archion: the browse-site link was dropped")
-    elif not any(b.get("projectPath") for b in builds):
-        errors.append("the browse-site build omitted projectPath, so the hand-off was not logged by the tool")
+    elif not any(_as_mapping(b.get("response")).get("logId") for b in builds):
+        errors.append("no browse-site build returned a logId, so the hand-off was not logged by the tool")
     films, groups = set(), set()
     for c in catalog:
         for hit in _as_mapping(c.get("response")).get("hits") or []:
@@ -635,7 +729,7 @@ def test_browse_site_catalog_cross_check(tool_calls, text_response, test, agent_
         errors.append("the catalog_search responses carry no center-only film, so this test cannot judge the hand-off")
     elif films and not any(re.search(rf"(?<!\d){f}(?!\d)", tail) for f in films):
         errors.append(f"the researcher's text names none of the center-only films {sorted(films)}")
-    if any(b.get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
+    if any(_as_mapping(b.get("args")).get("site") == "matricula" for b in builds) and not re.search(r"Ortssuche|matricula-online\.eu/\w+/suchen", tail):
         errors.append("the researcher's text never gives Matricula's place search (Suchen → Ortssuche), the route the tool's note carries")
     offered = sorted(g for g in groups if re.search(rf"(?<!\d)0*{g}(?!\d)", tail))
     if offered:
@@ -1398,6 +1492,19 @@ def test_closing_capture_filename_is_the_upload(before_state, after_state, tool_
     assert not errors, "a closing entry names an upload's text layer:\n  - " + "\n  - ".join(errors)
 
 
+#: `DIGEST_EXCERPT_CHARS` in `utils/staged-compaction.ts`. A page no longer than
+#: this is whole in `digest.excerpt` (`transcriptionDigest` stops only past it), so
+#: reading its staged ref adds nothing. Pinned to the TypeScript by
+#: `test_digest_excerpt_cap_matches_the_typescript_source`.
+DIGEST_EXCERPT_CHARS = 300
+
+
+def _digest_is_whole(response):
+    digest = response.get("digest")
+    chars = digest.get("chars") if isinstance(digest, dict) else None
+    return isinstance(chars, int) and chars <= DIGEST_EXCERPT_CHARS
+
+
 def test_hosted_upload_is_read_with_the_tools(before_state, tool_calls, builtin_tool_calls, test):
     """#3990 V4. On a hosted store an upload is not a file the agent can `Read`:
     production's project folder holds no such path, although the harness's does.
@@ -1412,7 +1519,9 @@ def test_hosted_upload_is_read_with_the_tools(before_state, tool_calls, builtin_
     `uploads/<name>` (the mock transcribes `./uploads/<name>` too, where
     production refuses it), and one whose answer carried a `staged` ref is
     followed by a `sidecar_read` of that ref; a refused one stages nothing and
-    owes none. A built-in `Read`, `Grep` or `Glob` on an `uploads/` path fails.
+    owes none, and nor does one whose page is whole in its digest
+    (`digest.chars` within `DIGEST_EXCERPT_CHARS`). A built-in `Read`, `Grep` or
+    `Glob` on an `uploads/` path fails.
     Skipped with no `uploadUrl`: folder mode `Read`s the path (V6)."""
     if not _served_upload_urls(tool_calls):
         pytest.skip("no uploadUrl was served: folder mode reads a capture with Read")
@@ -1442,7 +1551,7 @@ def test_hosted_upload_is_read_with_the_tools(before_state, tool_calls, builtin_
             errors.append(f"image_transcribe file {file!r} is not the ref {ref!r}: production refuses it unread")
         staged = response.get("staged")
         staged_ref = staged.get("resultsRef") if isinstance(staged, dict) else None
-        if isinstance(staged_ref, str) and staged_ref and staged_ref not in read:
+        if isinstance(staged_ref, str) and staged_ref and staged_ref not in read and not _digest_is_whole(response):
             errors.append(f"{ref} was transcribed, but its staged page {staged_ref!r} was never read")
     for call in builtin_tool_calls or []:
         tool = call.get("tool")

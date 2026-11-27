@@ -699,15 +699,19 @@ message verbatim, see §16):
 ```
 
 When the fixture bundles provided documents, the message also names them (§6.2).
-After that, under the default `--step-mode job`, the harness answers for the
-researcher, one reply per turn, with what `next_auto_reply` returns ("Keep going.",
-or "Wrap it up." in place of a further round of planning); `--wrap-up-after` swaps
-in "Wrap it up." after a named step. A `job` turn that ends cleanly on a question
-for the researcher, while research is left (it did not run proof-conclusion and the
-project is not completed), is answered with the fixture's own `researcher_question`,
-at most once per run. The run ends when the host sends no reply (sections A2 and F
-of `docs/specs/research-step-mode-spec.md` list when) or one of §6's stop signals
-ends it. `--step-mode step` sends no replies.
+After that, under the default `--step-mode unattended`, the harness is a simulated
+researcher: it answers each turn with what `next_reply` (`eval/harness/e2e/turn_loop.py`)
+returns: `/research --autonomous Continue.` at each offer (`UNATTENDED_CONTINUE`; the
+flag rides on every reply so the router keeps passing `userPresent: no`), or a bare
+"Wrap it up." at the plan offer after a planning round; `--wrap-up-after` swaps in "Wrap it up." after a named step. A turn that is not a
+wrap-up and ends cleanly on a question for the researcher, while research is left (it
+did not run proof-conclusion and the project is not completed), is answered with the
+fixture's own `researcher_question`, at most once per run. The run ends when the
+simulated researcher sends no reply (section F of
+`docs/specs/research-step-mode-spec.md` lists when) or one of §6's stop signals ends it.
+`--step-mode step` runs one turn and sends no reply. `unattended` replaced `job` on
+2026-11-24, when "Keep going" was retired; older run logs record `usage.step_mode: "job"`
+and still load.
 
 **Only the router reads the flag.** No other plugin body contains `--autonomous`:
 `grep -rln -- '--autonomous' packages/engine/plugin/` lists only the router. These
@@ -724,9 +728,9 @@ rules in `research/SKILL.md` branch on it; find them with
   to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
   run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
   otherwise `yes`". `@plugin:person-evidence` gets
-  it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
-  run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
+  it on a "Wrap it up." turn too: "On a "Wrap it up." turn and in an autonomous run,
+  pass `userPresent: no`" (§"One step per turn"), and its spawn fields name the same,
+  "turn and in an autonomous run". `@plugin:question-selection` gets it only in an autonomous
   run, so an objective holding several facts gets a question for the first one instead
   of an ask nobody answers. The rules are there so an e2e run never waits on an
   external-site capture nobody will upload. The research unit suite checks that the router sends
@@ -824,7 +828,7 @@ the `max_cost_usd` note in §6 step 5.
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns`. On a step run `num_turns` arrives per turn, so the host sums it across the run and sends no further reply once the sum crosses the cap |
    | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **Label only — this does not stop a run, a step run included: the host keeps replying past it.** A later turn cap, tool cap or SDK error still stops the run and replaces the label. See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the host sent no reply to the last turn (`next_auto_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the simulated researcher sent no reply to the last turn (`next_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
    | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
@@ -962,8 +966,8 @@ the `max_cost_usd` note in §6 step 5.
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
-   job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
-   purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
+   unattended` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
+   purpose, and the simulated researcher's reply, `next_reply`, continues the run (section F of
    `docs/specs/research-step-mode-spec.md`). No Stop hook is bound, and a run writes neither
    `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
    a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
@@ -1264,6 +1268,12 @@ since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` fr
 presence alone discriminates for it, and a second tool added to the set is
 covered here automatically.
 
+The same hook also denies the shipped hook's `MAIN_THREAD_DENIED` tools, which no
+agent holds and no step may call on the main thread: today `person_search`, because a
+project starts only from a FamilySearch person ID. Its predicate is imported
+(`context_policy.main_thread_denial`), and a denied call is recorded in
+`blocked_context_calls` like the rest.
+
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
 response: the denial reason names a reachable recovery — read the page with
@@ -1285,7 +1295,7 @@ session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
 (since the caller-ownership rules shipped), `Agent` / `Task`, for the fork deny,
-and a final alternative naming every `AGENT_ONLY_TOOLS` key. It still never sees an
+and a final alternative naming every `AGENT_ONLY_TOOLS` and `MAIN_THREAD_DENIED` key. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the `image_read` policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the
@@ -1367,10 +1377,11 @@ So a fixture may **bundle** the captures it needs:
 
 - Place them in `eval/tests/e2e/<slug>/provided-documents/` (e.g.
   `findagrave-quass.pdf`).
-- The harness copies each into the **workspace root** — exactly where an
-  uploaded capture lands — and names them in the user message so the
-  agent reads the local file instead of pausing to ask for an upload.
-- The agent uses its ordinary `Read` tool. No new MCP tool, no live
+- The harness copies each into the workspace's **`uploads/`** — exactly where an
+  uploaded capture lands — and names them (`uploads/<name>`) in the user message
+  so the agent reads the file instead of pausing to ask for an upload.
+- The agent reads it as it reads any upload (`sidecar_read` or
+  `image_transcribe` with `file: "uploads/<name>"`). No new MCP tool, no live
   network; the harness simply plays the role of the user who provides
   the documents.
 
@@ -2099,7 +2110,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage.per_turn` | **Step mode only** — one row per turn: `{index, step, wall_ms, sent, reply, duration_ms, duration_api_ms, num_turns, total_cost_usd}`. Written by `turn_loop.accumulate_usage`. The top-level quantities keep their whole-run meaning, so every existing reader works unchanged — but not all by summing: `total_cost_usd` and `duration_api_ms` are RUNNING totals the CLI already reports, so the latest turn's value is taken rather than the sum, which would multiply them (decided by the lead, 2026-10-26: a `ResultMessage` now arrives per TURN, and a plain assignment would have recorded only the last one and understated corpus spend quietly). `wall_ms` and `step` come from the turn rather than the `ResultMessage`. A turn that ran no step carries no `step`. Absent on every non-step run; `make e2e-latency BY_STEP=1` prints per-step p50/p90 wait and spend from it, in the order the run reached the steps, and says "no per-step data" rather than zeroes when it is absent. |
-| `usage.wrap_up_after` | **Step mode only** — the step after which the host answered `Wrap it up.` instead of `next_auto_reply`'s choice (`--wrap-up-after`), exercising B2's link-then-conclude path. `null` on every other run. A run with this set is **not** comparable to a step run without it: it ends deliberately early, so its turn count, spend and per-step figures all describe a shorter run. |
+| `usage.wrap_up_after` | **Step mode only** — the step after which the simulated researcher answered `Wrap it up.` instead of `next_reply`'s choice (`--wrap-up-after`), exercising B2's link-then-conclude path. `null` on every other run. A run with this set is **not** comparable to a step run without it: it ends deliberately early, so its turn count, spend and per-step figures all describe a shorter run. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). **A step-mode run is the case this field's caveat cannot see.** The caveat is detected by `result_message_covers_last_query_only`, which counts `system:init` rows; a persistent `ClaudeSDKClient` is one CLI process emitting one init however many turns it serves, so a many-turn step run is never flagged even though a `ResultMessage` arrived per turn. What makes the figures whole-run there is not the flag but `accumulate_usage` summing them at assembly (`usage.per_turn`) — do not remove that on the strength of the flag reading clean. |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
@@ -2119,7 +2130,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call), `duration_seconds` (earliest to latest record timestamp in its transcript — earliest/latest, since `queued_command` attachments can step backwards; `null` with fewer than two; within 0.1 s of the CLI's own `duration_ms` on the 16 helpers measured), `peak_window_tokens` (the tallest single window the subagent read — `input` + `cache_read` + `cache_creation` of one message, the **max** over its messages, 0 when none carries usage), `compactions` (one `{trigger, pre_tokens, post_tokens}` per `system`/`compact_boundary` record in the subagent's own transcript; a missing or non-numeric figure is `null`, never 0; the **count** is the signal — `pre_tokens` saturates at the trigger like the peak does), `models` (the distinct model ids its messages ran on, first-seen order, `<synthetic>` excluded), and `tool_messages` (the bare tool names each assistant API message called, one list per message that called any, grouped by `message.id`, in order — calls in one list ran side by side in one round trip). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call), `duration_seconds` (earliest to latest record timestamp in its transcript — earliest/latest, since `queued_command` attachments can step backwards; `null` with fewer than two; within 0.1 s of the CLI's own `duration_ms` on the 16 helpers measured), `peak_window_tokens` (the tallest single window the subagent read — `input` + `cache_read` + `cache_creation` of one message, the **max** over its messages, 0 when none carries usage), `compactions` (one `{trigger, pre_tokens, post_tokens}` per `system`/`compact_boundary` record in the subagent's own transcript; a missing or non-numeric figure is `null`, never 0; the **count** is the signal — `pre_tokens` saturates at the trigger like the peak does), `models` (the distinct model ids its messages ran on, first-seen order, `<synthetic>` excluded), `long_prompt_usage` (the four token totals of its messages that bill at a long-prompt multiple, `pricing.LONG_PROMPT`; all zeros when none did), and `tool_messages` (the bare tool names each assistant API message called, one list per message that called any, grouped by `message.id`, in order — calls in one list ran side by side in one round trip). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
 | `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
@@ -2243,7 +2254,10 @@ priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
 rate); a spawn recording no model predates the field and keeps the flat Sonnet
 table, labelled; a spawn on a model the table does not know, or on more than one
 model, is listed as unpriced with its reason — never as $0 and never at the Sonnet
-rate. An agent that ran on more than one model gets a sub-row per model.
+rate. An agent that ran on more than one model gets a sub-row per model. A Haiku 5.5
+request over 100,000 prompt tokens bills at 5x (`pricing.LONG_PROMPT`), a per-request
+price no sum can carry, so a spawn adds that premium from `long_prompt_usage`; a spawn
+captured before that field is unpriced when its `peak_window_tokens` passed the line.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 

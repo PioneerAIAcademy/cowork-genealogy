@@ -246,7 +246,7 @@ describe("a real client", () => {
     );
     await client.connect(new StreamableHTTPClientTransport(new URL(`${viewer.origin}/${SECRET}/mcp`)));
     try {
-      expect(client.getServerVersion()).toMatchObject({ title: "Genealogy Viewer" });
+      expect(client.getServerVersion()).toMatchObject({ title: "Genealogy Research" });
       expect(client.getServerCapabilities()).toMatchObject({
         tools: {},
         resources: {},

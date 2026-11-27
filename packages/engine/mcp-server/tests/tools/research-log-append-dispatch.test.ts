@@ -4,7 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 // The server binds the caller's catalog loader into research_log_append
-// (§8.6). The stub stands in for FamilySearch, so this checks the binding, not
+// (§8.7). The stub stands in for FamilySearch, so this checks the binding, not
 // the network.
 vi.mock("../../src/tools/collections-search.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/tools/collections-search.js")>();
@@ -30,7 +30,7 @@ vi.stubGlobal("fetch", mockFetch);
 
 import { callTool } from "../helpers/call-tool.js";
 
-describe("through the server: the browse-only check is bound (§8.6)", () => {
+describe("through the server: the browse-only check is bound (§8.7)", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "log-append-dispatch-"));

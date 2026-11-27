@@ -1036,7 +1036,8 @@ async def test_pgstore_upsert_user_inserts_a_new_user_with_its_id():
 
     def answer(sql: str):
         if sql.startswith("INSERT INTO users"):
-            uid, email, fs_id = conn.params[-1]
+            uid, email, fs_id, seed = conn.params[-1]
+            assert seed is None, "no seed was passed, so the insert carries no key"
             inserted.append(_row(email, fs_id, uid))
             return None
         if sql.startswith("SELECT id, email") and inserted:
@@ -1056,7 +1057,7 @@ async def test_pgstore_upsert_user_inserts_a_new_user_with_its_id():
     user = await store.upsert_user("c@example.org", FS_ID)
     assert (user.email, user.familysearch_id) == ("c@example.org", FS_ID)
     insert = next(q for q in conn.sql if q.startswith("INSERT INTO users"))
-    assert "(id, email, familysearch_id)" in insert and "ON CONFLICT DO NOTHING" in insert
+    assert "(id, email, familysearch_id, openrouter_key_enc)" in insert and "ON CONFLICT DO NOTHING" in insert
 
 
 async def test_pgstore_upsert_user_turns_a_unique_violation_into_busy():

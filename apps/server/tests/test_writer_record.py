@@ -45,6 +45,21 @@ def test_a_multi_op_call_records_every_section_it_touched():
                    "ids": ["pl_001", "pli_004"]}
 
 
+def test_a_plan_form_write_records_the_plan_and_its_items():
+    # research_append's plan form carries no `ops` and no `section`; read like a
+    # single op it recorded {"section": "", "op": "append", "ids": []}.
+    plan = {"question_id": "q_001", "status": "active", "created": "2026-11-26"}
+    items = [{"sequence": 1, "record_type": "census", "plan_item_id": "pli_009"},
+             {"sequence": 2, "record_type": "probate"}]
+    out = writer_record("mcp__genealogy__research_append", {"projectPath": "/p", "plan": plan, "planItems": items})
+    assert out == {"section": "plans,plan_items", "op": "append", "ids": ["pli_009"]}
+    # Stringified, as the engine accepts and decodes them.
+    import json
+    out = writer_record("mcp__genealogy__research_append",
+                        {"projectPath": "/p", "plan": json.dumps(plan), "planItems": json.dumps(items)})
+    assert out == {"section": "plans,plan_items", "op": "append", "ids": ["pli_009"]}
+
+
 def test_a_log_append_is_recorded_like_any_other_write():
     # The real parameters: this tool has no `entry`, and the id it can reach back to is
     # the plan item the search served. Rebuilt from the tool schema in review.

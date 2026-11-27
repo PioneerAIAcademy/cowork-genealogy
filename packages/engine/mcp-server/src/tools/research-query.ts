@@ -27,7 +27,7 @@
 // walk of one call per id. Lists of ids, never lists of sections — one section
 // per call is the 2026-10-10 ruling (research-query-tool-spec.md §3).
 
-import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readProjectJson } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
@@ -187,10 +187,7 @@ export type ResearchQueryResult =
        *  party, who has no link to it (§2.7). Absent when there is none. */
       unlinkedParties?: UnlinkedPartyRow[];
     }
-  // `reason: "no_project"` marks the one ok:false that is an answer rather than
-  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
-  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[] };
 
 export interface SettledConflictRow {
   /** The `pe_` ids on this page the sentences apply to. */
@@ -270,11 +267,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
-    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
-    // outer catch can return noProjectResult(). This tool is one of the two
-    // READS that issue #1695 calls out: a skill that merely looks at project
-    // state before answering must not surface a path error.
-    if (e instanceof NoProjectError) throw e;
     throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -315,6 +307,7 @@ interface FilterRule {
     | "place-or-enclosing"
     | "contains-substring-ci"
     | "plan-question"
+    | "plan-item"
     | "question-conflict";
 }
 
@@ -332,6 +325,10 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   },
   plans: {
     questionId: { field: "question_id", mode: "exact" },
+    // The plan holding that item: a delegation carries a `pli_` id, and with no
+    // filter for it the agent sent it as `questionId` and was refused
+    // (ut_search_external_sites_ulr, 8 of 10 runs on Haiku).
+    planItemId: { field: "items", mode: "plan-item" },
     status: { field: "status", mode: "exact" },
   },
   log: {
@@ -666,6 +663,10 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
     const id = item?.[fields[0]];
     return typeof id === "string" && scope !== undefined && scope.has(id);
   }
+  if (rule.mode === "plan-item") {
+    const items = item?.[fields[0]];
+    return Array.isArray(items) && items.some((i) => i?.id === value);
+  }
   if (rule.mode === "question-conflict") {
     const blocks = item?.[fields[0]];
     if (Array.isArray(blocks) && blocks.includes(value)) return true;
@@ -873,7 +874,6 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       try {
         doc = await readExternalCollections(projectPath);
       } catch (e) {
-        if (e instanceof NoProjectError) throw e;
         throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
       }
       // Place-key then row-key order, sorted here rather than read from the file:
@@ -1050,7 +1050,6 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       return page;
     });
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
     throw e;
   }
@@ -1074,7 +1073,7 @@ export const researchQuerySchema = {
     "`offset: nextOffset`.\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
-    "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
+    "(questionId, planItemId — the plan holding that item, status), `log` (planItemId, questionId — every entry for any plan item " +
     "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
@@ -1179,7 +1178,7 @@ export const researchQuerySchema = {
         items: { type: "string" },
         description: "conflicts: matches the conflict's own id (c_NNN).",
       },
-      planItemId: { type: "string", description: "log: matches plan_item_id." },
+      planItemId: { type: "string", description: "log: matches plan_item_id. plans: the plan holding that item." },
       status: {
         type: "string",
         description: "questions/plans/conflicts/hypotheses: matches status.",

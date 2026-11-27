@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "A bounded plan ask with a PID and no project stops after init-project",
     "type": "positive",
-    "description": "Issue #2813, lead 2026-11-10: a bounded research-plan ask with a PID and no project runs init-project and nothing else, then ends on \"Continue with `setting up the project`?\", so the researcher confirms the question before anything is planned. Feedback #4237 drifted at question-selection in the turn that created the project. init-project runs live so the router sees a real new project. Pairs with ut_research_b4i, the record ask that runs its search in the same turn.",
+    "description": "Issue #2813, lead 2026-11-10: a bounded research-plan ask with a PID and no project runs init-project and nothing else, then ends on \"Continue with `choosing the question`?\", so the researcher confirms the question before anything is planned. Feedback #4237 drifted at question-selection in the turn that created the project. init-project runs live so the router sees a real new project. Pairs with ut_research_b4i, the record ask that runs its search in the same turn.",
     "tags": [
       "routing",
       "routes-to:init-project",
@@ -21,7 +21,7 @@
   ],
   "judge_context": [
     "A bounded first message (a research plan) with a FamilySearch ID and no project. The router creates the project with init-project, which runs for real here, and then stops: no question-selection, locality-guide or research-plan in the turn that created the project. The researcher confirms the question first (issue #2813, lead 2026-11-10).",
-    "The hand-offs, the absence of a question or plan in research.json and the closing \"Continue with `setting up the project`?\" line are all checked deterministically by test_bounded_plan_first_message_stops_after_init_project. Do not re-grade them. The reply may keep init-project's sentence that the next step is the first research question: on a plan ask that is true.",
+    "The hand-offs, the absence of a question or plan in research.json and the closing \"Continue with `choosing the question`?\" line are all checked deterministically by test_bounded_plan_first_message_stops_after_init_project. Do not re-grade them. The reply may keep init-project's sentence that the next step is the first research question: on a plan ask that is true.",
     "Grade the reply on saying the project was made. Do not require it to say what the next step will do. Do not mark it down for not producing the plan: in this turn that is correct, and producing one is the failure this test exists to catch."
   ],
   "execution": {

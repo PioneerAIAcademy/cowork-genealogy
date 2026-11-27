@@ -2,7 +2,7 @@
 
 Grading dimensions for historical-context unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-Inside a project the agent ends with two `research_log_append` calls, one logging its lookups and one the overview; those entries appear in the file changes summary, and their shape is checked by validators, not by you. Most tests in this suite run with **no project**. There its first `research_log_append` call answers `ok: false`, `reason: "no_project"`: it is how the agent learns there is no project, and is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+Inside a project the agent ends with two `research_log_append` calls, one logging its lookups and one the overview; those entries appear in the file changes summary, and their shape is checked by validators, not by you.
 
 ## Relevance to research
 
@@ -17,10 +17,10 @@ Did the skill provide historical context directly relevant to the genealogical r
 Did the skill draw from reliable historical sources? Context should be
 factual, not speculative or fabricated.
 
-Grade the disclosure at **block** granularity, not per claim. One flag
-covering a contiguous passage of unverified material — the form the agent body
-prescribes, "the following comes from general knowledge and should be
-verified" — satisfies this dimension for every claim inside that passage.
+Grade the disclosure at **paragraph** granularity, not per claim. One flag
+opening a paragraph or bullet of unverified material — the form the agent body
+prescribes, "(general knowledge)" — satisfies this dimension for every claim
+inside that passage.
 Tagging each individual claim is a bonus, not what this dimension requires:
 do not mark down a flagged passage because a sentence within it reads as
 confident. What falls short is unverified material with no flag covering

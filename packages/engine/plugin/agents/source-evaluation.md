@@ -5,11 +5,12 @@ description: >-
   profile and reports what is wrong with them. Invoke when the user wants to
   evaluate, audit, or review the sources on a profile, asks whether the
   attached sources actually support the recorded facts, or asks to look for
-  errors in what is attached. Distinguishes three kinds of finding — an
+  errors in what is attached. Do NOT use to verify a person's facts or
+  relationships (a research job). Distinguishes three kinds of finding — an
   indexing or transcription error in the index (the usual case, fixed by
   re-reading the original image and correcting the index), a source genuinely
   misattributed to the wrong person (the only case where detaching is right),
-  and un-actionable FamilySearch backend metadata. Route a disagreement
+  and FamilySearch backend metadata. Route a disagreement
   between two sources about the same fact to conflict-resolution; route a
   single person's impossible dates or relationships to check-warnings; route
   extracting a new record's contents into assertions to extraction_append (or
@@ -30,8 +31,11 @@ tools:
   - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__person_quality
   - mcp__genealogy__person_warnings
+  - mcp__genealogy__source_screen
   - mcp__remote-devices__Genealogy_Research__person_warnings
+  - mcp__remote-devices__Genealogy_Research__source_screen
   - mcp__Genealogy_Research__person_warnings
+  - mcp__Genealogy_Research__source_screen
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -57,6 +61,7 @@ Hand it back — call no tool, analyse nothing, and return the one caller-facing
 - **Two sources disagree about the same fact** ("the census says Ireland, the death cert says County Cork") → `conflict-resolution`. That is a conflict between sources, not a defect in one of them.
 - **One person's own data is impossible** (death before birth, a 130-year lifespan, an event after death) → `check-warnings`. That needs no source read at all.
 - **A newly found record needs its contents turned into assertions** → `extraction_append({ recordIds })`, or the record-structurer agent for a non-FamilySearch source. You evaluate what is attached; you do not extract.
+- **Whether a person's facts or relationships are correct** (who their parents were, whether a marriage is right), even when the request also names the sources → `research`. That is a research job: an audit of the attached sources does not test them.
 
 This check comes first: a request that is one of these is handed back here even when it names no person or only a first name.
 
@@ -68,7 +73,7 @@ Your job is the remaining case: the sources on the profile are there, and the qu
 
 Call `person_read({ personId })`. Entries whose id starts with `SD_` never appear; the tool already filters them as metadata.
 
-If the delegation gives a name rather than an id, call `project_context({ projectPath })` and match on its `persons[*].name`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>` — **but only when the request is in scope**. A request that is one of the three above is handed back to ITS destination even though it names no person: the scope check is the earlier question, and answering `no person named` to a conflict question sends it nowhere. Decide scope first, identity second.
+If the delegation gives a name rather than an id, call `project_context({ projectPath })` and match on its `persons[*].name`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>` — **but only when the request is in scope**. A request that is one of the four above is handed back to ITS destination even though it names no person: the scope check is the earlier question, and answering `no person named` to a conflict question sends it nowhere. Decide scope first, identity second.
 
 **The audit list is not the whole `sources[]` array.** **The subject is `persons[0]`.** The audit list is:
 
@@ -80,6 +85,8 @@ Audit no other entry. An empty audit list is a finished audit with one finding: 
 When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, each source named by its link, which is the `url` `person_read` returns for it, and which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
 
 For the same FamilySearch ID, also call `person_warnings({ projectPath, personId: <persons[0].id from person_read> })` once — the impossible-date check over the project tree. `projectPath` is the one the delegation gave; with none, skip this call. The tool finds the tree person itself, even when the tree keys them by a local id. If it returns an error (no tree, or the person is not in it), retry nothing and say in one line: "Impossible-date checks run only on a project that holds this person."
+
+With a `projectPath`, also call `source_screen({ projectPath, personId: <persons[0].id> })` once. Each `attachments[]` row with a `verdict` other than `not_scored` is that source's classification at step 4: `misattributed` is kind (b), `indexing_error` is kind (a), `contradicts` names the other source in `contradicts`, `weak` is reported with its `reasons`, and `fine` is no finding. Classify yourself only what has no such verdict: no project, an `ok: false` answer, a `not_scored` row, and `person_quality` conflicts.
 
 ### 2. Read each attached source's indexed record
 
@@ -203,11 +210,8 @@ from you. 1 kind of storage artifact, omitted above.)
 
 ### 6. Log the report
 
-If the delegation gave no `projectPath`, or `project_context` returned `reason: "no_project"`, skip this step.
-
 One `research_log_append` call with `projectPath` (the delegation's) and one op: `tool: "source_evaluation"`, `query: {personId, request}` (the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (audit-list sources examined), `notes` set to the **full** report exactly as you return it, never a summary. **You must actually call it — do not just describe it in your response.**
 
-- `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
 
 A hand-back, a `no person named` return, or a list of candidates logs nothing.

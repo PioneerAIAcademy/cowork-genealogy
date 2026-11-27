@@ -49,6 +49,30 @@ describe("unanchoredMintedPersonIds", () => {
     expect(unanchoredMintedPersonIds(tree, research, (id) => id === "KWCB-100")).toEqual(["I2", "I3", "I4"]);
   });
 
+  it("keeps the persons behind a probable or proved summary this call wrote, and no others", () => {
+    // ut_proof_conclusion_d8h: the probable father has no edge yet when the
+    // question resolves; proof-conclusion writes it after. ut_proof_conclusion_d3c:
+    // a disproved father still goes.
+    const tree = { persons: [person("KWCB-100"), person("I2"), person("I3")], relationships: [] };
+    const link = (id: string, assertion: string, pid: string) =>
+      ({ id, assertion_id: assertion, person_id: pid, confidence: "probable", superseded_by: null });
+    const research: any = {
+      person_evidence: [link("pe_001", "a_001", "KWCB-100"), link("pe_002", "a_003", "I2")],
+      proof_summaries: [{ id: "ps_001", tier: "probable", supporting_assertion_ids: ["a_001", "a_003"] }],
+    };
+    const imported = (id: string) => id === "KWCB-100";
+    const thisCall = new Set(["ps_001"]);
+    expect(unanchoredMintedPersonIds(tree, research, imported, thisCall)).toEqual(["I3"]);
+    research.proof_summaries[0].tier = "proved";
+    expect(unanchoredMintedPersonIds(tree, research, imported, thisCall)).toEqual(["I3"]);
+    // A summary from an earlier call keeps no one this way.
+    expect(unanchoredMintedPersonIds(tree, research, imported)).toEqual(["I2", "I3"]);
+    for (const tier of ["disproved", "possible", "not_proved"]) {
+      research.proof_summaries[0].tier = tier;
+      expect(unanchoredMintedPersonIds(tree, research, imported, thisCall), tier).toEqual(["I2", "I3"]);
+    }
+  });
+
   it("finds nothing when no anchor exists", () => {
     const tree = { persons: [person("I1"), person("I2")], relationships: [] };
     expect(unanchoredMintedPersonIds(tree, {}, none)).toEqual([]);

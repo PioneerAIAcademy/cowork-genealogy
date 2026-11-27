@@ -13,7 +13,7 @@ import asyncio
 import importlib.util
 from pathlib import Path
 
-from harness.context_policy import SOURCES_NOTE, sources_note_hook
+from harness.context_policy import ROUTING_NOTE, SOURCES_NOTE, sources_note_hook
 
 _HARNESS = Path(__file__).resolve().parents[2]
 _HOOK = _HARNESS.parents[1] / "packages" / "engine" / "plugin" / "hooks" / "no_project_route.py"
@@ -33,14 +33,16 @@ def test_the_note_is_the_shipped_hook_sentence():
     hook = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hook)
     assert SOURCES_NOTE == hook.SOURCES_NOTE
-    assert "collections_search" in SOURCES_NOTE
+    assert "collections search, which the locality-guide and research-plan agents run" in SOURCES_NOTE
+    assert ROUTING_NOTE == hook.ROUTING_NOTE
+    assert "goes to the research skill" in ROUTING_NOTE
 
 
 def test_the_hook_adds_it_to_a_researcher_message_only():
     out = asyncio.run(sources_note_hook({"prompt": "What Kenyan records can I search?"}, None, None))
     assert out["hookSpecificOutput"] == {
         "hookEventName": "UserPromptSubmit",
-        "additionalContext": SOURCES_NOTE,
+        "additionalContext": f"{SOURCES_NOTE}\n\n{ROUTING_NOTE}",
     }
     hand_back = {"prompt": '<agent-message from="a1">done</agent-message>'}
     assert asyncio.run(sources_note_hook(hand_back, None, None)) == {}

@@ -512,7 +512,9 @@ can be skipped or repeated; `placeExpansion.searches[].error` shows when that
 happened. A ranked expansion
 (one with a `subjectId`) refuses `offset` above 0, because each page would re-rank
 a deeper pool and could skip a record that outranks the rows already shown; raise
-`count` instead. So its `hasMore` is always false, and its `ranked` summary is
+`count` instead. Its `hasMore` is computed as for any expansion, so it is true
+whenever rows exist past the ones shown, and it says only that: the way to them
+is a larger `count`, as the refusal of `offset` says. Its `ranked` summary is
 rewritten to describe the page shown: `returnedCount` and `relativeTermNote` count
 the rows shown, and the no-match advice says to raise `count` rather than page
 deeper. Because each page
@@ -797,7 +799,7 @@ can still change and still be what the schema checks and the file holds.
 `nilLogRefused` with the log tool's errors and keeps its results. Usually this
 is the pinned-nil rule, and the agent then logs that nil by hand batched with the
 retry the message names. The other is the browse-only rule
-(`research-log-editor-spec.md` §8.6): a search pinned to a collection with almost
+(`research-log-editor-spec.md` §8.7): a search pinned to a collection with almost
 no index is not logged as a negative at all, and the message sends the agent to
 browse the page images. For that check the write takes the caller's catalog
 loader (`RecordSearchOptions.loadCatalog`, bound in `server.ts`) under a shorter

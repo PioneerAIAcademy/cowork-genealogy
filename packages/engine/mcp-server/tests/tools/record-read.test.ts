@@ -1,4 +1,5 @@
 import { LOCAL } from "../../src/auth/principal.js";
+import { makeLocalProject } from "../helpers/seed-project.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -211,6 +212,20 @@ describe("extractEntityId", () => {
       /document-image ARK/i,
     );
   });
+
+  // A tree-source id ("legacy-nfs:MMVZ-Z9T") read as a bare id returned
+  // persona 1:1:MMVZ-Z9T, an unrelated 1900 census household.
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("rejects the scheme-prefixed id %s as not a record persona", (id) => {
+    expect(() => extractEntityId(id)).toThrow(/not a FamilySearch record persona/);
+  });
+
+  it("still accepts a bare persona id", () => {
+    expect(extractEntityId("QVS9-DHDB")).toBe("QVS9-DHDB");
+  });
 });
 
 // ─── recordReadTool tests ─────────────────────────────────────────────────
@@ -244,6 +259,17 @@ describe("recordReadTool", () => {
     await expect(
       recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }, LOCAL),
     ).rejects.toThrow(/1:2: record ARK/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "legacy-nfs:MMVZ-Z9T",
+    "capture:falk-family-bible-letter",
+    "ancestry:7602:123456",
+  ])("refuses the scheme-prefixed id %s without fetching", async (id) => {
+    await expect(recordReadTool({ recordId: id }, LOCAL)).rejects.toThrow(
+      /not a FamilySearch record persona/,
+    );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -1672,7 +1698,7 @@ const RECORD_WITH_SOURCES: GedcomX = {
 describe("record_read compacts its answer at the MCP boundary only (#4415)", () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "record-read-compact-"));
+    dir = (await makeLocalProject()).dir;
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -1693,7 +1719,7 @@ describe("record_read compacts its answer at the MCP boundary only (#4415)", () 
 
   it("the record_read tool call answers with the compacted shape", async () => {
     mockOk(RECORD_WITH_SOURCES);
-    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB" });
+    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB", projectPath: dir });
     expect(isError).toBe(false);
     const answer = JSON.parse(text);
     expect(answer.sources).toBeUndefined();

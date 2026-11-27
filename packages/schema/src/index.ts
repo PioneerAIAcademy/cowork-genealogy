@@ -44,6 +44,9 @@ export interface Project {
    *  Optional: absent on legacy projects, where the control plane falls back to
    *  deriving one from `objective`. */
   title?: string
+  /** The researcher's opening request to verify one relationship, fact or source
+   *  of the subject, in their words; the first question's turn removes it first. */
+  verify_request?: string
 }
 
 export interface ResearcherProfile {
@@ -90,6 +93,11 @@ export interface Question {
    *  obligation; `targeted` does not. Optional: absent on questions written
    *  before the field existed. */
   question_kind?: QuestionKind
+  /** Set by question-selection: true when the question tests whether the tree's
+   *  own attributions are right. research_append then refuses a `confident` link
+   *  that only the tree's own citation of the record corroborates. Optional:
+   *  absent means not an audit. */
+  audits_tree?: boolean
   priority: Priority
   status: QuestionStatus
   depends_on: string[]

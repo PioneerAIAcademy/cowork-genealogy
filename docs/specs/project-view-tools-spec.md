@@ -50,7 +50,7 @@ the project is resolved, so a call with both faults reports the argument.
 
 ```typescript
 {
-  show: "setup" | "plan" | "search" | "link" | "conflict" | "hypothesis"
+  show: "setup" | "question" | "plan" | "search" | "link" | "conflict" | "hypothesis"
       | "assess" | "conclusion" | "latest" | "file";    // required
   projectPath?: string;                                 // see "projectPath"
   page?: "case" | "compare" | "people" | "sources" | "log";
@@ -200,7 +200,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 |---|---|
 | URI | `ui://genealogy/viewer-<12 hex>.html`, the first 12 hex of the page's sha256 (`pageUri`); `ui://genealogy/viewer.html` when no page is installed |
 | MIME type | `text/html;profile=mcp-app` |
-| `resources/list` | `{ resources: [{ uri, name: "Genealogy Viewer", mimeType }] }` |
+| `resources/list` | `{ resources: [{ uri, name: "Genealogy Research", mimeType }] }` |
 | `resources/read` | `{ contents: [{ uri, mimeType, text, _meta: { ui: { csp: { resourceDomains } } } }] }` |
 
 `resourceDomains` is `[<origin>]`, where the origin is `webPublicUrl` trimmed with no
@@ -284,7 +284,7 @@ is plain, not the dispatcher's `{"error":...}` JSON, because a card shows it.
 | Condition | Text |
 |---|---|
 | An argument the schema does not list | `<tool> has no argument <names>. It takes: <names>.` |
-| `show` absent or not a listed value | `show must be one of: setup, plan, search, link, conflict, hypothesis, assess, conclusion, latest, file.` |
+| `show` absent or not a listed value | `show must be one of: setup, question, plan, search, link, conflict, hypothesis, assess, conclusion, latest, file.` |
 | `page` not a listed value | `page must be one of: case, compare, people, sources, log.` |
 | An id argument that is not a string | `<name> must be a string.` |
 | `part` absent or not a listed value | `part must be one of: document, results, image.` |
@@ -376,7 +376,10 @@ differ, and the tool server accepts none of them:
   `read_project_view` call with `part: "document"`. It still draws the thin server's size
   buttons, which send `pad`, so on the tool server each answers the unknown-argument
   refusal.
-- **The research router.** No skill or agent calls `show_project` yet.
+- **The research router.** `skills/research/SKILL.md`, "One step per turn", calls
+  `show_project` after each step's report, with the card its table names. A step whose card
+  is not built yet draws the question's `latest` card (`cardKind` in
+  `apps/mcp-viewer/src/cards/registry.ts`).
 
 ---
 

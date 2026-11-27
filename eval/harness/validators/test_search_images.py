@@ -30,6 +30,7 @@ from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_ci
 from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
 from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import TOOL_LOGGED_READ
 
 
 def _new_result_sidecars(before_state, after_state) -> list[str]:
@@ -66,6 +67,10 @@ def test_positive_appends_browse_log_entry(before_state, after_state, test):
         )
     if "confirm-read" in test.get("tags", []):
         pytest.skip("confirm-read: one page read by ARK is not a browse")
+    if "reindex" in test.get("tags", []):
+        pytest.skip("reindex: one page read against its index is not a browse")
+    if "catalog-only" in test.get("tags", []):
+        pytest.skip("catalog-only: a catalog lookup is not a browse, so its entry names catalog_search")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -121,10 +126,23 @@ def test_no_results_sidecar_written(before_state, after_state, test):
     """image_search does not stage results, so logging a browse never writes a
     results/<log_id>.json sidecar (unlike record/full-text search). A new
     sidecar would mean the skill mis-modeled the browse on the staging
-    search tools. Pages image_transcribe stages are not sidecars."""
+    search tools. Pages image_transcribe stages are not sidecars, nor is the
+    results/<log_id>.json its own log entry for a page read finalizes (#4721)."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests perform a browse")
-    new_sidecars = _new_result_sidecars(before_state, after_state)
+    if "confirm-read" in test.get("tags", []) or "reindex" in test.get("tags", []):
+        pytest.skip(
+            "confirm-read / reindex: a page read is logged with its own results "
+            "file, and is not a browse"
+        )
+    page_reads = {
+        f"results/{e.get('id')}.json"
+        for e in _new_log_entries(before_state, after_state, include_tool_reads=True)
+        if e.get("written_by") == TOOL_LOGGED_READ
+    }
+    new_sidecars = [
+        p for p in _new_result_sidecars(before_state, after_state) if p not in page_reads
+    ]
     assert not new_sidecars, (
         "image_search does not stage results, so no results/ sidecar should "
         f"be written for a browse; got {new_sidecars}"
@@ -356,6 +374,8 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
         )
     if "confirm-read" in test.get("tags", []):
         pytest.skip("confirm-read: one page read by ARK is not a browse")
+    if "reindex" in test.get("tags", []):
+        pytest.skip("reindex: one page read against its index is not a browse")
     relabelled = [
         entry.get("id")
         for entry in _new_log_entries(before_state, after_state)
@@ -441,8 +461,7 @@ def _line_pairs(block: str, left: tuple[str, ...], right: tuple[str, ...]) -> bo
 
 def test_reindex_reads_the_index_then_the_page_once(tool_calls, test):
     """Tag-gated (reindex): the page's index comes from image_index before the
-    page is read, the page is read once with no projectPath, and nothing is
-    logged (no project)."""
+    page is read, and the page is read once, in the project the delegation names."""
     if "reindex" not in test.get("tags", []):
         pytest.skip("not a re-index test")
     indexes = _calls_named(tool_calls, "image_index")
@@ -451,11 +470,9 @@ def test_reindex_reads_the_index_then_the_page_once(tool_calls, test):
     assert reads, "the re-index never read the page with image_transcribe"
     assert indexes[0][0] < reads[0][0], "image_transcribe ran before image_index"
     assert len(reads) == 1, f"the page was read {len(reads)} times; one read, never a second OCR pass"
-    assert not (_as_mapping(reads[0][1].get("args")).get("projectPath")), (
-        "image_transcribe was called with a projectPath; with no project it takes none"
+    assert _as_mapping(reads[0][1].get("args")).get("projectPath"), (
+        "image_transcribe was called with no projectPath; every read has a project"
     )
-    writes = [c.get("tool") for c in tool_calls or [] if (c.get("tool") or "").endswith(("research_log_append", "research_append"))]
-    assert not writes, f"no project, so nothing is logged; got {writes}"
 
 
 def test_reindex_reply_pairs_readings_without_a_verdict(agent_returns, text_response, test):

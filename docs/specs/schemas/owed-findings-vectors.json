@@ -151,6 +151,113 @@
    ]
   },
   {
+    "name": "extract: a page image_transcribe logged itself is a read, not a find, so nothing is owed to extraction",
+    "research": {
+      "questions": [
+        {
+          "id": "q_001",
+          "status": "open"
+        },
+        {
+          "id": "q_002",
+          "status": "open"
+        }
+      ],
+      "plans": [
+        {
+          "id": "pl_1",
+          "question_id": "q_001",
+          "items": [
+            {
+              "id": "pli_1"
+            }
+          ]
+        }
+      ],
+      "log": [
+        {
+          "id": "log_001",
+          "plan_item_id": "pli_1",
+          "outcome": "positive",
+          "tool": "image_transcribe",
+          "written_by": "image_transcribe"
+        },
+        {
+          "id": "log_002",
+          "plan_item_id": "pli_1",
+          "outcome": "negative"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "a_1",
+          "record_id": "rec1",
+          "source_id": "src_1",
+          "record_role": "child",
+          "fact_type": "birth",
+          "value": "x",
+          "record_basis": "stated",
+          "extracted_for_question_ids": [
+            "q_002"
+          ]
+        }
+      ],
+      "person_evidence": [
+        {
+          "id": "pe_a_1",
+          "assertion_id": "a_1",
+          "person_id": "I1",
+          "confidence": "confident",
+          "superseded_by": null
+        }
+      ]
+    },
+    "tree": {
+      "persons": [
+        {
+          "id": "I1",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N1",
+              "given": "John",
+              "surname": "Abarca"
+            }
+          ],
+          "facts": [
+            {
+              "id": "F1",
+              "type": "Birth",
+              "date": "1879"
+            }
+          ]
+        },
+        {
+          "id": "I2",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N2",
+              "given": "Pedro",
+              "surname": "Abarca"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    "expect": [
+      {
+        "kind": "conclude",
+        "ref": "q_002",
+        "personIds": [
+          "I1"
+        ],
+        "blocksCompletion": true
+      }
+    ]
+  },
+  {
    "name": "conclude does not fire once the question has a summary",
    "research": {
     "questions": [
@@ -398,7 +505,7 @@
     {
      "kind": "encode",
      "ref": "ps_001/father",
-     "nextStep": "proof-conclusion — encode father from ps_001",
+     "nextStep": "proof-conclusion — encode father",
      "blocksCompletion": false
     }
    ]

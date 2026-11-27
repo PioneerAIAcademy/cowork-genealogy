@@ -239,7 +239,7 @@ function baseResearch(): {
   evaluations: Record<string, unknown>[];
 } {
   return {
-    project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    project: { id: "rp_001", objective: "Test", subject_person_ids: ["I1"], status: "active", created: "2026-01-01", updated: "2026-01-01" },
     questions: [],
     plans: [],
     log: [],
@@ -8033,7 +8033,9 @@ describe("research_append (project singleton section)", () => {
     });
 
     it("removes nothing when no person is known to be imported", async () => {
-      await writeProject(research([openQuestion()]), tree());
+      const noSubject = research([openQuestion()]);
+      (noSubject.project as any).subject_person_ids = [];
+      await writeProject(noSubject, tree());
       const r = await resolveQ1();
       expect(r.ok, JSON.stringify(r)).toBe(true);
       expect((await readTree()).persons).toHaveLength(5);
@@ -8172,7 +8174,7 @@ describe("research_append (project singleton section)", () => {
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — q_001 has 1 tied assertion\(s\) and no proof summary/);
+    expect(r.validation.warnings.join(" ")).toMatch(/completed while it still owes conclude q_001: proof-conclusion — this question has 1 tied assertion\(s\) and no proof summary/);
   });
 
   it("completion with an encode item warns", async () => {
@@ -8181,7 +8183,7 @@ describe("research_append (project singleton section)", () => {
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth from ps_001/);
+    expect(r.validation.warnings.join(" ")).toMatch(/still owes encode ps_001\/birth: proof-conclusion — encode birth/);
   });
 
   it("the legacy shape match is skipped for a summary that carries claims", async () => {
@@ -9256,6 +9258,18 @@ describe("research_append (batch ops)", () => {
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
+  it("(d4-logattr) a page image_transcribe logged itself is not the item's search (#4721)", async () => {
+    const pageRead = { ...logNaming("log_001", "pli_001"), tool: "image_transcribe", written_by: "image_transcribe" };
+    await writeProject(attrResearch("in_progress", [pageRead]));
+    const r = await researchAppend(completeIt() as any);
+    expect(r.ok).toBe(false);
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/no log\[\] entry names pli_001 \(a page image_transcribe logged itself/);
+
+    await writeProject(attrResearch("in_progress", [pageRead, logNaming("log_002", "pli_001")]));
+    expect((await researchAppend(completeIt() as any)).ok).toBe(true);
+  });
+
   it("(d4-logattr) refuses when log[] is empty", async () => {
     await writeProject(attrResearch("in_progress", []));
     const r = await researchAppend(completeIt() as any);
@@ -16675,6 +16689,28 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
       ]),
     );
     expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+  });
+
+  it("still refuses 'completed' when the item's latest entry is a page image_transcribe logged itself (#4721)", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "image_transcribe",
+          written_by: "image_transcribe",
+          query: { file: "uploads/capture.pdf" },
+          notes: "1850 census household page",
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    const errs = failure(await researchAppend(setStatus("completed") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
   });
 
   it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {

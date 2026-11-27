@@ -5,10 +5,19 @@
     "name": "Short Latin burial entry: translate and explain the key term concisely",
     "type": "positive",
     "description": "The user pastes a single short Latin burial entry and asks what it says, flagging one word ('relicta') they don't know. Tests that the skill translates the short entry and — the point of the test — explains the genealogically significant term rather than giving a bare literal gloss. Probes the Genealogical context dimension plus proportionate scoping: a one-line entry warrants a concise translation and a focused term explanation, not a heavyweight multi-phase workflow. Reframed from an earlier no-record 'what does [term] mean?' phrasing: a bare single-word question no longer routes to the skill (the model answers it inline, so activation was a hard 0), whereas embedding the record restores reliable activation while keeping the same Genealogical-context probe.",
-    "tags": ["latin", "burial", "single-term", "vocabulary", "genealogical-context", "scoping", "direct-arm"]
+    "tags": [
+      "latin",
+      "burial",
+      "single-term",
+      "vocabulary",
+      "genealogical-context",
+      "scoping",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Can you read this Latin burial entry and tell me what it says? I'm especially stuck on the word 'relicta': 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.'"
+    "delegation": "Can you read this Latin burial entry and tell me what it says? I'm especially stuck on the word 'relicta': 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.'\n\nprojectPath: <workspace>",
+    "scenario": "person-less-project"
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

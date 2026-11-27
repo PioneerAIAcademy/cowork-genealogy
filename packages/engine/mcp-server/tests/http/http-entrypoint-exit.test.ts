@@ -65,21 +65,39 @@ function runHttp(
       stdio: ["ignore", "ignore", "pipe"],
     });
     let stderr = "";
+    let settled = false;
+    // Both kill paths below settle on the kill itself rather than waiting for the
+    // child's `exit`. Under make test-all's load that round trip has arrived after
+    // vitest's own per-test budget, which fails the test as an opaque "Test timed
+    // out in 20000ms" carrying none of the stderr the assertions report. A killed
+    // child's `exit` delivers code null, so settling null here is the same value,
+    // and no case that passes `until` asserts on the code.
+    function settle(code: number | null) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolvePromise({ code, stderr });
+    }
     child.stderr.setEncoding("utf8");
     child.stderr.on("data", (chunk: string) => {
       stderr += chunk;
-      if (until?.test(stderr)) child.kill("SIGKILL");
+      if (until?.test(stderr)) {
+        child.kill("SIGKILL");
+        settle(null);
+      }
     });
     // A process that listens instead of exiting is killed, and reads as code null.
-    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      settle(null);
+    }, timeoutMs);
     child.on("error", (e) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       reject(e);
     });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      resolvePromise({ code, stderr });
-    });
+    child.on("exit", (code) => settle(code));
   });
 }
 

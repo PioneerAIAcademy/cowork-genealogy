@@ -94,7 +94,9 @@ than an error.
 1. **`recordReadTool({ recordId, resultsRef?, projectPath }, principal)`** — one
    call, not two hand-rolled routes. It *is* sidecar-read-or-live-fetch already,
    it normalises the id on both sides (`extractEntityId` / `arkToBareId`), and it
-   refuses `1:2:`/`3:1:` ARKs on both paths. Normalisation is not optional here:
+   refuses `1:2:`/`3:1:` ARKs on both paths. A scheme-prefixed `record_id`
+   (`legacy-nfs:…`, `capture:…`) is refused the same way, with no fetch, so
+   the record side comes from the projection. Normalisation is not optional here:
    `record_id` is stored as a resolver **URL** on 561 of the corpus's 10,554
    assertions and as a bare `ark:` on 9,993, so a raw string compare misses.
    `resultsRef` is passed **only** when the log entry's tool is in
@@ -275,19 +277,16 @@ that no sibling assertion and no name resolves, a role two siblings carry under
 different persona ids, and a `recordPersonaId` the record does not hold; on a
 projected record, a role two groups hold. Each lists the personas it is choosing
 between, so the next call can name one ("Party selection" says which).
-`same_person` is deliberately **not** in
-`tests/tools/no-project.test.ts`'s table: that table's first assertion requires
-the tool to RETURN `{ ok: false, reason: "no_project" }`, and this tool returns a
-score, so there is no answer shape to carry that verdict. That ruling is
-about a *write* being silently dropped; here nothing is saved, the explicit arm
-works anywhere, and saying so is the right answer.
+`same_person` called on a folder with no project fails with `NO_PROJECT_REFUSAL`; the
+explicit two-document arm names no project document, but through the server the gate
+still requires a `projectPath`.
 
 ### Arm B — explicit (two documents)
 
 Four required fields: two simplified-GedcomX documents and two
 in-document person IDs identifying which person in each document is
-the focus of the comparison. Use it when both documents are already in hand and
-there is no project to resolve against. **Nothing is recorded on this arm** — it
+the focus of the comparison. Use it when you already hold both GedcomX documents rather than an assertion and a tree person.
+It still needs a `projectPath`. **Nothing is recorded on this arm** — it
 has neither a project nor a record identity to key an attestation on.
 
 | Field | Type | Required | Description |

@@ -777,13 +777,13 @@ export const RESEARCH_SHAPES = {
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
-    "created", "updated",
+    "created", "updated", "verify_request",
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
   ]),
   question: new Set([
-    "id", "question", "rationale", "selection_basis", "question_kind",
+    "id", "question", "rationale", "selection_basis", "question_kind", "audits_tree",
     "priority", "status", "depends_on", "unblocks", "created", "resolved",
     "resolution_assertion_ids", "search_stop", "date_window",
   ]),
@@ -973,6 +973,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   if ("title" in p && typeof p.title !== "string") {
     addError(report, projPath, "'title' must be a string — omit it if there is none");
   }
+  if ("verify_request" in p && (typeof p.verify_request !== "string" || p.verify_request.trim() === "")) {
+    addError(report, projPath, "'verify_request' must be a non-empty string — omit it if there is none");
+  }
   if ("id" in p) {
     checkIdPrefix(p.id, ID_PREFIXES.project, projPath, report);
   }
@@ -1050,6 +1053,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_kind" in q) {
       checkEnum(q.question_kind, "question_kind", qp, report);
+    }
+    if ("audits_tree" in q && typeof q.audits_tree !== "boolean") {
+      addError(report, qp, `audits_tree must be true or false, got ${JSON.stringify(q.audits_tree)}`);
     }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
       const sorted = Array.from(SELECTION_BASIS_VALUES).sort();

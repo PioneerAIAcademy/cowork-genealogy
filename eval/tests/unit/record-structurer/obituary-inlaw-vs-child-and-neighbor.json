@@ -44,6 +44,35 @@
       "attribute": "date",
       "record_basis": "stated",
       "optional": true
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "91"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Logan"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Portland"
+    },
+    {
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Twin Falls"
+    },
+    {
+      "record_role": "sister_1",
+      "fact_type": "residence",
+      "attribute": "place",
+      "value": "Ogden"
     }
   ]
 }

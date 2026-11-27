@@ -15,9 +15,14 @@
     "user_message": "Plan more searches for the parentage question — what records are left that we haven't checked yet?",
     "scenario": "flynn-census-exhausted"
   },
-  "mcp_fixtures": ["wiki-read-any"],
+  "mcp_fixtures": [
+    "wiki-read-any",
+    "person-read-empty-any"
+  ],
   "execution": {
-    "run_agents": ["research-exhaustiveness"],
+    "run_agents": [
+      "research-exhaustiveness"
+    ],
     "max_wall_clock_seconds": 600
   },
   "negative": {
