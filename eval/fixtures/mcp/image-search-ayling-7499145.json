@@ -1,0 +1,16 @@
+{
+  "tool": "image_search",
+  "description": "Lists the image IDs inside image group (DGS) 7499145, one of the three reels of koha:186990, Ayling's 'Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866' (film 2319539). Captured live 2026-11-27 with dev/try-image-search.ts 7499145. Drives ut_search_images_np2: a DGS taken from catalog_search's film notes has real page images, so the agent must not say none are digitized. The substring predicate matches both the bare '7499145' and the zero-padded '007499145'. 484 images.",
+  "args": {
+    "imageGroupNumber": "~7499145"
+  },
+  "response": {
+    "imageCount": 484,
+    "imageIdRanges": [
+      [
+        "007499145_00001",
+        "007499145_00484"
+      ]
+    ]
+  }
+}

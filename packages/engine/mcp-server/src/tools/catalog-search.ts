@@ -1291,6 +1291,8 @@ export const catalogSearchSchema = {
     "is invisible there and present here. Use it to answer where the " +
     "original records are held and whether they can be seen, and to get an " +
     "imageGroupNumber for image_search or fulltext_search from a film note. " +
+    "A film note's imageGroupNumber IS its DGS (digital film number); its " +
+    "filmNumber is the microfilm number, which is not a DGS. " +
     "A hit's id (e.g. 'koha:3308785') is its catalog entry number, for " +
     "citation. When the researcher pastes a Catalog link or names an entry " +
     "id, pass it as catalogId to open that one entry with all its detail. " +
