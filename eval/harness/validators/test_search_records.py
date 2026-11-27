@@ -307,6 +307,17 @@ def test_no_search_or_writes_on_planning_request(
     )
 
 
+# A record set with no indexed FamilySearch collection may still be filmed: a
+# FamilySearch catalog check for filmed copies is an accepted next step on a test
+# carrying this tag (genealogist ruling, Benter, 2026-11-27).
+FILM_CHECK_TAG = "catalog-film-check-accepted"
+_CATALOG_FILM_NEXT_STEP = re.compile(
+    r"\bcatalog\b[^.\n]{0,120}\b(?:film|films|filmed|microfilm)\b"
+    r"|\b(?:film|films|filmed|microfilm)\b[^.\n]{0,120}\bcatalog\b",
+    re.I,
+)
+
+
 def test_escalates_to_external_sites_after_fs_exhaustion(
     agent_returns, text_response, test
 ):
@@ -327,9 +338,12 @@ def test_escalates_to_external_sites_after_fs_exhaustion(
     """
     from harness.skill_runner import agent_return_text
 
-    if "familysearch-exhausted" not in test.get("tags", []):
+    tags = test.get("tags", [])
+    if "familysearch-exhausted" not in tags:
         pytest.skip("only the FamilySearch-exhaustion escalation test")
     reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    if FILM_CHECK_TAG in tags and _CATALOG_FILM_NEXT_STEP.search(reply):
+        return
     assert re.search(r"hand[- ]?back[^\n]{0,80}`?search-external-sites", reply, re.I), (
         "FamilySearch was exhausted across name variants, so the agent had to "
         "hand back to search-external-sites in its return. Offering Ancestry in "
