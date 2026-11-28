@@ -667,7 +667,7 @@ sit inside this range while still failing the self-check below.
 
 **Breadth self-check — run this before writing the plan, not after the
 user asks "was anything missed?"** Answer Appendix A's
-Standard 17 five self-check questions, plus a sixth, a seventh and an eighth, against the plan
+Standard 17 five self-check questions, plus a sixth to a ninth, against the plan
 you are about to write:
 1. Sufficient breadth of record types (not just census/vital)? When the
    target question's `question_kind` is `enumerative`, does the plan cover
@@ -693,6 +693,8 @@ you are about to write:
    date_range covers each.
 8. Did you `wiki_read` every page Step 3's pre-work triggers for this
    subject? If not, fetch it now and plan from it.
+9. If the delegation asks who a person in a record or household is, are
+   the first items, after any hints item, Step 4's `marriage` items?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
