@@ -25,7 +25,6 @@ dutch-mother-ended-on-conflict
 dutch-mother-name-disputed
 dutch-mother-searched-out
 dutch-mother-searched-out-weighed
-empty-folder-no-project
 empty-project-new-orleans-objective
 empty-project-why-objective
 england-census-hypothesis
