@@ -489,7 +489,12 @@ question never loads the skill, so nothing reads that row's line until one does
 - **A readable report** is one more line in the router's bounded-request list:
   "write this up" produces a Word or PDF file in the conversation from the proof summary, the
   family and the sources. It adds no claims and keeps the rating, any reviewer's
-  verdict, what does not fit and what was not searched. No viewer code.
+  verdict, what does not fit and what was not searched. No viewer code. The report is
+  built from tool reads only, so it can be regenerated after a lost chat. The reviewer's
+  verdict is the page's rule ("The reviewer", above): the row carries no craft mark, so the
+  report reads each candidate's body with `sidecar_read` and a body it cannot read counts
+  as not craft. With no proof summary it gives what is
+  established and what is open, with no tier. It never concludes and never writes.
 
 ## Local testing
 
