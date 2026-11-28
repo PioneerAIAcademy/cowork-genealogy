@@ -56,7 +56,7 @@ def _edit(root: Path, rel: str, old: str, new: str) -> None:
         ("skill_runner.py", "    rest = list(skills_invoked or [])", "    rest = list(skills_invoked or [])[:1]"),
         # the whole-module half
         ("scenario_brief.py", "def readme_fallback_warning(", "def _probe():\n    return 1\n\n\ndef readme_fallback_warning("),
-        # Review 2026-10-26, blocker 1: a strategy function handed to `_render`
+        # Review 2026-10-26, blocker 1: a strategy function handed to `_render_kept_calls`
         # BY VALUE. Following only `ast.Call` left all three `_live_args_*`
         # outside the graph, so editing the marker every live call renders at
         # changed each judge's input and moved no hash.
@@ -64,6 +64,20 @@ def _edit(root: Path, rel: str, old: str, new: str) -> None:
             "judge.py",
             "[args omitted by harness for prompt size;",
             "[args omitted by the harness for prompt size;",
+        ),
+        # #4682: the size guard's render passes are listed in `_render_passes`.
+        # As a module-level tuple they hid these two strategies from the walk,
+        # which collects a constant read by a reached function but not the
+        # functions named inside it.
+        (
+            "judge.py",
+            "def _live_args_as_is(args: Any) -> Any:\n    return args\n",
+            "def _live_args_as_is(args: Any) -> Any:\n    return args or None\n",
+        ),
+        (
+            "judge.py",
+            "    return _summarize_response(args, array_sample=None)\n",
+            "    return _summarize_response(args, array_sample=None, string_max=1999)\n",
         ),
         # a slot `grade()` fills: blanking one deletes evidence from every
         # judge prompt, which is exactly what rule 2b exists to catch.

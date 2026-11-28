@@ -211,7 +211,7 @@ def _render_graph_nodes(validators_dir: Path) -> list[tuple[str, str, ast.stmt]]
                 elif called in mod.imports:
                     pending.append(mod.imports[called])
             elif isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
-                # A function PASSED BY VALUE is render code too. `_render` takes
+                # A function PASSED BY VALUE is render code too. `_render_kept_calls` takes
                 # its live-args strategy as a parameter -- `_live_args_omitted`,
                 # `_live_args_as_is`, `_live_args_string_capped` are handed in,
                 # never called by name here -- so following only `ast.Call` left

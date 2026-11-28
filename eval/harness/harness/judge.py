@@ -335,21 +335,20 @@ def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
 
 
 def _carries_excerpt(response: Any, needles: tuple[str, ...]) -> bool:
-    """Whether rendering `response` would append at least one excerpt.
+    """Whether the render of `response` shows at least one excerpt.
 
-    Not merely "mentions a needle": nearly every wiki page names
-    familysearch.org, which every guide cites, and protecting all of those
-    from the size guard dropped three more calls from v7h for no excerpt.
+    Defined by the render itself (#4682 case 1): a string at
+    _RESPONSE_MAX_DEPTH is replaced by the depth marker and shows none, and a
+    walk of its own that ignored that cap protected calls from the size guard
+    for excerpts the judge never saw. Not merely "mentions a needle" either:
+    nearly every wiki page names familysearch.org, which every guide cites, and
+    protecting all of those from the size guard dropped three more calls from
+    v7h for no excerpt.
     """
     if not needles:
         return False
-    if isinstance(response, dict):
-        return any(_carries_excerpt(v, needles) for v in response.values())
-    if isinstance(response, list):
-        return any(_carries_excerpt(v, needles) for v in response)
-    if isinstance(response, str) and len(response) > _RESPONSE_STRING_MAX:
-        return bool(_excerpts_past_cut(response, needles))
-    return False
+    summary = _summarize_response(response, array_sample=None)
+    return _with_excerpts(response, summary, needles) != summary
 
 
 def _with_excerpts(original: Any, summarized: Any, needles: tuple[str, ...]) -> Any:
@@ -548,16 +547,18 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 # Size guard for the tool_calls slot. Even with per-response summarization,
 # many calls × moderate sizes can blow past the judge's context. The budget is
 # spent on evidence: once the block exceeds _TOOL_CALLS_MAX_CHARS the harness
-# drops the oldest tool calls (a call that carries a harness excerpt goes last;
-# see `_render_tool_calls_with_size_guard`) and prepends a "_dropped_for_size" marker so
-# reviewers can see truncation happened. That budget is measured with the args
-# of every live call (matched.kind == "live": the mock answered it from the
-# real implementation, which is how every writer runs) stood in by a short
-# omission marker, because those args are the agent's own output, not
-# evidence. A locality guide persisted through research_append carries the
-# whole ~20K-char guide in its args, and counting it pushed the earliest
-# survey calls out, so the judge called their correctly cited values
-# fabricated (#3442). The real calls are then rendered, held under
+# drops whole tool calls, oldest first with a call that carries a harness
+# excerpt last, then adds back, newest first, each dropped call that still fits
+# without moving the render to a later pass (see
+# `_render_tool_calls_with_size_guard`), and prepends a "_dropped_for_size"
+# marker that counts them so reviewers can see truncation happened. That budget
+# is measured with the args of every live call (matched.kind == "live": the
+# mock answered it from the real implementation, which is how every writer
+# runs) stood in by a short omission marker, because those args are the
+# agent's own output, not evidence. A locality guide persisted through
+# research_append carries the whole ~20K-char guide in its args, and counting
+# it pushed the earliest survey calls out, so the judge called their correctly
+# cited values fabricated (#3442). The real calls are then rendered, held under
 # _TOOL_CALLS_HARD_MAX_CHARS by cutting live args (first their strings to the
 # per-string cap, then the args whole to the marker), never by dropping more
 # evidence. ~50K chars ≈ ~12K tokens and the 100K ceiling ≈ ~25K, both well
@@ -677,7 +678,8 @@ _WRITER_NO_REFUSAL_PATH = {
 # in the MEASURED view, or the refusal marker grows the drop budget and pushes
 # out the earliest calls -- the regression #3442 records, where a dropped call
 # made the judge score a correct citation as fabricated.
-# `test_refusal_marker_cannot_grow_the_size_guard_budget` pins it.
+# `test_refusal_marker_is_shorter_than_the_omission_marker_it_replaces` and
+# `test_refusal_marker_growth_against_raw_args_is_bounded_and_measured` pin it.
 _REFUSED_ARGS_MARKER = "[args omitted: the tool refused this call]"
 
 
@@ -706,6 +708,198 @@ def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> A
     return live_args(call["args"]) if _is_live_call(call) else call["args"]
 
 
+def _dropped_for_size_marker(dropped: int, dropped_cited: int) -> str:
+    """The line before a calls list the size guard cut.
+
+    It counts the dropped calls and the ones among them that carried a harness
+    excerpt (#4682 case 2). It names no order: after the refill pass the
+    missing calls are not "the oldest" ones. It sits in the measured view and
+    in every render pass. The drop pass measures with the old line's length and
+    keeps the calls the old guard kept, so a longer line here could push those
+    calls over the budget, or their render to a later pass that cuts a write or
+    drops excerpts the old guard showed;
+    `test_dropped_marker_cannot_grow_the_size_guard_budget` pins it.
+    """
+    return (
+        f"(_dropped_for_size: {dropped} tool calls dropped whole, "
+        f"{dropped_cited} of them with harness excerpts, "
+        f"to keep tool calls under "
+        f"{_TOOL_CALLS_MAX_CHARS} chars, "
+        f"not counting live calls' args, a refused writer's "
+        f"omitted args, or harness excerpts)\n"
+    )
+
+
+def _render_kept_calls(
+    tool_calls: list[dict[str, Any]],
+    keep: list[bool],
+    cited: list[bool],
+    live_args: Callable[[Any], Any],
+    excerpt_needles: tuple[str, ...] = (),
+) -> str:
+    """The calls `keep` marks, in their original order, after a
+    `_dropped_for_size_marker` line if `keep` marks any call dropped."""
+    body = json.dumps(
+        [
+            {
+                "tool": c["tool"],
+                "args": _args_for_render(c, live_args),
+                "expected_args": c.get("expected_args"),
+                "matched": c["matched"],
+                # array_sample=None: render EVERY result, not the first 3.
+                # The default (3) suits argument-quality grading, but a
+                # grounding rubric marks a correct citation of result 4+ as
+                # fabricated when the judge can only see results 1-3 (#1902).
+                # The prompt-size bound is the size guard, which drops whole
+                # calls with a stated marker.
+                "response_summary": _with_excerpts(
+                    c.get("response"),
+                    _summarize_response(c.get("response"), array_sample=None),
+                    excerpt_needles,
+                ),
+            }
+            for c, kept in zip(tool_calls, keep)
+            if kept
+        ],
+        indent=2,
+    )
+    dropped = keep.count(False)
+    if not dropped:
+        return body
+    dropped_cited = sum(1 for kept, c in zip(keep, cited) if c and not kept)
+    return _dropped_for_size_marker(dropped, dropped_cited) + body
+
+
+def _pre_4682_marker_len(dropped: int) -> int:
+    """How long the `_dropped_for_size` line was before #4682, at `dropped`.
+
+    The drop pass measures with it so it stops exactly where the guard stopped
+    before. Measured with the shorter line it stopped up to 22 chars early and
+    kept a call the old guard dropped, and that call could push the render to a
+    later pass and cost every excerpt (#4682 review). The refill measures with
+    the real line.
+    """
+    return len(
+        f"(_dropped_for_size: {dropped} tool calls dropped, oldest "
+        f"first but keeping any that carries a harness excerpt, "
+        f"to keep tool calls under "
+        f"{_TOOL_CALLS_MAX_CHARS} chars, "
+        f"not counting live calls' args, a refused writer's "
+        f"omitted args, or harness excerpts)\n"
+    )
+
+
+def _size_guard_fits(
+    tool_calls: list[dict[str, Any]],
+    keep: list[bool],
+    cited: list[bool],
+    *,
+    as_before: bool = False,
+) -> bool:
+    """Whether the measured view of the calls `keep` marks is within budget.
+
+    `as_before` measures it with the pre-#4682 marker's length, for the drop
+    pass (see `_pre_4682_marker_len`)."""
+    measured = len(_render_kept_calls(tool_calls, keep, cited, _live_args_omitted))
+    dropped = keep.count(False)
+    if as_before and dropped:
+        dropped_cited = sum(1 for kept, c in zip(keep, cited) if c and not kept)
+        measured += _pre_4682_marker_len(dropped) - len(
+            _dropped_for_size_marker(dropped, dropped_cited)
+        )
+    return measured <= _TOOL_CALLS_MAX_CHARS
+
+
+def _size_guard_drop_loop(
+    tool_calls: list[dict[str, Any]], cited: list[bool]
+) -> list[bool]:
+    """The size guard's drop pass: the same victim rule and stop as before
+    #4682, measured with the old marker's length, so it keeps exactly the calls
+    the old guard kept wherever `cited` agrees (`cited` now follows the render).
+    Returns the kept mask."""
+    keep = [True] * len(tool_calls)
+    while keep.count(True) > 1 and not _size_guard_fits(tool_calls, keep, cited, as_before=True):
+        kept = [i for i, k in enumerate(keep) if k]
+        # Oldest first, but a call that carries an excerpt goes last: in
+        # locality-guide v6 `k9d` the guard dropped the church-records page
+        # every excerpt came from, and the judge saw neither head nor excerpt.
+        # Writes get no place in this order (#4682 case 5): putting them ahead
+        # of a cited call dropped ut_locality_guide_029's call #4, the only
+        # Pulaski County locality_survey, to keep writes #7-12, and the judge
+        # would have read a Pulaski guide with no Pulaski source. The refill
+        # pass in `_size_guard_keep` brings writes back when there is room.
+        victim = next((i for i in kept if not cited[i]), kept[0])
+        keep[victim] = False
+    return keep
+
+
+def _render_passes() -> tuple[tuple[Callable[[Any], Any], bool], ...]:
+    """The render passes, in order: (live-args strategy, with excerpts).
+
+    A function, not a module constant: `judge_render`'s walk follows a call
+    and the names a reached function reads, but not the names inside a
+    module-level value, so a tuple constant here left `_live_args_as_is` and
+    `_live_args_string_capped` outside the render hash.
+    """
+    return (
+        (_live_args_as_is, True),
+        (_live_args_string_capped, True),
+        (_live_args_string_capped, False),
+    )
+
+
+def _render_pass(
+    tool_calls: list[dict[str, Any]],
+    keep: list[bool],
+    cited: list[bool],
+    needles: tuple[str, ...],
+) -> int:
+    """Index of the first render pass whose output is within
+    _TOOL_CALLS_HARD_MAX_CHARS; len(_render_passes()) means the measured view."""
+    passes = _render_passes()
+    for n, (live_args, with_excerpts) in enumerate(passes):
+        excerpt_needles = needles if with_excerpts else ()
+        rendered = _render_kept_calls(tool_calls, keep, cited, live_args, excerpt_needles)
+        if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
+            return n
+    return len(passes)
+
+
+def _size_guard_keep(
+    tool_calls: list[dict[str, Any]],
+    cited: list[bool],
+    needles: tuple[str, ...],
+) -> list[bool]:
+    """The calls the size guard keeps: the drop pass, then the refill pass.
+
+    The refill re-adds dropped calls newest first, each only if the measured
+    view, its marker recounted, still fits AND the render stays on the pass the
+    drop pass's calls render at. The measured view stands a live call's args in
+    by a short marker, so a re-added write can cost ~250 chars there and 100K in
+    the real render, pushing it to a later pass: every excerpt lost, or another
+    write cut to the string cap. Holding the pass means refill never costs the
+    judge anything it saw before. It only adds, so every call the drop pass
+    keeps is kept. The drop pass takes every uncited call before a cited one,
+    the agent's writes among them; in ut_locality_guide_q4m it dropped all four
+    research_append calls although dropping the 44.6K survey alone left room
+    for them.
+    """
+    keep = _size_guard_drop_loop(tool_calls, cited)
+    if all(keep):
+        return keep
+    held = _render_pass(tool_calls, keep, cited, needles)
+    for i in range(len(keep) - 1, -1, -1):
+        if keep[i]:
+            continue
+        keep[i] = True
+        if not (
+            _size_guard_fits(tool_calls, keep, cited)
+            and _render_pass(tool_calls, keep, cited, needles) <= held
+        ):
+            keep[i] = False
+    return keep
+
+
 def _render_tool_calls_with_size_guard(
     tool_calls: list[dict[str, Any]], needles: tuple[str, ...] = ()
 ) -> str:
@@ -714,13 +908,20 @@ def _render_tool_calls_with_size_guard(
     The drop budget is measured on a view in which each live call's args are
     replaced by `_live_args_omitted`: while that view exceeds
     _TOOL_CALLS_MAX_CHARS, drop the oldest call that carries no excerpt (the
-    oldest call once every remaining one carries one), and prepend a marker that
-    records how many were dropped. The kept calls are then rendered with their
-    real args. If that render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args
-    are rendered with their strings cut to the per-string cap, and if it still
-    does, as in the measured view. Worst case (single call still too large),
-    keep one call and accept the overage: the newest that carries an excerpt
-    if any does, else the newest.
+    oldest call once every remaining one carries one). Then add dropped calls
+    back, newest first, each only if the view still fits, and prepend a marker
+    that counts the calls still dropped and the ones among them that carried an
+    excerpt. The drop pass measures with the pre-#4682 marker's length, so it
+    keeps exactly what the guard kept before; a call is added back only if the
+    real render stays on the same pass (listed below) as the drop pass's
+    calls, so the refill never costs the judge an excerpt or a whole write it
+    saw before. The kept calls are then rendered
+    with their real args. If that
+    render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args are rendered with
+    their strings cut to the per-string cap, and if it still does, as in the
+    measured view. Worst case (single call still too large), keep one call and
+    accept the overage: the newest that carries an excerpt if any does, else
+    the newest.
 
     `needles` (from `_citation_needles`) adds excerpts to every cut string that
     hides one. Like live args, excerpts are left out of the measured view, so
@@ -730,70 +931,14 @@ def _render_tool_calls_with_size_guard(
     if not tool_calls:
         return "(none)"
 
-    def _render(
-        calls: list[dict[str, Any]],
-        dropped: int,
-        live_args: Callable[[Any], Any],
-        excerpt_needles: tuple[str, ...] = (),
-    ) -> str:
-        body = json.dumps(
-            [
-                {
-                    "tool": c["tool"],
-                    "args": _args_for_render(c, live_args),
-                    "expected_args": c.get("expected_args"),
-                    "matched": c["matched"],
-                    # array_sample=None: render EVERY result, not the first 3.
-                    # The default (3) suits argument-quality grading, but a
-                    # grounding rubric marks a correct citation of result 4+ as
-                    # fabricated when the judge can only see results 1-3 (#1902).
-                    # The prompt-size bound is the guard below, which drops
-                    # whole calls, oldest uncited first, with a stated marker.
-                    "response_summary": _with_excerpts(
-                        c.get("response"),
-                        _summarize_response(c.get("response"), array_sample=None),
-                        excerpt_needles,
-                    ),
-                }
-                for c in calls
-            ],
-            indent=2,
-        )
-        if dropped:
-            return (
-                f"(_dropped_for_size: {dropped} tool calls dropped, oldest "
-                f"first but keeping any that carries a harness excerpt, "
-                f"to keep tool calls under "
-                f"{_TOOL_CALLS_MAX_CHARS} chars, "
-                f"not counting live calls' args, a refused writer's "
-                f"omitted args, or harness excerpts)\n"
-                + body
-            )
-        return body
-
-    calls = list(tool_calls)
-    cited = [_carries_excerpt(c.get("response"), needles) for c in calls]
-    dropped = 0
-    view = _render(calls, dropped, _live_args_omitted)
-    while len(calls) > 1 and len(view) > _TOOL_CALLS_MAX_CHARS:
-        # Oldest first, but a call that carries an excerpt goes last: in
-        # locality-guide v6 `k9d` the guard dropped the church-records page
-        # every excerpt came from, and the judge saw neither head nor excerpt.
-        victim = cited.index(False) if False in cited else 0
-        calls.pop(victim)
-        cited.pop(victim)
-        dropped += 1
-        view = _render(calls, dropped, _live_args_omitted)
-
-    for live_args, excerpt_needles in (
-        (_live_args_as_is, needles),
-        (_live_args_string_capped, needles),
-        (_live_args_string_capped, ()),
-    ):
-        rendered = _render(calls, dropped, live_args, excerpt_needles)
+    cited = [_carries_excerpt(c.get("response"), needles) for c in tool_calls]
+    keep = _size_guard_keep(tool_calls, cited, needles)
+    for live_args, with_excerpts in _render_passes():
+        excerpt_needles = needles if with_excerpts else ()
+        rendered = _render_kept_calls(tool_calls, keep, cited, live_args, excerpt_needles)
         if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
             return rendered
-    return view
+    return _render_kept_calls(tool_calls, keep, cited, _live_args_omitted)
 
 
 def _grading_tool_for_rubric(rubric: Rubric) -> dict[str, Any]:
