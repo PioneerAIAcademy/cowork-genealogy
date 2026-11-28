@@ -8,7 +8,7 @@
   "timestamp": "2026-11-19_22-20-42",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
-  "judge_prompt_hash": "ce5a32f52be690f6ef13643cb3211f0154aae15b6328800ebbe9d635849cb491",
+  "judge_prompt_hash": "550fc431911f86e30864a496e0cdf7be737afc2f6bacb93ff34121bf33680b08",
   "snapshot": {
     "packages/engine/plugin/agents/gps-mentor.md": "008b502a40c7f1a3a94dbb2f6a6dac80e0280dfeb2933f952a5661402f5b53fb",
     "eval/tests/unit/gps-mentor/craft-refusal-no-proof-summary.json": "d30791a7101bf96f3d577789f5ab5167162b243aa89bd0e7aa4d04a4694f731e",
@@ -46,37 +46,37 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry was written with the correct target_id 'project', verdict 'refused', and a narrative_for_user conveying both required elements (no finished prose to read, run proof-conclusion first). Nothing required was omitted."
+            "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry carries the correct target_id 'project' and target_type 'project'. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query used section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly persisted the refusal with verdict 'refused', target_id 'project', target_type 'project', focus 'on-demand', and craft:true. All expected_args were null (live calls), and the args passed were appropriate and correct."
+            "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query correctly specified section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly used the projectPath, section 'evaluations', op 'append', and a verdict with verdict 'refused', target_id 'project', target_type 'project'. All expected_args were null (live calls), and the args passed were appropriate and correct."
           },
           {
             "source": "rubric",
             "name": "Focus discipline and refusal",
             "score": 3,
-            "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, evaluated nothing further (no strengths, no must_address items, no findings), and persisted the refusal. The \u00a76.4 preamble about what was not checked is not required on a refusal per the rubric, and the agent correctly omitted it. No degradation into a lighter mode occurred."
+            "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, persisted the refusal, and did not evaluate any evidence or degrade into an evidentiary on-demand review. The refusal correctly conveys that there is no finished prose to read and that proof-conclusion must come first. Per the spec note, the \u00a76.4 preamble is not required on a refusal, and the agent correctly omitted it."
           },
           {
             "source": "rubric",
             "name": "Severity and citation discipline",
-            "score": null,
-            "rationale": "This was a refusal \u2014 no findings were produced, so no severity or citation decisions were made. This dimension has no occasion to apply."
+            "score": 3,
+            "rationale": "This is a refusal \u2014 no findings were produced, so no severity tiers or citations were applied. The structured verdict correctly has empty arrays for strengths, must_address, consider_addressing, and non_blocking_notes. No severity or citation discipline violations occurred."
           },
           {
             "source": "rubric",
             "name": "Tool work: reading the state the verdict rests on",
             "score": 3,
-            "rationale": "The agent fetched the facts its verdict rests on: it called project_context to understand the project state and research_query on proof_summaries to confirm zero proof summaries exist. The refusal decision was grounded in actual tool reads, not inference. No prior evaluation sidecar existed to read (the scenario ships no evaluations/ directory), so no sidecar_read was needed or expected."
+            "rationale": "The agent called research_query with section 'proof_summaries' to confirm no proof summaries exist before issuing the refusal. This is the correct instrument for verifying the precondition. The verdict rests on the confirmed absence of proof summaries, which was read rather than assumed. No sidecar_read was needed since there are no prior evaluations to check for supersession."
           },
           {
             "source": "rubric",
             "name": "Mentor voice and actionability",
             "score": 3,
-            "rationale": "The refusal narrative is one line of plain language that a researcher can understand without knowing the schema: it names what is missing (no written-up finding / no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the only requirement is a plain-language one-liner naming the gap and next step, which this satisfies."
+            "rationale": "The refusal narrative is plain language a researcher can understand without knowing the schema: 'There's no written-up finding to read yet, and a craft read needs finished prose.' It names what is missing (no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the deliverable is one line of plain language naming the gap and the next step, which this satisfies."
           }
         ],
         "review_dimensions": [
@@ -90,37 +90,37 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry was written with the correct target_id 'project', verdict 'refused', and a narrative_for_user conveying both required elements (no finished prose to read, run proof-conclusion first). Nothing required was omitted."
+            "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry carries the correct target_id 'project' and target_type 'project'. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query used section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly persisted the refusal with verdict 'refused', target_id 'project', target_type 'project', focus 'on-demand', and craft:true. All expected_args were null (live calls), and the args passed were appropriate and correct."
+            "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query correctly specified section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly used the projectPath, section 'evaluations', op 'append', and a verdict with verdict 'refused', target_id 'project', target_type 'project'. All expected_args were null (live calls), and the args passed were appropriate and correct."
           },
           {
             "source": "rubric",
             "name": "Focus discipline and refusal",
             "score": 3,
-            "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, evaluated nothing further (no strengths, no must_address items, no findings), and persisted the refusal. The \u00a76.4 preamble about what was not checked is not required on a refusal per the rubric, and the agent correctly omitted it. No degradation into a lighter mode occurred."
+            "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, persisted the refusal, and did not evaluate any evidence or degrade into an evidentiary on-demand review. The refusal correctly conveys that there is no finished prose to read and that proof-conclusion must come first. Per the spec note, the \u00a76.4 preamble is not required on a refusal, and the agent correctly omitted it."
           },
           {
             "source": "rubric",
             "name": "Severity and citation discipline",
-            "score": null,
-            "rationale": "This was a refusal \u2014 no findings were produced, so no severity or citation decisions were made. This dimension has no occasion to apply."
+            "score": 3,
+            "rationale": "This is a refusal \u2014 no findings were produced, so no severity tiers or citations were applied. The structured verdict correctly has empty arrays for strengths, must_address, consider_addressing, and non_blocking_notes. No severity or citation discipline violations occurred."
           },
           {
             "source": "rubric",
             "name": "Tool work: reading the state the verdict rests on",
             "score": 3,
-            "rationale": "The agent fetched the facts its verdict rests on: it called project_context to understand the project state and research_query on proof_summaries to confirm zero proof summaries exist. The refusal decision was grounded in actual tool reads, not inference. No prior evaluation sidecar existed to read (the scenario ships no evaluations/ directory), so no sidecar_read was needed or expected."
+            "rationale": "The agent called research_query with section 'proof_summaries' to confirm no proof summaries exist before issuing the refusal. This is the correct instrument for verifying the precondition. The verdict rests on the confirmed absence of proof summaries, which was read rather than assumed. No sidecar_read was needed since there are no prior evaluations to check for supersession."
           },
           {
             "source": "rubric",
             "name": "Mentor voice and actionability",
             "score": 3,
-            "rationale": "The refusal narrative is one line of plain language that a researcher can understand without knowing the schema: it names what is missing (no written-up finding / no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the only requirement is a plain-language one-liner naming the gap and next step, which this satisfies."
+            "rationale": "The refusal narrative is plain language a researcher can understand without knowing the schema: 'There's no written-up finding to read yet, and a craft read needs finished prose.' It names what is missing (no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the deliverable is one line of plain language naming the gap and the next step, which this satisfies."
           }
         ]
       },
@@ -504,11 +504,6 @@
                 "kind": "prose_observation",
                 "check": "report_no_gps_jargon_in_response",
                 "observation": "GPS vocabulary in the reply: proof"
-              },
-              {
-                "kind": "scenario_readme_fallback",
-                "scenario": "flynn-decisive-record-unsearched",
-                "advisory": "Scenario 'flynn-decisive-record-unsearched' has no judge-brief.md, so the judge read its whole README.md, which may state the outcome this run is graded on (issue #2478)."
               }
             ]
           },
@@ -661,52 +656,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "The agent correctly identified that no proof summaries exist (confirmed by research_query returning count:0), correctly refused the craft review, and persisted a refusal verdict with target_id 'project' and target_type 'project' as required. The narrative accurately states there is no written-up finding and directs the researcher to run proof-conclusion first. No fabricated material; all claims are supported by the tool responses."
+                "rationale": "The agent correctly identified that no proof summaries exist (confirmed by research_query returning count:0), correctly refused the craft review, and persisted a refusal verdict with target_id 'project' and target_type 'project' as required. The narrative accurately states there is no written-up finding and directs the researcher to run proof-conclusion first. No fabricated material; all claims are supported by the tool responses.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry was written with the correct target_id 'project', verdict 'refused', and a narrative_for_user conveying both required elements (no finished prose to read, run proof-conclusion first). Nothing required was omitted."
+                "rationale": "The agent completed all required steps: checked project context, queried proof_summaries (confirming zero exist), issued a structured refusal verdict, and persisted it via evaluation_append. The refusal entry carries the correct target_id 'project' and target_type 'project'. Nothing required by the scenario was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query used section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly persisted the refusal with verdict 'refused', target_id 'project', target_type 'project', focus 'on-demand', and craft:true. All expected_args were null (live calls), and the args passed were appropriate and correct."
+                "rationale": "All three tool calls used correct arguments. project_context received the correct projectPath. research_query correctly specified section 'proof_summaries' to check for existing proof summaries. evaluation_append correctly used the projectPath, section 'evaluations', op 'append', and a verdict with verdict 'refused', target_id 'project', target_type 'project'. All expected_args were null (live calls), and the args passed were appropriate and correct.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Focus discipline and refusal",
-                "score": 3,
-                "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, evaluated nothing further (no strengths, no must_address items, no findings), and persisted the refusal. The \u00a76.4 preamble about what was not checked is not required on a refusal per the rubric, and the agent correctly omitted it. No degradation into a lighter mode occurred."
+                "rationale": "The agent correctly refused the craft review because no proof summary exists. It returned verdict 'refused' with a one-line narrative_for_user, persisted the refusal, and did not evaluate any evidence or degrade into an evidentiary on-demand review. The refusal correctly conveys that there is no finished prose to read and that proof-conclusion must come first. Per the spec note, the \u00a76.4 preamble is not required on a refusal, and the agent correctly omitted it.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Severity and citation discipline",
-                "score": null,
-                "rationale": "This was a refusal \u2014 no findings were produced, so no severity or citation decisions were made. This dimension has no occasion to apply."
+                "rationale": "This is a refusal \u2014 no findings were produced, so no severity tiers or citations were applied. The structured verdict correctly has empty arrays for strengths, must_address, consider_addressing, and non_blocking_notes. No severity or citation discipline violations occurred.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Tool work: reading the state the verdict rests on",
-                "score": 3,
-                "rationale": "The agent fetched the facts its verdict rests on: it called project_context to understand the project state and research_query on proof_summaries to confirm zero proof summaries exist. The refusal decision was grounded in actual tool reads, not inference. No prior evaluation sidecar existed to read (the scenario ships no evaluations/ directory), so no sidecar_read was needed or expected."
+                "rationale": "The agent called research_query with section 'proof_summaries' to confirm no proof summaries exist before issuing the refusal. This is the correct instrument for verifying the precondition. The verdict rests on the confirmed absence of proof summaries, which was read rather than assumed. No sidecar_read was needed since there are no prior evaluations to check for supersession.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Mentor voice and actionability",
-                "score": 3,
-                "rationale": "The refusal narrative is one line of plain language that a researcher can understand without knowing the schema: it names what is missing (no written-up finding / no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the only requirement is a plain-language one-liner naming the gap and next step, which this satisfies."
+                "rationale": "The refusal narrative is plain language a researcher can understand without knowing the schema: 'There's no written-up finding to read yet, and a craft read needs finished prose.' It names what is missing (no proof summary) and what to do next (run proof-conclusion first). It does not use internal axis vocabulary or schema field names. Per the rubric, on a refusal the deliverable is one line of plain language naming the gap and the next step, which this satisfies.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.036681,
+            "judge_cost_usd": 0.037086,
             "duration_ms": 19869.280914004776,
             "error": null,
-            "input_tokens": 7697,
+            "input_tokens": 7722,
             "cached_input_tokens": 0,
-            "output_tokens": 906
+            "output_tokens": 928
           },
           "started_at": 1795127878.0245402,
           "ended_at": 1795127921.5642385
@@ -732,43 +727,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims in the response are grounded in the actual content of ps_001's narrative_markdown (read via research_query) and the prior sidecar body (read via sidecar_read). The agent correctly identifies: 'Original Source' appearing three times, 'indirect evidence' used twice, 'secondary informant' for James Brown, 'GPS preponderance hierarchy', the Evidence Summary as a three-item numbered list, and the relationship-column point made twice. The verdict is 'consider_addressing' with craft:true, no must_address items, and no address_first verdict \u2014 all correct for a craft read. The prior ev_001 is superseded by ev_002 as required. The scope sentence correctly names proof-critique as the review that checks the evidence. No fabricated material detected."
+            "rationale": "The agent correctly performed a craft review of ps_001, appended a new verdict (ev_002) with 'craft': true, superseded ev_001, and produced findings that are grounded in the actual prose of ps_001 (vocabulary terms like 'Original Source', 'indirect evidence', 'secondary informant', 'GPS preponderance hierarchy' are all present in the narrative_markdown as confirmed by the scenario description). The verdict is 'consider_addressing' with no must_address items, consistent with the craft-advisory rule. The scope sentence is present. No fabricated material detected. The agent correctly read the sidecar before deciding supersession."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: read project_context, queried evaluations for ps_001, read the prior sidecar body via sidecar_read, read the proof summary content, appended a new craft verdict (ev_002) with craft:true, and updated ev_001's superseded_by to ev_002. The craft review covers audience calibration, engagement, context provision, and the duplicate relationship-column note. The narrative_for_user is present and substantive. Nothing required by the task was omitted."
+            "rationale": "The agent completed all required steps: read project context, queried evaluations for ps_001, read the prior sidecar body to confirm craft:true, read the proof summary content, appended a new craft verdict with strengths/consider_addressing/non_blocking_notes/narrative_for_user, and updated ev_001's superseded_by to ev_002. The new verdict includes the required scope sentence, audience inference, and actionable findings. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls used correct arguments. project_context used the correct projectPath. research_query for evaluations used correct section, targetId 'ps_001', and focus 'on-demand'. sidecar_read used the exact file_path 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' from the prior entry. research_query for proof_summaries used correct questionId 'q_001'. evaluation_append for the new verdict used correct op:'append' with all required fields including craft:true. The update call correctly set superseded_by:'ev_002' on ev_001. All matched as 'live' with no fixture_not_found errors."
+            "rationale": "All tool calls used live fixtures (matched.kind == 'live') with no fixture_not_found errors. The project_context call used the correct projectPath. The research_query for evaluations used correct section, targetId, and focus. The sidecar_read used the exact file_path from the prior entry ('evaluations/on-demand-ps_001-2026-06-02T09-15-00.json'). The research_query for proof_summaries and assertions used appropriate parameters. The evaluation_append calls correctly appended the new verdict and updated ev_001's superseded_by. All expected_args are null (live calls), so no fixture-declared expected args to mismatch against."
           },
           {
             "source": "rubric",
             "name": "Focus discipline and refusal",
             "score": 3,
-            "rationale": "The agent performed a craft read (not a refusal), and correctly opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This names proof-critique as the review that checks the evidence. The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. The craft:true flag was correctly set on the new verdict."
+            "rationale": "The agent performed a craft read as requested (focus: on-demand, craft mode). It opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This correctly names what was NOT checked (evidentiary review/proof-critique). The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. No refusal was needed since ps_001 exists and has a proof summary."
           },
           {
             "source": "rubric",
             "name": "Severity and citation discipline",
             "score": 3,
-            "rationale": "All craft findings are filed under consider_addressing or non_blocking_notes \u2014 none appear in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision) as required by \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed at nit level. No GPS standard numbers are invented for craft findings. The carry-over rule (\u00a76.3 check-3) was not triggered since no claims-to-record traceability issue arose."
+            "rationale": "All craft findings are filed under 'consider_addressing' or 'non_blocking_notes' \u2014 none are in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision), which is the correct citation form for craft findings per \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed as a nit. No numbered Genealogy Standard is invented for craft findings. Severity discipline is fully correct."
           },
           {
             "source": "rubric",
             "name": "Tool work: reading the state the verdict rests on",
             "score": 3,
-            "rationale": "The agent made the critical sidecar_read call on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The prior entry had superseded_by:null (confirmed by research_query response), so it was correctly identified as the live entry. The sidecar body revealed craft:true, which is the fact the supersession decision rests on. The agent did not guess \u2014 it read the body first, then acted. This is the required behavior per the per-test context."
+            "rationale": "The agent called sidecar_read on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The response confirmed craft:true in the body. The agent selected the live entry (superseded_by: null) from the research_query results. The supersession decision was therefore grounded in an actual read of the prior body, not inferred from focus/target_id alone. This is the required behavior per the per-test context."
           },
           {
             "source": "rubric",
             "name": "Mentor voice and actionability",
             "score": 3,
-            "rationale": "The narrative_for_user is written in plain colleague language with no internal axis vocabulary surfacing (no 'audience calibration check' etc.). Each finding names a specific artifact (e.g., 'Original Source tagged after each of the three records'), a specific gap, and a concrete next action (e.g., 'Say what each means in place'). The JSON fields are terse machine pointers while the prose lives in narrative_for_user without duplication. The agent states the assumed audience ('for a cousin' / 'a family audience') as required when intended_audience is unset. The prior craft read is acknowledged, confirming rather than contradicting it. The response notes the harness-observed identifiers (ev_001, ev_002, ps_001) appear in the footer/files-touched section, not in the main narrative prose, which is acceptable as a technical summary rather than schema vocabulary surfacing in the review itself."
+            "rationale": "The narrative_for_user is written in plain collegial language without internal axis vocabulary surfacing to the researcher (no mention of 'audience calibration check' etc.). The assumed audience is stated ('for a family audience', 'a cousin'). Each finding names a specific artifact (the vocabulary terms, the numbered Evidence Summary structure), a specific gap, and a concrete next action (translate terms in place, lead with the question the records answer, add historical context). The JSON fields are terse machine pointers while the human prose lives in narrative_for_user. The response notes the prior craft review and confirms/extends it. The point about the duplicate relationship-column mention is specific and actionable. No prose is restated verbatim in both JSON and narrative (the narrative paraphrases rather than copies the JSON fields). The harness flags 'ev_001', 'ev_002', 'ps_001' in the reply text \u2014 these appear in the 'Files touched' footer, not in the narrative itself, which is acceptable as a technical summary rather than schema vocabulary surfaced to the researcher in the review prose."
           }
         ],
         "review_dimensions": [
@@ -776,43 +771,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims in the response are grounded in the actual content of ps_001's narrative_markdown (read via research_query) and the prior sidecar body (read via sidecar_read). The agent correctly identifies: 'Original Source' appearing three times, 'indirect evidence' used twice, 'secondary informant' for James Brown, 'GPS preponderance hierarchy', the Evidence Summary as a three-item numbered list, and the relationship-column point made twice. The verdict is 'consider_addressing' with craft:true, no must_address items, and no address_first verdict \u2014 all correct for a craft read. The prior ev_001 is superseded by ev_002 as required. The scope sentence correctly names proof-critique as the review that checks the evidence. No fabricated material detected."
+            "rationale": "The agent correctly performed a craft review of ps_001, appended a new verdict (ev_002) with 'craft': true, superseded ev_001, and produced findings that are grounded in the actual prose of ps_001 (vocabulary terms like 'Original Source', 'indirect evidence', 'secondary informant', 'GPS preponderance hierarchy' are all present in the narrative_markdown as confirmed by the scenario description). The verdict is 'consider_addressing' with no must_address items, consistent with the craft-advisory rule. The scope sentence is present. No fabricated material detected. The agent correctly read the sidecar before deciding supersession."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: read project_context, queried evaluations for ps_001, read the prior sidecar body via sidecar_read, read the proof summary content, appended a new craft verdict (ev_002) with craft:true, and updated ev_001's superseded_by to ev_002. The craft review covers audience calibration, engagement, context provision, and the duplicate relationship-column note. The narrative_for_user is present and substantive. Nothing required by the task was omitted."
+            "rationale": "The agent completed all required steps: read project context, queried evaluations for ps_001, read the prior sidecar body to confirm craft:true, read the proof summary content, appended a new craft verdict with strengths/consider_addressing/non_blocking_notes/narrative_for_user, and updated ev_001's superseded_by to ev_002. The new verdict includes the required scope sentence, audience inference, and actionable findings. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls used correct arguments. project_context used the correct projectPath. research_query for evaluations used correct section, targetId 'ps_001', and focus 'on-demand'. sidecar_read used the exact file_path 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' from the prior entry. research_query for proof_summaries used correct questionId 'q_001'. evaluation_append for the new verdict used correct op:'append' with all required fields including craft:true. The update call correctly set superseded_by:'ev_002' on ev_001. All matched as 'live' with no fixture_not_found errors."
+            "rationale": "All tool calls used live fixtures (matched.kind == 'live') with no fixture_not_found errors. The project_context call used the correct projectPath. The research_query for evaluations used correct section, targetId, and focus. The sidecar_read used the exact file_path from the prior entry ('evaluations/on-demand-ps_001-2026-06-02T09-15-00.json'). The research_query for proof_summaries and assertions used appropriate parameters. The evaluation_append calls correctly appended the new verdict and updated ev_001's superseded_by. All expected_args are null (live calls), so no fixture-declared expected args to mismatch against."
           },
           {
             "source": "rubric",
             "name": "Focus discipline and refusal",
             "score": 3,
-            "rationale": "The agent performed a craft read (not a refusal), and correctly opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This names proof-critique as the review that checks the evidence. The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. The craft:true flag was correctly set on the new verdict."
+            "rationale": "The agent performed a craft read as requested (focus: on-demand, craft mode). It opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This correctly names what was NOT checked (evidentiary review/proof-critique). The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. No refusal was needed since ps_001 exists and has a proof summary."
           },
           {
             "source": "rubric",
             "name": "Severity and citation discipline",
             "score": 3,
-            "rationale": "All craft findings are filed under consider_addressing or non_blocking_notes \u2014 none appear in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision) as required by \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed at nit level. No GPS standard numbers are invented for craft findings. The carry-over rule (\u00a76.3 check-3) was not triggered since no claims-to-record traceability issue arose."
+            "rationale": "All craft findings are filed under 'consider_addressing' or 'non_blocking_notes' \u2014 none are in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision), which is the correct citation form for craft findings per \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed as a nit. No numbered Genealogy Standard is invented for craft findings. Severity discipline is fully correct."
           },
           {
             "source": "rubric",
             "name": "Tool work: reading the state the verdict rests on",
             "score": 3,
-            "rationale": "The agent made the critical sidecar_read call on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The prior entry had superseded_by:null (confirmed by research_query response), so it was correctly identified as the live entry. The sidecar body revealed craft:true, which is the fact the supersession decision rests on. The agent did not guess \u2014 it read the body first, then acted. This is the required behavior per the per-test context."
+            "rationale": "The agent called sidecar_read on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The response confirmed craft:true in the body. The agent selected the live entry (superseded_by: null) from the research_query results. The supersession decision was therefore grounded in an actual read of the prior body, not inferred from focus/target_id alone. This is the required behavior per the per-test context."
           },
           {
             "source": "rubric",
             "name": "Mentor voice and actionability",
             "score": 3,
-            "rationale": "The narrative_for_user is written in plain colleague language with no internal axis vocabulary surfacing (no 'audience calibration check' etc.). Each finding names a specific artifact (e.g., 'Original Source tagged after each of the three records'), a specific gap, and a concrete next action (e.g., 'Say what each means in place'). The JSON fields are terse machine pointers while the prose lives in narrative_for_user without duplication. The agent states the assumed audience ('for a cousin' / 'a family audience') as required when intended_audience is unset. The prior craft read is acknowledged, confirming rather than contradicting it. The response notes the harness-observed identifiers (ev_001, ev_002, ps_001) appear in the footer/files-touched section, not in the main narrative prose, which is acceptable as a technical summary rather than schema vocabulary surfacing in the review itself."
+            "rationale": "The narrative_for_user is written in plain collegial language without internal axis vocabulary surfacing to the researcher (no mention of 'audience calibration check' etc.). The assumed audience is stated ('for a family audience', 'a cousin'). Each finding names a specific artifact (the vocabulary terms, the numbered Evidence Summary structure), a specific gap, and a concrete next action (translate terms in place, lead with the question the records answer, add historical context). The JSON fields are terse machine pointers while the human prose lives in narrative_for_user. The response notes the prior craft review and confirms/extends it. The point about the duplicate relationship-column mention is specific and actionable. No prose is restated verbatim in both JSON and narrative (the narrative paraphrases rather than copies the JSON fields). The harness flags 'ev_001', 'ev_002', 'ps_001' in the reply text \u2014 these appear in the 'Files touched' footer, not in the narrative itself, which is acceptable as a technical summary rather than schema vocabulary surfaced to the researcher in the review prose."
           }
         ]
       },
@@ -1623,52 +1618,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "All factual claims in the response are grounded in the actual content of ps_001's narrative_markdown (read via research_query) and the prior sidecar body (read via sidecar_read). The agent correctly identifies: 'Original Source' appearing three times, 'indirect evidence' used twice, 'secondary informant' for James Brown, 'GPS preponderance hierarchy', the Evidence Summary as a three-item numbered list, and the relationship-column point made twice. The verdict is 'consider_addressing' with craft:true, no must_address items, and no address_first verdict \u2014 all correct for a craft read. The prior ev_001 is superseded by ev_002 as required. The scope sentence correctly names proof-critique as the review that checks the evidence. No fabricated material detected."
+                "rationale": "The agent correctly performed a craft review of ps_001, appended a new verdict (ev_002) with 'craft': true, superseded ev_001, and produced findings that are grounded in the actual prose of ps_001 (vocabulary terms like 'Original Source', 'indirect evidence', 'secondary informant', 'GPS preponderance hierarchy' are all present in the narrative_markdown as confirmed by the scenario description). The verdict is 'consider_addressing' with no must_address items, consistent with the craft-advisory rule. The scope sentence is present. No fabricated material detected. The agent correctly read the sidecar before deciding supersession.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: read project_context, queried evaluations for ps_001, read the prior sidecar body via sidecar_read, read the proof summary content, appended a new craft verdict (ev_002) with craft:true, and updated ev_001's superseded_by to ev_002. The craft review covers audience calibration, engagement, context provision, and the duplicate relationship-column note. The narrative_for_user is present and substantive. Nothing required by the task was omitted."
+                "rationale": "The agent completed all required steps: read project context, queried evaluations for ps_001, read the prior sidecar body to confirm craft:true, read the proof summary content, appended a new craft verdict with strengths/consider_addressing/non_blocking_notes/narrative_for_user, and updated ev_001's superseded_by to ev_002. The new verdict includes the required scope sentence, audience inference, and actionable findings. Nothing required by the task was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "All tool calls used correct arguments. project_context used the correct projectPath. research_query for evaluations used correct section, targetId 'ps_001', and focus 'on-demand'. sidecar_read used the exact file_path 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' from the prior entry. research_query for proof_summaries used correct questionId 'q_001'. evaluation_append for the new verdict used correct op:'append' with all required fields including craft:true. The update call correctly set superseded_by:'ev_002' on ev_001. All matched as 'live' with no fixture_not_found errors."
+                "rationale": "All tool calls used live fixtures (matched.kind == 'live') with no fixture_not_found errors. The project_context call used the correct projectPath. The research_query for evaluations used correct section, targetId, and focus. The sidecar_read used the exact file_path from the prior entry ('evaluations/on-demand-ps_001-2026-06-02T09-15-00.json'). The research_query for proof_summaries and assertions used appropriate parameters. The evaluation_append calls correctly appended the new verdict and updated ev_001's superseded_by. All expected_args are null (live calls), so no fixture-declared expected args to mismatch against.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Focus discipline and refusal",
-                "score": 3,
-                "rationale": "The agent performed a craft read (not a refusal), and correctly opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This names proof-critique as the review that checks the evidence. The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. The craft:true flag was correctly set on the new verdict."
+                "rationale": "The agent performed a craft read as requested (focus: on-demand, craft mode). It opened with the required \u00a76.4 preamble: 'I read this for how it reads, not for whether the evidence holds up \u2014 that's a different review, one that would check whether the tier and the conflict resolution actually hold (a review of the finding itself, not this one).' This correctly names what was NOT checked (evidentiary review/proof-critique). The agent did not evaluate tier, exhaustiveness, or conflict resolution \u2014 it stayed within craft scope throughout. No refusal was needed since ps_001 exists and has a proof summary.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Severity and citation discipline",
-                "score": 3,
-                "rationale": "All craft findings are filed under consider_addressing or non_blocking_notes \u2014 none appear in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision) as required by \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed at nit level. No GPS standard numbers are invented for craft findings. The carry-over rule (\u00a76.3 check-3) was not triggered since no claims-to-record traceability issue arose."
+                "rationale": "All craft findings are filed under 'consider_addressing' or 'non_blocking_notes' \u2014 none are in must_address, and the verdict is 'consider_addressing' not 'address_first'. Each consider_addressing item carries a 'Craft \u2014 <axis>' label (Craft \u2014 audience calibration, Craft \u2014 engagement, Craft \u2014 context provision), which is the correct citation form for craft findings per \u00a76.4. The non_blocking_notes item (duplicate relationship-column point) is correctly filed as a nit. No numbered Genealogy Standard is invented for craft findings. Severity discipline is fully correct.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Tool work: reading the state the verdict rests on",
-                "score": 3,
-                "rationale": "The agent made the critical sidecar_read call on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The prior entry had superseded_by:null (confirmed by research_query response), so it was correctly identified as the live entry. The sidecar body revealed craft:true, which is the fact the supersession decision rests on. The agent did not guess \u2014 it read the body first, then acted. This is the required behavior per the per-test context."
+                "rationale": "The agent called sidecar_read on 'evaluations/on-demand-ps_001-2026-06-02T09-15-00.json' \u2014 the exact file_path of the prior entry \u2014 before making the supersession decision. The response confirmed craft:true in the body. The agent selected the live entry (superseded_by: null) from the research_query results. The supersession decision was therefore grounded in an actual read of the prior body, not inferred from focus/target_id alone. This is the required behavior per the per-test context.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Mentor voice and actionability",
-                "score": 3,
-                "rationale": "The narrative_for_user is written in plain colleague language with no internal axis vocabulary surfacing (no 'audience calibration check' etc.). Each finding names a specific artifact (e.g., 'Original Source tagged after each of the three records'), a specific gap, and a concrete next action (e.g., 'Say what each means in place'). The JSON fields are terse machine pointers while the prose lives in narrative_for_user without duplication. The agent states the assumed audience ('for a cousin' / 'a family audience') as required when intended_audience is unset. The prior craft read is acknowledged, confirming rather than contradicting it. The response notes the harness-observed identifiers (ev_001, ev_002, ps_001) appear in the footer/files-touched section, not in the main narrative prose, which is acceptable as a technical summary rather than schema vocabulary surfacing in the review itself."
+                "rationale": "The narrative_for_user is written in plain collegial language without internal axis vocabulary surfacing to the researcher (no mention of 'audience calibration check' etc.). The assumed audience is stated ('for a family audience', 'a cousin'). Each finding names a specific artifact (the vocabulary terms, the numbered Evidence Summary structure), a specific gap, and a concrete next action (translate terms in place, lead with the question the records answer, add historical context). The JSON fields are terse machine pointers while the human prose lives in narrative_for_user. The response notes the prior craft review and confirms/extends it. The point about the duplicate relationship-column mention is specific and actionable. No prose is restated verbatim in both JSON and narrative (the narrative paraphrases rather than copies the JSON fields). The harness flags 'ev_001', 'ev_002', 'ps_001' in the reply text \u2014 these appear in the 'Files touched' footer, not in the narrative itself, which is acceptable as a technical summary rather than schema vocabulary surfaced to the researcher in the review prose.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.06354,
+            "judge_cost_usd": 0.0650163,
             "duration_ms": 31837.9976110009,
             "error": null,
-            "input_tokens": 14255,
-            "cached_input_tokens": 0,
-            "output_tokens": 1385
+            "input_tokens": 14329,
+            "cached_input_tokens": 5381,
+            "output_tokens": 1361
           },
           "started_at": 1795126842.6325278,
           "ended_at": 1795126959.883929
@@ -1696,7 +1691,7 @@
     "wall_clock_ms": 1078931.7107200623
   },
   "judge_model": "claude-sonnet-4-6",
-  "judge_render_hash": "94626c71a7348164d70b18f894e4d8efc9b32570ad10cea8416ac1a56303f3b3",
+  "judge_render_hash": "4a9a4b93ae17dddb00537783a46ea77e2a6461ce66a130aadcbbbd1192e30e3e",
   "review_sample": {
     "tests": [
       "ut_gps_mentor_k4p",

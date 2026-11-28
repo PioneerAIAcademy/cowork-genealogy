@@ -8,7 +8,7 @@
   "timestamp": "2026-11-24_12-56-12",
   "harness_version": "0.1.0",
   "model": "claude-haiku-5-5",
-  "judge_prompt_hash": "ce5a32f52be690f6ef13643cb3211f0154aae15b6328800ebbe9d635849cb491",
+  "judge_prompt_hash": "550fc431911f86e30864a496e0cdf7be737afc2f6bacb93ff34121bf33680b08",
   "snapshot": {
     "packages/engine/plugin/agents/where-else-to-search.md": "52ce6ccdd1746f33e8786680e7de3e4d6b4282882255049c47142ef57d9cefbc",
     "eval/tests/unit/where-else-to-search/baptism-kongsberg-1800.json": "4110e65f7a7cd570a0d0e7a0a50d89ea38f69f047a60183a42f98aa9d2d655fb",
@@ -60,43 +60,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800). All 8 built URLs match exactly what build_external_search_url returned. Access labels (subscription/free) match the tool's access field. Year spans stated for each collection match the startYear-endYear from external_links_search results. The Digitalarkivet 'Search in Born and Baptised Records' entry correctly says 'Undated collection.' since the row has no startYear/endYear. No fabricated claims detected."
+            "rationale": "All tool calls succeeded and returned valid URLs. The agent correctly identified Kongsberg, Buskerud, Norway as the historical place (appropriate for 1800), used the right year window (1795-1805), and built 8 entries from rows the external_links_search returned. Access values (subscription/free) are correctly reported. The Digitalarkivet 'Search in Born and Baptised Records' entry is correctly labeled 'Undated collection.' since the row has no startYear/endYear. All links match tool-returned URLs character for character. No fabricated facts appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search for the place and year range, and build_external_search_url for 8 curated rows. The response includes all 8 built suggestions plus 3 unbuildable 'also on file' rows listed separately. The closing sentence is present. The counts line and the user-facing block are both present. Nothing required by the delegation was omitted."
+            "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search with the resolved place and year window, and build_external_search_url for 8 curated rows. It listed 3 unbuildable rows in the 'Also listed' section. The log was updated (8 entries added). The response includes the opening sentence, all 8 suggestions in the fixed three-line shape, the 'Also listed' rows, and the closing sentence. Nothing required by the delegation or rubric was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName='Kongsberg' and contextName='Norway', matching the expected ~Kongsberg predicate. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically correct result for 1800), startYear=1795, endYear=1805, matching the expected ~Kongsberg predicate. All build_external_search_url calls used the correct baseUrl from the tool's returned rows, correct site identifiers, and correct person attributes. No fixture_not_found errors occurred. All calls matched live or predicate fixtures."
+            "rationale": "place_search used placeName='Kongsberg' with contextName='Norway' and the correct projectPath \u2014 matches expected ~Kongsberg. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800), startYear=1795, endYear=1805, and correct projectPath \u2014 matches expected ~Kongsberg. All build_external_search_url calls used the correct site identifiers, the row's url as baseUrl, and correct person attributes. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions were built from rows external_links_search returned, using those rows' urls as baseUrl. The agent correctly prioritized baptism/birth collections first (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage), then the Digitalarkivet born/baptised search, then dated overlapping rows (1801 census on Ancestry and MyHeritage, ELCA records). The 3 unbuildable rows (media.digitalarkivet.no church books, S\u00f8k etter kirkeb\u00f8ker, Norway Parish Record Search) were correctly listed separately without being passed to build_external_search_url. Exactly 8 built suggestions, no padding with invented sites."
+            "rationale": "All 8 suggestions were built from rows external_links_search returned, using supported hosts (ancestry, findmypast, myheritage, digitalarkivet). The baptism-named collections (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage) appear first, followed by the Digitalarkivet born/baptised search, then census and ELCA records. The per-test note says Norway baptism collections should lead, and they do. The 3 unbuildable rows (media.digitalarkivet.no and rhd.uit.no) were correctly listed without prefilled searches rather than passed to build_external_search_url. Exactly 8 built entries, no padding with invented sites."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "Each suggestion's reason states only the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates), how those years cover the searched 1795-1805 range, and the access value from build_external_search_url (subscription or free). No extra facts about the place, the person, or the historical period were asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The 'also on file' rows are listed without prefilled searches, correctly."
+            "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates in the tool response), how the span covers the searched years 1795-1805, and the access value returned by build_external_search_url (subscription or free). No extra facts about the place, the person, or the record set are asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The grading note says not to score down for span width, and the spans stated match the rows' startYear-endYear values."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a url returned verbatim by build_external_search_url or by external_links_search (for the unbuildable rows). The 8 built links appear in the main block and are character-for-character matches to tool responses. The 3 unbuildable rows list their URLs from the external_links_search results (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) without prefilled searches. No hand-written or edited URLs detected."
+            "rationale": "Every link in the response is a url returned by build_external_search_url, reproduced character for character. All 8 built links appear in the user-facing block below the ---. The 3 unbuildable rows are listed separately with their raw tool-returned URLs (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) as 'Also listed' without prefilled searches. No hand-written or edited URLs are present."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, then each of the 8 suggestions in the three-line format (bold linkText with site and free/subscription; years and coverage; full link), then the 'Also listed' section for unbuildable rows, then the fixed closing sentence. No tool names, field names, file names, or IDs appear in the user block. The header above the '---' correctly states the place searched, the years used (1795-1805), and the counts (8 entries, 3 'also on file' rows). No extra sentences about the collections, person, or history were added."
+            "rationale": "The user-facing block begins with the fixed opening sentence, then each of the 8 suggestions in the fixed three-line shape (bold linkText with site and free/subscription; years and coverage; full link), followed by the 'Also listed' rows and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the --- shows the place searched, the years used, and the counts ('8 entries, 3 also on file rows'). No extra sentences about the collections, the person, or the period appear beyond the fixed shape."
           }
         ],
         "review_dimensions": [
@@ -104,43 +104,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800). All 8 built URLs match exactly what build_external_search_url returned. Access labels (subscription/free) match the tool's access field. Year spans stated for each collection match the startYear-endYear from external_links_search results. The Digitalarkivet 'Search in Born and Baptised Records' entry correctly says 'Undated collection.' since the row has no startYear/endYear. No fabricated claims detected."
+            "rationale": "All tool calls succeeded and returned valid URLs. The agent correctly identified Kongsberg, Buskerud, Norway as the historical place (appropriate for 1800), used the right year window (1795-1805), and built 8 entries from rows the external_links_search returned. Access values (subscription/free) are correctly reported. The Digitalarkivet 'Search in Born and Baptised Records' entry is correctly labeled 'Undated collection.' since the row has no startYear/endYear. All links match tool-returned URLs character for character. No fabricated facts appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search for the place and year range, and build_external_search_url for 8 curated rows. The response includes all 8 built suggestions plus 3 unbuildable 'also on file' rows listed separately. The closing sentence is present. The counts line and the user-facing block are both present. Nothing required by the delegation was omitted."
+            "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search with the resolved place and year window, and build_external_search_url for 8 curated rows. It listed 3 unbuildable rows in the 'Also listed' section. The log was updated (8 entries added). The response includes the opening sentence, all 8 suggestions in the fixed three-line shape, the 'Also listed' rows, and the closing sentence. Nothing required by the delegation or rubric was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName='Kongsberg' and contextName='Norway', matching the expected ~Kongsberg predicate. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically correct result for 1800), startYear=1795, endYear=1805, matching the expected ~Kongsberg predicate. All build_external_search_url calls used the correct baseUrl from the tool's returned rows, correct site identifiers, and correct person attributes. No fixture_not_found errors occurred. All calls matched live or predicate fixtures."
+            "rationale": "place_search used placeName='Kongsberg' with contextName='Norway' and the correct projectPath \u2014 matches expected ~Kongsberg. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800), startYear=1795, endYear=1805, and correct projectPath \u2014 matches expected ~Kongsberg. All build_external_search_url calls used the correct site identifiers, the row's url as baseUrl, and correct person attributes. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions were built from rows external_links_search returned, using those rows' urls as baseUrl. The agent correctly prioritized baptism/birth collections first (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage), then the Digitalarkivet born/baptised search, then dated overlapping rows (1801 census on Ancestry and MyHeritage, ELCA records). The 3 unbuildable rows (media.digitalarkivet.no church books, S\u00f8k etter kirkeb\u00f8ker, Norway Parish Record Search) were correctly listed separately without being passed to build_external_search_url. Exactly 8 built suggestions, no padding with invented sites."
+            "rationale": "All 8 suggestions were built from rows external_links_search returned, using supported hosts (ancestry, findmypast, myheritage, digitalarkivet). The baptism-named collections (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage) appear first, followed by the Digitalarkivet born/baptised search, then census and ELCA records. The per-test note says Norway baptism collections should lead, and they do. The 3 unbuildable rows (media.digitalarkivet.no and rhd.uit.no) were correctly listed without prefilled searches rather than passed to build_external_search_url. Exactly 8 built entries, no padding with invented sites."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "Each suggestion's reason states only the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates), how those years cover the searched 1795-1805 range, and the access value from build_external_search_url (subscription or free). No extra facts about the place, the person, or the historical period were asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The 'also on file' rows are listed without prefilled searches, correctly."
+            "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates in the tool response), how the span covers the searched years 1795-1805, and the access value returned by build_external_search_url (subscription or free). No extra facts about the place, the person, or the record set are asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The grading note says not to score down for span width, and the spans stated match the rows' startYear-endYear values."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a url returned verbatim by build_external_search_url or by external_links_search (for the unbuildable rows). The 8 built links appear in the main block and are character-for-character matches to tool responses. The 3 unbuildable rows list their URLs from the external_links_search results (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) without prefilled searches. No hand-written or edited URLs detected."
+            "rationale": "Every link in the response is a url returned by build_external_search_url, reproduced character for character. All 8 built links appear in the user-facing block below the ---. The 3 unbuildable rows are listed separately with their raw tool-returned URLs (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) as 'Also listed' without prefilled searches. No hand-written or edited URLs are present."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, then each of the 8 suggestions in the three-line format (bold linkText with site and free/subscription; years and coverage; full link), then the 'Also listed' section for unbuildable rows, then the fixed closing sentence. No tool names, field names, file names, or IDs appear in the user block. The header above the '---' correctly states the place searched, the years used (1795-1805), and the counts (8 entries, 3 'also on file' rows). No extra sentences about the collections, person, or history were added."
+            "rationale": "The user-facing block begins with the fixed opening sentence, then each of the 8 suggestions in the fixed three-line shape (bold linkText with site and free/subscription; years and coverage; full link), followed by the 'Also listed' rows and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the --- shows the place searched, the years used, and the counts ('8 entries, 3 also on file rows'). No extra sentences about the collections, the person, or the period appear beyond the fixed shape."
           }
         ]
       },
@@ -732,7 +732,8 @@
                   }
                 }
               }
-            }
+            },
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -931,52 +932,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800). All 8 built URLs match exactly what build_external_search_url returned. Access labels (subscription/free) match the tool's access field. Year spans stated for each collection match the startYear-endYear from external_links_search results. The Digitalarkivet 'Search in Born and Baptised Records' entry correctly says 'Undated collection.' since the row has no startYear/endYear. No fabricated claims detected."
+                "rationale": "All tool calls succeeded and returned valid URLs. The agent correctly identified Kongsberg, Buskerud, Norway as the historical place (appropriate for 1800), used the right year window (1795-1805), and built 8 entries from rows the external_links_search returned. Access values (subscription/free) are correctly reported. The Digitalarkivet 'Search in Born and Baptised Records' entry is correctly labeled 'Undated collection.' since the row has no startYear/endYear. All links match tool-returned URLs character for character. No fabricated facts appear.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search for the place and year range, and build_external_search_url for 8 curated rows. The response includes all 8 built suggestions plus 3 unbuildable 'also on file' rows listed separately. The closing sentence is present. The counts line and the user-facing block are both present. Nothing required by the delegation was omitted."
+                "rationale": "The agent completed all required steps: place_search to resolve Kongsberg, external_links_search with the resolved place and year window, and build_external_search_url for 8 curated rows. It listed 3 unbuildable rows in the 'Also listed' section. The log was updated (8 entries added). The response includes the opening sentence, all 8 suggestions in the fixed three-line shape, the 'Also listed' rows, and the closing sentence. Nothing required by the delegation or rubric was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "place_search was called with placeName='Kongsberg' and contextName='Norway', matching the expected ~Kongsberg predicate. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically correct result for 1800), startYear=1795, endYear=1805, matching the expected ~Kongsberg predicate. All build_external_search_url calls used the correct baseUrl from the tool's returned rows, correct site identifiers, and correct person attributes. No fixture_not_found errors occurred. All calls matched live or predicate fixtures."
+                "rationale": "place_search used placeName='Kongsberg' with contextName='Norway' and the correct projectPath \u2014 matches expected ~Kongsberg. external_links_search used standardPlace='Kongsberg, Buskerud, Norway' (the historically appropriate result for 1800), startYear=1795, endYear=1805, and correct projectPath \u2014 matches expected ~Kongsberg. All build_external_search_url calls used the correct site identifiers, the row's url as baseUrl, and correct person attributes. No fixture_not_found errors occurred.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Selection",
-                "score": 3,
-                "rationale": "All 8 suggestions were built from rows external_links_search returned, using those rows' urls as baseUrl. The agent correctly prioritized baptism/birth collections first (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage), then the Digitalarkivet born/baptised search, then dated overlapping rows (1801 census on Ancestry and MyHeritage, ELCA records). The 3 unbuildable rows (media.digitalarkivet.no church books, S\u00f8k etter kirkeb\u00f8ker, Norway Parish Record Search) were correctly listed separately without being passed to build_external_search_url. Exactly 8 built suggestions, no padding with invented sites."
+                "rationale": "All 8 suggestions were built from rows external_links_search returned, using supported hosts (ancestry, findmypast, myheritage, digitalarkivet). The baptism-named collections (Norway Births and Christenings, Norway Select Baptisms, Norway Baptisms on Findmypast, Norway Baptisms on MyHeritage) appear first, followed by the Digitalarkivet born/baptised search, then census and ELCA records. The per-test note says Norway baptism collections should lead, and they do. The 3 unbuildable rows (media.digitalarkivet.no and rhd.uit.no) were correctly listed without prefilled searches rather than passed to build_external_search_url. Exactly 8 built entries, no padding with invented sites.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Grounding",
-                "score": 3,
-                "rationale": "Each suggestion's reason states only the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates), how those years cover the searched 1795-1805 range, and the access value from build_external_search_url (subscription or free). No extra facts about the place, the person, or the historical period were asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The 'also on file' rows are listed without prefilled searches, correctly."
+                "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear (or 'Undated collection.' for the Digitalarkivet born/baptised row which has no dates in the tool response), how the span covers the searched years 1795-1805, and the access value returned by build_external_search_url (subscription or free). No extra facts about the place, the person, or the record set are asserted. The counts line and closing sentence are the agent's own fixed text, not factual claims about tool output. The grading note says not to score down for span width, and the spans stated match the rows' startYear-endYear values.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Links",
-                "score": 3,
-                "rationale": "Every link in the response is a url returned verbatim by build_external_search_url or by external_links_search (for the unbuildable rows). The 8 built links appear in the main block and are character-for-character matches to tool responses. The 3 unbuildable rows list their URLs from the external_links_search results (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) without prefilled searches. No hand-written or edited URLs detected."
+                "rationale": "Every link in the response is a url returned by build_external_search_url, reproduced character for character. All 8 built links appear in the user-facing block below the ---. The 3 unbuildable rows are listed separately with their raw tool-returned URLs (media.digitalarkivet.no/en/kb/browse, media.digitalarkivet.no/kb/browse, rhd.uit.no/indexeng.html) as 'Also listed' without prefilled searches. No hand-written or edited URLs are present.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Prose",
-                "score": 3,
-                "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, then each of the 8 suggestions in the three-line format (bold linkText with site and free/subscription; years and coverage; full link), then the 'Also listed' section for unbuildable rows, then the fixed closing sentence. No tool names, field names, file names, or IDs appear in the user block. The header above the '---' correctly states the place searched, the years used (1795-1805), and the counts (8 entries, 3 'also on file' rows). No extra sentences about the collections, person, or history were added."
+                "rationale": "The user-facing block begins with the fixed opening sentence, then each of the 8 suggestions in the fixed three-line shape (bold linkText with site and free/subscription; years and coverage; full link), followed by the 'Also listed' rows and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the --- shows the place searched, the years used, and the counts ('8 entries, 3 also on file rows'). No extra sentences about the collections, the person, or the period appear beyond the fixed shape.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.06786,
+            "judge_cost_usd": 0.06770999999999999,
             "duration_ms": 26223.395300010452,
             "error": null,
-            "input_tokens": 16340,
+            "input_tokens": 16370,
             "cached_input_tokens": 0,
-            "output_tokens": 1256
+            "output_tokens": 1240
           },
           "started_at": 1795525067.3880355,
           "ended_at": 1795525139.7563899
@@ -996,98 +997,98 @@
         "place-search-schuylkill-by-place",
         "external-links-search-wets-schuylkill"
       ],
-      "outcome": "partial",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "partial"
+          "pass"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "The response is mostly correct. All 8 built links come from tool-returned URLs. However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' in the prose, but the row's endYear is 1956 while the linkText says '1865-1936' \u2014 the agent used the endYear (1956) rather than the linkText year (1936), creating a minor factual mismatch between the stated span and the collection name. Additionally, the 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response, yet the agent states 'Covers 1850\u20131880' \u2014 these years come from the linkText, which is acceptable per the rubric. The '1870 United States Federal Census' row correctly states 'Covers 1870' from the linkText. Overall mostly correct with the GAR endYear discrepancy being a minor concrete error."
+            "score": 3,
+            "rationale": "All tool calls succeeded with no fixture_not_found errors. The agent correctly resolved 'Schuylkill County, Pennsylvania' to 'Schuylkill, Pennsylvania, United States', ran external_links_search, and built 8 URLs using build_external_search_url. All 8 suggestions come from rows the tool returned. The '1870 United States Federal Census' row has no startYear/endYear, and the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly says this is correct. One minor factual issue: the Pennsylvania Grand Army of the Republic row's linkText says '1865-1936' but the agent wrote 'Covers 1865\u20131956' (using the endYear from the tool response, which was 1956, not 1936 from the linkText). The tool's endYear field was 1956, so the agent used the tool's data correctly. All access values are reported as 'needs a subscription' matching the tool's 'subscription' access. No fabricated material detected."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the full user-facing block with opening sentence, 8 suggestions in the fixed three-line shape, 3 'also on file' rows, and the closing sentence. The expected first suggestion (1870 United States Federal Census on Ancestry) is present and ranked first. Nothing required by the delegation or rubric was omitted."
+            "rationale": "The agent completed all required steps: place_search, external_links_search, and 8 build_external_search_url calls. It produced 8 buildable suggestions plus 3 'also on file' rows (Fold3 and immigrantships.net, which are on unsupported hosts). The opening summary line, the fixed opening sentence, all 8 suggestions in the three-line shape, the 'Also listed' section, and the closing sentence are all present. The '1870 United States Federal Census' appears as the first suggestion as required. Nothing required by the input state was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with 'Pennsylvania' context, matching the expected ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search ('Schuylkill, Pennsylvania, United States') with startYear 1865 and endYear 1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site ('ancestry'), the row's url as baseUrl, and appropriate person/residence attributes. The projectPath was passed to all three tools. No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Schuylkill County' and contextName='Pennsylvania', matching the expected ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1865 and endYear=1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site='ancestry', the exact baseUrl from the tool's row, and appropriate attributes. All calls passed the correct projectPath. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions were built from rows returned by external_links_search on Ancestry (a supported host). The first suggestion is the '1870 United States Federal Census' whose linkText names the searched record type, correctly ranked first. The remaining 7 are dated rows overlapping 1865\u20131875 or the searched year. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and correctly listed without prefilled links. Total is exactly 8 built suggestions, within the allowed maximum."
+            "rationale": "All 8 suggestions are built from rows returned by external_links_search on the ancestry host, which is in the agent's supported table. The '1870 United States Federal Census' (collection 7163) appears first as required \u2014 its linkText names the searched record type. The remaining 7 are dated rows overlapping 1865\u20131875 or covering the period. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and are correctly listed separately without prefilled links. Total is exactly 8 buildable suggestions. No rows from unsupported hosts were passed to build_external_search_url."
           },
           {
             "source": "rubric",
             "name": "Grounding",
-            "score": 2,
-            "rationale": "Most reasons correctly cite the row's linkText, years, and access (all 'needs a subscription' matching the tool's 'subscription' access). However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' \u2014 the endYear 1956 comes from the row's endYear field, but the linkText says '1865-1936'. The rubric says the span should be the row's startYear-endYear or years its linkText names; using 1956 (the endYear) rather than 1936 (the linkText year) creates a discrepancy. The 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response but the agent states their years from the linkText, which is acceptable. The coverage statements ('includes your 1865\u20131875' or 'overlaps your 1865\u20131875') are correct for all entries."
+            "score": 3,
+            "rationale": "Each suggestion's reason uses only the row's linkText, its years (from startYear/endYear or linkText), and the access value returned by build_external_search_url. For the '1870 United States Federal Census' (no startYear/endYear), the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly approves this. For the GAR row, the agent used the tool's endYear of 1956 (not the linkText's 1936), which is the tool-returned value. All access values correctly say 'needs a subscription'. No facts about sites, places, or record sets were asserted beyond what the tools returned. The closing sentence is present. The counts line and 'also on file' label are the agent's own tally, not tool claims."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned by build_external_search_url, character for character. All 8 built links appear in the user-facing block below the '---'. The 3 'also on file' rows list their original tool-returned URLs (fold3.com and immigrantships.net) without prefilled searches. No links were hand-written or edited."
+            "rationale": "Every link in the response is a URL returned by build_external_search_url in this run, character for character (e.g., https://www.ancestry.com/search/collections/7163/?name=Patrick_Flynn&residence=1870_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the block after the '---'. The 3 'also on file' rows list their original URLs from the external_links_search response (fold3.com and immigrantships.net URLs) without prefilled searches. No hand-written or edited URLs detected."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, 8 suggestions each in the three-line format (bold linkText with site and subscription status; years and coverage; full link), an 'Also listed' section for the 3 unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' correctly states the place searched, the years used (1865\u20131875), and the counts (8 entries, 3 'also on file' rows). No extra sentences were added beyond the fixed shape."
+            "rationale": "The block after '---' follows the fixed shape: opening sentence, then each suggestion in bold linkText with site and subscription status, years and coverage, and the full link. The closing sentence 'Open a link and bring back anything found to keep researching.' is present verbatim. The 'Also listed' section appears after the 8 suggestions. No tool names, field names, file names, or IDs appear in the user-facing block. The header above '---' shows the place searched, years used (1865\u20131875), and counts (8 entries, 3 'also on file' rows). No extra sentences beyond the fixed shape were added to any suggestion."
           }
         ],
         "review_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "The response is mostly correct. All 8 built links come from tool-returned URLs. However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' in the prose, but the row's endYear is 1956 while the linkText says '1865-1936' \u2014 the agent used the endYear (1956) rather than the linkText year (1936), creating a minor factual mismatch between the stated span and the collection name. Additionally, the 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response, yet the agent states 'Covers 1850\u20131880' \u2014 these years come from the linkText, which is acceptable per the rubric. The '1870 United States Federal Census' row correctly states 'Covers 1870' from the linkText. Overall mostly correct with the GAR endYear discrepancy being a minor concrete error."
+            "score": 3,
+            "rationale": "All tool calls succeeded with no fixture_not_found errors. The agent correctly resolved 'Schuylkill County, Pennsylvania' to 'Schuylkill, Pennsylvania, United States', ran external_links_search, and built 8 URLs using build_external_search_url. All 8 suggestions come from rows the tool returned. The '1870 United States Federal Census' row has no startYear/endYear, and the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly says this is correct. One minor factual issue: the Pennsylvania Grand Army of the Republic row's linkText says '1865-1936' but the agent wrote 'Covers 1865\u20131956' (using the endYear from the tool response, which was 1956, not 1936 from the linkText). The tool's endYear field was 1956, so the agent used the tool's data correctly. All access values are reported as 'needs a subscription' matching the tool's 'subscription' access. No fabricated material detected."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the full user-facing block with opening sentence, 8 suggestions in the fixed three-line shape, 3 'also on file' rows, and the closing sentence. The expected first suggestion (1870 United States Federal Census on Ancestry) is present and ranked first. Nothing required by the delegation or rubric was omitted."
+            "rationale": "The agent completed all required steps: place_search, external_links_search, and 8 build_external_search_url calls. It produced 8 buildable suggestions plus 3 'also on file' rows (Fold3 and immigrantships.net, which are on unsupported hosts). The opening summary line, the fixed opening sentence, all 8 suggestions in the three-line shape, the 'Also listed' section, and the closing sentence are all present. The '1870 United States Federal Census' appears as the first suggestion as required. Nothing required by the input state was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with 'Pennsylvania' context, matching the expected ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search ('Schuylkill, Pennsylvania, United States') with startYear 1865 and endYear 1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site ('ancestry'), the row's url as baseUrl, and appropriate person/residence attributes. The projectPath was passed to all three tools. No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Schuylkill County' and contextName='Pennsylvania', matching the expected ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1865 and endYear=1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site='ancestry', the exact baseUrl from the tool's row, and appropriate attributes. All calls passed the correct projectPath. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions were built from rows returned by external_links_search on Ancestry (a supported host). The first suggestion is the '1870 United States Federal Census' whose linkText names the searched record type, correctly ranked first. The remaining 7 are dated rows overlapping 1865\u20131875 or the searched year. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and correctly listed without prefilled links. Total is exactly 8 built suggestions, within the allowed maximum."
+            "rationale": "All 8 suggestions are built from rows returned by external_links_search on the ancestry host, which is in the agent's supported table. The '1870 United States Federal Census' (collection 7163) appears first as required \u2014 its linkText names the searched record type. The remaining 7 are dated rows overlapping 1865\u20131875 or covering the period. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and are correctly listed separately without prefilled links. Total is exactly 8 buildable suggestions. No rows from unsupported hosts were passed to build_external_search_url."
           },
           {
             "source": "rubric",
             "name": "Grounding",
-            "score": 2,
-            "rationale": "Most reasons correctly cite the row's linkText, years, and access (all 'needs a subscription' matching the tool's 'subscription' access). However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' \u2014 the endYear 1956 comes from the row's endYear field, but the linkText says '1865-1936'. The rubric says the span should be the row's startYear-endYear or years its linkText names; using 1956 (the endYear) rather than 1936 (the linkText year) creates a discrepancy. The 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response but the agent states their years from the linkText, which is acceptable. The coverage statements ('includes your 1865\u20131875' or 'overlaps your 1865\u20131875') are correct for all entries."
+            "score": 3,
+            "rationale": "Each suggestion's reason uses only the row's linkText, its years (from startYear/endYear or linkText), and the access value returned by build_external_search_url. For the '1870 United States Federal Census' (no startYear/endYear), the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly approves this. For the GAR row, the agent used the tool's endYear of 1956 (not the linkText's 1936), which is the tool-returned value. All access values correctly say 'needs a subscription'. No facts about sites, places, or record sets were asserted beyond what the tools returned. The closing sentence is present. The counts line and 'also on file' label are the agent's own tally, not tool claims."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned by build_external_search_url, character for character. All 8 built links appear in the user-facing block below the '---'. The 3 'also on file' rows list their original tool-returned URLs (fold3.com and immigrantships.net) without prefilled searches. No links were hand-written or edited."
+            "rationale": "Every link in the response is a URL returned by build_external_search_url in this run, character for character (e.g., https://www.ancestry.com/search/collections/7163/?name=Patrick_Flynn&residence=1870_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the block after the '---'. The 3 'also on file' rows list their original URLs from the external_links_search response (fold3.com and immigrantships.net URLs) without prefilled searches. No hand-written or edited URLs detected."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, 8 suggestions each in the three-line format (bold linkText with site and subscription status; years and coverage; full link), an 'Also listed' section for the 3 unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' correctly states the place searched, the years used (1865\u20131875), and the counts (8 entries, 3 'also on file' rows). No extra sentences were added beyond the fixed shape."
+            "rationale": "The block after '---' follows the fixed shape: opening sentence, then each suggestion in bold linkText with site and subscription status, years and coverage, and the full link. The closing sentence 'Open a link and bring back anything found to keep researching.' is present verbatim. The 'Also listed' section appears after the 8 suggestions. No tool names, field names, file names, or IDs appear in the user-facing block. The header above '---' shows the place searched, years used (1865\u20131875), and counts (8 entries, 3 'also on file' rows). No extra sentences beyond the fixed shape were added to any suggestion."
           }
         ]
       },
@@ -1112,7 +1113,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_where_else_to_search_001_2026-11-24_12-56-12_0",
-          "outcome": "partial",
+          "outcome": "pass",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 46504.75050001114,
@@ -1673,7 +1674,8 @@
                   }
                 }
               }
-            }
+            },
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -1872,52 +1874,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 2,
-                "rationale": "The response is mostly correct. All 8 built links come from tool-returned URLs. However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' in the prose, but the row's endYear is 1956 while the linkText says '1865-1936' \u2014 the agent used the endYear (1956) rather than the linkText year (1936), creating a minor factual mismatch between the stated span and the collection name. Additionally, the 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response, yet the agent states 'Covers 1850\u20131880' \u2014 these years come from the linkText, which is acceptable per the rubric. The '1870 United States Federal Census' row correctly states 'Covers 1870' from the linkText. Overall mostly correct with the GAR endYear discrepancy being a minor concrete error."
+                "rationale": "All tool calls succeeded with no fixture_not_found errors. The agent correctly resolved 'Schuylkill County, Pennsylvania' to 'Schuylkill, Pennsylvania, United States', ran external_links_search, and built 8 URLs using build_external_search_url. All 8 suggestions come from rows the tool returned. The '1870 United States Federal Census' row has no startYear/endYear, and the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly says this is correct. One minor factual issue: the Pennsylvania Grand Army of the Republic row's linkText says '1865-1936' but the agent wrote 'Covers 1865\u20131956' (using the endYear from the tool response, which was 1956, not 1936 from the linkText). The tool's endYear field was 1956, so the agent used the tool's data correctly. All access values are reported as 'needs a subscription' matching the tool's 'subscription' access. No fabricated material detected.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the full user-facing block with opening sentence, 8 suggestions in the fixed three-line shape, 3 'also on file' rows, and the closing sentence. The expected first suggestion (1870 United States Federal Census on Ancestry) is present and ranked first. Nothing required by the delegation or rubric was omitted."
+                "rationale": "The agent completed all required steps: place_search, external_links_search, and 8 build_external_search_url calls. It produced 8 buildable suggestions plus 3 'also on file' rows (Fold3 and immigrantships.net, which are on unsupported hosts). The opening summary line, the fixed opening sentence, all 8 suggestions in the three-line shape, the 'Also listed' section, and the closing sentence are all present. The '1870 United States Federal Census' appears as the first suggestion as required. Nothing required by the input state was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with 'Pennsylvania' context, matching the expected ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search ('Schuylkill, Pennsylvania, United States') with startYear 1865 and endYear 1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site ('ancestry'), the row's url as baseUrl, and appropriate person/residence attributes. The projectPath was passed to all three tools. No fixture_not_found errors occurred."
+                "rationale": "place_search was called with placeName='Schuylkill County' and contextName='Pennsylvania', matching the expected ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1865 and endYear=1875 (\u00b15 years around 1870), matching the expected ~Schuylkill predicate. All 8 build_external_search_url calls used the correct site='ancestry', the exact baseUrl from the tool's row, and appropriate attributes. All calls passed the correct projectPath. No fixture_not_found errors occurred.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Selection",
-                "score": 3,
-                "rationale": "All 8 suggestions were built from rows returned by external_links_search on Ancestry (a supported host). The first suggestion is the '1870 United States Federal Census' whose linkText names the searched record type, correctly ranked first. The remaining 7 are dated rows overlapping 1865\u20131875 or the searched year. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and correctly listed without prefilled links. Total is exactly 8 built suggestions, within the allowed maximum."
+                "rationale": "All 8 suggestions are built from rows returned by external_links_search on the ancestry host, which is in the agent's supported table. The '1870 United States Federal Census' (collection 7163) appears first as required \u2014 its linkText names the searched record type. The remaining 7 are dated rows overlapping 1865\u20131875 or covering the period. The 3 'also on file' rows (Fold3 and immigrantships.net) are on unsupported hosts and are correctly listed separately without prefilled links. Total is exactly 8 buildable suggestions. No rows from unsupported hosts were passed to build_external_search_url.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Grounding",
-                "score": 2,
-                "rationale": "Most reasons correctly cite the row's linkText, years, and access (all 'needs a subscription' matching the tool's 'subscription' access). However, the 'Pennsylvania Grand Army of the Republic Membership Records, 1865-1936' entry states 'Covers 1865\u20131956' \u2014 the endYear 1956 comes from the row's endYear field, but the linkText says '1865-1936'. The rubric says the span should be the row's startYear-endYear or years its linkText names; using 1956 (the endYear) rather than 1936 (the linkText year) creates a discrepancy. The 'U.S., Selected Federal Census Non-Population Schedules, 1850-1880' and 'U.S. Federal Census Mortality Schedules Index, 1850-1880' rows have no startYear/endYear in the tool response but the agent states their years from the linkText, which is acceptable. The coverage statements ('includes your 1865\u20131875' or 'overlaps your 1865\u20131875') are correct for all entries."
+                "rationale": "Each suggestion's reason uses only the row's linkText, its years (from startYear/endYear or linkText), and the access value returned by build_external_search_url. For the '1870 United States Federal Census' (no startYear/endYear), the agent wrote 'Covers 1870, which includes your 1865\u20131875' \u2014 the per-test note explicitly approves this. For the GAR row, the agent used the tool's endYear of 1956 (not the linkText's 1936), which is the tool-returned value. All access values correctly say 'needs a subscription'. No facts about sites, places, or record sets were asserted beyond what the tools returned. The closing sentence is present. The counts line and 'also on file' label are the agent's own tally, not tool claims.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Links",
-                "score": 3,
-                "rationale": "Every link in the response is a URL returned by build_external_search_url, character for character. All 8 built links appear in the user-facing block below the '---'. The 3 'also on file' rows list their original tool-returned URLs (fold3.com and immigrantships.net) without prefilled searches. No links were hand-written or edited."
+                "rationale": "Every link in the response is a URL returned by build_external_search_url in this run, character for character (e.g., https://www.ancestry.com/search/collections/7163/?name=Patrick_Flynn&residence=1870_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the block after the '---'. The 3 'also on file' rows list their original URLs from the external_links_search response (fold3.com and immigrantships.net URLs) without prefilled searches. No hand-written or edited URLs detected.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Prose",
-                "score": 3,
-                "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, 8 suggestions each in the three-line format (bold linkText with site and subscription status; years and coverage; full link), an 'Also listed' section for the 3 unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' correctly states the place searched, the years used (1865\u20131875), and the counts (8 entries, 3 'also on file' rows). No extra sentences were added beyond the fixed shape."
+                "rationale": "The block after '---' follows the fixed shape: opening sentence, then each suggestion in bold linkText with site and subscription status, years and coverage, and the full link. The closing sentence 'Open a link and bring back anything found to keep researching.' is present verbatim. The 'Also listed' section appears after the 8 suggestions. No tool names, field names, file names, or IDs appear in the user-facing block. The header above '---' shows the place searched, years used (1865\u20131875), and counts (8 entries, 3 'also on file' rows). No extra sentences beyond the fixed shape were added to any suggestion.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.07704659999999999,
+            "judge_cost_usd": 0.07735739999999999,
             "duration_ms": 28744.87080000108,
             "error": null,
-            "input_tokens": 18096,
-            "cached_input_tokens": 4562,
-            "output_tokens": 1426
+            "input_tokens": 18124,
+            "cached_input_tokens": 4568,
+            "output_tokens": 1441
           },
           "started_at": 1795525135.0379908,
           "ended_at": 1795525210.9602196
@@ -1943,19 +1945,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the request (searching FamilySearch for Mary Hood's 1860 census record) belongs to the search-records skill, not where-else-to-search. The hand-back 'search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama' is accurate and routes to the correct skill."
+            "rationale": "This is a negative test where the correct behavior is to decline and route to search-records. Claude's response is exactly 'Hand-back: search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama.' This is a correct one-line hand-back naming the right skill (search-records) without performing the where-else-to-search task itself. The routing decision is accurate and correct."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior is a decline/routing to search-records, which is exactly what the skill did. The one-line hand-back naming search-records is the complete expected output per the test author's notes. Nothing more was required."
+            "rationale": "The test author's notes state the correct reply is a one-line hand-back naming search-records. Claude produced exactly that \u2014 a single line routing to search-records with the relevant context. Nothing more was required, and nothing was omitted from what was expected."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+            "rationale": "No MCP tool calls were made in this execution, which is correct behavior per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A."
           }
         ],
         "review_dimensions": [
@@ -1963,19 +1965,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the request (searching FamilySearch for Mary Hood's 1860 census record) belongs to the search-records skill, not where-else-to-search. The hand-back 'search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama' is accurate and routes to the correct skill."
+            "rationale": "This is a negative test where the correct behavior is to decline and route to search-records. Claude's response is exactly 'Hand-back: search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama.' This is a correct one-line hand-back naming the right skill (search-records) without performing the where-else-to-search task itself. The routing decision is accurate and correct."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior is a decline/routing to search-records, which is exactly what the skill did. The one-line hand-back naming search-records is the complete expected output per the test author's notes. Nothing more was required."
+            "rationale": "The test author's notes state the correct reply is a one-line hand-back naming search-records. Claude produced exactly that \u2014 a single line routing to search-records with the relevant context. Nothing more was required, and nothing was omitted from what was expected."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+            "rationale": "No MCP tool calls were made in this execution, which is correct behavior per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A."
           }
         ]
       },
@@ -2101,7 +2103,8 @@
                 "subagent_type": "where-else-to-search",
                 "text": "Hand-back: search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -2300,28 +2303,28 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "This is a negative test. The skill correctly identified that the request (searching FamilySearch for Mary Hood's 1860 census record) belongs to the search-records skill, not where-else-to-search. The hand-back 'search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama' is accurate and routes to the correct skill."
+                "rationale": "This is a negative test where the correct behavior is to decline and route to search-records. Claude's response is exactly 'Hand-back: search-records \u2014 search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama.' This is a correct one-line hand-back naming the right skill (search-records) without performing the where-else-to-search task itself. The routing decision is accurate and correct.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "This is a negative test. The correct behavior is a decline/routing to search-records, which is exactly what the skill did. The one-line hand-back naming search-records is the complete expected output per the test author's notes. Nothing more was required."
+                "rationale": "The test author's notes state the correct reply is a one-line hand-back naming search-records. Claude produced exactly that \u2014 a single line routing to search-records with the relevant context. Nothing more was required, and nothing was omitted from what was expected.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": null,
-                "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+                "rationale": "No MCP tool calls were made in this execution, which is correct behavior per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A.",
+                "score": null
               }
             ],
-            "judge_cost_usd": 0.0151323,
+            "judge_cost_usd": 0.0158511,
             "duration_ms": 5501.012500011711,
             "error": null,
-            "input_tokens": 3170,
-            "cached_input_tokens": 3291,
-            "output_tokens": 309
+            "input_tokens": 3244,
+            "cached_input_tokens": 3297,
+            "output_tokens": 342
           },
           "started_at": 1795526189.3900683,
           "ended_at": 1795526206.2488081
@@ -2347,19 +2350,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the request (searching Ancestry for Patrick Flynn in the 1880 census) belongs to the search-external-sites skill, not where-else-to-search. The hand-back is accurate and names the correct skill. No fabricated content or incorrect claims were made."
+            "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites. Claude's response does exactly that: 'Hand-back: search-external-sites \u2014 run a search on Ancestry for Patrick Flynn in the 1880 census.' It correctly identifies the right skill to route to without performing where-else-to-search's own task, and without building a URL or calling any tool. This is the correct outcome per the per-test context."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites, which the skill did with a one-line hand-back. The test author's notes confirm a one-line hand-back naming search-external-sites is the correct and complete response. Nothing more was required."
+            "rationale": "The per-test context states the correct reply is a one-line hand-back naming search-external-sites. Claude produced exactly that \u2014 a single line routing to search-external-sites with the relevant context. Nothing more was required, and nothing was omitted from what was expected."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+            "rationale": "No MCP tool calls were made in this execution, which is correct behavior for this negative test (the per-test context explicitly states that calling any tool is a fail)."
           }
         ],
         "review_dimensions": [
@@ -2367,19 +2370,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the request (searching Ancestry for Patrick Flynn in the 1880 census) belongs to the search-external-sites skill, not where-else-to-search. The hand-back is accurate and names the correct skill. No fabricated content or incorrect claims were made."
+            "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites. Claude's response does exactly that: 'Hand-back: search-external-sites \u2014 run a search on Ancestry for Patrick Flynn in the 1880 census.' It correctly identifies the right skill to route to without performing where-else-to-search's own task, and without building a URL or calling any tool. This is the correct outcome per the per-test context."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites, which the skill did with a one-line hand-back. The test author's notes confirm a one-line hand-back naming search-external-sites is the correct and complete response. Nothing more was required."
+            "rationale": "The per-test context states the correct reply is a one-line hand-back naming search-external-sites. Claude produced exactly that \u2014 a single line routing to search-external-sites with the relevant context. Nothing more was required, and nothing was omitted from what was expected."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+            "rationale": "No MCP tool calls were made in this execution, which is correct behavior for this negative test (the per-test context explicitly states that calling any tool is a fail)."
           }
         ]
       },
@@ -2505,7 +2508,8 @@
                 "subagent_type": "where-else-to-search",
                 "text": "Hand-back: search-external-sites \u2014 run a search on Ancestry for Patrick Flynn in the 1880 census."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -2704,28 +2708,28 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "This is a negative test. The skill correctly identified that the request (searching Ancestry for Patrick Flynn in the 1880 census) belongs to the search-external-sites skill, not where-else-to-search. The hand-back is accurate and names the correct skill. No fabricated content or incorrect claims were made."
+                "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites. Claude's response does exactly that: 'Hand-back: search-external-sites \u2014 run a search on Ancestry for Patrick Flynn in the 1880 census.' It correctly identifies the right skill to route to without performing where-else-to-search's own task, and without building a URL or calling any tool. This is the correct outcome per the per-test context.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "This is a negative test. The correct behavior is to decline and route to search-external-sites, which the skill did with a one-line hand-back. The test author's notes confirm a one-line hand-back naming search-external-sites is the correct and complete response. Nothing more was required."
+                "rationale": "The per-test context states the correct reply is a one-line hand-back naming search-external-sites. Claude produced exactly that \u2014 a single line routing to search-external-sites with the relevant context. Nothing more was required, and nothing was omitted from what was expected.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": null,
-                "rationale": "No MCP tool calls were made in this execution \u2014 N/A."
+                "rationale": "No MCP tool calls were made in this execution, which is correct behavior for this negative test (the per-test context explicitly states that calling any tool is a fail).",
+                "score": null
               }
             ],
-            "judge_cost_usd": 0.0305973,
+            "judge_cost_usd": 0.0314811,
             "duration_ms": 6431.691899997531,
             "error": null,
-            "input_tokens": 8375,
-            "cached_input_tokens": 3291,
-            "output_tokens": 299
+            "input_tokens": 8449,
+            "cached_input_tokens": 3297,
+            "output_tokens": 343
           },
           "started_at": 1795526168.7634327,
           "ended_at": 1795526188.8830676
@@ -2751,19 +2755,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the query about records in Schuylkill County, Pennsylvania in the 1860s belongs to the locality-guide skill, not where-else-to-search. The hand-back message accurately names 'locality-guide' as the correct destination, which is exactly what the per-test context requires."
+            "rationale": "This is a negative test where the correct behavior is to decline and route to locality-guide. Claude's response is exactly 'Hand-back: locality-guide \u2014 what records exist for Schuylkill County, Pennsylvania in the 1860s', which correctly identifies locality-guide as the appropriate skill and hands back the query without performing where-else-to-search's own task. This is the correct routing decision."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior was to decline and route to locality-guide, which the skill did with a one-line hand-back. The per-test context explicitly states 'The correct reply is a one-line hand-back naming locality-guide.' The skill fulfilled this requirement completely without performing where-else-to-search's own task."
+            "rationale": "The per-test context states the correct reply is a one-line hand-back naming locality-guide. Claude produced exactly that \u2014 a single line naming locality-guide and passing along the original query. Nothing more was required, and nothing was omitted from the expected behavior."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly produced only a routing hand-back with no tool usage, which is the expected behavior per the per-test context ('Calling any tool is a fail')."
+            "rationale": "No MCP tool calls were made in this execution, which is correct per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A."
           }
         ],
         "review_dimensions": [
@@ -2771,19 +2775,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly identified that the query about records in Schuylkill County, Pennsylvania in the 1860s belongs to the locality-guide skill, not where-else-to-search. The hand-back message accurately names 'locality-guide' as the correct destination, which is exactly what the per-test context requires."
+            "rationale": "This is a negative test where the correct behavior is to decline and route to locality-guide. Claude's response is exactly 'Hand-back: locality-guide \u2014 what records exist for Schuylkill County, Pennsylvania in the 1860s', which correctly identifies locality-guide as the appropriate skill and hands back the query without performing where-else-to-search's own task. This is the correct routing decision."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. The correct behavior was to decline and route to locality-guide, which the skill did with a one-line hand-back. The per-test context explicitly states 'The correct reply is a one-line hand-back naming locality-guide.' The skill fulfilled this requirement completely without performing where-else-to-search's own task."
+            "rationale": "The per-test context states the correct reply is a one-line hand-back naming locality-guide. Claude produced exactly that \u2014 a single line naming locality-guide and passing along the original query. Nothing more was required, and nothing was omitted from the expected behavior."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly produced only a routing hand-back with no tool usage, which is the expected behavior per the per-test context ('Calling any tool is a fail')."
+            "rationale": "No MCP tool calls were made in this execution, which is correct per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A."
           }
         ]
       },
@@ -2909,7 +2913,8 @@
                 "subagent_type": "where-else-to-search",
                 "text": "Hand-back: locality-guide \u2014 what records exist for Schuylkill County, Pennsylvania in the 1860s"
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -3108,28 +3113,28 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "This is a negative test. The skill correctly identified that the query about records in Schuylkill County, Pennsylvania in the 1860s belongs to the locality-guide skill, not where-else-to-search. The hand-back message accurately names 'locality-guide' as the correct destination, which is exactly what the per-test context requires."
+                "rationale": "This is a negative test where the correct behavior is to decline and route to locality-guide. Claude's response is exactly 'Hand-back: locality-guide \u2014 what records exist for Schuylkill County, Pennsylvania in the 1860s', which correctly identifies locality-guide as the appropriate skill and hands back the query without performing where-else-to-search's own task. This is the correct routing decision.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "This is a negative test. The correct behavior was to decline and route to locality-guide, which the skill did with a one-line hand-back. The per-test context explicitly states 'The correct reply is a one-line hand-back naming locality-guide.' The skill fulfilled this requirement completely without performing where-else-to-search's own task."
+                "rationale": "The per-test context states the correct reply is a one-line hand-back naming locality-guide. Claude produced exactly that \u2014 a single line naming locality-guide and passing along the original query. Nothing more was required, and nothing was omitted from the expected behavior.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": null,
-                "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly produced only a routing hand-back with no tool usage, which is the expected behavior per the per-test context ('Calling any tool is a fail')."
+                "rationale": "No MCP tool calls were made in this execution, which is correct per the test author's note that calling any tool is a fail. Since zero tool calls were made, this dimension is N/A.",
+                "score": null
               }
             ],
-            "judge_cost_usd": 0.014738999999999999,
+            "judge_cost_usd": 0.015710099999999998,
             "duration_ms": 6811.310500008403,
             "error": null,
-            "input_tokens": 3163,
-            "cached_input_tokens": 0,
-            "output_tokens": 350
+            "input_tokens": 3237,
+            "cached_input_tokens": 3297,
+            "output_tokens": 334
           },
           "started_at": 1795526144.5516615,
           "ended_at": 1795526167.7441187
@@ -3158,43 +3163,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Blount, Alabama, United States'. Each collection's name, year range, and access level (subscription) matches what the tools returned. The URLs in the response match exactly what build_external_search_url returned. The 'also on file' rows (Alabama Department of Archives and History, Alabama Marriage Records, Alabama Genealogy) are all present in the external_links_search results. No fabricated material detected."
+            "rationale": "All 8 suggestions are drawn from rows returned by external_links_search. The URLs in the response match exactly what build_external_search_url returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The access descriptions ('needs a subscription') match the 'subscription' access values returned by the tool. The year spans stated (e.g., '1805\u20131967', '1809\u20131920') match the startYear/endYear in the tool responses. The 'Also listed' rows are real URLs from the tool response. No fabricated material detected."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced a user-facing block with all 8 built suggestions plus 3 'also on file' rows. The log was updated. The delegation's projectPath was passed to all three tools. Nothing required by the task was omitted."
+            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the user-facing block with all 8 suggestions plus 3 'also on file' rows. The log was updated. The closing sentence is present. Nothing required by the delegation was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used the resolved standardPlace 'Blount, Alabama, United States' with startYear=1850 and endYear=1860, matching the expected ~Blount predicate. All build_external_search_url calls used the correct row URLs as baseUrl, correct site identifiers, and appropriate attributes (givenName, surname, marriageYear, marriagePlace). No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used standardPlace='Blount, Alabama, United States' matching ~Blount, with startYear=1850 and endYear=1860 (reasonable window around 1855). All build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site identifiers, and passed the delegation's projectPath to all three tools. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions come from rows returned by external_links_search, all on buildable hosts (ancestry and findmypast). Marriage-named rows (Alabama County Marriage Records 1805-1967, Alabama Compiled Marriages 1809-1920, Alabama Select Marriage Indexes 1816-1942, Alabama Marriage Indexes 1814-1935, Alabama U.S. Marriage Index 1800-1969) are prioritized first, followed by US Marriages-Alabama 1733-2013 (Findmypast marriage collection), then Newspapers.com Marriage Index, then Alabama State Census 1855. Marriage-named rows correctly rank ahead of the census row. Exactly 8 suggestions, no padding with non-tool sites."
+            "rationale": "All 8 suggestions are from rows returned by external_links_search, on buildable hosts (ancestry and findmypast). Marriage-named rows ('Alabama County Marriage Records, 1805-1967', 'Alabama Compiled Marriages from Selected Counties, 1809-1920', 'Alabama Select Marriage Indexes, 1816-1942', 'Alabama Marriage Indexes, 1814-1935', 'Alabama U.S. Marriage Index, 1800-1969') are ranked first, followed by 'US Marriages \u2013 Alabama, 1733-2013' (also marriage-named), then 'U.S., Newspapers.com Marriage Index, 1800s-1999' (marriage-named), then 'Alabama State Census 1855' (dated, overlapping). The 3 'also on file' rows are unbuildable hosts listed separately. Total is exactly 8. Selection is correct."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear from the tool response, how those years cover the searched 1850-1860 period, and the access level ('needs a subscription') as returned by build_external_search_url. No unsupported claims about the site, place, or record set appear. The 'also on file' rows are listed without prefilled searches. The closing sentence 'Open a link and bring back anything found to keep researching.' is present. The counts line '8 entries, 3 \"also on file\" rows' is the agent's own tally, not a tool claim."
+            "rationale": "Each suggestion states the row's linkText, its startYear-endYear from the tool response, and the access value ('needs a subscription') from build_external_search_url. The coverage lines correctly state 'which includes your 1850\u20131860' for all rows that overlap. The 'Alabama State Census 1855' entry states 'Covers 1855, which includes your 1850\u20131860' \u2014 the row has no startYear/endYear in the tool response but its linkText names 1855, so 'Covers 1855' is appropriate. No extra facts about the place, person, or record sets beyond what tools returned. The closing sentence is present. The counts line ('8 entries, 3 \"also on file\" rows') is the agent's own tally, not a tool claim. All grounding checks pass."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url or external_links_search. The 8 built search URLs appear in the main block and match exactly what the tool returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The 3 'also on file' rows list their base URLs from the tool response without prefilled searches. No hand-written or edited URLs detected."
+            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855 matches the tool's response_summary url exactly). All 8 suggestion links appear in full after the --- block. The 3 'also on file' rows list their URLs as plain links without prefilled searches, which is correct for unbuildable rows. No hand-written or edited URLs detected."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, each suggestion in the three-line format (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above '---' states the place searched, years used, and counts. No extra sentences about collections, the person's name, or historical context were added beyond the fixed shape."
+            "rationale": "The user-facing block begins with the fixed opening sentence, then each suggestion in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link). The fixed closing sentence ('Open a link and bring back anything found to keep researching.') is present. No tool names, field names, or file names appear. The 'Also listed' rows are presented separately without prefilled searches. The counts line above the --- is present. No extra sentences beyond the fixed shape are added for any suggestion. The block conforms to the required structure."
           }
         ],
         "review_dimensions": [
@@ -3202,43 +3207,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Blount, Alabama, United States'. Each collection's name, year range, and access level (subscription) matches what the tools returned. The URLs in the response match exactly what build_external_search_url returned. The 'also on file' rows (Alabama Department of Archives and History, Alabama Marriage Records, Alabama Genealogy) are all present in the external_links_search results. No fabricated material detected."
+            "rationale": "All 8 suggestions are drawn from rows returned by external_links_search. The URLs in the response match exactly what build_external_search_url returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The access descriptions ('needs a subscription') match the 'subscription' access values returned by the tool. The year spans stated (e.g., '1805\u20131967', '1809\u20131920') match the startYear/endYear in the tool responses. The 'Also listed' rows are real URLs from the tool response. No fabricated material detected."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced a user-facing block with all 8 built suggestions plus 3 'also on file' rows. The log was updated. The delegation's projectPath was passed to all three tools. Nothing required by the task was omitted."
+            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the user-facing block with all 8 suggestions plus 3 'also on file' rows. The log was updated. The closing sentence is present. Nothing required by the delegation was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used the resolved standardPlace 'Blount, Alabama, United States' with startYear=1850 and endYear=1860, matching the expected ~Blount predicate. All build_external_search_url calls used the correct row URLs as baseUrl, correct site identifiers, and appropriate attributes (givenName, surname, marriageYear, marriagePlace). No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used standardPlace='Blount, Alabama, United States' matching ~Blount, with startYear=1850 and endYear=1860 (reasonable window around 1855). All build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site identifiers, and passed the delegation's projectPath to all three tools. No fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "All 8 suggestions come from rows returned by external_links_search, all on buildable hosts (ancestry and findmypast). Marriage-named rows (Alabama County Marriage Records 1805-1967, Alabama Compiled Marriages 1809-1920, Alabama Select Marriage Indexes 1816-1942, Alabama Marriage Indexes 1814-1935, Alabama U.S. Marriage Index 1800-1969) are prioritized first, followed by US Marriages-Alabama 1733-2013 (Findmypast marriage collection), then Newspapers.com Marriage Index, then Alabama State Census 1855. Marriage-named rows correctly rank ahead of the census row. Exactly 8 suggestions, no padding with non-tool sites."
+            "rationale": "All 8 suggestions are from rows returned by external_links_search, on buildable hosts (ancestry and findmypast). Marriage-named rows ('Alabama County Marriage Records, 1805-1967', 'Alabama Compiled Marriages from Selected Counties, 1809-1920', 'Alabama Select Marriage Indexes, 1816-1942', 'Alabama Marriage Indexes, 1814-1935', 'Alabama U.S. Marriage Index, 1800-1969') are ranked first, followed by 'US Marriages \u2013 Alabama, 1733-2013' (also marriage-named), then 'U.S., Newspapers.com Marriage Index, 1800s-1999' (marriage-named), then 'Alabama State Census 1855' (dated, overlapping). The 3 'also on file' rows are unbuildable hosts listed separately. Total is exactly 8. Selection is correct."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear from the tool response, how those years cover the searched 1850-1860 period, and the access level ('needs a subscription') as returned by build_external_search_url. No unsupported claims about the site, place, or record set appear. The 'also on file' rows are listed without prefilled searches. The closing sentence 'Open a link and bring back anything found to keep researching.' is present. The counts line '8 entries, 3 \"also on file\" rows' is the agent's own tally, not a tool claim."
+            "rationale": "Each suggestion states the row's linkText, its startYear-endYear from the tool response, and the access value ('needs a subscription') from build_external_search_url. The coverage lines correctly state 'which includes your 1850\u20131860' for all rows that overlap. The 'Alabama State Census 1855' entry states 'Covers 1855, which includes your 1850\u20131860' \u2014 the row has no startYear/endYear in the tool response but its linkText names 1855, so 'Covers 1855' is appropriate. No extra facts about the place, person, or record sets beyond what tools returned. The closing sentence is present. The counts line ('8 entries, 3 \"also on file\" rows') is the agent's own tally, not a tool claim. All grounding checks pass."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url or external_links_search. The 8 built search URLs appear in the main block and match exactly what the tool returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The 3 'also on file' rows list their base URLs from the tool response without prefilled searches. No hand-written or edited URLs detected."
+            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855 matches the tool's response_summary url exactly). All 8 suggestion links appear in full after the --- block. The 3 'also on file' rows list their URLs as plain links without prefilled searches, which is correct for unbuildable rows. No hand-written or edited URLs detected."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, each suggestion in the three-line format (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above '---' states the place searched, years used, and counts. No extra sentences about collections, the person's name, or historical context were added beyond the fixed shape."
+            "rationale": "The user-facing block begins with the fixed opening sentence, then each suggestion in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link). The fixed closing sentence ('Open a link and bring back anything found to keep researching.') is present. No tool names, field names, or file names appear. The 'Also listed' rows are presented separately without prefilled searches. The counts line above the --- is present. No extra sentences beyond the fixed shape are added for any suggestion. The block conforms to the required structure."
           }
         ]
       },
@@ -3842,7 +3847,8 @@
                   }
                 }
               }
-            }
+            },
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -4041,52 +4047,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "All factual claims are supported by tool responses. The place resolved correctly to 'Blount, Alabama, United States'. Each collection's name, year range, and access level (subscription) matches what the tools returned. The URLs in the response match exactly what build_external_search_url returned. The 'also on file' rows (Alabama Department of Archives and History, Alabama Marriage Records, Alabama Genealogy) are all present in the external_links_search results. No fabricated material detected."
+                "rationale": "All 8 suggestions are drawn from rows returned by external_links_search. The URLs in the response match exactly what build_external_search_url returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The access descriptions ('needs a subscription') match the 'subscription' access values returned by the tool. The year spans stated (e.g., '1805\u20131967', '1809\u20131920') match the startYear/endYear in the tool responses. The 'Also listed' rows are real URLs from the tool response. No fabricated material detected.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced a user-facing block with all 8 built suggestions plus 3 'also on file' rows. The log was updated. The delegation's projectPath was passed to all three tools. Nothing required by the task was omitted."
+                "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 rows. It produced the user-facing block with all 8 suggestions plus 3 'also on file' rows. The log was updated. The closing sentence is present. Nothing required by the delegation was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used the resolved standardPlace 'Blount, Alabama, United States' with startYear=1850 and endYear=1860, matching the expected ~Blount predicate. All build_external_search_url calls used the correct row URLs as baseUrl, correct site identifiers, and appropriate attributes (givenName, surname, marriageYear, marriagePlace). No fixture_not_found errors occurred."
+                "rationale": "place_search was called with placeName='Blount County' and contextName='Alabama', matching the expected ~Blount predicate. external_links_search used standardPlace='Blount, Alabama, United States' matching ~Blount, with startYear=1850 and endYear=1860 (reasonable window around 1855). All build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site identifiers, and passed the delegation's projectPath to all three tools. No fixture_not_found errors occurred.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Selection",
-                "score": 3,
-                "rationale": "All 8 suggestions come from rows returned by external_links_search, all on buildable hosts (ancestry and findmypast). Marriage-named rows (Alabama County Marriage Records 1805-1967, Alabama Compiled Marriages 1809-1920, Alabama Select Marriage Indexes 1816-1942, Alabama Marriage Indexes 1814-1935, Alabama U.S. Marriage Index 1800-1969) are prioritized first, followed by US Marriages-Alabama 1733-2013 (Findmypast marriage collection), then Newspapers.com Marriage Index, then Alabama State Census 1855. Marriage-named rows correctly rank ahead of the census row. Exactly 8 suggestions, no padding with non-tool sites."
+                "rationale": "All 8 suggestions are from rows returned by external_links_search, on buildable hosts (ancestry and findmypast). Marriage-named rows ('Alabama County Marriage Records, 1805-1967', 'Alabama Compiled Marriages from Selected Counties, 1809-1920', 'Alabama Select Marriage Indexes, 1816-1942', 'Alabama Marriage Indexes, 1814-1935', 'Alabama U.S. Marriage Index, 1800-1969') are ranked first, followed by 'US Marriages \u2013 Alabama, 1733-2013' (also marriage-named), then 'U.S., Newspapers.com Marriage Index, 1800s-1999' (marriage-named), then 'Alabama State Census 1855' (dated, overlapping). The 3 'also on file' rows are unbuildable hosts listed separately. Total is exactly 8. Selection is correct.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Grounding",
-                "score": 3,
-                "rationale": "Each suggestion's reason states the row's linkText, its startYear-endYear from the tool response, how those years cover the searched 1850-1860 period, and the access level ('needs a subscription') as returned by build_external_search_url. No unsupported claims about the site, place, or record set appear. The 'also on file' rows are listed without prefilled searches. The closing sentence 'Open a link and bring back anything found to keep researching.' is present. The counts line '8 entries, 3 \"also on file\" rows' is the agent's own tally, not a tool claim."
+                "rationale": "Each suggestion states the row's linkText, its startYear-endYear from the tool response, and the access value ('needs a subscription') from build_external_search_url. The coverage lines correctly state 'which includes your 1850\u20131860' for all rows that overlap. The 'Alabama State Census 1855' entry states 'Covers 1855, which includes your 1850\u20131860' \u2014 the row has no startYear/endYear in the tool response but its linkText names 1855, so 'Covers 1855' is appropriate. No extra facts about the place, person, or record sets beyond what tools returned. The closing sentence is present. The counts line ('8 entries, 3 \"also on file\" rows') is the agent's own tally, not a tool claim. All grounding checks pass.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Links",
-                "score": 3,
-                "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url or external_links_search. The 8 built search URLs appear in the main block and match exactly what the tool returned (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855). The 3 'also on file' rows list their base URLs from the tool response without prefilled searches. No hand-written or edited URLs detected."
+                "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url (e.g., https://www.ancestry.com/search/collections/61365?name=William_Hood&marriage=1855 matches the tool's response_summary url exactly). All 8 suggestion links appear in full after the --- block. The 3 'also on file' rows list their URLs as plain links without prefilled searches, which is correct for unbuildable rows. No hand-written or edited URLs detected.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Prose",
-                "score": 3,
-                "rationale": "The user-facing block follows the fixed shape: a '---' line, the fixed opening sentence, each suggestion in the three-line format (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above '---' states the place searched, years used, and counts. No extra sentences about collections, the person's name, or historical context were added beyond the fixed shape."
+                "rationale": "The user-facing block begins with the fixed opening sentence, then each suggestion in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link). The fixed closing sentence ('Open a link and bring back anything found to keep researching.') is present. No tool names, field names, or file names appear. The 'Also listed' rows are presented separately without prefilled searches. The counts line above the --- is present. No extra sentences beyond the fixed shape are added for any suggestion. The block conforms to the required structure.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.0736296,
+            "judge_cost_usd": 0.0754194,
             "duration_ms": 29220.068099995842,
             "error": null,
-            "input_tokens": 18327,
-            "cached_input_tokens": 4562,
-            "output_tokens": 1152
+            "input_tokens": 18358,
+            "cached_input_tokens": 4568,
+            "output_tokens": 1265
           },
           "started_at": 1795525211.117421,
           "ended_at": 1795525285.6520452
@@ -4106,98 +4112,98 @@
         "place-search-schuylkill-by-place",
         "external-links-search-wets-schuylkill"
       ],
-      "outcome": "partial",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "partial"
+          "pass"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "Most content is correct and grounded in tool responses. However, the GAR entry states 'Covers 1865\u20131956' but the tool returned startYear:1865, endYear:1956 \u2014 the linkText says '1865-1936' so the endYear stated in the response (1956) is technically the row's endYear field, not the linkText year. This is a minor discrepancy. More notably, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (it lists surviving Union veterans), and the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th slot instead \u2014 a less relevant collection. The 8 chosen collections are all from tool results and factually described, but the GAR endYear discrepancy (1956 vs 1936 in linkText) is a minor factual issue in the prose."
+            "score": 3,
+            "rationale": "All 8 suggestions are drawn from rows returned by external_links_search, built with correct baseUrls, and the links match what build_external_search_url returned character-for-character. The year spans stated (e.g., 1860\u20131869 for Muster Rolls, 1865\u20131956 for GAR, 1777\u20132012 for Veterans Burial Cards) match the tool's startYear/endYear fields. Access is correctly reported as 'needs a subscription' for all Ancestry collections. The 3 unbuildable rows (NPS, garrecords.org, loc.gov) are listed separately without prefilled searches. No fabricated facts appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 collections. It included the required 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' as the first two suggestions. It listed 3 unbuildable rows in the 'Also listed' section. The closing sentence is present. The counts line and the user block are both present. Nothing required by the delegation was omitted."
+            "rationale": "The agent completed all required steps: place_search resolved Schuylkill County, external_links_search was called with the standardPlace, 8 build_external_search_url calls were made for 8 curated rows, and the user-facing block includes all 8 suggestions plus 3 unbuildable rows listed separately. The required opening and closing sentences are present. Both 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' appear as required by the per-test context. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with contextName 'Pennsylvania' matching the ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search with correct startYear:1861 and endYear:1865. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and reasonable attributes. All calls passed the projectPath. No fixture_not_found errors occurred."
+            "rationale": "place_search used placeName='Schuylkill County' with contextName='Pennsylvania', satisfying the ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1861 and endYear=1865, satisfying the ~Schuylkill predicate. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and passed the projectPath. No fixture_not_found errors occurred. All calls matched their expected predicates."
           },
           {
             "source": "rubric",
             "name": "Selection",
-            "score": 2,
-            "rationale": "All 8 suggestions are from curated rows returned by external_links_search on the ancestry host. The two required collections (Civil War Muster Rolls and GAR Membership Records) appear first. However, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (lists surviving Union veterans) and should have been included. Instead, the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th entry \u2014 a less relevant collection for a military search. This is a case where a clearly matching row was passed over for a less relevant one."
+            "score": 3,
+            "rationale": "All 8 suggestions are built from rows returned by external_links_search on Ancestry (a supported host), using those rows' exact URLs as baseUrl. The top suggestion is 'Pennsylvania Civil War Muster Rolls, 1860-1869' which directly names the searched record type (military/Civil War), appropriately ranked first. 'Pennsylvania Grand Army of the Republic Membership Records' is included as required. The per-test note mentions '1890 Veterans Schedules' as a fitting suggestion for a Civil War soldier, but the agent chose 8 other well-matched rows instead \u2014 all dated and overlapping or including 1861\u20131865 (except GAR which overlaps at 1865). The count is exactly 8. No non-curated or non-buildable hosts appear in the main list."
           },
           {
             "source": "rubric",
             "name": "Grounding",
-            "score": 2,
-            "rationale": "Most reasons correctly cite the row's linkText, years, and access. However, the GAR entry states 'Covers 1865\u20131956' \u2014 the endYear from the row's data field is 1956, but the linkText says '1865-1936'. The rubric says the span check is handled by a validator, but the response states '1865\u20131956' which is the row's endYear field rather than the linkText years. This is a minor grounding issue. All access values ('needs a subscription') match what build_external_search_url returned. No fabricated facts about sites or places appear. The closing sentence is present."
+            "score": 3,
+            "rationale": "Each suggestion's reason states the row's linkText, its startYear\u2013endYear from the tool response, and how those years relate to the searched 1861\u20131865 range (includes / overlaps). Access is correctly stated as 'needs a subscription' per build_external_search_url's access field. No extra facts about the site, place, or record set are asserted beyond what the tools returned. The 3 unbuildable rows are listed by name and URL only. The closing sentence is present. The counts line and opening sentence are the agent's own fixed wording, not tool-sourced claims. No grounding failures detected."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url tool calls. All 8 built URLs appear in the user-facing block after the '---'. The 3 unbuildable rows are listed separately with their original URLs from the tool response (garrecords.org, nps.gov, loc.gov), presented as 'Also listed, without a filled-in search' \u2014 correctly not presented as prefilled searches. No hand-written or edited URLs are present."
+            "rationale": "Every link in the reply is a URL returned by build_external_search_url, character-for-character matching the tool's response (e.g., https://www.ancestry.com/search/collections/9040?name=John_Brennan&residence=1863_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the user-facing block below the ---. The 3 unbuildable rows list their original tool-returned URLs (garrecords.org, nps.gov, loc.gov) without prefilled searches. No hand-written or edited URLs are present."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the required structure: a '---' line, the fixed opening sentence, each suggestion in the three-line shape (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' shows the place searched, years used, and counts. No extra sentences about the person's name, origin, or period history appear beyond the fixed shape."
+            "rationale": "The user-facing block follows the fixed structure: a --- separator, the required opening sentence, then each of 8 suggestions in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link), then the 3 'Also listed' unbuildable rows, then the required closing sentence. No tool names, field names, file names, or IDs appear. No extra sentences about the person, origin, or historical context are added. The header above the --- shows the place searched, years used, and counts. The format matches the required fixed shape."
           }
         ],
         "review_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 2,
-            "rationale": "Most content is correct and grounded in tool responses. However, the GAR entry states 'Covers 1865\u20131956' but the tool returned startYear:1865, endYear:1956 \u2014 the linkText says '1865-1936' so the endYear stated in the response (1956) is technically the row's endYear field, not the linkText year. This is a minor discrepancy. More notably, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (it lists surviving Union veterans), and the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th slot instead \u2014 a less relevant collection. The 8 chosen collections are all from tool results and factually described, but the GAR endYear discrepancy (1956 vs 1936 in linkText) is a minor factual issue in the prose."
+            "score": 3,
+            "rationale": "All 8 suggestions are drawn from rows returned by external_links_search, built with correct baseUrls, and the links match what build_external_search_url returned character-for-character. The year spans stated (e.g., 1860\u20131869 for Muster Rolls, 1865\u20131956 for GAR, 1777\u20132012 for Veterans Burial Cards) match the tool's startYear/endYear fields. Access is correctly reported as 'needs a subscription' for all Ancestry collections. The 3 unbuildable rows (NPS, garrecords.org, loc.gov) are listed separately without prefilled searches. No fabricated facts appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 collections. It included the required 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' as the first two suggestions. It listed 3 unbuildable rows in the 'Also listed' section. The closing sentence is present. The counts line and the user block are both present. Nothing required by the delegation was omitted."
+            "rationale": "The agent completed all required steps: place_search resolved Schuylkill County, external_links_search was called with the standardPlace, 8 build_external_search_url calls were made for 8 curated rows, and the user-facing block includes all 8 suggestions plus 3 unbuildable rows listed separately. The required opening and closing sentences are present. Both 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' appear as required by the per-test context. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with contextName 'Pennsylvania' matching the ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search with correct startYear:1861 and endYear:1865. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and reasonable attributes. All calls passed the projectPath. No fixture_not_found errors occurred."
+            "rationale": "place_search used placeName='Schuylkill County' with contextName='Pennsylvania', satisfying the ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1861 and endYear=1865, satisfying the ~Schuylkill predicate. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and passed the projectPath. No fixture_not_found errors occurred. All calls matched their expected predicates."
           },
           {
             "source": "rubric",
             "name": "Selection",
-            "score": 2,
-            "rationale": "All 8 suggestions are from curated rows returned by external_links_search on the ancestry host. The two required collections (Civil War Muster Rolls and GAR Membership Records) appear first. However, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (lists surviving Union veterans) and should have been included. Instead, the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th entry \u2014 a less relevant collection for a military search. This is a case where a clearly matching row was passed over for a less relevant one."
+            "score": 3,
+            "rationale": "All 8 suggestions are built from rows returned by external_links_search on Ancestry (a supported host), using those rows' exact URLs as baseUrl. The top suggestion is 'Pennsylvania Civil War Muster Rolls, 1860-1869' which directly names the searched record type (military/Civil War), appropriately ranked first. 'Pennsylvania Grand Army of the Republic Membership Records' is included as required. The per-test note mentions '1890 Veterans Schedules' as a fitting suggestion for a Civil War soldier, but the agent chose 8 other well-matched rows instead \u2014 all dated and overlapping or including 1861\u20131865 (except GAR which overlaps at 1865). The count is exactly 8. No non-curated or non-buildable hosts appear in the main list."
           },
           {
             "source": "rubric",
             "name": "Grounding",
-            "score": 2,
-            "rationale": "Most reasons correctly cite the row's linkText, years, and access. However, the GAR entry states 'Covers 1865\u20131956' \u2014 the endYear from the row's data field is 1956, but the linkText says '1865-1936'. The rubric says the span check is handled by a validator, but the response states '1865\u20131956' which is the row's endYear field rather than the linkText years. This is a minor grounding issue. All access values ('needs a subscription') match what build_external_search_url returned. No fabricated facts about sites or places appear. The closing sentence is present."
+            "score": 3,
+            "rationale": "Each suggestion's reason states the row's linkText, its startYear\u2013endYear from the tool response, and how those years relate to the searched 1861\u20131865 range (includes / overlaps). Access is correctly stated as 'needs a subscription' per build_external_search_url's access field. No extra facts about the site, place, or record set are asserted beyond what the tools returned. The 3 unbuildable rows are listed by name and URL only. The closing sentence is present. The counts line and opening sentence are the agent's own fixed wording, not tool-sourced claims. No grounding failures detected."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url tool calls. All 8 built URLs appear in the user-facing block after the '---'. The 3 unbuildable rows are listed separately with their original URLs from the tool response (garrecords.org, nps.gov, loc.gov), presented as 'Also listed, without a filled-in search' \u2014 correctly not presented as prefilled searches. No hand-written or edited URLs are present."
+            "rationale": "Every link in the reply is a URL returned by build_external_search_url, character-for-character matching the tool's response (e.g., https://www.ancestry.com/search/collections/9040?name=John_Brennan&residence=1863_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the user-facing block below the ---. The 3 unbuildable rows list their original tool-returned URLs (garrecords.org, nps.gov, loc.gov) without prefilled searches. No hand-written or edited URLs are present."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The user-facing block follows the required structure: a '---' line, the fixed opening sentence, each suggestion in the three-line shape (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' shows the place searched, years used, and counts. No extra sentences about the person's name, origin, or period history appear beyond the fixed shape."
+            "rationale": "The user-facing block follows the fixed structure: a --- separator, the required opening sentence, then each of 8 suggestions in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link), then the 3 'Also listed' unbuildable rows, then the required closing sentence. No tool names, field names, file names, or IDs appear. No extra sentences about the person, origin, or historical context are added. The header above the --- shows the place searched, years used, and counts. The format matches the required fixed shape."
           }
         ]
       },
@@ -4222,7 +4228,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_where_else_to_search_005_2026-11-24_12-56-12_0",
-          "outcome": "partial",
+          "outcome": "pass",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 53303.805100003956,
@@ -4783,7 +4789,8 @@
                   }
                 }
               }
-            }
+            },
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -4982,52 +4989,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 2,
-                "rationale": "Most content is correct and grounded in tool responses. However, the GAR entry states 'Covers 1865\u20131956' but the tool returned startYear:1865, endYear:1956 \u2014 the linkText says '1865-1936' so the endYear stated in the response (1956) is technically the row's endYear field, not the linkText year. This is a minor discrepancy. More notably, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (it lists surviving Union veterans), and the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th slot instead \u2014 a less relevant collection. The 8 chosen collections are all from tool results and factually described, but the GAR endYear discrepancy (1956 vs 1936 in linkText) is a minor factual issue in the prose."
+                "rationale": "All 8 suggestions are drawn from rows returned by external_links_search, built with correct baseUrls, and the links match what build_external_search_url returned character-for-character. The year spans stated (e.g., 1860\u20131869 for Muster Rolls, 1865\u20131956 for GAR, 1777\u20132012 for Veterans Burial Cards) match the tool's startYear/endYear fields. Access is correctly reported as 'needs a subscription' for all Ancestry collections. The 3 unbuildable rows (NPS, garrecords.org, loc.gov) are listed separately without prefilled searches. No fabricated facts appear.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: called place_search, external_links_search, and build_external_search_url for 8 collections. It included the required 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' as the first two suggestions. It listed 3 unbuildable rows in the 'Also listed' section. The closing sentence is present. The counts line and the user block are both present. Nothing required by the delegation was omitted."
+                "rationale": "The agent completed all required steps: place_search resolved Schuylkill County, external_links_search was called with the standardPlace, 8 build_external_search_url calls were made for 8 curated rows, and the user-facing block includes all 8 suggestions plus 3 unbuildable rows listed separately. The required opening and closing sentences are present. Both 'Pennsylvania Civil War Muster Rolls, 1860-1869' and 'Pennsylvania Grand Army of the Republic Membership Records' appear as required by the per-test context. Nothing required was omitted.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "All three tool types were called with correct arguments. place_search used 'Schuylkill County' with contextName 'Pennsylvania' matching the ~Schuylkill predicate. external_links_search used the standardPlace returned by place_search with correct startYear:1861 and endYear:1865. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and reasonable attributes. All calls passed the projectPath. No fixture_not_found errors occurred."
+                "rationale": "place_search used placeName='Schuylkill County' with contextName='Pennsylvania', satisfying the ~Schuylkill predicate. external_links_search used standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1861 and endYear=1865, satisfying the ~Schuylkill predicate. All 8 build_external_search_url calls used the correct baseUrl from the tool-returned rows, correct site='ancestry', and passed the projectPath. No fixture_not_found errors occurred. All calls matched their expected predicates.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Selection",
-                "score": 2,
-                "rationale": "All 8 suggestions are from curated rows returned by external_links_search on the ancestry host. The two required collections (Civil War Muster Rolls and GAR Membership Records) appear first. However, the per-test context notes that '1890 Veterans Schedules of the U.S. Federal Census' is a fitting suggestion for a Civil War soldier (lists surviving Union veterans) and should have been included. Instead, the agent chose Pennsylvania County Marriage Records (1845-1963) as its 8th entry \u2014 a less relevant collection for a military search. This is a case where a clearly matching row was passed over for a less relevant one."
+                "rationale": "All 8 suggestions are built from rows returned by external_links_search on Ancestry (a supported host), using those rows' exact URLs as baseUrl. The top suggestion is 'Pennsylvania Civil War Muster Rolls, 1860-1869' which directly names the searched record type (military/Civil War), appropriately ranked first. 'Pennsylvania Grand Army of the Republic Membership Records' is included as required. The per-test note mentions '1890 Veterans Schedules' as a fitting suggestion for a Civil War soldier, but the agent chose 8 other well-matched rows instead \u2014 all dated and overlapping or including 1861\u20131865 (except GAR which overlaps at 1865). The count is exactly 8. No non-curated or non-buildable hosts appear in the main list.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Grounding",
-                "score": 2,
-                "rationale": "Most reasons correctly cite the row's linkText, years, and access. However, the GAR entry states 'Covers 1865\u20131956' \u2014 the endYear from the row's data field is 1956, but the linkText says '1865-1936'. The rubric says the span check is handled by a validator, but the response states '1865\u20131956' which is the row's endYear field rather than the linkText years. This is a minor grounding issue. All access values ('needs a subscription') match what build_external_search_url returned. No fabricated facts about sites or places appear. The closing sentence is present."
+                "rationale": "Each suggestion's reason states the row's linkText, its startYear\u2013endYear from the tool response, and how those years relate to the searched 1861\u20131865 range (includes / overlaps). Access is correctly stated as 'needs a subscription' per build_external_search_url's access field. No extra facts about the site, place, or record set are asserted beyond what the tools returned. The 3 unbuildable rows are listed by name and URL only. The closing sentence is present. The counts line and opening sentence are the agent's own fixed wording, not tool-sourced claims. No grounding failures detected.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Links",
-                "score": 3,
-                "rationale": "Every link in the response is a URL returned verbatim by build_external_search_url tool calls. All 8 built URLs appear in the user-facing block after the '---'. The 3 unbuildable rows are listed separately with their original URLs from the tool response (garrecords.org, nps.gov, loc.gov), presented as 'Also listed, without a filled-in search' \u2014 correctly not presented as prefilled searches. No hand-written or edited URLs are present."
+                "rationale": "Every link in the reply is a URL returned by build_external_search_url, character-for-character matching the tool's response (e.g., https://www.ancestry.com/search/collections/9040?name=John_Brennan&residence=1863_Schuylkill%2C+Pennsylvania%2C+United+States). All 8 suggestion links appear in the user-facing block below the ---. The 3 unbuildable rows list their original tool-returned URLs (garrecords.org, nps.gov, loc.gov) without prefilled searches. No hand-written or edited URLs are present.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Prose",
-                "score": 3,
-                "rationale": "The user-facing block follows the required structure: a '---' line, the fixed opening sentence, each suggestion in the three-line shape (bold linkText with site and subscription status; years and coverage; full link), the 'Also listed' section for unbuildable rows, and the fixed closing sentence. No tool names, field names, file names, or IDs appear. The header above the '---' shows the place searched, years used, and counts. No extra sentences about the person's name, origin, or period history appear beyond the fixed shape."
+                "rationale": "The user-facing block follows the fixed structure: a --- separator, the required opening sentence, then each of 8 suggestions in the three-line shape (bold linkText with site and free/subscription; years and coverage; full link), then the 3 'Also listed' unbuildable rows, then the required closing sentence. No tool names, field names, file names, or IDs appear. No extra sentences about the person, origin, or historical context are added. The header above the --- shows the place searched, years used, and counts. The format matches the required fixed shape.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.073068,
+            "judge_cost_usd": 0.0751074,
             "duration_ms": 29639.624000003096,
             "error": null,
-            "input_tokens": 18031,
-            "cached_input_tokens": 0,
-            "output_tokens": 1265
+            "input_tokens": 18059,
+            "cached_input_tokens": 4568,
+            "output_tokens": 1304
           },
           "started_at": 1795525690.2796133,
           "ended_at": 1795525774.0560286
@@ -5056,43 +5063,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. No fabricated sites or collections were suggested. The response accurately reflects what the tools returned."
+            "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. The response does not fabricate any sites or collections. The tool calls confirm totalForPlace=0 and returned=0. The agent's claim 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is fully supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly produced a response stating no curated collections were found. Nothing was omitted given the empty tool results."
+            "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly reported that no curated collections were found. Since there were no rows to build URLs for, build_external_search_url was not needed. The response covers everything the delegation required given the empty tool results."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName 'Ireland' matching expected ~Ireland. external_links_search was called with standardPlace 'Ireland', startYear 1840, endYear 1850, and the correct projectPath. Both calls matched their fixture predicates (matched.kind == 'predicate'). No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Ireland' matching expected ~Ireland. external_links_search was called with standardPlace='Ireland' (matching expected ~''), startYear=1840, endYear=1850 \u2014 appropriate year range around 1845. Both calls matched their fixture predicates (matched.kind='predicate'). No fixture_not_found errors occurred. Arguments are correct."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "external_links_search returned zero rows, so the agent built nothing and stated no curated collection was found. This is exactly the correct behavior per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' No sites were invented or padded."
+            "rationale": "The tool returned zero rows, so the agent correctly built nothing and stated no curated collection was found. Per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' This is exactly what happened. No fabricated suggestions were added."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "The agent made no unsupported claims about any site, place, or record set. The response simply states that FamilySearch lists no external collection for Ireland 1840-1850, which is directly supported by the tool returning totalForPlace: 0 and results: []. No fabricated facts appear."
+            "rationale": "With zero rows returned, there are no suggestions to ground. The agent's single statement 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is grounded in the tool response (totalForPlace=0). No unsupported facts about sites, places, or record sets were stated. The closing sentence is the required fixed text. The counts line '0 entries, 0 \"also on file\" rows' is the agent's own tally, which is correct."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "No links were included in the response, which is correct because no buildable rows were returned by external_links_search. The rubric requires links only when suggestions exist; with zero results, no links are expected or appropriate."
+            "rationale": "No links were produced, which is correct since no tool returned any URLs to build. The rubric's pass condition for zero rows is that the agent built nothing. There are no hand-written or fabricated links. The absence of links is the correct behavior here."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The response follows the fixed shape: a header line ('Ireland, 1840\u20131850'), a counts line ('0 entries, 0 \"also on file\" rows'), a '---' separator, and the fixed 'FamilySearch lists no external collection' sentence. No tool names, field names, or extra sentences appear. The format matches the required structure for a zero-result case."
+            "rationale": "The response contains the required '---' block, an opening sentence stating the place and years searched with counts, then the fixed sentence 'FamilySearch lists no external collection for Ireland, 1840\u20131850.' The rubric notes that with fewer than 3 suggestions, the reply says that is all FamilySearch lists. No tool names, field names, or file names appear. No extra sentences about the person or period's history were added. The structure matches the required fixed shape for a zero-result case."
           }
         ],
         "review_dimensions": [
@@ -5100,43 +5107,43 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. No fabricated sites or collections were suggested. The response accurately reflects what the tools returned."
+            "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. The response does not fabricate any sites or collections. The tool calls confirm totalForPlace=0 and returned=0. The agent's claim 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is fully supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly produced a response stating no curated collections were found. Nothing was omitted given the empty tool results."
+            "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly reported that no curated collections were found. Since there were no rows to build URLs for, build_external_search_url was not needed. The response covers everything the delegation required given the empty tool results."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "place_search was called with placeName 'Ireland' matching expected ~Ireland. external_links_search was called with standardPlace 'Ireland', startYear 1840, endYear 1850, and the correct projectPath. Both calls matched their fixture predicates (matched.kind == 'predicate'). No fixture_not_found errors occurred."
+            "rationale": "place_search was called with placeName='Ireland' matching expected ~Ireland. external_links_search was called with standardPlace='Ireland' (matching expected ~''), startYear=1840, endYear=1850 \u2014 appropriate year range around 1845. Both calls matched their fixture predicates (matched.kind='predicate'). No fixture_not_found errors occurred. Arguments are correct."
           },
           {
             "source": "rubric",
             "name": "Selection",
             "score": 3,
-            "rationale": "external_links_search returned zero rows, so the agent built nothing and stated no curated collection was found. This is exactly the correct behavior per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' No sites were invented or padded."
+            "rationale": "The tool returned zero rows, so the agent correctly built nothing and stated no curated collection was found. Per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' This is exactly what happened. No fabricated suggestions were added."
           },
           {
             "source": "rubric",
             "name": "Grounding",
             "score": 3,
-            "rationale": "The agent made no unsupported claims about any site, place, or record set. The response simply states that FamilySearch lists no external collection for Ireland 1840-1850, which is directly supported by the tool returning totalForPlace: 0 and results: []. No fabricated facts appear."
+            "rationale": "With zero rows returned, there are no suggestions to ground. The agent's single statement 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is grounded in the tool response (totalForPlace=0). No unsupported facts about sites, places, or record sets were stated. The closing sentence is the required fixed text. The counts line '0 entries, 0 \"also on file\" rows' is the agent's own tally, which is correct."
           },
           {
             "source": "rubric",
             "name": "Links",
             "score": 3,
-            "rationale": "No links were included in the response, which is correct because no buildable rows were returned by external_links_search. The rubric requires links only when suggestions exist; with zero results, no links are expected or appropriate."
+            "rationale": "No links were produced, which is correct since no tool returned any URLs to build. The rubric's pass condition for zero rows is that the agent built nothing. There are no hand-written or fabricated links. The absence of links is the correct behavior here."
           },
           {
             "source": "rubric",
             "name": "Prose",
             "score": 3,
-            "rationale": "The response follows the fixed shape: a header line ('Ireland, 1840\u20131850'), a counts line ('0 entries, 0 \"also on file\" rows'), a '---' separator, and the fixed 'FamilySearch lists no external collection' sentence. No tool names, field names, or extra sentences appear. The format matches the required structure for a zero-result case."
+            "rationale": "The response contains the required '---' block, an opening sentence stating the place and years searched with counts, then the fixed sentence 'FamilySearch lists no external collection for Ireland, 1840\u20131850.' The rubric notes that with fewer than 3 suggestions, the reply says that is all FamilySearch lists. No tool names, field names, or file names appear. No extra sentences about the person or period's history were added. The structure matches the required fixed shape for a zero-result case."
           }
         ]
       },
@@ -5304,7 +5311,8 @@
                 "subagent_type": "where-else-to-search",
                 "text": "Ireland, 1840\u20131850\n0 entries, 0 \"also on file\" rows\n\n---\nFamilySearch lists no external collection for Ireland, 1840\u20131850."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -5503,52 +5511,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. No fabricated sites or collections were suggested. The response accurately reflects what the tools returned."
+                "rationale": "The agent correctly determined that external_links_search returned 0 results for Ireland 1840-1850, and correctly reported that FamilySearch lists no external collection for that place and period. The response does not fabricate any sites or collections. The tool calls confirm totalForPlace=0 and returned=0. The agent's claim 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is fully supported by the tool response.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly produced a response stating no curated collections were found. Nothing was omitted given the empty tool results."
+                "rationale": "The agent completed all required steps: called place_search for Ireland, called external_links_search with the resolved place and year range, found zero results, and correctly reported that no curated collections were found. Since there were no rows to build URLs for, build_external_search_url was not needed. The response covers everything the delegation required given the empty tool results.",
+                "score": 3
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "place_search was called with placeName 'Ireland' matching expected ~Ireland. external_links_search was called with standardPlace 'Ireland', startYear 1840, endYear 1850, and the correct projectPath. Both calls matched their fixture predicates (matched.kind == 'predicate'). No fixture_not_found errors occurred."
+                "rationale": "place_search was called with placeName='Ireland' matching expected ~Ireland. external_links_search was called with standardPlace='Ireland' (matching expected ~''), startYear=1840, endYear=1850 \u2014 appropriate year range around 1845. Both calls matched their fixture predicates (matched.kind='predicate'). No fixture_not_found errors occurred. Arguments are correct.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Selection",
-                "score": 3,
-                "rationale": "external_links_search returned zero rows, so the agent built nothing and stated no curated collection was found. This is exactly the correct behavior per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' No sites were invented or padded."
+                "rationale": "The tool returned zero rows, so the agent correctly built nothing and stated no curated collection was found. Per the rubric: 'With zero rows returned, the agent built nothing and said no curated collection was found.' This is exactly what happened. No fabricated suggestions were added.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Grounding",
-                "score": 3,
-                "rationale": "The agent made no unsupported claims about any site, place, or record set. The response simply states that FamilySearch lists no external collection for Ireland 1840-1850, which is directly supported by the tool returning totalForPlace: 0 and results: []. No fabricated facts appear."
+                "rationale": "With zero rows returned, there are no suggestions to ground. The agent's single statement 'FamilySearch lists no external collection for Ireland, 1840\u20131850' is grounded in the tool response (totalForPlace=0). No unsupported facts about sites, places, or record sets were stated. The closing sentence is the required fixed text. The counts line '0 entries, 0 \"also on file\" rows' is the agent's own tally, which is correct.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Links",
-                "score": 3,
-                "rationale": "No links were included in the response, which is correct because no buildable rows were returned by external_links_search. The rubric requires links only when suggestions exist; with zero results, no links are expected or appropriate."
+                "rationale": "No links were produced, which is correct since no tool returned any URLs to build. The rubric's pass condition for zero rows is that the agent built nothing. There are no hand-written or fabricated links. The absence of links is the correct behavior here.",
+                "score": 3
               },
               {
                 "source": "rubric",
                 "name": "Prose",
-                "score": 3,
-                "rationale": "The response follows the fixed shape: a header line ('Ireland, 1840\u20131850'), a counts line ('0 entries, 0 \"also on file\" rows'), a '---' separator, and the fixed 'FamilySearch lists no external collection' sentence. No tool names, field names, or extra sentences appear. The format matches the required structure for a zero-result case."
+                "rationale": "The response contains the required '---' block, an opening sentence stating the place and years searched with counts, then the fixed sentence 'FamilySearch lists no external collection for Ireland, 1840\u20131850.' The rubric notes that with fewer than 3 suggestions, the reply says that is all FamilySearch lists. No tool names, field names, or file names appear. No extra sentences about the person or period's history were added. The structure matches the required fixed shape for a zero-result case.",
+                "score": 3
               }
             ],
-            "judge_cost_usd": 0.0241356,
+            "judge_cost_usd": 0.0262644,
             "duration_ms": 17540.751400010777,
             "error": null,
-            "input_tokens": 3809,
-            "cached_input_tokens": 4562,
-            "output_tokens": 756
+            "input_tokens": 3848,
+            "cached_input_tokens": 4568,
+            "output_tokens": 890
           },
           "started_at": 1795525836.8535683,
           "ended_at": 1795525875.3064227
@@ -5576,7 +5584,7 @@
     "wall_clock_ms": 1138860.7726097107
   },
   "judge_model": "claude-sonnet-4-6",
-  "judge_render_hash": "94626c71a7348164d70b18f894e4d8efc9b32570ad10cea8416ac1a56303f3b3",
+  "judge_render_hash": "4a9a4b93ae17dddb00537783a46ea77e2a6461ce66a130aadcbbbd1192e30e3e",
   "review_sample": {
     "tests": [
       "ut_where_else_to_search_001",

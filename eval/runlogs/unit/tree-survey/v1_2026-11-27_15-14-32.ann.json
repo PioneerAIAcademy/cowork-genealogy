@@ -185,6 +185,62 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Survey",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage check",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Suggestions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Hand-off and prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly called tree_gaps with the expected personId, TGAP-ROT, and the fixture matched successfully. However, it included an additional projectPath argument that was not required by the expected arguments. Although this did not prevent the tool from returning the correct results, the agent should avoid passing unnecessary parameters when the skill specifies using the default arguments."
     }
   ]
 }
