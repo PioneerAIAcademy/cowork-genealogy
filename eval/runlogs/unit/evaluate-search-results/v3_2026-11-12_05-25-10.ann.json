@@ -217,6 +217,198 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The deciding facts are named correctly: mother Mary Robertson, father \"Hiram Hy\", and the place. The reasoning should still have said that \"Selmon\" appears where the child's surname would be and does not match Hyde, and then explained why the match holds anyway (a garbled OCR row; both parents' names fit). Leaving that out makes the match look cleaner than the evidence is. Partial."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The summary is accurate, clear, and easy to understand. It identifies the record, explains why it matches Iram F. Hyde, and correctly states that the information was already extracted. However, it uses three sentences instead of the preferred one or two, so a small improvement in conciseness would make it stronger."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The summary is clear, accurate, and easy to understand. It identifies the record, explains the differences that establish the Not a Match verdict, and confirms that no relevant new information was found. However, it uses three sentences instead of the preferred one or two, so it could be slightly more concise."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The summary is clear, accurate, and understandable. It explains the record, why the identity is uncertain, and what new information it could provide. However, it uses four sentences instead of following the preferred one- or two-sentence guideline."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The summary is clear and beginner-friendly. It explains what the record is, why it could relate to Iram, why the identity is uncertain, and why it adds no new vital information. However, it uses five sentences instead of following the preferred one- or two-sentence guideline. The content is accurate, but it could be more concise."
     }
   ]
 }
