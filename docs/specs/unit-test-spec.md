@@ -1778,7 +1778,7 @@ The template is versioned with the harness; its SHA-256 hash is recorded in the 
 
 Forced tool_use eliminates parsing brittleness — there is no "extract JSON from prose" step. The harness expects exactly one tool call; multiple calls or no calls are treated as a judge failure and surfaced in the run log (rare; usually a prompt-template bug, not a model bug).
 
-`rationale` comes before `score` in both `properties` and `required`, and the prompt says to write it first: the model emits keys in schema order, and a judge that wrote the score first then reasoned toward a different one (#4833). Without strict mode the order is a nudge, not a guarantee; `test_grading_tool_orders_rationale_before_score` pins it.
+`rationale` comes before `score` in both `properties` and `required`, and the prompt says to write it first: the model emits keys in schema order, so a judge that writes the score first can then reason toward a different one. Without strict mode the order is a nudge, not a guarantee; `test_grading_tool_orders_rationale_before_score` pins it.
 
 The minimum rationale length (20 chars) blocks one-word rationales — those correlate strongly with the judge guessing rather than reading.
 
