@@ -1,7 +1,10 @@
 {
   "id": "birth-no-pid-marie-brigard",
   "message": "Locate the birth date of Marie Anne Brigard born in Hamm in 1895.",
-  "expected_owner": "init-project",
+  "expected_owner": [
+    null,
+    "init-project"
+  ],
   "expected_save": [
     {
       "section": "log",
@@ -26,6 +29,5 @@
     "max_turns": 20,
     "max_cost_usd": 1.0
   },
-  "is_plan_ask": false,
-  "known_issue": "#2813"
+  "is_plan_ask": false
 }

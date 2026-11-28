@@ -21,7 +21,31 @@ Not graded: whether the 1875 velación is reported as the marriage (printed as `
 
 ## Expected result today
 
-PASS. Measured 2026-11-16 in the eight-fixture panel run:
+PASS in 4 of 5 runs on 2026-11-27 (063dbcbc0 to 24f41ec71, Haiku 5.5 low main thread). The whole-panel run on
+24f41ec71 was the one that failed:
+
+```
+FAIL marriage-victoriana-vasquez  expected=search-records  first=none  save=missing log tool=record_search (new log rows: none)  stop=clean  failed=[owner,save]
+    units: research > init-project  extraction_append=0
+```
+
+After init-project the main thread relayed its report with the question-selection offer, though init-project's
+relay note names when or where one event happened as a bounded request. Two runs on 24f41ec71 an hour before it
+passed, as did the panel runs on 063dbcbc0 and fbc87a159.
+
+Re-measured 2026-11-26 on the Haiku 5.5 low main thread, once `project_context` returned
+`boundedRequest` with its closing-offer clause:
+
+```
+PASS marriage-victoriana-vasquez  expected=search-records  first=search-records  save=ok  stop=clean
+    units: research > init-project > search-records  extraction_append=0
+```
+
+On `main` 84e94e6c9 without the field it stopped after init-project the same day (FAIL on `owner` and
+`save`), and on `main` 202730796 it ran `question-selection` after init-project. A run with the field but
+without the clause ended on a plain question and failed `ends_on_offer`.
+
+Measured 2026-11-16 in the eight-fixture panel run:
 
 ```
 PASS marriage-victoriana-vasquez  expected=search-records  first=search-records  save=ok  stop=clean

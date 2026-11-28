@@ -59,7 +59,7 @@ describe("URL construction", () => {
     expect(url.pathname).toBe("/search/match/resolutions/match/matches");
     expect(url.searchParams.get("collection")).toBe("records");
     expect(url.searchParams.get("id")).toBe("ark:/61903/4:1:KNDX-MKG");
-    expect(url.searchParams.get("minConfidence")).toBe("2");
+    expect(url.searchParams.get("minConfidence")).toBe("1");
     expect(url.searchParams.get("count")).toBe("20");
     expect(url.searchParams.get("includeSummary")).toBe("false");
     expect(url.searchParams.getAll("status")).toEqual(["accepted", "pending", "rejected"]);
@@ -80,6 +80,7 @@ describe("URL construction", () => {
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("collection")).toBe("tree");
     expect(url.searchParams.get("id")).toBe("ark:/61903/4:1:KNDX-MKG");
+    expect(url.searchParams.get("minConfidence")).toBe("2");
   });
 
   it("record_record_matches: collection=records, ark prefix 1:1:", async () => {

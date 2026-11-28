@@ -1,5 +1,6 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
+import { readForbidden } from "../utils/fs-forbidden.js";
 import { resolveStandardPlaceToPlaceId, ambiguousPlaceError } from "../utils/place-resolver.js";
 import {
   dedupeCollections,
@@ -73,9 +74,17 @@ async function fetchAll(placeId: string): Promise<FSPlaceExternalResponse> {
   });
 
   if (res.status === 403) {
+    const forbidden = await readForbidden(res);
+    if (forbidden.firewall) {
+      throw new Error(
+        "FamilySearch's firewall blocked the request (403). This is NOT an empty result — " +
+          `which outside sites cover the place is unknown. (status 403; body: ${forbidden.snippet})`
+      );
+    }
     throw new Error(
-      `FamilySearch rejected the request (403 Forbidden). ` +
-        "This usually means a User-Agent block — check that the MCP server is running an unmodified build."
+      "FamilySearch refused this external-links request (403). This is NOT an " +
+        "empty result — which outside sites cover the place is unknown. The same " +
+        `request may be answered if tried again later. (status 403; body: ${forbidden.snippet})`
     );
   }
   if (res.status === 429) {

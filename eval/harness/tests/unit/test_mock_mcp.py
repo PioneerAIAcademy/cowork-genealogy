@@ -3765,3 +3765,18 @@ def test_image_transcribe_puts_the_held_records_index_beside_the_reading(tmp_pat
     assert body.get("staged"), body.get("stagingError")
     assert body["indexReadings"] == [{"sourceId": sid, "recordId": "r", "role": "head", "name": "Tyler"}]
     assert "one machine reading" in body["readingNote"]
+
+
+@pytest.mark.requires_engine_build
+def test_tree_gaps_holes_carry_the_compiled_question(tmp_path):
+    """The mock runs production's `withQuestions` on a canned tree_gaps answer:
+    each hole gets its single-fact question, placed right after `detail`."""
+    server, call_log, tools_by_name = create_mock_server(["tree-gaps-child-gap"], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "tree_gaps", {"personId": "TGAP-ROT"}))
+    (hole,) = body["gaps"]
+    assert hole["question"] == (
+        "Who were the children born to Edmund Ashby and Clara Weis in "
+        "Dayton, Montgomery, Ohio, United States between 1881 and 1886?"
+    )
+    keys = list(hole)
+    assert keys[keys.index("detail") + 1] == "question"

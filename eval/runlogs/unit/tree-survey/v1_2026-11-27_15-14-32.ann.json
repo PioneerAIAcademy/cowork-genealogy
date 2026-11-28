@@ -1,0 +1,190 @@
+{
+  "run_log": "v1_2026-11-27_15-14-32.json",
+  "annotator": "adeyinkaadedayo1024@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Hand-off and prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every fact matches the tool data: lifespan 1850–1919, children born 1880 and 1887, window 1881–1886, Dayton, no pending hints. No census year falls inside the window, so the census helps only indirectly. The 1900 census asks each mother how many children she had borne and how many were living, which can expose a child who died young."
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Suggestions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "'Who were the children born to Edmund Ashby and Clara Weis in Dayton … between 1881 and 1886?' is one fact, names the couple, and scopes place and years."
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage check",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Survey",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Facts match the tool data: 1854–1927, wife of Edmund Ashby, window 1879–1881, Dayton, 1880 census in the window, no hints. One genealogy note: the 1880 census lists her under her married name, so it won't give the maiden surname directly. It does give her birthplace and her parents' birthplaces, which narrows the search. Church and vital records are the right first stop, as the prose says."
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Survey",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage check",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Suggestions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Hand-off and prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
