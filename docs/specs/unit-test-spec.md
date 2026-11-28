@@ -1743,13 +1743,13 @@ the real render stays on the same pass below. The measured view stands a live
 call's args in by a short marker, so without that second condition a re-added
 write could push the real render past the hard cap and cost every excerpt, or
 cut another write to the string cap. The drop pass measures with the old
-marker's length, so it stops where it stopped before #4682 (measured with the
+marker's length, so it stops where it stopped before the marker changed (measured with the
 shorter marker it could stop one call early and keep a write that pushed the
 render to a later pass). Refill only adds, and never moves the render to a later
 pass, so nothing the judge saw before is lost. Sparing writes in the
 drop order itself was rejected: it dropped `ut_locality_guide_029`'s only
 Pulaski County `locality_survey` to keep six writes, leaving the judge a Pulaski
-guide with no Pulaski source (#4682). The `_dropped_for_size` marker states how
+guide with no Pulaski source. The `_dropped_for_size` marker states how
 many calls are dropped and how many of them carried an excerpt, and no order,
 because after the refill the missing calls are not simply the oldest. Past the
 hard cap the render tries, in order: live args as-is with excerpts, live args

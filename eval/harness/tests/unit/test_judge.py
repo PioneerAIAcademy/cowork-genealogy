@@ -2353,6 +2353,29 @@ def test_refill_adds_back_newest_first(monkeypatch):
     assert judge._size_guard_keep(calls, [False] * 6, ()) == [False, True, True, True, True, True]
 
 
+@pytest.mark.parametrize(
+    "fits, render_pass",
+    [
+        (lambda tc, keep, cited: not keep[2] and keep.count(True) <= 4, lambda tc, keep, cited, needles: 0),
+        (lambda tc, keep, cited: keep.count(True) <= 4, lambda tc, keep, cited, needles: 1 if keep[2] else 0),
+    ],
+    ids=["too-big-for-the-budget", "moves-the-render-pass"],
+)
+def test_refill_keeps_going_past_a_call_it_cannot_add_back(monkeypatch, fits, render_pass):
+    """#4682 case 5: a dropped call refused by either check does not end the
+    refill; older dropped calls are still tried, a cited one included. In six
+    of the seven corpus runs the refill improves, the newest dropped call is
+    one that cannot come back."""
+    calls = [_read_call(i) for i in range(6)]
+    monkeypatch.setattr(
+        judge, "_size_guard_drop_loop", lambda tc, cited: [False, False, False, True, True, True]
+    )
+    monkeypatch.setattr(judge, "_size_guard_fits", fits)
+    monkeypatch.setattr(judge, "_render_pass", render_pass)
+    cited = [False, True, False, False, False, False]
+    assert judge._size_guard_keep(calls, cited, ()) == [False, True, False, True, True, True]
+
+
 def _sixty_op_write():
     ops = [{"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}} for _ in range(60)]
     return _live_write_call({"projectPath": "/p", "ops": ops})
@@ -3316,10 +3339,11 @@ def test_refusal_marker_growth_against_raw_args_is_bounded_and_measured():
 
 
 def test_dropped_marker_cannot_grow_the_size_guard_budget():
-    """The `_dropped_for_size` line is part of the measured view. Were it longer
-    than `origin/main`'s at any count, the drop pass would stop later than
-    main's did and drop a call main kept, which the refill pass cannot be
-    relied on to bring back (#4682)."""
+    """The `_dropped_for_size` line is part of the measured view and of every
+    render pass. The drop pass measures with `origin/main`'s length and keeps
+    the calls main kept, so a longer line could push those calls over the
+    budget, or their render to a later pass than main's, which cuts a write or
+    drops excerpts main showed (#4682)."""
     longer = [
         (n, k)
         for n in range(1, 1_000)

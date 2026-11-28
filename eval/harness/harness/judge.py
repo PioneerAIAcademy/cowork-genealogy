@@ -710,9 +710,11 @@ def _dropped_for_size_marker(dropped: int, dropped_cited: int) -> str:
 
     It counts the dropped calls and the ones among them that carried a harness
     excerpt (#4682 case 2). It names no order: after the refill pass the
-    missing calls are not "the oldest" ones. It sits in the measured view, so
-    it must be no longer than the marker it replaced at any count, or the drop
-    pass stops later than before and drops a call that used to be kept;
+    missing calls are not "the oldest" ones. It sits in the measured view and
+    in every render pass. The drop pass measures with the old line's length and
+    keeps the calls the old guard kept, so a longer line here could push those
+    calls over the budget, or their render to a later pass that cuts a write or
+    drops excerpts the old guard showed;
     `test_dropped_marker_cannot_grow_the_size_guard_budget` pins it.
     """
     return (
