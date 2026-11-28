@@ -209,6 +209,38 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly identified one missing living child using census_children_gap and avoided double-counting across the two censuses. However, the rationale incorrectly compares the 1900 census count with all three children in the tree, including Thomas, who was born in 1904 and therefore could not have been counted in 1900. The question itself correctly targets one missing child born on or before 1 June 1900. The census-gap calculation and question selection are correct, but the rationale needs correction."
     }
   ]
 }

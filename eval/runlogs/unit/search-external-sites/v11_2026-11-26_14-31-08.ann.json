@@ -385,6 +385,134 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The agent correctly identified Matricula as a free browsing archive, provided the correct site URL and navigation instructions, and identified FamilySearch film 876540 with its offline access limitation. However, it made an unsupported recommendation by suggesting that the broader FamilySearch collection could be searched for Wilhelm's marriage. The collection-search results do not confirm indexed coverage for Ochtrup or the Diocese of Münster."
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly handled the search workflow, evaluated all four results individually, recorded the positive outcome with capture_received true and capture_filename null, and completed pli_001. However, Result 3 should have been classified as no match because its Maine birthplace conflicts with the subject's Massachusetts birthplace. The remaining classifications and research-log handling were correct."
+    },
+    {
+      "test_id": "ut_search_external_sites_iwc",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill provided individual reasoning for all four results and correctly identified Results 1, 2, and 4. However, Result 3 should have been classified as no match rather than possible because the recorded Maine birthplace conflicts with the subject's Massachusetts birthplace. The other three classifications were appropriate."
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent correctly triaged all four results individually and handled the closing research log and plan update appropriately. Result 1 was correctly identified as a strong match, Result 2 as no match, and Result 4 as possible. However, Result 3 should have been classified as no match because its Maine birthplace conflicts with the subject's Massachusetts birthplace. This is a minor but important classification error."
+    },
+    {
+      "test_id": "ut_search_external_sites_tri",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent provided individual reasoning for all four results. Results 1, 2, and 4 were correctly classified. Result 3 was incorrectly labeled possible despite the conflicting birthplace of Maine. It should have been classified as no match based on the subject's Massachusetts birthplace. The triage was otherwise complete, but this one misclassification prevents a fully correct assessment."
     }
   ]
 }
