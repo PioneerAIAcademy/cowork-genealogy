@@ -40,6 +40,7 @@ import { isLiveAssertion, questionAssertions } from "./assertion-liveness.js";
 import { recordPartyKeys } from "./settled-birth-disputes.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 import { routesToFamilySearch } from "./plan-item-plausibility.js";
+import { preferredDisplayName } from "./name-helpers.js";
 import { isToolLoggedRead } from "./tool-logged-read.js";
 
 export type QuestionState =
@@ -362,10 +363,7 @@ export function subjectUnreached(
   linkedAssertionIds: ReadonlySet<unknown>,
 ): { unlinked: number; subjects: string[] } | null {
   if (!tree) return null;
-  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
-  const subjects = arr(research?.project?.subject_person_ids).filter(
-    (id): id is string => typeof id === "string" && persons.has(id),
-  );
+  const subjects = subjectTreeIds(research, tree);
   if (subjects.length === 0) return null;
   const rejected = new Set(
     arr(research?.rejected_links).filter((r) => subjects.includes(r?.person_id)).map((r) => r?.assertion_id),
@@ -377,6 +375,22 @@ export function subjectUnreached(
     (pe) => countsForLinkedRung(pe) && ids.has(pe?.assertion_id) && subjects.includes(pe?.person_id),
   );
   return reaches ? null : { unlinked, subjects };
+}
+
+/** The project's subjects that are tree persons. */
+export function subjectTreeIds(research: any, tree: any): string[] {
+  const persons = new Set(arr(tree?.persons).map((p) => p?.id));
+  return arr(research?.project?.subject_person_ids).filter(
+    (id): id is string => typeof id === "string" && persons.has(id),
+  );
+}
+
+/** Tree persons by name, for a step the researcher is shown: the name
+ *  `project_context`'s persons row gives when `names` is passed (the surname
+ *  alone for a doubted given name), else the preferred name. */
+function personNames(tree: any, ids: readonly string[], names?: ReadonlyMap<string, string | null>): string {
+  const byId = new Map(arr(tree?.persons).map((p) => [p?.id, p]));
+  return ids.map((id) => (names ? names.get(id) : preferredDisplayName(byId.get(id))) ?? "an unnamed person").join(", ");
 }
 
 /** Tree persons linked to this question's assertions whom nothing ties to a
@@ -843,7 +857,11 @@ export function registeredPairConflictIds(research: any, pair: AttachedBirthPair
  *  matters: told to open a conflict, an orchestrator asked for John's pair to be
  *  registered again while c_002 sat unweighed (thomas-hanrahan-marriage,
  *  2026-11-18 14:12). */
-export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], research: any): string {
+export function attachedBirthPairsAction(
+  pairs: readonly AttachedBirthPair[],
+  research: any,
+  name: (personId: string) => string = (id) => id,
+): string {
   const registered = new Set<string>();
   const unregistered: string[] = [];
   for (const pair of pairs) {
@@ -856,15 +874,18 @@ export function attachedBirthPairsAction(pairs: readonly AttachedBirthPair[], re
     parts.push(`weigh ${[...registered].sort().join(", ")} (registered, not yet analysed)`);
   }
   if (unregistered.length > 0) {
-    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.join(", ")}`);
+    parts.push(`open a conflict_type 'identity' conflict naming the two records for ${unregistered.map(name).join(", ")}`);
   }
   return parts.join("; ");
 }
 
 /** The pairs as one clause: the identity rung's text and the proof gate's. */
-export function describeAttachedBirthPairs(pairs: readonly AttachedBirthPair[]): string {
+export function describeAttachedBirthPairs(
+  pairs: readonly AttachedBirthPair[],
+  name: (personId: string) => string = (id) => id,
+): string {
   return pairs
-    .map(({ personId, a, b }) => `${personId}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
+    .map(({ personId, a, b }) => `${name(personId)}'s attached births ${a?.id} ('${a?.place}') and ${b?.id} ('${b?.place}')`)
     .join("; ");
 }
 
@@ -897,6 +918,7 @@ export function questionStatus(
   tree: any = null,
   attachedBirthPairs: readonly AttachedBirthPair[] = [],
   owed?: readonly OwedFinding[],
+  names?: ReadonlyMap<string, string | null>,
 ): QuestionStatus {
   const qid = question?.id;
   // Computed only when an owed-finding arm is reached; questionStates passes it.
@@ -962,9 +984,10 @@ export function questionStatus(
     // #4444. First, because research_append refuses every proof summary of this
     // question (any tier but disproved, resolved or not) until a conflict has
     // weighed each pair: a rung below one that names proof-conclusion would loop.
+    const name = (id: string): string => personNames(tree, [id], names);
     nextStep =
-      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs)} cannot both ` +
-      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research)}, blocking ${qid}`;
+      `conflict-resolution — identity: ${describeAttachedBirthPairs(attachedBirthPairs, name)} cannot both ` +
+      `be theirs; ${attachedBirthPairsAction(attachedBirthPairs, research, name)}, blocking ${qid}`;
   } else if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
     // written one with `shortfall: "conflict"`, at the tier the evidence reaches,
@@ -1011,19 +1034,19 @@ export function questionStatus(
     // `conflicts[]` cannot be what routes there — the evidence has to.
     nextStep =
       "conflict-resolution — unregistered disagreement: " +
-      disagreements.map((d) => `${d.personId} ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
+      disagreements.map((d) => `${personNames(tree, [d.personId], names)}'s ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
   } else if (parentSets.length > 0) {
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
-      parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
+      parentSets.map((p) => `${personNames(tree, [p.personId], names)} (${personNames(tree, p.parentIds, names)})`).join("; ");
   } else if (kin.length > 0) {
-    nextStep = `hypothesis-tracking — unlinked kin: ${kin.join(", ")}`;
+    nextStep = `hypothesis-tracking — unlinked kin: ${personNames(tree, kin, names)}`;
   } else if (unreached) {
     // Below the kin rung, so it changes no step that rung sets. Some links but
     // none reaching the subject: the record was linked around them, not to them.
     nextStep =
       `person-evidence — ${unreached.unlinked} of this question's ${assertions.length} assertions ` +
-      `are unlinked and none of its links reaches the project subject (${unreached.subjects.join(", ")})`;
+      `are unlinked and none of its links reaches the project subject (${personNames(tree, unreached.subjects, names)})`;
   } else if (researcherChoice(research, question, plans, itemIds)) {
     // Section B: the "not exhaustive" choice. The search stopped on resources
     // rather than on a finding, so neither searching more nor concluding is
@@ -1114,15 +1137,17 @@ export function questionStatus(
 
 /** Every question's state, in document order. `tree` is optional: without it
  *  `competingParentSets` is always empty. `attachedBirthPairs` (by question id)
- *  is optional: without it the identity rung never fires. */
+ *  is optional: without it the identity rung never fires. `names` (by person id)
+ *  is the name each step gives a person; without it, the preferred name. */
 export function questionStates(
   research: any,
   tree: any = null,
   attachedBirthPairs?: ReadonlyMap<string, readonly AttachedBirthPair[]>,
+  names?: ReadonlyMap<string, string | null>,
 ): QuestionStatus[] {
   // The owed list is project-wide: compute it once, not once per question.
   const owed = owedFindings(research, tree);
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed));
+    .map((q) => questionStatus(research, q, tree, attachedBirthPairs?.get(q.id) ?? [], owed, names));
 }

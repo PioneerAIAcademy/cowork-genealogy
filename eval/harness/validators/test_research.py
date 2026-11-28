@@ -520,8 +520,9 @@ _PROJECT_ID_PREFIXES = (
     "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
     "h_", "t_", "ps_", "ev_", "loc_", "ns_", "hv_",
 )
+_TREE_ID_PATTERN = r"[FINRS]\d+"
 _PROJECT_ID_RE = re.compile(
-    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
+    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|" + _TREE_ID_PATTERN + r")\b"
 )
 _PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 _SHAPED_LINE_RE = re.compile(r"^\s*(?:#|\||[-*+]\s|\d+[.)]\s)", re.MULTILINE)
@@ -617,6 +618,66 @@ def test_status_question_answered_from_project_context_only(
     assert not hits, (
         "status answer must contain no project identifiers; found: "
         f"{sorted(set(hits))}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tree ids in any reply (issue #4669)
+# ---------------------------------------------------------------------------
+
+# A FamilySearch ID (PID) is the one identifier narration may show. Its halves
+# can look like a tree id (`K835-R12`, `F123-ABC`), so PID-shaped tokens are
+# removed before the tree-id search, unless both halves are tree ids: a range
+# such as `I1-I5` or `I100-I200` is still caught. Links, and record or image ids
+# written without `ark:/`, are removed first: an image id's third part
+# (`3:1:939K-8LJ5-F9`) can look like a tree id too.
+_LINK_RE = re.compile(r"(?:https?://|ark:/)\S+|\b\d:\d:\S+")
+_PID_TOKEN_RE = re.compile(r"\b([A-Za-z0-9]{4})-([A-Za-z0-9]{3,4})\b")
+_TREE_ID_RE = re.compile(r"\b" + _TREE_ID_PATTERN + r"\b")
+_WHOLE_TREE_ID_RE = re.compile(_TREE_ID_PATTERN)
+_LINK_TREE_ID_RE = re.compile(r"/(" + _TREE_ID_PATTERN + r")(?![\w-])")
+
+
+def _drop_pid(m: re.Match) -> str:
+    if _WHOLE_TREE_ID_RE.fullmatch(m.group(1)) and _WHOLE_TREE_ID_RE.fullmatch(m.group(2)):
+        return m.group(0)
+    return " "
+
+
+def tree_ids_named(text: str | None) -> list[str]:
+    """The tree ids (`I13`, `S2`, `F4`...) a reply names, distinct and sorted."""
+    text = text or ""
+    in_links = {i for link in _LINK_RE.findall(text) for i in _LINK_TREE_ID_RE.findall(link)}
+    rest = _TREE_ID_RE.findall(_PID_TOKEN_RE.sub(_drop_pid, _LINK_RE.sub(" ", text)))
+    return sorted(in_links | set(rest))
+
+
+def _narration_guidance(state: dict | None) -> str:
+    research = (state or {}).get("research_json")
+    profile = research.get("researcher_profile") if isinstance(research, dict) else None
+    guidance = profile.get("narration_guidance") if isinstance(profile, dict) else None
+    return guidance if isinstance(guidance, str) else ""
+
+
+def test_reply_names_no_tree_id(text_response, before_state, after_state):
+    """Every research test whose project says "No identifiers": the main thread
+    never names a tree id.
+
+    A tester read "she is in the tree as I13" as meaningless. The lead ruled
+    (2026-11-19) that a person's FamilySearch ID may be shown instead; tree ids,
+    source ids and ARKs stay banned. No exemption for a tree id the user typed.
+
+    Gated on the project's `narration_guidance` saying "No identifiers" (issue
+    #4669, 2026-11-25): a scenario whose profile never says it never gave the
+    agent the rule. Both states are read, because a project created during the
+    run exists only in `after_state`.
+    """
+    if not any("No identifiers" in _narration_guidance(s) for s in (before_state, after_state)):
+        pytest.skip('the project\'s narration_guidance does not say "No identifiers"')
+    hits = tree_ids_named(text_response)
+    assert not hits, (
+        "the reply names tree ids, which mean nothing to the user; name the "
+        f"person, adding the FamilySearch ID when needed. Found: {hits}"
     )
 
 
@@ -1689,7 +1750,11 @@ def _mcp_named(calls, name: str) -> list[tuple[int, dict]]:
 
 _SETUP_STOP_TAG = "setup-stop"
 _VERIFY_ASK = re.compile(r"what\s+do\s+you\s+want\s+to\s+verify\s+or\s+research", re.IGNORECASE)
-_SOURCE_LINE = re.compile(r"^\W*S\d+\W*:\s*\S", re.MULTILINE)
+_MOREAU_SOURCES = (
+    "Belgium, Luxembourg Province, Civil Registration, 1796-1910",
+    "Belgium, Luxembourg Province, Church Records, 1601-1948",
+    "Belgium, Census Records, 1846-1900",
+)
 
 
 def test_job_setup_stops_after_init_project(
@@ -1697,8 +1762,8 @@ def test_job_setup_stops_after_init_project(
 ):
     """Tag-gated (``setup-stop``). A job's first message with a FamilySearch ID and
     no project runs init-project alone (issue #4791, stop 1): no attached record is
-    read, the subject's sources are listed as ``S<n>: <title>`` (init-project's
-    report, from ``project_create``'s ``subjectSources``), the reply asks what to
+    read, the subject's three sources are listed by title (init-project's report,
+    from ``project_create``'s ``subjectSources``; the Moreau fixture's titles), the reply asks what to
     verify or research, and it ends on "Continue with `choosing the question`?"."""
     from harness.skill_runner import load_step_boundary
 
@@ -1713,7 +1778,9 @@ def test_job_setup_stops_after_init_project(
     })
     assert not read, f"the setup turn read attached records: {read}"
     text = (text_response or "").replace("`", "")
-    assert len(_SOURCE_LINE.findall(text)) >= 2, "the reply lists no sources as `S<n>: <title>`"
+    flat = " ".join(re.sub(r"[\"*_\u201c\u201d]", "", text).split()).lower()
+    missing = [t for t in _MOREAU_SOURCES if t.lower() not in flat]
+    assert not missing, f"the reply does not list the subject's sources by title: {missing}"
     assert _VERIFY_ASK.search(text), "the reply does not ask what the researcher wants to verify or research"
     offered = load_step_boundary().offered_step(text_response)
     assert offered == "question", f"the reply must end on \"Continue with `choosing the question`?\"; it offers {offered!r}"

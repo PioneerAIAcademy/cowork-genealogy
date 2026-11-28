@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes to person-evidence when extracted assertions are not yet linked to persons",
     "type": "positive",
-    "description": "Routing table row 'Assertions not yet linked to persons'. flynn-household-skeleton has one in_progress question whose only plan item is completed and whose one positive log entry (the 1850 census) is extracted into seven assertions, six of them with no person_evidence link. Nothing is pending extraction, and there are no conflicts or hypotheses. The router must spawn the person-evidence agent, never write person_evidence links inline. project_context's advisory nextStep reads 'person-evidence — 6 of this question's 7 assertions are unlinked and none of its links reaches the project subject (I1)' on this state: the one link is the 1850 head Thomas (I2), and the subject Patrick is not in that household.",
+    "description": "Routing table row 'Assertions not yet linked to persons'. flynn-household-skeleton has one in_progress question whose only plan item is completed and whose one positive log entry (the 1850 census) is extracted into seven assertions, six of them with no person_evidence link. Nothing is pending extraction, and there are no conflicts or hypotheses. The router must spawn the person-evidence agent, never write person_evidence links inline. project_context's advisory nextStep reads 'person-evidence — 6 of this question's 7 assertions are unlinked and none of its links reaches the project subject (Patrick Flynn)' on this state, and its spawn carries 'personIds: I1': the one link is the 1850 head Thomas (I2), and the subject Patrick is not in that household.",
     "tags": [
       "routing",
       "routes-to:person-evidence"

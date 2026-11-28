@@ -22,6 +22,7 @@ drift too.
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import sys
@@ -35,6 +36,7 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_init_project import _HOUSE_STYLE  # noqa: E402
+from test_research import test_reply_names_no_tree_id as _no_tree_id  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
 #: The string ships in the engine: `project_create` writes the profile itself
@@ -80,8 +82,9 @@ def test_house_style_is_byte_identical_to_the_shipped_string():
         "HOUSE_RESEARCHER_PROFILE.narration_guidance have diverged.\n"
         f"  engine:        {_shipped_guidance()!r}\n"
         f"  _HOUSE_STYLE:  {_HOUSE_STYLE!r}\n"
-        "Change BOTH, and see docs/plan/research-as-a-job-phase5-prose.md for the "
-        "four other verbatim copies that also have to move."
+        "Change BOTH, and the four other verbatim copies that "
+        "test_the_seeded_copies_carry_the_shipped_string and "
+        "test_the_documented_copies_carry_the_shipped_string compare."
     )
 
 
@@ -132,6 +135,27 @@ def test_the_hedging_and_plain_word_clauses_survive(phrase):
     assert phrase in _HOUSE_STYLE
 
 
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "never a tree or source id",
+        "the one identifier you may add is the FamilySearch ID of a person",
+        "copied from the data",
+        "when the person is not yet in the project tree",
+    ],
+)
+def test_the_familysearch_id_exception_survives(phrase):
+    """A tester read "she is in the tree as I13" as meaningless (issue #4669). The
+    lead ruled a person's FamilySearch ID is the one identifier narration may show,
+    because it is the user's own name for a person, while tree ids, source ids and
+    ARKs stay banned. "copied from the data" is there because a PID typed from
+    memory or read out of an ARK can point at a different, real person.
+
+    Pinned per-phrase so the failure names which clause went.
+    """
+    assert phrase in _HOUSE_STYLE
+
+
 def _template_guidance() -> str:
     path = REPO / "eval" / "harness" / "e2e" / "templates" / "starting-research.json"
     return json.loads(path.read_text(encoding="utf-8"))["researcher_profile"]["narration_guidance"]
@@ -150,3 +174,33 @@ def test_the_seeded_copies_carry_the_shipped_string(read):
     measure every future e2e reply against the OLD string; the mock agent stands
     in for production's project. Both were hand-copied and nothing compared them."""
     assert read() == _shipped_guidance()
+
+
+def _e2e_spec_guidance() -> str:
+    path = REPO / "docs" / "specs" / "e2e-test-spec.md"
+    m = re.search(r'^\s*"narration_guidance": "([^"\\]*)"', path.read_text(encoding="utf-8"), re.MULTILINE)
+    assert m, "could not find e2e-test-spec.md's narration_guidance; fix this locator, do not delete the test"
+    return m.group(1)
+
+
+def _onboarding_slides_guidance() -> str:
+    path = REPO / "docs" / "onboarding-slides.html"
+    m = re.search(r"<em>(Plain language for someone[^<]*)</em>", path.read_text(encoding="utf-8"))
+    assert m, "could not find onboarding-slides.html's house text; fix this locator, do not delete the test"
+    return html.unescape(m.group(1))
+
+
+@pytest.mark.parametrize("read", [_e2e_spec_guidance, _onboarding_slides_guidance], ids=["e2e-spec", "onboarding-slides"])
+def test_the_documented_copies_carry_the_shipped_string(read):
+    assert read() == _shipped_guidance()
+
+
+def test_the_shipped_house_text_turns_the_tree_id_check_on():
+    """Every project project_create makes carries this string, and the research
+    suite's tree-id check runs only when it says "No identifiers" (issue #4669)."""
+    state = {"research_json": {"researcher_profile": {"narration_guidance": _shipped_guidance()}}}
+    try:
+        with pytest.raises(AssertionError, match="names tree ids"):
+            _no_tree_id("She is in the tree as I13.", state, state)
+    except pytest.skip.Exception as e:
+        pytest.fail(f"the shipped house text leaves the tree-id check off: {e}")

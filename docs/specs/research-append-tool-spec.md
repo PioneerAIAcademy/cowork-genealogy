@@ -4282,6 +4282,10 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   relationships returns `ok: true` with nothing written, the skipped count, and
   a summary saying no attached indexed record exists on the person or the
   person's relationships.
+- **Summary names people.** Person mode's `summary` names the person, and each
+  other person it linked to, by preferred name ("an unnamed person" when there is
+  none), never by tree id: the main thread repeats it to the researcher. The ids
+  stay in `linkedPersons`.
 - **Extraction** goes through the record-id path (§11.6), with no
   `questionIds`. Each record's source cites the tree `S` the import already
   made for it (`gedcomx_source_description_id`, matched on the bare `1:1:` id,

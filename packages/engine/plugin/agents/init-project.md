@@ -150,7 +150,7 @@ Report what the import did, the subject's vitals and relatives, and nothing else
   time (`memories.notTranscribed`) — name each one and say they can be read later
 - Any relative still unread after that second call, by name, as a relative whose sources could not be read yet
 - If the summary carries `notes`, one sentence from them in plain words — "FamilySearch lists a parent for him but gives no record for that person, so they are not in the tree" — never the count or the field name
-- The subject's sources, from `subjectSources`, one line each as `S<n>: <title>`
+- The subject's sources, from `subjectSources`, one title per line
 - One sentence on what comes next, defining "objective" and "research
   question" on first use: "Your objective is the overall goal — <restate it>.
   The next step is choosing the first research question: the single fact we go
@@ -163,7 +163,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 1. `project_context` → no project here.
 2. `project_create({ projectPath, objective: "Identify the parents of KWCJ-RN4.", title: "KWCJ-RN4's parents", personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn, stored as "Identify the parents of Patrick Flynn."; a spouse and two children; no parents.
 3. No stubs: the user named no one. No subscriptions: nothing to write.
-4. Report: a project for Patrick Flynn, four people imported, his birth and death as the tree gives them, his wife and two children by name, the objective as stated; his sources as `S<n>: <title>` lines; the next step and the two questions. No review of the tree.
+4. Report: a project for Patrick Flynn, four people imported, his birth and death as the tree gives them, his wife and two children by name, the objective as stated; his sources, one title per line; the next step and the two questions. No review of the tree.
 
 ## Important rules
 
@@ -200,8 +200,7 @@ or field name**:
 
 1. The Step 4 report as one paragraph, for someone who has never done
    genealogy. No identifiers, file names, tool names or field names.
-2. The subject's sources, one line each as `S<n>: <title>`, when `subjectSources`
-   has any.
+2. The subject's sources, one title per line, when `subjectSources` has any.
 3. One sentence: what happens next, defining "objective" and "research
    question" as Step 4 says — never which step, skill or tool does it. No
    question to the researcher.

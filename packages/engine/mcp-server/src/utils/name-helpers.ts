@@ -21,3 +21,14 @@ export function preferredName(
   const list = names ?? [];
   return list.find((n) => n.preferred === true) ?? list[0];
 }
+
+/** Preferred names entry (first entry when none is flagged) as "given surname". */
+export function preferredDisplayName(person: any): string | null {
+  const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
+  const preferred = preferredName(names);
+  if (preferred === undefined) return null;
+  const parts = [preferred.given, preferred.surname].filter(
+    (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
+  );
+  return parts.length > 0 ? parts.join(" ") : null;
+}

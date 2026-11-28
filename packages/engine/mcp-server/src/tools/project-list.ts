@@ -8,7 +8,7 @@
 
 import { getProjectStore } from "../store/project-store.js";
 import { START_PROJECT_RULE } from "../utils/project-io.js";
-import { preferredDisplayName } from "./project-context.js";
+import { preferredDisplayName } from "../utils/name-helpers.js";
 
 export interface ProjectListSubject {
   id: string;

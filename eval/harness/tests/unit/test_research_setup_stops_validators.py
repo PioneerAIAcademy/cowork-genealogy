@@ -41,8 +41,9 @@ def _mcp(name, **args):
 SETUP = {"skill": "research", "tags": ["setup-stop"]}
 SETUP_REPLY = (
     "The project for Jean Baptiste Moreau is set up. He was born 12 March 1821 in Bastogne.\n\n"
-    "S1: Jean Baptiste Moreau, Belgium civil registration\n"
-    "S2: Jean Baptiste Moreau, Belgium church records\n\n"
+    'Jean Baptiste Moreau, "Belgium, Luxembourg Province, Civil Registration, 1796-1910"\n'
+    'Jean Baptiste Moreau, "Belgium, Luxembourg Province, Church Records, 1601-1948"\n'
+    'Jean Baptiste Moreau, "Belgium, Census Records, 1846-1900"\n\n'
     "What do you want to verify or research? Is anything here you think is wrong, or do you "
     "know or have anything that isn't here? If not,\n\nContinue with `choosing the question`?"
 )
@@ -61,7 +62,8 @@ def _setup(names=("init-project",), calls=None, text=SETUP_REPLY, attempted=()):
 
 def test_setup_stop_passes_on_init_project_alone():
     _setup()
-    _setup(text=SETUP_REPLY.replace("S1:", "- **S1:**").replace("S2:", "- **S2:**"))
+    _setup(text=SETUP_REPLY.replace("Jean Baptiste Moreau, ", "- **").replace('"\n', '"**\n'))
+    _setup(text=SETUP_REPLY.replace('"Belgium', "\u201cBelgium").replace('0"', "0\u201d").replace(", 1796", ",\n1796"))
 
 
 def test_setup_stop_fails_when_question_selection_follows():
@@ -76,8 +78,10 @@ def test_setup_stop_fails_when_an_attached_record_is_read():
 
 
 def test_setup_stop_fails_without_the_sources_the_ask_or_the_offer():
-    with pytest.raises(AssertionError, match="S<n>: <title>"):
-        _setup(text=SETUP_REPLY.replace("S1: ", "").replace("S2: ", ""))
+    with pytest.raises(AssertionError, match="by title"):
+        _setup(text=SETUP_REPLY.replace("Census Records", "census"))
+    with pytest.raises(AssertionError, match="by title"):
+        _setup(text=SETUP_REPLY.split("Jean Baptiste Moreau, \"")[0] + "He has three sources.\n\nWhat do you want to verify or research? Continue with `choosing the question`?")
     with pytest.raises(AssertionError, match="verify or research"):
         _setup(text=SETUP_REPLY.replace("What do you want to verify or research?", ""))
     with pytest.raises(AssertionError, match="choosing the question"):

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { questionStatus, questionStates } from "../../src/utils/question-state.js";
 import { ATTACHMENT_LINK_RATIONALE, countsForProofGate, isAttachmentLink } from "../../src/utils/tree-person.js";
@@ -649,7 +649,7 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     expect(s.unregisteredDisagreements).toEqual([
       { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2", "a_3"] },
     ]);
-    expect(s.nextStep).toMatch(/^conflict-resolution — unregistered disagreement: I2 birth place/);
+    expect(s.nextStep).toMatch(/^conflict-resolution — unregistered disagreement: an unnamed person's birth place \(a_1, a_2, a_3\)/);
   });
 
   it("a birth's place and a birthplace assertion compare as one fact", () => {
@@ -848,7 +848,7 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
   it("a subject with four parents and no hypotheses is the next step", () => {
     const s = questionStatus(withSubject(), question(), tree);
     expect(s.competingParentSets).toEqual([{ personId: "I1", parentIds: ["I2", "I3", "I4", "I5"] }]);
-    expect(s.nextStep).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+    expect(s.nextStep).toMatch(/^hypothesis-tracking — competing parent sets: an unnamed person \(an unnamed person, /);
   });
 
   it("two hypotheses related to the question clear it", () => {
@@ -923,14 +923,14 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
   const step = (research: any, tree: any, qid = Q): string | null =>
     questionStatus(research, research.questions.find((q: any) => q.id === qid), tree).nextStep;
 
-  it("fires on the sibling-premise scenario with I2 and I3", () => {
+  it("fires on the sibling-premise scenario, naming I2 and I3 by name", () => {
     const { research, tree } = load(SIBLINGS);
-    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: Nora Stowers, Lois E. Stowers");
   });
 
   it("fires on the marriage-only scenario, whose parents have no child link", () => {
     const { research, tree } = load("flynn-marriage-only-no-child-link");
-    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+    expect(step(research, tree)).toBe("hypothesis-tracking — unlinked kin: Thomas Flynn, Mary Doyle");
   });
 
   it("is silent when the tree records the relationship (the subject's recorded parent)", () => {
@@ -965,7 +965,7 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     const i2Record = s.research.assertions.find((a: any) => a.id === "a_001").record_id;
     s.research.assertions.push({ ...s.research.assertions[0], id: "a_900", record_id: i2Record });
     s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_900", person_id: "I1" });
-    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I3");
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: Lois E. Stowers");
   });
 
   it("with no record_id, a shared source_id is the shared record, and a different one is not", () => {
@@ -973,7 +973,7 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     for (const a of s.research.assertions) delete a.record_id;
     s.research.assertions.push({ ...s.research.assertions[0], id: "a_900", source_id: "src_900" });
     s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_900", person_id: "I1" });
-    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I2, I3");
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: Nora Stowers, Lois E. Stowers");
     s.research.assertions.find((a: any) => a.id === "a_900").source_id = "src_001";
     expect(step(s.research, s.tree)).not.toMatch(KIN);
   });
@@ -991,17 +991,17 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
       const s = load(SIBLINGS);
       s.tree.persons.push({ id: "I4" });
       s.tree.relationships = relationships;
-      expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I3");
+      expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: Lois E. Stowers");
     }
   });
 
   it("a superseded link, or a person absent from the tree, is not a candidate", () => {
     const s = load(SIBLINGS);
     for (const pe of s.research.person_evidence) if (pe.person_id === "I3") pe.superseded_by = "pe_999";
-    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: I2");
+    expect(step(s.research, s.tree)).toBe("hypothesis-tracking — unlinked kin: Nora Stowers");
     const t = load(SIBLINGS);
     t.tree.persons = t.tree.persons.filter((p: any) => p.id !== "I3");
-    expect(step(t.research, t.tree)).toBe("hypothesis-tracking — unlinked kin: I2");
+    expect(step(t.research, t.tree)).toBe("hypothesis-tracking — unlinked kin: Nora Stowers");
   });
 
   it("is silent with no tree and on a resolved question", () => {
@@ -1015,10 +1015,19 @@ describe("questionStatus — unlinked kin routes to hypothesis-tracking", () => 
     const s = load(SIBLINGS);
     s.tree.relationships = ["I5", "I6", "I7"].map((parent) => ({ type: "ParentChild", parent, child: "I1" }));
     s.research.person_evidence.push({ id: "pe_900", assertion_id: "a_001", person_id: "I1" });
-    expect(step(s.research, s.tree)).toMatch(/^hypothesis-tracking — competing parent sets: I1/);
+    expect(step(s.research, s.tree)).toMatch(/^hypothesis-tracking — competing parent sets: Elizabeth Stouer \(an unnamed person, /);
     const c = load(SIBLINGS);
     c.research.conflicts = [{ id: "c_001", status: "unresolved", competing_assertion_ids: ["a_001", "a_005"] }];
     expect(step(c.research, c.tree)).toMatch(/^conflict-resolution/);
+  });
+
+  it("names no tree id, so the researcher is never shown one (#4669)", () => {
+    const s = load(SIBLINGS);
+    expect(step(s.research, s.tree)).not.toMatch(/\b[FINRS]\d+\b/);
+    s.tree.persons.find((p: any) => p.id === "I3").names = [];
+    expect(step(s.research, s.tree)).toBe(
+      "hypothesis-tracking — unlinked kin: Nora Stowers, an unnamed person",
+    );
   });
 });
 
@@ -1041,7 +1050,7 @@ describe("questionStatus — a partly-linked question that never reaches the sub
     const { research, tree } = load(PE7);
     expect(step(research, tree)).toBe(
       "person-evidence — 6 of this question's 7 assertions are unlinked and none of its " +
-        "links reaches the project subject (I1)",
+        "links reaches the project subject (Patrick Flynn)",
     );
   });
 
@@ -1065,7 +1074,7 @@ describe("questionStatus — a partly-linked question that never reaches the sub
     research.rejected_links = [{ id: "rj_1", assertion_id: leftovers[0].id, person_id: "I1", created: "2026-11-24" }];
     expect(step(research, tree)).toBe(
       "person-evidence — 5 of this question's 7 assertions are unlinked and none of its " +
-        "links reaches the project subject (I1)",
+        "links reaches the project subject (Patrick Flynn)",
     );
     research.rejected_links = leftovers.map((a: any, i: number) => ({
       id: `rj_${i + 1}`, assertion_id: a.id, person_id: "I1", created: "2026-11-24",
@@ -1657,5 +1666,24 @@ describe("questionStatus — owed-finding arms (issue #3032 Stage 1b)", () => {
       person_evidence: [{ id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", superseded_by: null }],
     });
     expect(questionStatus(d, question(), tree).nextStep ?? "").not.toMatch(/^proof-conclusion — hypothesis/);
+  });
+});
+
+/** Issue #4669: the main thread repeats `nextStep` to the researcher, so no
+ *  scenario's next step may name a tree id. The spawns carry the ids. */
+describe("questionStatus — no next step names a tree id", () => {
+  const SCENARIOS = join(resolve(__dirname, "../../../../.."), "eval/fixtures/scenarios");
+  const scenarios = readdirSync(SCENARIOS).filter(
+    (d) => existsSync(join(SCENARIOS, d, "research.json")) && existsSync(join(SCENARIOS, d, "tree.gedcomx.json")),
+  );
+
+  it("covers the scenarios that reach a person-naming step", () => {
+    expect(scenarios.length).toBeGreaterThan(50);
+  });
+
+  it.each(scenarios)("%s", (scenario) => {
+    const read = (f: string): any => JSON.parse(readFileSync(join(SCENARIOS, scenario, f), "utf-8"));
+    const steps = questionStates(read("research.json"), read("tree.gedcomx.json")).map((q) => q.nextStep ?? "");
+    for (const step of steps) expect(step).not.toMatch(/\b[FINRS]\d+\b/);
   });
 });

@@ -8,7 +8,7 @@
 // jurisdiction has had its locality survey, which comes first.
 
 import { questionAssertions } from "./assertion-liveness.js";
-import type { QuestionStatus } from "./question-state.js";
+import { subjectTreeIds, unlinkedKin, type AttachedBirthPair, type QuestionStatus } from "./question-state.js";
 
 export interface StepSpawn {
   agent: "conflict-resolution" | "person-evidence" | "hypothesis-tracking" | "research-exhaustiveness" | "proof-conclusion";
@@ -24,7 +24,13 @@ const SPAWNED = new Set<StepSpawn["agent"]>([
 ]);
 
 /** The spawn for a question whose `nextStep` names one of `SPAWNED`, else null. */
-export function stepSpawn(projectPath: string, research: any, status: QuestionStatus): StepSpawn | null {
+export function stepSpawn(
+  projectPath: string,
+  research: any,
+  status: QuestionStatus,
+  tree: any = null,
+  attachedBirthPairs: readonly AttachedBirthPair[] = [],
+): StepSpawn | null {
   const next = status.nextStep;
   if (typeof next !== "string") return null;
   const agent = next.match(/^([a-z-]+)/)?.[1] as StepSpawn["agent"] | undefined;
@@ -34,8 +40,13 @@ export function stepSpawn(projectPath: string, research: any, status: QuestionSt
     const ids = questionAssertions(research, status.id)
       .map((a: any) => a?.id)
       .filter((id: unknown): id is string => typeof id === "string");
-    lines.push(`assertionIds: ${ids.join(", ")}`, "userPresent: yes");
+    lines.push(`assertionIds: ${ids.join(", ")}`);
+    if (next.includes("reaches the project subject")) lines.push(`personIds: ${subjectTreeIds(research, tree).join(", ")}`);
+    lines.push("userPresent: yes");
   } else if (agent === "conflict-resolution") {
+    if (next.startsWith("conflict-resolution — identity")) {
+      lines.push(`personIds: ${[...new Set(attachedBirthPairs.map((p) => p.personId))].join(", ")}`);
+    }
     if (next.includes("unregistered disagreement")) {
       for (const d of status.unregisteredDisagreements) {
         lines.push(`competingAssertionIds: ${d.assertionIds.join(", ")} (${d.personId} ${d.fact})`);
@@ -46,6 +57,10 @@ export function stepSpawn(projectPath: string, research: any, status: QuestionSt
   } else if (agent === "hypothesis-tracking") {
     for (const p of status.competingParentSets) {
       lines.push(`personId: ${p.personId}; parentIds: ${p.parentIds.join(", ")}`);
+    }
+    if (next.includes("unlinked kin")) {
+      const ids = new Set(questionAssertions(research, status.id).map((a: any) => a?.id));
+      lines.push(`personIds: ${unlinkedKin(research, tree, status.id, ids).join(", ")}`);
     }
   }
   lines.push(`reason: ${next}`);

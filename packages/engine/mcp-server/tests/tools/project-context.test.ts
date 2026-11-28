@@ -1,7 +1,8 @@
 import { CLAIM_KINDS } from "../../src/validation/validator.js";
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from "vitest";
-import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
-import { join } from "path";
+import { mkdtemp, mkdir, writeFile, rm, utimes, readFile } from "fs/promises";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 
 import {
@@ -41,6 +42,19 @@ describe("project_context", () => {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
+
+  it("names a person in a step as the persons row does, surname alone for a doubted given name", async () => {
+    const scenario = join(dirname(fileURLToPath(import.meta.url)), "../../../../../eval/fixtures/scenarios/research-competing-parent-sets-no-hypotheses");
+    const research = JSON.parse(await readFile(join(scenario, "research.json"), "utf-8"));
+    const tree = JSON.parse(await readFile(join(scenario, "tree.gedcomx.json"), "utf-8"));
+    research.assertions.find((a: any) => a.id === "a_013").value = "Robert Tarrent";
+    await writeProject(research, tree);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.persons?.find((p) => p.id === "I1")?.name).toBe("Tarrant");
+    expect(r.questionStatuses?.[0]?.nextStep).toContain("competing parent sets: Tarrant (");
+  });
 
   it("projects a populated project: open questions, persons, sources with recordIds", async () => {
     await writeProject(

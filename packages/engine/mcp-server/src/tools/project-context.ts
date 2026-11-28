@@ -23,7 +23,7 @@ import { isNationalCollectionTitle, localityNationalCountry } from "../utils/col
 import { collectionAvailability, type CollectionAvailability } from "../utils/collection-availability.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
-import { preferredName } from "../utils/name-helpers.js";
+import { preferredDisplayName, preferredName } from "../utils/name-helpers.js";
 import { treePidOfArk } from "../utils/ark.js";
 import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import { lookupNameFamily } from "../utils/name-variants.js";
@@ -484,17 +484,6 @@ function truncateQuestion(text: string): string {
   return `${text.slice(0, QUESTION_TRUNCATE_AT - 1)}…`;
 }
 
-/** Preferred names entry (first entry when none is flagged) as "given surname". */
-export function preferredDisplayName(person: any): string | null {
-  const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
-  const preferred = preferredName(names);
-  if (preferred === undefined) return null;
-  const parts = [preferred.given, preferred.surname].filter(
-    (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
-  );
-  return parts.length > 0 ? parts.join(" ") : null;
-}
-
 export async function projectContext(input: ProjectContextInput, principal: Principal): Promise<ProjectContextResult> {
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
@@ -709,13 +698,14 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       .filter((q: any) => q && typeof q === "object" && typeof q.id === "string")
       .map((q: any) => [q.id, q]),
   );
-  const questionStatuses = questionStates(research, tree, attachedBirthPairs).map((status) => {
+  const shownNames = new Map(persons.map((p) => [p.id, p.name ?? null]));
+  const questionStatuses = questionStates(research, tree, attachedBirthPairs, shownNames).map((status) => {
     const { id, ...rest } = status;
     const searches =
       typeof rest.nextStep === "string" && SEARCH_STEP.test(rest.nextStep)
         ? searchDelegations(input.projectPath, research, tree, questionById.get(id), exhaustedItemIds, subjectUnsupported)
         : [];
-    const spawn = stepSpawn(input.projectPath, research, status);
+    const spawn = stepSpawn(input.projectPath, research, status, tree, attachedBirthPairs.get(id) ?? []);
     return omitEmpty({ id, question: questionText.get(id) ?? "", ...rest, searches, ...(spawn ? { spawn } : {}) }, [
       "nextStep",
     ]) as ProjectContextQuestionStatus;

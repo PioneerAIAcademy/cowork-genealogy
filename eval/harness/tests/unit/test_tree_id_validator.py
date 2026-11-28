@@ -1,0 +1,147 @@
+"""The research suite's tree-id validator, proved in both directions (issue #4669).
+
+A tester read "she is in the tree as I13" as meaningless. The validator fails a
+reply naming a tree id, and must not fail one naming a FamilySearch ID (PID),
+whose halves can look like a tree id.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = next(
+    q for q in Path(__file__).resolve().parents
+    if (q / "eval/harness/validators").is_dir()
+)
+sys.path.insert(0, str(REPO / "eval/harness/validators"))
+
+from test_research import (  # noqa: E402
+    _PROJECT_ID_RE,
+    tree_ids_named,
+)
+from test_research import test_reply_names_no_tree_id as _validator  # noqa: E402
+
+_OLD_HOUSE_TEXT = "Plain language. No identifiers, file names, tool names or field names."
+
+
+def _state(guidance: str | None) -> dict:
+    if guidance is None:
+        return {"research_json": None}
+    return {"research_json": {"researcher_profile": {"narration_guidance": guidance}}}
+
+
+def _checked(reply, before, after):
+    """Run the validator; a skip here is a failure, or pytest reports it green."""
+    try:
+        _validator(reply, before, after)
+    except pytest.skip.Exception as e:
+        pytest.fail(f"the gate skipped a project that says No identifiers: {e}")
+
+
+def no_tree_id(reply):
+    """The validator on a project whose house text says "No identifiers"."""
+    _checked(reply, _state(_OLD_HOUSE_TEXT), _state(_OLD_HOUSE_TEXT))
+
+
+@pytest.mark.parametrize(
+    ("reply", "expected"),
+    [
+        ("Zeruiah Phipps, 24, is Benjamin's sister — she is in the tree as I13.", ["I13"]),
+        ("The census and the will (S1 and S3) agree.", ["S1", "S3"]),
+        ("His death fact F2 has no date.", ["F2"]),
+        ("The couple R4 and the name N7.", ["N7", "R4"]),
+        ("Persons I1-I5 are the children.", ["I1", "I5"]),
+        ("Persons I1–I5 are the children.", ["I1", "I5"]),
+        ("Persons I100-I200 are the children.", ["I100", "I200"]),
+        ("I123-I45", ["I123", "I45"]),
+        ("(I1)", ["I1"]),
+        ("Mary (K835-34K) is I2 in the tree.", ["I2"]),
+        # A known, accepted false positive: nothing like it is in any committed reply.
+        ("She entered on an F1 visa.", ["F1"]),
+        ("See https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9; she is I13.", ["I13"]),
+        ("Page image 3:1:33SQ-GG8M-S133 shows I13.", ["I13"]),
+        ("See https://www.familysearch.org/tree/person/details/I1 for him.", ["I1"]),
+        ("See [his page](https://www.familysearch.org/tree/person/details/I1).", ["I1"]),
+    ],
+)
+def test_a_reply_naming_a_tree_id_fails(reply, expected):
+    assert tree_ids_named(reply) == expected
+    with pytest.raises(AssertionError, match="names tree ids"):
+        no_tree_id(reply)
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "Zeruiah Phipps (KHCM-61R) is Benjamin's sister.",
+        "Her FamilySearch ID is K835-34K.",
+        "Two men named John: K835-R12 and F123-ABC.",
+        "Lowercase k835-r12 still reads as a FamilySearch ID.",
+        "I think she was born in 1880.",
+        "I",
+        "Henry VIII and Louis XIV",
+        "the record ark:/61903/4:1:94Z5-N1F",
+        "Open https://www.familysearch.org/ark:/61903/3:1:939K-8LJ5-F9 to see the page.",
+        "[the page](https://www.familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133)",
+        "Page image 3:1:33SQ-GG8M-S133 shows the entry.",
+        "the page ark:/61903/3:1:939K-8LJ5-F9 shows it",
+        "Her FamilySearch ID is KWCJ-S123.",
+        "See https://www.familysearch.org/tree/person/details/K835-34K for her.",
+        "See https://www.familysearch.org/tree/person/details/F123-ABC for him.",
+        "[her page](https://www.familysearch.org/tree/person/details/KWCJ-S123)",
+        "Y-DNA haplogroup R1b, saved as UTF8.",
+        "",
+        None,
+    ],
+)
+def test_a_reply_without_a_tree_id_passes(reply):
+    assert tree_ids_named(reply) == []
+    no_tree_id(reply)
+
+
+_PLANTED = "Zeruiah Phipps is Benjamin's sister — she is in the tree as I13."
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        (_OLD_HOUSE_TEXT, _OLD_HOUSE_TEXT),
+        (None, _OLD_HOUSE_TEXT),
+        (_OLD_HOUSE_TEXT, None),
+    ],
+    ids=["project-says-it", "project-created-during-the-run", "after-state-missing"],
+)
+def test_the_gate_still_fails_a_planted_tree_id(before, after):
+    with pytest.raises(AssertionError, match="names tree ids"):
+        _checked(_PLANTED, _state(before), _state(after))
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        (None, None),
+        ("One-line preamble per action, in plain language.", None),
+        ("", ""),
+    ],
+    ids=["no-profile", "profile-without-the-rule", "empty-guidance"],
+)
+def test_the_gate_skips_a_project_that_never_said_no_identifiers(before, after):
+    with pytest.raises(pytest.skip.Exception):
+        _validator(_PLANTED, _state(before), _state(after))
+
+
+def test_the_gate_skips_a_research_json_that_is_not_a_dict():
+    with pytest.raises(pytest.skip.Exception):
+        _validator(_PLANTED, {"research_json": ["not", "a", "dict"]}, {})
+
+
+def test_the_status_question_regex_is_unchanged():
+    """`_PROJECT_ID_RE` is now built from the shared tree-id piece; the
+    status-question check must match exactly what it matched before."""
+    text = "q_001 src_002 I13 S2 F4 N1 R9 ps_001 hv_3 KHCM-61R Henry VIII"
+    assert _PROJECT_ID_RE.findall(text) == [
+        "q_001", "src_002", "I13", "S2", "F4", "N1", "R9", "ps_001", "hv_3",
+    ]
