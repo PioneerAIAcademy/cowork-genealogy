@@ -10,8 +10,8 @@ Each dimension belongs to one of two sources:
   Some skills have no rubric; in that case only the base dimensions
   apply.
 
-For each dimension, return a score plus a rationale of at least 20
-characters. Scores are:
+For each dimension, return a rationale of at least 20 characters, then the
+score that rationale reaches. Scores are:
 
 - **3** — pass (the dimension's pass criteria are met)
 - **2** — partial (mostly met, with the gaps described by the partial criteria)
@@ -256,7 +256,10 @@ have come from the cut part cannot be attributed either way. That is a
 a `{"_truncated_for_depth": true, …}` value, or a calls list preceded by a
 `(_dropped_for_size: N tool calls dropped …)` line, which means N calls
 were dropped whole; the line says how many of them carried harness excerpts.
-After that truncation marker, a
+On every dimension, base and rubric, a call dropped for size is no evidence
+of a bad argument, a missing call or an incomplete run: grade argument quality
+on the calls you can see, and deduct nothing for being unable to verify the
+dropped ones. After that truncation marker, a
 `[harness excerpt at char N of M] ...text...` line is the tool's own text from
 the cut part, copied verbatim; text between excerpts is still cut.
 
@@ -409,4 +412,5 @@ semantic labels live in the rubric bullets; the score field itself is
 just the value.
 
 Rationales must be specific and at least 20 characters long. One-word
-rationales (e.g., "good") will be rejected.
+rationales (e.g., "good") will be rejected. Write each dimension's rationale
+first, then give the score that rationale reaches.

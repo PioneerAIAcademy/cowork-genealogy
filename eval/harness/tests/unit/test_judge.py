@@ -2895,6 +2895,17 @@ def test_grade_sends_rubric_constrained_tool_schema(sample_rubric, monkeypatch):
     assert "Correctness" in name_enum
 
 
+def test_grading_tool_orders_rationale_before_score(sample_rubric, monkeypatch):
+    """The judge emits keys in schema order; with score first it committed to a
+    number and then reasoned toward a different one (#4833). Pin the order on
+    the template and on the tool grade() actually sends."""
+    client, _ = _grade_with(monkeypatch, sample_rubric, [_parseable_response()])
+    for tool in (judge.GRADING_TOOL, client.calls[0]["tools"][0]):
+        item = tool["input_schema"]["properties"]["dimensions"]["items"]
+        for keys in (list(item["properties"]), item["required"]):
+            assert keys.index("rationale") < keys.index("score"), keys
+
+
 def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatch):
     """The re-sample loop recovers from a malformed draw only if the retry can
     draw something *different*. Pinned at temperature=0 the retry would re-decode

@@ -89,11 +89,15 @@ GRADING_TOOL = {
                 "type": "array",
                 "items": {
                     "type": "object",
-                    "required": ["source", "name", "score", "rationale"],
+                    "required": ["source", "name", "rationale", "score"],
                     "additionalProperties": False,
                     "properties": {
                         "source": {"enum": ["base", "rubric"]},
                         "name": {"type": "string"},
+                        # Rationale before score: the model emits keys in
+                        # schema order, and a score written first is one the
+                        # rationale then argues against (#4833).
+                        "rationale": {"type": "string", "minLength": 20},
                         # Tool Arguments may be null (N/A) when zero MCP
                         # calls happened. Correctness and Completeness
                         # must be 1/2/3 — validated post-hoc in
@@ -104,7 +108,6 @@ GRADING_TOOL = {
                                 {"type": "null"},
                             ]
                         },
-                        "rationale": {"type": "string", "minLength": 20},
                     },
                 },
             }
