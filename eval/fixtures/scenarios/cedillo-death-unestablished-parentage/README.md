@@ -11,8 +11,10 @@ deceased.
   (I9, GJG6-74S) is linked by a Couple relationship and has no death date. Seven
   children, baptised 1899–1914.
 - `research.json`: the run's project and question `q_001` (when and where did she
-  die), set back to `active`/`open`, with one plan `pl_001` and one item `pli_001`.
-  Every other section is empty: no sources, assertions or log entries.
+  die), set back to `active`/`open` with its `search_stop` cleared, with one plan
+  `pl_001` and one item `pli_001`. Every other section is empty: no sources,
+  assertions or log entries. (The run's stop cited its own sources and person
+  links and named the 1943 record as hers; it was cleared on 2026-11-28.)
 
 **Changed from the run:** the run's `pli_001` searched Camasca, 1914–1943, which
 excludes the 1945 death. Here `pli_001` covers Santa Lucía, Intibucá, 1919–1968
