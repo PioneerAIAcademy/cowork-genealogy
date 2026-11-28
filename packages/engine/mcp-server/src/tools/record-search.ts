@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import type { CollectionCatalogLoader } from "../types/collection.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
   toSimplified,
@@ -1099,7 +1100,16 @@ export interface RecordSearchOptions {
    *  Default true. Scripts that measure FamilySearch's own place matching pass
    *  false, since the union would hide the very difference they measure. */
   expandPlaces?: boolean;
+  /** The collection catalog through the caller's session, for the browse-only
+   *  check on this tool's own nil log write (`research-log-editor-spec.md` §8.7).
+   *  Bound at dispatch (`server.ts`); absent, the write is not checked. */
+  loadCatalog?: CollectionCatalogLoader | null;
 }
+
+/** How long the nil log write waits on a cold catalog. Shorter than
+ *  `research_log_append`'s own default: it stacks on this search's time under
+ *  Cowork's 60s abort, and the check fails open. */
+export const NIL_LOG_CATALOG_BUDGET_MS = 10_000;
 
 const PLACE_FIELDS: readonly PlaceField[] = EVENT_GROUPS.map((g) => `${g.prefix}Place` as PlaceField);
 /** Most searches one call fans out to (the product over its place fields). */
@@ -1694,7 +1704,7 @@ export async function recordSearchTool(
       planItemId: input.planItemId ?? null,
       notes: typeof input.note === "string" && input.note.trim() !== "" ? input.note.trim() : null,
       writtenBy: "record_search",
-    });
+    }, { loadCatalog: opts.loadCatalog ?? null, catalogBudgetMs: NIL_LOG_CATALOG_BUDGET_MS });
     if (logged.ok && "logId" in logged) {
       // Key order (spec § Key order): everything the agent needs at the moment
       // of a nil arrives ahead of `results`, which a size bound drops first.

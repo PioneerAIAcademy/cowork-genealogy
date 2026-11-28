@@ -203,6 +203,7 @@ import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import type { FulltextSearchableLoader } from "../types/volume-search.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
+import { CATALOG_READ_BUDGET_MS, readCatalog, type CollectionCatalog } from "../utils/collection-catalog.js";
 import { claimRuleFindings, questionCapFindings } from "../validation/claim-rules.js";
 import { owedFindings } from "../utils/owed-findings.js";
 import { applyRuleMode, ruleMode, summaryConcern, treeConcern } from "../validation/rule-modes.js";
@@ -11966,10 +11967,6 @@ function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record
   return out;
 }
 
-/** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
- *  the lock, or `"unavailable"` when that read failed. */
-export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
-
 /** The most collections one locality's fill leaves it holding, place and core
  *  national rows together. The largest place list in 18 surveyed places was New
  *  York's 65; a country-level place can run to about 140 (the United States). */
@@ -14046,30 +14043,6 @@ export function planEntryLinkExpansion(
     }
   }
   return { derived, refusals };
-}
-
-/** How long a caller's write waits on the catalog before stamping null counts. A
- *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
- *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
- *  read keeps running and fills the cache for the next write. */
-export const CATALOG_READ_BUDGET_MS = 20_000;
-
-/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
- *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
-async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<"unavailable">((done) => {
-    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
-  });
-  const read = loadCatalog().catch((err: unknown) => {
-    if (isFsBudgetExhausted(err)) throw err;
-    return "unavailable" as const;
-  });
-  try {
-    return await Promise.race([read, timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /** `research_append` as an MCP caller reaches it. Assertions are written only by

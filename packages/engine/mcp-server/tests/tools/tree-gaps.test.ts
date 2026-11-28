@@ -84,7 +84,8 @@ describe("treeGapsTool", () => {
       "/service/search/hr/v2/collections": () => json({ entries: [] }),
     });
     const r = await treeGapsTool({ ancestorGenerations: 1 }, LOCAL);
-    expect(r.root).toEqual({ personId: "ROOT-1", name: "Root" });
+    expect(r.root).toEqual({ name: "Root" });
+    expect(r.gaps.every((g) => typeof g.question === "string" && g.question.endsWith("?"))).toBe(true);
     expect(r.gaps.map((g) => g.type)).toContain("no_children");
     expect(r.scanned.descendancyReads).toBe(1);
     const urls = mockFetch.mock.calls.map((c) => String(c[0]));

@@ -796,9 +796,16 @@ the append and the validate, which is the only window where the entry's `notes`
 can still change and still be what the schema checks and the file holds.
 
 **A refused write does not fail the search.** The response carries
-`nilLogRefused` with the log tool's errors and keeps its results; in practice this
+`nilLogRefused` with the log tool's errors and keeps its results. Usually this
 is the pinned-nil rule, and the agent then logs that nil by hand batched with the
-retry the message names. A `no_project` refusal is relayed as a note.
+retry the message names. The other is the browse-only rule
+(`research-log-editor-spec.md` §8.7): a search pinned to a collection with almost
+no index is not logged as a negative at all, and the message sends the agent to
+browse the page images. For that check the write takes the caller's catalog
+loader (`RecordSearchOptions.loadCatalog`, bound in `server.ts`) under a shorter
+catalog budget (`NIL_LOG_CATALOG_BUDGET_MS`), because it stacks on the search's
+own time; when the catalog cannot be read the nil is logged and a warning says
+the check did not run. A `no_project` refusal is relayed as a note.
 
 **`planItemId` with no `projectPath` is answered, not dropped.** There is no
 project to write to, so no entry is written and the plan item reaches none —
