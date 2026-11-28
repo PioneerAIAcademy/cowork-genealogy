@@ -227,7 +227,7 @@ and never answer it inline from the tree; add `@plugin:check-warnings` after it
 only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
-of two persons already confirmed identical; a "should these be merged?" never goes
+of two persons already confirmed identical; the user's word is that confirmation, so an open identity question does not hold it back; a "should these be merged?" never goes
 to `@plugin:tree-edit`. Before handing to `@plugin:historical-context`, call
 `project_context({ projectPath, include: ["historicalContext"] })`, again when
 init-project made the project this turn; spawn the agent with `historicalContext.prompt`
@@ -427,9 +427,9 @@ message.
    | `research-exhaustiveness` returned "not yet exhaustive" naming gaps it wants planned — a verdict, not the decline above | `@plugin:research-plan` with its whole gap list in one delegation. A FAN pivot is plan items on this question too — never a new question. When it DECLINED instead, the row above owns it: report and offer, do not pick |
    | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` **or `in_progress`** | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. A Step 0 refusal judged no stop criteria: consult the gate again once they are disposed of. An item waiting only on the researcher's upload is left alone |
    | `research-plan` returned that a jurisdiction it must plan has no `localities` entry | `@plugin:locality-guide` for that jurisdiction, then `@plugin:research-plan` again |
-    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in the tree (`tree_query`)** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
+    | `project_context.owedFindings` lists an **`encode`** item for a summary `proof-conclusion` wrote | `@plugin:proof-conclusion` again for that summary's question — it must encode the claim before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **Settle the objective's coverage from `project_context` before any `tree_query`, even the Tree-encoding gate's. First check the objective, not the question list, and never the tree: a fact or relationship already in `tree.gedcomx.json` covers nothing unless a resolved question stands behind it.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and spawn `@plugin:question-selection` for it in this turn (with `userPresent: no` on an `--autonomous` run), and do not continue this row — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **Settle the objective's coverage from `project_context` before any `tree_query`, even the Tree-encoding gate's. First check the objective, not the question list, and never the tree: a fact or relationship already in `tree.gedcomx.json` covers nothing unless a resolved question stands behind it.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and spawn `@plugin:question-selection` for it in this turn (with `userPresent: no` on an `--autonomous` run), and do not continue this row — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** no `encode` item is owed (see **Tree-encoding gate**); if one is, re-invoke `@plugin:proof-conclusion` for that summary's question. An owed `raise` item (a claim standing at `possible`) does not block completion. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop — **unless the message carries a new question**, which goes to `@plugin:question-selection` (§"A different question, or a steer") |
 
    **The search step** is the question's `searches` in `project_context`:
@@ -655,40 +655,19 @@ message.
 
 ## Tree-encoding gate
 
-**A conclusion is not done until the tree reflects it.** `proof-conclusion`
-writes two things — the `proof_summaries` narrative *and* the concluded
-**relationship or fact** in `tree.gedcomx.json` (its §6, at tier ≥ probable).
-The narrative is the argument; the tree is the deliverable, where the
-researcher's answer actually lives. A proof summary whose conclusion is missing
-from the tree is a **found-but-lost** result: the question looks answered on
-paper while the tree still doesn't show it. In long runs the agent sometimes
-writes the summary and skips the tree write — so verify it, don't assume it.
+**A conclusion is not done until the tree reflects it.** After `proof-conclusion` returns, read `project_context.owedFindings`:
+each `encode` item names a summary and a claim affirmed at `probable` or better that
+no tree object carries.
 
-After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
+1. **An `encode` item is owed → re-invoke `@plugin:proof-conclusion`** for that
+   summary's question, before anything marks the question resolved.
+2. **A hard gate:** never let a question be resolved, and never let `project.status`
+   reach `"completed"`, while an `encode` item is owed.
+3. A claim at `possible`, `not_proved` or `disproved` owes no tree write; a `raise`
+   item is advisory. An `identity` claim is never an `encode` item.
 
-1. **Call `tree_query` and confirm the concluded relationship or fact is
-   present** — match the check to the question type: a `ParentChild` linking
-   the concluded parent(s) to the child for a parentage question, a `Couple`
-   for a marriage, **a `Death`/`Birth`/`Marriage` fact carrying the concluded
-   date and place on the subject person for a vital-event question**. A bounded
-   conclusion still encodes as a fact — use the proof's bounded expression as
-   the fact's `date` (e.g. `"between 1879 and 1885"`) rather than leaving the
-   fact off because no exact date was proved. **When the proof summary has a
-   `claims[]` breakdown, check each claim's relationship against THAT CLAIM'S
-   OWN `proof_tier`** — a claim at `possible` is correctly absent from the
-   tree and is not a gate failure, even though the scalar `tier` (the
-   stronger of the per-claim tiers) already reads `probable`.
-2. **If it is missing, re-invoke `@plugin:proof-conclusion` for the same question** (its
-    §6 writes the relationship or fact). Do this before anything marks the
-    question resolved.
- 3. **This is a hard gate:** never let `question-selection` mark the question
-    resolved, and never let `project.status` reach `"completed"`, while any
-    tier-≥-probable conclusion is unencoded in the tree. A run does not finish
-    with a conclusion that never reached the tree.
-
-At tier `possible` / `not_proved` / `disproved` no tree write is expected (the
-conclusion is a documented lead, not a tree assertion), so the gate is satisfied
-trivially.
+With no `claimKinds` in `project_context`, check with `tree_query` that each
+summary at `probable` or better has its concluded relationship or fact in the tree.
 
 ## Second opinion
 
@@ -852,9 +831,8 @@ Stop when one of:
 
 - `project.status == "completed"` — **`@plugin:proof-conclusion` writes
   this via `research_append`, never you**, once all questions are
-  `resolved` **and every tier-≥-probable conclusion is encoded in
-  `tree.gedcomx.json`** (Tree-encoding gate; per claim where a `claims[]`
-  breakdown exists) — see routing table
+  `resolved` **and no `encode` item is owed** (Tree-encoding gate) — see
+  routing table
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —

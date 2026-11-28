@@ -8,8 +8,8 @@ import { getProjectStore } from "../store/project-store.js";
 
 /** Read the write-once starting-tree.gedcomx.json baseline, or null when it is
  *  absent or unreadable. Fail-open by design: legacy projects created before the
- *  baseline shipped have no such file, and a tree-encoding WARNING must never
- *  block a completion for a project that simply predates it. */
+ *  baseline shipped have no such file, and every reader (the import test, the
+ *  viewer's diff) falls back rather than treating every object as new. */
 export async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
   try {
     const raw = await getProjectStore().readText(projectPath, "starting-tree.gedcomx.json");

@@ -295,10 +295,8 @@ how to word it:
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
 > `/research` path — and the **tree-encoding gate** as a warning on
 > `opWarnings`: owed findings (an `encode` item for a likely claim no tree object
-> carries) plus, for a summary with no claims, a diff of the final tree against a
-> write-once `starting-tree.gedcomx.json` baseline. It ships warn-only rather than as a
-> refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
-> hard-block correct work when a wrong refusal has no override). **If you are
+> carries). It ships warn-only rather than as a refusal per the 2026-08-24
+> no-override ruling until Stage 1c measures its fire rate. **If you are
 > adding a new cross-turn invariant, do not add it as prose.** If it cannot be
 > anchored, say so in the PR and explain why.
 
@@ -916,8 +914,9 @@ There **is** an orchestrator, and it is a skill:
    earlier change deliberately deleted — and it was ruled out and removed.
 4. **Completion is gated once in the router, once in the tool.** Before
    `project.status = "completed"` is written via `research_append`, the router
-   checks the **tree-encoding gate** — every tier-≥-probable conclusion must be
-   encoded in `tree.gedcomx.json` — and the tool refuses while a blocking conflict
+   checks the **tree-encoding gate** — no owed `encode` item, an affirmed claim at
+   `probable` or better with no tree object (`project_context.owedFindings`) — and
+   the tool refuses while a blocking conflict
    is unresolved. No `proof-critique` verdict is required: gps-mentor is off the
    default path, and `proof-conclusion`'s completing summary tells the user they
    can ask for a second opinion. **`proof-conclusion` owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when

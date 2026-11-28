@@ -99,13 +99,24 @@ from test_proof_conclusion import (  # noqa: E402
 BOUNDED = {"type": "positive", "tags": ["bounded-conclusion"]}
 
 
-def _state(tier, death_fact):
+def _state(claim_tier, death_fact, *, scalar="possible", claim=True, date="after 1870, before 1885", polarity=None):
     facts = [{"type": "Birth", "date": "1805"}]
     if death_fact is not None:
         facts.append(death_fact)
+    claims = []
+    if claim:
+        c = {
+            "claim": "death bracket",
+            "proof_tier": claim_tier,
+            "supporting_assertion_ids": [],
+            "fact": {"subject": "I1", "fact_type": "Death", **({"date": date} if date else {})},
+        }
+        if polarity:
+            c["polarity"] = polarity
+        claims.append(c)
     return {
         "research_json": {
-            "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": tier}]
+            "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": scalar, "claims": claims}]
         },
         "tree_gedcomx_json": {"persons": [{"id": "I1", "facts": facts}]},
     }
@@ -114,8 +125,12 @@ def _state(tier, death_fact):
 DEATH = {"type": "Death", "date": "after 1870, before 1885"}
 
 
-def test_accepts_probable_with_an_encoded_bracket():
-    bounded(_state("probable", DEATH), BOUNDED)
+def test_accepts_a_probable_bracket_claim_encoded_under_a_possible_scalar():
+    bounded(_state("probable", DEATH, scalar="possible"), BOUNDED)
+
+
+def test_accepts_a_possible_bracket_claim_left_off_the_tree():
+    bounded(_state("possible", None), BOUNDED)
 
 
 def test_rejects_the_not_proved_collapse():
@@ -123,29 +138,38 @@ def test_rejects_the_not_proved_collapse():
         bounded(_state("not_proved", None), BOUNDED)
 
 
-def test_accepts_possible_with_an_encoded_bracket():
-    """Settled 2026-08-21: a bounded conclusion encodes at `possible` too. The
-    probable threshold asks whether a conclusion was REACHED, not how precise
-    it is — and a defensible range is a conclusion. This is what makes the
-    fixture satisfiable: its expected tier is `possible` (a reachable,
-    unsearched 1880 census would halve the bracket) AND it requires the fact."""
-    bounded(_state("possible", DEATH), BOUNDED)
+def test_rejects_a_bracket_with_no_claim():
+    with pytest.raises(AssertionError, match="no Death fact claim on I1"):
+        bounded(_state("probable", DEATH, claim=False), BOUNDED)
 
 
-def test_rejects_possible_that_never_reached_the_tree():
-    """The carve-out is about the threshold, not a licence to skip the write."""
-    with pytest.raises(AssertionError, match="no Death fact on I1"):
-        bounded(_state("possible", None), BOUNDED)
-
-
-def test_rejects_a_conclusion_that_never_reached_the_tree():
-    with pytest.raises(AssertionError, match="no Death fact on I1"):
+def test_rejects_a_probable_bracket_claim_that_never_reached_the_tree():
+    with pytest.raises(AssertionError, match="no Death fact on I1 although its claim stands at 'probable'"):
         bounded(_state("probable", None), BOUNDED)
+
+
+def test_rejects_a_possible_bracket_claim_written_to_the_tree():
+    with pytest.raises(AssertionError, match="only an affirmed claim at probable or better reaches the tree"):
+        bounded(_state("possible", DEATH), BOUNDED)
+
+
+def test_rejects_a_bracket_claim_with_no_date():
+    with pytest.raises(AssertionError, match="carries no date"):
+        bounded(_state("probable", DEATH, date=None), BOUNDED)
 
 
 def test_rejects_a_death_fact_with_no_bracket():
     with pytest.raises(AssertionError, match="carries no date"):
         bounded(_state("probable", {"type": "Death"}), BOUNDED)
+
+
+def test_reads_the_dated_death_claim_when_place_is_a_claim_of_its_own():
+    state = _state("probable", DEATH)
+    state["research_json"]["proof_summaries"][0]["claims"].append(
+        {"claim": "death place", "proof_tier": "possible", "supporting_assertion_ids": [],
+         "fact": {"subject": "I1", "fact_type": "Death", "place": "Muhlenberg County, Kentucky"}}
+    )
+    bounded(state, BOUNDED)
 
 
 def test_bounded_check_skips_when_untagged():
@@ -393,3 +417,237 @@ def test_refresh_rejects_a_second_summary_for_the_question():
 def test_refresh_skips_when_untagged():
     with pytest.raises(pytest.skip.Exception):
         check_refresh(*_refresh_states(), UNTAGGED)
+
+
+# --- no warn-mode finding left standing (#3032 Stage 1b part 4c) -------------
+
+from test_proof_conclusion import test_no_finding_left_will_be_refused as standing  # noqa: E402
+
+ANY = {"type": "positive", "tags": []}
+
+
+def _call(tool, args, warnings=(), results=None, ok=True):
+    response = {"ok": ok, "validation": {"valid": True, "warnings": list(warnings)}}
+    if results is not None:
+        response["results"] = results
+    return {"tool": f"mcp__genealogy__{tool}", "args": args, "response": response}
+
+
+def _fact_warning(person, fact):
+    # The exact shape rule-modes.ts `applyRuleMode` + `treeConcern` writes.
+    return f"Will be refused: personId {person}, factId {fact}: `primary` marks a fact the concluded value of its type"
+
+
+def _summary_warning(sid):
+    return f"Will be refused: proof_summaries {sid}: claim 'paternity' would stand at possible: I2 is not linked."
+
+
+def test_fires_on_a_tree_warning_never_written_again():
+    calls = [_call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")])]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_later_clean_write_to_another_fact_does_not_clear_it():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F3"}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_clean_write_to_the_same_fact_id_on_another_person_does_not_clear_it():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I2", "factId": "F2"}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_narrative_only_edit_does_not_clear_a_warned_summary():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "edits": [{"field": "narrative_markdown", "old": "a", "new": "b"}]}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def test_passes_when_a_batch_warning_is_cleared_by_a_later_write_to_that_fact_alone():
+    batch = {"ops": [
+        {"operation": "update_fact", "personId": "I1", "factId": "F1"},
+        {"operation": "update_fact", "personId": "I1", "factId": "F2"},
+    ]}
+    calls = [
+        _call("tree_correct", batch, [_fact_warning("I1", "F2")]),
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}),
+    ]
+    standing(calls, ANY)
+
+
+def test_passes_when_a_summary_warning_is_cleared_by_a_claims_update():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": {"claims": []}}),
+    ]
+    standing(calls, ANY)
+
+
+def test_ignores_a_refused_call_and_other_tools():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")], ok=False),
+        _call("person_read", {"personId": "I1"}, [_fact_warning("I1", "F2")]),
+    ]
+    standing(calls, ANY)
+
+
+def test_a_stringified_fields_claims_update_clears_a_summary_warning():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": '{"claims": []}'}),
+    ]
+    standing(calls, ANY)
+
+
+def test_reopening_the_question_clears_a_capped_open_finding():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    standing(calls, ANY)
+
+
+def test_reopening_another_question_does_not_clear_it():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_002",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def _birth_claim(subject="I1", tier="probable", **extra):
+    return {"claim": "birth", "proof_tier": tier, "fact": {"subject": subject, "fact_type": "Birth", "date": "1850"}, **extra}
+
+
+def test_a_claims_write_clears_a_primary_finding():
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                                  "fields": {"claims": [_birth_claim()]}}),
+    ]
+    standing(calls, ANY)
+
+
+@pytest.mark.parametrize("claim,why", [
+    ({"claim": "marriage", "proof_tier": "possible", "relationship": {"type": "Couple", "person1": "I1", "person2": "I3"}}, "an unrelated claim"),
+    (_birth_claim(subject="I9"), "a fact claim on another person"),
+    (_birth_claim(tier="possible"), "a fact claim below probable"),
+    (_birth_claim(polarity="denied"), "a denied fact claim"),
+])
+def test_a_claims_write_that_does_not_claim_the_warned_fact_leaves_it_standing(claim, why):
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_009",
+                                  "fields": {"claims": [claim]}}),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_entry_mentioning_claims_in_its_narrative_does_not_clear_a_primary_finding():
+    entry = json.dumps({"question_id": "q_002", "tier": "probable", "narrative_markdown": "No claims yet."})
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": entry}, results=[{"entryId": "ps_009"}]),
+    ]
+    with pytest.raises(AssertionError, match="personId I1, factId F2"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_entry_with_a_covering_claim_clears_a_primary_finding():
+    entry = json.dumps({"question_id": "q_002", "tier": "probable", "claims": [_birth_claim()]})
+    calls = [
+        _call("tree_correct", {"operation": "update_fact", "personId": "I1", "factId": "F2"}, [_fact_warning("I1", "F2")]),
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": entry}, results=[{"entryId": "ps_009"}]),
+    ]
+    standing(calls, ANY)
+
+
+_COUPLE_FACT_WARNING = "Will be refused: relationshipId R1, factId F1: `primary` marks a fact the concluded value of its type"
+_MARRIAGE_CLAIM = {"claim": "marriage", "proof_tier": "probable",
+                   "fact": {"subject": {"person1": "I1", "person2": "I2"}, "fact_type": "Marriage", "date": "1786"}}
+
+
+def test_a_flat_append_op_with_a_couple_fact_claim_clears_a_couple_primary_finding():
+    calls = [
+        _call("tree_edit", {"operation": "add_fact", "relationshipId": "R1", "fact": {"type": "Marriage", "primary": True}},
+              [_COUPLE_FACT_WARNING]),
+        _call("research_append", {"ops": [{"section": "proof_summaries", "op": "append", "question_id": "q_001",
+                                           "tier": "probable", "claims": [_MARRIAGE_CLAIM]}]},
+              results=[{"entryId": "ps_001"}]),
+    ]
+    standing(calls, ANY)
+
+
+def test_a_flat_append_op_without_a_fact_claim_leaves_a_couple_primary_finding_standing():
+    couple_only = {"claim": "couple", "proof_tier": "probable", "relationship": {"type": "Couple", "person1": "I1", "person2": "I2"}}
+    calls = [
+        _call("tree_edit", {"operation": "add_fact", "relationshipId": "R1", "fact": {"type": "Marriage", "primary": True}},
+              [_COUPLE_FACT_WARNING]),
+        _call("research_append", {"ops": [{"section": "proof_summaries", "op": "append", "question_id": "q_001",
+                                           "tier": "probable", "claims": [couple_only]}]},
+              results=[{"entryId": "ps_001"}]),
+    ]
+    with pytest.raises(AssertionError, match="relationshipId R1, factId F1"):
+        standing(calls, ANY)
+
+
+def test_reopening_clears_only_the_capped_finding_and_keeps_the_rest():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"ops": [
+            {"section": "proof_summaries", "op": "update", "entryId": "ps_001", "fields": {"claims": []}},
+            {"section": "questions", "op": "update", "entryId": "q_001", "fields": {"status": "resolved"}},
+        ]}, [capped, _summary_warning("ps_001")]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "in_progress"}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)
+
+
+def test_a_stringified_reopen_clears_a_capped_open_finding():
+    capped = "Will be refused: proof_summaries ps_001: question q_001 is set resolved while claim 'paternity' stands at possible."
+    calls = [
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": {"status": "resolved"}}, [capped]),
+        _call("research_append", {"section": "questions", "op": "update", "entryId": "q_001",
+                                  "fields": '{"status": "in_progress"}'}),
+    ]
+    standing(calls, ANY)
+
+
+def test_a_claims_write_does_not_clear_a_summary_finding_on_another_summary():
+    calls = [
+        _call("research_append", {"section": "proof_summaries", "op": "append", "entry": {}}, [_summary_warning("ps_001")],
+              results=[{"entryId": "ps_001"}]),
+        _call("research_append", {"section": "proof_summaries", "op": "update", "entryId": "ps_002",
+                                  "fields": {"claims": []}}),
+    ]
+    with pytest.raises(AssertionError, match="proof_summaries ps_001"):
+        standing(calls, ANY)

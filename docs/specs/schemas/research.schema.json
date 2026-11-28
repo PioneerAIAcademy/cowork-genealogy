@@ -1598,7 +1598,7 @@
       }
     },
     "proof_claim": {
-      "description": "One claim of a proof summary, tiered independently of the summary's scalar `tier`, which may not exceed the strongest claim at `possible` or better. Optional and additive: omit `claims` for the single-conclusion case. A claim names exactly one object: a `relationship`, a `fact`, an `identity`, a `name`, or a `finding` (a conclusion that is no tree object). The tree-encoding gate reads each claim's own `proof_tier`.",
+      "description": "One claim of a proof summary, tiered independently of the summary's scalar `tier`, which may not exceed the strongest claim at `possible` or better. Every proof-conclusion summary states one claim per object its answer decides; a summary with none is a legacy shape the readers tolerate (Decision 24). A claim names exactly one object: a `relationship`, a `fact`, an `identity`, a `name`, or a `finding` (a conclusion that is no tree object). The tree-encoding gate reads each claim's own `proof_tier`.",
       "type": "object",
       "required": [
         "claim",

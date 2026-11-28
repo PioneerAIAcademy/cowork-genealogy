@@ -53,9 +53,9 @@ Does the chosen proof conclusion — written as a Statement, Summary, or Argumen
 
 ## Tree encoding
 
-**Decide N/A FIRST, and decide it on the TIER THIS RUN WROTE — not on a tag.**
-Score `null` and stop reading here when the run wrote no conclusion at
-`probable` or above:
+**Decide N/A FIRST, and decide it on the CLAIMS THIS RUN WROTE — not on a tag.**
+Score `null` and stop reading here when the run wrote no affirmed claim at
+`probable` or above (a legacy summary with no claims: read its scalar `tier`):
 
 - the skill **assessed** an existing proof and wrote nothing (`gps-review`) —
   the tree's state is then the FIXTURE's setup, not the skill's output, and a
@@ -64,9 +64,11 @@ Score `null` and stop reading here when the run wrote no conclusion at
   Observed 2026-08-20: scored fail on a rationale reading "the assessment
   correctly flags this". If the rationale you are about to write praises the
   assessment, the score is `null`, not 1.
-- the concluded tier is `not_proved` or `disproved` — nothing is encoded below
-  the threshold, except the bounded/documented-negative case, which encodes at
-  `possible` and IS graded here.
+- every claim it wrote is at `possible`, `not_proved` or `disproved`, or
+  `denied` — nothing is encoded below the threshold. A bracket claim is tiered
+  on its own support, so a bounded death claimed at `probable` IS graded here
+  even under a `possible` scalar; a documented absence is a `finding` claim and
+  writes no tree object.
 - the test is a negative routing test.
 
 **`no-new-proof-expected` is NOT one of those conditions.** It means no *new*
@@ -76,7 +78,7 @@ reach the tree. Observed 2026-08-21, the mirror of the misgrade above: a
 re-invocation test was scored on this dimension after the tag had been read as
 "skip". One tag, three situations; the tier is what separates them.
 
-At tier `probable` or higher, does the skill actually *encode the conclusion in `tree.gedcomx.json`* — marking the concluded value as `primary` (facts) / `preferred` (names) on the right person, not merely narrating it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion agent body §6).
+For each affirmed claim at `probable` or higher, does the skill actually *encode it in `tree.gedcomx.json`* — the claimed relationship present, the claimed value marked `primary` (facts) / `preferred` (names) on the right person — not merely narrate it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion agent body §6).
 
 **Two write paths (spec §7.1) — grade whichever the evidence shape calls for:**
 - **Common case — value matches an existing evidence fact.** The concluded value equals a fact already materialized from a record (e.g. the 1908 death-cert father-name, the 1786 marriage date). Set `primary` on that fact via `tree_correct` `update_fact` — **no new fact is added.**
@@ -84,8 +86,8 @@ At tier `probable` or higher, does the skill actually *encode the conclusion in 
 
 **The concluded relationship edge is usually already present.** For a parentage/marriage the `ParentChild` / `Couple` edge was typically minted by person-evidence at identity-link time and already carries a source-ref — so grade **"set `primary` / add the conclusion fact,"** NOT "first create the edge." **A parentage or marriage concludes no fact value of its own.** When its concluded edge is already on the tree carrying a source ref, and the question asks only for the relationship, that edge IS the encoded conclusion: a run that confirms the edge is present and marks nothing else passes, and setting the edge's subtype is fine too. Score it **pass**, not fail and not N/A; the fail below is a probable parentage with no edge on the tree. If the concluded edge does not yet exist (the conclusion establishes a relationship no record materialized), writing it via `add_relationship` **carrying a non-null source-ref** (spec §8) is correct; a ref-less new edge is a fail. **Marking `primary` is what records that a conclusion stands behind a value (spec §7)** — it is not a permission gate. The researcher decides what reaches FamilySearch; grade whether the conclusion was marked, never whether an upload was withheld.
 
-**N/A (score null) when:** the concluded tier is `possible` / `not_proved` / `disproved` **and the conclusion is neither bounded nor a documented negative** (the skill reaches no conclusion, so it sets no `primary` and makes no tree write *during its run* — the already-materialized evidence facts stay un-`primary`; this "no `primary` set below probable" is graded mechanically by the validator instead); or the test is a negative routing test. **A bounded or documented-negative conclusion encodes AT `possible` and IS graded here** — the same carve-out the `not_proved`/`disproved` bullet above already carries; withholding the bracket is the found-but-lost failure, not an N/A. **`no-new-proof-expected` is NOT on this list** — the paragraph above says why. Where an individual review-mode or already-encoded case needs the dimension skipped, its own `judge_context` says so per-test.
+**N/A (score null) when:** no claim the run wrote is affirmed at `probable` or above (it sets no `primary` and makes no tree write *during its run* — the already-materialized evidence facts stay un-`primary`; this is graded mechanically by the validator instead); or the test is a negative routing test. A bounded death claimed at `probable` IS graded here: withholding the bracket is the found-but-lost failure, not an N/A. **`no-new-proof-expected` is NOT on this list** — the paragraph above says why. Where an individual review-mode or already-encoded case needs the dimension skipped, its own `judge_context` says so per-test.
 
-- **pass:** At `probable`/`proved`, the skill encodes the conclusion on the tree — sets `primary` on the matching evidence fact via `tree_correct` `update_fact`, or adds the synthesized fact via `tree_edit` `add_fact` (`primary: true`, multi-ref) — and the concluded relationship edge is present and sourced (already-materialized, or newly written with a ref). The researcher's tree now reflects the conclusion, not just the narrative.
+- **pass:** For every affirmed claim at `probable`/`proved`, the skill encodes it on the tree — sets `primary` on the matching evidence fact via `tree_correct` `update_fact`, or adds the synthesized fact via `tree_edit` `add_fact` (`primary: true`, multi-ref) — and the concluded relationship edge is present and sourced (already-materialized, or newly written with a ref). The researcher's tree now reflects the conclusion, not just the narrative.
 - **partial:** The conclusion is encoded but incompletely — e.g. `primary` is set on the fact but a genuinely-synthesized value is written as a bare stated year instead of `abt`/`cal`; a newly-written edge lacks its source-ref; or only one side of a two-part conclusion (e.g. a marriage) is set.
-- **fail:** The skill concludes at `probable`+ in the proof summary but the tree carries no encoding of it: for a fact value, no fact marked `primary` and none added; for a parentage/marriage, no sourced edge between the concluded persons — the conclusion never reaches the tree.
+- **fail:** An affirmed claim stands at `probable`+ but the tree carries no encoding of it: for a fact value, no fact marked `primary` and none added; for a parentage/marriage, no sourced edge between the concluded persons — the conclusion never reaches the tree.

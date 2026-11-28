@@ -139,16 +139,26 @@ a tier judgement as a gate failure.
      `proved` (§2), and it must be named in the narrative.
    List any conflict IDs that fail this check.
 
-**If step 2 produces failing IDs, or step 3 leaves any relied-upon *person*
-without a linked identity assertion: stop. Do not proceed to Step 1.** Those
-are workflow states — an upstream step has not run — so there is no finding to
+**If step 2 produces failing IDs: stop. Do not proceed to Step 1.** That is a
+workflow state — an upstream step has not run — so there is no finding to
 record. Report the failing IDs and route.
 
-**Except under `wrapUp: yes`, for step 3 only.** Proceed, conclude at
-`not_proved` with `shortfall: "gap"`, name who is unidentified and what
-identifying them would take, and resolve the question (§7). A question with no
-assertions at all is this case. Step 4's conflict IDs still stop you under
-`wrapUp: yes` — see §7.
+**If step 3 leaves a relied-upon *person* without a linked identity assertion,
+write the answer anyway, and leave the question open.** Each claim naming that
+person carries `shortfall: "gap"`:
+- nothing cited is linked to anyone, or a cited parent side has no linked
+  assertion → the claim at `not_proved`, citing no assertion, and the scalar
+  `tier` `not_proved` unless another claim stands higher; keep that parent's
+  assertions out of the summary's `supporting_assertion_ids` too;
+- the evidence is linked but that person is not linked from it → the claim at
+  `possible`.
+Write no tree object for it, name who is unidentified and what identifying them
+would take, and route to `person-evidence`.
+
+**Under `wrapUp: yes`** write such a claim at `not_proved` (never `possible`)
+and the same write resolves the question (§7). A question
+with no assertions at all is this case. Step 4's conflict IDs still stop you
+under `wrapUp: yes` — see §7.
 
 **If step 4 produces failing IDs, do not conclude the question — but do record
 the attempt.** An unresolved identity conflict is a research *finding*, not a
@@ -222,11 +232,11 @@ Never select a tier from a partial set, and never describe one as complete.
 | **Not Proved** | Insufficient evidence to lean toward any conclusion. |
 | **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
-**Decision rules:** Unresolved conflicts are a **hard block on Proved**, counted question-scoped: a conflict blocks this conclusion only when this conclusion's `question_id` appears in that conflict's `blocks_question_ids`. A conflict left open on a different question does not block it. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (An unresolved conflict on a *non-identifying* detail — one that does not bear on whether the cited sources describe the same person — only blocks Proved, not Probable. The test is **not** "is it part of the conclusion?": a birthplace dispute is not part of a parentage conclusion, yet it goes directly to whether the census entries and the death certificate are even the same man. Identity first, then tier.) **Undeclared exhaustiveness is not always the same weight.** Probable tolerates it when the unsearched records would *corroborate* an answer you already have. It does not tolerate it when a named, reachable record would **narrow the answer itself** — for a question whose answer is a date range, an unsearched census that would halve the bracket is a Component 1 failure, not a corroboration gap, and caps the tier at `possible`. Ask which kind of gap you have before tiering on it. **Name the narrowing record in `exhaustive_search_summary`** — a gap you do not name is a gap you have not weighed, so list it, say what it would narrow, and tier on it. Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
+**Decision rules:** Unresolved conflicts are a **hard block on Proved**, counted question-scoped: a conflict blocks this conclusion only when this conclusion's `question_id` appears in that conflict's `blocks_question_ids`. A conflict left open on a different question does not block it. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (An unresolved conflict on a *non-identifying* detail — one that does not bear on whether the cited sources describe the same person — only blocks Proved, not Probable. The test is **not** "is it part of the conclusion?": a birthplace dispute is not part of a parentage conclusion, yet it goes directly to whether the census entries and the death certificate are even the same man. Identity first, then tier.) **Undeclared exhaustiveness is not always the same weight.** Probable tolerates it when the unsearched records would *corroborate* an answer you already have. It does not tolerate it when a named, reachable record would **narrow the answer itself** — for a question whose answer is a date range, an unsearched census that would halve the bracket is a Component 1 failure, not a corroboration gap, and caps the scalar `tier` at `possible`; the bracket claim keeps the tier its own evidence supports. Ask which kind of gap you have before tiering on it. **Name the narrowing record in `exhaustive_search_summary`** — a gap you do not name is a gap you have not weighed, so list it, say what it would narrow, and tier on it. Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
 
-**Multi-claim exception — applies only when writing a `claims[]` breakdown (§5), never to an ordinary single-claim tier.** When a question resolves into distinguishable claims with different evidence strength (paternity vs. maternity is the canonical case), tier each claim independently by the table and decision rules above, using only the evidence bearing on that claim, and write a per-claim breakdown in `claims[]` instead of forcing the scalar to speak for both — instead, too, of splitting into two questions (reserved for when the two parents need genuinely different research plans, not differing evidence strength alone; see `research-plan`). Once each claim has its own tier, set the scalar `tier` field to whichever is stronger — this is bookkeeping so existing tier-≥-probable routing keeps firing, not a preference for higher confidence in general. The breakdown, not the scalar, decides what gets written to the tree (§6).
+**Tier each claim on its own evidence.** The answer is stated as claims (§5), one per object it decides, each tiered by the table and decision rules above using only the evidence bearing on that object. The scalar `tier` states the whole answer and never exceeds the strongest claim. Split into two questions only when two objects need genuinely different research plans (see `research-plan`).
 
-**A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: if you can bound it or document its record-absence, that conclusion belongs in the tree (§6). **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (conflicts resolved); it is never a way to conclude *past* an unresolved conflict.
+**A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding, written as an `absence` finding claim; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: a bracket at `probable` or better belongs in the tree (§6), and a documented absence belongs in an `absence` finding claim. **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (conflicts resolved); it is never a way to conclude *past* an unresolved conflict.
 
 **Data values are lowercase** (the table labels are capitalized for readability, but the `tier` field stored in `research.json` must be one of `proved` / `probable` / `possible` / `not_proved` / `disproved` — case-sensitive).
 
@@ -242,7 +252,7 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 ### 4. Write the narrative markdown
 
-The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
+The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
 **Citations in the narrative must be copied directly from the `research_query` source entry, not recalled or paraphrased.** Before writing any footnote or inline citation, read the relevant source entry's `citation` and `citation_detail` fields from `research_query` (`sources`) and copy the text verbatim. Do not write collection names, repository names, or URLs from memory. A paraphrased citation that differs even slightly from the stored citation is a citation error — it sends future researchers to the wrong place.
 
@@ -276,53 +286,44 @@ Each op carries its fields directly beside `section` and `op`, with no `entry` o
 
 **Re-opening a conflict this conclusion cites takes two calls, in this order:** remove the id from `resolved_conflict_ids` first, then re-open the conflict. The reverse order is refused, one call carrying both edits is denied, and `conflict-resolution` cannot remove the citation itself.
 
-**Optional `claims` field.** Only when §2's per-claim case applies: an array of `{ claim, proof_tier, shortfall, supporting_assertion_ids, relationship }` — `claim` is a free-text label (`"paternity"`, `"maternity"`), `proof_tier` is that claim's own tier, `supporting_assertion_ids` are the `a_` ids grounding that claim specifically, and `relationship` names the tree endpoint the claim concludes (`{ type: "ParentChild", parent: "<id>", child: "<id>" }`). Omit `claims` entirely for the default, single-conclusion case — that is the unchanged path for every existing proof.
+**`claims` — one per object the answer decides.** Use only the kinds `project_context.claimKinds` lists. Each claim is `{ claim, proof_tier, shortfall, supporting_assertion_ids }` plus exactly one object:
+- `relationship`: `{ type: "ParentChild", parent, child, subtype? }` or `{ type: "Couple", person1, person2 }`;
+- `fact`: `{ subject, fact_type, date?, place?, value? }`, `subject` a person id or `{ person1, person2 }` for a couple event; take its values from the tree fact it concludes when one exists;
+- `name`: `{ person, given?, surname? }`;
+- `identity`: `{ record_id, party, person }`, or `{ person, same_as }`;
+- `finding`: `{ finding_type, statement, log_entry_ids? }`, `finding_type` one of `absence`, `completeness`, `record_content`, `rejected_candidate`.
+
+Labels are unique within the summary; a parent claim is labelled `paternity` or `maternity`. Write a claim for:
+- every object concluded;
+- every rival set aside: a claim with `polarity: "denied"` at `probable` or `possible`, or an affirmed claim at `possible`;
+- every object ruled out: `proof_tier: "disproved"`, no `polarity`. Evidence that refutes it, such as a death before the birth, rules it out; it is not a rival set aside. A disproof names the subtype it rules out; omit `subtype` only to rule out every relationship between the pair.
+
+A write answered `Will be refused:` is refused once the rule binds: rewrite it before you finish so the rule holds — cite what it asks for, such as an assertion linked to the person whose slot a rival contests, or write the claim at the tier it names.
+
+When `project_context` has no `claimKinds`, omit `claims` and mark the concluded value `primary` as §6 describes.
 
 On re-invocation where a proof summary for this question already exists, use `op: "update"` with the existing `ps_` id — **never append a second summary for the same question**. `op: "update"` shallow-merges, so pass `entryId: "ps_NNN"` plus a `fields` object containing ONLY the fields that changed — do NOT regenerate or re-emit the full entry (especially `narrative_markdown`) when just a couple of fields change. `narrative_markdown` and `exhaustive_search_summary` count as one field: when the log holds entries the summary does not yet account for, re-derive both from the log, taking every record a later entry searched off the narrative's what-could-resolve-it and not-examined lists and adding it to the summary's searched list, and pass both. The tool refuses one without the other.
 
-### 6. Encode the conclusion in tree.gedcomx.json (tier >= probable, and always for a bounded or documented-negative conclusion)
+### 6. Encode the conclusion in tree.gedcomx.json
 
-**A bounded or documented-negative conclusion is encoded at `possible` too.**
-The `probable` threshold exists to keep *un-concluded evidence* off the tree —
-it asks "is this a conclusion yet?", not "how precise is it?". A bracket answers
-those two differently: you are certain the event happened, and uncertain only
-about where inside the range it falls. Withholding it leaves the tree silent on
-a vital event you can place within a decade, which is the found-but-lost failure
-this section exists to prevent. So encode the bracket, with its range verbatim
-in the fact's `date`.
+**Encode every affirmed claim at `probable` or better; nothing below it.** A bracket claim is tiered on the bracket's own support, so a bounded death you can place within a range is encoded at `probable` or better, with the range verbatim in the fact's `date`, even when the scalar `tier` reads `possible`. A `denied` or `disproved` claim writes no tree object.
 
-That carve-out is narrow and does not generalise. A `possible` parentage is
-uncertain about whether the relationship exists **at all**, so it stays off the
-tree until it reaches `probable`. A `possible` bounded death is uncertain about
-*when* — the death itself is not in question. Only the second kind encodes below
-`probable`.
-
-**When the proof summary carries a `claims[]` breakdown, encode each claim's
-relationship at THAT CLAIM'S OWN `proof_tier` — never the scalar.** A claim at
-`possible` stays off the tree exactly as a whole-question `possible`
-parentage would above, even though the scalar `tier` (the stronger of the
-per-claim tiers, per §2) may already read `probable`. Write (or leave
-unwritten) each claim's `relationship` independently — most often two
-`ParentChild` writes to the same child, one landing and one withheld, never
-one write gated by the scalar.
-
-**This step — not the proof summary — is where the conclusion actually lands. Do not skip it.** The `narrative_markdown` you wrote in §5 is the *argument*; the tree already carries the sourced evidence facts (materialized at link time by person-evidence), and this step lands the *conclusion* on top of them — the concluded relationship plus the `primary`/`preferred` marking on the concluded value. If the question was a parentage (or a marriage), **the relationship that answers it is the primary output of this skill.** A concluded parentage you do NOT write as a tree relationship is an **incomplete conclusion** — the persons sit in the tree unlinked and the question is effectively unanswered in the tree, even though your narrative concluded it.
+**This step — not the proof summary — is where the conclusion actually lands. Do not skip it.** The `narrative_markdown` you wrote in §5 is the *argument*; the tree already carries the sourced evidence facts (materialized at link time by person-evidence), and this step lands the *conclusion* on top of them — the concluded relationship plus the `primary`/`preferred` marking on the concluded value. Set `primary` only on a value a claim at `probable` or better covers; `research_append` clears it when that claim goes. If the question was a parentage (or a marriage), **the relationship that answers it is the primary output of this skill.** A concluded parentage you do NOT write as a tree relationship is an **incomplete conclusion** — the persons sit in the tree unlinked and the question is effectively unanswered in the tree, even though your narrative concluded it.
 
 Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
 
 1. **The concluded relationship(s) FIRST** — `add_relationship` with a `relationship` object, **carrying a non-null `sources[]` ref** (the Phase-2 guard rejects a ref-less edge, so the whole all-or-nothing batch would fail without it). Parentage: `{ "type": "ParentChild", "parent": "<parentId>", "child": "<childId>", "sources": [{ "ref": "S..", "quality": <0-3> }] }`. Marriage: `{ "type": "Couple", "person1": "<id>", "person2": "<id>", "sources": [{ "ref": "S..", "quality": <0-3> }] }`. Resolve the ref from the relationship assertion's `source_id` (its tree S-entry); for an **indirect/correlated** parentage matching no single record, carry **multiple refs** in `sources[]` to all the correlated evidence S-entries, at a lower `quality` reflecting the indirect class (mirroring the synthesized-fact write in step 2). Endpoints must be **existing** person ids — link the persons already in the tree, don't re-add them (`ParentChild` uses `parent`/`child`, NOT `person1`/`person2`). This is the answer to the question; write it before anything else so it cannot be dropped.
-2. **Facts — the concluded value.** person-evidence already materialized the sourced evidence facts onto the tree person at link time; this step marks *which* value is concluded by setting `primary: true`. The first three paths depend on whether the concluded value already sits on the person as a materialized evidence fact; the fourth retires a value that no longer holds:
+2. **Facts — the concluded value.** person-evidence already materialized the sourced evidence facts onto the tree person at link time; this step marks *which* value is concluded by setting `primary: true`. The three paths depend on whether the concluded value already sits on the person as a materialized evidence fact:
    - **Common case (value matches an existing evidence fact)** — the concluded value equals a fact already materialized from a record. **Set `primary: true` on that existing fact via `tree_correct` `update_fact`** (issued as a separate `tree_correct` call, not this `tree_edit` batch) — **do NOT add a second fact.**
    - **Synthesized case (value matches no single record)** — an indirect conclusion whose correlated value matches **no single record** (e.g. three census ages → a computed "abt 1805"). Use `tree_edit` `add_fact` with `primary: true`, carrying **multiple source-refs** in its `sources[]` pointing at **all** the correlated evidence S-entries (multi-ref `sources[]` is supported).
-   - **Bounded / documented-negative case** — **a bounded or documented-negative vital conclusion (§2) is encoded here as a fact, not left off.** Use `tree_edit` `add_fact` with `primary: true`: for a bounded death, write a `Death` fact whose `date` carries the bracket verbatim (e.g. `"after 1870, before 1911"` or `"1870s"`) and whose narrative/citation records the documented negative ("no Kentucky death certificate exists — statewide registration began 1911"), with `sources[]` refs to the S-entries that establish the bracket. The absence of an *exact* date is not a reason to omit the fact — the bounded value IS the finding, and the tree must show the vital event you concluded on (bracket included) just as it must show a concluded relationship.
-   - **Retiring a concluded value** — a value you concluded earlier that no longer holds is retired with `tree_correct` `update_fact` and `primary: false` (issued as a separate `tree_correct` call, not this `tree_edit` batch), which **clears** the flag rather than storing a false. That leaves the type with no primary, which is the correct state while a conflict over it is open. Only this skill sets `primary`; a merge re-marks the best fact of a vital type, so a clear may need repeating after one.
+   - **Bounded case** — **a bounded vital claim at `probable` or better is encoded here as a fact, not left off.** Use `tree_edit` `add_fact` with `primary: true`: for a bounded death, write a `Death` fact whose `date` carries the bracket verbatim (e.g. `"after 1870, before 1911"` or `"1870s"`) and whose narrative/citation records the documented negative ("no Kentucky death certificate exists — statewide registration began 1911"), with `sources[]` refs to the S-entries that establish the bracket. The absence of an *exact* date is not a reason to omit the fact — the bounded value IS the finding, and the tree must show the vital event you concluded on (bracket included) just as it must show a concluded relationship.
 
    **A recorded namesake.** When `tree_edit` refuses a fact because the person has a recorded namesake, write no `person_evidence`: leave the fact off unless a record the refusal allows supports it, and name `person-evidence`, with the link that would tie the record, in the next-step hint for the caller.
 
    **Indirect evidence.** Extraction already classifies indirect claims (`record_basis: inferred`, `date_certainty: calculated`); value-bearing indirect evidence materializes with the inference encoded **honestly** — a GEDCOM `abt`/`cal`/`est` qualifier, never a bare stated year — at a **lower ref quality** reflecting the weaker evidence class. Indirect evidence **never self-concludes**: only proof-conclusion correlation sets `primary`. Purely-argumentative / negative evidence does **not** materialize as a fact (there is no positive value to write) — only its *conclusion* (e.g. a death "bef 1870" established by absence) lands, via this additive write.
-3. **Source entries (upload-time citation).** `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation). **What the tree surfaces about upload readiness:** the working tree carries *all* sourced evidence facts (materialized at link time by person-evidence); marking a fact `primary` is what records that a conclusion stands behind it. The researcher decides what reaches FamilySearch — surface the `tier` and `shortfall` so that decision is informed, and never describe a value as permitted or withheld. A bounded or documented-negative conclusion at `possible` is proof-backed in the same sense: it states a range it can defend. Copy the ESM citation onto an S-entry when you mark the fact `primary`.
+3. **Source entries.** `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation). Copy the ESM citation onto an S-entry when you mark the fact `primary`.
 
-Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op — removals live in **`tree_correct`** (a separate call with the same batched `ops[]` form), not `tree_edit`.
+Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove a tree object whose covering claim falls below `probable`, unless another live claim covers it, with a `remove` op in **`tree_correct`** (a separate call with the same batched `ops[]` form). An import is not removed: lowering its claim relabels it.
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "contradiction"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "implausible"` is advisory. Get confirmation, then call `merge_tree_persons`.
 
@@ -334,7 +335,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route, except in the unsettled-conflict ending, where there is nowhere to route.
 
-**Under `wrapUp: yes` you resolve the question at the tier you reached**, `not_proved` included, and whether or not the person was identified. Where an unidentified person would otherwise have blocked you, write `not_proved` with `shortfall: "gap"`, name who is unidentified and what identifying them would take, and resolve.
+**Under `wrapUp: yes` you resolve the question at the tier you reached**, `not_proved` included, and whether or not the person was identified. Where a person is unidentified, write the claims as the preconditions direct, name who is unidentified and what identifying them would take, and resolve.
 
 **A blocking conflict still holds the question open, `wrapUp: yes` or not.** Write or refresh the `not_proved` summary with `shortfall: "conflict"`, leave `status` as it is, and name the conflict. Do not rely on the writer tool to stop you: it builds its blocking set from the summary's `supporting_assertion_ids`, so a summary citing none resolves straight over an open conflict.
 
@@ -408,13 +409,11 @@ is already persisted.
 
 ## Re-invocation behavior
 
-**Writes:** `proof_summaries[]`, the concluded question's resolution fields (`status`, `resolved`, `resolution_assertion_ids`), and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable — and at `possible` for a bounded or documented-negative conclusion (§6).
+**Writes:** `proof_summaries[]`, the concluded question's resolution fields (`status`, `resolved`, `resolution_assertion_ids`), and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` for every affirmed claim at `probable` or better (§6).
 
-**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. To change a sentence or two of `narrative_markdown` or `exhaustive_search_summary`, pass `edits: [{ field, old, new }]` on that update instead of the field, each `old` copied exactly from the current text so it matches once. `narrative_markdown` and `exhaustive_search_summary` change together: a log entry made after the summary was written changes both (see §5). Before treating the existing summary as current, call `research_query({ section: "log", questionId })` and check every record those entries searched against the summary's not-examined list and the narrative's what-could-resolve list; a searched record still on either list means the summary is stale and both fields change. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
+**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. To change a sentence or two of `narrative_markdown` or `exhaustive_search_summary`, pass `edits: [{ field, old, new }]` on that update instead of the field, each `old` copied exactly from the current text so it matches once. `narrative_markdown` and `exhaustive_search_summary` change together: a log entry made after the summary was written changes both (see §5). Before treating the existing summary as current, call `research_query({ section: "log", questionId })` and check every record those entries searched against the summary's not-examined list and the narrative's what-could-resolve list; a searched record still on either list means the summary is stale and both fields change. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On a downgrade, apply §6's downgrade rule claim by claim.
 
 **Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `search_stop`, and never mint a question (see §7).
-
-**Per-claim downgrade.** When a `claims[]` breakdown exists and just one claim's `proof_tier` is revised downward across the `probable` threshold on re-invocation (e.g. maternity from `probable` to `possible`), remove only that claim's relationship via `tree_correct` — independent of what happens to the other claim or to the scalar `tier`.
 
 
 ---
@@ -709,8 +708,8 @@ reproduce it, re-argue the evidence, or walk the assertions again. Return
 
 - the `ps_` id and whether it was appended or updated in place
 - the `tier` and `shortfall`, and the question id resolved
-- what was encoded in `tree.gedcomx.json`, or that nothing was (tier below
-  the threshold and not a bounded/documented-negative conclusion)
+- what was encoded in `tree.gedcomx.json`, or that nothing was (no affirmed
+  claim at `probable` or better)
 - key limitations: unresolved conflicts accounted for, named records still
   unsearched, and any gap that would narrow the answer
 - next-step hint for the caller (e.g. "conflict-resolution on c_001",
@@ -742,7 +741,7 @@ paragraphs of plain prose with **no label, heading or field name**:
 2. One sentence: what happens next, in plain language. When this invocation
    set `project.status` to `completed`, write exactly one of these instead, and
    nothing else in the paragraph, even when your next-step hint names more
-   work. When the question's `search_stop` lists
+   work or the delegation asks what happens next. When the question's `search_stop` lists
    unsearched sources (paragraph 1 names them): "This research is finished for
    now. If you'd like a second opinion on it, just ask." When it does not:
    "This research is finished. If you'd like a second opinion on it, just ask."

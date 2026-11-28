@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_cl1",
+    "skill": "proof-conclusion",
+    "name": "A marriage proof states a Couple claim and a Marriage fact claim (direct-agent arm)",
+    "type": "positive",
+    "description": "#3032 Stage 1b part 4c: the answer is stated as claims, one per object it decides. A marriage proof decides two objects: the couple, and the marriage event. Built on anders-unna-marriage-proof, whose one marriage index entry is linked to both spouses at confident.",
+    "tags": [
+      "proof",
+      "marriage",
+      "claims",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Write the proof conclusion for q_001 — when and where Anders Monsen married Unna Halsteinsdatter.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "anders-unna-marriage-proof"
+  },
+  "judge_context": [
+    "COMPLIANT: one proof summary for q_001 whose `claims` hold (1) a `relationship` claim `{ type: \"Couple\", person1, person2 }` naming LKFW-9XH and KZHH-VTX, and (2) a `fact` claim with `fact_type` Marriage, `subject` `{ person1, person2 }` naming the same pair, carrying the date and place the index entry gives (25 Jun 1786, Hamre). Each is tiered on its own evidence; `probable` is the expected tier for one derivative index entry with primary information.",
+    "The scalar `tier` states the whole answer and never exceeds the strongest claim.",
+    "Tree encoding: both claims are affirmed at `probable`, so the Couple edge (rel-anders-unna, already present) stands and a Marriage fact is on it, `primary`. Score this dimension.",
+    "Writing only the scalar with no `claims`, or one claim covering both objects, is the failure this test guards (Correctness 2 at most)."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

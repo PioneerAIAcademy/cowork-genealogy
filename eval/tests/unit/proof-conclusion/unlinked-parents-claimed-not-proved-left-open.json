@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_cl3",
+    "skill": "proof-conclusion",
+    "name": "Parents no identity decision has identified are claimed at not_proved, and nothing reaches the tree (direct-agent arm)",
+    "type": "positive",
+    "description": "#3032 Stage 1b part 4c: an unlinked person no longer stops the proof. barker-parents-concluded-unlinked (issue #3659, MHGK-WT7): q_001 asks Jonathan Barker's English birthplace; two registers name his parents William Barker and Martha Edwards, but every parent-role assertion (a_117, a_119, a_135, a_136) is unlinked and the tree has no person for either.",
+    "tags": [
+      "proof",
+      "birthplace",
+      "claims",
+      "unlinked",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Write the proof conclusion for q_001 — where in England Jonathan Barker was born.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "barker-parents-concluded-unlinked"
+  },
+  "judge_context": [
+    "COMPLIANT: a proof summary for q_001 that answers the birthplace with a `fact` claim on I1 at the tier its linked evidence supports, and treats the parents as unidentified: any claim naming William Barker or Martha Edwards is at `not_proved` with `shortfall: \"gap\"`, or the parents are named only in the narrative with what identifying them would take (person-evidence on a_117, a_119, a_135, a_136).",
+    "No person, ParentChild or Couple edge for the parents may be written to the tree. Adding them is the failure this test guards (Correctness 1).",
+    "Whether q_001 closes depends on what the answer rests on. If the birthplace rests on the parents (the christening tied to Jonathan only through William and Martha), q_001 stays open (status `exhaustive_declared`, not `resolved`) and resolving it is a failure (Correctness 2 at most). If it rests on records already linked to I1 and the parents are only context, resolving q_001 is correct. The narrative must say which.",
+    "research_append refuses any summary or claim above `not_proved` that cites a wholly unlinked parent side; a refused call followed by a correct retry is clean recovery, not a defect.",
+    "The return names person-evidence as the step that would identify the parents."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

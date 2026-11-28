@@ -164,7 +164,6 @@ import {
 export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
-import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
   loadStoredCollectionUrls,
@@ -8716,58 +8715,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   }
 }
 
-/** Tree-encoding completion check (issue #1490), shadow → WARNING.
- *
- * A tier->=-probable conclusion is expected to leave a trace in the tree. This
- * warns — never refuses, per the 2026-08-24 no-override ruling — when a
- * completed project holds such a conclusion but none of the tree persons its
- * evidence touches gained any new fact or relationship since the opening tree.
- *
- * A SHAPE match, not a foreign key: a proof summary carries no tree reference, so
- * "the conclusion's person" is the union of persons its supporting assertions have
- * person_evidence for (person_evidence is the only link table). Deliberately
- * broad — it warns only when NONE of those persons gained ANY structure — because
- * the measured fire rate is low and a noisy warning on correct work is worse than
- * a missed one. Fails open when the baseline is absent (legacy projects).
- *
- * Corpus reading (3 fires, 2 false denies on documented negatives) confirmed
- * warning-only; see docs/specs/research-append-tool-spec.md §5.2. */
-function treeEncodingCompletionWarnings(
-  research: any,
-  currentTree: SimplifiedGedcomX,
-  startingTree: SimplifiedGedcomX | null,
-): string[] {
-  if (startingTree === null) return [];
-  const gained = new Set(
-    treeDiff({ before: startingTree, after: currentTree }).personsWithNewStructure,
-  );
-  const personEvidence = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
-  const warnings: string[] = [];
-  for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
-    if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
-    // A summary that states claims is judged claim by claim (owed `encode`
-    // items); this shape match is Decision 24's legacy reading of one that does
-    // not, kept until Stage 1b's part 4 bodies write claims.
-    if (Array.isArray(ps.claims) && ps.claims.length > 0) continue;
-    const supporting = new Set(
-      Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
-    );
-    const personIds = new Set<string>(
-      personEvidence
-        .filter((e: any) => e && supporting.has(e.assertion_id) && typeof e.person_id === "string")
-        .map((e: any) => e.person_id as string),
-    );
-    if (personIds.size === 0) continue; // no evidence-linked person to check
-    if ([...personIds].some((p) => gained.has(p))) continue; // encoded — no warning
-    warnings.push(
-      `proof summary ${ps.id} (tier ${ps.tier}) concludes ${ps.question_id ?? "a question"}, ` +
-        "but no tree person it draws evidence from gained a new fact or relationship this " +
-        "session. Verify the conclusion is encoded in tree.gedcomx.json — a proved/probable " +
-        "finding is normally reflected as a fact or relationship on the person it is about.",
-    );
-  }
-  return warnings;
-}
 
 /** Decision 33: completing a project while it still owes a blocking finding (a
  *  question with tied assertions and no summary; a supported hypothesis with no
@@ -14598,18 +14545,14 @@ export async function researchAppend(
     ];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
-    // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
-    // THIS call sets project.status = "completed" — the same trigger the
-    // conflict gate uses — so it never re-warns on a later write to an
-    // already-completed project. Reads the write-once baseline; fails open (no
-    // warning) when the project predates it.
+    // Owed findings (Decision 33), only when THIS call sets project.status =
+    // "completed", so it never re-warns on a later write. Warns, never refuses.
     const completingNow = projectStatusOps(ops).some(
       (o: any) => o.op === "update" && o.fields?.status === "completed",
     );
     let treeEncodingWarnings: string[] = [];
     if (completingNow) {
       treeEncodingWarnings = [
-        ...treeEncodingCompletionWarnings(research, tree, prep.startingTree ?? null),
         ...owedCompletionWarnings(research, tree),
       ];
     }

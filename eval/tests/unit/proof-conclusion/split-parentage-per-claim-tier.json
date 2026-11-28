@@ -21,7 +21,7 @@
   },
   "judge_context": [
     "Should write a `claims[]` breakdown on the proof_summaries entry with (at least) a `paternity` claim at `probable` and a `maternity` claim at `possible`, each carrying its own `supporting_assertion_ids` and a `relationship` naming the tree endpoint it concludes",
-    "The scalar `tier` should read `probable` — the stronger of the two per-claim tiers, per research-schema-spec.md §7 — not `possible`",
+    "The scalar `tier` should read `probable`: it states the whole answer and never exceeds the strongest claim, here paternity at `probable` — not `possible`",
     "The narrative should explain why paternity and maternity differ: three independent original sources for paternity vs. a single weakly-identified 1870 census record and a near-zero same-person match score for maternity — and should not claim the maternal identification is more solid than it is",
     "Should NOT write the maternal ParentChild relationship (Bridget I3 → Patrick I1) into tree.gedcomx.json — a `possible` claim stays off the tree even when the scalar tier is `probable`",
     "Should write the paternal ParentChild relationship (Thomas I2 → Patrick I1) into tree.gedcomx.json",

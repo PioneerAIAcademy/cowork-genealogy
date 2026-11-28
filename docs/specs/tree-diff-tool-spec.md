@@ -13,21 +13,14 @@ surface (no `projectPath`, no I/O). "the tool" below reads "the helper".
 Given two simplified-GedcomX trees, report what the second added, removed, and
 changed relative to the first — persons, per-person facts, and relationships.
 
-Two callers need this and neither can get it from the data alone:
+**The viewer and a status answer** want the "what did this session change" delta
+for display (`project_view`'s `treeChanges`). The completion check's legacy arm used
+it too, until Stage 1b part 4c removed that arm: a summary's claims now name their
+objects, and the owed `encode` item joins each one to the tree
+(research-append-tool-spec §5.2).
 
-- **The tree-encoding completion gate's legacy arm** diffs the final
-  `tree.gedcomx.json` against the write-once `starting-tree.gedcomx.json` baseline
-  to tell a conclusion this session encoded from a fact that was already seeded,
-  for a proof summary that states no claims. A summary with claims is judged by
-  the owed `encode` item instead, which joins each claim to the tree object it
-  names (research-append-tool-spec §5.2).
-  `research_append` loads only the *current* tree, so without the baseline it has
-  no way to make that distinction.
-- **The viewer and a status answer** want the same "what did this session change"
-  delta for display.
-
-The tool is the shared, tested implementation both use, so neither re-derives a
-diff and gets the relationship landmines wrong.
+The tool is the shared, tested implementation, so no caller re-derives a diff and
+gets the relationship landmines wrong.
 
 ## Inputs
 
@@ -66,8 +59,8 @@ not what any caller asks for).
   fact dated onto an already-seeded Couple. Its endpoints join
   `personsWithNewStructure` when it gained a fact.
 
-`personsWithNewStructure` is the set a tree-encoding gate asks about: "did this
-conclusion's person gain any tree structure this session?"
+`personsWithNewStructure` answers "which persons gained any tree structure this
+session?"
 
 ## Identity rules — the landmines
 
@@ -104,11 +97,9 @@ conclusion's person gain any tree structure this session?"
 - It does not diff `sources[]`, names, gender, or `ark`.
 - It is a **shape** diff, not a semantic one: it reports that a person gained a
   Birth fact, not whether that Birth fact is the one a given conclusion asserts.
-  That ambiguity is inherent for a proof summary with no claims — it carries no
-  machine-readable tree reference — and is why the gate's legacy arm built on this
-  is a shape match, not a foreign key. A summary that states claims names its
-  objects, and the owed `encode` item reads those instead
-  (`research-append-tool-spec.md` §5.2).
+  A caller that needs to know whether a given conclusion reached the tree reads
+  the summary's claims (the owed `encode` item, `research-append-tool-spec.md`
+  §5.2), not this diff.
 
 ## Behaviour
 
