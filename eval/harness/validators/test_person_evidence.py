@@ -1848,8 +1848,13 @@ def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, 
 
 
 _SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
-_LINK_NOUN = r"(?:\bpe_\w*\s+(?:entry|entries|link|links|record)\b|\blinks?\b|\blinking\b|\bentry\b|\bentries\b)"
 _NOT_A_GAP_WORD = r"(?:conflicts?|contradict\w*|problems?|issues?|edits?|changes?|writes?|further|more|additional|other|new|need)"
+# A bare `pe_` ("I2 has no `pe_` for a_013.") is a link noun too, unless a
+# not-a-gap word follows it ("no `pe_` edits").
+_LINK_NOUN = (
+    r"(?:\bpe_\w*\s+(?:entry|entries|link|links|record)\b|\blinks?\b|\blinking\b|\bentry\b|\bentries\b"
+    r"|(?:`pe_`|(?<!`)\bpe_(?![\w`]))(?!\s+" + _NOT_A_GAP_WORD + r"\b))"
+)
 _BETWEEN = r"(?:(?!\b" + _NOT_A_GAP_WORD + r"\b)[^.\n]){0,40}?"
 _MISSING_LINK = re.compile(
     r"(?:\bno\b|\bmissing\b|\blacks?\b|\bwithout\b)" + _BETWEEN + _LINK_NOUN

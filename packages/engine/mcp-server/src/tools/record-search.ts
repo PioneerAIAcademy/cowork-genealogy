@@ -1,4 +1,5 @@
 import type { Principal } from "../auth/principal.js";
+import type { CollectionCatalogLoader } from "../types/collection.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
   toSimplified,
@@ -51,6 +52,8 @@ import {
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { readForbidden } from "../utils/fs-forbidden.js";
+import { DEFAULT_RETRY_BUDGET_MS, isFetchTimeout } from "../utils/http.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import {
   isSubCountryPlace,
@@ -71,8 +74,10 @@ const FS_SEARCH_URL =
 // Per-attempt ceiling for the FamilySearch search fetch. FS search can be slow;
 // without a timeout a stalled connection hangs until the OS/transport kills it,
 // which surfaces upstream as a dead turn mid-search rather than an actionable
-// error (issue #1316). Retried by fetchWithRetry (default 3 attempts within a
-// 10s budget), so worst-case wall time is ~25s + budget.
+// error (issue #1316). A timed-out attempt is NOT retried: it outlasts
+// fetchWithRetry's 10s budget (DEFAULT_RETRY_BUDGET_MS), so the loop stops after
+// it, and worst-case wall time is ~25s. A network error, 429 or 5xx that
+// answers quickly is still retried within that budget.
 const SEARCH_TIMEOUT_MS = 25_000;
 
 const PAGINATION_CAP = 4999;
@@ -1013,10 +1018,20 @@ async function fetchSearchPage(
     // network failure: rethrown marked, so the agent reads "try again in about
     // N seconds" rather than a transient error that was never retried.
     if (isFsBudgetExhausted(err)) throw err;
+    if (isFetchTimeout(err)) {
+      // A timeout at least as long as the retry budget leaves no time for a
+      // second attempt, so saying "after retries" here was false (#4707).
+      const notRetried = timeoutMs >= DEFAULT_RETRY_BUDGET_MS ? " and was not retried" : "";
+      throw new Error(
+        `FamilySearch record search timed out after ${Math.round(timeoutMs / 1000)}s` +
+          `${notRetried}. This is a transient failure, NOT an empty result — ` +
+          `coverage is unknown.`
+      );
+    }
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(
       `FamilySearch record search did not complete after retries ` +
-        `(network timeout or transient error): ${detail}. This is a transient ` +
+        `(network or transient error): ${detail}. This is a transient ` +
         `failure, NOT an empty result — coverage is unknown.`
     );
   }
@@ -1026,8 +1041,21 @@ async function fetchSearchPage(
       throw new SearchSessionRejected(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
+      // Only the firewall's own `errorCode: "15"` body is a firewall block; its
+      // cause is not shown, so the message names none. Any other 403 is
+      // FamilySearch refusing this search. Both carry the body tail, which is
+      // how they are diagnosed from a feedback bundle (#4707).
+      const forbidden = await readForbidden(response);
+      if (forbidden.firewall) {
+        throw new Error(
+          "FamilySearch's firewall blocked the request (403). This is NOT an empty " +
+            `result — coverage is unknown. (status 403; body: ${forbidden.snippet})`
+        );
+      }
       throw new Error(
-        "FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."
+        "FamilySearch refused this record search (403). This is NOT an empty " +
+          "result — coverage is unknown. The same search may be answered if " +
+          `tried again later. (status 403; body: ${forbidden.snippet})`
       );
     }
     if (response.status === 400) {
@@ -1072,7 +1100,16 @@ export interface RecordSearchOptions {
    *  Default true. Scripts that measure FamilySearch's own place matching pass
    *  false, since the union would hide the very difference they measure. */
   expandPlaces?: boolean;
+  /** The collection catalog through the caller's session, for the browse-only
+   *  check on this tool's own nil log write (`research-log-editor-spec.md` §8.7).
+   *  Bound at dispatch (`server.ts`); absent, the write is not checked. */
+  loadCatalog?: CollectionCatalogLoader | null;
 }
+
+/** How long the nil log write waits on a cold catalog. Shorter than
+ *  `research_log_append`'s own default: it stacks on this search's time under
+ *  Cowork's 60s abort, and the check fails open. */
+export const NIL_LOG_CATALOG_BUDGET_MS = 10_000;
 
 const PLACE_FIELDS: readonly PlaceField[] = EVENT_GROUPS.map((g) => `${g.prefix}Place` as PlaceField);
 /** Most searches one call fans out to (the product over its place fields). */
@@ -1667,7 +1704,7 @@ export async function recordSearchTool(
       planItemId: input.planItemId ?? null,
       notes: typeof input.note === "string" && input.note.trim() !== "" ? input.note.trim() : null,
       writtenBy: "record_search",
-    });
+    }, { loadCatalog: opts.loadCatalog ?? null, catalogBudgetMs: NIL_LOG_CATALOG_BUDGET_MS });
     if (logged.ok && "logId" in logged) {
       // Key order (spec § Key order): everything the agent needs at the moment
       // of a nil arrives ahead of `results`, which a size bound drops first.

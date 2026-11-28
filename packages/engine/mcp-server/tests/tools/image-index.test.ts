@@ -1110,6 +1110,10 @@ describe("image_index: the deadline", () => {
   });
 
   it("gives the list call at most 24 s and each read at most its own ceiling", async () => {
+    // fetchWithRetry takes the time spent in `beforeAttempt` out of the read's
+    // timeout, so a slow runner's 1 ms reads 14999: a frozen clock keeps the
+    // ceilings exact.
+    vi.useFakeTimers({ toFake: ["Date"] });
     const timeouts: number[] = [];
     const real = AbortSignal.timeout.bind(AbortSignal);
     const spy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms: number) => {
@@ -1125,6 +1129,7 @@ describe("image_index: the deadline", () => {
       expect(timeouts[1]).toBe(IMAGE_INDEX_READ_TIMEOUT_MS);
     } finally {
       spy.mockRestore();
+      vi.useRealTimers();
     }
   });
 });

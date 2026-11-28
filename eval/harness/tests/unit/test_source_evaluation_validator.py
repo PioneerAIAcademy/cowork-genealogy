@@ -83,7 +83,7 @@ def _committed_source_evaluation_logs() -> list[str]:
         for p in glob.glob(str(_REPO / pattern))
         if not p.endswith(".ann.json")
     )
-    assert sum("/fixtures/" in p for p in logs) == 2, "the replay must read the two fixture logs"
+    assert sum("/fixtures/" in Path(p).as_posix() for p in logs) == 2, "the replay must read the two fixture logs"
     return logs
 _PROTECTED = "Minnesota Death Index"
 _TEST = {

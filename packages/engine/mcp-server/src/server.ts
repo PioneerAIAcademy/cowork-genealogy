@@ -486,7 +486,7 @@ export function createServer(principal: Principal): Server {
         // search result and reports `nilLogRefused`), so this never marks an
         // error; the intersection is the same idiom external_links_search uses
         // above, and it surfaces an `ok: false` correctly if one is ever added.
-        const result: RecordSearchToolResponse & OkFalseResult = await recordSearchTool(args, principal);
+        const result: RecordSearchToolResponse & OkFalseResult = await recordSearchTool(args, principal, { loadCatalog: collectionCatalogLoader(principal) });
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -799,7 +799,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_log_append") {
       try {
         const args = request.params.arguments as unknown as ResearchLogAppendInput;
-        const result = await researchLogAppend(args);
+        const result = await researchLogAppend(args, { loadCatalog: collectionCatalogLoader(principal) });
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
