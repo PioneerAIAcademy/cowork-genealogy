@@ -230,7 +230,7 @@ second, write last. The stored plans pick the mode, never the delegation's
 account of them: "every search is done" is true only where a `log` entry
 closes each item. While the active plan holds a `planned`/`in_progress`
 item, every mode but Review needs its warrant in the delegation — the item
-ids (Dispose), the researcher's strike/add words (Edit), the falsifying
+ids (Dispose), the researcher's strike/add words or a question asking who an unidentified person in a record or household is (Edit), the falsifying
 fact (Supersede); a fresh-plan order is not one, and lacking all three you
 Review, however firmly the delegation insists.
 
@@ -607,6 +607,8 @@ table and contextual factors checklist.
 
 **On an identity, parentage, birth, death or marriage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** A birth question asks a birth, baptism or christening date or place; a death question a death or burial date or place; a marriage question when or where the person married. Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, none on a question asking who the spouse was, none on an enumerative question (children, siblings), and none on any other question.
 
+**When the delegation asks who a person in a record or household is and they are not yet identified, the first items are the relatives' marriages.** The candidates are the head's and spouse's parents and siblings, step-parents and step-siblings, in-laws, and a relative under a married or earlier surname. Call `tree_query` for the household's head and spouse. For each parent of the head and each parent of the spouse who is in the project tree, emit one item with `record_type: "marriage"`, searching that parent's other marriages: its `date_range` runs from the known spouse's death or last appearance to that parent's death or the household's record, whichever is earlier, or, for a parent who died before the known spouse, covers the years before their known marriage. Where the project tree holds none of the spouse's parents, emit an item for the spouse's own marriage or birth record that names them. Each `rationale` names the candidate the item could produce (a step-parent, a step-sibling, an in-law). These items come first, right after the hints item above when there is one, ahead of the ordering rules below: every census or other search for the household comes after them.
+
 Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
@@ -665,7 +667,7 @@ sit inside this range while still failing the self-check below.
 
 **Breadth self-check — run this before writing the plan, not after the
 user asks "was anything missed?"** Answer Appendix A's
-Standard 17 five self-check questions, plus a sixth, a seventh and an eighth, against the plan
+Standard 17 five self-check questions, plus a sixth to a ninth, against the plan
 you are about to write:
 1. Sufficient breadth of record types (not just census/vital)? When the
    target question's `question_kind` is `enumerative`, does the plan cover
@@ -691,6 +693,8 @@ you are about to write:
    date_range covers each.
 8. Did you `wiki_read` every page Step 3's pre-work triggers for this
    subject? If not, fetch it now and plan from it.
+9. If the delegation asks who a person in a record or household is, are
+   the first items, after any hints item, Step 4's `marriage` items?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.

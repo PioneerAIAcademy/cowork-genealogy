@@ -1,0 +1,291 @@
+{
+  "log_id": "log_025",
+  "tool": "record_read",
+  "retrieved": "2026-11-26T19:51:18.456Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:M68Y-B65"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M68Y-B65",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_325564614",
+              "ark": "ark:/61903/1:1:M68Y-B65",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "410721a9-8113-4287-bf18-3b88c8d533e9",
+                  "type": "BirthName",
+                  "given": "Benjamin J",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "e6198ada-e04d-4edf-87e1-2b007da801f5",
+                  "type": "Birth",
+                  "date": "1816",
+                  "standard_date": "1816",
+                  "place": "Connecticut"
+                },
+                {
+                  "id": "98c86a6c-16d3-4470-b6b9-2c4f169d6e79",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_325564615",
+              "ark": "ark:/61903/1:1:M68Y-B6R",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "57713a30-cf99-4be6-8993-9044a6d0dee8",
+                  "type": "BirthName",
+                  "given": "Mary L",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "04560a00-091d-4d14-933a-7cd88c5f3026",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "3e457c88-305f-40af-8145-189df620ccf4",
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Connecticut"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_325564616",
+              "ark": "ark:/61903/1:1:M68Y-B6T",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "6beec0b7-aa4b-428a-bb15-4980d51b1916",
+                  "type": "BirthName",
+                  "given": "Harriet G",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "72be121e-7154-4e02-acf1-87c77f51038c",
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Massachusetts"
+                },
+                {
+                  "id": "d0c66303-aaa5-4bc0-b3b6-0e18c3fac557",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_325564617",
+              "ark": "ark:/61903/1:1:M68Y-B6Y",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "9f518fb4-c1f3-4a6d-a869-819b4c9bcbda",
+                  "type": "BirthName",
+                  "given": "Zerniah",
+                  "surname": "Phipps"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "595b93e2-32b8-4871-9d09-0b2e41be7bf6",
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826",
+                  "place": "Connecticut"
+                },
+                {
+                  "id": "c9d51cf0-2079-455e-8c20-2597a1df24f3",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Thompson, Windham, Connecticut, United States",
+                  "standard_place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_204762205",
+              "resource_type": "Record",
+              "title": "Household of Benjamin J Phipps, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B65 : Wed Jan 15 16:21:28 UTC 2025), Entry for Benjamin J Phipps and Mary L Phipps, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHDP-PNR",
+              "coverage": {
+                "place_rep_id": "3779481",
+                "date_range": "1850",
+                "record_type": "Census",
+                "standard_place": "Thompson, Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_c_1401638",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1850",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DCW4-8JB",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1850",
+                "record_type": "Census",
+                "standard_place": "Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_p_325564617",
+              "resource_type": "Person",
+              "title": "Zerniah Phipps, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6Y : Wed Jan 15 16:21:28 UTC 2025), Zerniah Phipps in entry for Benjamin J Phipps, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M68Y-B6Y"
+            },
+            {
+              "id": "sd_p_325564616",
+              "resource_type": "Person",
+              "title": "Harriet G Phipps, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6T : Wed Jan 15 16:21:28 UTC 2025), Harriet G Phipps in entry for Benjamin J Phipps, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M68Y-B6T"
+            },
+            {
+              "id": "sd_p_325564614",
+              "resource_type": "Person",
+              "title": "Benjamin J Phipps, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B65 : Wed Jan 15 16:21:28 UTC 2025), Benjamin J Phipps, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M68Y-B65"
+            },
+            {
+              "id": "sd_p_325564615",
+              "resource_type": "Person",
+              "title": "Mary L Phipps, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M68Y-B6R : Wed Jan 15 16:21:28 UTC 2025), Mary L Phipps in entry for Benjamin J Phipps, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M68Y-B6R"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1790 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1790-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_3779481"
+            }
+          ]
+        },
+        "indexFields": {
+          "p_325564614": {
+            "sortKey": "0000000004181041_00080_03141_0000000204762205_000",
+            "householdId": "299",
+            "age": "34",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_325564615": {
+            "sortKey": "0000000004181041_00080_03141_0000000204762205_001",
+            "householdId": "299",
+            "age": "22",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_325564616": {
+            "sortKey": "0000000004181041_00080_03141_0000000204762205_002",
+            "householdId": "299",
+            "age": "50",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_325564617": {
+            "sortKey": "0000000004181041_00080_03141_0000000204762205_003",
+            "householdId": "299",
+            "age": "24",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,685 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find all children of Benjamin Fairbanks Phipps, whether recorded in Family Tree or not.",
+    "title": "Children of Benjamin Fairbanks Phipps",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-18",
+    "updated": "2026-11-18"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Never sound surer than the evidence was rated: say the records show it for a well established fact or relationship, probably for a likely one and possibly for a tentative one, and never write that someone is the parent, spouse or child of another without one of these. Say match or search result, never hit; never write ARK: name the record or link to it. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the children of Benjamin Fairbanks Phipps (b. 1816 Thompson, Connecticut)?",
+      "rationale": "Primary research objective. The household censuses name the children living at home.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-11-18",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Thompson, Windham, Connecticut, United States",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 household lists any children at home between the 1850 and 1870 enumerations.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1849-1878",
+          "repository": "FamilySearch",
+          "rationale": "Birth, death and marriage entries that name Benjamin or Mary as a parent can show a child no census caught.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-18T21:48:36.748Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Phips",
+        "givenName": "Benjamin",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "residencePlace": "Thompson, Windham, Connecticut, United States",
+        "subjectId": "I1"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 11523,
+      "notes": "Spelling variant Phips with 1860 Thompson scope (place expanded to Thompson, Windham County and Nashaway). Ranked list is mostly vital and burial records for Benjamin F Phipps (b.1816, d.16 Aug 1893), not census. Surfaced one 1860 census entry, Benj Phillips (b.1815, Connecticut), Thompson, rank 8, attached to subject, surname not Phipps: needs-review. Read as one dwelling; family structure inferred from surname, ages and order, not stated. No 1860 Phipps census household found under this spelling."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-18T21:48:36.753Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Phipps",
+        "givenName": "Mary",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "residencePlace": "Thompson, Windham, Connecticut, United States"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 21729,
+      "notes": "Wife search, Mary Phipps in 1860 Thompson. Only page 1 read (20 of 21,729). Surfaced 1860 census entry Mary S Phillips, b.1828 Connecticut, in one dwelling with Benj Phillips (b.1815) and Harriet Phillips (b.1800); family structure inferred from surname, ages and order, not stated. Mary S b.1828 fits Mary L. Childs (tree birth 6 Jan 1828). Needs-review: surname Phillips, not Phipps; no children indexed in that dwelling. Other rows are Phelps and Phillips women, not this family."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "namesakes": [
+    {
+      "id": "ns_002",
+      "person_id": "I1",
+      "name": "Benjamin Phillips",
+      "place": "Pomfret, Windham, Connecticut, United States",
+      "time_period": "1860",
+      "record_ids": [
+        "ark:/61903/1:1:MH51-GM3"
+      ],
+      "log_entry_ids": [
+        "log_013"
+      ],
+      "notes": "1860 census, Pomfret CT, listed as Pierpoint/Benjamin Phillips b. 1805 is a different entry; this entry (b. 1825, Connecticut) is ruled out on a stated ground: birth year 1825 is 9 years from the subject's 30 Jan 1816 birth (tool birthYearConflict), and the household is in Pomfret, not Thompson. Family structure in that dwelling inferred from surname, ages and order, not stated.",
+      "created": "2026-11-18",
+      "record_persona_ids": {
+        "ark:/61903/1:1:MH51-GM3": "p_214642803"
+      },
+      "birth_year": 1825
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Windham, Connecticut, United States",
+      "for_place": "Thompson, Windham, Connecticut, United States",
+      "time_period": "1790-1880",
+      "jurisdictions": [
+        {
+          "name": "Thompson, Windham, Connecticut, United States",
+          "date_range": "1785-"
+        },
+        {
+          "name": "Windham, Connecticut, United States",
+          "date_range": "1726-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2448938",
+          "title": "Connecticut, Births and Baptisms, 1639-1941",
+          "date_range": "1639-1941",
+          "person_count": 87659,
+          "record_count": 39361
+        },
+        {
+          "id": "1674736",
+          "title": "Connecticut, Births and Christenings, 1649-1906",
+          "date_range": "1649-1906",
+          "person_count": 1975883,
+          "record_count": 719358
+        },
+        {
+          "id": "2658554",
+          "title": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955",
+          "date_range": "1640-1955",
+          "person_count": 1476365,
+          "record_count": 1205723
+        },
+        {
+          "id": "2658799",
+          "title": "Connecticut, Church Records, 1660-1955",
+          "date_range": "1660-1955",
+          "person_count": 33571,
+          "record_count": 16710
+        },
+        {
+          "id": "1674748",
+          "title": "Connecticut, Deaths and Burials, 1772-1934",
+          "date_range": "1772-1934",
+          "person_count": 1356993,
+          "record_count": 711947
+        },
+        {
+          "id": "2448941",
+          "title": "Connecticut, Deaths, 1640-1955",
+          "date_range": "1640-1955",
+          "person_count": 838850,
+          "record_count": 447940
+        },
+        {
+          "id": "1674749",
+          "title": "Connecticut, Marriages, 1630-1997",
+          "date_range": "1630-1997",
+          "person_count": 556136,
+          "record_count": 281484
+        },
+        {
+          "id": "2448940",
+          "title": "Connecticut, Marriages, 1640-1939",
+          "date_range": "1640-1939",
+          "person_count": 3052141,
+          "record_count": 1683068
+        },
+        {
+          "id": "2843390",
+          "title": "Connecticut, Vital Records, Prior to 1850",
+          "date_range": "1710-1850",
+          "person_count": 1146260,
+          "record_count": 437950
+        },
+        {
+          "id": "3158818",
+          "title": "Connecticut, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017",
+          "person_count": 6647,
+          "record_count": 1
+        },
+        {
+          "id": "5000080",
+          "title": "Connecticut, County Coroner's Records, 1883-1934",
+          "date_range": "1883-1934",
+          "person_count": 76309,
+          "record_count": 76296
+        },
+        {
+          "id": "1946874",
+          "title": "Connecticut, Death Index, 1949-2001",
+          "date_range": "1949-2001",
+          "person_count": 3165925,
+          "record_count": 1408326
+        },
+        {
+          "id": "2141008",
+          "title": "Connecticut, District Court Naturalization Indexes, 1851-1992",
+          "date_range": "1851-1992",
+          "person_count": 251944,
+          "record_count": 253215
+        },
+        {
+          "id": "1967742",
+          "title": "Connecticut, Divorce Index, 1968-1997",
+          "date_range": "1968-1997",
+          "person_count": 966036,
+          "record_count": 322012
+        },
+        {
+          "id": "1936542",
+          "title": "Connecticut, Marriage Index, 1959-2001",
+          "date_range": "1959-2001",
+          "person_count": 2011486,
+          "record_count": 1005743
+        },
+        {
+          "id": "3741249",
+          "title": "Connecticut, Military Census Questionnaires, 1917",
+          "date_range": "1917-1917",
+          "person_count": 522261,
+          "record_count": 522261
+        },
+        {
+          "id": "3238391",
+          "title": "Connecticut, Naturalization Records, 1795-1945",
+          "date_range": "1795-1945",
+          "person_count": 1083892,
+          "record_count": 782656
+        },
+        {
+          "id": "3477650",
+          "title": "Connecticut, Passenger and Crew Lists, 1804-1959",
+          "date_range": "1804-1959",
+          "person_count": 98791,
+          "record_count": 98790
+        },
+        {
+          "id": "2695954",
+          "title": "Connecticut, World War II Draft Registration Cards, 1940-1945",
+          "date_range": "1940-1945",
+          "person_count": 953946,
+          "record_count": 478703
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133
+        },
+        {
+          "id": "1803959",
+          "title": "United States, Census, 1790",
+          "date_range": "1790-1790",
+          "person_count": 408495,
+          "record_count": 408495
+        },
+        {
+          "id": "1804228",
+          "title": "United States, Census, 1800",
+          "date_range": "1800-1800",
+          "person_count": 540398,
+          "record_count": 540398
+        },
+        {
+          "id": "1803765",
+          "title": "United States, Census, 1810",
+          "date_range": "1810-1810",
+          "person_count": 827020,
+          "record_count": 827020
+        },
+        {
+          "id": "1803955",
+          "title": "United States, Census, 1820",
+          "date_range": "1820-1820",
+          "person_count": 1226220,
+          "record_count": 1226220
+        },
+        {
+          "id": "1803958",
+          "title": "United States, Census, 1830",
+          "date_range": "1830-1830",
+          "person_count": 1824437,
+          "record_count": 1824437
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840-1840",
+          "person_count": 2566652,
+          "record_count": 2566652
+        },
+        {
+          "id": "1401638",
+          "title": "United States, Census, 1850",
+          "date_range": "1850-1850",
+          "person_count": 20224571,
+          "record_count": 20224571
+        },
+        {
+          "id": "1473181",
+          "title": "United States, Census, 1860",
+          "date_range": "1860-1860",
+          "person_count": 27176265,
+          "record_count": 27176265
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 40350030,
+          "record_count": 40350030
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885
+        }
+      ],
+      "pages_read": [],
+      "source": "locality-guide",
+      "created": "2026-11-26"
+    },
+    {
+      "id": "loc_002",
+      "place": "Worcester, Massachusetts, United States",
+      "for_place": "Worcester, Massachusetts, United States",
+      "time_period": "1790-1880",
+      "jurisdictions": [
+        {
+          "name": "Worcester, Massachusetts, United States",
+          "date_range": "1731-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1675351",
+          "title": "Massachusetts Marriages, 1695-1910, 1921-1924",
+          "date_range": "1695-1910",
+          "person_count": 678298,
+          "record_count": 128728
+        },
+        {
+          "id": "1675197",
+          "title": "Massachusetts, Births and Christenings, 1639-1915",
+          "date_range": "1639-1915",
+          "person_count": 7151990,
+          "record_count": 2538593
+        },
+        {
+          "id": "2400643",
+          "title": "Massachusetts, Births, 1636-1924",
+          "date_range": "1636-1924",
+          "person_count": 72915,
+          "record_count": 24610
+        },
+        {
+          "id": "2787822",
+          "title": "Massachusetts, Church Records, 1630-1943",
+          "date_range": "1630-1943",
+          "person_count": 21750,
+          "record_count": 9337
+        },
+        {
+          "id": "1675350",
+          "title": "Massachusetts, Deaths and Burials, 1795-1910",
+          "date_range": "1795-1910",
+          "person_count": 1163620,
+          "record_count": 368497
+        },
+        {
+          "id": "1469062",
+          "title": "Massachusetts, Marriages, 1841-1915",
+          "date_range": "1841-1915",
+          "person_count": 9620,
+          "record_count": 1611
+        },
+        {
+          "id": "1459985",
+          "title": "Massachusetts, State Census, 1855",
+          "date_range": "1855-1855",
+          "person_count": 1202234,
+          "record_count": 1202234
+        },
+        {
+          "id": "1410399",
+          "title": "Massachusetts, State Census, 1865",
+          "date_range": "1865-1865",
+          "person_count": 1352817,
+          "record_count": 1352817
+        },
+        {
+          "id": "1928860",
+          "title": "Massachusetts, State Vital Records, 1638-1927",
+          "date_range": "1638-1927",
+          "person_count": 52931621,
+          "record_count": 12026254
+        },
+        {
+          "id": "2061550",
+          "title": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+          "date_range": "1626-2001",
+          "person_count": 21656989,
+          "record_count": 7101883
+        },
+        {
+          "id": "3155889",
+          "title": "Massachusetts, Wills and Deeds, ca. 1700-2017",
+          "date_range": "1700-2017",
+          "person_count": 81433,
+          "record_count": 1
+        },
+        {
+          "id": "1463156",
+          "title": "Massachusetts Deaths, 1841-1915, 1921-1924",
+          "date_range": "1841-1924",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1949332",
+          "title": "Massachusetts, Death Index, 1970-2003",
+          "date_range": "1970-2003",
+          "person_count": 2429694,
+          "record_count": 2037187
+        },
+        {
+          "id": "2268583",
+          "title": "Massachusetts, Delayed and Corrected Vital Records, 1753-1900",
+          "date_range": "1753-1900",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2311325",
+          "title": "Massachusetts, Federal Census Mortality Schedule, 1870",
+          "date_range": "1870-1870",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2315101",
+          "title": "Massachusetts, Federal Census Mortality Schedule, 1880",
+          "date_range": "1880-1880",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2304666",
+          "title": "Massachusetts, Index to Boston Passenger Lists, 1848-1891",
+          "date_range": "1848-1891",
+          "person_count": 1139764,
+          "record_count": 1139732
+        },
+        {
+          "id": "2526178",
+          "title": "Massachusetts, Index to Passenger Lists of Vessels Arriving at Boston, 1921-1949",
+          "date_range": "1921-1949",
+          "person_count": 262890,
+          "record_count": 262890
+        },
+        {
+          "id": "2106411",
+          "title": "Massachusetts, Land Records, 1620-1986",
+          "date_range": "1620-1986",
+          "person_count": 18,
+          "record_count": 0
+        },
+        {
+          "id": "1834334",
+          "title": "Massachusetts, Naturalization Index, 1906-1966",
+          "date_range": "1906-1966",
+          "person_count": 486026,
+          "record_count": 388086
+        },
+        {
+          "id": "2140604",
+          "title": "Massachusetts, Naturalization Records, 1906-1917",
+          "date_range": "1906-1917",
+          "person_count": 92746,
+          "record_count": 92745
+        },
+        {
+          "id": "1918549",
+          "title": "Massachusetts, Plymouth County, Probate Estate Files, 1686-1915",
+          "date_range": "1686-1915",
+          "person_count": 61903,
+          "record_count": 61903
+        },
+        {
+          "id": "2018320",
+          "title": "Massachusetts, Plymouth County, Probate Records, 1633-1967",
+          "date_range": "1633-1967",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1881492",
+          "title": "Massachusetts, Revolutionary War Bounty Land Applications, 1805-1845",
+          "date_range": "1805-1845",
+          "person_count": 906,
+          "record_count": 616
+        },
+        {
+          "id": "2285844",
+          "title": "Massachusetts, Town Records, ca. 1638-1961",
+          "date_range": "1638-1961",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2632082",
+          "title": "Massachusetts, United States Naturalization Records, 1790-1991",
+          "date_range": "1790-1991",
+          "person_count": 1646407,
+          "record_count": 987160
+        },
+        {
+          "id": "2102083",
+          "title": "Massachusetts, Worcester County, Probate Files, 1731-1925",
+          "date_range": "1731-1925",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "1420441",
+          "title": "United States Census (Mortality Schedule), 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 1356791,
+          "record_count": 1356791
+        },
+        {
+          "id": "3754697",
+          "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+          "date_range": "1748-1991",
+          "person_count": 233239068,
+          "record_count": 67418133
+        },
+        {
+          "id": "1803959",
+          "title": "United States, Census, 1790",
+          "date_range": "1790-1790",
+          "person_count": 408495,
+          "record_count": 408495
+        },
+        {
+          "id": "1804228",
+          "title": "United States, Census, 1800",
+          "date_range": "1800-1800",
+          "person_count": 540398,
+          "record_count": 540398
+        },
+        {
+          "id": "1803765",
+          "title": "United States, Census, 1810",
+          "date_range": "1810-1810",
+          "person_count": 827020,
+          "record_count": 827020
+        },
+        {
+          "id": "1803955",
+          "title": "United States, Census, 1820",
+          "date_range": "1820-1820",
+          "person_count": 1226220,
+          "record_count": 1226220
+        },
+        {
+          "id": "1803958",
+          "title": "United States, Census, 1830",
+          "date_range": "1830-1830",
+          "person_count": 1824437,
+          "record_count": 1824437
+        },
+        {
+          "id": "1786457",
+          "title": "United States, Census, 1840",
+          "date_range": "1840-1840",
+          "person_count": 2566652,
+          "record_count": 2566652
+        },
+        {
+          "id": "1401638",
+          "title": "United States, Census, 1850",
+          "date_range": "1850-1850",
+          "person_count": 20224571,
+          "record_count": 20224571
+        },
+        {
+          "id": "1473181",
+          "title": "United States, Census, 1860",
+          "date_range": "1860-1860",
+          "person_count": 27176265,
+          "record_count": 27176265
+        },
+        {
+          "id": "1438024",
+          "title": "United States, Census, 1870",
+          "date_range": "1870-1870",
+          "person_count": 40350030,
+          "record_count": 40350030
+        },
+        {
+          "id": "1417683",
+          "title": "United States, Census, 1880",
+          "date_range": "1880-1880",
+          "person_count": 50472677,
+          "record_count": 50472677
+        },
+        {
+          "id": "1202535",
+          "title": "United States, Social Security Death Index",
+          "date_range": "1875-2014",
+          "person_count": 93945885,
+          "record_count": 93945885
+        }
+      ],
+      "pages_read": [],
+      "source": "locality-guide",
+      "created": "2026-11-26"
+    }
+  ]
+}

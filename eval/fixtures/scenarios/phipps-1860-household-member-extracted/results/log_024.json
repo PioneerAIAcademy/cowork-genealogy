@@ -1,0 +1,223 @@
+{
+  "log_id": "log_024",
+  "tool": "record_read",
+  "retrieved": "2026-11-26T19:51:18.423Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MHR9-JWT"
+    },
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MHR9-JWT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_214692506",
+              "ark": "ark:/61903/1:1:MHR9-JWT",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "42ba8b75-f786-4716-b934-37f5a0c65059",
+                  "type": "BirthName",
+                  "given": "Benj",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "ae2b6740-94fc-45eb-be98-81f95e51e07c",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "094f4ba1-d2ad-44ff-b9ac-5e07e09712ec",
+                  "type": "Birth",
+                  "date": "1815",
+                  "standard_date": "1815",
+                  "place": "Conn"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692507",
+              "ark": "ark:/61903/1:1:MHR9-JWY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "6ab169e9-bcd2-4273-8618-b2c9c3999269",
+                  "type": "BirthName",
+                  "given": "Mary S",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "60ed060c-b7a1-458a-8d20-fe08ac55562d",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "be1d1a35-d0a7-41d6-8358-1ed2c01123f3",
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Conn"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_214692508",
+              "ark": "ark:/61903/1:1:MHR9-JWB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "cc15c4da-a1b8-4569-bc89-083d3a68c8c9",
+                  "type": "BirthName",
+                  "given": "Harriet",
+                  "surname": "Phillips"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "f0e3ad9e-ef00-4265-aaf6-bdf869d7316c",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Thompson, Windham, Connecticut, United States"
+                },
+                {
+                  "id": "4fc6bd66-c936-4687-99b6-ff3391f13e29",
+                  "type": "Birth",
+                  "date": "1800",
+                  "standard_date": "1800",
+                  "place": "Conn"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_169237206",
+              "resource_type": "Record",
+              "title": "Household of Benj Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Entry for Benj Phillips and Mary S Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWBB-9ZW",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBV-9NSP",
+              "coverage": {
+                "place_rep_id": "393813",
+                "date_range": "1860",
+                "record_type": "Census",
+                "standard_place": "Windham, Connecticut, United States"
+              }
+            },
+            {
+              "id": "sd_p_214692508",
+              "resource_type": "Person",
+              "title": "Harriet Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWB : Mon Jul 08 04:23:14 UTC 2024), Harriet Phillips in entry for Benj Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MHR9-JWB"
+            },
+            {
+              "id": "sd_p_214692507",
+              "resource_type": "Person",
+              "title": "Mary S Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWY : Mon Jul 08 04:23:14 UTC 2024), Mary S Phillips in entry for Benj Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MHR9-JWY"
+            },
+            {
+              "id": "sd_p_214692506",
+              "resource_type": "Person",
+              "title": "Benj Phillips, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT : Mon Jul 08 04:23:14 UTC 2024), Benj Phillips, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MHR9-JWT"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1790 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1790-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ]
+        },
+        "indexFields": {
+          "p_214692506": {
+            "sortKey": "000000000_005165664_00086_03154_00000658212492",
+            "age": "45",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_214692507": {
+            "sortKey": "000000000_005165664_00086_03155_00000658212493",
+            "age": "32",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          },
+          "p_214692508": {
+            "sortKey": "000000000_005165664_00086_03156_00000658212494",
+            "age": "60",
+            "censusPlace": "Thompson, Windham, Connecticut, United States"
+          }
+        }
+      }
+    ]
+  }
+}

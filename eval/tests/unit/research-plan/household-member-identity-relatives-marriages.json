@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_4gc",
+    "skill": "research-plan",
+    "name": "Plans an unidentified household member from the relatives' other marriages and the spouse's parentage, reading no relative's profile",
+    "type": "positive",
+    "description": "Mined from issue #4670 (the Phipps feedback session, at the tester's question of who Harriet Phillips is in the 1860 household). The router hands research-plan the question in add-new mode on the current question. In the session the household member was guessed from surname and age as the spouse's mother or an unrecorded sister, the parents' later marriages were never considered, and the answer was a stepmother whom one of the parents in the tree had married. For a household member who is not yet identified, the plan's first items reach the relatives' other marriages and the spouse's parentage from records, before any further search for the household, and no relative's FamilySearch profile is read.",
+    "tags": [
+      "planning",
+      "from-cowork",
+      "phipps-1860-household-member",
+      "household-identity-no-relative-read",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Add-new mode on the current question. The researcher asks: \"Who would the Harriet Phillips be, in the 1860 census household?\" She is indexed, born about 1800 in Connecticut, in the 1860 Thompson household of Benj Phillips (record MHR9-JWT, in the log_013 search results). Plan the records that would identify her, as plan items on q_001.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "phipps-1860-household-member"
+  },
+  "mcp_fixtures": [
+    "collections-search-windham-connecticut-1790-1880",
+    "person-read-empty-any",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "The question is who an unidentified member of an already-found household is. Candidates for an older person sharing the household's surname are the parents and siblings of the head and of the spouse, and also step-parents and step-siblings (a parent's other spouse and that spouse's children), in-laws, and a relative living under a married or earlier surname. A plan that weighs only blood relatives of the head, an unrecorded sibling, or a boarder has missed candidates.",
+    "Before any further search for the 1860 household itself, the plan's first items reach the relatives' other marriages: one marriage item for each parent of the head or spouse who is in the project tree, covering that parent's other marriages (Peyton Randolph Phipps, I2, died 1843, his wife Clarisa, I6, having died in 1830; Clarisa herself). Mary L. Childs's (I4) parents are not in the project tree, so an item for her own marriage or birth record that names them belongs among those first items. Each such item's rationale names the candidate it could produce.",
+    "A specific detail in the record (her indexed age and Connecticut birthplace) that contradicts a candidate counts against that candidate. An item or rationale that treats such a detail as an error in order to keep a candidate alive is a defect.",
+    "Whether any relative's FamilySearch profile was read is checked by a deterministic validator; do not grade it here.",
+    "The prior plan pl_001 has every item completed and the question has no proof summary, so this is add-new: the finished plan is set completed if still active and one new active plan holds the new items. Changing the finished plan's items is a defect."
+  ],
+  "judge_reads_files": true
+}

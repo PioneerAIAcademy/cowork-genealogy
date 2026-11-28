@@ -407,6 +407,7 @@ message.
    | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, or to re-index one page or compare it with its FamilySearch index, rather than research on one person | `project_create` with the message as `objective` and no `personId`, then `@plugin:search-images` with the message verbatim and that `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted. On a job it is the turn's only step: read no attached record. Relay init-project's summary verbatim, then "What do you want to verify or research? Is anything here you think is wrong, or do you know or have anything that isn't here?", and end on "Continue with `choosing the question`?" |
    | `project_context` lists **`waitingPages`** | `@plugin:record-structurer` once, with `projectPath` alone: it keeps every waiting page. Relay its reply. Then route again. |
+   | The message asks who a person in a record or household is, and no tree person, hypothesis, namesake or record names their relationship, even after extraction | `@plugin:research-plan` with the researcher's question (Edit on an active plan), never question-selection or person-evidence; give no kinship reading of your own |
    | Objective but no questions | Never in the turn a bounded first message created the project (§"Bounded request or job"). A message that answers the offer of `choosing the question` (your last turn ended on it, or the message names it) and is not only "Continue.", "Keep going." or "Wrap it up." is the researcher's reply. A verify request is the reply, or with none the request `project_context`'s `nextStep` quotes from the project's creation, never the objective; it is narrow when it names a particular relationship, fact or source of the subject ("verify his parents", "her birth date is wrong", "S3 is not him"), and broad when it names none ("are his facts and relationships correct?"). A broad one is this project's whole work: `extraction_append({ projectPath, personId })` for each id in `subjectPersonIds`, then `@plugin:source-evaluation` with `projectPath`, the subject and the one request to audit the subject's attached sources (not the reply), then in the same turn `@plugin:check-warnings` with `projectPath` and the subject, and nothing else; relay both in full; when neither found anything wrong, say so; otherwise give each finding as its own next project, with the words to start it: a new project from the subject's FamilySearch person ID, answering its setup stop with that narrow request ("Verify his parents."). No "Continue with …?" line either way. In order: (1) for a narrow request, `Skill("forget-and-rederive")` with `mode: verify` and that text verbatim; (2) for each id in `project_context`'s `subjectPersonIds`: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`; (3) `@plugin:question-selection` (with `userPresent: no` on an `--autonomous` run), with a `researcherReply:` line holding the reply verbatim when there is one, and, when step 1 removed a relationship or fact, a `statedQuestion:` line for each as a fact question (`statedQuestion: Who were the parents of <subject>?`); a removed source alone gets no `statedQuestion:`. Report forget-and-rederive's counts when it ran, each timeline event (date, place, description) from `research_query({ projectPath, section: "timelines", personId })`, then question-selection's summary verbatim, and end on "Continue with `planning the searches`?". **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with **no plan**, and no `localities` entry yet for its target jurisdiction | `@plugin:locality-guide`, then in the same turn `@plugin:research-plan`; relay both |
    | A question with **no plan**, and its jurisdiction already has a `localities` entry | `@plugin:research-plan` |
@@ -842,9 +843,10 @@ has that link.
 ## A question between steps
 
 The researcher asks something rather than answering the offer — "why that
-census?", "who is this person again?". Answer it from what you hold, spawn
-**no** agent, and end with the **same** "Continue with …?" line the last turn
-offered. The turn ran no step, so nothing moves.
+census?", "who is this person again?" about someone the project already holds.
+Answer it from what you hold, spawn **no** agent, and end with the **same**
+"Continue with …?" line the last turn offered. The turn ran no step, so
+nothing moves.
 
 ## When to stop
 
@@ -883,12 +885,16 @@ produced, end the turn as §"Bounded request or job" says to.
 
 For an identity or completeness ask — "find this record", "is this the
 same person", "find the missing children" — report **candidates**, never
-a verdict:
+a verdict. Who an unidentified person in a record or household is goes to
+research-plan by the routing table instead:
 
 - give each candidate with how strong the match is and what was searched
   to find it;
 - **never declare the question answered on a name match.** A name is not
   an identification;
+- a specific detail on the original page (birthplace, age) that contradicts a
+  candidate counts against that candidate; never call it an enumerator error
+  to make the candidate fit;
 - end with an offer to **research it further** — never an offer to extract,
   attach, or link. Those are writes, and `search-records` forbids offering one
   on an unsettled identity. Offer the investigation, not the write.
