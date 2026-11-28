@@ -1,0 +1,8 @@
+Amos Whitfield and the project's ids are invented test fixtures, not real
+FamilySearch data. No call in this run reaches FamilySearch or the wiki: those
+answers come from test fixtures. Tools that read or write the project's own
+files run for real against a temporary copy of it.
+
+The project is saved just before the first search: `pli_001` is `planned`, and
+`log`, `sources` and `assertions` are empty. The tree holds `I1` alone, with no
+child yet. That is the state the fixture was built to hold.
