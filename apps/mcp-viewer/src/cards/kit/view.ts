@@ -29,7 +29,7 @@ export function isLive(row: { superseded_by?: unknown }): boolean {
   return row.superseded_by === undefined || row.superseded_by === null
 }
 
-function isResolved(question: Question): boolean {
+export function isResolved(question: Question): boolean {
   return question.status === 'resolved' || Boolean(question.resolved)
 }
 
@@ -50,9 +50,11 @@ export function currentQuestion(research: ResearchDocument, questionId: unknown)
 
 export type CardKind = Exclude<Show, 'latest' | 'file'>
 
-/** The card `latest` shows, from the current question's state. Planned shows setup until the plan card. */
+/** The card `latest` shows, from the current question's state. Planned shows setup until the plan card (#4858). */
 export function latestKind(status: DerivedQuestion | null): CardKind {
   switch (status?.state) {
+    case 'framed':
+      return 'question'
     case 'searching':
       return 'search'
     case 'evidence-gathered':

@@ -6,7 +6,7 @@ import { nextStepWords, stateWords } from './kit/words'
 import type { CardProps } from './registry'
 
 export function SetupCard({ view, heightLimit, actions }: CardProps) {
-  const { research, index, question, status } = view
+  const { research, index, status } = view
   const subjectIds = (Array.isArray(research.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
     (id) => resolveFieldId(id, index) !== null
   )
@@ -25,7 +25,6 @@ export function SetupCard({ view, heightLimit, actions }: CardProps) {
       ))
     })
   }
-  if (question) points.push({ label: 'The question', body: <Prose text={question.question} index={index} /> })
   const next = nextStepWords(status?.nextStep)
   const state = stateWords(status?.state)
   if (next) points.push({ label: 'Next', body: next })

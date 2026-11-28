@@ -76,7 +76,7 @@ describe("the question's links", () => {
 
 describe('latest', () => {
   it.each([
-    ['framed', 'setup'],
+    ['framed', 'question'],
     ['planned', 'setup'],
     ['searching', 'search'],
     ['evidence-gathered', 'link'],

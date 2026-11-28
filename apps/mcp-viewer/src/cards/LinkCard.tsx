@@ -4,15 +4,11 @@ import { Prose } from '../rules/Prose'
 import { FieldName } from './kit/FieldName'
 import { linksByPerson, questionLinks, ruledOut, statedConflicts, type PersonLinks } from './kit/links'
 import { Shell, type Point } from './kit/Shell'
-import { nextStepWords } from './kit/words'
+import { nextStepWords, plural } from './kit/words'
 import type { CardProps } from './registry'
 
 const PEOPLE_NAMED = 3
 const CONFLICTS_SHOWN = 2
-
-function plural(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`
-}
 
 function strengthWords(person: PersonLinks): string {
   if (person.strengths.length === 1) return statusLabel(person.strengths[0][0])

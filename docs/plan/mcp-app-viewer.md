@@ -3,8 +3,8 @@
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
 an answer (2026-11-08). The fold's done-when was met on 2026-11-13 (see "The fold"). M1's
 cards and M3's case file are built and on main. Still to do: a live research run on the
-deployed server that draws the step cards; M2's step cards other than the link card (question, plan, conflict,
-hypothesis and assess: issues #4857 to #4861); and M3's demo script and recording. The
+deployed server that draws the step cards; M2's step cards other than the link and question cards (plan, conflict,
+hypothesis and assess: issues #4858 to #4861); and M3's demo script and recording. The
 router lines are in `skills/research/SKILL.md`.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
@@ -350,7 +350,7 @@ from it, and an unannotated tool defaults to "not read-only".
 - **Display rules,** applied to the cards and, from M3, to the file:
   - **The current question** is `questionId` if passed, else the last unresolved
     question, else the last with a proof. `latest` picks the card from that
-    question's state in `derived`: framed → setup, planned → plan, searching →
+    question's state in `derived`: framed → question, planned → plan, searching →
     search, evidence-gathered → link, concluded or critiqued → conclusion. No
     question yet: `latest` is setup, and the setup card shows the objective.
   - **The evidence grid's rows** key on the person and the fact type, lower-cased
