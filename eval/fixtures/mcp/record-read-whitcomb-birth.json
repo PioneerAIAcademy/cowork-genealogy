@@ -1,0 +1,105 @@
+{
+  "tool": "record_read",
+  "description": "record_read of W7BK-A73, the 1773 Keene birth of Asa Whitcomb, son of Reuben Whitcomb and Molly Towne. Stocked; the test does not require the read. Feeds ut_search_records_ull (issue #4432). Synthetic names and ids.",
+  "args": {
+    "recordId": "~W7BK-A73"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Asa",
+            "surname": "Whitcomb",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "11 March 1773",
+            "place": "Keene, Cheshire, New Hampshire, United States"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)"
+          }
+        ],
+        "ark": "ark:/61903/1:1:W7BK-A73"
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Reuben",
+            "surname": "Whitcomb",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Molly",
+            "surname": "Towne",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "id": "R2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      },
+      {
+        "id": "R3",
+        "type": "Couple",
+        "person1": "P2",
+        "person2": "P3"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "New Hampshire, Town Birth Records, 1714-1900 (synthetic)"
+      }
+    ]
+  }
+}

@@ -133,6 +133,33 @@ def test_escalation_passes_on_a_named_hand_back_and_fails_without_one():
         mod.test_escalates_to_external_sites_after_fs_exhaustion([], "", {"tags": []})
 
 
+FILM_OK = {"tags": ["familysearch-exhausted", "catalog-film-check-accepted"]}
+
+
+@pytest.mark.parametrize("text", [
+    "The next step is a catalog search for New York state census films for Clinton and Essex Counties.",
+    "The next step is to look up the film holdings for these censuses in the FamilySearch catalog.",
+    "Two next steps would settle it: checking the FamilySearch catalog for filmed copies of the 1825 enumerations.",
+])
+def test_film_check_passes_only_on_a_tagged_test(text):
+    mod = _validators("test_search_records")
+    mod.test_escalates_to_external_sites_after_fs_exhaustion(_return(text), "", FILM_OK)
+    with pytest.raises(AssertionError):
+        mod.test_escalates_to_external_sites_after_fs_exhaustion(_return(text), "", ESCALATE)
+
+
+@pytest.mark.parametrize("text", [
+    "Next, the state census collections for those years need to be searched directly.",
+    "The state census collections need to be located on FamilySearch by another route.",
+    "The catalog lists the directories. The films were not checked.",
+])
+def test_film_check_needs_a_catalog_film_next_step(text):
+    with pytest.raises(AssertionError):
+        _validators("test_search_records").test_escalates_to_external_sites_after_fs_exhaustion(
+            _return(text), "", FILM_OK
+        )
+
+
 NO_SOLE = {"tags": ["no-sole-repository-claim"], "delegation": "Find every Tallman family."}
 
 

@@ -1,0 +1,109 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Asa Whitcomb, born about 1770 in Cheshire County, New Hampshire. No direct statement of parentage is to be assumed.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-15",
+    "updated": "2026-10-16",
+    "title": "Asa Whitcomb's parents"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who are the parents of Asa Whitcomb (b. about 1770, Cheshire County, New Hampshire)?",
+      "rationale": "Asa Whitcomb has no parents in the Family Tree. No direct statement of parentage is to be assumed. Census and New Hampshire town records are the first sources to search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "created": "2026-10-15",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Cheshire County, New Hampshire, United States",
+          "date_range": "1790",
+          "repository": "FamilySearch",
+          "rationale": "Search the 1790 US census for Whitcomb households in Cheshire County, New Hampshire.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital",
+          "jurisdiction": "Cheshire County, New Hampshire, United States",
+          "date_range": "1765-1775",
+          "repository": "FamilySearch",
+          "rationale": "A New Hampshire town birth record for Asa would name his parents directly.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "land",
+          "jurisdiction": "Cheshire County, New Hampshire, United States",
+          "date_range": "1785-1800",
+          "repository": "FamilySearch",
+          "rationale": "Cheshire County deeds may name Asa with a father or a grantor of his surname.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "performed": "2026-10-16T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Whitcomb",
+        "eventPlace": "Cheshire, New Hampshire, United States",
+        "recordType": "Census, 1790"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "results_available": 2,
+      "plan_item_id": "pli_001",
+      "results_ref": null,
+      "external_site": null,
+      "notes": "1790 census, Cheshire County: Asa Whitcomb is not among the results. Reuben Whitcomb, head of household in Westmoreland, is Asa's older brother, so Asa's parents were living in Westmoreland before 1790 and the next searches should centre on that town."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

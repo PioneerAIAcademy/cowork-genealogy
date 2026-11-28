@@ -2600,7 +2600,7 @@ _HYPOTHESIS_WRITTEN_RE = re.compile(
     r"|\bhypothes[ie]s\b(?:\s+h_\d+)?\s+(?:(?:has|have)\s+(?:now\s+)?been|is|are|was|were)"
     rf"\s+(?:now\s+)?{_WRITTEN}\b"
     r"|\bhypothes[ie]s\b(?:\s+h_\d+)?\s+(?:now\s+)?on\s+record\b"
-    rf"|\bnow\s+(?:{_WRITTEN}\s+as\s+an?\s+(?:\w+\s+)?hypothesis"
+    rf"|\bnow\s+(?:{_WRITTEN}\s+as\s+(?:an?\s+)?(?:\w+\s+)?hypothesis"
     r"|an?\s+(?:registered|recorded|tracked)\s+hypothesis)\b"
     r"|\bI(?:['’]ve|\s+have)?\s+(?:now\s+)?(?:registered|recorded|created|written|logged)"
     r"\s+(?:the|a|this|that)\s+(?:\w+\s+)?hypothesis\b"

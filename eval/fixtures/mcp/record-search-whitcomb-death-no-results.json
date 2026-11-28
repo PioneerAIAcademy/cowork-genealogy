@@ -1,0 +1,20 @@
+{
+  "tool": "record_search",
+  "description": "A Whitcomb record_search with a death recordType finds nothing in Cheshire County. Listed before record-search-whitcomb-births, so a death search is not answered with the 1773 birth. Feeds ut_search_records_ull (issue #4432). Synthetic.",
+  "args": {
+    "surname": "~Whitcomb",
+    "recordType": "~death"
+  },
+  "response": {
+    "query": {
+      "surname": "Whitcomb",
+      "recordType": "death"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
